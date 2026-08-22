@@ -74,7 +74,7 @@ export const getServingUnit = (
 	food: FoodItem,
 	servingUnits: Record<number, ServingMeasureUnit>,
 ) => {
-	return normalizeServingUnit(servingUnits[food.fdcId]) ?? "g";
+	return normalizeServingUnit(servingUnits[food.fdcId], food) ?? "g";
 };
 
 export const getServingConversion = (
@@ -149,7 +149,10 @@ export const readStoredMixState = (
 					? parseServingAmount(persistedMixState.servingInputs[foodId])
 					: null;
 				const requestedUnit =
-					normalizeServingUnit(persistedMixState.servingUnits?.[foodId]) ??
+						normalizeServingUnit(
+							persistedMixState.servingUnits?.[foodId],
+							food,
+						) ??
 					parsedInput?.unit ??
 					"g";
 				return [

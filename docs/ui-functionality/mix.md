@@ -204,6 +204,10 @@ remain in status summaries and accessible text.
   editable amount.
 - Weight is primary. Volume is available only with explicit, evidence-backed conversion
   data; estimated conversion must remain clearly identified.
+- Exact household servings remain selectable when a source reports their gram weight
+  without a reusable unit conversion. The selector represents one complete reported
+  serving, such as one medium banana at 118 grams; it must not invent a generic item,
+  density, or volume unit.
 - Nutrition math uses normalized per-100g values scaled by the selected gram amount.
 - Use one identity row followed by one amount-control row on compact and wider layouts.
   Names, actions, units, and inputs must not compete for the same space.

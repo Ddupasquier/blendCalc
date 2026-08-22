@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
 	convertServingAmount,
+	convertServingQuantityToUnit,
 	convertServingToGrams,
+	getSourceServingMeasureOptions,
 	getServingMeasureDimension,
 	parseServingAmount,
 	parseSourceServingMeasure,
@@ -38,6 +40,24 @@ const customFood = {
 	customDensityVariancePercent: 0,
 	customDensityConfidence: "known",
 	foodNutrients: [],
+} satisfies FoodItem;
+
+const foodWithReportedHouseholdServing = {
+	fdcId: 5,
+	description: "Banana, Raw",
+	foodNutrients: [],
+	foodServings: [{
+		label: "1 medium banana (118 g)",
+		gramWeight: 118,
+		isPrimary: true,
+		measureType: "household",
+		isHouseholdMeasure: true,
+		sourceMeasureKey: "banana-medium",
+		origin: "source-household-measure",
+		gramWeightMethod: "source-reported",
+		source: "usda",
+		confidence: "source-verified",
+	}],
 } satisfies FoodItem;
 
 describe("serving amount conversion", () => {
@@ -101,5 +121,59 @@ describe("serving amount conversion", () => {
 		expect(conversion.warning).toBeNull();
 		expect(conversion.method).toBe("calculated-conversion");
 		expect(conversion.basis).toContain("1 cup = 245g");
+	});
+
+	it("converts exact household servings without inventing a reusable unit", () => {
+		const options = getSourceServingMeasureOptions(
+			foodWithReportedHouseholdServing,
+		);
+
+		expect(options).toHaveLength(1);
+		expect(options[0]).toMatchObject({
+			label: "medium banana",
+			gramWeight: 118,
+		});
+		expect(
+			convertServingAmount(
+				2,
+				options[0].value,
+				foodWithReportedHouseholdServing,
+			),
+		).toMatchObject({
+			grams: 236,
+			available: true,
+			dimension: "weight",
+			method: "source-reported",
+		});
+	});
+
+	it("rejects a source-serving selector that does not belong to the food", () => {
+		const [option] = getSourceServingMeasureOptions(foodWithReportedHouseholdServing);
+
+		expect(convertServingAmount(1, option.value, unknownFood)).toMatchObject({
+			grams: null,
+			available: false,
+		});
+	});
+
+	it("preserves grams when switching between weight and a source serving", () => {
+		const [option] = getSourceServingMeasureOptions(foodWithReportedHouseholdServing);
+
+		expect(
+			convertServingQuantityToUnit(
+				118,
+				"g",
+				option.value,
+				foodWithReportedHouseholdServing,
+			),
+		).toBe(1);
+		expect(
+			convertServingQuantityToUnit(
+				2,
+				option.value,
+				"g",
+				foodWithReportedHouseholdServing,
+			),
+		).toBe(236);
 	});
 });

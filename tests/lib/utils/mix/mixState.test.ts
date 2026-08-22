@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import {
 	MIX_STATE_STORAGE_VERSION,
 	getStateWithServingAmount,
+	getStateWithToggledFood,
 	readStoredMixState,
 	writeStoredMixState,
 } from "$lib/utils/mix/state/mixState";
@@ -40,6 +41,41 @@ describe("mix serving state", () => {
 		expect(getStateWithServingAmount(state, food, "0", "g")).toMatchObject({
 			servingGrams: { [food.fdcId]: 0 },
 			servingQuantities: { [food.fdcId]: 0 },
+		});
+	});
+
+	it("stores exact source servings using their reported gram weight", () => {
+		const banana: FoodItem = {
+			fdcId: 2,
+			description: "Banana, Raw",
+			foodNutrients: [],
+			foodServings: [{
+				label: "1 medium banana (118 g)",
+				gramWeight: 118,
+				isPrimary: true,
+				gramWeightMethod: "source-reported",
+			}],
+		};
+		const defaultState = getStateWithToggledFood(
+			{ ...state, selectedFoodIds: [] },
+			banana.fdcId,
+			[banana],
+		);
+		const sourceServingUnit = defaultState.servingUnits[banana.fdcId];
+
+		expect(sourceServingUnit).toMatch(/^source-serving:/);
+		expect(defaultState.servingQuantities[banana.fdcId]).toBe(1);
+		expect(defaultState.servingGrams[banana.fdcId]).toBe(118);
+		expect(
+			getStateWithServingAmount(
+				defaultState,
+				banana,
+				"2",
+				sourceServingUnit,
+			),
+		).toMatchObject({
+			servingQuantities: { [banana.fdcId]: 2 },
+			servingGrams: { [banana.fdcId]: 236 },
 		});
 	});
 

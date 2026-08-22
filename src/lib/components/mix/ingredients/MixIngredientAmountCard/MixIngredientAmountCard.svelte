@@ -21,7 +21,11 @@
 		SERVING_MEASURE_OPTIONS,
 		type ServingMeasureUnit,
 	} from "$lib/utils/serving/servingMeasureCatalog";
-	import { canConvertServingUnit } from "$lib/utils/serving/servingAmount";
+	import {
+		canConvertServingUnit,
+		convertServingQuantityToUnit,
+		getSourceServingMeasureOptions,
+	} from "$lib/utils/serving/servingAmount";
 	import { isPrivateCustomFood } from "$lib/utils/food/records/foodClassification";
 	import { getFoodWarningEdgeTone } from "$lib/utils/ingredients/ingredientListUi";
 	import {
@@ -50,12 +54,32 @@
 	const warningEdgeTone = $derived(getFoodWarningEdgeTone(food));
 	const detailsElementId = $derived(`mix-ingredient-${food.fdcId}-details`);
 	const servingUnitOptions = $derived(
-		SERVING_MEASURE_OPTIONS
-			.filter((option) => canConvertServingUnit(option.value, food))
-			.map((option) => ({ value: option.value, label: option.shortLabel })),
+		[
+			...SERVING_MEASURE_OPTIONS
+				.filter((option) => canConvertServingUnit(option.value, food))
+				.map((option) => ({ value: option.value, label: option.shortLabel })),
+			...getSourceServingMeasureOptions(food).map((option) => ({
+				value: option.value,
+				label: option.label,
+			})),
+		],
 	);
 	const updateQuantity = (nextQuantity: number) =>
 		onServingChange(food, String(Math.max(0, nextQuantity)), servingUnit);
+	const updateServingUnit = (nextUnit: ServingMeasureUnit) => {
+		const convertedQuantity = convertServingQuantityToUnit(
+			servingQuantity,
+			servingUnit,
+			nextUnit,
+			food,
+		);
+		if (convertedQuantity === null) return;
+		onServingChange(
+			food,
+			String(Number(convertedQuantity.toFixed(6))),
+			nextUnit,
+		);
+	};
 </script>
 
 <article
@@ -108,8 +132,7 @@
 			width="content"
 			value={servingUnit}
 			options={servingUnitOptions}
-			onValueChange={(value) =>
-				onServingChange(food, String(servingQuantity), value as ServingMeasureUnit)}
+			onValueChange={(value) => updateServingUnit(value as ServingMeasureUnit)}
 		/>
 	</div>
 	<div class="mix-ingredient-amount-card__actions">

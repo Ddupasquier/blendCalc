@@ -10,7 +10,11 @@ import {
 	getFoodNutrientAmount,
 	type NutrientMeta,
 } from "$lib/utils/mix/calculations";
-import type { ServingConversion } from "$lib/utils/serving/servingAmount";
+import {
+	getSourceServingMeasureOption,
+	getSourceServingMeasureOptions,
+	type ServingConversion,
+} from "$lib/utils/serving/servingAmount";
 import type { MixWarning } from "$lib/utils/mix/warnings/mixWarnings";
 import type { FoodItem } from "$lib/utils/food/types";
 import { formatMixQuantity } from "$lib/utils/mix/formatting/mixQuantity";
@@ -146,10 +150,12 @@ export const getFoodNutrientChips = (
 		}));
 };
 
-export const normalizeServingUnit = (value: unknown) => {
+export const normalizeServingUnit = (value: unknown, food?: FoodItem) => {
 	if (typeof value !== "string") return null;
+	const normalizedValue = value.trim();
+	if (getSourceServingMeasureOption(normalizedValue, food)) return normalizedValue;
 	return (
-		SERVING_MEASURE_ALIASES[value.trim().toLowerCase().replace(/\s+/g, "")] ??
+		SERVING_MEASURE_ALIASES[normalizedValue.toLowerCase().replace(/\s+/g, "")] ??
 		null
 	);
 };
@@ -160,6 +166,17 @@ export const getDefaultServingAmount = (food?: FoodItem) => {
 		return {
 			quantity: food.servingSize,
 			unit: servingUnit,
+		};
+	}
+
+	const sourceServingOptions = getSourceServingMeasureOptions(food);
+	const primarySourceServingOption = sourceServingOptions.find(
+		(option) => option.serving.isPrimary,
+	) ?? sourceServingOptions[0];
+	if (primarySourceServingOption) {
+		return {
+			quantity: 1,
+			unit: primarySourceServingOption.value,
 		};
 	}
 
@@ -177,9 +194,16 @@ export const getServingGramsLabel = (conversion: ServingConversion) => {
 
 export const getServingConversionBasis = (conversion: ServingConversion) => {
 	if (!conversion.available || !conversion.basis) return null;
-	return conversion.method === "calculated-conversion"
-		? `Calculated from ${conversion.basis}`
-		: `Exact unit conversion: ${conversion.basis}`;
+	if (conversion.method === "calculated-conversion") {
+		return `Calculated from ${conversion.basis}`;
+	}
+	if (
+		conversion.method === "source-reported" ||
+		conversion.method === "user-reported"
+	) {
+		return `Reported serving: ${conversion.basis}`;
+	}
+	return `Exact unit conversion: ${conversion.basis}`;
 };
 
 export const withOverageDetails = (

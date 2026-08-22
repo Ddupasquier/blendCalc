@@ -11,6 +11,9 @@ import {
 } from "./support/localQaDatabase";
 import { getLocalQaAccountForWorker } from "./support/localQaAccounts";
 
+const escapeRegularExpression = (value: string) =>
+	value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 const openMixGoals = async (page: import("@playwright/test").Page) => {
 	const goalsSection = page.locator("[data-tutorial-target='mix-goals']");
 	const details = goalsSection.locator(":scope > details");
@@ -449,7 +452,7 @@ test("the reusable segmented control switches Mix ingredient sources by pointer 
 	await expect(fridgeTab).toHaveAttribute("aria-selected", "true");
 });
 
-test("Mix ingredient cards use their full surface for selection and restore state", async ({
+test("Mix ingredient chooser preserves selection across search, sorting, pagination, and every card hit area", async ({
 	page,
 }, testInfo) => {
 	test.skip(
@@ -460,23 +463,225 @@ test("Mix ingredient cards use their full surface for selection and restore stat
 	await page.goto("/mix");
 	await waitForAppReady(page);
 	const chooser = page.locator(".ingredient-chooser");
+	const chooserDetails = chooser.locator(":scope > details");
+	if ((await chooserDetails.getAttribute("open")) === null) {
+		await chooserDetails.locator(":scope > summary").click();
+	}
+	const selectedSection = page.locator(".selected-ingredients-panel");
+	const selectedDetails = selectedSection.locator(":scope > details");
+	if ((await selectedDetails.getAttribute("open")) === null) {
+		await selectedDetails.locator(":scope > summary").click();
+	}
+
+	const chooserSearch = chooser.getByRole("searchbox", {
+		name: "Find ingredients",
+	});
+	const selectedSearch = selectedSection.getByRole("searchbox", {
+		name: "Find selected ingredients",
+	});
+	const selectionCorpus = [
+		{ query: "spinach", name: "Spinach, Raw" },
+		{ query: "beef", name: "Beef" },
+		{ query: "strawberry", name: "Strawberry Jelly, Strawberry" },
+	];
+
+	for (const { query, name } of selectionCorpus) {
+		await chooserSearch.fill(query);
+		const selectionAction = chooser.getByRole("button", {
+			name: new RegExp(
+				`^(?:Add|Remove) ${escapeRegularExpression(name)} (?:to|from) this mix`,
+			),
+		});
+		const card = selectionAction.locator("..");
+		await expect(card).toHaveCount(1);
+		const originalSelected =
+			(await selectionAction.getAttribute("aria-pressed")) === "true";
+		const expectSynchronizedSelection = async (selected: boolean) => {
+			await expect(selectionAction).toHaveAttribute(
+				"aria-pressed",
+				String(selected),
+			);
+			await selectedSearch.fill(name);
+			await expect(
+				selectedSection.getByRole("spinbutton", {
+					name: `Quantity for ${name}`,
+				}),
+			).toHaveCount(selected ? 1 : 0);
+		};
+
+		await card.scrollIntoViewIfNeeded();
+		const nameBounds = await card.getByText(name, { exact: true }).boundingBox();
+		expect(nameBounds).not.toBeNull();
+		await page.mouse.click(
+			nameBounds!.x + nameBounds!.width / 2,
+			nameBounds!.y + nameBounds!.height / 2,
+		);
+		await expectSynchronizedSelection(!originalSelected);
+
+		await card.scrollIntoViewIfNeeded();
+		const cardBounds = await card.boundingBox();
+		expect(cardBounds).not.toBeNull();
+		await page.mouse.click(
+			cardBounds!.x + cardBounds!.width * 0.72,
+			cardBounds!.y + cardBounds!.height * 0.82,
+		);
+		await expectSynchronizedSelection(originalSelected);
+
+		await card.scrollIntoViewIfNeeded();
+		const selectionIndicatorBounds = await card
+			.locator(".mix-ingredient-option__select-status")
+			.boundingBox();
+		expect(selectionIndicatorBounds).not.toBeNull();
+		await page.mouse.click(
+			selectionIndicatorBounds!.x + selectionIndicatorBounds!.width / 2,
+			selectionIndicatorBounds!.y + selectionIndicatorBounds!.height / 2,
+		);
+		await expectSynchronizedSelection(!originalSelected);
+
+		await selectionAction.scrollIntoViewIfNeeded();
+		await selectionAction.click();
+		await expectSynchronizedSelection(originalSelected);
+	}
+	await selectedSearch.fill("");
+	await chooserSearch.fill("");
+
+	const originalSelectedCount = Number.parseInt(
+		(await chooser.locator(".result-count").textContent())?.match(
+			/(\d+) selected/,
+		)?.[1] ?? "-1",
+		10,
+	);
+	expect(originalSelectedCount).toBeGreaterThan(0);
+	await chooser.getByRole("button", { name: "Filter and sort ingredients" }).click();
+	await expect(page).toHaveURL(/\/mix\/ingredients\/filters$/);
+	let filterSheet = page.getByRole("dialog", {
+		name: "Filter and sort ingredients",
+	});
+	await filterSheet.getByRole("button", { name: "Selected only" }).click();
+	await filterSheet.getByRole("button", { name: "A → Z" }).click();
+	await filterSheet.getByRole("button", { name: "Apply" }).click();
+	await expect(page).toHaveURL(/\/mix$/);
+	const visibleSelectedCardCount = await chooser
+		.locator(".mix-ingredient-option")
+		.count();
+	expect(visibleSelectedCardCount).toBeGreaterThan(0);
+	expect(visibleSelectedCardCount).toBeLessThanOrEqual(originalSelectedCount);
+	for (const selectedCardAction of await chooser
+		.locator(".mix-ingredient-option__select")
+		.all()) {
+		await expect(selectedCardAction).toHaveAttribute("aria-pressed", "true");
+	}
+	await expect(chooser.locator(".result-count")).toContainText(
+		`${originalSelectedCount} selected`,
+	);
+
+	await chooser.getByRole("button", { name: "Filter and sort ingredients" }).click();
+	filterSheet = page.getByRole("dialog", {
+		name: "Filter and sort ingredients",
+	});
+	await filterSheet.getByRole("button", { name: "All ingredients" }).click();
+	await filterSheet.getByRole("button", { name: "A → Z" }).click();
+	await filterSheet.getByRole("button", { name: "Apply" }).click();
+	await expect(page).toHaveURL(/\/mix$/);
+
+	const chooserCards = chooser.locator(".mix-ingredient-option");
+	const firstPageNames = await chooserCards
+		.locator(".mix-ingredient-option__copy strong")
+		.allTextContents();
+	expect(firstPageNames.length).toBeGreaterThan(1);
+	expect(firstPageNames).toEqual(
+		[...firstPageNames].sort((first, second) => first.localeCompare(second)),
+	);
+	const firstPageCardIds = await chooserCards.evaluateAll((cards) =>
+		cards.map((card) =>
+			card.querySelector("button")?.getAttribute("aria-label"),
+		),
+	);
+	const loadMore = chooser.getByRole("button", { name: "Load more ingredients" });
+	await expect(loadMore).toBeVisible();
+	await loadMore.click();
+	await expect.poll(() => chooserCards.count()).toBeGreaterThan(firstPageNames.length);
+	await expect
+		.poll(() =>
+			chooserCards.evaluateAll((cards, originalCardCount) =>
+				cards
+					.slice(0, originalCardCount)
+					.map((card) =>
+						card.querySelector("button")?.getAttribute("aria-label"),
+					),
+				firstPageCardIds.length,
+			),
+		)
+		.toEqual(firstPageCardIds);
+	await expect(chooser.locator(".result-count")).toContainText(
+		`${originalSelectedCount} selected`,
+	);
+
+	await chooser.getByRole("tab", { name: /Shopping List/ }).click();
+	await expect(chooser.getByRole("tab", { name: /Shopping List/ })).toHaveAttribute(
+		"aria-selected",
+		"true",
+	);
+	await chooserSearch.fill("broccoli");
+	const shoppingSelection = chooser.getByRole("button", {
+		name: /^(?:Add|Remove) Broccoli (?:to|from) this mix/,
+	});
+	const shoppingCard = shoppingSelection.locator("..");
+	await expect(shoppingCard).toHaveCount(1);
+	const shoppingOriginallySelected =
+		(await shoppingSelection.getAttribute("aria-pressed")) === "true";
+	const shoppingNameBounds = await shoppingCard
+		.getByText("Broccoli", { exact: true })
+		.boundingBox();
+	expect(shoppingNameBounds).not.toBeNull();
+	await page.mouse.click(
+		shoppingNameBounds!.x + shoppingNameBounds!.width / 2,
+		shoppingNameBounds!.y + shoppingNameBounds!.height / 2,
+	);
+	await expect(shoppingSelection).toHaveAttribute(
+		"aria-pressed",
+		String(!shoppingOriginallySelected),
+	);
+	await shoppingSelection.click();
+	await expect(shoppingSelection).toHaveAttribute(
+		"aria-pressed",
+		String(shoppingOriginallySelected),
+	);
+});
+
+test("compact Mix chooser cards keep long names clear of the selection control", async ({
+	page,
+}, testInfo) => {
+	test.skip(
+		!testInfo.project.name.startsWith("mobile-"),
+		"Compact geometry is owned by phone-layout projects.",
+	);
+
+	await page.goto("/mix");
+	await waitForAppReady(page);
+	const chooser = page.locator(".ingredient-chooser");
 	const details = chooser.locator(":scope > details");
 	if ((await details.getAttribute("open")) === null) {
 		await details.locator(":scope > summary").click();
 	}
-	await chooser.getByRole("searchbox", { name: "Find ingredients" }).fill("Mango");
-	const mango = chooser.getByRole("button", {
-		name: "Remove Mango, Raw from this mix",
-	});
-	await mango.click();
-	const addMango = chooser.getByRole("button", {
-		name: "Add Mango, Raw to this mix",
-	});
-	await expect(addMango).toHaveAttribute("aria-pressed", "false");
-	await addMango.click();
-	await expect(
-		chooser.getByRole("button", { name: "Remove Mango, Raw from this mix" }),
-	).toHaveAttribute("aria-pressed", "true");
+	await chooser.getByRole("searchbox", { name: "Find ingredients" }).fill("strawberry");
+	const card = chooser
+		.getByRole("button", {
+			name: /^(?:Add|Remove) Strawberry Jelly, Strawberry (?:to|from) this mix/,
+		})
+		.locator("..");
+	await expect(card).toHaveCount(1);
+	const [copyBounds, indicatorBounds] = await Promise.all([
+		card.locator(".mix-ingredient-option__copy").boundingBox(),
+		card.locator(".mix-ingredient-option__select-status").boundingBox(),
+	]);
+	expect(copyBounds).not.toBeNull();
+	expect(indicatorBounds).not.toBeNull();
+	expect(copyBounds!.x + copyBounds!.width).toBeLessThanOrEqual(
+		indicatorBounds!.x,
+	);
+	await expect(card.getByText("Custom", { exact: true })).toHaveCount(0);
+	await expect(card.locator(".ingredient-category-badge")).toHaveCount(0);
 });
 
 test("selected ingredient amount controls change once and restore the original value", async ({
@@ -505,6 +710,123 @@ test("selected ingredient amount controls change once and restore the original v
 	await expect(quantity).not.toHaveValue(originalValue);
 	await selectedSection.getByRole("button", { name: "Use less Mango, Raw" }).click();
 	await expect(quantity).toHaveValue(originalValue);
+});
+
+test("Mix preserves exact grams across package, household, and weight-only serving controls", async ({
+	page,
+}, testInfo) => {
+	test.skip(
+		testInfo.project.name !== "desktop-chromium",
+		"One isolated browser worker owns this temporary Mix-state mutation.",
+	);
+
+	const originalGoalConfiguration =
+		await captureLocalQaMixGoalConfiguration(testInfo.parallelIndex);
+	try {
+		await saveLocalQaMixState(testInfo.parallelIndex, {
+			version: 1,
+			selected: [1008, 1003, 1079, 1005, 1004],
+			options: [
+				{ id: 1008, label: "Calories" },
+				{ id: 1003, label: "Protein" },
+				{ id: 1079, label: "Dietary Fiber" },
+				{ id: 1005, label: "Total Carbohydrates" },
+				{ id: 1004, label: "Total Fat" },
+			],
+			selectedFoodIds: [2032704, 9200002, 9200012],
+			servingGrams: { 2032704: 125, 9200002: 118, 9200012: 113 },
+			servingQuantities: { 2032704: 125, 9200002: 118, 9200012: 113 },
+			servingUnits: { 2032704: "g", 9200002: "g", 9200012: "g" },
+		});
+
+		await page.goto("/mix");
+		await waitForAppReady(page);
+		const selectedSection = await openMixSection(
+			page,
+			".selected-ingredients-panel",
+		);
+		const pastaCard = selectedSection
+			.locator(".mix-ingredient-amount-card")
+			.filter({ hasText: "Roasted Onion & Garlic Pasta Sauce" });
+		const bananaCard = selectedSection
+			.locator(".mix-ingredient-amount-card")
+			.filter({ hasText: "Banana, Raw" });
+		const beefCard = selectedSection
+			.locator(".mix-ingredient-amount-card")
+			.filter({ hasText: "Ground Beef, 85% Lean, Cooked" });
+
+		const pastaQuantity = pastaCard.getByRole("spinbutton", {
+			name: "Quantity for Roasted Onion & Garlic Pasta Sauce",
+		});
+		const pastaMeasure = pastaCard.getByRole("combobox", {
+			name: "Measure for Roasted Onion & Garlic Pasta Sauce",
+		});
+		await pastaMeasure.click();
+		await page.getByRole("option", { name: "cup", exact: true }).click();
+		await expect(pastaQuantity).toHaveValue("0.5");
+		await expect(pastaCard).toContainText(/125\s*g equivalent/i);
+		await pastaCard
+			.getByRole("button", {
+				name: "Show details for Roasted Onion & Garlic Pasta Sauce",
+			})
+			.click();
+		await expect(pastaCard).toContainText(/Calculated from 0\.5 cup/i);
+		await expect(pastaCard).toContainText(/1\/2 cup \(125 g\) = 125g/i);
+
+		const bananaQuantity = bananaCard.getByRole("spinbutton", {
+			name: "Quantity for Banana, Raw",
+		});
+		const bananaMeasure = bananaCard.getByRole("combobox", {
+			name: "Measure for Banana, Raw",
+		});
+		await bananaMeasure.click();
+		await page.getByRole("option", { name: "medium banana", exact: true }).click();
+		await expect(bananaQuantity).toHaveValue("1");
+		await expect(bananaCard).toContainText(/118\s*g equivalent/i);
+
+		await bananaCard.getByRole("button", { name: "Use more Banana, Raw" }).click();
+		await expect(bananaQuantity).toHaveValue("2");
+		await expect(bananaCard).toContainText(/236\s*g equivalent/i);
+		await bananaQuantity.fill("1.5");
+		await expect(bananaCard).toContainText(/177\s*g equivalent/i);
+		await bananaCard.getByRole("button", { name: "Use less Banana, Raw" }).click();
+		await expect(bananaQuantity).toHaveValue("0.5");
+		await expect(bananaCard).toContainText(/59\s*g equivalent/i);
+
+		await bananaMeasure.click();
+		await page.getByRole("option", { name: "g", exact: true }).click();
+		await expect(bananaQuantity).toHaveValue("59");
+		await expect(bananaCard.getByText(/g equivalent/i)).toHaveCount(0);
+
+		const beefMeasure = beefCard.getByRole("combobox", {
+			name: "Measure for Ground Beef, 85% Lean, Cooked",
+		});
+		await beefMeasure.click();
+		for (const volumeUnit of ["cup", "tbsp", "tsp", "ml", "floz"]) {
+			await expect(
+				page.getByRole("option", { name: volumeUnit, exact: true }),
+			).toHaveCount(0);
+		}
+
+		await expect
+			.poll(async () => {
+				const configuration = await captureLocalQaMixGoalConfiguration(
+					testInfo.parallelIndex,
+				);
+				return configuration.mixState;
+			})
+			.toMatchObject({
+				servingGrams: { 2032704: 125, 9200002: 59, 9200012: 113 },
+				servingQuantities: { 2032704: 0.5, 9200002: 59, 9200012: 113 },
+				servingUnits: { 2032704: "cup", 9200002: "g", 9200012: "g" },
+			});
+	} finally {
+		if (!page.isClosed()) await page.close();
+		await restoreLocalQaMixGoalConfiguration(
+			testInfo.parallelIndex,
+			originalGoalConfiguration,
+		);
+	}
 });
 
 test("explicit nutrient goals preserve zero, units, independent rules, and synchronized controls", async ({
