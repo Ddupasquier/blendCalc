@@ -120,3 +120,26 @@ describe("IngredientChooser progressive loading", () => {
 		expect(screen.queryByRole("button", { name: /next page/i })).not.toBeInTheDocument();
 	});
 });
+
+describe("IngredientChooser empty guidance", () => {
+	it("replaces unusable list controls with one direct Ingredients route", () => {
+		render(IngredientChooser, {
+			props: {
+				fridgeItems: [],
+				shoppingItems: [],
+				selectedFoodIds: [],
+				onToggleFood: vi.fn(),
+			},
+		});
+
+		expect(screen.getByText("Find ingredients first")).toBeInTheDocument();
+		expect(
+			screen.getByRole("link", { name: "Go to Ingredients" }),
+		).toHaveAttribute("href", "/ingredients/fridge");
+		expect(screen.queryByRole("searchbox")).not.toBeInTheDocument();
+		expect(screen.queryByRole("tab")).not.toBeInTheDocument();
+		expect(
+			screen.queryByText("No ingredients selected"),
+		).not.toBeInTheDocument();
+	});
+});

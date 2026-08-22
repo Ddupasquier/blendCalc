@@ -1,5 +1,6 @@
 <script lang="ts">
 	import ListControls from "$lib/components/common/lists/ListControls/ListControls.svelte";
+	import RoundedActionLink from "$lib/components/common/buttons/RoundedActionLink/RoundedActionLink.svelte";
 	import ListSortSheet from "$lib/components/common/lists/ListSortSheet/ListSortSheet.svelte";
 	import PaginatedListControls from "$lib/components/common/navigation/PaginatedListControls/PaginatedListControls.svelte";
 	import SegmentedControl from "$lib/components/common/buttons/SegmentedControl/SegmentedControl.svelte";
@@ -61,6 +62,9 @@
 	});
 	const visibleItems = $derived(filteredItems.slice(0, visibleCount));
 	const hasMoreItems = $derived(visibleItems.length < filteredItems.length);
+	const hasAnyAvailableIngredients = $derived(
+		fridgeItems.length > 0 || shoppingItems.length > 0,
+	);
 	const selectedInActiveList = $derived(
 		activeItems.filter((food) => selectedFoodIds.includes(food.fdcId)).length,
 	);
@@ -126,63 +130,78 @@
 	{onOpenChange}
 >
 	<div class="ingredient-chooser__content">
-		<SegmentedControl
-			label="Ingredient source"
-			options={tabs}
-			value={activeListKey}
-			onSelect={setActiveList}
-		/>
-		<ListControls
-			id="mix-ingredient-search"
-			{query}
-			onQueryChange={(value) => {
-				query = value;
-				resetVisibleItems();
-			}}
-			placeholder={`Search ${activeListKey === MIX_STORAGE_KEYS.fridge ? "fridge" : "shopping list"}…`}
-			label="Find ingredients"
-			totalCount={activeItems.length}
-			visibleCount={filteredItems.length}
-			resultSummary={`${filteredItems.length} available · ${selectedInActiveList} selected`}
-			itemLabel="ingredients"
-			filterLabel="Filter and sort ingredients"
-			filterValue={filter}
-			{filterOptions}
-			filtersActive={filtersOpen || filter !== "all" || sort !== "recent"}
-			filterControlsId="mix-ingredient-filter-sheet-title"
-			onFilterOpen={onOpenFilters}
-		/>
-		<div
-			class="ingredient-chooser__list"
-			bind:this={listElement}
-			aria-label={activeListKey === MIX_STORAGE_KEYS.fridge
-				? "Mix fridge ingredients"
-				: "Mix shopping-list ingredients"}
-			data-tutorial-target="mix-ingredient-options"
-		>
-			{#each visibleItems as food (food.fdcId)}
-				<MixIngredientOption
-					{food}
-					selected={selectedFoodIds.includes(food.fdcId)}
-					onSelect={() => onToggleFood(food.fdcId)}
-				/>
-			{/each}
-			{#if visibleItems.length === 0}
-				<p class="ingredient-chooser__empty">
-					{activeItems.length
-						? "No ingredients match these controls."
-						: "This list is empty."}
-				</p>
-			{/if}
-			<PaginatedListControls
-				scrollContainer={listElement}
-				{hasMoreItems}
-				loadMoreLabel="Load more ingredients"
-				contentVersion={`${activeListKey}:${query}:${filter}:${sort}:${visibleItems.length}`}
-				containerElement="div"
-				onLoadMore={revealMoreItems}
+		{#if !hasAnyAvailableIngredients}
+			<div class="ingredient-chooser__empty-guidance">
+				<div>
+					<strong>Find ingredients first</strong>
+					<p>
+						Add food to your Fridge or Shopping List, then return here to
+						build your Mix.
+					</p>
+				</div>
+				<RoundedActionLink href="/ingredients/fridge" variant="neutral">
+					Go to Ingredients
+				</RoundedActionLink>
+			</div>
+		{:else}
+			<SegmentedControl
+				label="Ingredient source"
+				options={tabs}
+				value={activeListKey}
+				onSelect={setActiveList}
 			/>
-		</div>
+			<ListControls
+				id="mix-ingredient-search"
+				{query}
+				onQueryChange={(value) => {
+					query = value;
+					resetVisibleItems();
+				}}
+				placeholder={`Search ${activeListKey === MIX_STORAGE_KEYS.fridge ? "fridge" : "shopping list"}…`}
+				label="Find ingredients"
+				totalCount={activeItems.length}
+				visibleCount={filteredItems.length}
+				resultSummary={`${filteredItems.length} available · ${selectedInActiveList} selected`}
+				itemLabel="ingredients"
+				filterLabel="Filter and sort ingredients"
+				filterValue={filter}
+				{filterOptions}
+				filtersActive={filtersOpen || filter !== "all" || sort !== "recent"}
+				filterControlsId="mix-ingredient-filter-sheet-title"
+				onFilterOpen={onOpenFilters}
+			/>
+			<div
+				class="ingredient-chooser__list"
+				bind:this={listElement}
+				aria-label={activeListKey === MIX_STORAGE_KEYS.fridge
+					? "Mix fridge ingredients"
+					: "Mix shopping-list ingredients"}
+				data-tutorial-target="mix-ingredient-options"
+			>
+				{#each visibleItems as food (food.fdcId)}
+					<MixIngredientOption
+						{food}
+						selected={selectedFoodIds.includes(food.fdcId)}
+						onSelect={() => onToggleFood(food.fdcId)}
+					/>
+				{/each}
+				{#if visibleItems.length === 0}
+					<p class="ingredient-chooser__empty">
+						{activeItems.length
+							? "No ingredients match these controls."
+							: "This list is empty."}
+					</p>
+				{/if}
+				<PaginatedListControls
+					scrollContainer={listElement}
+					{hasMoreItems}
+					loadMoreLabel="Load more ingredients"
+					contentVersion={`${activeListKey}:${query}:${filter}:${sort}:${visibleItems.length}`}
+					containerElement="div"
+					onLoadMore={revealMoreItems}
+				/>
+			</div>
+		{/if}
 	</div>
 </MixPanelSection>
 

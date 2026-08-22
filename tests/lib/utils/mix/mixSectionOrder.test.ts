@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
 	DEFAULT_MIX_SECTION_DISCLOSURE_STATE,
 	DEFAULT_MIX_SECTION_ORDER,
+	getMixSectionOrderForIngredientAvailability,
 	moveMixSection,
 	moveMixSectionRelative,
 	normalizeMixSectionDisclosureState,
@@ -69,5 +70,16 @@ describe("Mix section order", () => {
 			goals: false,
 			warnings: false,
 		});
+	});
+
+	it("puts Add ingredients first only when both ingredient lists are empty", () => {
+		const savedOrder = moveMixSection(DEFAULT_MIX_SECTION_ORDER, "goals", 0);
+
+		expect(
+			getMixSectionOrderForIngredientAvailability(savedOrder, false)[0],
+		).toBe("add-ingredients");
+		expect(
+			getMixSectionOrderForIngredientAvailability(savedOrder, true),
+		).toEqual(savedOrder);
 	});
 });

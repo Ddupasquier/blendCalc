@@ -77,6 +77,9 @@
 		getNutrientMeta,
 		type NutrientOption,
 	} from "$lib/utils/mix/ui/mixUi";
+	import {
+		getMixSectionOrderForIngredientAvailability,
+	} from "$lib/utils/mix/ui/mixSectionOrder";
 	import type { ServingMeasureUnit } from "$lib/utils/serving/servingMeasureCatalog";
 	import type { SavedRecipeInput } from "$lib/utils/storage/client/savedRecipes";
 	import {
@@ -297,6 +300,13 @@
 		}),
 	);
 	const allIngredientItems = $derived([...fridgeItems, ...shoppingItems]);
+	const hasAvailableIngredients = $derived(allIngredientItems.length > 0);
+	const displayedSectionOrder = $derived(
+		getMixSectionOrderForIngredientAvailability(
+			sectionPreferences.state.order,
+			hasAvailableIngredients,
+		),
+	);
 	const selectedFoods = $derived(
 		allIngredientItems.filter((item) => selectedFoodIds.includes(item.fdcId)),
 	);
@@ -1061,7 +1071,7 @@
 			{:else}
 				<section class="mix-panel" aria-label="Mix builder">
 					<div class="mix-builder">
-						{#each sectionPreferences.state.order as sectionId (sectionId)}
+						{#each displayedSectionOrder as sectionId (sectionId)}
 							{#if sectionId === "nutrient-shape"}
 							<NutrientShapePanel
 								nutrientAxisCount={mixAnalysis.nutrientLabels.length}
@@ -1137,7 +1147,9 @@
 											overlay: MIX_ROUTE_OVERLAYS.ingredientFilters,
 										})}
 									onCloseFilters={closeMixOverlay}
-									open={sectionPreferences.state.disclosureState[sectionId]}
+									open={hasAvailableIngredients
+										? sectionPreferences.state.disclosureState[sectionId]
+										: true}
 									onOpenChange={(open) =>
 										sectionPreferences.setDisclosure(sectionId, open)}
 								/>

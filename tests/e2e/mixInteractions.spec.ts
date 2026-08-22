@@ -52,6 +52,53 @@ const openMixSection = async (
 	return section;
 };
 
+const expectInnerListScrollPassesToMixPage = async ({
+	page,
+	list,
+	itemSelector,
+	loadMoreLabel,
+}: {
+	page: import("@playwright/test").Page;
+	list: import("@playwright/test").Locator;
+	itemSelector: string;
+	loadMoreLabel: string;
+}) => {
+	const mixPage = page.locator(".mix-page");
+	const itemNamesBefore = await list.locator(itemSelector).allTextContents();
+	expect(itemNamesBefore.length).toBeGreaterThan(0);
+
+	await list.evaluate((element) => {
+		element.scrollTop = element.scrollHeight;
+	});
+	await expect
+		.poll(() =>
+			list.evaluate(
+				(element) =>
+					Math.abs(
+						element.scrollHeight - element.clientHeight - element.scrollTop,
+					) <= 1,
+			),
+		)
+		.toBe(true);
+	await expect(list.getByRole("button", { name: loadMoreLabel })).toBeVisible();
+	await expect(list.getByRole("button", { name: "Return to top" })).toBeVisible();
+
+	await list.hover();
+	const mainScrollBefore = await mixPage.evaluate((element) => element.scrollTop);
+	const mainMaximumScroll = await mixPage.evaluate(
+		(element) => element.scrollHeight - element.clientHeight,
+	);
+	expect(mainScrollBefore).toBeLessThan(mainMaximumScroll);
+	await page.mouse.wheel(0, 500);
+	await expect
+		.poll(() => mixPage.evaluate((element) => element.scrollTop))
+		.toBeGreaterThan(mainScrollBefore);
+
+	expect(await list.locator(itemSelector).allTextContents()).toEqual(
+		itemNamesBefore,
+	);
+};
+
 const readRenderedMixGoals = (
 	goalsSection: import("@playwright/test").Locator,
 ) =>
@@ -394,6 +441,60 @@ test("closed Mix warnings retain visible severity and open on demand", async ({
 	await summary.click();
 	await expect(details).toHaveAttribute("open", "");
 	if (!initiallyOpen) await summary.click();
+});
+
+test("an empty Mix leads with one open Add ingredients path", async ({ page }) => {
+	await page.context().clearCookies();
+	await page.goto("/auth?next=/mix");
+	await page.getByLabel("Email").fill("qa-empty@blendcalc.local");
+	await page.getByLabel("Password", { exact: true }).fill(
+		process.env.PLAYWRIGHT_QA_PASSWORD ?? "BlendCalc-Local-QA-2026!",
+	);
+	await page.getByRole("button", { name: "Sign in", exact: true }).click();
+	await expect(page).toHaveURL(/\/mix$/);
+	await waitForAppReady(page);
+
+	const firstBuilderSection = page
+		.locator(".mix-builder > .mix-panel-section")
+		.first();
+	await expect(firstBuilderSection).toHaveAttribute("aria-label", "Add ingredients");
+	await expect(firstBuilderSection.locator(":scope > details")).toHaveAttribute(
+		"open",
+		"",
+	);
+	await expect(page.getByText("No ingredients selected")).toHaveCount(0);
+	const ingredientsLink = firstBuilderSection.getByRole("link", {
+		name: "Go to Ingredients",
+	});
+	await expect(ingredientsLink).toHaveAttribute("href", "/ingredients/fridge");
+	await ingredientsLink.click();
+	await expect(page).toHaveURL(/\/ingredients\/fridge$/);
+});
+
+test("bounded Mix ingredient lists hand continued scrolling to the main page", async ({
+	page,
+}) => {
+	await page.goto("/mix");
+	await waitForAppReady(page);
+
+	const selectedSection = await openMixSection(
+		page,
+		".selected-ingredients-panel",
+	);
+	await expectInnerListScrollPassesToMixPage({
+		page,
+		list: selectedSection.locator(".selected-ingredient-cards"),
+		itemSelector: ".mix-ingredient-amount-card",
+		loadMoreLabel: "Load more selected ingredients",
+	});
+
+	const chooser = await openMixSection(page, ".ingredient-chooser");
+	await expectInnerListScrollPassesToMixPage({
+		page,
+		list: chooser.locator(".ingredient-chooser__list"),
+		itemSelector: ".mix-ingredient-option",
+		loadMoreLabel: "Load more ingredients",
+	});
 });
 
 test("selected ingredients progressively load and can be filtered", async ({ page }) => {
