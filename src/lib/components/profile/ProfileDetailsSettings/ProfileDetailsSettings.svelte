@@ -4,6 +4,10 @@
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import TextField from "$lib/components/common/forms/TextField/TextField.svelte";
 	import { createPendingSubmit } from "$lib/utils/forms/pendingSubmit";
+	import {
+		PROFILE_BIO_MAX_LENGTH,
+		PROFILE_DISPLAY_NAME_MAX_LENGTH,
+	} from "$lib/utils/profile/profileValidation";
 	import type { ProfileDetailsSettingsProps } from "./types";
 
 	let {
@@ -37,7 +41,7 @@
 			name="displayName"
 			label="Preferred name"
 			value={displayName}
-			maxlength={80}
+			maxlength={PROFILE_DISPLAY_NAME_MAX_LENGTH}
 			autocomplete="name"
 			placeholder="What should we call you?"
 			helper="This name stays separate from your private account email."
@@ -48,7 +52,8 @@
 			name="bio"
 			label="Bio"
 			value={bio}
-			maxlength={300}
+			maxlength={PROFILE_BIO_MAX_LENGTH}
+			showCharacterCount
 			rows={4}
 			placeholder="A short note about you"
 			multiline

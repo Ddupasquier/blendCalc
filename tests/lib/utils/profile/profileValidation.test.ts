@@ -5,6 +5,7 @@ import {
 	getProfileValidationError,
 	matchesAvatarFileSignature,
 	normalizeOptionalProfileText,
+	PROFILE_BIO_MAX_LENGTH,
 } from "$lib/utils/profile/profileValidation";
 
 describe("profile validation", () => {
@@ -36,6 +37,22 @@ describe("profile validation", () => {
 		expect(
 			getProfileValidationError({ displayName: null, bio: null }),
 		).toBe("");
+	});
+
+	it("accepts a 150-character bio and rejects anything longer", () => {
+		expect(PROFILE_BIO_MAX_LENGTH).toBe(150);
+		expect(
+			getProfileValidationError({
+				displayName: "Dylan",
+				bio: "a".repeat(PROFILE_BIO_MAX_LENGTH),
+			}),
+		).toBe("");
+		expect(
+			getProfileValidationError({
+				displayName: "Dylan",
+				bio: "a".repeat(PROFILE_BIO_MAX_LENGTH + 1),
+			}),
+		).toBe("Bio must be 150 characters or fewer.");
 	});
 
 	it("checks image signatures instead of trusting MIME alone", () => {

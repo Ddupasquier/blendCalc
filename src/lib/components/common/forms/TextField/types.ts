@@ -15,6 +15,7 @@ export type TextFieldProps = {
 	required?: boolean;
 	disabled?: boolean;
 	maxlength?: number;
+	showCharacterCount?: boolean;
 	autocomplete?: HTMLInputAttributes["autocomplete"];
 	multiline?: boolean;
 	rows?: number;
