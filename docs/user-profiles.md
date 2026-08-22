@@ -117,10 +117,17 @@ not automated visual moderation.
 `PROFILE_AVATAR_REQUIRE_HUMAN_FACE` in `src/lib/utils/profile/avatarPolicy.ts` controls
 whether the form also requires a face confirmation. It does not perform face detection.
 
-Before profile images are made visible to other users, add a server-side image
-moderation provider and keep unreviewed uploads private. Client-side checks or browser
-face-detection APIs are not a sufficient enforcement boundary because they can be
-bypassed.
+An accepted upload is immediately usable as the account's current profile image; it does
+not enter a moderator queue merely because the user uploaded it. The Storage object
+remains private and is rendered only through intentional short-lived signed URLs.
+
+When social profile-image exposure is introduced, another authenticated user may report
+the exact image they can see. That server-owned intake creates a private
+`profile_image_reports` row tied to the current Storage path. One report does not hide
+the image automatically. A moderator may dismiss the report and keep the image, remove
+that exact image, or let an image replacement supersede the stale report. The reporting
+control must ship with the social surface that exposes other users' profile images; it
+must not be added as an unreachable or speculative form before then.
 
 Account roles, blocks, audit history, and signup blocklists are documented in
 `docs/moderation.md`.

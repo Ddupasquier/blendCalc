@@ -15,6 +15,8 @@ export type ModerationWorkspaceForm = {
 	productReviewSuccess?: string;
 	compatibilityReviewError?: string;
 	compatibilityReviewSuccess?: string;
+	profileImageReviewError?: string;
+	profileImageReviewSuccess?: string;
 } | null;
 
 export type ModerationWorkspaceProps = {

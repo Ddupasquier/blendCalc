@@ -45,6 +45,10 @@ import {
 } from "$lib/server/food-safety/foodCompatibilityFeedback.server";
 import { readLimitedFormData } from "$lib/server/security/requestBody.server";
 import { requireModeratorAccess } from "$lib/server/moderation/moderationAccess.server";
+import {
+	listPendingProfileImageReports,
+	reviewProfileImageReport,
+} from "$lib/server/moderation/profileImageReports.server";
 
 const PERMANENT_BAN_DURATION = "876000h";
 const MODERATION_FORM_MAX_BYTES = 512 * 1024;
@@ -181,15 +185,18 @@ export const loadModerationWorkspaceData = async (
 	const { user: viewer, role } = await requireModeratorAccess(locals, returnPath);
 	const query = url.searchParams.get("q")?.trim().toLocaleLowerCase() ?? "";
 	const includesAccounts =
-		scope === "all" || scope === "profile-images" || scope === "account-access";
+		scope === "all" || scope === "account-access";
 	const includesProductSubmissions =
 		scope === "all" || scope === "product-submissions";
 	const includesFoodWarningReports =
 		scope === "all" || scope === "food-warning-reports";
+	const includesProfileImageReports =
+		scope === "all" || scope === "profile-images";
 	const [
 		{ admin, users: authUsers },
 		pendingProductSubmissions,
 		pendingCompatibilityFeedback,
+		pendingProfileImageReports,
 	] =
 		await Promise.all([
 			includesAccounts
@@ -200,6 +207,9 @@ export const loadModerationWorkspaceData = async (
 				: Promise.resolve([]),
 			includesFoodWarningReports
 				? listPendingFoodCompatibilityFeedback()
+				: Promise.resolve([]),
+			includesProfileImageReports
+				? listPendingProfileImageReports()
 				: Promise.resolve([]),
 		]);
 	const userIds = authUsers.map((user) => user.id);
@@ -426,6 +436,7 @@ export const loadModerationWorkspaceData = async (
 		totalCount: users.length,
 		users: users.filter((user) => matchesSearch(user, query)),
 		productSubmissions,
+		profileImageReports: pendingProfileImageReports,
 		compatibilityFeedback: pendingCompatibilityFeedback.map((feedback) => {
 			const policyVersion = feedback.policy_version as unknown as
 				| { version_number: number }
@@ -458,6 +469,71 @@ export const loadModerationWorkspaceData = async (
 };
 
 export const moderationWorkspaceActions = {
+	reviewProfileImageReport: async ({ locals, request }) => {
+		const { user } = await requireModeratorAccess(
+			locals,
+			"/profile/moderator-actions/profile-images",
+		);
+		const formData = await readLimitedFormData(
+			request,
+			MODERATION_FORM_MAX_BYTES,
+		);
+		const reportId = String(formData.get("reportId") ?? "");
+		const decision = String(formData.get("decision") ?? "");
+		const reviewNote = String(formData.get("reviewNote") ?? "").trim();
+
+		if (
+			!reportId ||
+			(decision !== "dismissed" && decision !== "removed") ||
+			!reviewNote ||
+			reviewNote.length > 2000
+		) {
+			return fail(400, {
+				profileImageReviewError:
+					"Choose whether to keep or remove the image, then add a short review note.",
+			});
+		}
+
+		try {
+			const result = await reviewProfileImageReport({
+				reportId,
+				reviewedBy: user.id,
+				decision,
+				reviewNote,
+			});
+
+			if (result === "already-reviewed") {
+				return fail(409, {
+					profileImageReviewError:
+						"That report was already reviewed. Refresh the page.",
+				});
+			}
+			if (result === "reports-unavailable") {
+				return fail(503, {
+					profileImageReviewError:
+						"Profile image reports are temporarily unavailable. Try again shortly.",
+				});
+			}
+			if (result === "image-changed") {
+				return {
+					profileImageReviewSuccess:
+						"The user already replaced that image, so the old report was closed.",
+				};
+			}
+
+			return {
+				profileImageReviewSuccess:
+					decision === "removed"
+						? "The reported image was removed."
+						: "The report was dismissed and the image remains available.",
+			};
+		} catch {
+			return fail(500, {
+				profileImageReviewError:
+					"We couldn’t save that profile image review.",
+			});
+		}
+	},
 	reviewCompatibilityFeedback: async ({ locals, request }) => {
 		const { user } = await requireModeratorAccess(
 			locals,

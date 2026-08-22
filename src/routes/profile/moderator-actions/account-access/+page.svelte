@@ -16,6 +16,7 @@
 	id="profile-account-access-view"
 	title="Account access"
 	subtitle="Find an account, review its current standing, and block or restore access when policy requires it."
+	informationKey="account-access"
 	{data}
 	{form}
 	scope="account-access"

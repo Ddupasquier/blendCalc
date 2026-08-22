@@ -151,12 +151,18 @@ matching.
   food-warning reports, and profile-image review rows are disabled when their verified
   queue count is zero; a nonzero queue displays its own red count in the row's top-right
   corner.
+- Count only exact profile images with pending user reports. Ordinary profile-image
+  uploads remain active and never create moderator work by themselves.
 - Show one crown beside the Moderator actions sheet title. The action region retains its
   accessible group name without repeating `Moderator actions` as a second visible
   heading.
 - Give every focused moderator right sheet one plain-language heading, one short outcome-
   focused explanation, and one crown at the view header. Do not repeat the heading in
   the action body or expose source keys and status codes as unexplained user-facing copy.
+- Place one shared circular information action beside the crown. It opens a contextual
+  bottom sheet explaining that tool's purpose, review flow, decision effect, and safety
+  boundary. Keep the main right sheet focused on current work instead of repeating those
+  instructions in every review card.
 - Before identity verification, keep review counts private but leave the protected
   review rows available as entry points into the authenticator flow. Explain that
   verification is required instead of making the actions look permanently unavailable.

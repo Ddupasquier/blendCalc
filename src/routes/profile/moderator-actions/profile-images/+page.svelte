@@ -15,7 +15,8 @@
 <ModeratorActionWorkspaceView
 	id="profile-image-reviews-view"
 	title="Profile images"
-	subtitle="Review profile images that have not received a moderation decision."
+	subtitle="Review profile images that another user reported. Ordinary uploads do not enter this queue."
+	informationKey="profile-images"
 	{data}
 	{form}
 	scope="profile-images"

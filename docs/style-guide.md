@@ -432,6 +432,9 @@ Check the existing primitive before writing markup or SCSS.
 | Guided feature tour                   | `TutorialOverlay`            | Route-aware modal guidance with one rounded spotlight and a collision-aware instruction card        |
 | Repeated-tap safety                   | `TwoStepConfirmation`        | In-place double activation such as ingredient deletion                                              |
 | Privileged action container           | `PrivilegedActionGroup`      | Groups privileged moderator, admin, or developer actions and owns one crown                         |
+| Moderator review list                 | `ModeratorReviewList`        | Shared queue count, record spacing, and calm empty state for privileged review work                 |
+| Moderator review card                 | `ModeratorReviewCard`        | Identity/status header followed by evidence and decision content in one consistent card shell       |
+| Moderator tool help                   | `ModeratorActionInformationSheet` | Contextual purpose, review flow, decision effect, and guardrail opened from one circular info action |
 | Numeric amount                        | `NumberInput`                | Shared number semantics and control styling                                                         |
 | Text or multiline entry               | `TextField`                  | Shared label, helper, focus, disabled, text, search, and textarea presentation                       |
 | Single checkbox                       | `CheckboxField`              | Full-row checkbox target with shared focus, disabled, and responsive behavior                        |
@@ -731,6 +734,12 @@ reporting interface for every warning in the default view.
 ## Badges And Privileged Actions
 
 - Use badges only when the state helps the current decision.
+- Focused moderator tools use one crown and one circular information action in the view
+  header. Do not repeat the crown on each review card or leave full workflow instructions
+  permanently expanded in the action body.
+- Moderator review cards read from identity and status to key facts, supporting evidence,
+  and finally the decision. Long evidence and technical details use shared closed
+  disclosures; the decision itself stays easy to find after those disclosures.
 - Compact ingredient cards do not show provider-origin badges.
 - Search may show verification because it affects whether a user adds a result.
 - Nutrition detail may show verification and neutral source attribution.

@@ -76,6 +76,12 @@ correct theme before the page paints. The cookie is not a competing source of tr
 authenticated layout loads reconcile it from `profiles.appearance_theme`, and invalid
 or missing values resolve to the device theme.
 
+Profile-image policy acceptances preserve upload consent, while
+`profile_image_reports` owns private, exact-image report and review history. Ordinary
+uploads remain active and outside the moderation queue. Future social report intake and
+current moderator reads/writes cross trusted server boundaries; browser clients receive
+neither the report table nor reporter identity.
+
 Mix section order and open/closed disclosure state are account-owned presentation
 preferences stored in `mix_preferences`. Authenticated RPCs validate the complete set
 of stable section identifiers before saving either preference; browser storage is not

@@ -10,6 +10,5 @@ export const load: PageServerLoad = (event) =>
 	loadModerationWorkspaceData(event, routePath, "profile-images");
 
 export const actions: Actions = {
-	ban: moderationWorkspaceActions.ban,
-	unban: moderationWorkspaceActions.unban,
+	reviewProfileImageReport: moderationWorkspaceActions.reviewProfileImageReport,
 };

@@ -1458,11 +1458,20 @@ have passed an authenticated dry run.
 | `moderation_email_deliveries`      | `id`         | Audit log                  | Tracks moderation email delivery status                   | `moderation_action_id → moderation_actions.id`     |
 | `blocked_signup_emails`            | `email_hash` | Blocklist                  | Prevents signup by hashed email                           | Optional source/blocking users                     |
 | `profile_image_policy_acceptances` | `id`         | Many rows per auth user    | Records profile image policy acceptance per avatar upload | `user_id → auth.users.id`                          |
+| `profile_image_reports`            | `id`         | Private moderation history | Tracks reports and review outcomes for exact profile images | Target profile and reporting/reviewing auth users |
 
 Notes:
 
 - Moderation/admin writes are intentionally not available to normal authenticated
   clients.
+- `profile_image_reports` is forced-RLS and service-role-only. Each row retains the
+  exact current private avatar path, bounded reason/details, reporter, lifecycle, and
+  review evidence. Ordinary uploads create no row. Replacing an image supersedes its
+  pending reports; a moderator decision dismisses or removes all pending reports for
+  the exact reviewed path without affecting a replacement image.
+- `get_pending_profile_image_review_count()` returns the number of distinct exact images
+  requiring action rather than loading private report rows or counting duplicate reports
+  as separate moderator tasks. Only the service role can execute it.
 - `app_role_assignments` is the authority for application roles. The `app_role` enum
   contains `user`, `moderator`, `admin`, and `developer`, while assignments store only
   elevated roles. `app_role_permissions` maps those roles to database-owned
@@ -1675,6 +1684,7 @@ category, or serving fields.
 | `get_blendcalc_product_revision_history_v1`     | Service-role-only raw reader for bounded immutable revision metadata and evidence-backed field changes for one publication-ready GTIN-14 |
 | `search_blendcalc_products_v1`                  | Service-role-only partial metadata search for active, publication-ready shared products with bounded pagination and name → brand → category → supporting-metadata relevance |
 | `get_moderator_data_health`                     | Returns bounded moderator/admin/developer catalog, source, dataset, policy, mapping, revision, conflict, and publication-readiness summaries after verifying an AAL2 permission and the caller's current role assignment |
+| `get_pending_profile_image_review_count`        | Service-role-only count of distinct exact profile images with one or more pending reports |
 | `claim_catalog_revalidation_jobs`               | Service-only bounded claim of due product/provider jobs using expiring claim tokens |
 | `complete_catalog_revalidation_job`             | Service-only completion and retry scheduling for one claimed product check |
 | `record_catalog_provider_snapshot`              | Service-only immutable observation/snapshot write that creates a review for material changes |

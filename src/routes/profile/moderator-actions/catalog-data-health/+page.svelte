@@ -18,6 +18,7 @@
 	id="profile-catalog-data-health-view"
 	title="Catalog data health"
 	subtitle="Review recalls, provider changes, mapping gaps, and catalog readiness without exposing private evidence."
+	informationKey="catalog-data-health"
 	onClose={closeAction}
 >
 	{#if form?.monitorReviewError}

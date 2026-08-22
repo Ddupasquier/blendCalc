@@ -16,7 +16,16 @@
 	min-width: 0;
 }
 
+.moderator-action-right-sheet__header-actions {
+	display: flex;
+	align-items: center;
+	gap: $app-gap-xs;
+}
+
 :global(.moderator-action-right-sheet__body) {
+	display: grid;
+	align-content: start;
+	gap: $app-gap-md;
 	padding-block: $app-gap-sm $app-gap-lg;
 }
 
@@ -26,6 +35,7 @@
 	}
 
 	:global(.moderator-action-right-sheet__body) {
+		gap: $app-gap-sm;
 		padding-block: $app-gap-xs $app-gap-md;
 	}
 }

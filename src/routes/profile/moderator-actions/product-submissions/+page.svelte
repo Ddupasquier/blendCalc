@@ -16,6 +16,7 @@
 	id="profile-product-submissions-view"
 	title="Product submissions"
 	subtitle="Compare package evidence with the submitted values before publishing a shared product."
+	informationKey="product-submissions"
 	{data}
 	{form}
 	scope="product-submissions"

@@ -7,6 +7,7 @@
 		id,
 		title,
 		subtitle,
+		informationKey,
 		data,
 		form = null,
 		scope,
@@ -14,6 +15,6 @@
 	}: ModeratorActionWorkspaceViewProps = $props();
 </script>
 
-<ModeratorActionRightSheet {id} {title} {subtitle} {onClose}>
+<ModeratorActionRightSheet {id} {title} {subtitle} {informationKey} {onClose}>
 	<ModerationWorkspace {data} {form} {scope} />
 </ModeratorActionRightSheet>

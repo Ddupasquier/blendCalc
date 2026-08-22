@@ -1,0 +1,125 @@
+@use "../../../../styles/variables" as *;
+
+.account-access,
+.account-access__heading,
+.account-access__search,
+.account-access__list,
+.account-access__details,
+.account-access__block-form {
+	display: grid;
+	gap: $app-gap-sm;
+	min-width: 0;
+}
+
+.account-access__heading p,
+.account-access__result-count,
+.account-access__empty p {
+	color: $app-muted;
+}
+
+.account-access__heading h2 {
+	font-size: $app-font-size-lg;
+}
+
+.account-access__search,
+.account-access__empty {
+	padding: $app-gap-md;
+	background: $app-section-bg;
+	border: $app-border;
+	border-radius: $app-card-radius;
+}
+
+.account-access__search-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: $app-gap-xs;
+}
+
+.account-access__result-count {
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-semibold;
+}
+
+.account-access__account {
+	min-width: 0;
+}
+
+.account-access__details {
+	padding: 0 $app-gap-xs $app-gap-xs;
+}
+
+.account-access__avatar {
+	width: 3.5rem;
+	height: 3.5rem;
+	object-fit: cover;
+	background: $app-accent;
+	border-radius: $app-radius-sm;
+}
+
+.account-access__facts {
+	display: grid;
+	gap: $app-gap-xs;
+	margin: 0;
+}
+
+.account-access__facts > div {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr);
+	gap: $app-gap-sm;
+}
+
+.account-access__facts dt {
+	font-weight: $app-font-weight-bold;
+}
+
+.account-access__facts dd {
+	min-width: 0;
+	margin: 0;
+	overflow-wrap: anywhere;
+	text-align: end;
+}
+
+.account-access__suspension,
+.account-access__restriction,
+.account-access__public-reason {
+	padding: $app-gap-xs;
+	border-radius: $app-radius-sm;
+	font-size: $app-font-size-sm;
+}
+
+.account-access__suspension {
+	color: $app-danger-action;
+	background: $app-danger-bg;
+	font-weight: $app-font-weight-semibold;
+}
+
+.account-access__restriction,
+.account-access__public-reason {
+	color: $app-muted;
+	background: $app-accent;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.account-access,
+	.account-access__heading,
+	.account-access__search,
+	.account-access__list,
+	.account-access__details,
+	.account-access__block-form {
+		gap: $app-gap-xs;
+	}
+
+	.account-access__search,
+	.account-access__empty {
+		padding: $app-gap-sm;
+	}
+
+	.account-access__facts > div {
+		grid-template-columns: 1fr;
+		gap: $app-gap-2xs;
+	}
+
+	.account-access__facts dd {
+		text-align: start;
+	}
+}

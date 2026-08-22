@@ -16,13 +16,33 @@ load behavior. Queue rows remain visible and disabled at zero; standing account 
 data-health tools remain available. The bottom-sheet title and each right-sheet heading
 own one crown without repeating the same visible label inside their content.
 
+Every focused right sheet follows the same reading order: the plain-language view
+heading, current action feedback, one bounded result summary, review records, supporting
+evidence in closed shared disclosures, and the decision controls last. An adjacent
+information button opens the shared contextual bottom sheet for that exact tool. It
+explains the tool's purpose, review order, decision effect, and safety boundary without
+adding permanent instructions to every record. The information sheet is contextual help,
+not a second moderation workflow, and never exposes private evidence or internal codes.
+
+Product, warning, and reported-image queues use the shared moderator review-list and
+review-card structure. Keep identity and the decision-relevant status in the card header,
+keep a short fact summary in the primary reading path, and move package photos, raw
+matching facts, long change lists, nutrient values, and report details into clearly named
+shared disclosures. Decisions remain outside those disclosures so reviewers can find the
+required action after reading the evidence.
+
 ## Account Review
 
 - Show the viewer's current role.
 - Search accounts by preferred/display name, email, user ID, role, or status.
-- Account cards show avatar or placeholder, display name, moderator-only email, status,
-  role, image-review status, public block reason, cumulative moderator-rejected public
-  submission count, and any active public-sharing suspension date.
+- Keep each account closed by default. Its summary shows only the display name and
+  current access status so moderators can scan the result list without reading every
+  account field.
+- Opening an account reveals its avatar when available, moderator-only email, role,
+  image status, public block reason, cumulative moderator-rejected public submission
+  count, and any active public-sharing suspension date.
+- Keep the block form in a closed `Access controls` disclosure inside the opened account. Show
+  `Restore access` directly only when the account is already blocked.
 - Prevent self-moderation.
 - Prevent moderators from acting on privileged accounts.
 - Keep administrators and developers protected from the web blocking flow.
@@ -33,18 +53,46 @@ own one crown without repeating the same visible label inside their content.
 
 - Show product name, brand, barcode, source match, evidence completeness, conflict
   count, lookup failures, review flags, private evidence images, and nutrition details.
+- Keep package photos, proposed changes, card-image placement, and full nutrition values
+  in separate closed disclosures. Missing evidence and validation flags remain visible
+  before the decision area.
 - Keep one clear Approve action and one Reject action that requires a note.
 - Preserve deterministic QA-fixture behavior in the disposable local environment.
 - The 51st moderator rejection pauses public catalog sharing for six calendar months.
   Automated declines do not count, and private food tracking remains available.
 
+## Profile Image Report Review
+
+- Ordinary self-attested profile-image uploads are published without entering this
+  queue.
+- Show only exact current images with one or more pending user reports. Group multiple
+  reports about the same image into one review card without exposing reporter identity.
+- Keep the reported image visible while review is pending. A single report never hides
+  or rejects an image automatically.
+- Explain each report reason in plain language and preserve optional report details and
+  dates as private moderation evidence.
+- Keep the exact reported image visible while report reasons stay in one closed Report
+  details disclosure.
+- Require one explicit `Keep image` or `Remove image` decision and a review note.
+- `Keep image` dismisses every pending report for that exact image. `Remove image`
+  clears only that exact current image and closes its reports. If the user already
+  replaced the image, close the stale reports without affecting the replacement.
+- User-facing report intake is deferred until a social surface intentionally displays
+  another user's profile image.
+
 ## Data Health
 
-`/profile/moderator-actions/catalog-data-health` starts with bounded overview counts.
+`/profile/moderator-actions/catalog-data-health` starts with one closed catalog-readiness
+snapshot and direct links to the two related review queues.
 The legacy `/moderation/data-health` route remains a compatibility entry point. Keep source activity,
 dataset/licence state, food-warning policy coverage, conflicts, API publication gaps,
 nutrient mapping review, and revision gaps in closed shared disclosures. Product issues
 link to their existing provenance review.
+
+Source activity uses the database-recorded lookup count for the selected bounded metric
+window and lists the most-used source first. Equal lookup counts fall back to source name
+so refreshes remain stable. API requests, cache hits, matches, errors, and response time
+remain supporting metrics and do not silently alter the usage ranking.
 
 This view is read-oriented. Existing submission and warning queues remain the mutation
 paths. Never render raw provider payloads, private evidence paths, user identity beyond
