@@ -460,6 +460,19 @@ test("Ingredients exposes one page-level manual-entry action without a duplicate
 			name: "Enter a custom ingredient manually",
 		}),
 	).toHaveCount(1);
+	const filterAction = page.getByRole("button", {
+		name: "Sort saved ingredients",
+		exact: true,
+	});
+	const manualEntryBounds = await manualEntryAction.boundingBox();
+	const filterBounds = await filterAction.boundingBox();
+	expect(manualEntryBounds).not.toBeNull();
+	expect(filterBounds).not.toBeNull();
+	expect(Math.abs(
+		manualEntryBounds!.y + manualEntryBounds!.height / 2 -
+			(filterBounds!.y + filterBounds!.height / 2),
+	)).toBeLessThanOrEqual(1);
+	expect(manualEntryBounds!.x).toBeLessThan(filterBounds!.x);
 
 	await manualEntryAction.click();
 	await expect(page).toHaveURL(/\/ingredients\/fridge\/manual-entry$/);

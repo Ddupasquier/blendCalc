@@ -336,7 +336,8 @@ summary control height and section border; opening it restores the normal tokeni
 inset without changing the summary target or introducing a second panel shell.
 
 The compact manual-entry action is one `44px` pencil-only button in the same toolbar row
-as Search, Barcode, and Filters. It uses the shared rounded icon-control shape and keeps
+after Search and Barcode and before Filters. It uses the shared rounded icon-control
+shape and keeps
 the full accessible name `Enter a custom ingredient manually`; the larger launcher row
 is not shown at that tier. The toolbar launcher is the only page-level manual-entry
 action; Ingredients does not repeat it as a floating add button. The compact
