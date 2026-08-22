@@ -60,11 +60,30 @@ textarea:disabled {
 	opacity: 0.65;
 }
 
-.text-field__helper {
+.text-field__support {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: $app-gap-sm;
+}
+
+.text-field__helper,
+.text-field__character-count {
+	margin: 0;
 	color: $app-shell-text-muted;
 	font-size: $app-font-size-xs;
 	font-weight: $app-font-weight-medium;
 	line-height: $app-line-height-body;
+}
+
+.text-field__helper {
+	min-width: 0;
+}
+
+.text-field__character-count {
+	flex: 0 0 auto;
+	margin-inline-start: auto;
+	font-variant-numeric: tabular-nums;
 }
 
 @media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
