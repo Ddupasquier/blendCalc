@@ -72,6 +72,8 @@ Notes:
 
 - `display_name` is required and auto-filled with a safe `User##########` style value if
   the user has not chosen one.
+- `bio` is optional and constrained to 150 characters. The tightening migration trims
+  any older out-of-contract value once before applying the new constraint.
 - `appearance_theme` is constrained to `system`, `light`, or `dark` and defaults to
   `system`.
 - `cheeky_messages_enabled` backs the user-facing `Playful messages` preference for

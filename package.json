@@ -99,7 +99,7 @@
 		"jsdom": "^30.0.0",
 		"read-excel-file": "^9.3.5",
 		"sass": "^1.102.0",
-		"supabase": "^2.110.0",
+		"supabase": "^2.115.0",
 		"svelte": "^5.56.8",
 		"svelte-check": "^4.7.4",
 		"typescript": "^6.0.3",

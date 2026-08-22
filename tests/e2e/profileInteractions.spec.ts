@@ -376,6 +376,13 @@ test("Profile settings use routed sheets and restore launcher focus", async ({
 	await expect(page).toHaveURL(/\/profile\/details$/);
 	const profileDetailsSheet = page.getByRole("dialog", { name: "Profile details" });
 	await expect(profileDetailsSheet).toBeVisible();
+	const bioField = profileDetailsSheet.getByRole("textbox", { name: "Bio" });
+	await expect(bioField).toHaveAttribute("maxlength", "150");
+	const initialBioLength = (await bioField.inputValue()).length;
+	await expect(profileDetailsSheet.getByText(`${initialBioLength} / 150`)).toBeVisible();
+	await bioField.fill("Profile bio");
+	await expect(profileDetailsSheet.getByText("11 / 150")).toBeVisible();
+	await expect(bioField).toHaveAccessibleDescription("139 characters remaining");
 	await expect(
 		profileDetailsSheet.getByRole("button", { name: "Close sheet" }),
 	).toBeVisible();
