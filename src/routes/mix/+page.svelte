@@ -166,6 +166,10 @@
 	let goalPresetError = $state("");
 	let goalPresetDialogError = $state("");
 	let goalPresetDialogBusy = $state(false);
+	let suggestedAdjustmentUndo = $state<{
+		foodDescription: string;
+		previousMixState: MixStateSnapshot;
+	} | null>(null);
 	let nutrientGoalSaveRequestId = 0;
 	let nutrientGoalSaveQueue: Promise<void> = Promise.resolve();
 	const goalTemplates = $derived([
@@ -459,6 +463,7 @@
 	};
 
 	const loadMixState = () => {
+		suggestedAdjustmentUndo = null;
 		assignMixState(
 			readStoredMixState(getCurrentMixState(), allIngredientItems),
 		);
@@ -557,6 +562,7 @@
 	};
 
 	const clearIngredients = () => {
+		suggestedAdjustmentUndo = null;
 		detachLoadedSavedRecipe();
 		selectedFoodIds = [];
 		const emptyServingState = getEmptyServingState();
@@ -567,6 +573,7 @@
 	};
 
 	const resetMix = async () => {
+		suggestedAdjustmentUndo = null;
 		detachLoadedSavedRecipe();
 		assignMixState(getDefaultMixState());
 		await resetGoals();
@@ -840,6 +847,7 @@
 	};
 
 	const toggleFood = (foodId: number) => {
+		suggestedAdjustmentUndo = null;
 		assignMixState(
 			getStateWithToggledFood(getCurrentMixState(), foodId, allIngredientItems),
 		);
@@ -851,19 +859,35 @@
 		foodId: number,
 		nextServingGrams: number,
 	) => {
+		const previousMixState = getCurrentMixState();
+		const foodDescription = allIngredientItems.find(
+			(food) => food.fdcId === foodId,
+		)?.description;
 		assignMixState(
 			nextServingGrams <= 0
 				? getStateWithToggledFood(
-						getCurrentMixState(),
+						previousMixState,
 						foodId,
 						allIngredientItems,
 					)
 				: getStateWithGramServing(
-						getCurrentMixState(),
+						previousMixState,
 						foodId,
 						nextServingGrams,
 					),
 		);
+		suggestedAdjustmentUndo = foodDescription
+			? { foodDescription, previousMixState }
+			: null;
+		markLoadedSavedRecipeDirty();
+		saveMixState();
+	};
+
+	const undoSuggestedAdjustment = () => {
+		if (!suggestedAdjustmentUndo) return;
+		const previousMixState = suggestedAdjustmentUndo.previousMixState;
+		suggestedAdjustmentUndo = null;
+		assignMixState(previousMixState);
 		markLoadedSavedRecipeDirty();
 		saveMixState();
 	};
@@ -888,6 +912,7 @@
 		quantityValue: string,
 		unit: ServingMeasureUnit,
 	) => {
+		suggestedAdjustmentUndo = null;
 		assignMixState(
 			getStateWithServingAmount(
 				getCurrentMixState(),
@@ -1166,7 +1191,9 @@
 							{:else if sectionId === "suggested-adjustments"}
 								<NutrientAdjustmentSuggestions
 									suggestions={mixAnalysis.adjustmentSuggestions}
+									lastAppliedFoodDescription={suggestedAdjustmentUndo?.foodDescription}
 									onApply={applySuggestedAdjustment}
+									onUndo={undoSuggestedAdjustment}
 									open={sectionPreferences.state.disclosureState[sectionId]}
 									onOpenChange={(open) =>
 										sectionPreferences.setDisclosure(sectionId, open)}

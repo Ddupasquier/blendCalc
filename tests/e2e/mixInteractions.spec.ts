@@ -7,6 +7,7 @@ import {
 import {
 	captureLocalQaMixGoalConfiguration,
 	restoreLocalQaMixGoalConfiguration,
+	saveLocalQaMixGoalConfiguration,
 	saveLocalQaMixState,
 } from "./support/localQaDatabase";
 import { getLocalQaAccountForWorker } from "./support/localQaAccounts";
@@ -1055,6 +1056,119 @@ test("selected ingredient amount controls change once and restore the original v
 	await expect(quantity).not.toHaveValue(originalValue);
 	await selectedSection.getByRole("button", { name: "Use less Mango, Raw" }).click();
 	await expect(quantity).toHaveValue(originalValue);
+});
+
+test("safe Mix suggestions apply practical increases and reductions once and undo immediately", async ({
+	page,
+}, testInfo) => {
+	test.skip(
+		testInfo.project.name !== "desktop-chromium",
+		"One isolated browser worker owns this temporary Mix-state mutation.",
+	);
+
+	const originalGoalConfiguration = await captureLocalQaMixGoalConfiguration(
+		testInfo.parallelIndex,
+	);
+	const nutrientOptions = [
+		{ id: 1008, label: "Calories" },
+		{ id: 1003, label: "Protein" },
+		{ id: 1079, label: "Dietary Fiber" },
+		{ id: 2000, label: "Total Sugars" },
+		{ id: 1004, label: "Total Fat" },
+	];
+	const makeExactGoals = (targets: Record<number, number>) =>
+		nutrientOptions.map((nutrient, index) => ({
+			goal_type: "exact",
+			importance_weight: 1,
+			nutrient_id: nutrient.id,
+			sort_order: index + 1,
+			target_amount: targets[nutrient.id] ?? 0,
+			tolerance_ratio: 0.05,
+			upper_amount: null,
+		}));
+	const saveSpinachScenario = async (grams: number, targets: Record<number, number>) => {
+		await saveLocalQaMixGoalConfiguration(testInfo.parallelIndex, makeExactGoals(targets));
+		await saveLocalQaMixState(testInfo.parallelIndex, {
+			version: 1,
+			selected: nutrientOptions.map((nutrient) => nutrient.id),
+			options: nutrientOptions,
+			selectedFoodIds: [9200001],
+			servingGrams: { 9200001: grams },
+			servingQuantities: { 9200001: grams },
+			servingUnits: { 9200001: "g" },
+		});
+	};
+	const readSpinachQuantity = async () => {
+		const selectedSection = await openMixSection(page, ".selected-ingredients-panel");
+		return selectedSection.getByRole("spinbutton", {
+			name: "Quantity for Spinach, Raw",
+		});
+	};
+	const applySuggestionAndUndo = async ({
+		direction,
+		startingGrams,
+		expectedGrams,
+	}: {
+		direction: "Increase" | "Reduce";
+		startingGrams: number;
+		expectedGrams: number;
+	}) => {
+		await page.goto("/mix");
+		await waitForAppReady(page);
+		const suggestionsSection = await openMixSection(page, ".nutrient-adjustments");
+		const suggestion = suggestionsSection
+			.locator(".nutrient-adjustment")
+			.filter({ hasText: "Spinach, Raw" });
+		await expect(suggestion).toHaveCount(1);
+		await expect(suggestion).toContainText(
+			`${direction} to ${expectedGrams.toLocaleString("en-US", { maximumFractionDigits: 3 })} g`,
+		);
+		await expect(suggestion).toContainText("Uses one reported serving: 1 cup (30 g)");
+		await expect(
+			suggestion.locator(".nutrient-adjustment__impacts .metadata-pill"),
+		).not.toHaveCount(0);
+
+		const quantity = await readSpinachQuantity();
+		await expect(quantity).toHaveValue(String(startingGrams));
+		await suggestion.getByRole("button", { name: "Apply" }).click();
+		await expect(quantity).toHaveValue(String(expectedGrams));
+		await expect(suggestionsSection.getByText("Spinach, Raw updated.")).toBeVisible();
+		await suggestionsSection.getByRole("button", { name: "Undo" }).click();
+		await expect(quantity).toHaveValue(String(startingGrams));
+		await expect(suggestionsSection.getByRole("button", { name: "Undo" })).toHaveCount(0);
+	};
+
+	try {
+		await saveSpinachScenario(0.01, {
+			1008: 350,
+			1003: 25,
+			1079: 10,
+			2000: 25,
+			1004: 15,
+		});
+		await applySuggestionAndUndo({
+			direction: "Increase",
+			startingGrams: 0.01,
+			expectedGrams: 30.01,
+		});
+
+		await page.goto("about:blank");
+		await saveSpinachScenario(3000, {
+			1008: 100,
+			1003: 5,
+			1079: 2,
+			2000: 1,
+			1004: 1,
+		});
+		await applySuggestionAndUndo({
+			direction: "Reduce",
+			startingGrams: 3000,
+			expectedGrams: 2970,
+		});
+	} finally {
+		if (!page.isClosed()) await page.close();
+		await restoreLocalQaMixGoalConfiguration(testInfo.parallelIndex, originalGoalConfiguration);
+	}
 });
 
 test("Mix preserves exact grams across package, household, and weight-only serving controls", async ({

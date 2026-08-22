@@ -97,7 +97,6 @@ export const captureLocalQaMixGoalConfiguration = async (
 		await supabase.auth.signOut({ scope: "local" });
 	}
 };
-
 export const restoreLocalQaMixGoalConfiguration = async (
 	parallelWorkerIndex: number,
 	snapshot: LocalQaMixGoalConfigurationSnapshot,
@@ -144,6 +143,26 @@ export const saveLocalQaMixState = async (
 	try {
 		const { error } = await supabase.rpc("save_mix_preferences", {
 			p_mix_state: mixState,
+		});
+		if (error) throw error;
+	} finally {
+		await supabase.auth.signOut({ scope: "local" });
+	}
+};
+
+export const saveLocalQaMixGoalConfiguration = async (
+	parallelWorkerIndex: number,
+	goals: LocalQaMixGoalConfigurationSnapshot["goals"],
+) => {
+	const supabase = await createAuthenticatedLocalQaDatabaseClient(
+		parallelWorkerIndex,
+	);
+
+	try {
+		const { error } = await supabase.rpc("save_mix_goal_configuration", {
+			p_customized: true,
+			p_goal_basis: "per_mix",
+			p_goals: goals as Json,
 		});
 		if (error) throw error;
 	} finally {

@@ -58,6 +58,16 @@ const exactGoal = (
 	sortOrder,
 });
 
+const directionalGoal = (
+	nutrientId: number,
+	targetAmount: number,
+	goalType: "minimum" | "maximum",
+	sortOrder: number,
+) => ({
+	...exactGoal(nutrientId, targetAmount, sortOrder),
+	goalType,
+});
+
 describe("mix calculations", () => {
 	afterEach(() => configureAppReferenceCatalog(appReferenceCatalogFixture));
 
@@ -493,6 +503,194 @@ describe("mix calculations", () => {
 			amountChange: -10,
 			nextTotal: 30,
 		});
+	});
+
+
+	it("keeps ranking safe corrections after the display score reaches zero", () => {
+		const suggestions = getNutrientAdjustmentSuggestions({
+			nutrients: [{ id: NUTRIENT_IDS.PROTEIN, label: "Protein", unit: "g" }],
+			selectedFoods: [milk],
+			nutrientGoals: {
+				[NUTRIENT_IDS.PROTEIN]: exactGoal(NUTRIENT_IDS.PROTEIN, 1),
+			},
+			servingGrams: { [milk.fdcId]: 3000 },
+		});
+
+		expect(suggestions[0]).toMatchObject({
+			food: milk,
+			direction: "decrease",
+			currentServingGrams: 3000,
+			nextServingGrams: 2900,
+		});
+	});
+
+	it("keeps the representative five-goal food corpus selected-only, practical, and safe", () => {
+		const nutrient = (
+			nutrientId: number,
+			nutrientName: string,
+			value: number,
+		) => ({
+			nutrientId,
+			nutrientName,
+			nutrientNumber: String(nutrientId),
+			unitName: nutrientId === NUTRIENT_IDS.CALORIES ? "KCAL" : "G",
+			value,
+		});
+		const representativeFoods = [
+			{
+				fdcId: 40,
+				description: "Spinach, Raw",
+				foodNutrients: [
+					nutrient(NUTRIENT_IDS.CALORIES, "Calories", 23),
+					nutrient(NUTRIENT_IDS.PROTEIN, "Protein", 2.86),
+					nutrient(NUTRIENT_IDS.FIBER, "Dietary Fiber", 2.2),
+					nutrient(NUTRIENT_IDS.SUGAR, "Total Sugars", 0.42),
+					nutrient(NUTRIENT_IDS.FAT, "Total Fat", 0.39),
+				],
+				foodServings: [
+					{
+						label: "1 cup",
+						gramWeight: 30,
+						isPrimary: true,
+						origin: "source-household-measure",
+						gramWeightMethod: "source-reported",
+					},
+				],
+			},
+			{
+				fdcId: 41,
+				description: "Banana, Raw",
+				foodNutrients: [
+					nutrient(NUTRIENT_IDS.CALORIES, "Calories", 89),
+					nutrient(NUTRIENT_IDS.PROTEIN, "Protein", 1.09),
+					nutrient(NUTRIENT_IDS.FIBER, "Dietary Fiber", 2.6),
+					nutrient(NUTRIENT_IDS.SUGAR, "Total Sugars", 12.23),
+					nutrient(NUTRIENT_IDS.FAT, "Total Fat", 0.33),
+				],
+				foodServings: [
+					{
+						label: "1 medium banana",
+						gramWeight: 118,
+						isPrimary: true,
+						origin: "source-household-measure",
+						gramWeightMethod: "source-reported",
+					},
+				],
+			},
+			{
+				fdcId: 42,
+				description: "Yogurt, Greek, Plain",
+				foodNutrients: [
+					nutrient(NUTRIENT_IDS.CALORIES, "Calories", 59),
+					nutrient(NUTRIENT_IDS.PROTEIN, "Protein", 10.19),
+					nutrient(NUTRIENT_IDS.FIBER, "Dietary Fiber", 0),
+					nutrient(NUTRIENT_IDS.SUGAR, "Total Sugars", 3.6),
+					nutrient(NUTRIENT_IDS.FAT, "Total Fat", 0.39),
+				],
+			},
+			{
+				fdcId: 43,
+				description: "Chia Seeds, Dried",
+				foodNutrients: [
+					nutrient(NUTRIENT_IDS.CALORIES, "Calories", 486),
+					nutrient(NUTRIENT_IDS.PROTEIN, "Protein", 16.54),
+					nutrient(NUTRIENT_IDS.FIBER, "Dietary Fiber", 34.4),
+					nutrient(NUTRIENT_IDS.SUGAR, "Total Sugars", 0),
+					nutrient(NUTRIENT_IDS.FAT, "Total Fat", 30.74),
+				],
+				foodServings: [
+					{
+						label: "1 tablespoon",
+						gramWeight: 17,
+						isPrimary: true,
+						origin: "source-household-measure",
+						gramWeightMethod: "source-reported",
+					},
+				],
+			},
+		] satisfies FoodItem[];
+		const nutrients = [
+			{ id: NUTRIENT_IDS.CALORIES, label: "Calories", unit: "kcal" },
+			{ id: NUTRIENT_IDS.PROTEIN, label: "Protein", unit: "g" },
+			{ id: NUTRIENT_IDS.FIBER, label: "Dietary Fiber", unit: "g" },
+			{ id: NUTRIENT_IDS.SUGAR, label: "Total Sugars", unit: "g" },
+			{ id: NUTRIENT_IDS.FAT, label: "Total Fat", unit: "g" },
+		];
+		const nutrientGoals = {
+			[NUTRIENT_IDS.CALORIES]: directionalGoal(
+				NUTRIENT_IDS.CALORIES,
+				320,
+				"minimum",
+				1,
+			),
+			[NUTRIENT_IDS.PROTEIN]: directionalGoal(
+				NUTRIENT_IDS.PROTEIN,
+				23,
+				"minimum",
+				2,
+			),
+			[NUTRIENT_IDS.FIBER]: directionalGoal(
+				NUTRIENT_IDS.FIBER,
+				12,
+				"minimum",
+				3,
+			),
+			[NUTRIENT_IDS.SUGAR]: directionalGoal(
+				NUTRIENT_IDS.SUGAR,
+				25,
+				"maximum",
+				4,
+			),
+			[NUTRIENT_IDS.FAT]: directionalGoal(
+				NUTRIENT_IDS.FAT,
+				10,
+				"maximum",
+				5,
+			),
+		};
+		const servingGrams = { 40: 60, 41: 120, 42: 150, 43: 17 };
+		const request = (selectedFoods: FoodItem[]) =>
+			getNutrientAdjustmentSuggestions({
+				nutrients,
+				selectedFoods,
+				nutrientGoals,
+				servingGrams,
+				maxSuggestions: 10,
+			});
+
+		const suggestions = request(representativeFoods);
+		expect(suggestions).toHaveLength(1);
+		expect(suggestions[0]).toMatchObject({
+			food: representativeFoods[0],
+			direction: "increase",
+			changeGrams: 30,
+			incrementLabel: "1 cup",
+			incrementSource: "source-serving",
+		});
+		expect(new Set(suggestions.map(({ food }) => food.fdcId)).size).toBe(
+			suggestions.length,
+		);
+
+		const conflictingYogurt = {
+			...representativeFoods[2],
+			compatibilityEvaluation: {
+				status: "conflict",
+			} as FoodItem["compatibilityEvaluation"],
+		} satisfies FoodItem;
+		const conflictSuggestions = request([
+			representativeFoods[0],
+			representativeFoods[1],
+			conflictingYogurt,
+			representativeFoods[3],
+		]);
+		expect(conflictSuggestions.map(({ food }) => food.fdcId)).toEqual([40]);
+
+		const incompleteFood = {
+			fdcId: 44,
+			description: "Incomplete nutrition food",
+			foodNutrients: [nutrient(NUTRIENT_IDS.CALORIES, "Calories", 100)],
+		} satisfies FoodItem;
+		expect(request([...representativeFoods, incompleteFood])).toEqual([]);
 	});
 
 	it("hides an adjustment that would worsen another tracked goal", () => {
