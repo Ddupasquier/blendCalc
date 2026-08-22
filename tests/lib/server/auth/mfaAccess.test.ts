@@ -17,23 +17,31 @@ const createSupabase = ({
 		created_at: string;
 		updated_at: string;
 	}>;
-}) => ({
-	auth: {
-		mfa: {
-			getAuthenticatorAssuranceLevel: vi.fn().mockResolvedValue({
-				data: {
-					currentLevel,
-					nextLevel: currentLevel === "aal1" ? "aal2" : "aal2",
-				},
+}) => {
+	const factors = verifiedFactors.map((factor) => ({
+		...factor,
+		factor_type: "totp",
+		status: "verified",
+	}));
+
+	return {
+		auth: {
+			getUser: vi.fn().mockResolvedValue({
+				data: { user: { factors } },
 				error: null,
 			}),
-			listFactors: vi.fn().mockResolvedValue({
-				data: { totp: verifiedFactors, all: verifiedFactors },
+			getClaims: vi.fn().mockResolvedValue({
+				data: { claims: { aal: currentLevel } },
 				error: null,
 			}),
+			getSession: vi.fn(),
+			mfa: {
+				getAuthenticatorAssuranceLevel: vi.fn(),
+				listFactors: vi.fn(),
+			},
 		},
-	},
-});
+	};
+};
 
 describe("privileged MFA access", () => {
 	it("maps verified TOTP factors without exposing their secrets", async () => {
@@ -56,6 +64,48 @@ describe("privileged MFA access", () => {
 				createdAt: "2026-08-11T00:00:00.000Z",
 				updatedAt: "2026-08-11T00:01:00.000Z",
 			}],
+		});
+		expect(supabase.auth.getUser).toHaveBeenCalledOnce();
+		expect(supabase.auth.getClaims).toHaveBeenCalledOnce();
+		expect(supabase.auth.getSession).not.toHaveBeenCalled();
+		expect(
+			supabase.auth.mfa.getAuthenticatorAssuranceLevel,
+		).not.toHaveBeenCalled();
+		expect(supabase.auth.mfa.listFactors).not.toHaveBeenCalled();
+	});
+
+	it("ignores unverified and non-TOTP factors from the verified Auth user", async () => {
+		const supabase = createSupabase({ currentLevel: "aal1" });
+		supabase.auth.getUser.mockResolvedValue({
+			data: {
+				user: {
+					factors: [
+						{
+							id: "unverified-totp",
+							factor_type: "totp",
+							status: "unverified",
+							friendly_name: "Pending authenticator",
+							created_at: "2026-08-11T00:00:00.000Z",
+							updated_at: "2026-08-11T00:00:00.000Z",
+						},
+						{
+							id: "verified-phone",
+							factor_type: "phone",
+							status: "verified",
+							friendly_name: "Phone",
+							created_at: "2026-08-11T00:00:00.000Z",
+							updated_at: "2026-08-11T00:00:00.000Z",
+						},
+					],
+				},
+			},
+			error: null,
+		});
+
+		await expect(readMfaSecurityStatus(supabase as never)).resolves.toEqual({
+			currentLevel: "aal1",
+			nextLevel: "aal1",
+			verifiedTotpFactors: [],
 		});
 	});
 
