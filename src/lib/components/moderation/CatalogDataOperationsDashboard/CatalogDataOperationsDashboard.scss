@@ -1,0 +1,172 @@
+@use "../../../../styles/variables" as *;
+
+.catalog-data-operations,
+.catalog-data-operations__sections,
+.catalog-data-operations__stack,
+.catalog-data-operations__record,
+.catalog-data-operations__issue-record,
+.catalog-data-operations__evaluation {
+	display: grid;
+	min-width: 0;
+}
+
+.catalog-data-operations {
+	gap: $app-gap-md;
+	width: 100%;
+}
+
+.catalog-data-operations__generated,
+.catalog-data-operations__record span,
+.catalog-data-operations__issue-record span,
+.catalog-data-operations__evaluation span,
+.catalog-data-operations__empty,
+.catalog-data-operations__muted {
+	color: $app-shell-text-muted;
+}
+
+.catalog-data-operations__generated,
+.catalog-data-operations__muted {
+	margin: 0;
+	font-size: $app-font-size-sm;
+}
+
+.catalog-data-operations__overview {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+	gap: $app-gap-sm;
+}
+
+.catalog-data-operations__overview article {
+	display: flex;
+	align-items: center;
+	gap: $app-gap-sm;
+	min-width: 0;
+	padding: $app-shell-card-padding-compact;
+	background: $app-shell-surface-panel;
+	border: $app-border;
+	border-radius: $app-shell-radius-card;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-semibold;
+}
+
+.catalog-data-operations__sections,
+.catalog-data-operations__stack {
+	gap: $app-gap-sm;
+}
+
+.catalog-data-operations__record,
+.catalog-data-operations__issue-record {
+	gap: $app-gap-xs;
+	padding: $app-shell-card-padding-compact;
+	background: $app-shell-surface-soft;
+	border-radius: $app-shell-radius-card;
+}
+
+.catalog-data-operations__record > header,
+.catalog-data-operations__issue-record > div {
+	display: flex;
+	align-items: start;
+	justify-content: space-between;
+	gap: $app-gap-sm;
+}
+
+.catalog-data-operations__record > header > div {
+	display: grid;
+	min-width: 0;
+}
+
+.catalog-data-operations__metrics {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: $app-gap-xs $app-gap-md;
+	margin: 0;
+}
+
+.catalog-data-operations__metrics > div {
+	display: flex;
+	justify-content: space-between;
+	gap: $app-gap-sm;
+	min-width: 0;
+}
+
+.catalog-data-operations__metrics dt {
+	color: $app-shell-text-muted;
+}
+
+.catalog-data-operations__metrics dd {
+	margin: 0;
+	font-weight: $app-font-weight-bold;
+	text-align: end;
+	overflow-wrap: anywhere;
+}
+
+.catalog-data-operations__issues {
+	margin: 0;
+	padding-left: $app-gap-lg;
+	color: $app-warning-text;
+}
+
+.catalog-data-operations__evaluation {
+	gap: $app-gap-xs;
+	padding: $app-gap-sm;
+	background: $app-shell-surface-panel;
+	border-radius: $app-radius-sm;
+}
+
+.catalog-data-operations__record a,
+.catalog-data-operations__issue-record a {
+	color: $app-shell-accent-primary;
+	font-weight: $app-font-weight-bold;
+}
+
+.catalog-data-operations__record a:focus-visible,
+.catalog-data-operations__issue-record a:focus-visible {
+	outline: $app-focus-outline;
+	outline-offset: $app-focus-outline-offset;
+}
+
+.catalog-data-operations__evaluation p,
+.catalog-data-operations__issue-record p,
+.catalog-data-operations__issue-record ul {
+	margin: 0;
+}
+
+.catalog-data-operations__issue-record strong,
+.catalog-data-operations__issue-record span {
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+.catalog-data-operations__empty {
+	margin: 0;
+	padding: $app-gap-sm;
+	text-align: center;
+}
+
+@media (max-width: $app-breakpoint-xs) {
+	.catalog-data-operations__overview,
+	.catalog-data-operations__metrics {
+		grid-template-columns: 1fr;
+	}
+
+	.catalog-data-operations,
+	.catalog-data-operations__sections,
+	.catalog-data-operations__stack {
+		gap: $app-gap-xs;
+	}
+
+	.catalog-data-operations__overview article,
+	.catalog-data-operations__record,
+	.catalog-data-operations__issue-record,
+	.catalog-data-operations__evaluation {
+		padding: $app-gap-xs;
+	}
+
+	.catalog-data-operations__overview article,
+	.catalog-data-operations__generated,
+	.catalog-data-operations__record,
+	.catalog-data-operations__issue-record,
+	.catalog-data-operations__evaluation {
+		font-size: $app-font-size-xs;
+	}
+}

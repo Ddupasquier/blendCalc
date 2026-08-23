@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type AppRoleClaim = Database["public"]["Enums"]["app_role"];
 export type AppRole = Exclude<AppRoleClaim, "user">;
+export type AppPermission = Database["public"]["Enums"]["app_permission"];
 
 export const normalizeAppRoleClaim = (value: unknown): AppRoleClaim | null => {
   if (

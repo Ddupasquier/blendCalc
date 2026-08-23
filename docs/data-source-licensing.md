@@ -447,6 +447,10 @@ reuse does not automatically permit reuse of package photography.
   reference, image role, licence name, licence URL when available, attribution text when
   required, approval state, and retrieval date.
 - Open Food Facts images retain their Creative Commons Attribution-ShareAlike metadata.
+- An exact-barcode Open Food Facts front image can become the app's canonical product
+  image automatically only when its asset row preserves licence name, licence URL,
+  attribution, source reference, and retrieval date. A later candidate does not replace
+  an eligible canonical image merely because it is newer.
 - Wikimedia Commons has no blanket approval. Each selected file must be checked for its
   exact licence, creator credit, source page, modifications, and share-alike conditions.
 - User uploads stay in private moderation evidence. Approval creates a separate public
@@ -456,6 +460,9 @@ reuse does not automatically permit reuse of package photography.
   is available.
 - Missing or uncertain image rights mean the image is not public. The UI uses a category
   symbol instead.
+- Public API reads expose only the selected canonical front image and apply the stricter
+  complete-rights check independently. Canonical app selection does not grant missing
+  redistribution rights or make the source product data canonical.
 
 ## Community And User-Label Data
 

@@ -44,6 +44,15 @@ the exact normalized source unit; a different unit requires a reviewed nutrient-
 conversion. Legacy semantic mapping metadata remains noncanonical lineage rather than
 being deleted or silently trusted.
 
+Exact provider identifiers, reviewed keys, and dataset mappings continue through the
+automated path and never become routine human work. A semantic candidate receives a
+stable mapping UUID and remains disabled with `pending_review` status. An AAL2 admin or
+developer may open its focused data-operations route, choose only a nutrient with a
+compatible reviewed unit path, cite identity evidence, and approve it as
+`moderator_verified`; or exclude it. The decision is immutable. Approval affects future
+normalization and deliberate reprocessing, not historical values through an implicit
+rewrite.
+
 ## Application Reads
 
 The application fills the source-neutral `FoodItem.foodNutrients` contract from the

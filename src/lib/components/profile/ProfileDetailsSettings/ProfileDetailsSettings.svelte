@@ -42,6 +42,7 @@
 			label="Preferred name"
 			value={displayName}
 			maxlength={PROFILE_DISPLAY_NAME_MAX_LENGTH}
+			showCharacterCount
 			autocomplete="name"
 			placeholder="What should we call you?"
 			helper="This name stays separate from your private account email."

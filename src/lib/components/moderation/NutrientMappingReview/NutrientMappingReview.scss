@@ -1,0 +1,91 @@
+@use "../../../../styles/variables" as *;
+
+.nutrient-mapping-review,
+.nutrient-mapping-review__summary,
+.nutrient-mapping-review__summary > header > div,
+.nutrient-mapping-review__facts,
+.nutrient-mapping-review__explanation,
+.nutrient-mapping-review__decision {
+	display: grid;
+	min-width: 0;
+}
+
+.nutrient-mapping-review,
+.nutrient-mapping-review__summary,
+.nutrient-mapping-review__decision {
+	gap: $app-gap-sm;
+}
+
+.nutrient-mapping-review__summary {
+	padding: $app-shell-card-padding-compact;
+	background: $app-shell-surface-soft;
+	border-radius: $app-shell-radius-card;
+}
+
+.nutrient-mapping-review__summary > header {
+	display: flex;
+	align-items: start;
+	justify-content: space-between;
+	gap: $app-gap-sm;
+}
+
+.nutrient-mapping-review__summary span,
+.nutrient-mapping-review__explanation,
+.nutrient-mapping-review__facts dt {
+	color: $app-shell-text-muted;
+}
+
+.nutrient-mapping-review__facts {
+	gap: $app-gap-xs;
+	margin: 0;
+}
+
+.nutrient-mapping-review__facts > div {
+	display: flex;
+	justify-content: space-between;
+	gap: $app-gap-sm;
+	min-width: 0;
+}
+
+.nutrient-mapping-review__facts dt {
+	font-weight: $app-font-weight-semibold;
+}
+
+.nutrient-mapping-review__facts dd {
+	min-width: 0;
+	margin: 0;
+	font-weight: $app-font-weight-bold;
+	text-align: end;
+	overflow-wrap: anywhere;
+}
+
+.nutrient-mapping-review__explanation {
+	gap: $app-gap-xs;
+}
+
+.nutrient-mapping-review__explanation p {
+	margin: 0;
+}
+
+.nutrient-mapping-review__decision {
+	padding: $app-shell-card-padding-compact;
+	background: $app-shell-surface-soft;
+	border-radius: $app-shell-radius-card;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.nutrient-mapping-review,
+	.nutrient-mapping-review__summary,
+	.nutrient-mapping-review__decision {
+		gap: $app-gap-xs;
+	}
+
+	.nutrient-mapping-review__summary,
+	.nutrient-mapping-review__decision {
+		padding: $app-gap-xs;
+	}
+
+	.nutrient-mapping-review__facts > div {
+		gap: $app-gap-xs;
+	}
+}

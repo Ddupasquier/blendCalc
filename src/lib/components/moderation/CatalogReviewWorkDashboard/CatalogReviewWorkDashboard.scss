@@ -1,0 +1,104 @@
+@use "../../../../styles/variables" as *;
+
+.catalog-review-work,
+.catalog-review-work__stack,
+.catalog-review-work__record,
+.catalog-review-work__record form,
+.catalog-review-work__record header > div,
+.catalog-review-work__record--link > span {
+	display: grid;
+	min-width: 0;
+}
+
+.catalog-review-work,
+.catalog-review-work__stack,
+.catalog-review-work__record,
+.catalog-review-work__record form {
+	gap: $app-gap-sm;
+}
+
+.catalog-review-work__intro,
+.catalog-review-work__guidance,
+.catalog-review-work__empty,
+.catalog-review-work__record span,
+.catalog-review-work__record small {
+	color: $app-shell-text-muted;
+}
+
+.catalog-review-work__intro,
+.catalog-review-work__guidance,
+.catalog-review-work__empty,
+.catalog-review-work__record p,
+.catalog-review-work__record ul {
+	margin: 0;
+}
+
+.catalog-review-work__intro,
+.catalog-review-work__guidance {
+	font-size: $app-font-size-sm;
+}
+
+.catalog-review-work__record {
+	padding: $app-shell-card-padding-compact;
+	background: $app-shell-surface-soft;
+	border-radius: $app-shell-radius-card;
+}
+
+.catalog-review-work__record header,
+.catalog-review-work__record--link {
+	display: flex;
+	align-items: start;
+	justify-content: space-between;
+	gap: $app-gap-sm;
+}
+
+.catalog-review-work__record header > div,
+.catalog-review-work__record--link > span {
+	gap: $app-gap-inline-compact;
+}
+
+.catalog-review-work__record a,
+.catalog-review-work__record--link {
+	color: $app-shell-accent-primary;
+	font-weight: $app-font-weight-bold;
+}
+
+.catalog-review-work__record--link {
+	text-decoration: none;
+}
+
+.catalog-review-work__record a:focus-visible,
+.catalog-review-work__record--link:focus-visible {
+	outline: $app-focus-outline;
+	outline-offset: $app-focus-outline-offset;
+}
+
+.catalog-review-work__record strong,
+.catalog-review-work__record span,
+.catalog-review-work__record small {
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+.catalog-review-work__empty {
+	padding: $app-gap-sm;
+	text-align: center;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.catalog-review-work,
+	.catalog-review-work__stack,
+	.catalog-review-work__record,
+	.catalog-review-work__record form {
+		gap: $app-gap-xs;
+	}
+
+	.catalog-review-work__record {
+		padding: $app-gap-xs;
+	}
+
+	.catalog-review-work,
+	.catalog-review-work__record {
+		font-size: $app-font-size-xs;
+	}
+}

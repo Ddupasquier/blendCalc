@@ -1,19 +1,22 @@
 # Moderation
 
-Routes: the Profile gateway at `/profile/moderator-actions`, focused moderator views
-under `/profile/moderator-actions/*`, and the legacy compatibility routes
+Routes: the Profile gateway at `/profile/privileged-tools`, focused privileged views
+under `/profile/privileged-tools/*`, and the legacy compatibility routes
 `/moderation` and `/moderation/data-health`.
 
 Only authorized moderators, administrators, and developers may enter these views. Role,
 account-control, and notification rules live in [Moderation](../moderation.md).
 
-The elevated-role-only Profile launcher opens one compact bottom sheet containing every
-current moderation destination. Each destination opens a route-backed right sheet with
+The elevated-role-only Profile launcher uses the verified role title and opens one
+compact bottom sheet containing only destinations granted by that role's current
+`app_role_permissions` rows. Each destination opens a route-backed right sheet with
 one focused responsibility: product submissions, food-warning reports, profile images,
-account access, or catalog data health. The focused route retains its own server and
+account access, catalog review work, or data operations. Review work and data operations
+appear under separate headings and only when the current database permission grants
+them. The focused route retains its own server and
 database authorization, evidence, mutations, browser title, history entry, and direct-
-load behavior. Queue rows remain visible and disabled at zero; standing account and
-data-health tools remain available. The bottom-sheet title and each right-sheet heading
+load behavior. Queue rows remain visible and disabled at zero; standing account,
+catalog-review, and permitted data-operation tools remain available. The bottom-sheet title and each right-sheet heading
 own one crown without repeating the same visible label inside their content.
 
 Every focused right sheet follows the same reading order: the plain-language view
@@ -61,6 +64,20 @@ required action after reading the evidence.
 - The 51st moderator rejection pauses public catalog sharing for six calendar months.
   Automated declines do not count, and private food tracking remains available.
 
+## Food Warning Review And Follow-Up
+
+- Pending reports remain the decision queue. Each report requires one outcome, one
+  bounded follow-up action, and a concise internal note.
+- Confirmed reports with corrective work move into a separate `Follow-up work` list so
+  completed review decisions do not look unfinished or disappear without an owner.
+- Product corrections link to the shared product-readiness passport and show the exact
+  affected field families. Policy and source cases identify the responsible work group.
+- Product-correction follow-ups remain open until an evidence-backed correction creates
+  an approved immutable revision. The UI must not imply that confirming a report already
+  changed catalog data.
+- Empty follow-up work renders nothing; it does not add a zero-state card beneath an
+  already empty report queue.
+
 ## Profile Image Report Review
 
 - Ordinary self-attested profile-image uploads are published without entering this
@@ -80,20 +97,59 @@ required action after reading the evidence.
 - User-facing report intake is deferred until a social surface intentionally displays
   another user's profile image.
 
-## Data Health
+## Catalog Review And Data Operations
 
-`/profile/moderator-actions/catalog-data-health` starts with one closed catalog-readiness
-snapshot and direct links to the two related review queues.
-The legacy `/moderation/data-health` route remains a compatibility entry point. Keep source activity,
-dataset/licence state, food-warning policy coverage, conflicts, API publication gaps,
-nutrient mapping review, and revision gaps in closed shared disclosures. Product issues
-link to their existing provenance review.
+`/profile/privileged-tools/catalog-review-work` contains possible recall matches,
+provider changes, and material product conflicts. These are review decisions, not data
+health metrics. Keep each queue in a closed shared disclosure and route product-specific
+evidence to a path-backed product view.
+
+`/profile/privileged-tools/data-operations` starts with a compact operational summary.
+Keep automated monitoring, source activity, dataset/licence state, food-warning policy
+coverage, API publication gaps, nutrient mapping gaps, and revision gaps in closed
+shared disclosures. Do not render product submissions, warning reports, provider-change
+decisions, recall decisions, or catalog-conflict decisions in this workspace.
+
+The legacy `/moderation/data-health` route redirects to the Profile privileged-tools
+gateway. `/profile/privileged-tools/catalog-data-health` redirects to data operations
+during rollout and owns no data or mutation logic.
 
 Source activity uses the database-recorded lookup count for the selected bounded metric
 window and lists the most-used source first. Equal lookup counts fall back to source name
 so refreshes remain stable. API requests, cache hits, matches, errors, and response time
 remain supporting metrics and do not silently alter the usage ranking.
 
-This view is read-oriented. Existing submission and warning queues remain the mutation
-paths. Never render raw provider payloads, private evidence paths, user identity beyond
-the authorized account workflow, reviewer identity, or secrets.
+Data operations is read-oriented at its workspace summary. Its product-specific route
+may expose a bounded **Safe catalog repairs** disclosure only for issue codes whose
+database contract names an approved repair handler. The first action is always a dry
+run. Apply remains unavailable until that same AAL2 user has a current successful dry
+run with at least one exact candidate. Repairs may connect current canonical values to
+matching, legally reusable observations already stored by blendCalc, restore a missing
+first revision from an exact approved submission or source observation, or rebuild
+queryable change rows from an existing valid structured revision summary. They never
+invent, replace, average, or infer product values or history. Unresolved items remain
+unchanged and explain what evidence is missing. Review work owns only its explicit human
+decisions. Never render raw provider payloads, private evidence paths, user identity
+beyond the authorized account workflow, reviewer identity, or secrets.
+
+Product-specific links open a path-backed nested right sheet:
+
+- review work uses `/profile/privileged-tools/catalog-review-work/products/[productId]`;
+- data operations uses `/profile/privileged-tools/data-operations/products/[productId]`.
+
+Both routes render the shared product-readiness passport, but each server loader checks
+its own exact AAL2 permission. Keep product identity and the three independent
+availability states visible. Open current blocking issues by default. Keep revision,
+evidence coverage, and API-publication details in closed shared disclosures so the
+default view remains understandable. Only the data-operations route may render repair
+controls, and only when the live permission set includes
+`data_operations.catalog_health.repair`.
+
+Nutrient mapping gaps use a separate path-backed nested right sheet at
+`/profile/privileged-tools/data-operations/nutrient-mappings/[mappingId]`. The summary
+links only disabled candidates that are genuinely waiting for evidence. The sheet keeps
+source identity and the current suggestion visible, puts explanatory evidence in a
+closed shared disclosure, and uses the reusable searchable/select controls to offer
+only database-returned nutrients with a reviewed compatible unit path. Approve requires
+an evidence reference and review note; exclude requires a review note. Resolved work is
+read-only and no longer appears in the summary queue.

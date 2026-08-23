@@ -5,6 +5,7 @@ import {
 import {
   getUserAppRole,
   isModerationAppRole,
+  type AppPermission,
   type AppRole,
 } from "$lib/utils/moderation/moderation";
 import type { VerifiedAuthUser } from "$lib/utils/auth/types";
@@ -13,10 +14,15 @@ import {
   requireElevatedAuthenticatorAssuranceForApi,
   requireElevatedAuthenticatorAssuranceForPage,
 } from "$lib/server/auth/mfaAccess.server";
+import { readAppRolePermissions } from "$lib/server/moderation/appRolePermissions.server";
 
 export type ModeratorAccess = {
   user: VerifiedAuthUser;
   role: AppRole;
+};
+
+export type ModeratorPermissionAccess = ModeratorAccess & {
+  permissions: AppPermission[];
 };
 
 export const requireModeratorAccess = async (
@@ -64,4 +70,18 @@ export const requireModeratorApiAccess = async (
 
   await requireElevatedAuthenticatorAssuranceForApi(locals.supabase);
   return { user, role };
+};
+
+export const requireModeratorPermission = async (
+  locals: App.Locals,
+  permission: AppPermission,
+  returnPath = "/moderation",
+): Promise<ModeratorPermissionAccess> => {
+  const access = await requireModeratorAccess(locals, returnPath);
+  const permissions = await readAppRolePermissions(access.role);
+  if (!permissions.includes(permission)) {
+    throwAppError(403, "ACCESS_DENIED");
+  }
+
+  return { ...access, permissions };
 };

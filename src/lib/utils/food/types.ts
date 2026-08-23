@@ -93,6 +93,11 @@ export interface FoodImageAsset {
 	licenseUrl?: string;
 	attributionText?: string;
 	confidence: "source-verified" | "moderator-reviewed" | "imported";
+	canonicalStatus?: "candidate" | "selected";
+	canonicalSelectionMethod?:
+		| "exact-licensed-source"
+		| "moderator-approved-community";
+	canonicalSelectedAt?: string;
 	cropX?: number;
 	cropY?: number;
 	cropZoom?: number;

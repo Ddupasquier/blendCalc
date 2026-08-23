@@ -23,7 +23,7 @@ const renderAccountAccess = () => render(AccountAccessReviewList, {
 		totalCount: 1,
 		viewerUserId: "moderator-1",
 		viewerRole: "moderator",
-		searchPath: "/profile/moderator-actions/account-access",
+		searchPath: "/profile/privileged-tools/account-access",
 		showHeading: false,
 	},
 });
@@ -58,7 +58,7 @@ describe("AccountAccessReviewList", () => {
 				totalCount: 8,
 				viewerUserId: "moderator-1",
 				viewerRole: "moderator",
-				searchPath: "/profile/moderator-actions/account-access",
+				searchPath: "/profile/privileged-tools/account-access",
 			},
 		});
 

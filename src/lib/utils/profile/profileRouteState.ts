@@ -4,12 +4,14 @@ export const PROFILE_SETTINGS_ROUTES = {
 	details: "details",
 	image: "image",
 	foodPreferences: "food-preferences",
-	moderatorActions: "moderator-actions",
-	moderatorProductSubmissions: "moderator-actions/product-submissions",
-	moderatorFoodWarningReports: "moderator-actions/food-warning-reports",
-	moderatorProfileImages: "moderator-actions/profile-images",
-	moderatorAccountAccess: "moderator-actions/account-access",
-	moderatorCatalogDataHealth: "moderator-actions/catalog-data-health",
+	privilegedTools: "privileged-tools",
+	privilegedProductSubmissions: "privileged-tools/product-submissions",
+	privilegedFoodWarningReports: "privileged-tools/food-warning-reports",
+	privilegedProfileImages: "privileged-tools/profile-images",
+	privilegedAccountAccess: "privileged-tools/account-access",
+	privilegedCatalogReviewWork: "privileged-tools/catalog-review-work",
+	privilegedDataOperations: "privileged-tools/data-operations",
+	privilegedCatalogDataHealthCompatibility: "privileged-tools/catalog-data-health",
 } as const;
 
 export type ProfileSettingsRoute =
@@ -23,12 +25,14 @@ const PROFILE_SETTINGS_ROUTE_TITLES: Record<ProfileSettingsRoute, string> = {
 	[PROFILE_SETTINGS_ROUTES.details]: "Profile Details",
 	[PROFILE_SETTINGS_ROUTES.image]: "Profile Image",
 	[PROFILE_SETTINGS_ROUTES.foodPreferences]: "Food Preferences",
-	[PROFILE_SETTINGS_ROUTES.moderatorActions]: "Moderator Actions",
-	[PROFILE_SETTINGS_ROUTES.moderatorProductSubmissions]: "Product Submissions",
-	[PROFILE_SETTINGS_ROUTES.moderatorFoodWarningReports]: "Food Warning Reports",
-	[PROFILE_SETTINGS_ROUTES.moderatorProfileImages]: "Profile Image Reviews",
-	[PROFILE_SETTINGS_ROUTES.moderatorAccountAccess]: "Account Access",
-	[PROFILE_SETTINGS_ROUTES.moderatorCatalogDataHealth]: "Catalog Data Health",
+	[PROFILE_SETTINGS_ROUTES.privilegedTools]: "Privileged Tools",
+	[PROFILE_SETTINGS_ROUTES.privilegedProductSubmissions]: "Product Submissions",
+	[PROFILE_SETTINGS_ROUTES.privilegedFoodWarningReports]: "Food Warning Reports",
+	[PROFILE_SETTINGS_ROUTES.privilegedProfileImages]: "Profile Image Reviews",
+	[PROFILE_SETTINGS_ROUTES.privilegedAccountAccess]: "Account Access",
+	[PROFILE_SETTINGS_ROUTES.privilegedCatalogReviewWork]: "Catalog Review Work",
+	[PROFILE_SETTINGS_ROUTES.privilegedDataOperations]: "Data Operations",
+	[PROFILE_SETTINGS_ROUTES.privilegedCatalogDataHealthCompatibility]: "Data Operations",
 };
 
 export const getProfileSettingsRoute = (

@@ -8,6 +8,7 @@ import {
 import { getUserFoodPreferenceResolutions } from "$lib/server/food-safety/userFoodPreferenceResolution.server";
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
 import type { Json } from "$lib/types/database.types";
+import type { Database } from "$lib/types/database.types";
 import {
 	APP_ISSUE_CODES,
 	type AppIssueCode,
@@ -18,6 +19,7 @@ import type {
 	FoodCompatibilityFeedbackRequest,
 } from "$lib/utils/food/quality/compatibilityFeedback";
 import type { FoodPreferenceRuleType } from "$lib/utils/profile/foodPreferenceProfile";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 const warningIssueCodes = new Set<AppIssueCode>([
 	"FOOD_INTRINSIC_ALLERGEN",
@@ -50,6 +52,56 @@ export type FoodCompatibilityFeedbackReview = {
 		| "product_correction"
 		| "duplicate";
 	reviewNote: string;
+};
+
+export type FoodCompatibilityFeedbackReviewResult = {
+	reviewed: boolean;
+	followUpStatus: "not_required" | "open";
+	followUpType:
+		| "rule_review"
+		| "source_correction"
+		| "product_correction"
+		| null;
+	followUpId: string | null;
+};
+
+export type FoodCompatibilityFollowUps = {
+	productCorrections: Array<{
+		id: string;
+		sharedProductId: string;
+		productName: string;
+		barcode: string;
+		affectedFieldPaths: string[];
+		status: string;
+		submissionId: string | null;
+		feedbackType: string;
+		reportReason: string;
+		createdAt: string;
+	}>;
+	policyReviews: Array<{
+		id: string;
+		caseType: string;
+		responsibleGroup: string;
+		sharedProductId: string | null;
+		productName: string;
+		barcode: string | null;
+		sourceKey: string | null;
+		status: string;
+		feedbackType: string;
+		reportReason: string;
+		createdAt: string;
+	}>;
+};
+
+const readJoinedRecord = (value: unknown): Record<string, unknown> => {
+	if (Array.isArray(value)) {
+		return value[0] && typeof value[0] === "object"
+			? value[0] as Record<string, unknown>
+			: {};
+	}
+	return value && typeof value === "object"
+		? value as Record<string, unknown>
+		: {};
 };
 
 export type MissingFoodWarningFeedbackRequest = {
@@ -499,34 +551,130 @@ export const listPendingFoodCompatibilityFeedback = async () => {
 	})));
 };
 
+export const listOpenFoodCompatibilityFollowUps = async (): Promise<FoodCompatibilityFollowUps> => {
+	const admin = getSupabaseAdminClient();
+	const [correctionResult, policyResult] = await Promise.all([
+		admin
+			.from("catalog_correction_origins")
+			.select(
+				"id, shared_product_id, affected_field_paths, status, submission_id, created_at, product:shared_products(product_name, barcode), feedback:food_compatibility_feedback(feedback_type, report_reason)",
+			)
+			.eq("origin_type", "food_warning_report")
+			.in("status", ["waiting_for_correction", "linked"])
+			.order("created_at", { ascending: true }),
+		admin
+			.from("food_warning_policy_review_cases")
+			.select(
+				"id, case_type, responsible_group, shared_product_id, source_key, status, created_at, product:shared_products(product_name, barcode), feedback:food_compatibility_feedback(food_description, feedback_type, report_reason)",
+			)
+			.in("status", ["open", "deferred"])
+			.order("created_at", { ascending: true }),
+	]);
+
+	if (correctionResult.error || policyResult.error) {
+		throw correctionResult.error ?? policyResult.error;
+	}
+
+
+	return {
+		productCorrections: (correctionResult.data ?? []).map((record) => {
+			const product = readJoinedRecord(record.product);
+			const feedback = readJoinedRecord(record.feedback);
+			return {
+				id: record.id,
+				sharedProductId: record.shared_product_id,
+				productName: typeof product.product_name === "string"
+					? product.product_name
+					: "Catalog product",
+				barcode: typeof product.barcode === "string" ? product.barcode : "Barcode unavailable",
+				affectedFieldPaths: record.affected_field_paths,
+				status: record.status,
+				submissionId: record.submission_id,
+				feedbackType: typeof feedback.feedback_type === "string"
+					? feedback.feedback_type
+					: "warning_report",
+				reportReason: typeof feedback.report_reason === "string"
+					? feedback.report_reason
+					: "other",
+				createdAt: record.created_at,
+			};
+		}),
+		policyReviews: (policyResult.data ?? []).map((record) => {
+			const product = readJoinedRecord(record.product);
+			const feedback = readJoinedRecord(record.feedback);
+			return {
+				id: record.id,
+				caseType: record.case_type,
+				responsibleGroup: record.responsible_group,
+				sharedProductId: record.shared_product_id,
+				productName: typeof product.product_name === "string"
+					? product.product_name
+					: typeof feedback.food_description === "string"
+						? feedback.food_description
+						: "Reported food",
+				barcode: typeof product.barcode === "string" ? product.barcode : null,
+				sourceKey: record.source_key,
+				status: record.status,
+				feedbackType: typeof feedback.feedback_type === "string"
+					? feedback.feedback_type
+					: "warning_report",
+				reportReason: typeof feedback.report_reason === "string"
+					? feedback.report_reason
+					: "other",
+				createdAt: record.created_at,
+			};
+		}),
+	};
+};
+
 export const reviewFoodCompatibilityFeedback = async (
-	reviewerId: string,
+	supabase: SupabaseClient<Database>,
 	review: FoodCompatibilityFeedbackReview,
-) => {
+): Promise<FoodCompatibilityFeedbackReviewResult> => {
 	if (
 		!review.id ||
 		!["confirmed", "dismissed"].includes(review.status) ||
 		!resolutionActions.has(review.resolutionAction) ||
 		!review.reviewNote.trim()
 	) {
-		return false;
+		return {
+			reviewed: false,
+			followUpStatus: "not_required",
+			followUpType: null,
+			followUpId: null,
+		};
 	}
 
-	const admin = getSupabaseAdminClient();
-	const { data, error } = await admin
-		.from("food_compatibility_feedback")
-		.update({
-			status: review.status,
-			resolution_action: review.resolutionAction,
-			reviewed_by: reviewerId,
-			reviewed_at: new Date().toISOString(),
-			review_note: review.reviewNote.trim().slice(0, 2000),
-		})
-		.eq("id", review.id)
-		.eq("status", "pending")
-		.select("id")
-		.maybeSingle();
+	const { data, error } = await supabase.rpc(
+		"review_food_compatibility_feedback",
+		{
+			p_feedback_id: review.id,
+			p_status: review.status,
+			p_resolution_action: review.resolutionAction,
+			p_review_note: review.reviewNote.trim().slice(0, 2000),
+		},
+	);
 
 	if (error) throw error;
-	return Boolean(data);
+	if (!data || typeof data !== "object" || Array.isArray(data)) {
+		throw new TypeError("Food-warning review returned an invalid response.");
+	}
+	const result = data as Record<string, unknown>;
+	const followUpStatus = result.followUpStatus === "open"
+		? "open"
+		: "not_required";
+	const followUpType = [
+		"rule_review",
+		"source_correction",
+		"product_correction",
+	].includes(String(result.followUpType))
+		? result.followUpType as FoodCompatibilityFeedbackReviewResult["followUpType"]
+		: null;
+
+	return {
+		reviewed: result.reviewed === true,
+		followUpStatus,
+		followUpType,
+		followUpId: typeof result.followUpId === "string" ? result.followUpId : null,
+	};
 };
