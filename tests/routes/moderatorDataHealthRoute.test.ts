@@ -3,13 +3,13 @@ import { moderatorDataHealthFixture } from "../fixtures/moderatorDataHealth";
 import { catalogMonitorModerationFixture } from "../fixtures/catalogMonitorModeration";
 
 const mocks = vi.hoisted(() => ({
-  requireModeratorAccess: vi.fn(),
+  requireModeratorPermission: vi.fn(),
   readModeratorDataHealth: vi.fn(),
   readCatalogMonitorModerationSummary: vi.fn(),
 }));
 
 vi.mock("$lib/server/moderation/moderationAccess.server", () => ({
-  requireModeratorAccess: mocks.requireModeratorAccess,
+  requireModeratorPermission: mocks.requireModeratorPermission,
 }));
 
 vi.mock("$lib/server/moderation/catalogDataHealth.server", () => ({
@@ -23,9 +23,10 @@ describe("moderator data-health page", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("requires moderator access before loading the bounded dashboard", async () => {
-    mocks.requireModeratorAccess.mockResolvedValue({
+    mocks.requireModeratorPermission.mockResolvedValue({
       user: { id: "moderator-id" },
       role: "moderator",
+	  permissions: ["moderation.data_health.read"],
     });
     mocks.readModeratorDataHealth.mockResolvedValue(moderatorDataHealthFixture);
 	mocks.readCatalogMonitorModerationSummary.mockResolvedValue(catalogMonitorModerationFixture);
@@ -36,8 +37,9 @@ describe("moderator data-health page", () => {
       dashboard: moderatorDataHealthFixture,
 	  catalogMonitor: catalogMonitorModerationFixture,
     });
-    expect(mocks.requireModeratorAccess).toHaveBeenCalledWith(
+    expect(mocks.requireModeratorPermission).toHaveBeenCalledWith(
       expect.anything(),
+	  "moderation.data_health.read",
       "/moderation/data-health",
     );
     expect(mocks.readModeratorDataHealth).toHaveBeenCalledWith(supabase);
@@ -45,7 +47,7 @@ describe("moderator data-health page", () => {
   });
 
   it("does not read dashboard data when the access guard fails", async () => {
-    mocks.requireModeratorAccess.mockRejectedValue({ status: 403 });
+    mocks.requireModeratorPermission.mockRejectedValue({ status: 403 });
 
     await expect(
       load({ locals: { supabase: {} } } as never),
@@ -55,9 +57,10 @@ describe("moderator data-health page", () => {
   });
 
   it("passes the developer role through to the privileged dashboard", async () => {
-    mocks.requireModeratorAccess.mockResolvedValue({
+    mocks.requireModeratorPermission.mockResolvedValue({
       user: { id: "developer-id" },
       role: "developer",
+	  permissions: ["moderation.data_health.read"],
     });
     mocks.readModeratorDataHealth.mockResolvedValue(moderatorDataHealthFixture);
 	mocks.readCatalogMonitorModerationSummary.mockResolvedValue(catalogMonitorModerationFixture);

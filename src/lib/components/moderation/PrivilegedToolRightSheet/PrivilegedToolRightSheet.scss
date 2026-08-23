@@ -1,0 +1,41 @@
+@use "../../../../styles/variables" as *;
+
+.privileged-tool-right-sheet__header {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr);
+	align-items: start;
+	gap: $app-gap-sm;
+	min-width: 0;
+}
+
+.privileged-tool-right-sheet__heading {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	align-items: start;
+	gap: $app-gap-sm;
+	min-width: 0;
+}
+
+.privileged-tool-right-sheet__header-actions {
+	display: flex;
+	align-items: center;
+	gap: $app-gap-xs;
+}
+
+:global(.privileged-tool-right-sheet__body) {
+	display: grid;
+	align-content: start;
+	gap: $app-gap-md;
+	padding-block: $app-gap-sm $app-gap-lg;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.privileged-tool-right-sheet__header {
+		gap: $app-gap-xs;
+	}
+
+	:global(.privileged-tool-right-sheet__body) {
+		gap: $app-gap-sm;
+		padding-block: $app-gap-xs $app-gap-md;
+	}
+}

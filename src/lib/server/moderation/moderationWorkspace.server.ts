@@ -9,6 +9,7 @@ import {
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
 import {
 	canModerateTargetRole,
+	type AppPermission,
 	type AppRole,
 } from "$lib/utils/moderation/moderation";
 import { PROFILE_AVATAR_BUCKET } from "$lib/utils/profile/profile";
@@ -44,7 +45,12 @@ import {
 	reviewFoodCompatibilityFeedback,
 } from "$lib/server/food-safety/foodCompatibilityFeedback.server";
 import { readLimitedFormData } from "$lib/server/security/requestBody.server";
-import { requireModeratorAccess } from "$lib/server/moderation/moderationAccess.server";
+import {
+	requireModeratorAccess,
+	requireModeratorPermission,
+} from "$lib/server/moderation/moderationAccess.server";
+import { readAppRolePermissions } from "$lib/server/moderation/appRolePermissions.server";
+import { hasAppPermission } from "$lib/utils/moderation/profilePrivilegedTools";
 import {
 	listPendingProfileImageReports,
 	reviewProfileImageReport,
@@ -73,6 +79,13 @@ export type ModerationWorkspaceDataScope =
 	| "food-warning-reports"
 	| "profile-images"
 	| "account-access";
+
+const MODERATION_SCOPE_PERMISSIONS = {
+	"account-access": "moderation.accounts.manage",
+	"food-warning-reports": "moderation.warnings.review",
+	"product-submissions": "moderation.catalog.review",
+	"profile-images": "moderation.accounts.manage",
+} as const satisfies Record<Exclude<ModerationWorkspaceDataScope, "all">, AppPermission>;
 
 const getReason = (formData: FormData) => {
 	const reason = String(formData.get("reason") ?? "") as ModerationReason;
@@ -183,15 +196,23 @@ export const loadModerationWorkspaceData = async (
 	scope: ModerationWorkspaceDataScope = "all",
 ) => {
 	const { user: viewer, role } = await requireModeratorAccess(locals, returnPath);
+	const permissions = await readAppRolePermissions(role);
+	if (scope !== "all" && !hasAppPermission(permissions, MODERATION_SCOPE_PERMISSIONS[scope])) {
+		throwAppError(403, "ACCESS_DENIED");
+	}
 	const query = url.searchParams.get("q")?.trim().toLocaleLowerCase() ?? "";
 	const includesAccounts =
-		scope === "all" || scope === "account-access";
+		(scope === "all" || scope === "account-access") &&
+		hasAppPermission(permissions, "moderation.accounts.manage");
 	const includesProductSubmissions =
-		scope === "all" || scope === "product-submissions";
+		(scope === "all" || scope === "product-submissions") &&
+		hasAppPermission(permissions, "moderation.catalog.review");
 	const includesFoodWarningReports =
-		scope === "all" || scope === "food-warning-reports";
+		(scope === "all" || scope === "food-warning-reports") &&
+		hasAppPermission(permissions, "moderation.warnings.review");
 	const includesProfileImageReports =
-		scope === "all" || scope === "profile-images";
+		(scope === "all" || scope === "profile-images") &&
+		hasAppPermission(permissions, "moderation.accounts.manage");
 	const [
 		{ admin, users: authUsers },
 		pendingProductSubmissions,
@@ -470,9 +491,10 @@ export const loadModerationWorkspaceData = async (
 
 export const moderationWorkspaceActions = {
 	reviewProfileImageReport: async ({ locals, request }) => {
-		const { user } = await requireModeratorAccess(
+		const { user } = await requireModeratorPermission(
 			locals,
-			"/profile/moderator-actions/profile-images",
+			"moderation.accounts.manage",
+			"/profile/privileged-tools/profile-images",
 		);
 		const formData = await readLimitedFormData(
 			request,
@@ -535,9 +557,10 @@ export const moderationWorkspaceActions = {
 		}
 	},
 	reviewCompatibilityFeedback: async ({ locals, request }) => {
-		const { user } = await requireModeratorAccess(
+		const { user } = await requireModeratorPermission(
 			locals,
-			"/profile/moderator-actions/food-warning-reports",
+			"moderation.warnings.review",
+			"/profile/privileged-tools/food-warning-reports",
 		);
 		const formData = await readLimitedFormData(
 			request,
@@ -597,9 +620,10 @@ export const moderationWorkspaceActions = {
 		}
 	},
 	approveProduct: async ({ locals, request }) => {
-		const { user } = await requireModeratorAccess(
+		const { user } = await requireModeratorPermission(
 			locals,
-			"/profile/moderator-actions/product-submissions",
+			"moderation.catalog.review",
+			"/profile/privileged-tools/product-submissions",
 		);
 		const formData = await readLimitedFormData(
 			request,
@@ -671,9 +695,10 @@ export const moderationWorkspaceActions = {
 		}
 	},
 	rejectProduct: async ({ locals, request }) => {
-		const { user } = await requireModeratorAccess(
+		const { user } = await requireModeratorPermission(
 			locals,
-			"/profile/moderator-actions/product-submissions",
+			"moderation.catalog.review",
+			"/profile/privileged-tools/product-submissions",
 		);
 		const formData = await readLimitedFormData(
 			request,
@@ -697,9 +722,10 @@ export const moderationWorkspaceActions = {
 		}
 	},
 	ban: async ({ locals, request }) => {
-		const { user: actor, role: actorRole } = await requireModeratorAccess(
+		const { user: actor, role: actorRole } = await requireModeratorPermission(
 			locals,
-			"/profile/moderator-actions/account-access",
+			"moderation.accounts.manage",
+			"/profile/privileged-tools/account-access",
 		);
 		const formData = await readLimitedFormData(
 			request,
@@ -873,9 +899,10 @@ export const moderationWorkspaceActions = {
 		};
 	},
 	unban: async ({ locals, request }) => {
-		const { user: actor, role: actorRole } = await requireModeratorAccess(
+		const { user: actor, role: actorRole } = await requireModeratorPermission(
 			locals,
-			"/profile/moderator-actions/account-access",
+			"moderation.accounts.manage",
+			"/profile/privileged-tools/account-access",
 		);
 		const formData = await readLimitedFormData(
 			request,

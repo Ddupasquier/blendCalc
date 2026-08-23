@@ -105,10 +105,10 @@
 	</CollapsibleSection>
 
 	<nav class="data-health__queue-links" aria-label="Moderation queues">
-		<RoundedActionLink href="/profile/moderator-actions/product-submissions" variant="soft" fullWidth>
+		<RoundedActionLink href="/profile/privileged-tools/product-submissions" variant="soft" fullWidth>
 			Review product submissions
 		</RoundedActionLink>
-		<RoundedActionLink href="/profile/moderator-actions/food-warning-reports" variant="soft" fullWidth>
+		<RoundedActionLink href="/profile/privileged-tools/food-warning-reports" variant="soft" fullWidth>
 			Review food warning reports
 		</RoundedActionLink>
 	</nav>

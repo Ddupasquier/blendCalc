@@ -14,8 +14,8 @@
 	import ProfileFoodPreferenceView from "$lib/components/profile/ProfileFoodPreferenceView/ProfileFoodPreferenceView.svelte";
 	import ProfileIdentitySummary from "$lib/components/profile/ProfileIdentitySummary/ProfileIdentitySummary.svelte";
 	import ProfileImageSettings from "$lib/components/profile/ProfileImageSettings/ProfileImageSettings.svelte";
-	import ProfileModeratorActionLauncher from "$lib/components/profile/ProfileModeratorActionLauncher/ProfileModeratorActionLauncher.svelte";
-	import ProfileModeratorActionSheet from "$lib/components/profile/ProfileModeratorActionSheet/ProfileModeratorActionSheet.svelte";
+	import ProfilePrivilegedToolsLauncher from "$lib/components/profile/ProfilePrivilegedToolsLauncher/ProfilePrivilegedToolsLauncher.svelte";
+	import ProfilePrivilegedToolsSheet from "$lib/components/profile/ProfilePrivilegedToolsSheet/ProfilePrivilegedToolsSheet.svelte";
 	import ProfileSettingsMenu from "$lib/components/profile/ProfileSettingsMenu/ProfileSettingsMenu.svelte";
 	import ProfileSessionSettings from "$lib/components/profile/ProfileSessionSettings/ProfileSessionSettings.svelte";
 	import ProfileTutorialSettings from "$lib/components/profile/ProfileTutorialSettings/ProfileTutorialSettings.svelte";
@@ -214,10 +214,10 @@
 	/>
 </RightSheet>
 
-{#if data.moderatorActionSummary}
-	<ProfileModeratorActionSheet
-		open={activeSettingsRoute === PROFILE_SETTINGS_ROUTES.moderatorActions}
-		summary={data.moderatorActionSummary}
+{#if data.privilegedToolAccess}
+	<ProfilePrivilegedToolsSheet
+		open={activeSettingsRoute === PROFILE_SETTINGS_ROUTES.privilegedTools}
+		access={data.privilegedToolAccess}
 		onClose={closeSettingsRoute}
 		onNavigate={navigateToModeratorDestination}
 	/>
@@ -258,10 +258,10 @@
 				onOpen={openSettingsRoute}
 			/>
 
-			{#if data.moderatorActionSummary}
-				<ProfileModeratorActionLauncher
-					summary={data.moderatorActionSummary}
-					onOpen={() => openSettingsRoute(PROFILE_SETTINGS_ROUTES.moderatorActions)}
+			{#if data.privilegedToolAccess}
+				<ProfilePrivilegedToolsLauncher
+					access={data.privilegedToolAccess}
+					onOpen={() => openSettingsRoute(PROFILE_SETTINGS_ROUTES.privilegedTools)}
 				/>
 			{/if}
 

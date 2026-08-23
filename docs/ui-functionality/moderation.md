@@ -1,14 +1,15 @@
 # Moderation
 
-Routes: the Profile gateway at `/profile/moderator-actions`, focused moderator views
-under `/profile/moderator-actions/*`, and the legacy compatibility routes
+Routes: the Profile gateway at `/profile/privileged-tools`, focused privileged views
+under `/profile/privileged-tools/*`, and the legacy compatibility routes
 `/moderation` and `/moderation/data-health`.
 
 Only authorized moderators, administrators, and developers may enter these views. Role,
 account-control, and notification rules live in [Moderation](../moderation.md).
 
-The elevated-role-only Profile launcher opens one compact bottom sheet containing every
-current moderation destination. Each destination opens a route-backed right sheet with
+The elevated-role-only Profile launcher uses the verified role title and opens one
+compact bottom sheet containing only destinations granted by that role's current
+`app_role_permissions` rows. Each destination opens a route-backed right sheet with
 one focused responsibility: product submissions, food-warning reports, profile images,
 account access, or catalog data health. The focused route retains its own server and
 database authorization, evidence, mutations, browser title, history entry, and direct-
@@ -82,7 +83,7 @@ required action after reading the evidence.
 
 ## Data Health
 
-`/profile/moderator-actions/catalog-data-health` starts with one closed catalog-readiness
+`/profile/privileged-tools/catalog-data-health` starts with one closed catalog-readiness
 snapshot and direct links to the two related review queues.
 The legacy `/moderation/data-health` route remains a compatibility entry point. Keep source activity,
 dataset/licence state, food-warning policy coverage, conflicts, API publication gaps,

@@ -3,7 +3,7 @@
 	import type { PrivilegedActionGroupProps } from "./types";
 
 	let {
-		title = "Moderator actions",
+		title = "Privileged tools",
 		showHeader = true,
 		class: className = "",
 		children,

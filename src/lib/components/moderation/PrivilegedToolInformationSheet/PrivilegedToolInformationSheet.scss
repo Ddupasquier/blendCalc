@@ -1,0 +1,45 @@
+@use "../../../../styles/variables" as *;
+
+.privileged-tool-information,
+.privileged-tool-information section {
+	display: grid;
+	gap: $app-gap-sm;
+	min-width: 0;
+}
+
+.privileged-tool-information {
+	padding-top: $app-gap-xs;
+}
+
+.privileged-tool-information section {
+	padding: $app-gap-sm;
+	background: $app-shell-surface-soft;
+	border-radius: $app-shell-radius-card;
+}
+
+.privileged-tool-information h3 {
+	font-size: $app-font-size-md;
+}
+
+.privileged-tool-information p,
+.privileged-tool-information ol {
+	margin: 0;
+	color: $app-shell-text-muted;
+}
+
+.privileged-tool-information ol {
+	display: grid;
+	gap: $app-gap-xs;
+	padding-left: $app-gap-lg;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.privileged-tool-information,
+	.privileged-tool-information section {
+		gap: $app-gap-xs;
+	}
+
+	.privileged-tool-information section {
+		padding: $app-gap-xs;
+	}
+}

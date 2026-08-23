@@ -3,7 +3,7 @@ import {
 	readCatalogMonitorModerationSummary,
 	readModeratorDataHealth,
 } from "$lib/server/moderation/catalogDataHealth.server";
-import { requireModeratorAccess } from "$lib/server/moderation/moderationAccess.server";
+import { requireModeratorPermission } from "$lib/server/moderation/moderationAccess.server";
 import { readLimitedFormData } from "$lib/server/security/requestBody.server";
 
 const DATA_HEALTH_REVIEW_FORM_MAX_BYTES = 32 * 1024;
@@ -17,7 +17,11 @@ export const loadCatalogDataHealthWorkspace = async (
 	{ locals }: CatalogDataHealthLoadEvent,
 	returnPath = "/moderation/data-health",
 ) => {
-	const { role } = await requireModeratorAccess(locals, returnPath);
+	const { role } = await requireModeratorPermission(
+		locals,
+		"moderation.data_health.read",
+		returnPath,
+	);
 	const [dashboard, catalogMonitor] = await Promise.all([
 		readModeratorDataHealth(locals.supabase),
 		readCatalogMonitorModerationSummary(locals.supabase),
@@ -32,9 +36,10 @@ export const loadCatalogDataHealthWorkspace = async (
 
 export const catalogDataHealthWorkspaceActions = {
 	reviewSafetyMatch: async ({ locals, request }) => {
-		await requireModeratorAccess(
+		await requireModeratorPermission(
 			locals,
-			"/profile/moderator-actions/catalog-data-health",
+			"moderation.catalog.review",
+			"/profile/privileged-tools/catalog-data-health",
 		);
 		const formData = await readLimitedFormData(request, DATA_HEALTH_REVIEW_FORM_MAX_BYTES);
 		const matchId = String(formData.get("matchId") ?? "");
@@ -55,9 +60,10 @@ export const catalogDataHealthWorkspaceActions = {
 		return { monitorReviewSuccess: outcome === "confirmed" ? "The recall match is confirmed." : "The recall match was dismissed." };
 	},
 	dismissProviderChange: async ({ locals, request }) => {
-		await requireModeratorAccess(
+		await requireModeratorPermission(
 			locals,
-			"/profile/moderator-actions/catalog-data-health",
+			"moderation.catalog.review",
+			"/profile/privileged-tools/catalog-data-health",
 		);
 		const formData = await readLimitedFormData(request, DATA_HEALTH_REVIEW_FORM_MAX_BYTES);
 		const reviewId = String(formData.get("reviewId") ?? "");

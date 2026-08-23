@@ -32,17 +32,17 @@ describe("Profile settings routes", () => {
 		expect(getProfileSettingsRouteTitle("/profile/image")).toBe(
 			"Profile Image",
 		);
-		expect(getProfileSettingsRouteTitle("/profile/moderator-actions")).toBe(
-			"Moderator Actions",
+		expect(getProfileSettingsRouteTitle("/profile/privileged-tools")).toBe(
+			"Privileged Tools",
 		);
 		expect(
 			getProfileSettingsRouteTitle(
-				"/profile/moderator-actions/product-submissions",
+				"/profile/privileged-tools/product-submissions",
 			),
 		).toBe("Product Submissions");
 		expect(
 			getProfileSettingsRouteTitle(
-				"/profile/moderator-actions/catalog-data-health",
+				"/profile/privileged-tools/catalog-data-health",
 			),
 		).toBe("Catalog Data Health");
 		expect(getProfileSettingsRouteTitle("/profile")).toBe("Profile");

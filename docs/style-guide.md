@@ -434,7 +434,7 @@ Check the existing primitive before writing markup or SCSS.
 | Privileged action container           | `PrivilegedActionGroup`      | Groups privileged moderator, admin, or developer actions and owns one crown                         |
 | Moderator review list                 | `ModeratorReviewList`        | Shared queue count, record spacing, and calm empty state for privileged review work                 |
 | Moderator review card                 | `ModeratorReviewCard`        | Identity/status header followed by evidence and decision content in one consistent card shell       |
-| Moderator tool help                   | `ModeratorActionInformationSheet` | Contextual purpose, review flow, decision effect, and guardrail opened from one circular info action |
+| Privileged tool help                  | `PrivilegedToolInformationSheet` | Contextual purpose, review flow, decision effect, and guardrail opened from one circular info action |
 | Numeric amount                        | `NumberInput`                | Shared number semantics and control styling                                                         |
 | Text or multiline entry               | `TextField`                  | Shared label, helper, focus, disabled, text, search, and textarea presentation                       |
 | Single checkbox                       | `CheckboxField`              | Full-row checkbox target with shared focus, disabled, and responsive behavior                        |
@@ -734,7 +734,7 @@ reporting interface for every warning in the default view.
 ## Badges And Privileged Actions
 
 - Use badges only when the state helps the current decision.
-- Focused moderator tools use one crown and one circular information action in the view
+- Focused privileged tools use one crown and one circular information action in the view
   header. Do not repeat the crown on each review card or leave full workflow instructions
   permanently expanded in the action body.
 - Moderator review cards read from identity and status to key facts, supporting evidence,

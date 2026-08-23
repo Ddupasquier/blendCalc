@@ -551,13 +551,13 @@ test("logout ends the session without deleting durable account data", async ({
 	);
 });
 
-test("moderator actions stay hidden from regular accounts and use the shared sheet for elevated accounts", async ({
+test("privileged tools stay hidden from regular accounts and use the shared sheet for elevated accounts", async ({
 	page,
 }) => {
 	await page.goto("/profile");
 	await waitForAppReady(page);
 	await expect(
-		page.getByRole("button", { name: /Moderator actions/ }),
+		page.getByRole("button", { name: /Moderator tools/ }),
 	).toHaveCount(0);
 
 	await page.context().clearCookies();
@@ -570,17 +570,17 @@ test("moderator actions stay hidden from regular accounts and use the shared she
 	await expect(page).toHaveURL(/\/profile$/);
 	await waitForAppReady(page);
 
-	await page.getByRole("button", { name: /Moderator actions/ }).click();
-	await expect(page).toHaveURL(/\/profile\/moderator-actions$/);
-	const moderatorActionsSheet = page.getByRole("dialog", {
-		name: "Moderator actions",
+	await page.getByRole("button", { name: /Moderator tools/ }).click();
+	await expect(page).toHaveURL(/\/profile\/privileged-tools$/);
+	const privilegedToolsSheet = page.getByRole("dialog", {
+		name: "Moderator tools",
 	});
-	await expect(moderatorActionsSheet).toBeVisible();
+	await expect(privilegedToolsSheet).toBeVisible();
 	await expect(
-		moderatorActionsSheet.getByRole("heading", { name: "Moderator actions" }),
+		privilegedToolsSheet.getByRole("heading", { name: "Moderator tools" }),
 	).toHaveCount(1);
 	await expect(
-		moderatorActionsSheet.locator(
+		privilegedToolsSheet.locator(
 			".bottom-sheet__title-accessory .privileged-action-badge",
 		),
 	).toHaveCount(1);
@@ -592,25 +592,25 @@ test("moderator actions stay hidden from regular accounts and use the shared she
 		"Catalog data health",
 	]) {
 		await expect(
-			moderatorActionsSheet.getByRole("button", { name: new RegExp(actionName) }),
+			privilegedToolsSheet.getByRole("button", { name: new RegExp(actionName) }),
 		).toBeEnabled();
 	}
 	await expect(
-		moderatorActionsSheet.getByText(
+		privilegedToolsSheet.getByText(
 			"Verify with your authenticator when you open a protected tool. Review counts stay private until then.",
 		),
 	).toBeVisible();
 	await expect(
-		moderatorActionsSheet.getByText(
+		privilegedToolsSheet.getByText(
 			"Verify your identity to check this queue",
 		),
 	).toHaveCount(3);
 
-	await moderatorActionsSheet
+	await privilegedToolsSheet
 		.getByRole("button", { name: /Product submissions/ })
 		.click();
 	await expect(page).toHaveURL(
-		/\/auth\/mfa\/enroll\?next=%2Fprofile%2Fmoderator-actions%2Fproduct-submissions$/,
+		/\/auth\/mfa\/enroll\?next=%2Fprofile%2Fprivileged-tools%2Fproduct-submissions$/,
 	);
 	await expect(
 		page.getByRole("heading", { name: "Set up your authenticator." }),

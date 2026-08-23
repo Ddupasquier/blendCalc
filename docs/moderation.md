@@ -77,8 +77,9 @@ web workflow from blocking administrators or developers.
 
 ## Review Interface
 
-Profile links to five focused moderator right sheets: product submissions, food-warning
-reports, reported profile images, account access, and catalog data health. Each sheet
+Profile links elevated users to the focused right sheets allowed by their current
+database permission rows: product submissions, food-warning reports, reported profile
+images, account access, and catalog data health. Each sheet
 uses the same review order: concise queue or result status, record identity and key facts,
 closed supporting-evidence disclosures, then the decision controls. One shared
 information action explains the purpose, review steps, effect, and guardrail for the
@@ -303,7 +304,7 @@ details to other users.
 
 ## Catalog Data Health
 
-`/profile/moderator-actions/catalog-data-health` is the primary privileged catalog
+`/profile/privileged-tools/catalog-data-health` is the primary privileged catalog
 health summary available to
 moderators, admins, and developers. Its server
 load calls `get_moderator_data_health` through the signed-in user's Supabase client. The
@@ -342,16 +343,17 @@ Probable recall matches can be confirmed or dismissed only by an elevated AAL2 s
 Exact GTIN matches are visible immediately, while title-only similarity never enters
 the queue.
 
-Profile is the moderator navigation gateway. `/profile/moderator-actions` opens the
-compact action list, while the following direct routes own focused right sheets:
+Profile is the privileged navigation gateway. `/profile/privileged-tools` opens the
+role-aware permitted tool list, while the following direct routes own focused right sheets:
 
-- `/profile/moderator-actions/product-submissions`;
-- `/profile/moderator-actions/food-warning-reports`;
-- `/profile/moderator-actions/profile-images`;
-- `/profile/moderator-actions/account-access`; and
-- `/profile/moderator-actions/catalog-data-health`.
+- `/profile/privileged-tools/product-submissions`;
+- `/profile/privileged-tools/food-warning-reports`;
+- `/profile/privileged-tools/profile-images`;
+- `/profile/privileged-tools/account-access`; and
+- `/profile/privileged-tools/catalog-data-health`.
 
-Every direct route repeats the current role and AAL2 checks on the server. Legacy
+Every direct route repeats the current role, exact database-owned permission, and AAL2
+checks on the server. Legacy
 `/moderation` routes remain compatibility entry points while links and Profile flows use
 the focused routes.
 

@@ -20,7 +20,7 @@ describe("DataHealthDashboard", () => {
 		expect(screen.getByRole("link", { name: "Review product submissions" }))
 			.toHaveAttribute(
 				"href",
-				"/profile/moderator-actions/product-submissions",
+				"/profile/privileged-tools/product-submissions",
 			);
 
 		const sourceSummary = screen.getByText("Source activity").closest("summary");

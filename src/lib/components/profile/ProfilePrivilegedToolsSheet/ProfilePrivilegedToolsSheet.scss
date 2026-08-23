@@ -1,0 +1,13 @@
+@use "../../../../styles/variables" as *;
+
+.profile-privileged-tools-sheet {
+	display: grid;
+	gap: $app-gap-sm;
+	min-width: 0;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.profile-privileged-tools-sheet {
+		gap: $app-gap-xs;
+	}
+}
