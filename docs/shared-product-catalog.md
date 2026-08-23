@@ -451,6 +451,22 @@ approved canonical revision remains active. A moderator may dismiss a provider c
 or complete the existing catalog correction workflow and link the resulting approved
 revision; the monitor never overwrites `shared_products` directly.
 
+### Readiness And Operational Issues
+
+Canonical availability and public API publication are separate states. Every product
+has one service-only `catalog_product_readiness` record with:
+
+- shared-catalog state: `Active`, `Waiting for review`, or `Blocked`;
+- API v1 state: `Ready` or `Withheld`;
+- explicit blendCalc search and use availability; and
+- current revision, correction, conflict, verification, and API-withholding context.
+
+`Withheld` means that API v1 cannot legally or accurately publish the record yet. It
+does not hide an otherwise active product from blendCalc. Current operational gaps are
+projected through `catalog_health_issue_occurrences`. Stable issue metadata owns
+urgency, responsible work group, supported resolution action, and whether a reviewed
+evidence-only repair can be offered. Friendly UI wording remains application-owned.
+
 ### Official Recall Matching
 
 FDA recall announcements, FDA enforcement records, and USDA FSIS recalls/public-health

@@ -314,16 +314,21 @@ rules.
 
 | Table | Documented columns |
 | ----------------- | ------------------------------------------------------------------------------ |
-| `app_issue_codes` | `code`, `kind`, `domain`, `description`, `enabled`, `created_at`, `updated_at` |
+| `app_issue_codes` | `code`, `kind`, `domain`, `description`, `operational_severity`, `responsible_group`, `resolution_action`, `automated_repair_key`, `automated_repair_allowed`, `enabled`, `created_at`, `updated_at` |
 
 Notes:
 
 - `description` is developer-facing contract documentation and must never be rendered as
   user-interface copy.
-- The database owns rule evidence, severity, thresholds, and issue-code references.
+- The database owns rule evidence, operational severity, work ownership, resolution
+  routing, reviewed repair capability, thresholds, and issue-code references. A
+  responsible group never grants permission by itself.
 - Server boundaries return approved codes with bounded, non-sensitive parameters.
 - Friendly wording belongs to the versioned application message catalog so it remains
   available during database outages and can be tested, revised, and translated.
+- `automated_repair_allowed` can be true only with a named reviewed handler. It never
+  authorizes a write without the repair-run workflow, dry-run evidence, and an
+  independently authorized server action.
 - Direct table access is restricted to the service role.
 
 ## Nutrient Definitions, Values, And Validation
@@ -807,6 +812,17 @@ Notes:
   for identity, required nutrition, servings, ingredient/allergen evidence, provenance,
   conflicts, recency, and redistribution without exposing private evidence to API
   consumers.
+- `catalog_product_readiness` is the service-only reusable status record for canonical
+  products. It reports `Active`, `Waiting for review`, or `Blocked` for the shared
+  catalog; `Ready` or `Withheld` for API v1; and explicit
+  `searchable_in_blendcalc`/`usable_in_blendcalc` booleans. An API-withheld product can
+  remain available inside blendCalc because catalog usefulness and public
+  redistribution are separate decisions.
+- `catalog_health_issue_occurrences` normalizes current API-publication reasons,
+  material catalog conflicts, nutrient-mapping gaps, enabled source-policy gaps,
+  active/import-enabled dataset gaps, and warning-policy coverage gaps. Every row uses
+  an `app_issue_codes` contract for urgency, work ownership, supported action, and
+  reviewed repair capability. Disabled unused datasets do not create failures.
 - `blendcalc_api_publication_profiles` stores versioned fail-closed hard gates separately
   from the broader canonical catalog. The default API v1 packaged-product profile links
   to `api-v1-packaged-core-v1`, requires evidence-backed core identity and serving

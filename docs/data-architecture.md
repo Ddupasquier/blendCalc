@@ -131,6 +131,12 @@ API v1. Publication fails closed on incomplete identity, nutrition, serving, pro
 source policy, recency, or unresolved material conflicts. Withholding never deletes the
 underlying evidence or revision history.
 
+The reusable `catalog_product_readiness` record makes that separation explicit. Shared
+catalog state controls whether blendCalc can search and use a canonical product; API v1
+readiness independently controls whether that product may be redistributed publicly.
+Operational gaps are normalized through `catalog_health_issue_occurrences` and stable
+`app_issue_codes`, rather than reconstructed independently in each dashboard.
+
 API v1 database readers are server-service-role-only. Browser sessions reach catalog
 data through the versioned HTTP routes, whose serializers rebuild explicit public
 objects and reject undeclared fields. Private foods, user-list state, pending review
