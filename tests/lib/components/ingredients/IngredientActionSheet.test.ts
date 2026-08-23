@@ -36,7 +36,7 @@ describe("IngredientActionSheet delete confirmation", () => {
 			},
 		});
 
-		const group = screen.getByRole("region", { name: "Moderator actions" });
+		const group = screen.getByRole("region", { name: "Privileged tools" });
 		const action = screen.getByRole("button", { name: "Adjust image placement" });
 		const removeAction = screen.getByRole("button", {
 			name: "Remove from Fridge",

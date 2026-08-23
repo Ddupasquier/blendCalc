@@ -2,6 +2,7 @@
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import AccountAccessReviewList from "$lib/components/moderation/AccountAccessReviewList/AccountAccessReviewList.svelte";
 	import FoodWarningReportReviewList from "$lib/components/moderation/FoodWarningReportReviewList/FoodWarningReportReviewList.svelte";
+	import FoodWarningFollowUpList from "$lib/components/moderation/FoodWarningFollowUpList/FoodWarningFollowUpList.svelte";
 	import ProductSubmissionReviewList from "$lib/components/moderation/ProductSubmissionReviewList/ProductSubmissionReviewList.svelte";
 	import ProfileImageReportReviewList from "$lib/components/moderation/ProfileImageReportReviewList/ProfileImageReportReviewList.svelte";
 	import type { ModerationWorkspaceProps } from "./types";
@@ -19,7 +20,7 @@
 			<p class="moderation-workspace__eyebrow">{data.viewerRole}</p>
 			<h1>Moderation</h1>
 			<p>Review shared products, food warnings, reported profile images, and account access.</p>
-			<a href="/profile/moderator-actions/catalog-data-health">Review catalog data health</a>
+			<a href="/profile/privileged-tools">Open focused privileged tools</a>
 		</header>
 	{/if}
 
@@ -45,6 +46,7 @@
 			{form}
 			showHeading={scope === "all"}
 		/>
+		<FoodWarningFollowUpList followUps={data.compatibilityFollowUps} />
 	{/if}
 
 	{#if scope === "all" || scope === "profile-images"}
@@ -62,7 +64,7 @@
 			totalCount={data.totalCount}
 			viewerUserId={data.viewerUserId}
 			viewerRole={data.viewerRole}
-			searchPath={scope === "all" ? "/moderation" : "/profile/moderator-actions/account-access"}
+			searchPath={scope === "all" ? "/moderation" : "/profile/privileged-tools/account-access"}
 			showHeading={scope === "all"}
 		/>
 	{/if}

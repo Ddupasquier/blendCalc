@@ -1,0 +1,28 @@
+@use "../../../../styles/variables" as *;
+
+.profile-privileged-tools-sheet {
+	display: grid;
+	gap: $app-gap-sm;
+	min-width: 0;
+}
+
+.profile-privileged-tools-sheet__group {
+	display: grid;
+	gap: $app-gap-xs;
+	min-width: 0;
+}
+
+.profile-privileged-tools-sheet__group h2 {
+	margin: 0;
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-heavy;
+	letter-spacing: $app-letter-spacing-wider;
+	text-transform: uppercase;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.profile-privileged-tools-sheet {
+		gap: $app-gap-xs;
+	}
+}

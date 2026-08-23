@@ -362,6 +362,9 @@ const record: ApprovedCatalogRecord = {
 		licenseUrl: "https://creativecommons.org/licenses/by-sa/3.0/",
 		attributionText: "Open Food Facts contributors",
 		confidence: "source-verified",
+		canonicalStatus: "selected",
+		canonicalSelectionMethod: "exact-licensed-source",
+		canonicalSelectedAt: "2026-07-17T09:30:00.000Z",
 		cropX: 60,
 		cropY: 40,
 		cropZoom: 1.5,
@@ -807,6 +810,20 @@ describe("blendCalc API v1 catalog mapping", () => {
 			expect(product.images).toEqual([]);
 		},
 	);
+
+	it("withholds alternate front-image candidates", () => {
+		const alternateImageRecord = structuredClone(record);
+		alternateImageRecord.images[0].canonicalStatus = "candidate";
+		delete alternateImageRecord.images[0].canonicalSelectionMethod;
+		delete alternateImageRecord.images[0].canonicalSelectedAt;
+
+		const product = mapApprovedCatalogRecordToApiV1Product(
+			alternateImageRecord,
+			defaultAttributionCatalog(),
+		);
+
+		expect(product.images).toEqual([]);
+	});
 
 	it("creates predictable pagination", () => {
 		expect(createPagination(15, 15, 31)).toEqual({

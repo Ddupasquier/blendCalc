@@ -1,10 +1,6 @@
-import type { Actions, PageServerLoad } from "./$types";
-import {
-	catalogDataHealthWorkspaceActions,
-	loadCatalogDataHealthWorkspace,
-} from "$lib/server/moderation/catalogDataHealthWorkspace.server";
+import type { PageServerLoad } from "./$types";
+import { redirect } from "@sveltejs/kit";
 
-export const load: PageServerLoad = (event) =>
-	loadCatalogDataHealthWorkspace(event, "/moderation/data-health");
-
-export const actions: Actions = catalogDataHealthWorkspaceActions;
+export const load: PageServerLoad = () => {
+	throw redirect(308, "/profile/privileged-tools");
+};

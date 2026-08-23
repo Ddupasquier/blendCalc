@@ -37,11 +37,11 @@ import { publishCatalogSubmission } from "./catalogPublishing.server";
 import {
 	createCatalogSubmission,
 	findPendingCatalogSubmission,
-	recordAutoDeclinedCatalogSubmission,
 } from "./catalogSubmissionRepository.server";
 import {
 	buildProductSubmissionReviewFlags,
 	prepareCatalogSubmissionReview,
+	resolveCatalogSubmissionIntent,
 	type CatalogSubmissionValidationReport,
 } from "./catalogSubmissionReview.server";
 import {
@@ -112,7 +112,7 @@ const formatBlockDate = (value: string) =>
 		timeZone: "UTC",
 	}).format(new Date(value));
 
-export { buildProductSubmissionReviewFlags };
+export { buildProductSubmissionReviewFlags, resolveCatalogSubmissionIntent };
 
 export const validateSharedProductFood = (
 	food: FoodItem,
@@ -281,35 +281,10 @@ export const submitProductForCatalog = async (
 	const catalogUpdateTarget = existingCatalogFood?.sharedProductId && existingCatalogComparison
 		? await readCatalogUpdateTarget(admin, existingCatalogFood.sharedProductId)
 		: null;
-	if (
-		existingCatalogComparison?.shouldAutoDecline &&
-		submissionIntent !== "catalog_correction"
-	) {
-		if (!catalogUpdateTarget) {
-			throw new Error("The active catalog product could not be prepared for comparison.");
-		}
-		const changeSummary = createCatalogUpdateSummary({
-			comparison: existingCatalogComparison,
-			baseRevisionNumber: catalogUpdateTarget.baseRevisionNumber,
-			observedAt: labelObservedAt,
-			sourceChecks: [],
-		});
-		await recordAutoDeclinedCatalogSubmission(admin, {
-			userId,
-			barcode: validation.barcode,
-			food: submissionFood,
-			categoryOptionId: selectedCategory.categoryOptionId,
-			comparison: existingCatalogComparison,
-			updateTarget: catalogUpdateTarget,
-			changeSummary,
-			intent: submissionIntent,
-		});
-		return {
-			status: "already-available",
-			message: "This barcode already has a verified catalog item. Your private ingredient was saved, but it was not sent for shared review.",
-			evidenceAccepted: false,
-		};
-	}
+	const effectiveSubmissionIntent = resolveCatalogSubmissionIntent({
+		requestedIntent: submissionIntent,
+		existingComparison: existingCatalogComparison,
+	});
 
 	const existingSubmission = await findPendingCatalogSubmission(
 		admin,
@@ -384,7 +359,7 @@ export const submitProductForCatalog = async (
 		report,
 		evidencePaths,
 		evidenceComplete,
-		intent: submissionIntent,
+		intent: effectiveSubmissionIntent,
 	});
 	if (!submissionId) {
 		return {

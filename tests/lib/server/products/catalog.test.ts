@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
 	buildProductSubmissionReviewFlags,
+	resolveCatalogSubmissionIntent,
 	validateSharedProductFood,
 } from "$lib/server/products/catalog.server";
 import type { NutrientRelationshipRule } from "$lib/utils/food/nutrients/nutrientRelationshipRules";
@@ -118,7 +119,6 @@ describe("shared product validation", () => {
 	it("forces source-reported differences into moderator review", () => {
 		const sourceComparison = {
 			matchesExisting: false,
-			shouldAutoDecline: false,
 			hasBlockingIdentityMismatch: false,
 			changedFields: ["nutrient:1008"],
 			changes: [],
@@ -129,5 +129,25 @@ describe("shared product validation", () => {
 		expect(buildProductSubmissionReviewFlags({ sourceComparison })).toContain(
 			"Calories differs from the source record.",
 		);
+	});
+
+	it("routes every changed same-barcode product through catalog correction review", () => {
+		const existingComparison = {
+			matchesExisting: false,
+			hasBlockingIdentityMismatch: false,
+			changedFields: ["nutrient:1008"],
+			changes: [],
+			issues: ["Calories differs from the active catalog item."],
+			severeDifferences: ["Calories differs from the active catalog item."],
+		};
+
+		expect(resolveCatalogSubmissionIntent({
+			requestedIntent: "catalog_share",
+			existingComparison,
+		})).toBe("catalog_correction");
+		expect(resolveCatalogSubmissionIntent({
+			requestedIntent: "catalog_share",
+			existingComparison: null,
+		})).toBe("catalog_share");
 	});
 });

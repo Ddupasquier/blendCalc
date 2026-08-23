@@ -290,10 +290,27 @@ revision. The system never averages conflicting values or silently chooses a pro
 The first approved correction advances the revision; every other pending correction
 must then be re-compared before it can change the catalog.
 
+Provider changes, open field conflicts, and confirmed warning reports retain separate
+`catalog_correction_origins`. Each origin preserves the exact product, base revision,
+affected field families, and a prefilled current snapshot. A later evidence-backed
+catalog-correction submission links automatically only when its real changed fields
+overlap that origin. Approval atomically records the exact resolving revision and closes
+the linked work; rejection releases it for a later correction. The origin snapshot does
+not invent a submission or satisfy evidence requirements by itself, so ordinary exact
+matches and safe automated acceptance remain unchanged.
+
 `label_observed_at` records when blendCalc saw the submitted label. It is not presented
 as the date the manufacturer changed the product unless a separate source provides that
 date. Revision history is retained for the future public API, while private evidence
 paths remain moderator-only.
+
+Legacy structural gaps use the same evidence boundary as new changes. The audited
+catalog repair can reconstruct a missing first revision only from an exact approved
+matching submission or exact stored source observation. It can repopulate missing
+field-change rows only from that revision's already-valid structured change summary.
+The repair never compares nearby snapshots, infers a manufacturer date, or invents a
+historical difference. If retained evidence is insufficient, the gap remains visibly
+unresolved and the product stays subject to the normal readiness gate.
 
 Public API removal is separate from canonical deletion. A credible rights,
 attribution, privacy, accuracy, or source-retirement concern can place a reversible
@@ -311,6 +328,13 @@ across canonical products, selected source observations, normalized rows, API v1
 publication, and the app read model. Add `--json` for machine-readable output. The
 report classifies each field as populated, sparse, or empty and prints representative
 non-private values.
+
+Run `npm run audit:api-catalog -- --json` for a fresh product-by-product publication
+reassessment. It reads the live readiness gate and DB-owned issue contracts, separates
+safe automated repairs from catalog, data-operations, food-policy, external, and system
+work, and reports any blocker whose operational contract is not yet deployed. The audit
+is read-only: it never repairs, publishes, or removes a product merely to improve its
+result.
 
 | User concept | Semantic owner | Meaning | Missing-value behavior |
 | --- | --- | --- | --- |
@@ -451,6 +475,28 @@ approved canonical revision remains active. A moderator may dismiss a provider c
 or complete the existing catalog correction workflow and link the resulting approved
 revision; the monitor never overwrites `shared_products` directly.
 
+### Readiness And Operational Issues
+
+Canonical availability and public API publication are separate states. Every product
+has one service-only `catalog_product_readiness` record with:
+
+- shared-catalog state: `Active`, `Waiting for review`, or `Blocked`;
+- API v1 state: `Ready` or `Withheld`;
+- explicit blendCalc search and use availability; and
+- current revision, correction, conflict, verification, and API-withholding context.
+
+`Withheld` means that API v1 cannot legally or accurately publish the record yet. It
+does not hide an otherwise active product from blendCalc. Current operational gaps are
+projected through `catalog_health_issue_occurrences`. Stable issue metadata owns
+urgency, responsible work group, supported resolution action, and whether a reviewed
+evidence-only repair can be offered. Friendly UI wording remains application-owned.
+
+The product-readiness passport is the bounded operational read for this state. It joins
+the current canonical revision, independent blendCalc/API availability, evidence
+coverage counts, and normalized open issues without exposing raw observations or user
+evidence. Catalog review and data operations share the contract while retaining
+separate route and database permissions.
+
 ### Official Recall Matching
 
 FDA recall announcements, FDA enforcement records, and USDA FSIS recalls/public-health
@@ -499,12 +545,19 @@ approval.
   image into public product image storage and records it in `food_image_assets`,
   including the accepted fit, crop, zoom, clockwise quarter-turn rotation, placement
   method, algorithm version, and confidence. Automatic placement never bypasses image
-  approval.
+  approval. Once approved, the image can become canonical automatically only when the
+  product does not already have an eligible canonical front image.
 - **Trusted source image placement:** when an exact-barcode provider supplies a new
   licensed front image, the server caches it with the honest Full image default and
   schedules bounded OCR placement. A confident result may update only that untouched,
   unapproved placement metadata; it does not verify the product, approve a community
   image, or overwrite any user-adjusted or moderator-approved crop.
+- **Canonical image admission:** every shared product may have one selected canonical
+  front image. An eligible selected image remains stable; later imports stay available
+  as candidates instead of silently replacing it. If the selected image is retired, the
+  database promotes the next exact licensed or moderator-approved candidate. Public API
+  reads expose only the selected canonical front image and still require complete asset
+  redistribution metadata.
 - **Reject:** retains the private user ingredient, records the review note, and does not
   publish a shared product.
 - **Submission pause:** moderator-rejected submissions are counted cumulatively in
@@ -538,9 +591,10 @@ outcomes:
    matches closely enough. Publish without human review and keep source provenance.
 5. **Human review:** unknown label, same-product source disagreement, or missing
    confidence. Require package, nutrition label, and barcode evidence.
-6. **Silent machine block:** the submitted product identity is wildly different from the
-   verified barcode match. Offer verified autofill or remove the barcode and save the
-   user-authored item privately; do not create a normal moderation item.
+6. **Evidence-aware divergence:** an exact-GTIN submission that materially differs from
+   the current product becomes a correction when it includes the required current
+   package evidence. A definite identity contradiction without that evidence remains
+   private and does not create ordinary review work.
 
 ### Suggested Checks
 
@@ -572,17 +626,18 @@ to audit them:
 
 - Barcode belongs to an existing catalog product, but the submitted name/brand/category
   is clearly unrelated.
-- Barcode has a trusted source match, but the submitted nutrients are wildly outside the
-  source range.
+- Barcode has a trusted source match, but the submitted nutrients differ materially;
+  require current package evidence and route it as a correction rather than assuming
+  the magnitude proves the submission is wrong.
 - Submission appears to reuse a barcode for a different product.
 - Required evidence is absent after the flow already told the user it is required.
 
 ### Schema Note
 
-Normal `rejected` submissions count toward the 5-rejection sharing pause. Silent machine
-blocks use `shared_product_submissions.status = 'auto_declined'` and do not count as
-normal moderator rejections. That keeps spam protection useful without punishing honest
-users who hit a machine guardrail while saving a private ingredient.
+Normal `rejected` submissions count toward the 51st-rejection sharing suspension.
+Historical `auto_declined` rows remain non-punitive audit records. New same-GTIN
+differences are not assigned that status based on value magnitude; they either become
+evidence-backed corrections or remain private when correction evidence is missing.
 
 Current server behavior compares new barcoded submissions against an active shared
 product before deciding the outcome:
@@ -590,8 +645,8 @@ product before deciding the outcome:
 - matching catalog data returns `already-available` and does not create a new
   submission;
 - meaningful differences become a pending catalog update request with evidence;
-- wildly unrelated data is stored as `auto_declined` for audit and never appears in the
-  normal moderation queue.
+- material same-GTIN changes with complete current-package evidence become pending
+  catalog corrections; identity contradictions without that evidence stay private.
 
 ## Verification Rules
 

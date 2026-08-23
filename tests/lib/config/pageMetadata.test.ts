@@ -51,8 +51,8 @@ describe("page metadata", () => {
 		expect(getAppDocumentTitle(url("/profile/food-preferences"))).toBe(
 			"Food Preferences · blendCalc",
 		);
-		expect(getAppDocumentTitle(url("/profile/moderator-actions"))).toBe(
-			"Moderator Actions · blendCalc",
+		expect(getAppDocumentTitle(url("/profile/privileged-tools"))).toBe(
+			"Privileged Tools · blendCalc",
 		);
 	});
 

@@ -844,6 +844,16 @@ absorb another person's or another task's changes merely to make the tree clean.
 commits may retain their generated merge description when it clearly names the branches
 or responsibility being integrated.
 
+**20b.** Before making multiple explicitly authorized commits, maintain the local-only
+`docs/local-context/proposed-commits.md` ledger. Organize the batch by branch, feature,
+and intention; list each exact proposed commit message in execution order; identify the
+coherent responsibility and required verification; and distinguish proposed, ready,
+committed, and superseded entries. Present that commit-name list to the user before
+executing the batch. Reconcile the ledger with the real diff and branch immediately
+before staging because the ledger is planning context, not Git authority. The ledger
+must remain ignored, contain no secrets or private user data, and never replace the work
+queue or imply permission to commit, push, merge, or deploy.
+
 **21.** Verify meaningful changes with `npm run check`, focused tests, and builds when
 scope warrants it.
 
@@ -1933,8 +1943,11 @@ production database.
 **47.** <a id="rule-local-recovery-context"></a>Keep temporary recovery checkpoints and
 decision notes under local-only `docs/local-context/`. Keep that folder ignored by Git.
 Never store passwords, tokens, environment values, private user data, or raw private
-reasoning. Verify recovery notes against the current request, development rules, code,
-migrations, database, and QA tasks before resuming work.
+reasoning. Keep proposed commit batches in `proposed-commits.md`, organized by branch,
+feature, and intention rather than mixing them into the working checkpoint or work
+queue. Verify recovery notes and commit proposals against the current request,
+development rules, Git state, code, migrations, database, and QA tasks before resuming
+work.
 
 **47a.** <a id="rule-qa-screenshot-assets"></a>If a QA task depends on a specific
 screenshot reference, copy that screenshot into local-only `docs/QA/assets/` and link to
@@ -2077,11 +2090,15 @@ make future changes easier. Do not leave known schema, flow, or ownership proble
 unspoken.
 
 **54.** <a id="rule-catalog-divergence-blocks"></a>Shared catalog submissions that are
-wildly different from an existing barcode match or trusted source should be blocked
-before they reach normal moderation. This must be server-side and schema-aware. Do not
-count silent machine blocks the same as human moderator rejections unless that is an
-explicit product decision, because normal rejections affect the user’s submission-block
-threshold. Private Custom records cannot be submitted directly. A source-backed
+materially different from an existing exact-barcode product must be classified
+server-side and schema-aware. An exact duplicate reuses the canonical product. A
+credible same-GTIN change with the required current-package evidence becomes a
+`catalog_correction` review even when its name, serving, or nutrient values differ
+substantially; magnitude alone must never discard a possible reformulation. A definite
+identity contradiction without the required correction evidence is kept private and
+blocked from shared review. Deterministic automated validation outcomes must remain
+distinct from human moderator rejections because normal rejections affect the user’s
+submission-block threshold. Private Custom records cannot be submitted directly. A source-backed
 submission with any meaningful server-calculated identity, serving, ingredient,
 allergen, category, or nutrient difference must require evidence and moderation rather
 than relying on client review flags or automatic source publication. Validate GTIN

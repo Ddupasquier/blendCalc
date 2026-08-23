@@ -24,9 +24,10 @@ session settings. Detailed privacy and storage rules live in
   inside the sheet.
 - Open Food preferences at `/profile/food-preferences` in the shared route-backed
   `RightSheet` because it is a long, independently scrollable settings workflow.
-- Show the Moderator actions launcher only when the current server-verified role is
-  moderator, administrator, or developer. Open it at
-  `/profile/moderator-actions` in the shared route-backed `BottomSheet`.
+- Show the privileged-tools launcher only when the current server-verified role is
+  moderator, administrator, or developer. Name it `Moderator tools`, `Admin tools`, or
+  `Developer tools` from that verified role, and open it at
+  `/profile/privileged-tools` in the shared route-backed `BottomSheet`.
 - Each launcher summarizes the saved state without duplicating its complete form.
 - The shared handle, intentional backdrop press, Escape, and browser history close a
   bottom sheet and return to `/profile` without reloading the underlying Profile page.
@@ -36,9 +37,10 @@ session settings. Detailed privacy and storage rules live in
 
 ## Identity
 
-- Show and edit preferred display name and an optional bio limited to 150 characters.
-- Show the live bio character count beside the field and announce the remaining count
-  through the field's accessible description.
+- Show and edit a preferred display name limited to 25 characters and an optional bio
+  limited to 150 characters.
+- Show the live character count beside both fields and announce the remaining count
+  through each field's accessible description.
 - Use a generated display name when the account has no chosen name.
 - Do not require or expose the account email as a public identity.
 - Show clear validation, pending, success, and failure states.
@@ -139,26 +141,32 @@ matching.
 - Log out only the current browser session; other signed-in devices remain active.
 - Logging out never deletes profile, food, list, recipe, or Mix data.
 
-## Moderator Actions
+## Privileged Tools
 
 - Treat Profile as a privileged navigation gateway, not as a second moderation
   implementation. Every destination retains its own server and database authorization.
-- Open the compact destination list in the shared bottom sheet, then open each selected
-  moderation responsibility in its own route-backed `RightSheet`. Closing a focused
+- Read the current role's permission rows from `app_role_permissions`; never infer tool
+  access from the role name or expose a destination without its required permission.
+- Open the compact permitted destination list in the shared bottom sheet, then open each
+  selected responsibility in its own route-backed `RightSheet`. Closing a focused
   view returns to the destination list. Never use hash jumps into one crowded page as
   the primary Profile moderation flow.
 - Show one aggregate red count on the Profile launcher only when one or more review
   items are waiting.
-- Keep every supported moderator option visible in the sheet. Product submissions,
+- Keep every permitted option visible in the sheet. Product submissions,
   food-warning reports, and profile-image review rows are disabled when their verified
   queue count is zero; a nonzero queue displays its own red count in the row's top-right
   corner.
 - Count only exact profile images with pending user reports. Ordinary profile-image
   uploads remain active and never create moderator work by themselves.
-- Show one crown beside the Moderator actions sheet title. The action region retains its
-  accessible group name without repeating `Moderator actions` as a second visible
+- Group catalog decisions under **Review work** and source/dataset/readiness operations
+  under **Data operations**. Catalog reviewers can resolve conflicts, provider changes,
+  and possible recalls without receiving permission to run or inspect admin/developer
+  operations.
+- Show one crown beside the role-aware tools sheet title. The action region retains its
+  accessible group name without repeating the title as a second visible
   heading.
-- Give every focused moderator right sheet one plain-language heading, one short outcome-
+- Give every focused privileged-tool right sheet one plain-language heading, one short outcome-
   focused explanation, and one crown at the view header. Do not repeat the heading in
   the action body or expose source keys and status codes as unexplained user-facing copy.
 - Place one shared circular information action beside the crown. It opens a contextual
@@ -168,8 +176,8 @@ matching.
 - Before identity verification, keep review counts private but leave the protected
   review rows available as entry points into the authenticator flow. Explain that
   verification is required instead of making the actions look permanently unavailable.
-- Keep standing tools such as Account access and Catalog data health enabled because
-  they remain useful without a pending queue.
+- Keep standing tools such as Account access, Catalog review work, and permitted Catalog
+  data operations enabled because they remain useful without a pending queue.
 - If queue counts cannot be read, preserve unknown as unknown, disable queue actions,
   explain the temporary limitation with friendly copy, and leave standing tools
   available. Never present an unavailable count as zero.

@@ -27,10 +27,11 @@ import type { RegulatoryRegionOption } from "$lib/utils/profile/regulatoryRegion
 import { getDefaultMixFields } from "$lib/utils/food/reference/appReferenceCatalog";
 import type { ProfilePageDataReaderOptions } from "./types";
 import {
-	getIdentityVerificationRequiredModeratorActionSummary,
-	getUnavailableModeratorActionSummary,
-	readModeratorActionSummary,
-} from "$lib/server/moderation/moderatorActionSummary.server";
+	getIdentityVerificationRequiredPrivilegedToolReviewSummary,
+	getUnavailablePrivilegedToolReviewSummary,
+	readPrivilegedToolReviewSummary,
+} from "$lib/server/moderation/privilegedToolReviewSummary.server";
+import { readAppRolePermissions } from "$lib/server/moderation/appRolePermissions.server";
 import { readMfaSecurityStatus } from "$lib/server/auth/mfaAccess.server";
 
 export const getRegulatoryRegionOptions = (
@@ -53,13 +54,23 @@ export const loadProfilePageData = async ({
 			profile,
 			avatarUrl: await getSignedAvatarUrl(supabase, profile?.avatar_path),
 		}));
-	const moderatorActionSummaryPromise = appRole
-		? readMfaSecurityStatus(supabase)
-			.then((status) => status.currentLevel === "aal2"
-				? readModeratorActionSummary().catch(() =>
-					getUnavailableModeratorActionSummary())
-				: getIdentityVerificationRequiredModeratorActionSummary())
-			.catch(() => getUnavailableModeratorActionSummary())
+	const privilegedToolAccessPromise = appRole
+		? readAppRolePermissions(appRole)
+			.then(async (permissions) => ({
+				role: appRole,
+				permissions,
+				reviewSummary: await readMfaSecurityStatus(supabase)
+					.then((status) => status.currentLevel === "aal2"
+						? readPrivilegedToolReviewSummary(permissions).catch(() =>
+							getUnavailablePrivilegedToolReviewSummary())
+						: getIdentityVerificationRequiredPrivilegedToolReviewSummary())
+					.catch(() => getUnavailablePrivilegedToolReviewSummary()),
+			}))
+			.catch(() => ({
+				role: appRole,
+				permissions: [],
+				reviewSummary: getUnavailablePrivilegedToolReviewSummary(),
+			}))
 		: Promise.resolve(null);
 
 	const [
@@ -69,7 +80,7 @@ export const loadProfilePageData = async ({
 		appReferenceCatalog,
 		foodSafetyPolicy,
 		preferenceResolutions,
-		moderatorActionSummary,
+		privilegedToolAccess,
 	] = await Promise.all([
 		profileWithAvatarPromise,
 		supabase
@@ -89,7 +100,7 @@ export const loadProfilePageData = async ({
 		getAppReferenceCatalog(),
 		getFoodSafetyPolicy(),
 		getUserFoodPreferenceResolutions(supabase, userId),
-		moderatorActionSummaryPromise,
+		privilegedToolAccessPromise,
 	]);
 
 	const foodPreferencesUnavailable =
@@ -120,6 +131,6 @@ export const loadProfilePageData = async ({
 		defaultDisplayName: getDefaultDisplayName(userId),
 		avatarPolicyItems: PROFILE_AVATAR_POLICY_ITEMS,
 		requireHumanFace: PROFILE_AVATAR_REQUIRE_HUMAN_FACE,
-		moderatorActionSummary,
+		privilegedToolAccess,
 	};
 };

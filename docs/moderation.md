@@ -12,7 +12,7 @@ workflows. Profile upload behavior belongs in
 | --- | --- |
 | Access and setup | [Security model](#security-model) and [apply and configure](#apply-and-configure) |
 | Account actions | [Notification emails](#block-notification-emails), [blocking and restoring](#blocking-and-restoring-accounts), and [future-signup blocking](#enable-future-signup-blocking) |
-| Data review | [Food warnings](#food-warning-reports), [preference mappings](#custom-food-preference-mapping-requests), [nutrient mappings](#nutrient-mapping-and-uncertainty-review), [product corrections](#product-correction-reports), and [catalog health](#catalog-data-health) |
+| Data review | [Food warnings](#food-warning-reports), [preference mappings](#custom-food-preference-mapping-requests), [nutrient mappings](#nutrient-mapping-and-uncertainty-review), [product corrections](#product-correction-reports), and [catalog review and operations](#catalog-review-and-data-operations) |
 | Media and privacy | [Profile image moderation](#profile-image-moderation) and [IP addresses](#ip-addresses) |
 
 ## Security Model
@@ -53,8 +53,10 @@ linked project. Do not use a custom PostgreSQL login role, overwrite the require
 `role` claim, or store privileged app-role status in editable user metadata.
 
 `app_role_permissions` owns capability mapping. Moderators receive account, catalog,
-warning, and data-health permissions. Admins and developers receive those capabilities
-plus role management.
+and warning-review permissions. Admins and developers receive those capabilities plus
+role management and explicit data-operations permissions. The old
+`moderation.data_health.read` capability remains only as a temporary rollout boundary;
+new application code does not use it.
 The `authorize_app_permission` helper is suitable for RLS policy checks and requires
 both an allowed signed `app_role` and the JWT `aal2` claim. Sensitive server actions
 continue to re-read `app_role_assignments` so revocations apply without waiting for JWT
@@ -66,7 +68,10 @@ expiry.
 | Manage eligible accounts | No | Yes | Yes | Yes |
 | Review catalog submissions | No | Yes | Yes | Yes |
 | Review food warnings | No | Yes | Yes | Yes |
-| Read moderator data health | No | Yes | Yes | Yes |
+| Resolve catalog review work | No | Yes | Yes | Yes |
+| Read catalog data operations | No | No | Yes | Yes |
+| Run audited exact-evidence repairs | No | No | Yes | Yes |
+| Review ambiguous nutrient mappings | No | No | Yes | Yes |
 | Grant or revoke application roles | No | No | Yes | Yes |
 
 The table describes authorization policy, not UI availability or target eligibility.
@@ -77,8 +82,12 @@ web workflow from blocking administrators or developers.
 
 ## Review Interface
 
-Profile links to five focused moderator right sheets: product submissions, food-warning
-reports, reported profile images, account access, and catalog data health. Each sheet
+Profile links elevated users to the focused right sheets allowed by their current
+database permission rows. **Review work** includes product submissions, catalog
+conflicts/provider changes/possible recalls, food-warning reports, reported profile
+images, and account access. **Data operations** includes source, dataset, publication,
+mapping, revision, and automated-monitoring health for administrators and developers.
+Each sheet
 uses the same review order: concise queue or result status, record identity and key facts,
 closed supporting-evidence disclosures, then the decision controls. One shared
 information action explains the purpose, review steps, effect, and guardrail for the
@@ -86,8 +95,9 @@ current tool without mixing instructions into every record.
 
 Product submissions, food-warning reports, and reported profile images share the same
 review-list and card shells. Account access remains search-led and keeps account evidence
-plus destructive controls behind deliberate disclosures. Catalog data health keeps its
-readiness snapshot and specialized operational sections collapsed until requested. The
+plus destructive controls behind deliberate disclosures. Catalog review work contains
+only decisions a reviewer can make. Data operations keeps its bounded operational
+sections collapsed until requested and never duplicates review queues. The
 visual consistency never replaces each route's independent server, database, AAL2, and
 permission checks.
 
@@ -213,9 +223,22 @@ Reviewers must:
 4. Leave a concise internal note explaining the decision.
 
 Resolving feedback does not silently edit a product or compatibility rule. Confirmed
-reports create a traceable correction decision; any resulting product or policy change
-uses its own reviewed workflow and, for policy changes, a new compatibility policy
-version. Private package evidence is viewed through short-lived signed URLs and never
+reports create a traceable follow-up owned by the appropriate workflow:
+
+- `product_correction` preserves the exact product, current revision, affected field
+  families, and current food snapshot as a correction origin. A later evidence-backed
+  catalog-correction submission links automatically when its actual changed fields
+  overlap the origin. The report is completed only when that submission creates an
+  approved immutable revision.
+- `rule_review` opens a food-policy review case. Any rule change still requires a new
+  immutable compatibility policy version.
+- `source_correction` opens a data-operations case tied to the reported source context.
+
+The follow-up list remains separate from pending reports so a reviewer can distinguish
+the decision already made from the corrective work still owed. A dismissed report can
+never create correction work. Rejected or automatically declined product corrections
+release their linked origins for another evidence-backed correction instead of losing
+the report. Private package evidence is viewed through short-lived signed URLs and never
 enters public catalog or API responses.
 
 ## Custom Food Preference Mapping Requests
@@ -253,6 +276,20 @@ source-review rows never enter ordinary product pages or the public API. A revie
 correct an inaccurate mapping through the reviewed mapping workflow; the moderation
 read itself cannot rewrite nutrient math or silently approve a source row.
 
+The actionable workflow belongs to administrators and developers at
+`/profile/privileged-tools/data-operations/nutrient-mappings/[mappingId]`. It receives
+only disabled `pending_review` candidates discovered through semantic taxonomy or
+observation matching. Exact provider IDs, reviewed source keys, and approved dataset
+identities continue automatically and never enter the queue.
+
+The focused right sheet shows the source key, source unit, current suggestion,
+confidence, observation count, and why the candidate is uncertain. Approval requires a
+canonical nutrient selected from the database-filtered compatible-unit set, an evidence
+reference, and an internal note. Exclusion requires a note and keeps the candidate
+disabled. Both outcomes create an immutable private decision and immediately remove the
+mapping from unresolved data-health work. They do not rewrite older nutrient facts;
+safe historical reprocessing remains a separate evidence-preserving operation.
+
 ## Product Correction Reports
 
 Explicit product-correction reports are identified separately from ordinary catalog
@@ -287,8 +324,10 @@ operator action is needed before a dedicated moderation surface is available.
 ## Repeated Catalog Rejections
 
 Every transition to the moderator-owned `rejected` submission status atomically
-increments `user_catalog_submission_enforcement.moderator_rejection_count`. Automated
-validation outcomes use `auto_declined` and never increase this count.
+increments `user_catalog_submission_enforcement.moderator_rejection_count`. Historical
+`auto_declined` validation outcomes and other deterministic machine rejections never
+increase this count. Material same-GTIN changes with complete current-package evidence
+now enter correction review rather than being dismissed because their values differ.
 
 The 51st moderator rejection suspends new public catalog submissions for six calendar
 months. The user may continue saving private foods, using Ingredients, building Mixes,
@@ -301,59 +340,85 @@ card on `/moderation` displays the cumulative count and active suspension end da
 reviewer can understand the account's catalog-sharing history without exposing those
 details to other users.
 
-## Catalog Data Health
+## Catalog Review And Data Operations
 
-`/profile/moderator-actions/catalog-data-health` is the primary privileged catalog
-health summary available to
-moderators, admins, and developers. Its server
-load calls `get_moderator_data_health` through the signed-in user's Supabase client. The
-RPC requires both a signed AAL2 permission and a current database role assignment. The
-browser receives
-only bounded aggregates and issue summaries; it never receives raw provider payloads,
-private evidence, user identifiers, secrets, source-evaluation details, dataset import
-metadata, or download URLs.
+`/profile/privileged-tools/catalog-review-work` is the catalog-review workspace for
+moderators, administrators, and developers. It contains only evidence-backed decisions:
+open material conflicts, provider changes, and possible official recall matches.
+`get_catalog_review_work_summary` requires current `moderation.catalog.review`
+permission and AAL2, and it returns only those bounded review queues.
 
-The dashboard includes:
+`/profile/privileged-tools/data-operations` is the operational workspace for
+administrators and developers. It contains blendCalc/API readiness counts, automated
+monitor state and runs, source activity, dataset import/licence state, warning-policy
+coverage, publication gaps, nutrient-mapping gaps, and revision-history gaps.
+`get_catalog_data_operations_health` and
+`get_catalog_data_operations_monitor_summary` require current
+`data_operations.catalog_health.read` permission and AAL2. Moderators cannot enter this
+workspace merely because they can review catalog products.
 
-- active and API-publication-ready product counts;
-- pending catalog submissions, food-warning reports, and preference mappings;
-- unresolved catalog conflicts, revision-history gaps, and nutrient-mapping review
-  gaps;
-- source request, cache, reliability, match, response-time, and field-coverage counts
-  for a bounded 30-day window;
-- dataset import counts, checksum state, licence review state, and policy gaps; and
-- active food-compatibility policy coverage;
-- catalog-monitor enablement, queue state, recent bounded runs, and safe provider error
-  counts;
-- material provider changes awaiting a catalog correction decision; and
-- probable official recall matches awaiting confirmation or dismissal.
+Each nutrient-mapping gap links by stable mapping UUID to the focused route above.
+Rejected candidates and approved mappings are completed outcomes rather than recurring
+gaps. The workspace never offers arbitrary free-text nutrient identity or an unreviewed
+unit conversion.
 
-Issue queues are bounded to 20 rows in the application and the RPC enforces a maximum
-of 50. Product issues link to the existing moderator provenance read, while pending
-submissions and warning reports link to their established reviewed queues. Mapping,
-dataset, and policy corrections remain deliberate reviewed database/policy workflows;
-the health dashboard must not become an unreviewed direct-edit surface.
+Both workspaces are bounded to 20 issue rows in the application and database. They do
+not expose raw provider payloads, private evidence paths, user identifiers, secrets,
+download URLs, or internal source-evaluation details. Shared private builders assemble
+the bounded data, while each public RPC independently enforces its exact permission;
+one workspace never relies on the other's permission.
 
-Catalog-monitor review follows the same rule. Dismissing a provider change records that
+Product links in both workspaces open the same bounded readiness passport through
+different permission-checked routes. The passport separates shared-catalog availability
+from API v1 publication, identifies the current revision, summarizes source-backed
+nutrition and serving coverage, and routes every open issue to its responsible work
+group and supported next step. Reviewers use
+`/profile/privileged-tools/catalog-review-work/products/[productId]`; administrators and
+developers use `/profile/privileged-tools/data-operations/products/[productId]`.
+`get_catalog_product_readiness_passport` enforces either exact AAL2 permission before
+returning normalized counts and statuses. It never returns raw provider payloads,
+private evidence paths, or contributor identity.
+
+Administrators and developers with `data_operations.catalog_health.repair` may run a
+bounded repair from the data-operations product route when the issue code explicitly
+allows one. `run_catalog_health_repair` requires AAL2 and records a separate dry-run or
+apply run plus every candidate, changed, skipped, unresolved, or failed item. Apply
+requires a successful dry run by the same user within one hour. Current handlers only
+link unchanged product fields, nutrition, or servings to an exact, redistributable
+observation already stored for the same barcode, restore a missing baseline revision
+from an exact approved submission or exact source observation, or rebuild change rows
+from that revision's existing valid structured summary. Missing or ambiguous evidence
+remains unresolved; it does not become a review decision and never creates a guessed
+value or historical change.
+
+Catalog-review decisions follow the same rule. Dismissing a provider change records that
 the current canonical revision remains authoritative. Accepting a correct provider
 change requires completing the existing product-correction workflow and linking the
 new approved catalog revision; a monitor result cannot overwrite a canonical product.
+`catalog_correction_origins` applies the same origin-to-revision contract to provider
+changes, open field conflicts, and confirmed food-warning reports. A real correction
+submission links automatically by exact product, base revision, and overlapping changed
+fields. Approval then resolves all linked origins atomically; it never fabricates a
+change summary or treats an unchanged product snapshot as corrective evidence.
 Probable recall matches can be confirmed or dismissed only by an elevated AAL2 session.
 Exact GTIN matches are visible immediately, while title-only similarity never enters
 the queue.
 
-Profile is the moderator navigation gateway. `/profile/moderator-actions` opens the
-compact action list, while the following direct routes own focused right sheets:
+Profile is the privileged navigation gateway. `/profile/privileged-tools` opens the
+role-aware permitted tool list, while the following direct routes own focused right sheets:
 
-- `/profile/moderator-actions/product-submissions`;
-- `/profile/moderator-actions/food-warning-reports`;
-- `/profile/moderator-actions/profile-images`;
-- `/profile/moderator-actions/account-access`; and
-- `/profile/moderator-actions/catalog-data-health`.
+- `/profile/privileged-tools/product-submissions`;
+- `/profile/privileged-tools/food-warning-reports`;
+- `/profile/privileged-tools/profile-images`;
+- `/profile/privileged-tools/account-access`; and
+- `/profile/privileged-tools/catalog-review-work`; and
+- `/profile/privileged-tools/data-operations`.
 
-Every direct route repeats the current role and AAL2 checks on the server. Legacy
+Every direct route repeats the current role, exact database-owned permission, and AAL2
+checks on the server. Legacy
 `/moderation` routes remain compatibility entry points while links and Profile flows use
-the focused routes.
+the focused routes. `/profile/privileged-tools/catalog-data-health` redirects to the new
+data-operations route during rollout and owns no business logic.
 
 ## Enable Future-Signup Blocking
 

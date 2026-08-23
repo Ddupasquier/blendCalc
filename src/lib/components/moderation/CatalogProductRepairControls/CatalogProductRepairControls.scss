@@ -1,0 +1,71 @@
+@use "../../../../styles/variables" as *;
+
+.catalog-product-repairs,
+.catalog-product-repairs__item,
+.catalog-product-repairs__results,
+.catalog-product-repairs__results li {
+	display: grid;
+	min-width: 0;
+}
+
+.catalog-product-repairs,
+.catalog-product-repairs__item {
+	gap: $app-gap-sm;
+}
+
+.catalog-product-repairs__item {
+	padding: $app-shell-card-padding-compact;
+	background: $app-shell-surface-soft;
+	border-radius: $app-shell-radius-card;
+}
+
+.catalog-product-repairs__item > header {
+	display: flex;
+	align-items: start;
+	justify-content: space-between;
+	gap: $app-gap-sm;
+}
+
+.catalog-product-repairs__item > p,
+.catalog-product-repairs__results {
+	margin: 0;
+}
+
+.catalog-product-repairs__item > p,
+.catalog-product-repairs__results span {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+}
+
+.catalog-product-repairs__item strong,
+.catalog-product-repairs__results span {
+	overflow-wrap: anywhere;
+}
+
+.catalog-product-repairs__results {
+	gap: $app-gap-xs;
+	padding: 0;
+	list-style: none;
+}
+
+.catalog-product-repairs__results li {
+	grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+	gap: $app-gap-sm;
+	align-items: baseline;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.catalog-product-repairs,
+	.catalog-product-repairs__item {
+		gap: $app-gap-xs;
+	}
+
+	.catalog-product-repairs__item {
+		padding: $app-gap-xs;
+	}
+
+	.catalog-product-repairs__results li {
+		grid-template-columns: 1fr;
+		gap: $app-gap-inline-compact;
+	}
+}

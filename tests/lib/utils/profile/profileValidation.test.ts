@@ -6,6 +6,7 @@ import {
 	matchesAvatarFileSignature,
 	normalizeOptionalProfileText,
 	PROFILE_BIO_MAX_LENGTH,
+	PROFILE_DISPLAY_NAME_MAX_LENGTH,
 } from "$lib/utils/profile/profileValidation";
 
 describe("profile validation", () => {
@@ -37,6 +38,22 @@ describe("profile validation", () => {
 		expect(
 			getProfileValidationError({ displayName: null, bio: null }),
 		).toBe("");
+	});
+
+	it("accepts a 25-character display name and rejects anything longer", () => {
+		expect(PROFILE_DISPLAY_NAME_MAX_LENGTH).toBe(25);
+		expect(
+			getProfileValidationError({
+				displayName: "a".repeat(PROFILE_DISPLAY_NAME_MAX_LENGTH),
+				bio: null,
+			}),
+		).toBe("");
+		expect(
+			getProfileValidationError({
+				displayName: "a".repeat(PROFILE_DISPLAY_NAME_MAX_LENGTH + 1),
+				bio: null,
+			}),
+		).toBe("Display name must be 25 characters or fewer.");
 	});
 
 	it("accepts a 150-character bio and rejects anything longer", () => {

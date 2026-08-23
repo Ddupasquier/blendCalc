@@ -1,7 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
 	parseFoodCompatibilityFeedbackRequest,
 	parseMissingFoodWarningFeedbackRequest,
+	reviewFoodCompatibilityFeedback,
 } from "$lib/server/food-safety/foodCompatibilityFeedback.server";
 
 const validRequest = {
@@ -105,5 +106,48 @@ describe("parseMissingFoodWarningFeedbackRequest", () => {
 		formData.set("observedLabelDate", "2099-01-01");
 
 		expect(parseMissingFoodWarningFeedbackRequest(formData)).toBeNull();
+	});
+});
+
+describe("reviewFoodCompatibilityFeedback", () => {
+	it("uses the authenticated atomic review contract and preserves follow-up identity", async () => {
+		const rpc = vi.fn().mockResolvedValue({
+			data: {
+				reviewed: true,
+				followUpStatus: "open",
+				followUpType: "product_correction",
+				followUpId: "correction-origin-id",
+			},
+			error: null,
+		});
+
+		await expect(reviewFoodCompatibilityFeedback({ rpc } as never, {
+			id: "feedback-id",
+			status: "confirmed",
+			resolutionAction: "product_correction",
+			reviewNote: "Current package evidence supports a product correction.",
+		})).resolves.toEqual({
+			reviewed: true,
+			followUpStatus: "open",
+			followUpType: "product_correction",
+			followUpId: "correction-origin-id",
+		});
+		expect(rpc).toHaveBeenCalledWith("review_food_compatibility_feedback", {
+			p_feedback_id: "feedback-id",
+			p_status: "confirmed",
+			p_resolution_action: "product_correction",
+			p_review_note: "Current package evidence supports a product correction.",
+		});
+	});
+
+	it("rejects malformed database responses instead of losing follow-up state", async () => {
+		await expect(reviewFoodCompatibilityFeedback({
+			rpc: vi.fn().mockResolvedValue({ data: [], error: null }),
+		} as never, {
+			id: "feedback-id",
+			status: "dismissed",
+			resolutionAction: "none",
+			reviewNote: "The current warning is supported.",
+		})).rejects.toThrow(/invalid response/u);
 	});
 });
