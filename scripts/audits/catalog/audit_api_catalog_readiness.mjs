@@ -3,12 +3,18 @@
  * publication gate and print its canonical provenance, normalized data coverage, asset
  * coverage, and any reason the row is withheld from API reads. This script is read-only.
  * Run: `npm run audit:api-catalog`
+ * JSON: `npm run audit:api-catalog -- --json`
  * Strict: `npm run audit:api-catalog -- --strict`
  */
 
 import { config } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
 import WebSocket from "ws";
+import {
+	buildCatalogReadinessSummary,
+	classifyCatalogReadinessIssue,
+	isCatalogReadinessContractUnavailable,
+} from "../../lib/catalog/apiCatalogReadiness.mjs";
 
 config({ path: ".env.moderation.local", quiet: true });
 config({ path: ".env", quiet: true });
@@ -16,6 +22,7 @@ config({ path: ".env", quiet: true });
 const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const strict = process.argv.includes("--strict");
+const jsonOutput = process.argv.includes("--json");
 
 if (!supabaseUrl || !serviceRoleKey) {
 	throw new Error(
@@ -36,6 +43,37 @@ const readRows = async (label, request) => {
 	const { data, error } = await request;
 	if (error) throw new Error(`${label}: ${error.message}`);
 	return data ?? [];
+};
+
+const readOptionalCatalogContractRows = async (label, request) => {
+	const { data, error } = await request;
+	if (!error) return data ?? [];
+	if (!isCatalogReadinessContractUnavailable(error)) {
+		throw new Error(`${label}: ${error.message}`);
+	}
+	console.error(`${label} is not deployed yet; affected blockers remain unclassified.`);
+	return [];
+};
+
+const readIssueContracts = async () => {
+	const fullRequest = await supabase
+		.from("app_issue_codes")
+		.select(
+			"code, operational_severity, responsible_group, resolution_action, automated_repair_key, automated_repair_allowed",
+		)
+		.eq("enabled", true);
+	if (!fullRequest.error) return fullRequest.data ?? [];
+	if (!isCatalogReadinessContractUnavailable(fullRequest.error)) {
+		throw new Error(`Catalog health issue contracts: ${fullRequest.error.message}`);
+	}
+
+	console.error(
+		"Catalog health issue ownership is not deployed yet; affected blockers remain unclassified.",
+	);
+	return readRows(
+		"Legacy catalog issue codes",
+		supabase.from("app_issue_codes").select("code").eq("enabled", true),
+	);
 };
 
 const groupCounts = (rows, parentKey) => {
@@ -85,7 +123,16 @@ const products = await readRows(
 );
 const productIds = products.map((product) => product.id);
 
-const [readiness, provenance, nutrients, servings, images, conflicts] = await Promise.all([
+const [
+	readiness,
+	provenance,
+	nutrients,
+	servings,
+	images,
+	conflicts,
+	issueOccurrences,
+	issueContracts,
+] = await Promise.all([
 	readRows(
 		"API readiness",
 		supabase
@@ -150,6 +197,16 @@ const [readiness, provenance, nutrients, servings, images, conflicts] = await Pr
 				.eq("status", "open"),
 		)
 		: [],
+	productIds.length
+		? readOptionalCatalogContractRows(
+			"Catalog health issue occurrences",
+			supabase
+				.from("catalog_health_issue_occurrences")
+				.select("occurrence_key, issue_code, shared_product_id, source_reason")
+				.in("shared_product_id", productIds),
+		)
+		: [],
+	readIssueContracts(),
 ]);
 
 const readinessByProduct = new Map(
@@ -164,6 +221,10 @@ const nutrientsByProduct = groupRows(nutrients, "shared_product_id");
 const servingsByProduct = groupRows(servings, "shared_product_id");
 const imagesByProduct = groupRows(images, "shared_product_id");
 const conflictsByProduct = groupRows(conflicts, "shared_product_id");
+const issueOccurrencesByProduct = groupRows(issueOccurrences, "shared_product_id");
+const issueContractsByCode = new Map(
+	issueContracts.map((issueContract) => [issueContract.code, issueContract]),
+);
 const incompleteImageRights = new Set(
 	images
 		.filter(
@@ -181,6 +242,21 @@ const report = products.map((product) => {
 	const productImages = imagesByProduct.get(product.id) ?? [];
 	const productNutrients = nutrientsByProduct.get(product.id) ?? [];
 	const productConflicts = conflictsByProduct.get(product.id) ?? [];
+	const productIssues = (issueOccurrencesByProduct.get(product.id) ?? []).map(
+		(occurrence) => {
+			const issueContract = issueContractsByCode.get(occurrence.issue_code);
+			return {
+				issueCode: occurrence.issue_code,
+				reason: occurrence.source_reason,
+				owner: classifyCatalogReadinessIssue(issueContract),
+				severity: issueContract?.operational_severity ?? "unknown",
+				resolutionAction: issueContract?.resolution_action ?? "unclassified",
+				automatedRepairKey: issueContract?.automated_repair_allowed
+					? issueContract.automated_repair_key
+					: null,
+			};
+		},
+	);
 	return {
 		barcode: product.barcode,
 		product: product.product_name,
@@ -188,7 +264,22 @@ const report = products.map((product) => {
 		api: status?.publishable ? "included" : "withheld",
 		publicationStatus: status?.publication_status ?? "not_evaluated",
 		profile: status?.profile_key ?? "none",
-		reasons: (status?.reasons ?? ["readiness_not_evaluated"]).join(", "),
+		reasons: status?.reasons ?? ["readiness_not_evaluated"],
+		issues: productIssues,
+		automatedRepairCandidates: productIssues.filter(
+			(issue) => issue.owner === "safe_automated_repair",
+		).length,
+		humanReviewCandidates: productIssues.filter((issue) => [
+			"catalog_review",
+			"data_operations_review",
+			"food_policy_review",
+		].includes(issue.owner)).length,
+		externalReviewCandidates: productIssues.filter(
+			(issue) => issue.owner === "external_review",
+		).length,
+		resolutionActions: [...new Set(productIssues.map(
+			(issue) => issue.resolutionAction,
+		))].sort(),
 		category: product.category_option_id ? "yes" : "no",
 		fieldSources: provenanceCounts.get(product.id) ?? 0,
 		fieldLineage: (provenanceByProduct.get(product.id) ?? [])
@@ -234,18 +325,19 @@ const report = products.map((product) => {
 	};
 });
 
-console.table(report);
-const included = report.filter((row) => row.api === "included").length;
-const withheld = report.length - included;
-console.log(JSON.stringify({
-	activeSharedProducts: report.length,
-	apiIncluded: included,
-	apiWithheld: withheld,
-	allIncludedRowsPassedPolicyGate: report
-		.filter((row) => row.api === "included")
-		.every((row) => row.reasons === ""),
-}, null, 2));
+const summary = buildCatalogReadinessSummary(report);
+if (jsonOutput) {
+	console.log(JSON.stringify({ summary, products: report }, null, 2));
+} else {
+	console.table(report.map((row) => ({
+		...row,
+		reasons: row.reasons.join(", "),
+		issues: row.issues.map((issue) => issue.issueCode).join(", "),
+		resolutionActions: row.resolutionActions.join(", "),
+	})));
+	console.log(JSON.stringify(summary, null, 2));
+}
 
-if (strict && withheld > 0) {
+if (strict && summary.apiWithheld > 0) {
 	process.exitCode = 1;
 }
