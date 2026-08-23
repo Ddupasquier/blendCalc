@@ -15,7 +15,8 @@ This document owns profile behavior and privacy. Auth configuration belongs in
   part of the email before `@`.
 - Saving profile details requires a preferred name, but profile completion itself
   remains optional.
-- Preferred names are not unique and may contain normal spaces and punctuation.
+- Preferred names are not unique, may contain normal spaces and punctuation, and are
+  limited to 25 characters by the shared field and server validator.
 - Bio and profile image remain optional. Bio is limited to 150 characters in the shared
   field, server validation, and database constraint.
 

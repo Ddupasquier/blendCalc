@@ -37,9 +37,10 @@ session settings. Detailed privacy and storage rules live in
 
 ## Identity
 
-- Show and edit preferred display name and an optional bio limited to 150 characters.
-- Show the live bio character count beside the field and announce the remaining count
-  through the field's accessible description.
+- Show and edit a preferred display name limited to 25 characters and an optional bio
+  limited to 150 characters.
+- Show the live character count beside both fields and announce the remaining count
+  through each field's accessible description.
 - Use a generated display name when the account has no chosen name.
 - Do not require or expose the account email as a public identity.
 - Show clear validation, pending, success, and failure states.
