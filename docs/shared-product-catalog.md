@@ -467,6 +467,12 @@ projected through `catalog_health_issue_occurrences`. Stable issue metadata owns
 urgency, responsible work group, supported resolution action, and whether a reviewed
 evidence-only repair can be offered. Friendly UI wording remains application-owned.
 
+The product-readiness passport is the bounded operational read for this state. It joins
+the current canonical revision, independent blendCalc/API availability, evidence
+coverage counts, and normalized open issues without exposing raw observations or user
+evidence. Catalog review and data operations share the contract while retaining
+separate route and database permissions.
+
 ### Official Recall Matching
 
 FDA recall announcements, FDA enforcement records, and USDA FSIS recalls/public-health

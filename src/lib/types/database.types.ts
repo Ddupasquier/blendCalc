@@ -7512,6 +7512,10 @@ export type Database = {
         Args: { p_limit?: number }
         Returns: Json
       }
+      get_catalog_product_readiness_passport: {
+        Args: { p_shared_product_id: string }
+        Returns: Json
+      }
       get_catalog_review_work_summary: {
         Args: { p_limit?: number }
         Returns: Json

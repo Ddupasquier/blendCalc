@@ -1,0 +1,53 @@
+import type { CatalogProductReadinessPassport } from "$lib/utils/moderation/catalogProductReadinessPassport";
+
+export const catalogProductReadinessPassportFixture: CatalogProductReadinessPassport = {
+	product: {
+		id: "product-id",
+		barcode: "00021130493609",
+		productName: "Roasted Onion & Garlic Pasta Sauce",
+		brandOwner: "Signature Select",
+		sharedCatalogStatus: "Waiting for review",
+		apiV1Status: "Withheld",
+		searchableInBlendcalc: true,
+		usableInBlendcalc: true,
+		openMaterialConflictCount: 1,
+		pendingCorrectionCount: 1,
+		lastVerifiedAt: "2026-08-01T12:00:00.000Z",
+		updatedAt: "2026-08-21T12:00:00.000Z",
+	},
+	revision: {
+		id: "revision-id",
+		number: 3,
+		labelObservedAt: "2026-07-31T12:00:00.000Z",
+		createdAt: "2026-08-01T12:00:00.000Z",
+		source: "open-food-facts",
+		sourceReference: "00021130493609",
+		changeSummary: { reason: "Label update" },
+	},
+	qualityDimensions: {
+		identity: "complete",
+		nutrition: "complete",
+	},
+	evidence: {
+		selectedFieldCount: 7,
+		normalizedNutrientCount: 14,
+		nutrientsWithSourceEvidenceCount: 13,
+		servingCount: 2,
+		servingsWithSourceEvidenceCount: 2,
+		observationCount: 4,
+		sources: ["open-food-facts", "usda-fdc"],
+	},
+	issues: [{
+		occurrenceKey: "product-id:CATALOG_NUTRIENT_PROVENANCE_MISSING:nutrients",
+		issueCode: "CATALOG_NUTRIENT_PROVENANCE_MISSING",
+		sourceScope: "api_publication",
+		sourceReason: "missing_nutrient_provenance",
+		parameters: {},
+		detectedAt: "2026-08-21T12:00:00.000Z",
+		operationalSeverity: "blocking",
+		responsibleGroup: "data_operations",
+		resolutionAction: "run_nutrient_provenance_repair",
+		automatedRepairAllowed: true,
+		automatedRepairKey: "nutrient_provenance",
+	}],
+};

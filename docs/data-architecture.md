@@ -136,6 +136,9 @@ catalog state controls whether blendCalc can search and use a canonical product;
 readiness independently controls whether that product may be redistributed publicly.
 Operational gaps are normalized through `catalog_health_issue_occurrences` and stable
 `app_issue_codes`, rather than reconstructed independently in each dashboard.
+The product-readiness passport is the bounded per-product projection of that model for
+privileged review and operations. It exposes status and coverage summaries while raw
+evidence remains behind its existing server and database boundaries.
 
 API v1 database readers are server-service-role-only. Browser sessions reach catalog
 data through the versioned HTTP routes, whose serializers rebuild explicit public

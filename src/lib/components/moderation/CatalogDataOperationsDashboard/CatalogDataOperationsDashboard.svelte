@@ -205,7 +205,7 @@
 					<article class="catalog-data-operations__issue-record">
 						<div><strong>{issue.productName}</strong><span>{issue.barcode}</span></div>
 						<ul>{#each issue.reasons as reason}<li>{getCatalogIssueReasonLabel(reason)}</li>{/each}</ul>
-						<a href={`/api/moderation/catalog/products/${encodeURIComponent(issue.productId)}/provenance`} target="_blank" rel="noreferrer">Review publication evidence</a>
+						<a href={`/profile/privileged-tools/data-operations/products/${encodeURIComponent(issue.productId)}`}>Review publication evidence</a>
 					</article>
 				{:else}<p class="catalog-data-operations__empty">Every active product is ready for API v1.</p>{/each}
 			</div>
@@ -228,7 +228,7 @@
 					<article class="catalog-data-operations__issue-record">
 						<div><strong>{issue.productName}</strong><span>{issue.barcode}</span></div>
 						<p>{getCatalogIssueReasonLabel(issue.issue)}</p>
-						<a href={`/api/moderation/catalog/products/${encodeURIComponent(issue.productId)}/provenance`} target="_blank" rel="noreferrer">Review revision evidence</a>
+						<a href={`/profile/privileged-tools/data-operations/products/${encodeURIComponent(issue.productId)}`}>Review revision evidence</a>
 					</article>
 				{:else}<p class="catalog-data-operations__empty">No revision history gaps were found.</p>{/each}
 			</div>

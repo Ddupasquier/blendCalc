@@ -109,3 +109,14 @@ Data operations remains read-oriented until a separately reviewed repair flow is
 available. Review work owns only its explicit decisions. Never render raw provider
 payloads, private evidence paths, user identity beyond the authorized account workflow,
 reviewer identity, or secrets.
+
+Product-specific links open a path-backed nested right sheet:
+
+- review work uses `/profile/privileged-tools/catalog-review-work/products/[productId]`;
+- data operations uses `/profile/privileged-tools/data-operations/products/[productId]`.
+
+Both routes render the shared product-readiness passport, but each server loader checks
+its own exact AAL2 permission. Keep product identity and the three independent
+availability states visible. Open current blocking issues by default. Keep revision,
+evidence coverage, and API-publication details in closed shared disclosures so the
+default view remains understandable.

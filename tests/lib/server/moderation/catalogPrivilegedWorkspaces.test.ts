@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
 	readCatalogDataOperationsHealth: vi.fn(),
 	readCatalogMonitorModerationSummary: vi.fn(),
 	readCatalogReviewWork: vi.fn(),
+	readCatalogProductReadinessPassport: vi.fn(),
 }));
 
 vi.mock("$lib/server/moderation/moderationAccess.server", () => ({
@@ -22,8 +23,13 @@ vi.mock("$lib/server/moderation/catalogReviewWork.server", () => ({
 	readCatalogReviewWork: mocks.readCatalogReviewWork,
 }));
 
+vi.mock("$lib/server/moderation/catalogProductReadinessPassport.server", () => ({
+	readCatalogProductReadinessPassport: mocks.readCatalogProductReadinessPassport,
+}));
+
 import { loadCatalogDataOperationsWorkspace } from "$lib/server/moderation/catalogDataOperationsWorkspace.server";
 import { loadCatalogReviewWorkWorkspace } from "$lib/server/moderation/catalogReviewWorkWorkspace.server";
+import { loadCatalogProductReadinessPassportWorkspace } from "$lib/server/moderation/catalogProductReadinessPassportWorkspace.server";
 
 describe("catalog privileged workspaces", () => {
 	beforeEach(() => vi.clearAllMocks());
@@ -91,5 +97,29 @@ describe("catalog privileged workspaces", () => {
 		expect(mocks.readCatalogDataOperationsHealth).not.toHaveBeenCalled();
 		expect(mocks.readCatalogMonitorModerationSummary).not.toHaveBeenCalled();
 		expect(mocks.readCatalogReviewWork).not.toHaveBeenCalled();
+	});
+
+	it("uses the caller's exact permission and return route for product passports", async () => {
+		mocks.requireModeratorPermission.mockResolvedValue({ role: "developer" });
+		mocks.readCatalogProductReadinessPassport.mockResolvedValue({ product: { id: "product-id" } });
+		const supabase = {};
+
+		await expect(loadCatalogProductReadinessPassportWorkspace(
+			{ locals: { supabase }, params: { productId: "product-id" } } as never,
+			"data_operations.catalog_health.read",
+			"/profile/privileged-tools/data-operations",
+		)).resolves.toEqual({
+			viewerRole: "developer",
+			passport: { product: { id: "product-id" } },
+		});
+		expect(mocks.requireModeratorPermission).toHaveBeenCalledWith(
+			expect.anything(),
+			"data_operations.catalog_health.read",
+			"/profile/privileged-tools/data-operations",
+		);
+		expect(mocks.readCatalogProductReadinessPassport).toHaveBeenCalledWith(
+			supabase,
+			"product-id",
+		);
 	});
 });

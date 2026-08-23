@@ -1530,6 +1530,11 @@ Notes:
   explicit data-operations permission.
 - `get_catalog_review_work_summary(p_limit)` returns only material conflicts, provider
   changes, and possible recall matches to an AAL2 catalog reviewer.
+- `get_catalog_product_readiness_passport(p_shared_product_id)` returns one bounded
+  product contract to an AAL2 catalog reviewer or data-operations reader. It separates
+  shared-catalog and API v1 status, includes the current revision and source-evidence
+  counts, and maps open normalized issues to ownership and supported action metadata.
+  It excludes raw provider payloads, private evidence paths, and contributor identity.
 - `private.build_moderator_data_health_summary(p_days, p_issue_limit)` and
   `private.build_catalog_monitor_summary(p_limit)` assemble bounded payloads without
   granting access. Direct execution is revoked from client and service roles. Every
@@ -1721,6 +1726,7 @@ category, or serving fields.
 | `get_catalog_data_operations_health`            | Returns bounded admin/developer catalog, source, dataset, policy, mapping, revision, and publication-readiness summaries after exact AAL2 data-operations authorization |
 | `get_catalog_data_operations_monitor_summary`   | Returns bounded admin/developer monitor configuration, queue counts, and recent run state after exact AAL2 data-operations authorization |
 | `get_catalog_review_work_summary`               | Returns bounded material conflicts, provider changes, and possible recall matches after exact AAL2 catalog-review authorization |
+| `get_catalog_product_readiness_passport`         | Returns one bounded catalog/API status, revision, evidence-coverage, and normalized-issue passport after exact AAL2 catalog-review or data-operations authorization |
 | `get_moderator_data_health`                     | Temporary compatibility wrapper for the previous combined data-health interface |
 | `get_pending_profile_image_review_count`        | Service-role-only count of distinct exact profile images with one or more pending reports |
 | `claim_catalog_revalidation_jobs`               | Service-only bounded claim of due product/provider jobs using expiring claim tokens |

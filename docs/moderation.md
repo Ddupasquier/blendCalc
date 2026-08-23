@@ -335,6 +335,17 @@ download URLs, or internal source-evaluation details. Shared private builders as
 the bounded data, while each public RPC independently enforces its exact permission;
 one workspace never relies on the other's permission.
 
+Product links in both workspaces open the same bounded readiness passport through
+different permission-checked routes. The passport separates shared-catalog availability
+from API v1 publication, identifies the current revision, summarizes source-backed
+nutrition and serving coverage, and routes every open issue to its responsible work
+group and supported next step. Reviewers use
+`/profile/privileged-tools/catalog-review-work/products/[productId]`; administrators and
+developers use `/profile/privileged-tools/data-operations/products/[productId]`.
+`get_catalog_product_readiness_passport` enforces either exact AAL2 permission before
+returning normalized counts and statuses. It never returns raw provider payloads,
+private evidence paths, or contributor identity.
+
 Catalog-review decisions follow the same rule. Dismissing a provider change records that
 the current canonical revision remains authoritative. Accepting a correct provider
 change requires completing the existing product-correction workflow and linking the
