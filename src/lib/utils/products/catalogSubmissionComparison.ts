@@ -1,5 +1,4 @@
 import type { FoodItem } from "$lib/utils/food/types";
-import { getNutritionFactsFields } from "$lib/utils/food/reference/appReferenceCatalog";
 import {
 	compareNormalizedFoods,
 	type NormalizedProductDifference,
@@ -20,7 +19,6 @@ export type CatalogSubmissionFieldChange = {
 
 export type CatalogSubmissionComparison = {
 	matchesExisting: boolean;
-	shouldAutoDecline: boolean;
 	hasBlockingIdentityMismatch: boolean;
 	changedFields: string[];
 	changes: CatalogSubmissionFieldChange[];
@@ -112,32 +110,8 @@ export const compareCatalogSubmissionToExistingProduct = (
 	const hasNameMismatch = differences.some(
 		(difference) => difference.field === "productName",
 	);
-	const hasSevereNameMismatch = differences.some((difference) =>
-		difference.field === "productName" && difference.severity === "high"
-	);
-	const hasBrandMismatch = differences.some((difference) =>
-		difference.field === "brandOwner" && difference.severity === "high"
-	);
-	const hasCategoryMismatch = differences.some((difference) =>
-		difference.field === "category" && difference.severity === "high"
-	);
-	const keyNutrientIds = new Set(
-		getNutritionFactsFields().map((nutrient) => nutrient.id),
-	);
-	const severeNutrientCount = differences.filter((difference) =>
-		difference.field.startsWith("nutrient:") &&
-		keyNutrientIds.has(Number(difference.field.split(":")[1])) &&
-		difference.severity === "high"
-	).length;
-
-	const shouldAutoDecline =
-		(hasSevereNameMismatch && (hasBrandMismatch || hasCategoryMismatch)) ||
-		(severeDifferences.length >= 2 && severeNutrientCount >= 1) ||
-		severeNutrientCount >= 4;
-
 	return {
 		matchesExisting: differences.length === 0,
-		shouldAutoDecline,
 		hasBlockingIdentityMismatch: hasNameMismatch,
 		changedFields,
 		changes: differences,

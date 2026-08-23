@@ -538,9 +538,10 @@ outcomes:
    matches closely enough. Publish without human review and keep source provenance.
 5. **Human review:** unknown label, same-product source disagreement, or missing
    confidence. Require package, nutrition label, and barcode evidence.
-6. **Silent machine block:** the submitted product identity is wildly different from the
-   verified barcode match. Offer verified autofill or remove the barcode and save the
-   user-authored item privately; do not create a normal moderation item.
+6. **Evidence-aware divergence:** an exact-GTIN submission that materially differs from
+   the current product becomes a correction when it includes the required current
+   package evidence. A definite identity contradiction without that evidence remains
+   private and does not create ordinary review work.
 
 ### Suggested Checks
 
@@ -572,17 +573,18 @@ to audit them:
 
 - Barcode belongs to an existing catalog product, but the submitted name/brand/category
   is clearly unrelated.
-- Barcode has a trusted source match, but the submitted nutrients are wildly outside the
-  source range.
+- Barcode has a trusted source match, but the submitted nutrients differ materially;
+  require current package evidence and route it as a correction rather than assuming
+  the magnitude proves the submission is wrong.
 - Submission appears to reuse a barcode for a different product.
 - Required evidence is absent after the flow already told the user it is required.
 
 ### Schema Note
 
-Normal `rejected` submissions count toward the 5-rejection sharing pause. Silent machine
-blocks use `shared_product_submissions.status = 'auto_declined'` and do not count as
-normal moderator rejections. That keeps spam protection useful without punishing honest
-users who hit a machine guardrail while saving a private ingredient.
+Normal `rejected` submissions count toward the 51st-rejection sharing suspension.
+Historical `auto_declined` rows remain non-punitive audit records. New same-GTIN
+differences are not assigned that status based on value magnitude; they either become
+evidence-backed corrections or remain private when correction evidence is missing.
 
 Current server behavior compares new barcoded submissions against an active shared
 product before deciding the outcome:
@@ -590,8 +592,8 @@ product before deciding the outcome:
 - matching catalog data returns `already-available` and does not create a new
   submission;
 - meaningful differences become a pending catalog update request with evidence;
-- wildly unrelated data is stored as `auto_declined` for audit and never appears in the
-  normal moderation queue.
+- material same-GTIN changes with complete current-package evidence become pending
+  catalog corrections; identity contradictions without that evidence stay private.
 
 ## Verification Rules
 

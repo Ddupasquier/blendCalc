@@ -288,8 +288,10 @@ operator action is needed before a dedicated moderation surface is available.
 ## Repeated Catalog Rejections
 
 Every transition to the moderator-owned `rejected` submission status atomically
-increments `user_catalog_submission_enforcement.moderator_rejection_count`. Automated
-validation outcomes use `auto_declined` and never increase this count.
+increments `user_catalog_submission_enforcement.moderator_rejection_count`. Historical
+`auto_declined` validation outcomes and other deterministic machine rejections never
+increase this count. Material same-GTIN changes with complete current-package evidence
+now enter correction review rather than being dismissed because their values differ.
 
 The 51st moderator rejection suspends new public catalog submissions for six calendar
 months. The user may continue saving private foods, using Ingredients, building Mixes,

@@ -2077,11 +2077,15 @@ make future changes easier. Do not leave known schema, flow, or ownership proble
 unspoken.
 
 **54.** <a id="rule-catalog-divergence-blocks"></a>Shared catalog submissions that are
-wildly different from an existing barcode match or trusted source should be blocked
-before they reach normal moderation. This must be server-side and schema-aware. Do not
-count silent machine blocks the same as human moderator rejections unless that is an
-explicit product decision, because normal rejections affect the user’s submission-block
-threshold. Private Custom records cannot be submitted directly. A source-backed
+materially different from an existing exact-barcode product must be classified
+server-side and schema-aware. An exact duplicate reuses the canonical product. A
+credible same-GTIN change with the required current-package evidence becomes a
+`catalog_correction` review even when its name, serving, or nutrient values differ
+substantially; magnitude alone must never discard a possible reformulation. A definite
+identity contradiction without the required correction evidence is kept private and
+blocked from shared review. Deterministic automated validation outcomes must remain
+distinct from human moderator rejections because normal rejections affect the user’s
+submission-block threshold. Private Custom records cannot be submitted directly. A source-backed
 submission with any meaningful server-calculated identity, serving, ingredient,
 allergen, category, or nutrient difference must require evidence and moderation rather
 than relying on client review flags or automatic source publication. Validate GTIN

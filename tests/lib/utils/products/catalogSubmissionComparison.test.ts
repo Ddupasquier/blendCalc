@@ -53,7 +53,6 @@ describe("catalog submission comparison", () => {
 		const comparison = compareCatalogSubmissionToExistingProduct(createFood(), createFood());
 
 		expect(comparison.matchesExisting).toBe(true);
-		expect(comparison.shouldAutoDecline).toBe(false);
 		expect(comparison.hasBlockingIdentityMismatch).toBe(false);
 		expect(comparison.changedFields).toEqual([]);
 		expect(comparison.changes).toEqual([]);
@@ -72,7 +71,6 @@ describe("catalog submission comparison", () => {
 		);
 
 		expect(comparison.matchesExisting).toBe(false);
-		expect(comparison.shouldAutoDecline).toBe(false);
 		expect(comparison.hasBlockingIdentityMismatch).toBe(false);
 		expect(comparison.changedFields).toContain(`nutrient:${NUTRIENT_IDS.CARBS}`);
 		expect(comparison.changes).toContainEqual(
@@ -149,12 +147,11 @@ describe("catalog submission comparison", () => {
 		);
 
 		expect(comparison.matchesExisting).toBe(false);
-		expect(comparison.shouldAutoDecline).toBe(false);
 		expect(comparison.hasBlockingIdentityMismatch).toBe(true);
 		expect(comparison.changedFields).toContain("productName");
 	});
 
-	it("auto-declines wildly unrelated data for an existing barcode", () => {
+	it("retains wildly different same-barcode data for evidence-backed correction review", () => {
 		const comparison = compareCatalogSubmissionToExistingProduct(
 			createFood({
 				description: "Raw chicken breast",
@@ -177,7 +174,6 @@ describe("catalog submission comparison", () => {
 		);
 
 		expect(comparison.matchesExisting).toBe(false);
-		expect(comparison.shouldAutoDecline).toBe(true);
 		expect(comparison.hasBlockingIdentityMismatch).toBe(true);
 		expect(comparison.severeDifferences.length).toBeGreaterThan(0);
 	});
@@ -189,7 +185,6 @@ describe("catalog submission comparison", () => {
 		);
 
 		expect(comparison.matchesExisting).toBe(false);
-		expect(comparison.shouldAutoDecline).toBe(false);
 		expect(comparison.hasBlockingIdentityMismatch).toBe(true);
 		expect(comparison.changedFields).toContain("productName");
 	});

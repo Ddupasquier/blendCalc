@@ -1,4 +1,5 @@
 import type { FoodItem } from "$lib/utils/food/types";
+import type { CatalogSubmissionIntent } from "$lib/utils/products/catalog";
 import {
 	compareCatalogSubmissionToExistingProduct,
 	type CatalogSubmissionComparison,
@@ -32,7 +33,7 @@ export type CatalogSubmissionValidationReport = {
 	evidenceComplete?: boolean;
 	conflictCount?: number;
 	existingCatalogMatch?: boolean;
-	existingCatalogAction?: "already_available" | "update_review" | "auto_declined";
+	existingCatalogAction?: "already_available" | "update_review";
 	existingCatalogComparison?: CatalogSubmissionComparison;
 	imageCrop?: FoodImagePlacementValues | null;
 };
@@ -79,6 +80,17 @@ export type PreparedCatalogSubmissionReview = {
 	sourceMismatchName?: string;
 	verificationBundle: CatalogVerificationBundle | null;
 };
+
+export const resolveCatalogSubmissionIntent = ({
+	requestedIntent,
+	existingComparison,
+}: {
+	requestedIntent: CatalogSubmissionIntent;
+	existingComparison: CatalogSubmissionComparison | null;
+}): CatalogSubmissionIntent =>
+	existingComparison?.matchesExisting === false
+		? "catalog_correction"
+		: requestedIntent;
 
 export const prepareCatalogSubmissionReview = (input: {
 	submissionFood: FoodItem;

@@ -677,8 +677,9 @@ Notes:
   an external source matched the exact barcode; `manual_review` means a human reviewed
   the submission. Neither state verifies every product field. Selected field evidence
   remains authoritative in `shared_product_field_provenance`.
-- `auto_declined` means server validation blocked a bad share attempt before it reached
-  normal moderation; it should not count as a human rejection.
+- `auto_declined` is retained for historical machine-block audit rows and does not count
+  as a human rejection. Current same-GTIN differences use the evidence-backed correction
+  workflow instead of receiving this status based on value magnitude.
 - `validation_report` carries barcode/source comparison and nutrient validation results
   for moderation.
 - `category_option_id` points to the canonical DB-backed app category selected or
