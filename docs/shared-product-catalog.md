@@ -304,6 +304,14 @@ as the date the manufacturer changed the product unless a separate source provid
 date. Revision history is retained for the future public API, while private evidence
 paths remain moderator-only.
 
+Legacy structural gaps use the same evidence boundary as new changes. The audited
+catalog repair can reconstruct a missing first revision only from an exact approved
+matching submission or exact stored source observation. It can repopulate missing
+field-change rows only from that revision's already-valid structured change summary.
+The repair never compares nearby snapshots, infers a manufacturer date, or invents a
+historical difference. If retained evidence is insufficient, the gap remains visibly
+unresolved and the product stays subject to the normal readiness gate.
+
 Public API removal is separate from canonical deletion. A credible rights,
 attribution, privacy, accuracy, or source-retirement concern can place a reversible
 publication hold on one product, image, dataset release, or provider. The affected
@@ -320,6 +328,13 @@ across canonical products, selected source observations, normalized rows, API v1
 publication, and the app read model. Add `--json` for machine-readable output. The
 report classifies each field as populated, sparse, or empty and prints representative
 non-private values.
+
+Run `npm run audit:api-catalog -- --json` for a fresh product-by-product publication
+reassessment. It reads the live readiness gate and DB-owned issue contracts, separates
+safe automated repairs from catalog, data-operations, food-policy, external, and system
+work, and reports any blocker whose operational contract is not yet deployed. The audit
+is read-only: it never repairs, publishes, or removes a product merely to improve its
+result.
 
 | User concept | Semantic owner | Meaning | Missing-value behavior |
 | --- | --- | --- | --- |
@@ -530,12 +545,19 @@ approval.
   image into public product image storage and records it in `food_image_assets`,
   including the accepted fit, crop, zoom, clockwise quarter-turn rotation, placement
   method, algorithm version, and confidence. Automatic placement never bypasses image
-  approval.
+  approval. Once approved, the image can become canonical automatically only when the
+  product does not already have an eligible canonical front image.
 - **Trusted source image placement:** when an exact-barcode provider supplies a new
   licensed front image, the server caches it with the honest Full image default and
   schedules bounded OCR placement. A confident result may update only that untouched,
   unapproved placement metadata; it does not verify the product, approve a community
   image, or overwrite any user-adjusted or moderator-approved crop.
+- **Canonical image admission:** every shared product may have one selected canonical
+  front image. An eligible selected image remains stable; later imports stay available
+  as candidates instead of silently replacing it. If the selected image is retired, the
+  database promotes the next exact licensed or moderator-approved candidate. Public API
+  reads expose only the selected canonical front image and still require complete asset
+  redistribution metadata.
 - **Reject:** retains the private user ingredient, records the review note, and does not
   publish a shared product.
 - **Submission pause:** moderator-rejected submissions are counted cumulatively in

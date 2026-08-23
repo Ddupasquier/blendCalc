@@ -17,8 +17,11 @@ This document owns profile behavior and privacy. Auth configuration belongs in
   remains optional.
 - Preferred names are not unique, may contain normal spaces and punctuation, and are
   limited to 25 characters by the shared field and server validator.
-- Bio and profile image remain optional. Bio is limited to 150 characters in the shared
-  field, server validation, and database constraint.
+- Bio and profile image remain optional. The shared field and server validation limit
+  new bios to 150 characters. The database temporarily retains its legacy 300-character
+  ceiling so an older deployed application cannot be broken during rollout; a later
+  contract migration closes that compatibility window after the 150-character app is
+  live on `main`.
 
 ## Appearance
 

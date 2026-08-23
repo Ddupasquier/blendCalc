@@ -139,6 +139,28 @@ Operational gaps are normalized through `catalog_health_issue_occurrences` and s
 The product-readiness passport is the bounded per-product projection of that model for
 privileged review and operations. It exposes status and coverage summaries while raw
 evidence remains behind its existing server and database boundaries.
+Approved catalog-health repairs follow the same boundary. An AAL2 data operator first
+runs a non-mutating exact-evidence check, then may apply only the candidates returned by
+that current check. Immutable run and item records preserve what was considered and
+what changed; unresolved evidence cannot be promoted by the repair path. Revision
+repairs use a dedicated private handler behind the same public RPC: exact approved
+submissions or source observations may restore a missing baseline, and an existing
+valid structured revision summary may restore its queryable field-change rows. No
+snapshot comparison or best-effort inference is permitted.
+Canonical product images follow the same evidence-first rule without creating routine
+review work. The database selects one exact licensed or moderator-approved front image
+only when no eligible canonical image exists, keeps later alternatives as candidates,
+and automatically promotes a replacement only after the selected image becomes
+ineligible. App hydration prefers that durable selection; API hydration excludes
+alternate and barcode-only images.
+
+Nutrient mapping follows the same automation-first boundary. Exact reviewed provider
+identifiers and source keys remain active without human review. Name or observation
+similarity may create a disabled candidate, but only a focused AAL2 data-operations
+decision can promote it. The database limits the selector to nutrients with an exact
+unit match or reviewed source-specific conversion and records approval or exclusion as
+immutable private evidence. Resolved and rejected mappings leave the operational queue;
+historical nutrient facts are never silently rewritten by the decision.
 
 API v1 database readers are server-service-role-only. Browser sessions reach catalog
 data through the versioned HTTP routes, whose serializers rebuild explicit public

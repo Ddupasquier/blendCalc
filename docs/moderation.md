@@ -70,7 +70,8 @@ expiry.
 | Review food warnings | No | Yes | Yes | Yes |
 | Resolve catalog review work | No | Yes | Yes | Yes |
 | Read catalog data operations | No | No | Yes | Yes |
-| Run reviewed catalog repairs | No | No | Yes | Yes |
+| Run audited exact-evidence repairs | No | No | Yes | Yes |
+| Review ambiguous nutrient mappings | No | No | Yes | Yes |
 | Grant or revoke application roles | No | No | Yes | Yes |
 
 The table describes authorization policy, not UI availability or target eligibility.
@@ -275,6 +276,20 @@ source-review rows never enter ordinary product pages or the public API. A revie
 correct an inaccurate mapping through the reviewed mapping workflow; the moderation
 read itself cannot rewrite nutrient math or silently approve a source row.
 
+The actionable workflow belongs to administrators and developers at
+`/profile/privileged-tools/data-operations/nutrient-mappings/[mappingId]`. It receives
+only disabled `pending_review` candidates discovered through semantic taxonomy or
+observation matching. Exact provider IDs, reviewed source keys, and approved dataset
+identities continue automatically and never enter the queue.
+
+The focused right sheet shows the source key, source unit, current suggestion,
+confidence, observation count, and why the candidate is uncertain. Approval requires a
+canonical nutrient selected from the database-filtered compatible-unit set, an evidence
+reference, and an internal note. Exclusion requires a note and keeps the candidate
+disabled. Both outcomes create an immutable private decision and immediately remove the
+mapping from unresolved data-health work. They do not rewrite older nutrient facts;
+safe historical reprocessing remains a separate evidence-preserving operation.
+
 ## Product Correction Reports
 
 Explicit product-correction reports are identified separately from ordinary catalog
@@ -342,6 +357,11 @@ coverage, publication gaps, nutrient-mapping gaps, and revision-history gaps.
 `data_operations.catalog_health.read` permission and AAL2. Moderators cannot enter this
 workspace merely because they can review catalog products.
 
+Each nutrient-mapping gap links by stable mapping UUID to the focused route above.
+Rejected candidates and approved mappings are completed outcomes rather than recurring
+gaps. The workspace never offers arbitrary free-text nutrient identity or an unreviewed
+unit conversion.
+
 Both workspaces are bounded to 20 issue rows in the application and database. They do
 not expose raw provider payloads, private evidence paths, user identifiers, secrets,
 download URLs, or internal source-evaluation details. Shared private builders assemble
@@ -358,6 +378,18 @@ developers use `/profile/privileged-tools/data-operations/products/[productId]`.
 `get_catalog_product_readiness_passport` enforces either exact AAL2 permission before
 returning normalized counts and statuses. It never returns raw provider payloads,
 private evidence paths, or contributor identity.
+
+Administrators and developers with `data_operations.catalog_health.repair` may run a
+bounded repair from the data-operations product route when the issue code explicitly
+allows one. `run_catalog_health_repair` requires AAL2 and records a separate dry-run or
+apply run plus every candidate, changed, skipped, unresolved, or failed item. Apply
+requires a successful dry run by the same user within one hour. Current handlers only
+link unchanged product fields, nutrition, or servings to an exact, redistributable
+observation already stored for the same barcode, restore a missing baseline revision
+from an exact approved submission or exact source observation, or rebuild change rows
+from that revision's existing valid structured summary. Missing or ambiguous evidence
+remains unresolved; it does not become a review decision and never creates a guessed
+value or historical change.
 
 Catalog-review decisions follow the same rule. Dismissing a provider change records that
 the current canonical revision remains authoritative. Accepting a correct provider

@@ -844,6 +844,16 @@ absorb another person's or another task's changes merely to make the tree clean.
 commits may retain their generated merge description when it clearly names the branches
 or responsibility being integrated.
 
+**20b.** Before making multiple explicitly authorized commits, maintain the local-only
+`docs/local-context/proposed-commits.md` ledger. Organize the batch by branch, feature,
+and intention; list each exact proposed commit message in execution order; identify the
+coherent responsibility and required verification; and distinguish proposed, ready,
+committed, and superseded entries. Present that commit-name list to the user before
+executing the batch. Reconcile the ledger with the real diff and branch immediately
+before staging because the ledger is planning context, not Git authority. The ledger
+must remain ignored, contain no secrets or private user data, and never replace the work
+queue or imply permission to commit, push, merge, or deploy.
+
 **21.** Verify meaningful changes with `npm run check`, focused tests, and builds when
 scope warrants it.
 
@@ -1933,8 +1943,11 @@ production database.
 **47.** <a id="rule-local-recovery-context"></a>Keep temporary recovery checkpoints and
 decision notes under local-only `docs/local-context/`. Keep that folder ignored by Git.
 Never store passwords, tokens, environment values, private user data, or raw private
-reasoning. Verify recovery notes against the current request, development rules, code,
-migrations, database, and QA tasks before resuming work.
+reasoning. Keep proposed commit batches in `proposed-commits.md`, organized by branch,
+feature, and intention rather than mixing them into the working checkpoint or work
+queue. Verify recovery notes and commit proposals against the current request,
+development rules, Git state, code, migrations, database, and QA tasks before resuming
+work.
 
 **47a.** <a id="rule-qa-screenshot-assets"></a>If a QA task depends on a specific
 screenshot reference, copy that screenshot into local-only `docs/QA/assets/` and link to

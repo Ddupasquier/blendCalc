@@ -156,6 +156,7 @@ the exact migration source already exists on remote `main`.
 | `npm run audit:usda-branded-allergens` | Inspect USDA branded-food allergen field coverage. |
 | `npm run audit:off-allergens` | Inspect Open Food Facts allergen field coverage. |
 | `npm run audit:api-catalog` | Audit catalog publication readiness and field lineage. |
+| `npm run audit:api-catalog -- --json` | Reassess active products and print machine-repair, review, and unresolved readiness ownership as JSON. |
 | `npm run report:source-quality` | Report stored provider coverage, reliability, and request cost. |
 | `npm run benchmark:source-quality -- --limit=10` | Compare supported product sources over one controlled sample. |
 | `npm run seed:food-preferences -- --dry-run` | Preview food-safety evidence discovery. |

@@ -119,10 +119,18 @@ window and lists the most-used source first. Equal lookup counts fall back to so
 so refreshes remain stable. API requests, cache hits, matches, errors, and response time
 remain supporting metrics and do not silently alter the usage ranking.
 
-Data operations remains read-oriented until a separately reviewed repair flow is
-available. Review work owns only its explicit decisions. Never render raw provider
-payloads, private evidence paths, user identity beyond the authorized account workflow,
-reviewer identity, or secrets.
+Data operations is read-oriented at its workspace summary. Its product-specific route
+may expose a bounded **Safe catalog repairs** disclosure only for issue codes whose
+database contract names an approved repair handler. The first action is always a dry
+run. Apply remains unavailable until that same AAL2 user has a current successful dry
+run with at least one exact candidate. Repairs may connect current canonical values to
+matching, legally reusable observations already stored by blendCalc, restore a missing
+first revision from an exact approved submission or source observation, or rebuild
+queryable change rows from an existing valid structured revision summary. They never
+invent, replace, average, or infer product values or history. Unresolved items remain
+unchanged and explain what evidence is missing. Review work owns only its explicit human
+decisions. Never render raw provider payloads, private evidence paths, user identity
+beyond the authorized account workflow, reviewer identity, or secrets.
 
 Product-specific links open a path-backed nested right sheet:
 
@@ -133,4 +141,15 @@ Both routes render the shared product-readiness passport, but each server loader
 its own exact AAL2 permission. Keep product identity and the three independent
 availability states visible. Open current blocking issues by default. Keep revision,
 evidence coverage, and API-publication details in closed shared disclosures so the
-default view remains understandable.
+default view remains understandable. Only the data-operations route may render repair
+controls, and only when the live permission set includes
+`data_operations.catalog_health.repair`.
+
+Nutrient mapping gaps use a separate path-backed nested right sheet at
+`/profile/privileged-tools/data-operations/nutrient-mappings/[mappingId]`. The summary
+links only disabled candidates that are genuinely waiting for evidence. The sheet keeps
+source identity and the current suggestion visible, puts explanatory evidence in a
+closed shared disclosure, and uses the reusable searchable/select controls to offer
+only database-returned nutrients with a reviewed compatible unit path. Approve requires
+an evidence reference and review note; exclude requires a review note. Resolved work is
+read-only and no longer appears in the summary queue.
