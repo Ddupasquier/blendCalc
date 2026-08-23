@@ -586,10 +586,10 @@ test("privileged tools stay hidden from regular accounts and use the shared shee
 	).toHaveCount(1);
 	for (const actionName of [
 		"Product submissions",
+		"Catalog review work",
 		"Food warning reports",
 		"Profile images",
 		"Account access",
-		"Catalog data health",
 	]) {
 		await expect(
 			privilegedToolsSheet.getByRole("button", { name: new RegExp(actionName) }),
