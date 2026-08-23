@@ -1,8 +1,18 @@
 begin;
 
-select plan(50);
+select plan(51);
 
 select has_table('public', 'profiles', 'profiles table exists');
+select ok(
+	exists (
+		select 1
+		from pg_constraint
+		where conrelid = 'public.profiles'::regclass
+			and conname = 'profiles_bio_check'
+			and position('char_length(bio) <= 300' in pg_get_constraintdef(oid)) > 0
+	),
+	'the legacy database contract still accepts profiles written by the deployed app'
+);
 select has_table('public', 'user_food_list_items', 'food-list table exists');
 select has_table('public', 'custom_foods', 'custom-food table exists');
 select has_table('public', 'shared_products', 'shared catalog table exists');
