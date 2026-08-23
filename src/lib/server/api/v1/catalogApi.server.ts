@@ -686,6 +686,9 @@ export const mapApprovedCatalogRecordToApiV1Product = (
 			};
 		}),
 		images: record.images.flatMap((image) => {
+			if (image.role === "front" && image.canonicalStatus !== "selected") {
+				return [];
+			}
 			if (!hasCompleteImageRights(image)) return [];
 			const assetSource =
 				sourceAttributionCatalog.assetSources[normalizeSourceKey(image.source)];

@@ -35,7 +35,7 @@ import {
 
 const SHARED_PRODUCT_SEARCH_CANDIDATE_LIMIT = 100;
 const SHARED_PRODUCT_COLUMNS = "id, barcode, product_name, brand_owner, category_option_id, compatibility_summary, canonical_provenance, food, source, source_reference, confidence, created_at, updated_at, last_verified_at";
-const FOOD_IMAGE_COLUMNS = "id, barcode, shared_product_id, source, source_reference, image_role, image_url, thumbnail_url, license_name, license_url, attribution_text, confidence, crop_x, crop_y, crop_zoom, rotation_degrees, fit_mode, placement_version, crop_source, placement_method, placement_suggestion_version, placement_suggestion_confidence, placement_suggestion_accepted_at, approved_at, fetched_at";
+const FOOD_IMAGE_COLUMNS = "id, barcode, shared_product_id, source, source_reference, image_role, image_url, thumbnail_url, license_name, license_url, attribution_text, confidence, canonical_status, canonical_selection_method, canonical_selected_at, crop_x, crop_y, crop_zoom, rotation_degrees, fit_mode, placement_version, crop_source, placement_method, placement_suggestion_version, placement_suggestion_confidence, placement_suggestion_accepted_at, approved_at, fetched_at";
 type SharedProductRow = Pick<
 	Database["public"]["Tables"]["shared_products"]["Row"],
 	| "id"
@@ -83,6 +83,9 @@ type FoodImageRow = Pick<
 	| "license_url"
 	| "attribution_text"
 	| "confidence"
+	| "canonical_status"
+	| "canonical_selection_method"
+	| "canonical_selected_at"
 	| "crop_x"
 	| "crop_y"
 	| "crop_zoom"
@@ -155,6 +158,12 @@ const toFoodImageAsset = (row: FoodImageRow): FoodImageAsset => ({
 	licenseUrl: row.license_url ?? undefined,
 	attributionText: row.attribution_text ?? undefined,
 	confidence: row.confidence as FoodImageAsset["confidence"],
+	canonicalStatus:
+		row.canonical_status as NonNullable<FoodImageAsset["canonicalStatus"]>,
+	canonicalSelectionMethod:
+		(row.canonical_selection_method as FoodImageAsset["canonicalSelectionMethod"]) ??
+		undefined,
+	canonicalSelectedAt: row.canonical_selected_at ?? undefined,
 	cropX: row.crop_x,
 	cropY: row.crop_y,
 	cropZoom: row.crop_zoom,
@@ -251,6 +260,13 @@ export const associateCatalogImagesWithProducts = (
 	const imageRowsByProductId = new Map<string, FoodImageRow[]>();
 	const imageRowsByBarcode = new Map<string, FoodImageRow[]>();
 	for (const image of images) {
+		if (
+			imageAssociationScope === "canonical-product-only" &&
+			image.image_role === "front" &&
+			image.canonical_status !== "selected"
+		) {
+			continue;
+		}
 		if (image.shared_product_id) {
 			const productImages =
 				imageRowsByProductId.get(image.shared_product_id) ?? [];

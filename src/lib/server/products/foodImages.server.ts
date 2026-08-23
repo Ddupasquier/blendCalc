@@ -372,7 +372,7 @@ export const updateFoodImageAssetPlacement = async ({
 		.eq("image_role", role)
 		.eq("status", "active")
 		.select(
-			"source, source_reference, image_role, image_url, thumbnail_url, storage_path, license_name, license_url, attribution_text, confidence, crop_x, crop_y, crop_zoom, rotation_degrees, fit_mode, placement_version, crop_source, placement_method, placement_suggestion_version, placement_suggestion_confidence, placement_suggestion_accepted_at, approved_by, approved_at, fetched_at",
+			"source, source_reference, image_role, image_url, thumbnail_url, storage_path, license_name, license_url, attribution_text, confidence, canonical_status, canonical_selection_method, canonical_selected_at, crop_x, crop_y, crop_zoom, rotation_degrees, fit_mode, placement_version, crop_source, placement_method, placement_suggestion_version, placement_suggestion_confidence, placement_suggestion_accepted_at, approved_by, approved_at, fetched_at",
 		)
 		.maybeSingle();
 	if (error) throw error;
@@ -389,6 +389,12 @@ export const updateFoodImageAssetPlacement = async ({
 		licenseUrl: data.license_url ?? undefined,
 		attributionText: data.attribution_text ?? undefined,
 		confidence: data.confidence as FoodImageAsset["confidence"],
+		canonicalStatus:
+			data.canonical_status as NonNullable<FoodImageAsset["canonicalStatus"]>,
+		canonicalSelectionMethod:
+			(data.canonical_selection_method as FoodImageAsset["canonicalSelectionMethod"]) ??
+			undefined,
+		canonicalSelectedAt: data.canonical_selected_at ?? undefined,
 		cropX: data.crop_x,
 		cropY: data.crop_y,
 		cropZoom: data.crop_zoom,

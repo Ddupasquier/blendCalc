@@ -26,6 +26,13 @@ const createImage = (
 	license_url: "https://creativecommons.org/licenses/by-sa/3.0/",
 	attribution_text: "Open Food Facts contributors",
 	confidence: "source-verified",
+	canonical_status: sharedProductId ? "selected" : "candidate",
+	canonical_selection_method: sharedProductId
+		? "exact-licensed-source"
+		: null,
+	canonical_selected_at: sharedProductId
+		? "2026-08-11T12:00:00.000Z"
+		: null,
 	crop_x: 50,
 	crop_y: 50,
 	crop_zoom: 1,
@@ -57,6 +64,33 @@ describe("catalog image publication association", () => {
 					"https://images.example/barcode-only.jpg",
 				),
 			] as never,
+			"canonical-product-only",
+		);
+
+		expect(images.get(product.id)?.map((image) => image.imageUrl)).toEqual([
+			"https://images.example/canonical.jpg",
+		]);
+	});
+
+	it("withholds alternate front-image candidates from public hydration", () => {
+		const canonicalImage = createImage(
+			"11111111-1111-4111-8111-111111111111",
+			product.id,
+			"https://images.example/canonical.jpg",
+		);
+		const alternateImage = {
+			...createImage(
+				"22222222-2222-4222-8222-222222222222",
+				product.id,
+				"https://images.example/alternate.jpg",
+			),
+			canonical_status: "candidate",
+			canonical_selection_method: null,
+			canonical_selected_at: null,
+		};
+		const images = associateCatalogImagesWithProducts(
+			[product as never],
+			[canonicalImage, alternateImage] as never,
 			"canonical-product-only",
 		);
 

@@ -41,6 +41,9 @@ const makeImageRow = (
 	license_url: image.licenseUrl ?? null,
 	attribution_text: image.attributionText ?? null,
 	confidence: image.confidence,
+	canonical_status: image.canonicalStatus ?? "candidate",
+	canonical_selection_method: image.canonicalSelectionMethod ?? null,
+	canonical_selected_at: image.canonicalSelectedAt ?? null,
 	crop_x: image.cropX ?? 50,
 	crop_y: image.cropY ?? 50,
 	crop_zoom: image.cropZoom ?? 1,
@@ -81,6 +84,25 @@ const makeImageQueryClient = (rows: ReturnType<typeof makeImageRow>[]) => ({
 });
 
 describe("food image selection", () => {
+	it("keeps the canonical image ahead of a newer higher-confidence candidate", () => {
+		const canonical = makeImage({
+			canonicalStatus: "selected",
+			canonicalSelectionMethod: "exact-licensed-source",
+			canonicalSelectedAt: "2026-07-17T12:00:00.000Z",
+			fetchedAt: "2026-07-17T12:00:00.000Z",
+		});
+		const newerCandidate = makeImage({
+			source: "community-reviewed",
+			sourceReference: "approved/00021130493609/front.jpg",
+			confidence: "moderator-reviewed",
+			fetchedAt: "2026-07-18T12:00:00.000Z",
+		});
+
+		expect(
+			selectPreferredFoodImageAsset([newerCandidate, canonical]),
+		).toBe(canonical);
+	});
+
 	it("prefers moderator-reviewed images over newer imported images", () => {
 		const imported = makeImage({
 			fetchedAt: "2026-07-18T13:00:00.000Z",

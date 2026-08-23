@@ -14,6 +14,9 @@ type FoodImageAssetRow = {
 	license_url: string | null;
 	attribution_text: string | null;
 	confidence: FoodImageAsset["confidence"];
+	canonical_status: NonNullable<FoodImageAsset["canonicalStatus"]>;
+	canonical_selection_method: FoodImageAsset["canonicalSelectionMethod"] | null;
+	canonical_selected_at: string | null;
 	crop_x: number;
 	crop_y: number;
 	crop_zoom: number;
@@ -60,6 +63,9 @@ const FOOD_IMAGE_SELECT = [
 	"license_url",
 	"attribution_text",
 	"confidence",
+	"canonical_status",
+	"canonical_selection_method",
+	"canonical_selected_at",
 	"crop_x",
 	"crop_y",
 	"crop_zoom",
@@ -114,6 +120,10 @@ export const selectPreferredFoodImageAsset = (
 	if (!images.length) return null;
 
 	return [...images].sort((left, right) => {
+		const canonicalDifference =
+			Number(right.canonicalStatus === "selected") -
+			Number(left.canonicalStatus === "selected");
+		if (canonicalDifference !== 0) return canonicalDifference;
 		const confidenceDifference =
 			FOOD_IMAGE_CONFIDENCE_PRIORITY[right.confidence] -
 			FOOD_IMAGE_CONFIDENCE_PRIORITY[left.confidence];
@@ -136,6 +146,9 @@ const toFoodImageAsset = (row: FoodImageAssetRow): FoodImageAsset => ({
 	licenseUrl: row.license_url ?? undefined,
 	attributionText: row.attribution_text ?? undefined,
 	confidence: row.confidence,
+	canonicalStatus: row.canonical_status,
+	canonicalSelectionMethod: row.canonical_selection_method ?? undefined,
+	canonicalSelectedAt: row.canonical_selected_at ?? undefined,
 	cropX: row.crop_x,
 	cropY: row.crop_y,
 	cropZoom: row.crop_zoom,
