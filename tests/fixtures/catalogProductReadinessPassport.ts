@@ -48,6 +48,6 @@ export const catalogProductReadinessPassportFixture: CatalogProductReadinessPass
 		responsibleGroup: "data_operations",
 		resolutionAction: "run_nutrient_provenance_repair",
 		automatedRepairAllowed: true,
-		automatedRepairKey: "nutrient_provenance",
+		automatedRepairKey: "link_existing_nutrient_observation",
 	}],
 };

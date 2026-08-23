@@ -1,9 +1,10 @@
-import type { PageServerLoad } from "./$types";
-import { loadCatalogProductReadinessPassportWorkspace } from "$lib/server/moderation/catalogProductReadinessPassportWorkspace.server";
+import type { Actions, PageServerLoad } from "./$types";
+import {
+	loadCatalogProductRepairWorkspace,
+	runCatalogProductRepairAction,
+} from "$lib/server/moderation/catalogProductRepairWorkspace.server";
 
-export const load: PageServerLoad = (event) =>
-	loadCatalogProductReadinessPassportWorkspace(
-		event,
-		"data_operations.catalog_health.read",
-		"/profile/privileged-tools/data-operations",
-	);
+export const load: PageServerLoad = loadCatalogProductRepairWorkspace;
+export const actions: Actions = {
+	runCatalogRepair: runCatalogProductRepairAction,
+};

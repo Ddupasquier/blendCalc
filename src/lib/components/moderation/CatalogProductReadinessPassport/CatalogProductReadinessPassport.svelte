@@ -78,7 +78,7 @@
 							<div><dt>Owner</dt><dd>{getCatalogResponsibleGroupLabel(issue.responsibleGroup)}</dd></div>
 							<div><dt>Next step</dt><dd>{getCatalogResolutionActionLabel(issue.resolutionAction)}</dd></div>
 							<div><dt>Detected</dt><dd>{formatDate(issue.detectedAt)}</dd></div>
-							<div><dt>Automatic repair</dt><dd>{issue.automatedRepairAllowed ? "Eligible after a reviewed dry run" : "Human evidence required"}</dd></div>
+							<div><dt>Automatic repair</dt><dd>{issue.automatedRepairAllowed ? "Eligible after an exact-evidence safety check" : "More evidence required"}</dd></div>
 						</dl>
 					</article>
 				{/each}
