@@ -100,6 +100,7 @@ export type CatalogDataOperationsIssues = {
 		reasons: string[];
 	}>;
 	nutrientMappings: Array<{
+		mappingId: string;
 		sourceKey: string;
 		sourceNutrientKey: string;
 		sourceNutrientName: string | null;
@@ -315,6 +316,7 @@ const parseIssues = (value: unknown): CatalogDataOperationsIssues => {
 			const path = `issues.nutrientMappings[${index}]`;
 			const issue = readRecord(value, path);
 			return {
+				mappingId: readString(issue.mappingId, `${path}.mappingId`),
 				sourceKey: readString(issue.sourceKey, `${path}.sourceKey`),
 				sourceNutrientKey: readString(issue.sourceNutrientKey, `${path}.sourceNutrientKey`),
 				sourceNutrientName: readNullableString(issue.sourceNutrientName, `${path}.sourceNutrientName`),

@@ -20,6 +20,11 @@ describe("CatalogDataOperationsDashboard", () => {
 		expect(screen.queryByText("Catalog conflicts")).not.toBeInTheDocument();
 		expect(screen.queryByRole("link", { name: "Review product submissions" }))
 			.not.toBeInTheDocument();
+		expect(screen.getByRole("link", { name: "Review nutrient identity" }))
+			.toHaveAttribute(
+				"href",
+				"/profile/privileged-tools/data-operations/nutrient-mappings/mapping-id",
+			);
 
 		const sourceSummary = screen.getByText("Source activity").closest("summary");
 		expect(sourceSummary?.closest("details")).not.toHaveAttribute("open");

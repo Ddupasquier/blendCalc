@@ -100,6 +100,7 @@ export const catalogDataOperationsHealthFixture: CatalogDataOperationsHealth = {
 			reasons: ["missing_attribution"],
 		}],
 		nutrientMappings: [{
+			mappingId: "mapping-id",
 			sourceKey: "open-food-facts",
 			sourceNutrientKey: "fiber",
 			sourceNutrientName: "Fiber",

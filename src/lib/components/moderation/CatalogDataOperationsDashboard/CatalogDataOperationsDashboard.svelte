@@ -213,10 +213,11 @@
 
 		<CollapsibleSection title="Nutrient mapping gaps" badge={`${dashboard.issues.nutrientMappings.length}`} surface="panel">
 			<div class="catalog-data-operations__stack">
-				{#each dashboard.issues.nutrientMappings as issue (`${issue.sourceKey}:${issue.sourceNutrientKey}:${issue.sourceUnitName}`)}
+				{#each dashboard.issues.nutrientMappings as issue (issue.mappingId)}
 					<article class="catalog-data-operations__issue-record">
 						<div><strong>{issue.sourceNutrientName ?? issue.sourceNutrientKey}</strong><span>{issue.sourceKey}</span></div>
 						<p>{issue.sourceUnitName} · {getCatalogHealthStatusLabel(issue.reviewStatus)}</p>
+						<a href={`/profile/privileged-tools/data-operations/nutrient-mappings/${encodeURIComponent(issue.mappingId)}`}>Review nutrient identity</a>
 					</article>
 				{:else}<p class="catalog-data-operations__empty">No nutrient mappings need attention.</p>{/each}
 			</div>
