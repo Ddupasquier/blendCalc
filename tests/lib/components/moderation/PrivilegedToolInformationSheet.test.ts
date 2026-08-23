@@ -8,7 +8,8 @@ describe("PrivilegedToolInformationSheet", () => {
 		["food-warning-reports", "About food warning reports"],
 		["profile-images", "About profile image reports"],
 		["account-access", "About account access"],
-		["catalog-data-health", "About catalog data health"],
+		["catalog-review-work", "About catalog review work"],
+		["data-operations", "About data operations"],
 	] as const)("explains the %s workflow", (action, title) => {
 		render(PrivilegedToolInformationSheet, {
 			props: {

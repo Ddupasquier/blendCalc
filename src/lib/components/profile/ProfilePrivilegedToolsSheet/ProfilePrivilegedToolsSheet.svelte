@@ -40,9 +40,9 @@
 		access.permissions,
 		PROFILE_PRIVILEGED_TOOL_PERMISSIONS.accountManagement,
 	));
-	const canReadDataHealth = $derived(hasAppPermission(
+	const canReadDataOperations = $derived(hasAppPermission(
 		access.permissions,
-		PROFILE_PRIVILEGED_TOOL_PERMISSIONS.dataHealthRead,
+		PROFILE_PRIVILEGED_TOOL_PERMISSIONS.dataOperationsRead,
 	));
 
 	const describeQueue = (count: number | null) => {
@@ -83,11 +83,13 @@
 		{:else if summary.unavailable}
 			<StatusMessage
 				tone="warning"
-				message="Review counts are temporarily unavailable. Account and data-health tools still work."
+				message="Review counts are temporarily unavailable. Account and data-operation tools still work."
 			/>
 		{/if}
 
-		<PrivilegedActionGroup {title} showHeader={false}>
+		<section class="profile-privileged-tools-sheet__group" aria-labelledby="profile-review-work-title">
+			<h2 id="profile-review-work-title">Review work</h2>
+			<PrivilegedActionGroup title="Review work" showHeader={false}>
 			{#if canReviewProducts}
 			<BottomSheetAction
 				label="Product submissions"
@@ -98,6 +100,13 @@
 				onSelect={() => openPrivilegedToolDestination(getProfileSettingsRouteHref(PROFILE_SETTINGS_ROUTES.privilegedProductSubmissions))}
 			>
 				{#snippet icon()}<BrandCup />{/snippet}
+			</BottomSheetAction>
+			<BottomSheetAction
+				label="Catalog review work"
+				description="Resolve product conflicts, provider changes, and possible recalls"
+				onSelect={() => openPrivilegedToolDestination(getProfileSettingsRouteHref(PROFILE_SETTINGS_ROUTES.privilegedCatalogReviewWork))}
+			>
+				{#snippet icon()}<Sliders />{/snippet}
 			</BottomSheetAction>
 			{/if}
 			{#if canReviewWarnings}
@@ -131,16 +140,22 @@
 				{#snippet icon()}<ShieldCheck />{/snippet}
 			</BottomSheetAction>
 			{/if}
-			{#if canReadDataHealth}
+			</PrivilegedActionGroup>
+		</section>
+		{#if canReadDataOperations}
+		<section class="profile-privileged-tools-sheet__group" aria-labelledby="profile-data-operations-title">
+			<h2 id="profile-data-operations-title">Data operations</h2>
+			<PrivilegedActionGroup title="Data operations" showHeader={false}>
 			<BottomSheetAction
-				label="Catalog data health"
-				description="Review source, mapping, policy, and API readiness"
-				onSelect={() => openPrivilegedToolDestination(getProfileSettingsRouteHref(PROFILE_SETTINGS_ROUTES.privilegedCatalogDataHealth))}
+				label="Catalog data operations"
+				description="Inspect publication readiness, mappings, revisions, sources, datasets, and policy coverage"
+				onSelect={() => openPrivilegedToolDestination(getProfileSettingsRouteHref(PROFILE_SETTINGS_ROUTES.privilegedDataOperations))}
 			>
 				{#snippet icon()}<Sliders />{/snippet}
 			</BottomSheetAction>
-			{/if}
-		</PrivilegedActionGroup>
+			</PrivilegedActionGroup>
+		</section>
+		{/if}
 	</div>
 </BottomSheet>
 

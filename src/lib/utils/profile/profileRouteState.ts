@@ -9,7 +9,9 @@ export const PROFILE_SETTINGS_ROUTES = {
 	privilegedFoodWarningReports: "privileged-tools/food-warning-reports",
 	privilegedProfileImages: "privileged-tools/profile-images",
 	privilegedAccountAccess: "privileged-tools/account-access",
-	privilegedCatalogDataHealth: "privileged-tools/catalog-data-health",
+	privilegedCatalogReviewWork: "privileged-tools/catalog-review-work",
+	privilegedDataOperations: "privileged-tools/data-operations",
+	privilegedCatalogDataHealthCompatibility: "privileged-tools/catalog-data-health",
 } as const;
 
 export type ProfileSettingsRoute =
@@ -28,7 +30,9 @@ const PROFILE_SETTINGS_ROUTE_TITLES: Record<ProfileSettingsRoute, string> = {
 	[PROFILE_SETTINGS_ROUTES.privilegedFoodWarningReports]: "Food Warning Reports",
 	[PROFILE_SETTINGS_ROUTES.privilegedProfileImages]: "Profile Image Reviews",
 	[PROFILE_SETTINGS_ROUTES.privilegedAccountAccess]: "Account Access",
-	[PROFILE_SETTINGS_ROUTES.privilegedCatalogDataHealth]: "Catalog Data Health",
+	[PROFILE_SETTINGS_ROUTES.privilegedCatalogReviewWork]: "Catalog Review Work",
+	[PROFILE_SETTINGS_ROUTES.privilegedDataOperations]: "Data Operations",
+	[PROFILE_SETTINGS_ROUTES.privilegedCatalogDataHealthCompatibility]: "Data Operations",
 };
 
 export const getProfileSettingsRoute = (

@@ -159,6 +159,10 @@ matching.
   corner.
 - Count only exact profile images with pending user reports. Ordinary profile-image
   uploads remain active and never create moderator work by themselves.
+- Group catalog decisions under **Review work** and source/dataset/readiness operations
+  under **Data operations**. Catalog reviewers can resolve conflicts, provider changes,
+  and possible recalls without receiving permission to run or inspect admin/developer
+  operations.
 - Show one crown beside the role-aware tools sheet title. The action region retains its
   accessible group name without repeating the title as a second visible
   heading.
@@ -172,8 +176,8 @@ matching.
 - Before identity verification, keep review counts private but leave the protected
   review rows available as entry points into the authenticator flow. Explain that
   verification is required instead of making the actions look permanently unavailable.
-- Keep standing tools such as Account access and Catalog data health enabled because
-  they remain useful without a pending queue.
+- Keep standing tools such as Account access, Catalog review work, and permitted Catalog
+  data operations enabled because they remain useful without a pending queue.
 - If queue counts cannot be read, preserve unknown as unknown, disable queue actions,
   explain the temporary limitation with friendly copy, and leave standing tools
   available. Never present an unavailable count as zero.

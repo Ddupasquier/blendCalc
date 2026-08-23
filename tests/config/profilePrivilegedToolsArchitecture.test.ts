@@ -17,7 +17,8 @@ describe("Profile privileged tools architecture", () => {
 			"food-warning-reports",
 			"profile-images",
 			"account-access",
-			"catalog-data-health",
+			"catalog-review-work",
+			"data-operations",
 		]) {
 			expect(routeState).toContain(`privileged-tools/${routeName}`);
 		}
@@ -47,8 +48,11 @@ describe("Profile privileged tools architecture", () => {
 		const workspaceServer = readSource(
 			"src/lib/server/moderation/moderationWorkspace.server.ts",
 		);
-		const dataHealthServer = readSource(
-			"src/lib/server/moderation/catalogDataHealthWorkspace.server.ts",
+		const catalogReviewServer = readSource(
+			"src/lib/server/moderation/catalogReviewWorkWorkspace.server.ts",
+		);
+		const dataOperationsServer = readSource(
+			"src/lib/server/moderation/catalogDataOperationsWorkspace.server.ts",
 		);
 
 		expect(accessGuard).toContain("readAppRolePermissions");
@@ -60,8 +64,10 @@ describe("Profile privileged tools architecture", () => {
 		]) {
 			expect(workspaceServer).toContain(permission);
 		}
-		expect(dataHealthServer).toContain("moderation.data_health.read");
-		expect(dataHealthServer).toContain("moderation.catalog.review");
+		expect(catalogReviewServer).toContain("moderation.catalog.review");
+		expect(catalogReviewServer).not.toContain("data_operations.catalog_health.read");
+		expect(dataOperationsServer).toContain("data_operations.catalog_health.read");
+		expect(dataOperationsServer).not.toContain("moderation.catalog.review");
 	});
 
 	it("counts only reported profile images instead of ordinary uploads", () => {
@@ -113,7 +119,8 @@ describe("Profile privileged tools architecture", () => {
 			"food-warning-reports",
 			"profile-images",
 			"account-access",
-			"catalog-data-health",
+			"catalog-review-work",
+			"data-operations",
 		]) {
 			const route = readSource(
 				`src/routes/profile/privileged-tools/${routeName}/+page.svelte`,

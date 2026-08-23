@@ -17,8 +17,12 @@ describe("Profile privileged tool presentation", () => {
 		expect(getAvailableProfilePrivilegedToolCount([
 			"moderation.access",
 			"moderation.accounts.manage",
-			"moderation.data_health.read",
+			"data_operations.catalog_health.read",
 		])).toBe(3);
+		expect(getAvailableProfilePrivilegedToolCount([
+			"moderation.access",
+			"moderation.catalog.review",
+		])).toBe(2);
 		expect(getAvailableProfilePrivilegedToolCount([
 			"moderation.access",
 		])).toBe(0);

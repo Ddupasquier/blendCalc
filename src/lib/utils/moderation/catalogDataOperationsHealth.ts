@@ -1,6 +1,6 @@
 type JsonRecord = Record<string, unknown>;
 
-export type ModeratorDataHealthOverview = {
+export type CatalogDataOperationsOverview = {
 	activeProducts: number;
 	publicationReadyProducts: number;
 	unresolvedConflicts: number;
@@ -14,7 +14,7 @@ export type ModeratorDataHealthOverview = {
 	compatibilityCoverageGaps: number;
 };
 
-export type ModeratorSourceHealth = {
+export type CatalogSourceOperationalHealth = {
 	key: string;
 	displayName: string;
 	sourceType: string;
@@ -53,7 +53,7 @@ export type ModeratorSourceHealth = {
 	} | null;
 };
 
-export type ModeratorDatasetHealth = {
+export type CatalogDatasetOperationalHealth = {
 	key: string;
 	sourceKey: string;
 	displayName: string;
@@ -71,7 +71,7 @@ export type ModeratorDatasetHealth = {
 	issues: string[];
 };
 
-export type ModeratorPolicyHealth = {
+export type FoodWarningPolicyOperationalHealth = {
 	version: number | null;
 	effectiveAt: string | null;
 	reviewedAt: string | null;
@@ -83,7 +83,7 @@ export type ModeratorPolicyHealth = {
 	pendingPreferenceMappingCount: number;
 };
 
-export type ModeratorDataHealthIssues = {
+export type CatalogDataOperationsIssues = {
 	conflicts: Array<{
 		id: string;
 		productId: string;
@@ -115,34 +115,34 @@ export type ModeratorDataHealthIssues = {
 	}>;
 };
 
-export type ModeratorDataHealth = {
+export type CatalogDataOperationsHealth = {
 	generatedAt: string;
 	metricWindowDays: number;
 	issueLimit: number;
-	overview: ModeratorDataHealthOverview;
-	sources: ModeratorSourceHealth[];
-	datasets: ModeratorDatasetHealth[];
-	policy: ModeratorPolicyHealth;
-	issues: ModeratorDataHealthIssues;
+	overview: CatalogDataOperationsOverview;
+	sources: CatalogSourceOperationalHealth[];
+	datasets: CatalogDatasetOperationalHealth[];
+	policy: FoodWarningPolicyOperationalHealth;
+	issues: CatalogDataOperationsIssues;
 };
 
 const readRecord = (value: unknown, field: string): JsonRecord => {
 	if (value === null || typeof value !== "object" || Array.isArray(value)) {
-		throw new TypeError(`Invalid moderator data-health field: ${field}`);
+		throw new TypeError(`Invalid catalog data-operations field: ${field}`);
 	}
 	return value as JsonRecord;
 };
 
 const readArray = (value: unknown, field: string): unknown[] => {
 	if (!Array.isArray(value)) {
-		throw new TypeError(`Invalid moderator data-health field: ${field}`);
+		throw new TypeError(`Invalid catalog data-operations field: ${field}`);
 	}
 	return value;
 };
 
 const readString = (value: unknown, field: string): string => {
 	if (typeof value !== "string") {
-		throw new TypeError(`Invalid moderator data-health field: ${field}`);
+		throw new TypeError(`Invalid catalog data-operations field: ${field}`);
 	}
 	return value;
 };
@@ -152,7 +152,7 @@ const readNullableString = (value: unknown, field: string): string | null =>
 
 const readNumber = (value: unknown, field: string): number => {
 	if (typeof value !== "number" || !Number.isFinite(value)) {
-		throw new TypeError(`Invalid moderator data-health field: ${field}`);
+		throw new TypeError(`Invalid catalog data-operations field: ${field}`);
 	}
 	return value;
 };
@@ -162,7 +162,7 @@ const readNullableNumber = (value: unknown, field: string): number | null =>
 
 const readBoolean = (value: unknown, field: string): boolean => {
 	if (typeof value !== "boolean") {
-		throw new TypeError(`Invalid moderator data-health field: ${field}`);
+		throw new TypeError(`Invalid catalog data-operations field: ${field}`);
 	}
 	return value;
 };
@@ -171,7 +171,7 @@ const readStringArray = (value: unknown, field: string): string[] =>
 	readArray(value, field).map((entry, index) =>
 		readString(entry, `${field}[${index}]`));
 
-const parseOverview = (value: unknown): ModeratorDataHealthOverview => {
+const parseOverview = (value: unknown): CatalogDataOperationsOverview => {
 	const row = readRecord(value, "overview");
 	return {
 		activeProducts: readNumber(row.activeProducts, "overview.activeProducts"),
@@ -188,7 +188,7 @@ const parseOverview = (value: unknown): ModeratorDataHealthOverview => {
 	};
 };
 
-const parseSource = (value: unknown, index: number): ModeratorSourceHealth => {
+const parseSource = (value: unknown, index: number): CatalogSourceOperationalHealth => {
 	const path = `sources[${index}]`;
 	const row = readRecord(value, path);
 	const metrics = readRecord(row.metrics, `${path}.metrics`);
@@ -239,8 +239,8 @@ const parseSource = (value: unknown, index: number): ModeratorSourceHealth => {
 };
 
 const compareModeratorSourcesByDescendingLookupUsage = (
-	firstSource: ModeratorSourceHealth,
-	secondSource: ModeratorSourceHealth,
+	firstSource: CatalogSourceOperationalHealth,
+	secondSource: CatalogSourceOperationalHealth,
 ) =>
 	secondSource.metrics.lookups - firstSource.metrics.lookups ||
 	firstSource.displayName.localeCompare(secondSource.displayName, "en", {
@@ -248,7 +248,7 @@ const compareModeratorSourcesByDescendingLookupUsage = (
 	}) ||
 	firstSource.key.localeCompare(secondSource.key, "en");
 
-const parseDataset = (value: unknown, index: number): ModeratorDatasetHealth => {
+const parseDataset = (value: unknown, index: number): CatalogDatasetOperationalHealth => {
 	const path = `datasets[${index}]`;
 	const row = readRecord(value, path);
 	return {
@@ -270,7 +270,7 @@ const parseDataset = (value: unknown, index: number): ModeratorDatasetHealth => 
 	};
 };
 
-const parsePolicy = (value: unknown): ModeratorPolicyHealth => {
+const parsePolicy = (value: unknown): FoodWarningPolicyOperationalHealth => {
 	const row = readRecord(value, "policy");
 	return {
 		version: readNullableNumber(row.version, "policy.version"),
@@ -285,7 +285,7 @@ const parsePolicy = (value: unknown): ModeratorPolicyHealth => {
 	};
 };
 
-const parseIssues = (value: unknown): ModeratorDataHealthIssues => {
+const parseIssues = (value: unknown): CatalogDataOperationsIssues => {
 	const row = readRecord(value, "issues");
 	return {
 		conflicts: readArray(row.conflicts, "issues.conflicts").map((value, index) => {
@@ -336,7 +336,9 @@ const parseIssues = (value: unknown): ModeratorDataHealthIssues => {
 	};
 };
 
-export const parseModeratorDataHealth = (value: unknown): ModeratorDataHealth => {
+export const parseCatalogDataOperationsHealth = (
+	value: unknown,
+): CatalogDataOperationsHealth => {
 	const row = readRecord(value, "dashboard");
 	return {
 		generatedAt: readString(row.generatedAt, "generatedAt"),

@@ -1496,6 +1496,13 @@ Notes:
   elevated roles. `app_role_permissions` maps those roles to database-owned
   capabilities. Developer permissions are explicit rows matching the current admin
   capability set; they are not inferred through a role hierarchy.
+- Catalog review and catalog data operations are separate capabilities. Moderators,
+  admins, and developers receive `moderation.catalog.review`. Only admins and developers
+  receive `data_operations.catalog_health.read`,
+  `data_operations.catalog_health.repair`, and
+  `data_operations.nutrient_mappings.manage`. All protected operations also require
+  AAL2. `moderation.data_health.read` remains temporarily defined for compatibility but
+  is not used by the focused application routes.
 - `custom_access_token_hook` copies the current assignment into a newly issued JWT as
   `app_role`, defaults normal or malformed subjects to `user`, replaces stale or
   caller-supplied claims, and is executable only by `supabase_auth_admin`.
@@ -1509,8 +1516,8 @@ Notes:
   includes `insert` on `shared_product_submissions` because the trusted server creates
   pending submissions before moderator review; ordinary authenticated clients still
   cannot insert, update, or delete those rows directly.
-- `get_moderator_data_health(p_days, p_issue_limit)` is an authenticated,
-  MFA-verified moderator/admin/developer security-definer aggregate. It clamps the
+- `get_catalog_data_operations_health(p_days, p_issue_limit)` is an authenticated,
+  MFA-verified admin/developer security-definer aggregate. It clamps the
   metric window to
   1–90 days and each issue queue to 1–50 rows. It returns catalog/publication counts,
   source metrics and safe latest-evaluation summaries, dataset import/licence/checksum
@@ -1518,10 +1525,19 @@ Notes:
   mapping, and revision gaps. It deliberately excludes raw provider payloads, private
   evidence, user identities, secrets, source-evaluation `details`, dataset `metadata`,
   and dataset download URLs.
-- `private.build_moderator_data_health_summary(p_days, p_issue_limit)` builds the
-  bounded payload behind that public RPC. Direct execution is revoked from client and
-  service roles; the public wrapper enforces AAL2 permission before calling it, and the
-  private builder independently verifies the current role assignment.
+- `get_catalog_data_operations_monitor_summary(p_limit)` returns bounded monitor
+  configuration, queue counts, and recent runs only to an AAL2 admin/developer with
+  explicit data-operations permission.
+- `get_catalog_review_work_summary(p_limit)` returns only material conflicts, provider
+  changes, and possible recall matches to an AAL2 catalog reviewer.
+- `private.build_moderator_data_health_summary(p_days, p_issue_limit)` and
+  `private.build_catalog_monitor_summary(p_limit)` assemble bounded payloads without
+  granting access. Direct execution is revoked from client and service roles. Every
+  public wrapper independently enforces its exact role permission and AAL2 before
+  calling a private builder.
+- `get_moderator_data_health` and `get_catalog_monitor_moderation_summary` remain
+  temporary compatibility wrappers for the previous interface. New application code
+  does not call them.
 - `blocked_signup_emails` stores hashes, not raw email addresses.
 - `reject_blocked_signup` is the auth hook function for blocking signups.
 - `set_app_user_role` is the only service-role write path for role assignments; it
@@ -1702,7 +1718,10 @@ category, or serving fields.
 | `get_blendcalc_product_v1`                      | Service-role-only raw reader for one active, publication-ready shared product and its latest revision by GTIN-14 |
 | `get_blendcalc_product_revision_history_v1`     | Service-role-only raw reader for bounded immutable revision metadata and evidence-backed field changes for one publication-ready GTIN-14 |
 | `search_blendcalc_products_v1`                  | Service-role-only partial metadata search for active, publication-ready shared products with bounded pagination and name → brand → category → supporting-metadata relevance |
-| `get_moderator_data_health`                     | Returns bounded moderator/admin/developer catalog, source, dataset, policy, mapping, revision, conflict, and publication-readiness summaries after verifying an AAL2 permission and the caller's current role assignment |
+| `get_catalog_data_operations_health`            | Returns bounded admin/developer catalog, source, dataset, policy, mapping, revision, and publication-readiness summaries after exact AAL2 data-operations authorization |
+| `get_catalog_data_operations_monitor_summary`   | Returns bounded admin/developer monitor configuration, queue counts, and recent run state after exact AAL2 data-operations authorization |
+| `get_catalog_review_work_summary`               | Returns bounded material conflicts, provider changes, and possible recall matches after exact AAL2 catalog-review authorization |
+| `get_moderator_data_health`                     | Temporary compatibility wrapper for the previous combined data-health interface |
 | `get_pending_profile_image_review_count`        | Service-role-only count of distinct exact profile images with one or more pending reports |
 | `claim_catalog_revalidation_jobs`               | Service-only bounded claim of due product/provider jobs using expiring claim tokens |
 | `complete_catalog_revalidation_job`             | Service-only completion and retry scheduling for one claimed product check |
@@ -1712,7 +1731,7 @@ category, or serving fields.
 | `complete_safety_alert_ingestion_source`        | Service-only independent success or retry scheduling for one recall source |
 | `record_official_food_safety_alert`             | Service-only versioned alert upsert, identifier refresh, and conservative product matching |
 | `request_catalog_monitor_run`                   | Requests the secret-authenticated monitor Edge Function through the configured Vault values |
-| `get_catalog_monitor_moderation_summary`        | Returns bounded monitor status, runs, provider changes, and probable recall matches after an AAL2 permission check |
+| `get_catalog_monitor_moderation_summary`        | Temporary compatibility wrapper for the previous combined monitor/review interface |
 | `review_official_food_safety_alert_match`        | Confirms or dismisses one probable recall match after an AAL2 permission check |
 | `review_catalog_provider_change`                | Rejects/supersedes a provider change or links acceptance to an existing approved catalog revision after an AAL2 permission check |
 | `mark_product_safety_alert_notification_read`   | Lets an authenticated owner mark exactly one of their alert notifications as read |

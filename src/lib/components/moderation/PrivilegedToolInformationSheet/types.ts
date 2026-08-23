@@ -3,7 +3,8 @@ export type PrivilegedToolInformationKey =
 	| "food-warning-reports"
 	| "profile-images"
 	| "account-access"
-	| "catalog-data-health";
+	| "catalog-review-work"
+	| "data-operations";
 
 export type PrivilegedToolInformation = {
 	title: string;

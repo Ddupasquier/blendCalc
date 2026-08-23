@@ -8,7 +8,6 @@ const moderatorPermissions: ProfilePrivilegedToolAccess["permissions"] = [
 	"moderation.accounts.manage",
 	"moderation.catalog.review",
 	"moderation.warnings.review",
-	"moderation.data_health.read",
 ];
 
 const createAccess = (
@@ -49,15 +48,17 @@ describe("Profile privileged tools sheet", () => {
 			.toBeDisabled();
 		expect(screen.getByRole("button", { name: /Account access/ }))
 			.toBeEnabled();
-		expect(screen.getByRole("button", { name: /Catalog data health/ }))
+		expect(screen.getByRole("button", { name: /Catalog review work/ }))
 			.toBeEnabled();
+		expect(screen.queryByRole("button", { name: /Catalog data operations/ }))
+			.not.toBeInTheDocument();
 		expect(screen.getByLabelText("4 product submissions requiring review"))
 			.toBeVisible();
 		expect(
 			screen.getAllByRole("heading", { name: "Moderator tools" }),
 		).toHaveLength(1);
 		expect(
-			screen.getByRole("region", { name: "Moderator tools" }),
+			screen.getByRole("dialog", { name: "Moderator tools" }),
 		).toBeInTheDocument();
 		expect(container.querySelectorAll(".privileged-action-badge")).toHaveLength(1);
 		expect(
@@ -136,7 +137,7 @@ describe("Profile privileged tools sheet", () => {
 		}
 		expect(screen.getByRole("button", { name: /Account access/ }))
 			.toBeEnabled();
-		expect(screen.getByRole("button", { name: /Catalog data health/ }))
+		expect(screen.getByRole("button", { name: /Catalog review work/ }))
 			.toBeEnabled();
 	});
 
@@ -163,7 +164,7 @@ describe("Profile privileged tools sheet", () => {
 			["Food warning reports", "/profile/privileged-tools/food-warning-reports"],
 			["Profile images", "/profile/privileged-tools/profile-images"],
 			["Account access", "/profile/privileged-tools/account-access"],
-			["Catalog data health", "/profile/privileged-tools/catalog-data-health"],
+			["Catalog review work", "/profile/privileged-tools/catalog-review-work"],
 		] as const;
 
 		for (const [label, href] of destinations) {
@@ -187,7 +188,7 @@ describe("Profile privileged tools sheet", () => {
 					identityVerificationRequired: false,
 				}, {
 					role: "admin",
-					permissions: ["moderation.access", "moderation.data_health.read"],
+					permissions: ["moderation.access", "data_operations.catalog_health.read"],
 				}),
 				onClose: vi.fn(),
 				onNavigate: vi.fn(),
@@ -195,7 +196,7 @@ describe("Profile privileged tools sheet", () => {
 		});
 
 		expect(screen.getByRole("heading", { name: "Admin tools" })).toBeVisible();
-		expect(screen.getByRole("button", { name: /Catalog data health/ })).toBeEnabled();
+		expect(screen.getByRole("button", { name: /Catalog data operations/ })).toBeEnabled();
 		expect(screen.queryByRole("button", { name: /Account access/ })).not.toBeInTheDocument();
 		expect(screen.queryByRole("button", { name: /Product submissions/ })).not.toBeInTheDocument();
 	});

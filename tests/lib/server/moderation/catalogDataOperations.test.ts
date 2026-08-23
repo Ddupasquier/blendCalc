@@ -1,23 +1,23 @@
 import { describe, expect, it, vi } from "vitest";
 import {
 	isCatalogMonitorSchemaUnavailable,
+	readCatalogDataOperationsHealth,
 	readCatalogMonitorModerationSummary,
-	readModeratorDataHealth,
-} from "$lib/server/moderation/catalogDataHealth.server";
+} from "$lib/server/moderation/catalogDataOperations.server";
 import { createUnavailableCatalogMonitorModerationSummary } from "$lib/utils/moderation/catalogMonitorModeration";
-import { moderatorDataHealthFixture } from "../../../fixtures/moderatorDataHealth";
+import { catalogDataOperationsHealthFixture } from "../../../fixtures/catalogDataOperationsHealth";
 import { catalogMonitorModerationFixture } from "../../../fixtures/catalogMonitorModeration";
 
-describe("moderator catalog data-health repository", () => {
+describe("catalog data-operations repository", () => {
 	it("requests a bounded aggregate through the caller's authenticated client", async () => {
 		const rpc = vi.fn().mockResolvedValue({
-			data: moderatorDataHealthFixture,
+			data: catalogDataOperationsHealthFixture,
 			error: null,
 		});
 
-		await expect(readModeratorDataHealth({ rpc } as never))
-			.resolves.toEqual(moderatorDataHealthFixture);
-		expect(rpc).toHaveBeenCalledWith("get_moderator_data_health", {
+		await expect(readCatalogDataOperationsHealth({ rpc } as never))
+			.resolves.toEqual(catalogDataOperationsHealthFixture);
+		expect(rpc).toHaveBeenCalledWith("get_catalog_data_operations_health", {
 			p_days: 30,
 			p_issue_limit: 20,
 		});
@@ -32,7 +32,7 @@ describe("moderator catalog data-health repository", () => {
 		await expect(readCatalogMonitorModerationSummary({ rpc } as never))
 			.resolves.toEqual(catalogMonitorModerationFixture);
 		expect(rpc).toHaveBeenCalledWith(
-			"get_catalog_monitor_moderation_summary",
+			"get_catalog_data_operations_monitor_summary",
 			{ p_limit: 20 },
 		);
 	});
@@ -41,7 +41,7 @@ describe("moderator catalog data-health repository", () => {
 		const missingFunctionError = {
 			code: "PGRST202",
 			message:
-				"Could not find the function public.get_catalog_monitor_moderation_summary in the schema cache",
+				"Could not find the function public.get_catalog_data_operations_monitor_summary in the schema cache",
 		};
 		await expect(readCatalogMonitorModerationSummary({
 			rpc: vi.fn().mockResolvedValue({ data: null, error: missingFunctionError }),
@@ -50,16 +50,16 @@ describe("moderator catalog data-health repository", () => {
 		);
 		expect(isCatalogMonitorSchemaUnavailable({
 			code: "42501",
-			message: "permission denied for function get_catalog_monitor_moderation_summary",
+			message: "permission denied for function get_catalog_data_operations_monitor_summary",
 		})).toBe(false);
 	});
 
 	it("returns the approved moderation error for database or contract failures", async () => {
-		await expect(readModeratorDataHealth({
+		await expect(readCatalogDataOperationsHealth({
 			rpc: vi.fn().mockResolvedValue({ data: null, error: { message: "failed" } }),
 		} as never)).rejects.toMatchObject({ status: 502 });
 
-		await expect(readModeratorDataHealth({
+		await expect(readCatalogDataOperationsHealth({
 			rpc: vi.fn().mockResolvedValue({ data: {}, error: null }),
 		} as never)).rejects.toMatchObject({ status: 502 });
 	});

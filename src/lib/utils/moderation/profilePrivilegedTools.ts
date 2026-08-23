@@ -18,7 +18,7 @@ export type ProfilePrivilegedToolAccess = {
 export const PROFILE_PRIVILEGED_TOOL_PERMISSIONS = {
 	accountManagement: "moderation.accounts.manage",
 	catalogReview: "moderation.catalog.review",
-	dataHealthRead: "moderation.data_health.read",
+	dataOperationsRead: "data_operations.catalog_health.read",
 	warningReview: "moderation.warnings.review",
 } as const satisfies Record<string, AppPermission>;
 
@@ -41,7 +41,7 @@ export const getProfilePrivilegedToolTitle = (role: AppRole) => {
 export const getAvailableProfilePrivilegedToolCount = (
 	permissions: readonly AppPermission[],
 ) =>
-	Number(hasAppPermission(permissions, PROFILE_PRIVILEGED_TOOL_PERMISSIONS.catalogReview)) +
+	Number(hasAppPermission(permissions, PROFILE_PRIVILEGED_TOOL_PERMISSIONS.catalogReview)) * 2 +
 	Number(hasAppPermission(permissions, PROFILE_PRIVILEGED_TOOL_PERMISSIONS.warningReview)) +
 	Number(hasAppPermission(permissions, PROFILE_PRIVILEGED_TOOL_PERMISSIONS.accountManagement)) * 2 +
-	Number(hasAppPermission(permissions, PROFILE_PRIVILEGED_TOOL_PERMISSIONS.dataHealthRead));
+	Number(hasAppPermission(permissions, PROFILE_PRIVILEGED_TOOL_PERMISSIONS.dataOperationsRead));

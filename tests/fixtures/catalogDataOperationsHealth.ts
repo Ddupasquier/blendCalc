@@ -1,6 +1,6 @@
-import type { ModeratorDataHealth } from "$lib/utils/moderation/dataHealth";
+import type { CatalogDataOperationsHealth } from "$lib/utils/moderation/catalogDataOperationsHealth";
 
-export const moderatorDataHealthFixture: ModeratorDataHealth = {
+export const catalogDataOperationsHealthFixture: CatalogDataOperationsHealth = {
 	generatedAt: "2026-07-31T12:00:00.000Z",
 	metricWindowDays: 30,
 	issueLimit: 20,

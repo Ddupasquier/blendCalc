@@ -19,7 +19,7 @@
 			<p class="moderation-workspace__eyebrow">{data.viewerRole}</p>
 			<h1>Moderation</h1>
 			<p>Review shared products, food warnings, reported profile images, and account access.</p>
-			<a href="/profile/privileged-tools/catalog-data-health">Review catalog data health</a>
+			<a href="/profile/privileged-tools">Open focused privileged tools</a>
 		</header>
 	{/if}
 

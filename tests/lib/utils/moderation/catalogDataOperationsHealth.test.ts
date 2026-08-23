@@ -1,15 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { parseModeratorDataHealth } from "$lib/utils/moderation/dataHealth";
-import { moderatorDataHealthFixture } from "../../../fixtures/moderatorDataHealth";
+import { parseCatalogDataOperationsHealth } from "$lib/utils/moderation/catalogDataOperationsHealth";
+import { catalogDataOperationsHealthFixture } from "../../../fixtures/catalogDataOperationsHealth";
 
 describe("moderator data-health parser", () => {
 	it("accepts the bounded dashboard contract", () => {
-		expect(parseModeratorDataHealth(moderatorDataHealthFixture))
-			.toEqual(moderatorDataHealthFixture);
+		expect(parseCatalogDataOperationsHealth(catalogDataOperationsHealthFixture))
+			.toEqual(catalogDataOperationsHealthFixture);
 	});
 
 	it("orders source activity by descending lookup usage with deterministic ties", () => {
-		const usdaSource = moderatorDataHealthFixture.sources[0];
+		const usdaSource = catalogDataOperationsHealthFixture.sources[0];
 		const openFoodFactsSource = {
 			...usdaSource,
 			key: "open-food-facts",
@@ -22,8 +22,8 @@ describe("moderator data-health parser", () => {
 			displayName: "COLA Cloud",
 			metrics: { ...usdaSource.metrics, lookups: 20 },
 		};
-		const parsed = parseModeratorDataHealth({
-			...moderatorDataHealthFixture,
+		const parsed = parseCatalogDataOperationsHealth({
+			...catalogDataOperationsHealthFixture,
 			sources: [usdaSource, colaSource, openFoodFactsSource],
 		});
 
@@ -35,10 +35,10 @@ describe("moderator data-health parser", () => {
 	});
 
 	it("rejects malformed aggregate values rather than inventing defaults", () => {
-		expect(() => parseModeratorDataHealth({
-			...moderatorDataHealthFixture,
+		expect(() => parseCatalogDataOperationsHealth({
+			...catalogDataOperationsHealthFixture,
 			overview: {
-				...moderatorDataHealthFixture.overview,
+				...catalogDataOperationsHealthFixture.overview,
 				activeProducts: "16",
 			},
 		})).toThrow(/overview\.activeProducts/u);

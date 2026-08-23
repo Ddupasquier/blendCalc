@@ -60,18 +60,32 @@ export const privilegedToolInformationByTool = {
 		guardrail:
 			"You cannot moderate yourself, and protected roles require a more privileged reviewer.",
 	},
-	"catalog-data-health": {
-		title: "About catalog data health",
+	"catalog-review-work": {
+		title: "About catalog review work",
 		purpose:
-			"Use this dashboard to find catalog, provider, recall, mapping, licensing, and publication-readiness problems.",
+			"Use this queue to resolve catalog conflicts, provider changes, and possible official recall matches.",
 		reviewSteps: [
-			"Start with the readiness summary and any active recall or provider-change queues.",
-			"Open only the data area related to the issue you are investigating.",
-			"Use the linked correction or review workflow rather than editing evidence in place.",
+			"Confirm the exact product and evidence behind the reported change or match.",
+			"Keep the current revision only when its existing evidence remains stronger.",
+			"Route supported changes through a correction so approval creates a new revision.",
 		],
 		decisionEffect:
-			"Dashboard reviews preserve the current catalog revision until a separate evidence-backed correction is approved.",
+			"Review decisions preserve the current catalog revision until a separate evidence-backed correction is approved.",
 		guardrail:
-			"This view summarizes private operational evidence. Raw provider payloads, secrets, and ordinary user identity do not belong here.",
+			"A provider response or probable match never overwrites canonical product data by itself.",
+	},
+	"data-operations": {
+		title: "About data operations",
+		purpose:
+			"Use this workspace to understand why catalog records, source policies, mappings, datasets, or revisions need operational work.",
+		reviewSteps: [
+			"Start with publication readiness and open the affected product or data area.",
+			"Confirm whether the issue has an evidence-only repair or requires reviewed source material.",
+			"Run supported repairs as a dry run before applying any bounded change.",
+		],
+		decisionEffect:
+			"Operational repairs preserve immutable evidence and report every changed, skipped, and unresolved record.",
+		guardrail:
+			"Data operations never invent missing facts or turn an unreviewed source into public API data.",
 	},
 } satisfies Record<PrivilegedToolInformationKey, PrivilegedToolInformation>;

@@ -7500,7 +7500,19 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_catalog_data_operations_health: {
+        Args: { p_days?: number; p_issue_limit?: number }
+        Returns: Json
+      }
+      get_catalog_data_operations_monitor_summary: {
+        Args: { p_limit?: number }
+        Returns: Json
+      }
       get_catalog_monitor_moderation_summary: {
+        Args: { p_limit?: number }
+        Returns: Json
+      }
+      get_catalog_review_work_summary: {
         Args: { p_limit?: number }
         Returns: Json
       }
@@ -7871,6 +7883,9 @@ export type Database = {
         | "moderation.warnings.review"
         | "moderation.data_health.read"
         | "moderation.roles.manage"
+        | "data_operations.catalog_health.read"
+        | "data_operations.catalog_health.repair"
+        | "data_operations.nutrient_mappings.manage"
       app_role: "user" | "moderator" | "admin" | "developer"
     }
     CompositeTypes: {
@@ -8009,6 +8024,9 @@ export const Constants = {
         "moderation.warnings.review",
         "moderation.data_health.read",
         "moderation.roles.manage",
+        "data_operations.catalog_health.read",
+        "data_operations.catalog_health.repair",
+        "data_operations.nutrient_mappings.manage",
       ],
       app_role: ["user", "moderator", "admin", "developer"],
     },

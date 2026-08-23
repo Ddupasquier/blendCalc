@@ -42,9 +42,14 @@ describe("Profile settings routes", () => {
 		).toBe("Product Submissions");
 		expect(
 			getProfileSettingsRouteTitle(
-				"/profile/privileged-tools/catalog-data-health",
+				"/profile/privileged-tools/catalog-review-work",
 			),
-		).toBe("Catalog Data Health");
+		).toBe("Catalog Review Work");
+		expect(
+			getProfileSettingsRouteTitle(
+				"/profile/privileged-tools/data-operations",
+			),
+		).toBe("Data Operations");
 		expect(getProfileSettingsRouteTitle("/profile")).toBe("Profile");
 	});
 });
