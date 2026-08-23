@@ -659,6 +659,7 @@ Both tables force RLS and grant table access only to `service_role`.
 | `product_ingredient_components`   | `id`                    | Shared evidence projection    | Ordered relational ingredient tree preserving source text, nesting, reported percentages, and source payload | `statement_id`, optional parent component and reviewed ingredient term |
 | `product_precautionary_statements` | `id`                   | Shared evidence projection    | Exact package precautionary wording plus normalized statement type and allergens | Exactly one owner; optional observation and revision links           |
 | `shared_product_conflicts`        | `id`                    | Shared moderation/provenance  | Open/resolved conflicts between observed values                           | `shared_product_id → shared_products.id`                            |
+| `catalog_correction_origins`      | `id`                    | Private correction workflow   | Evidence-backed provider changes, field conflicts, and warning reports waiting on or linked to one real catalog correction | Product, base revision, exactly one origin, optional submission and resolved revision |
 | `api_publication_concerns`        | `id`                    | Private API review            | Evidence-backed correction, rights, attribution, privacy, and source concerns | Exactly one product, image, dataset release, or source target       |
 | `api_publication_holds`           | `id`                    | Private API operations        | Reversible public-output holds with placing and release audit history      | Exactly one product, image, dataset release, or source target       |
 | `food_image_assets`               | `id`                    | Shared image reference        | Source-backed product/ingredient image metadata rendered by ingredient UI | Optional `shared_product_id → shared_products.id`, optional barcode |
@@ -1037,6 +1038,7 @@ Notes:
 | `food_allergen_regulatory_profile_tags` | Composite | Shared regulatory reference | Normalized compatibility tags covered by a regional allergen profile                               | Profile and tag foreign keys                                                         |
 | `product_compatibility_facts`      | `id`        | Shared product metadata     | Facts extracted from shared products/submissions/observations                                      | `tag_id → compatibility_tags.id`; exactly one product/submission/observation parent |
 | `food_compatibility_feedback`      | `id`        | User report/moderation queue | Versioned incorrect- and missing-warning reports with preserved product, preference, policy, revision, and private evidence context | User, policy version, preference tag, optional product/revision, and reviewer foreign keys |
+| `food_warning_policy_review_cases` | `id`       | Private warning follow-up    | Confirmed warning reports requiring versioned rule review or source-data correction | One feedback row, optional product/source, opening and resolving actors |
 | `food_preference_mapping_requests` | `id` | Shared review queue | Privacy-safe normalized requests for saved preference text that has no single exact reviewed mapping | Optional resolved mapping, term, tag, and reviewer |
 | `food_preference_option_catalog`   | `id`        | Shared reference            | App-ready allergen/dietary/ingredient options built from product compatibility and ingredient data | Optional `tag_id → compatibility_tags.id`                                           |
 | `food_preference_api_observations` | `id`        | Shared reference/provenance | Raw observed allergen/dietary/ingredient metadata from external APIs                               | No direct user ownership                                                            |
@@ -1216,7 +1218,7 @@ Notes:
 
 | Table | Documented columns |
 | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `food_compatibility_feedback` | `id`, `reported_by`, `policy_version_id`, `feedback_type`, `shared_product_id`, `shared_product_revision_id`, `source_key`, `source_id`, `barcode`, `food_description`, `warning_id`, `issue_code`, `issue_params`, `fact_snapshot`, `preference_type`, `preference_value`, `preference_tag_id`, `observed_label_date`, `evidence_path`, `evidence_sha256`, `report_reason`, `report_details`, `report_fingerprint`, `status`, `resolution_action`, `reviewed_by`, `reviewed_at`, `review_note`, `created_at`, `updated_at` |
+| `food_compatibility_feedback` | `id`, `reported_by`, `policy_version_id`, `feedback_type`, `shared_product_id`, `shared_product_revision_id`, `source_key`, `source_id`, `barcode`, `food_description`, `warning_id`, `issue_code`, `issue_params`, `fact_snapshot`, `preference_type`, `preference_value`, `preference_tag_id`, `observed_label_date`, `evidence_path`, `evidence_sha256`, `report_reason`, `report_details`, `report_fingerprint`, `status`, `resolution_action`, `follow_up_status`, `reviewed_by`, `reviewed_at`, `review_note`, `created_at`, `updated_at` |
 
 Notes:
 
@@ -1230,6 +1232,33 @@ Notes:
   optional package-observation date, and an optional normalized private label image.
   Evidence paths remain in the private product-evidence bucket and are exposed only as
   short-lived signed URLs inside privileged moderation reads.
+- `review_food_compatibility_feedback` is the AAL2, permission-checked decision
+  boundary. It records the report outcome and creates required policy, source, or
+  product-correction follow-up atomically. Dismissed reports cannot create follow-up
+  work.
+
+### `food_warning_policy_review_cases`
+
+| Table | Documented columns |
+| --- | --- |
+| `food_warning_policy_review_cases` | `id`, `feedback_id`, `case_type`, `responsible_group`, `shared_product_id`, `source_key`, `status`, `opened_by`, `resolved_by`, `resolution_note`, `created_at`, `resolved_at`, `updated_at` |
+
+Rule and source cases remain private operational work. They retain the originating
+feedback and explicit responsible group instead of flattening a confirmed report into
+an ambiguous resolved status.
+
+### `catalog_correction_origins`
+
+| Table | Documented columns |
+| --- | --- |
+| `catalog_correction_origins` | `id`, `shared_product_id`, `base_revision_id`, `origin_type`, `provider_change_review_id`, `shared_product_conflict_id`, `food_compatibility_feedback_id`, `affected_field_paths`, `prefilled_food`, `submission_id`, `status`, `resolved_revision_id`, `resolution_note`, `created_at`, `resolved_at`, `updated_at` |
+
+Each row references exactly one provider change, product conflict, or warning report.
+The database validates product and revision identity before linking a real
+`catalog_correction` submission. Matching uses the correction's actual changed fields;
+the prefilled product snapshot is only a safe starting point and never counts as proof
+of a change. Approval requires and records the immutable revision that resolved the
+origin, while rejection returns the origin to the waiting state.
 - Users may read only their own reports. Inserts and moderation updates use authenticated
   server boundaries; the service role owns privileged writes.
 - Moderators resolve reports as `confirmed` or `dismissed` and record the next action as

@@ -290,6 +290,15 @@ revision. The system never averages conflicting values or silently chooses a pro
 The first approved correction advances the revision; every other pending correction
 must then be re-compared before it can change the catalog.
 
+Provider changes, open field conflicts, and confirmed warning reports retain separate
+`catalog_correction_origins`. Each origin preserves the exact product, base revision,
+affected field families, and a prefilled current snapshot. A later evidence-backed
+catalog-correction submission links automatically only when its real changed fields
+overlap that origin. Approval atomically records the exact resolving revision and closes
+the linked work; rejection releases it for a later correction. The origin snapshot does
+not invent a submission or satisfy evidence requirements by itself, so ordinary exact
+matches and safe automated acceptance remain unchanged.
+
 `label_observed_at` records when blendCalc saw the submitted label. It is not presented
 as the date the manufacturer changed the product unless a separate source provides that
 date. Revision history is retained for the future public API, while private evidence

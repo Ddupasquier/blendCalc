@@ -179,6 +179,14 @@ Product revalidation follows this sequence:
 5. An accepted correction still uses the ordinary catalog revision workflow. A monitor
    review cannot claim acceptance without linking the approved revision it produced.
 
+Provider changes, product conflicts, and confirmed warning reports keep immutable
+correction-origin rows separate from mutable queue status. The database links an origin
+to a real evidence-backed correction by exact product, base revision, and overlapping
+changed fields. One approval transaction records the resulting immutable revision and
+resolves every linked origin; an unsuccessful correction releases the origin rather
+than discarding it. This preserves automatic intake while preventing monitoring or a
+moderation decision from fabricating canonical product changes.
+
 Official FDA recall announcements and enforcement records share one FDA-owned cursor
 with independent bounded offsets; USDA FSIS uses its own cursor, retry, and history.
 An unchanged FDA announcement index is skipped with conditional requests, and an

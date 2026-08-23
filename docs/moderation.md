@@ -222,9 +222,22 @@ Reviewers must:
 4. Leave a concise internal note explaining the decision.
 
 Resolving feedback does not silently edit a product or compatibility rule. Confirmed
-reports create a traceable correction decision; any resulting product or policy change
-uses its own reviewed workflow and, for policy changes, a new compatibility policy
-version. Private package evidence is viewed through short-lived signed URLs and never
+reports create a traceable follow-up owned by the appropriate workflow:
+
+- `product_correction` preserves the exact product, current revision, affected field
+  families, and current food snapshot as a correction origin. A later evidence-backed
+  catalog-correction submission links automatically when its actual changed fields
+  overlap the origin. The report is completed only when that submission creates an
+  approved immutable revision.
+- `rule_review` opens a food-policy review case. Any rule change still requires a new
+  immutable compatibility policy version.
+- `source_correction` opens a data-operations case tied to the reported source context.
+
+The follow-up list remains separate from pending reports so a reviewer can distinguish
+the decision already made from the corrective work still owed. A dismissed report can
+never create correction work. Rejected or automatically declined product corrections
+release their linked origins for another evidence-backed correction instead of losing
+the report. Private package evidence is viewed through short-lived signed URLs and never
 enters public catalog or API responses.
 
 ## Custom Food Preference Mapping Requests
@@ -350,6 +363,11 @@ Catalog-review decisions follow the same rule. Dismissing a provider change reco
 the current canonical revision remains authoritative. Accepting a correct provider
 change requires completing the existing product-correction workflow and linking the
 new approved catalog revision; a monitor result cannot overwrite a canonical product.
+`catalog_correction_origins` applies the same origin-to-revision contract to provider
+changes, open field conflicts, and confirmed food-warning reports. A real correction
+submission links automatically by exact product, base revision, and overlapping changed
+fields. Approval then resolves all linked origins atomically; it never fabricates a
+change summary or treats an unchanged product snapshot as corrective evidence.
 Probable recall matches can be confirmed or dismissed only by an elevated AAL2 session.
 Exact GTIN matches are visible immediately, while title-only similarity never enters
 the queue.

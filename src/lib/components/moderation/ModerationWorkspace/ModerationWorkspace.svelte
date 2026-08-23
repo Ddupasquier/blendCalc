@@ -2,6 +2,7 @@
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import AccountAccessReviewList from "$lib/components/moderation/AccountAccessReviewList/AccountAccessReviewList.svelte";
 	import FoodWarningReportReviewList from "$lib/components/moderation/FoodWarningReportReviewList/FoodWarningReportReviewList.svelte";
+	import FoodWarningFollowUpList from "$lib/components/moderation/FoodWarningFollowUpList/FoodWarningFollowUpList.svelte";
 	import ProductSubmissionReviewList from "$lib/components/moderation/ProductSubmissionReviewList/ProductSubmissionReviewList.svelte";
 	import ProfileImageReportReviewList from "$lib/components/moderation/ProfileImageReportReviewList/ProfileImageReportReviewList.svelte";
 	import type { ModerationWorkspaceProps } from "./types";
@@ -45,6 +46,7 @@
 			{form}
 			showHeading={scope === "all"}
 		/>
+		<FoodWarningFollowUpList followUps={data.compatibilityFollowUps} />
 	{/if}
 
 	{#if scope === "all" || scope === "profile-images"}

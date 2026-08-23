@@ -42,6 +42,7 @@ import {
 } from "$lib/server/errors/appError.server";
 import {
 	listPendingFoodCompatibilityFeedback,
+	listOpenFoodCompatibilityFollowUps,
 	reviewFoodCompatibilityFeedback,
 } from "$lib/server/food-safety/foodCompatibilityFeedback.server";
 import { readLimitedFormData } from "$lib/server/security/requestBody.server";
@@ -217,6 +218,7 @@ export const loadModerationWorkspaceData = async (
 		{ admin, users: authUsers },
 		pendingProductSubmissions,
 		pendingCompatibilityFeedback,
+		compatibilityFollowUps,
 		pendingProfileImageReports,
 	] =
 		await Promise.all([
@@ -229,6 +231,9 @@ export const loadModerationWorkspaceData = async (
 			includesFoodWarningReports
 				? listPendingFoodCompatibilityFeedback()
 				: Promise.resolve([]),
+			includesFoodWarningReports
+				? listOpenFoodCompatibilityFollowUps()
+				: Promise.resolve({ productCorrections: [], policyReviews: [] }),
 			includesProfileImageReports
 				? listPendingProfileImageReports()
 				: Promise.resolve([]),
@@ -486,6 +491,7 @@ export const loadModerationWorkspaceData = async (
 				policyVersion: policyVersion?.version_number ?? null,
 			};
 		}),
+		compatibilityFollowUps,
 	};
 };
 
@@ -557,7 +563,7 @@ export const moderationWorkspaceActions = {
 		}
 	},
 	reviewCompatibilityFeedback: async ({ locals, request }) => {
-		const { user } = await requireModeratorPermission(
+		await requireModeratorPermission(
 			locals,
 			"moderation.warnings.review",
 			"/profile/privileged-tools/food-warning-reports",
@@ -592,7 +598,7 @@ export const moderationWorkspaceActions = {
 		}
 
 		try {
-			const reviewed = await reviewFoodCompatibilityFeedback(user.id, {
+			const reviewed = await reviewFoodCompatibilityFeedback(locals.supabase, {
 				id: feedbackId,
 				status,
 				resolutionAction: resolutionAction as
@@ -603,10 +609,12 @@ export const moderationWorkspaceActions = {
 					| "duplicate",
 				reviewNote,
 			});
-			return reviewed
+			return reviewed.reviewed
 				? {
 					compatibilityReviewSuccess:
-						"Compatibility report reviewed.",
+						reviewed.followUpStatus === "open"
+							? "Report reviewed and its follow-up work is now tracked."
+							: "Compatibility report reviewed.",
 				}
 				: fail(409, {
 					compatibilityReviewError:

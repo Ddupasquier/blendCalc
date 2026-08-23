@@ -64,6 +64,20 @@ required action after reading the evidence.
 - The 51st moderator rejection pauses public catalog sharing for six calendar months.
   Automated declines do not count, and private food tracking remains available.
 
+## Food Warning Review And Follow-Up
+
+- Pending reports remain the decision queue. Each report requires one outcome, one
+  bounded follow-up action, and a concise internal note.
+- Confirmed reports with corrective work move into a separate `Follow-up work` list so
+  completed review decisions do not look unfinished or disappear without an owner.
+- Product corrections link to the shared product-readiness passport and show the exact
+  affected field families. Policy and source cases identify the responsible work group.
+- Product-correction follow-ups remain open until an evidence-backed correction creates
+  an approved immutable revision. The UI must not imply that confirming a report already
+  changed catalog data.
+- Empty follow-up work renders nothing; it does not add a zero-state card beneath an
+  already empty report queue.
+
 ## Profile Image Report Review
 
 - Ordinary self-attested profile-image uploads are published without entering this

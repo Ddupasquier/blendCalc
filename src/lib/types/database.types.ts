@@ -586,6 +586,141 @@ export type Database = {
         }
         Relationships: []
       }
+      catalog_correction_origins: {
+        Row: {
+          affected_field_paths: string[]
+          base_revision_id: string
+          created_at: string
+          food_compatibility_feedback_id: string | null
+          id: string
+          origin_type: string
+          prefilled_food: Json
+          provider_change_review_id: string | null
+          resolution_note: string | null
+          resolved_at: string | null
+          resolved_revision_id: string | null
+          shared_product_conflict_id: string | null
+          shared_product_id: string
+          status: string
+          submission_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          affected_field_paths: string[]
+          base_revision_id: string
+          created_at?: string
+          food_compatibility_feedback_id?: string | null
+          id?: string
+          origin_type: string
+          prefilled_food: Json
+          provider_change_review_id?: string | null
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_revision_id?: string | null
+          shared_product_conflict_id?: string | null
+          shared_product_id: string
+          status?: string
+          submission_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          affected_field_paths?: string[]
+          base_revision_id?: string
+          created_at?: string
+          food_compatibility_feedback_id?: string | null
+          id?: string
+          origin_type?: string
+          prefilled_food?: Json
+          provider_change_review_id?: string | null
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_revision_id?: string | null
+          shared_product_conflict_id?: string | null
+          shared_product_id?: string
+          status?: string
+          submission_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_correction_origins_base_revision_id_fkey"
+            columns: ["base_revision_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_product_readiness"
+            referencedColumns: ["current_revision_id"]
+          },
+          {
+            foreignKeyName: "catalog_correction_origins_base_revision_id_fkey"
+            columns: ["base_revision_id"]
+            isOneToOne: false
+            referencedRelation: "shared_product_revisions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catalog_correction_origins_food_compatibility_feedback_id_fkey"
+            columns: ["food_compatibility_feedback_id"]
+            isOneToOne: false
+            referencedRelation: "food_compatibility_feedback"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catalog_correction_origins_provider_change_review_id_fkey"
+            columns: ["provider_change_review_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_provider_change_reviews"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catalog_correction_origins_resolved_revision_id_fkey"
+            columns: ["resolved_revision_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_product_readiness"
+            referencedColumns: ["current_revision_id"]
+          },
+          {
+            foreignKeyName: "catalog_correction_origins_resolved_revision_id_fkey"
+            columns: ["resolved_revision_id"]
+            isOneToOne: false
+            referencedRelation: "shared_product_revisions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catalog_correction_origins_shared_product_conflict_id_fkey"
+            columns: ["shared_product_conflict_id"]
+            isOneToOne: false
+            referencedRelation: "shared_product_conflicts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catalog_correction_origins_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "blendcalc_api_v1_product_readiness"
+            referencedColumns: ["shared_product_id"]
+          },
+          {
+            foreignKeyName: "catalog_correction_origins_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_product_readiness"
+            referencedColumns: ["shared_product_id"]
+          },
+          {
+            foreignKeyName: "catalog_correction_origins_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "shared_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catalog_correction_origins_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "shared_product_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       catalog_monitor_runs: {
         Row: {
           created_at: string
@@ -1379,6 +1514,7 @@ export type Database = {
           evidence_sha256: string | null
           fact_snapshot: Json
           feedback_type: string
+          follow_up_status: string
           food_description: string
           id: string
           issue_code: string | null
@@ -1411,6 +1547,7 @@ export type Database = {
           evidence_sha256?: string | null
           fact_snapshot?: Json
           feedback_type?: string
+          follow_up_status?: string
           food_description: string
           id?: string
           issue_code?: string | null
@@ -1443,6 +1580,7 @@ export type Database = {
           evidence_sha256?: string | null
           fact_snapshot?: Json
           feedback_type?: string
+          follow_up_status?: string
           food_description?: string
           id?: string
           issue_code?: string | null
@@ -2804,6 +2942,83 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      food_warning_policy_review_cases: {
+        Row: {
+          case_type: string
+          created_at: string
+          feedback_id: string
+          id: string
+          opened_by: string | null
+          resolution_note: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          responsible_group: string
+          shared_product_id: string | null
+          source_key: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          case_type: string
+          created_at?: string
+          feedback_id: string
+          id?: string
+          opened_by?: string | null
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          responsible_group: string
+          shared_product_id?: string | null
+          source_key?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          case_type?: string
+          created_at?: string
+          feedback_id?: string
+          id?: string
+          opened_by?: string | null
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          responsible_group?: string
+          shared_product_id?: string | null
+          source_key?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "food_warning_policy_review_cases_feedback_id_fkey"
+            columns: ["feedback_id"]
+            isOneToOne: true
+            referencedRelation: "food_compatibility_feedback"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_warning_policy_review_cases_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "blendcalc_api_v1_product_readiness"
+            referencedColumns: ["shared_product_id"]
+          },
+          {
+            foreignKeyName: "food_warning_policy_review_cases_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_product_readiness"
+            referencedColumns: ["shared_product_id"]
+          },
+          {
+            foreignKeyName: "food_warning_policy_review_cases_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "shared_products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       generic_food_dataset_reference_rows: {
         Row: {
@@ -7735,6 +7950,15 @@ export type Database = {
           p_review_note: string
         }
         Returns: undefined
+      }
+      review_food_compatibility_feedback: {
+        Args: {
+          p_feedback_id: string
+          p_resolution_action: string
+          p_review_note: string
+          p_status: string
+        }
+        Returns: Json
       }
       review_official_food_safety_alert_match: {
         Args: { p_match_id: string; p_outcome: string; p_review_note: string }

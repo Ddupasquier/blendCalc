@@ -1,0 +1,52 @@
+@use "../../../../styles/variables" as *;
+
+.food-warning-follow-up-list,
+.food-warning-follow-up-list__item,
+.food-warning-follow-up-list__item header > div {
+	display: grid;
+	min-width: 0;
+}
+
+.food-warning-follow-up-list {
+	gap: $app-gap-sm;
+}
+
+.food-warning-follow-up-list__item {
+	gap: $app-gap-sm;
+	padding: $app-shell-card-padding-compact;
+	background: $app-shell-surface-soft;
+	border-radius: $app-shell-radius-card;
+}
+
+.food-warning-follow-up-list__item header {
+	display: flex;
+	align-items: start;
+	justify-content: space-between;
+	gap: $app-gap-sm;
+}
+
+.food-warning-follow-up-list__item header > div {
+	gap: $app-gap-inline-compact;
+}
+
+.food-warning-follow-up-list__item span,
+.food-warning-follow-up-list__owner {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+}
+
+.food-warning-follow-up-list__item p {
+	margin: 0;
+}
+
+.food-warning-follow-up-list__item a {
+	justify-self: start;
+	font-weight: $app-font-weight-semibold;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.food-warning-follow-up-list__item {
+		padding: $app-gap-xs;
+	}
+}
+
