@@ -534,4 +534,3 @@ comment on table public.food_warning_policy_review_cases is
 
 comment on function public.review_food_compatibility_feedback(uuid, text, text, text) is
 	'Atomically records an AAL2 food-warning decision and creates its required correction or policy follow-up without flattening the originating report.';
-

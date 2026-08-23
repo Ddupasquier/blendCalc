@@ -7,6 +7,11 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.5"
+  }
   graphql_public: {
     Tables: {
       [_ in never]: never
@@ -718,6 +723,119 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "shared_product_submissions"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      catalog_health_repair_run_items: {
+        Row: {
+          after_value: Json | null
+          before_value: Json | null
+          created_at: string
+          id: number
+          item_key: string
+          reason_code: string
+          result: string
+          run_id: string
+        }
+        Insert: {
+          after_value?: Json | null
+          before_value?: Json | null
+          created_at?: string
+          id?: never
+          item_key: string
+          reason_code: string
+          result: string
+          run_id: string
+        }
+        Update: {
+          after_value?: Json | null
+          before_value?: Json | null
+          created_at?: string
+          id?: never
+          item_key?: string
+          reason_code?: string
+          result?: string
+          run_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_health_repair_run_items_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_health_repair_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catalog_health_repair_runs: {
+        Row: {
+          candidate_count: number
+          changed_count: number
+          completed_at: string | null
+          dry_run_id: string | null
+          error_count: number
+          id: string
+          issue_code: string
+          mode: string
+          occurrence_key: string
+          repair_key: string
+          requested_by: string
+          skipped_count: number
+          started_at: string
+          status: string
+          summary: string | null
+          unresolved_count: number
+        }
+        Insert: {
+          candidate_count?: number
+          changed_count?: number
+          completed_at?: string | null
+          dry_run_id?: string | null
+          error_count?: number
+          id?: string
+          issue_code: string
+          mode: string
+          occurrence_key: string
+          repair_key: string
+          requested_by: string
+          skipped_count?: number
+          started_at?: string
+          status?: string
+          summary?: string | null
+          unresolved_count?: number
+        }
+        Update: {
+          candidate_count?: number
+          changed_count?: number
+          completed_at?: string | null
+          dry_run_id?: string | null
+          error_count?: number
+          id?: string
+          issue_code?: string
+          mode?: string
+          occurrence_key?: string
+          repair_key?: string
+          requested_by?: string
+          skipped_count?: number
+          started_at?: string
+          status?: string
+          summary?: string | null
+          unresolved_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_health_repair_runs_dry_run_id_fkey"
+            columns: ["dry_run_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_health_repair_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catalog_health_repair_runs_issue_code_fkey"
+            columns: ["issue_code"]
+            isOneToOne: false
+            referencedRelation: "app_issue_codes"
+            referencedColumns: ["code"]
           },
         ]
       }
@@ -2204,6 +2322,10 @@ export type Database = {
           approved_by: string | null
           attribution_text: string | null
           barcode: string | null
+          canonical_selected_at: string | null
+          canonical_selected_by: string | null
+          canonical_selection_method: string | null
+          canonical_status: string
           confidence: string
           created_at: string
           crop_source: string
@@ -2236,6 +2358,10 @@ export type Database = {
           approved_by?: string | null
           attribution_text?: string | null
           barcode?: string | null
+          canonical_selected_at?: string | null
+          canonical_selected_by?: string | null
+          canonical_selection_method?: string | null
+          canonical_status?: string
           confidence?: string
           created_at?: string
           crop_source?: string
@@ -2268,6 +2394,10 @@ export type Database = {
           approved_by?: string | null
           attribution_text?: string | null
           barcode?: string | null
+          canonical_selected_at?: string | null
+          canonical_selected_by?: string | null
+          canonical_selection_method?: string | null
+          canonical_status?: string
           confidence?: string
           created_at?: string
           crop_source?: string
@@ -4080,7 +4210,7 @@ export type Database = {
           {
             foreignKeyName: "nutrient_manual_entry_fields_nutrient_id_fkey"
             columns: ["nutrient_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "nutrient_definitions"
             referencedColumns: ["nutrient_id"]
           },
@@ -4300,6 +4430,76 @@ export type Database = {
           },
         ]
       }
+      nutrient_mapping_review_decisions: {
+        Row: {
+          evidence_reference: string | null
+          id: string
+          mapping_id: string
+          outcome: string
+          previous_mapping_method: string
+          previous_nutrient_id: number
+          review_note: string
+          reviewed_at: string
+          reviewed_by: string
+          selected_nutrient_id: number | null
+          source_key: string
+          source_nutrient_key: string
+          source_unit_name: string
+        }
+        Insert: {
+          evidence_reference?: string | null
+          id?: string
+          mapping_id: string
+          outcome: string
+          previous_mapping_method: string
+          previous_nutrient_id: number
+          review_note: string
+          reviewed_at?: string
+          reviewed_by: string
+          selected_nutrient_id?: number | null
+          source_key: string
+          source_nutrient_key: string
+          source_unit_name: string
+        }
+        Update: {
+          evidence_reference?: string | null
+          id?: string
+          mapping_id?: string
+          outcome?: string
+          previous_mapping_method?: string
+          previous_nutrient_id?: number
+          review_note?: string
+          reviewed_at?: string
+          reviewed_by?: string
+          selected_nutrient_id?: number | null
+          source_key?: string
+          source_nutrient_key?: string
+          source_unit_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nutrient_mapping_review_decisions_mapping_id_fkey"
+            columns: ["mapping_id"]
+            isOneToOne: false
+            referencedRelation: "nutrient_source_mappings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nutrient_mapping_review_decisions_previous_nutrient_id_fkey"
+            columns: ["previous_nutrient_id"]
+            isOneToOne: false
+            referencedRelation: "nutrient_definitions"
+            referencedColumns: ["nutrient_id"]
+          },
+          {
+            foreignKeyName: "nutrient_mapping_review_decisions_selected_nutrient_id_fkey"
+            columns: ["selected_nutrient_id"]
+            isOneToOne: false
+            referencedRelation: "nutrient_definitions"
+            referencedColumns: ["nutrient_id"]
+          },
+        ]
+      }
       nutrient_relationship_rules: {
         Row: {
           child_nutrient_id: number
@@ -4388,6 +4588,7 @@ export type Database = {
           created_at: string
           enabled: boolean
           first_observed_at: string | null
+          id: string
           last_observed_at: string | null
           mapping_method: string
           nutrient_id: number
@@ -4408,6 +4609,7 @@ export type Database = {
           created_at?: string
           enabled?: boolean
           first_observed_at?: string | null
+          id?: string
           last_observed_at?: string | null
           mapping_method: string
           nutrient_id: number
@@ -4428,6 +4630,7 @@ export type Database = {
           created_at?: string
           enabled?: boolean
           first_observed_at?: string | null
+          id?: string
           last_observed_at?: string | null
           mapping_method?: string
           nutrient_id?: number
@@ -7553,13 +7756,30 @@ export type Database = {
         Args: { p_source: string }
         Returns: boolean
       }
+      canonical_food_image_selection_method: {
+        Args: { p_food_image_asset_id: string }
+        Returns: string
+      }
       catalog_change_summary_is_valid: {
         Args: { p_require_changes?: boolean; p_summary: Json }
         Returns: boolean
       }
+      catalog_health_field_value: {
+        Args: {
+          p_brand_owner: string
+          p_field_path: string
+          p_food: Json
+          p_product_name: string
+        }
+        Returns: Json
+      }
       catalog_health_issue_code_for_reason: {
         Args: { p_reason: string }
         Returns: string
+      }
+      catalog_health_observation_field_value: {
+        Args: { p_field_path: string; p_food: Json }
+        Returns: Json
       }
       claim_catalog_revalidation_jobs: {
         Args: { p_limit?: number; p_run_id: string }
@@ -7739,6 +7959,10 @@ export type Database = {
         Args: { p_days?: number; p_issue_limit?: number }
         Returns: Json
       }
+      get_nutrient_mapping_review_workspace: {
+        Args: { p_mapping_id: string }
+        Returns: Json
+      }
       get_pending_profile_image_review_count: { Args: never; Returns: number }
       is_valid_gtin: { Args: { p_value: string }; Returns: boolean }
       jsonb_text_array_search_text: { Args: { p_value: Json }; Returns: string }
@@ -7853,6 +8077,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      refresh_canonical_food_image: {
+        Args: { p_shared_product_id: string }
+        Returns: string
+      }
       refresh_food_compatibility_preference_mapping_bundle: {
         Args: { p_policy_version_id: string }
         Returns: undefined
@@ -7960,9 +8188,27 @@ export type Database = {
         }
         Returns: Json
       }
+      review_nutrient_source_mapping: {
+        Args: {
+          p_evidence_reference?: string
+          p_mapping_id: string
+          p_outcome: string
+          p_review_note?: string
+          p_selected_nutrient_id?: number
+        }
+        Returns: Json
+      }
       review_official_food_safety_alert_match: {
         Args: { p_match_id: string; p_outcome: string; p_review_note: string }
         Returns: undefined
+      }
+      run_catalog_health_repair: {
+        Args: {
+          p_apply?: boolean
+          p_dry_run_id?: string
+          p_occurrence_key: string
+        }
+        Returns: Json
       }
       save_custom_food: {
         Args: { p_fdc_id: number; p_food: Json }

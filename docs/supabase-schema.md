@@ -72,8 +72,10 @@ Notes:
 
 - `display_name` is required and auto-filled with a safe `User##########` style value if
   the user has not chosen one.
-- `bio` is optional and constrained to 150 characters. The tightening migration trims
-  any older out-of-contract value once before applying the new constraint.
+- `bio` is optional. The currently deployed database contract retains its legacy
+  300-character ceiling while the application and server validate the new 150-character
+  product limit. A later contract migration may trim legacy values and tighten the
+  database only after the compatible application is live on `main`.
 - `appearance_theme` is constrained to `system`, `light`, or `dark` and defaults to
   `system`.
 - `cheeky_messages_enabled` backs the user-facing `Playful messages` preference for
@@ -447,7 +449,8 @@ FoodData Central and Open Food Facts products.
 | ------------------------------ | ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
 | `product_data_sources`         | `key`                                                                     | Canonical identity, display name, URLs, terms, and observation history for each external API, standards API, or internal catalog | Referenced by all source-specific mapping and serving tables                              |
 | `product_source_daily_metrics` | `(metric_date, source_key, source_data_type, lookup_kind, lookup_origin)` | Privacy-safe daily API usage, reliability, match, nutrient-depth, metadata-coverage, cache, and timing counters                  | `source_key → product_data_sources.key`                                                   |
-| `nutrient_source_mappings`     | `(source_key, source_nutrient_key, source_unit_name)`                     | Maps a source API nutrient key and unit to the app's canonical nutrient                                                          | `source_key → product_data_sources.key`, `nutrient_id → nutrient_definitions.nutrient_id` |
+| `nutrient_source_mappings`     | `(source_key, source_nutrient_key, source_unit_name)`                     | Maps a source API nutrient key and unit to the app's canonical nutrient; immutable UUID `id` identifies review work               | `source_key → product_data_sources.key`, `nutrient_id → nutrient_definitions.nutrient_id` |
+| `nutrient_mapping_review_decisions` | `id`                                                                | Records immutable evidence-backed approval or exclusion decisions for ambiguous nutrient mappings                                | `mapping_id → nutrient_source_mappings.id`, selected and previous nutrient definitions, `reviewed_by → auth.users.id` |
 | `nutrient_unit_conversions`    | `(source_key, nutrient_id, from_unit_name, to_unit_name)`                 | Stores source- and nutrient-specific conversion multipliers                                                                      | `source_key → product_data_sources.key`, `nutrient_id → nutrient_definitions.nutrient_id` |
 | `serving_measure_units`        | `key`                                                                     | App-ready serving units, labels, dimensions, order, defaults, and conversion to grams or milliliters                             | `source_key → product_data_sources.key`                                                   |
 | `serving_measure_aliases`      | `(unit_key, normalized_alias)`                                            | Recognizes API and label spellings such as `tbsp`, `tablespoon`, and `tablespoons`                                               | `unit_key → serving_measure_units.key`, `source_key → product_data_sources.key`           |
@@ -517,7 +520,8 @@ Notes:
 
 | Table | Documented columns |
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `nutrient_source_mappings` | `source_key`, `source_nutrient_key`, `source_unit_name`, `source_nutrient_name`, `nutrient_id`, `priority`, `mapping_method`, `review_status`, `review_reference`, `confidence`, `enabled`, observation counts/timestamps, `provenance`, and timestamps |
+| `nutrient_source_mappings` | `id`, `source_key`, `source_nutrient_key`, `source_unit_name`, `source_nutrient_name`, `nutrient_id`, `priority`, `mapping_method`, `review_status`, `review_reference`, `confidence`, `enabled`, observation counts/timestamps, `provenance`, and timestamps |
+| `nutrient_mapping_review_decisions` | `id`, `mapping_id`, source identity snapshot, `outcome`, previous and selected nutrient IDs, previous mapping method, bounded review note and evidence reference, reviewer, and review time |
 
 Notes:
 
@@ -538,6 +542,23 @@ Notes:
 - Database constraints prevent pending mappings from being enabled, require evidence on
   approved rows, preserve reviewed semantic rejections, and prevent legacy semantic
   metadata from becoming canonical `food_nutrients` lineage.
+- `id` is a stable review identifier; the exact source key/unit tuple remains the table's
+  natural primary key. Only disabled `pending_review` semantic candidates enter the
+  data-operations queue. Exact approved mappings remain automated and never create
+  routine review work.
+- `get_nutrient_mapping_review_workspace(p_mapping_id)` returns one bounded candidate,
+  its current suggested nutrient, and only nutrient definitions with the same unit or a
+  reviewed source-specific conversion. `review_nutrient_source_mapping(...)` can approve
+  that evidence-backed identity or exclude the candidate. Both functions require AAL2
+  and `data_operations.nutrient_mappings.manage`.
+- Approval changes the mapping method to `moderator_verified`, enables the mapping, and
+  records an immutable `nutrient_mapping_review_decisions` row. Exclusion records the
+  decision and leaves the candidate disabled. Neither action guesses a conversion or
+  silently rewrites historical `food_nutrients`; older records require explicit safe
+  reprocessing when applicable.
+- The decision table is forced-RLS and service-role-only. Authenticated operators reach
+  it only through the guarded functions, so reviewer identity and private notes do not
+  enter ordinary application or API reads.
 - The lookup index starts with source and source nutrient key so barcode mapping does
   not scan the full table.
 - `20260727120000_canonical_barcode_nutrient_mappings.sql` restores the reviewed Open
@@ -820,10 +841,27 @@ Notes:
   remain available inside blendCalc because catalog usefulness and public
   redistribution are separate decisions.
 - `catalog_health_issue_occurrences` normalizes current API-publication reasons,
-  material catalog conflicts, nutrient-mapping gaps, enabled source-policy gaps,
+  material catalog conflicts, missing catalog revisions, accepted revisions without
+  queryable change rows, nutrient-mapping gaps, enabled source-policy gaps,
   active/import-enabled dataset gaps, and warning-policy coverage gaps. Every row uses
   an `app_issue_codes` contract for urgency, work ownership, supported action, and
   reviewed repair capability. Disabled unused datasets do not create failures.
+- `catalog_health_repair_runs` is the immutable audit header for one AAL2 dry run or
+  apply request against an open occurrence. It records the requesting user, issue,
+  approved handler, linked dry run, status, bounded outcome counts, summary, and timing.
+- `catalog_health_repair_run_items` records each field, nutrient, serving, or revision
+  item considered by a run, its changed/skipped/unresolved/failed outcome, a stable
+  reason code, and bounded before/after audit values. These records never replace
+  source observations or accepted revision snapshots.
+- `run_catalog_health_repair` is the only browser-session repair boundary. Apply
+  requires a successful same-user dry run from the previous hour with at least one
+  exact candidate. Provenance handlers link unchanged canonical fields, nutrients, or
+  a primary serving to exact, attribution-complete observations for the same barcode.
+  The revision handler may restore a missing first revision only from an exact approved
+  matching submission or exact stored source observation. It may restore missing
+  `shared_product_revision_changes` only from that revision's already-valid structured
+  change summary. Missing, conflicting, non-redistributable, or ambiguous evidence
+  remains unresolved rather than becoming invented history.
 - `blendcalc_api_publication_profiles` stores versioned fail-closed hard gates separately
   from the broader canonical catalog. The default API v1 packaged-product profile links
   to `api-v1-packaged-core-v1`, requires evidence-backed core identity and serving
@@ -839,6 +877,24 @@ Notes:
   observation between 0 and 100. A reported zero uses `reported-zero`; an omitted ABV
   remains absent and unknown. The same validation protects submissions, canonical rows,
   and revisions.
+
+### Catalog health repair audit
+
+| Table | Documented columns |
+| --- | --- |
+| `catalog_health_repair_runs` | `id`, `requested_by`, `occurrence_key`, `issue_code`, `repair_key`, `mode`, `dry_run_id`, `status`, `candidate_count`, `changed_count`, `skipped_count`, `unresolved_count`, `error_count`, `summary`, `started_at`, `completed_at` |
+| `catalog_health_repair_run_items` | `id`, `run_id`, `item_key`, `result`, `reason_code`, `before_value`, `after_value`, `created_at` |
+
+Notes:
+
+- Both tables use forced RLS. Browser roles have no direct table privileges; only the
+  permission-checked repair RPC writes them.
+- `requested_by` and `dry_run_id` make an apply run traceable to the exact user and
+  safety check that authorized it.
+- Before/after JSON stores bounded repair evidence only. Raw provider payloads remain in
+  their existing observation owners.
+- Run-item reason codes are machine contracts. Friendly operator wording remains in the
+  application message catalog.
 
 ### `shared_product_revisions` and `shared_product_revision_changes`
 
@@ -866,6 +922,14 @@ field paths, replaces stored labels with API-owned wording, and reduces values t
 public shapes. Browser roles cannot execute the RPC directly. Revision snapshots,
 private evidence, arbitrary JSON, and reviewer identities are never returned. Historical
 rows are left with empty changes when no retained evidence can prove the difference.
+
+An AAL2 data operator may use the shared dry-run-first catalog repair boundary to repair
+historical structural gaps without editing rows manually. A missing first revision is
+reconstructible only when the canonical snapshot exactly matches its approved
+submission or exact stored source observation. A later revision receives change rows
+only when its existing structured `change_summary` already proves the field, change
+type, values, and severity. Every attempt is recorded in the immutable repair audit;
+unrecoverable history remains explicitly unresolved.
 
 Product updates merge only the fields named in the reviewed `change_summary`.
 Unsubmitted nutrients and metadata remain canonical, unchanged selected provenance is
@@ -977,7 +1041,7 @@ records that the app can safely render.
 
 | Table | Documented columns |
 | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `food_image_assets` | `id`, `barcode`, `shared_product_id`, `source`, `source_reference`, `image_role`, `image_url`, `thumbnail_url`, `storage_path`, `license_name`, `license_url`, `attribution_text`, `confidence`, `crop_x`, `crop_y`, `crop_zoom`, `rotation_degrees`, `fit_mode`, `placement_version`, `crop_source`, `placement_method`, `placement_suggestion_version`, `placement_suggestion_confidence`, `placement_suggestion_accepted_at`, `approved_by`, `approved_at`, `status`, `fetched_at`, `created_at`, `updated_at` |
+| `food_image_assets` | `id`, `barcode`, `shared_product_id`, `source`, `source_reference`, `image_role`, `image_url`, `thumbnail_url`, `storage_path`, `license_name`, `license_url`, `attribution_text`, `confidence`, `canonical_status`, `canonical_selection_method`, `canonical_selected_at`, `canonical_selected_by`, `crop_x`, `crop_y`, `crop_zoom`, `rotation_degrees`, `fit_mode`, `placement_version`, `crop_source`, `placement_method`, `placement_suggestion_version`, `placement_suggestion_confidence`, `placement_suggestion_accepted_at`, `approved_by`, `approved_at`, `status`, `fetched_at`, `created_at`, `updated_at` |
 
 Notes:
 
@@ -988,6 +1052,18 @@ Notes:
 - Users can read active rows, but only service-role/server code can write rows.
 - Indexed lookup paths cover active barcode images, shared-product images, generic
   images, and source/reference deduping.
+- One partial unique index permits at most one selected canonical front image per shared
+  product. Other images remain `candidate` rows, so evidence is preserved without
+  allowing a newer import to replace the established image silently.
+- `refresh_canonical_food_image` keeps an eligible canonical image stable. When no
+  canonical image exists, it automatically selects a moderator-approved community image
+  or an exact-barcode Open Food Facts front image with complete asset rights metadata.
+  Exact cached images are linked when the matching shared product is created. Retiring
+  the selected image promotes the next eligible candidate deterministically.
+- `canonical_selection_method`, `canonical_selected_at`, and
+  `canonical_selected_by` record how and when selection occurred. Automated licensed
+  source selection never invents a reviewer; a community selection must retain its
+  approving moderator.
 - Card thumbnails use normalized `crop_x`, `crop_y`, `crop_zoom`, quarter-turn
   `rotation_degrees`, and `fit_mode`; nutrition detail views use the unchanged full
   image.
@@ -1013,8 +1089,9 @@ Notes:
   metadata.
 - API v1 emits an image only when its active row retains a licence name and URL,
   attribution text, and retrieval date and its source registry row supplies the public
-  source name and URL. Missing asset attribution omits the image without withholding an
-  otherwise eligible product.
+  source name and URL. It emits only the selected canonical front image; alternate
+  candidates and barcode-only fallbacks remain internal. Missing asset attribution
+  omits the image without withholding an otherwise eligible product.
 
 | Storage bucket | Visibility | Purpose |
 | ----------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------- |
@@ -1507,6 +1584,7 @@ have passed an authenticated dry run.
 | `blocked_signup_emails`            | `email_hash` | Blocklist                  | Prevents signup by hashed email                           | Optional source/blocking users                     |
 | `profile_image_policy_acceptances` | `id`         | Many rows per auth user    | Records profile image policy acceptance per avatar upload | `user_id → auth.users.id`                          |
 | `profile_image_reports`            | `id`         | Private moderation history | Tracks reports and review outcomes for exact profile images | Target profile and reporting/reviewing auth users |
+| `nutrient_mapping_review_decisions` | `id`        | Private data-operations history | Records immutable evidence-backed nutrient mapping decisions | Mapping, nutrient definitions, and reviewing auth user |
 
 Notes:
 
@@ -1554,6 +1632,10 @@ Notes:
   mapping, and revision gaps. It deliberately excludes raw provider payloads, private
   evidence, user identities, secrets, source-evaluation `details`, dataset `metadata`,
   and dataset download URLs.
+- Its nutrient-mapping count and bounded list include only disabled
+  `pending_review` candidates. Approved exact mappings and deliberately rejected
+  candidates are resolved states, not recurring operational gaps. Each pending row
+  includes its stable mapping UUID for the focused review route.
 - `get_catalog_data_operations_monitor_summary(p_limit)` returns bounded monitor
   configuration, queue counts, and recent runs only to an AAL2 admin/developer with
   explicit data-operations permission.
