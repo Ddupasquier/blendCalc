@@ -104,4 +104,34 @@ describe("barcode product route", () => {
 		);
 		warning.mockRestore();
 	});
+
+	it.each([
+		["860014523113", "00860014523113"],
+		["860014523120", "00860014523120"],
+		["850035324554", "00850035324554"],
+		["04006381333931", "04006381333931"],
+	])(
+		"returns an expected not-found result for %s without turning manual entry into a 404",
+		async (requestedBarcode, canonicalBarcode) => {
+			mocks.lookupBarcodeProductDraft.mockResolvedValue(null);
+
+			const response = await GET({
+				locals: {
+					getVerifiedUser: vi.fn().mockResolvedValue({ id: "user-id" }),
+				},
+				params: { barcode: requestedBarcode },
+			} as never);
+
+			expect(response.status).toBe(200);
+			await expect(response.json()).resolves.toEqual({
+				status: "not-found",
+				barcode: canonicalBarcode,
+			});
+			expect(mocks.lookupBarcodeProductDraft).toHaveBeenCalledWith(
+				mocks.adminClient,
+				canonicalBarcode,
+			);
+			expect(mocks.persistFoodImageAsset).not.toHaveBeenCalled();
+		},
+	);
 });

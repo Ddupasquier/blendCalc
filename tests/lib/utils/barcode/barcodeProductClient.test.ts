@@ -8,22 +8,30 @@ describe("lookupBarcodeProduct", () => {
 
 	it("shares one pending browser request for the same barcode", async () => {
 		let resolveFetch!: (response: Response) => void;
-		const fetcher = vi.fn(() => new Promise<Response>((resolve) => {
-			resolveFetch = resolve;
-		}));
+		const fetcher = vi.fn(
+			() =>
+				new Promise<Response>((resolve) => {
+					resolveFetch = resolve;
+				}),
+		);
 		vi.stubGlobal("fetch", fetcher);
 
 		const firstLookup = lookupBarcodeProduct("00021130493609");
 		const secondLookup = lookupBarcodeProduct("00021130493609");
 		expect(fetcher).toHaveBeenCalledTimes(1);
 
-		resolveFetch(new Response(JSON.stringify({
-			status: "found",
-			draft: { name: "Strawberry Jelly" },
-		}), {
-			status: 200,
-			headers: { "content-type": "application/json" },
-		}));
+		resolveFetch(
+			new Response(
+				JSON.stringify({
+					status: "found",
+					draft: { name: "Strawberry Jelly" },
+				}),
+				{
+					status: 200,
+					headers: { "content-type": "application/json" },
+				},
+			),
+		);
 
 		await expect(Promise.all([firstLookup, secondLookup])).resolves.toEqual([
 			{ status: "found", draft: { name: "Strawberry Jelly" } },
@@ -32,15 +40,36 @@ describe("lookupBarcodeProduct", () => {
 	});
 
 	it("removes a completed lookup so a later request can refresh", async () => {
-		const fetcher = vi.fn().mockResolvedValue(
-			new Response(null, { status: 404 }),
-		);
+		const fetcher = vi
+			.fn()
+			.mockResolvedValue(new Response(null, { status: 404 }));
 		vi.stubGlobal("fetch", fetcher);
 
 		await lookupBarcodeProduct("00021130493609");
 		await lookupBarcodeProduct("00021130493609");
 
 		expect(fetcher).toHaveBeenCalledTimes(2);
+	});
+
+	it("accepts a successful domain-level not-found result", async () => {
+		const fetcher = vi.fn().mockResolvedValue(
+			new Response(
+				JSON.stringify({
+					status: "not-found",
+					barcode: "00860014523120",
+				}),
+				{
+					status: 200,
+					headers: { "content-type": "application/json" },
+				},
+			),
+		);
+		vi.stubGlobal("fetch", fetcher);
+
+		await expect(lookupBarcodeProduct("860014523120")).resolves.toEqual({
+			status: "not-found",
+			barcode: "00860014523120",
+		});
 	});
 
 	it("rejects invalid barcode input without a network request", async () => {

@@ -1026,8 +1026,10 @@ server code using the `service_role`. Browser roles receive no table privileges.
 `request_kind`, `status_code`, `response`, `fetched_at`, `expires_at`, and optional
 `etag` support positive/negative caching, conditional refreshes, and short
 stale-on-outage fallback without turning cached provider data into canonical blendCalc
-data. Provider and request-kind names use normalized kebab-case so a new integration can
-use the shared request boundary without a new provider-specific schema constraint.
+data. Negative results keep their provider status code and store an explicit non-null
+JSON outcome marker; `null` never doubles as both “not found” and “missing cache data.”
+Provider and request-kind names use normalized kebab-case so a new integration can use
+the shared request boundary without a new provider-specific schema constraint.
 
 ### Reviewed product resolution policy and source coverage
 

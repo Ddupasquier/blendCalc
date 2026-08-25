@@ -13,6 +13,9 @@ import {
 const inFlightRequests = new Map<string, Promise<unknown>>();
 const memoryCache = new Map<string, ProductApiCacheRecord<unknown>>();
 const MEMORY_CACHE_MAX_ENTRIES = 250;
+const PRODUCT_NOT_FOUND_CACHE_RESPONSE = {
+	cacheOutcome: "product-not-found",
+} as const;
 
 type ProductApiCacheRecord<T> = {
 	response: T;
@@ -88,6 +91,15 @@ const writeMemoryCache = (
 	}
 };
 
+const getCachedProductApiValue = <T>(
+	record: ProductApiCacheRecord<unknown>,
+	notFoundStatuses: ReadonlySet<number>,
+	notFoundValue: T | undefined,
+) => {
+	if (notFoundStatuses.has(record.statusCode)) return notFoundValue as T;
+	return record.response as T;
+};
+
 const supabaseProductApiCacheStore: ProductApiCacheStore = {
 	read: async (provider, cacheKey) => {
 		const memoryRecord = readMemoryCache(provider, cacheKey);
@@ -132,7 +144,11 @@ const supabaseProductApiCacheStore: ProductApiCacheStore = {
 	},
 };
 
-const warnAboutCacheFailure = (provider: string, operation: string, error: unknown) => {
+const warnAboutCacheFailure = (
+	provider: string,
+	operation: string,
+	error: unknown,
+) => {
 	console.warn(
 		`Unable to ${operation} ${provider} API cache:`,
 		error instanceof Error ? error.message : error,
@@ -145,7 +161,10 @@ const readCacheSafely = async <T>(
 	cacheKey: string,
 ) => {
 	try {
-		return await store.read(provider, cacheKey) as ProductApiCacheRecord<T> | null;
+		return (await store.read(
+			provider,
+			cacheKey,
+		)) as ProductApiCacheRecord<T> | null;
 	} catch (error) {
 		warnAboutCacheFailure(provider, "read", error);
 		return null;
@@ -168,7 +187,8 @@ export const coalesceProductApiRequest = async <T>(
 	request: () => Promise<T>,
 	trace?: ProductSourceRequestTrace,
 ): Promise<T> => {
-	const existingRequest = inFlightRequests.get(requestKey) as Promise<T> | undefined;
+	const existingRequest = inFlightRequests.get(requestKey) as
+		Promise<T> | undefined;
 	if (existingRequest) {
 		recordProductSourceCacheHit(trace);
 		return existingRequest;
@@ -194,96 +214,115 @@ export const fetchCachedProductApiJson = async <T>(
 	const cacheStore = input.cacheStore ?? supabaseProductApiCacheStore;
 	const notFoundStatuses = new Set(input.notFoundStatusCodes ?? []);
 
-	return coalesceProductApiRequest(requestKey, async () => {
-		const now = Date.now();
-		const cached = await readCacheSafely<T>(
-			cacheStore,
-			input.provider,
-			cacheKey,
-		);
-		const expiresAt = cached ? Date.parse(cached.expiresAt) : 0;
-		if (cached && expiresAt > now) {
-			recordProductSourceCacheHit(input.trace);
-			return cached.response;
-		}
-
-		const headers = new Headers(input.headers);
-		if (cached?.etag) headers.set("if-none-match", cached.etag);
-
-		try {
-			const response = await fetchWithExternalRequestPolicy(input.url, {
-				headers,
-				timeoutMilliseconds: input.timeoutMilliseconds,
-				acceptedStatusCodes: [
-					...notFoundStatuses,
-					...(cached ? [304] : []),
-				],
-				onAttempt: () => recordProductSourceApiRequest(input.trace),
-				onAttemptFailure: () => recordProductSourceApiError(input.trace),
-				fetcher: input.fetcher,
-				sleep: input.sleep,
-			});
-
-			if (response.status === 304 && cached) {
-				const fetchedAt = new Date();
-				await completeServerBackgroundTask(writeCacheSafely(cacheStore, {
-					provider: input.provider,
-					cacheKey,
-					requestKind: input.requestKind,
-					statusCode: cached.statusCode,
-					response: cached.response,
-					fetchedAt: fetchedAt.toISOString(),
-					expiresAt: new Date(
-						fetchedAt.getTime() + input.ttlMilliseconds,
-					).toISOString(),
-					etag: cached.etag,
-				}));
+	return coalesceProductApiRequest(
+		requestKey,
+		async () => {
+			const now = Date.now();
+			const cached = await readCacheSafely<T>(
+				cacheStore,
+				input.provider,
+				cacheKey,
+			);
+			const expiresAt = cached ? Date.parse(cached.expiresAt) : 0;
+			if (cached && expiresAt > now) {
 				recordProductSourceCacheHit(input.trace);
-				return cached.response;
-			}
-
-			if (!response.ok && !notFoundStatuses.has(response.status)) {
-				throw new Error(
-					`${input.provider} request failed with ${response.status}.`,
+				return getCachedProductApiValue(
+					cached,
+					notFoundStatuses,
+					input.notFoundValue,
 				);
 			}
 
-			let payload: T;
-			if (notFoundStatuses.has(response.status)) {
-				payload = input.notFoundValue as T;
-			} else {
-				try {
-					payload = await response.json() as T;
-				} catch (error) {
-					recordProductSourceApiError(input.trace);
-					throw error;
-				}
-			}
+			const headers = new Headers(input.headers);
+			if (cached?.etag) headers.set("if-none-match", cached.etag);
 
-			const fetchedAt = new Date();
-			const ttlMilliseconds = notFoundStatuses.has(response.status)
-				? input.notFoundTtlMilliseconds ?? input.ttlMilliseconds
-				: input.ttlMilliseconds;
-			await completeServerBackgroundTask(writeCacheSafely(cacheStore, {
-				provider: input.provider,
-				cacheKey,
-				requestKind: input.requestKind,
-				statusCode: response.status,
-				response: payload,
-				fetchedAt: fetchedAt.toISOString(),
-				expiresAt: new Date(
-					fetchedAt.getTime() + ttlMilliseconds,
-				).toISOString(),
-				etag: response.headers.get("etag"),
-			}));
-			return payload;
-		} catch (error) {
-			const staleUntil = expiresAt + (input.staleIfErrorMilliseconds ?? 0);
-			if (cached && staleUntil > Date.now()) {
-				recordProductSourceCacheHit(input.trace);
-				return cached.response;
+			try {
+				const response = await fetchWithExternalRequestPolicy(input.url, {
+					headers,
+					timeoutMilliseconds: input.timeoutMilliseconds,
+					acceptedStatusCodes: [...notFoundStatuses, ...(cached ? [304] : [])],
+					onAttempt: () => recordProductSourceApiRequest(input.trace),
+					onAttemptFailure: () => recordProductSourceApiError(input.trace),
+					fetcher: input.fetcher,
+					sleep: input.sleep,
+				});
+
+				if (response.status === 304 && cached) {
+					const fetchedAt = new Date();
+					await completeServerBackgroundTask(
+						writeCacheSafely(cacheStore, {
+							provider: input.provider,
+							cacheKey,
+							requestKind: input.requestKind,
+							statusCode: cached.statusCode,
+							response: cached.response,
+							fetchedAt: fetchedAt.toISOString(),
+							expiresAt: new Date(
+								fetchedAt.getTime() + input.ttlMilliseconds,
+							).toISOString(),
+							etag: cached.etag,
+						}),
+					);
+					recordProductSourceCacheHit(input.trace);
+					return getCachedProductApiValue(
+						cached,
+						notFoundStatuses,
+						input.notFoundValue,
+					);
+				}
+
+				if (!response.ok && !notFoundStatuses.has(response.status)) {
+					throw new Error(
+						`${input.provider} request failed with ${response.status}.`,
+					);
+				}
+
+				let payload: T;
+				if (notFoundStatuses.has(response.status)) {
+					payload = input.notFoundValue as T;
+				} else {
+					try {
+						payload = (await response.json()) as T;
+					} catch (error) {
+						recordProductSourceApiError(input.trace);
+						throw error;
+					}
+				}
+
+				const fetchedAt = new Date();
+				const ttlMilliseconds = notFoundStatuses.has(response.status)
+					? (input.notFoundTtlMilliseconds ?? input.ttlMilliseconds)
+					: input.ttlMilliseconds;
+				await completeServerBackgroundTask(
+					writeCacheSafely(cacheStore, {
+						provider: input.provider,
+						cacheKey,
+						requestKind: input.requestKind,
+						statusCode: response.status,
+						response: notFoundStatuses.has(response.status)
+							? PRODUCT_NOT_FOUND_CACHE_RESPONSE
+							: payload,
+						fetchedAt: fetchedAt.toISOString(),
+						expiresAt: new Date(
+							fetchedAt.getTime() + ttlMilliseconds,
+						).toISOString(),
+						etag: response.headers.get("etag"),
+					}),
+				);
+				return payload;
+			} catch (error) {
+				const staleUntil = expiresAt + (input.staleIfErrorMilliseconds ?? 0);
+				if (cached && staleUntil > Date.now()) {
+					recordProductSourceCacheHit(input.trace);
+					return getCachedProductApiValue(
+						cached,
+						notFoundStatuses,
+						input.notFoundValue,
+					);
+				}
+				throw error;
 			}
-			throw error;
-		}
-	}, input.trace);
+		},
+		input.trace,
+	);
 };
