@@ -50,6 +50,7 @@ export const getRequestRateLimitPolicy = (
 	}
 
 	if (!pathname.startsWith("/api/")) return null;
+	if (pathname.startsWith("/api/internal/")) return null;
 
 	if (pathname === "/api/products/submissions" && requestMethod === "POST") {
 		return {
@@ -79,7 +80,10 @@ export const getRequestRateLimitPolicy = (
 			windowSeconds: 60,
 		};
 	}
-	if (pathname === "/api/food-compatibility/feedback" && requestMethod === "POST") {
+	if (
+		pathname === "/api/food-compatibility/feedback" &&
+		requestMethod === "POST"
+	) {
 		return {
 			scope: "compatibility:feedback",
 			limit: 30,
@@ -144,7 +148,8 @@ export const consumeRequestRateLimit = async ({
 	);
 	if (error) throw error;
 	const result = data?.[0];
-	if (!result) throw new Error("The request rate limit did not return a result.");
+	if (!result)
+		throw new Error("The request rate limit did not return a result.");
 	return {
 		allowed: result.allowed,
 		remaining: result.remaining,
