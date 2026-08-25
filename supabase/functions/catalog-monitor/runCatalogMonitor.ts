@@ -100,6 +100,7 @@ const processSafetyAlertSource = async (
 	openFdaApiKey: string | undefined,
 	fdaRecallProxyUrl: string | undefined,
 	fdaRecallProxySecret: string | undefined,
+	fdaRecallProxyProtectionBypassSecret: string | undefined,
 	summary: CatalogMonitorRunSummary,
 ) => {
 	try {
@@ -113,6 +114,7 @@ const processSafetyAlertSource = async (
 						{
 							url: fdaRecallProxyUrl,
 							secret: fdaRecallProxySecret,
+							protectionBypassSecret: fdaRecallProxyProtectionBypassSecret,
 						},
 					)
 				: await fetchFsisAlertPage();
@@ -171,6 +173,7 @@ export const runCatalogMonitor = async (
 		openFdaApiKey?: string;
 		fdaRecallProxyUrl?: string;
 		fdaRecallProxySecret?: string;
+		fdaRecallProxyProtectionBypassSecret?: string;
 	},
 ) => {
 	const settings = await repository.readSettings();
@@ -190,6 +193,7 @@ export const runCatalogMonitor = async (
 				environment.openFdaApiKey,
 				environment.fdaRecallProxyUrl,
 				environment.fdaRecallProxySecret,
+				environment.fdaRecallProxyProtectionBypassSecret,
 				summary,
 			);
 		}

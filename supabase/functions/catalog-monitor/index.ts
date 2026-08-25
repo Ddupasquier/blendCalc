@@ -75,6 +75,9 @@ Deno.serve(async (request) => {
 				openFdaApiKey: Deno.env.get("OPENFDA_API_KEY"),
 				fdaRecallProxyUrl: Deno.env.get("FDA_RECALL_PROXY_URL"),
 				fdaRecallProxySecret: Deno.env.get("FDA_RECALL_PROXY_SECRET"),
+				fdaRecallProxyProtectionBypassSecret: Deno.env.get(
+					"FDA_RECALL_PROXY_PROTECTION_BYPASS_SECRET",
+				),
 			},
 		);
 		return jsonResponse(result);

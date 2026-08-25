@@ -120,6 +120,13 @@ const normalizeGtin = (value: string) => {
 
 const collectLabeledIdentifiers = (text: string) => {
 	const identifiers: OfficialSafetyAlertIdentifier[] = [];
+	const genericIdentifierLabels = new Set([
+		"code",
+		"codes",
+		"number",
+		"numbers",
+		"information",
+	]);
 	for (const match of text.matchAll(
 		/\b(upc|gtin|ean)(?:\s*(?:code|no\.?|number))?\s*[:#-]?\s*(\d{8,14})\b/gi,
 	)) {
@@ -135,9 +142,11 @@ const collectLabeledIdentifiers = (text: string) => {
 	for (const match of text.matchAll(
 		/\blot(?:\s+(?:code|no\.?|number))?\s*[:#-]?\s*([a-z0-9][a-z0-9-]{2,})\b/gi,
 	)) {
+		const normalizedValue = match[1].toUpperCase();
+		if (genericIdentifierLabels.has(normalizedValue.toLowerCase())) continue;
 		identifiers.push({
 			type: "lot_code",
-			normalizedValue: match[1].toUpperCase(),
+			normalizedValue,
 			sourceText: match[0],
 		});
 	}
@@ -461,6 +470,18 @@ type FdaAnnouncementDataset = {
 type FdaRecallProxyConfiguration = {
 	url?: string;
 	secret?: string;
+	protectionBypassSecret?: string;
+};
+
+const addFdaRecallProxyHeaders = (
+	headers: Headers,
+	proxy: FdaRecallProxyConfiguration,
+) => {
+	if (!proxy.url || !proxy.secret) return;
+	headers.set("authorization", `Bearer ${proxy.secret}`);
+	if (proxy.protectionBypassSecret) {
+		headers.set("x-vercel-protection-bypass", proxy.protectionBypassSecret);
+	}
 };
 
 const buildFdaRecallProxyUrl = (proxyUrl: string, sourceUrl?: URL) => {
@@ -480,9 +501,7 @@ const fetchFdaAnnouncementDataset = async (
 	});
 	if (etag) headers.set("if-none-match", etag);
 	if (lastModified) headers.set("if-modified-since", lastModified);
-	if (proxy.url && proxy.secret) {
-		headers.set("authorization", `Bearer ${proxy.secret}`);
-	}
+	addFdaRecallProxyHeaders(headers, proxy);
 	let response: Response;
 	try {
 		response = await fetch(
@@ -668,13 +687,19 @@ const fetchFdaRecallAnnouncementPage = async (
 	const alerts = await Promise.all(
 		selectedRecords.map(async ({ record, alert }) => {
 			const sourceUrl = new URL(alert.sourceUrl);
+			const detailHeaders: Record<string, string> = {};
+			if (proxy.url && proxy.secret) {
+				detailHeaders.authorization = `Bearer ${proxy.secret}`;
+				if (proxy.protectionBypassSecret) {
+					detailHeaders["x-vercel-protection-bypass"] =
+						proxy.protectionBypassSecret;
+				}
+			}
 			const detailHtml = await fetchSafetyAlertText(
 				proxy.url && proxy.secret
 					? buildFdaRecallProxyUrl(proxy.url, sourceUrl)
 					: sourceUrl,
-				proxy.url && proxy.secret
-					? { authorization: `Bearer ${proxy.secret}` }
-					: undefined,
+				proxy.url && proxy.secret ? detailHeaders : undefined,
 			);
 			const normalizedAlert =
 				normalizeFdaRecallAnnouncement(record, detailHtml) ?? alert;
