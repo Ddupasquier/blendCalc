@@ -521,8 +521,8 @@ test("short and filled bottom sheets honor shared responsive height bounds", asy
 		});
 		await expect(manualEntryDialog).toBeVisible();
 		await waitForBottomSheetToSettle(manualEntryDialog);
-		const bounds = await page.evaluate(() => {
-			const panel = document.querySelector<HTMLElement>(
+		const bounds = await manualEntryDialog.evaluate((dialog) => {
+			const panel = dialog.querySelector<HTMLElement>(
 				".sheet-base__panel--bottom",
 			);
 			const header = document.querySelector<HTMLElement>(".app-header");
@@ -1049,7 +1049,10 @@ test("shared ingredient bottom sheets enter from below and preserve app chrome b
 		page.getByRole("dialog", { name: firstFoodName }),
 		async () => {
 			await page
-				.getByRole("button", { name: `Open actions for ${firstFoodName}` })
+				.getByRole("button", {
+					name: `Open actions for ${firstFoodName}`,
+					exact: true,
+				})
 				.click({ noWaitAfter: true });
 		},
 	);
@@ -1092,7 +1095,10 @@ test("shared ingredient bottom sheets render identical chrome", async ({
 		.first()
 		.innerText();
 	await page
-		.getByRole("button", { name: `Open actions for ${firstFoodName}` })
+		.getByRole("button", {
+			name: `Open actions for ${firstFoodName}`,
+			exact: true,
+		})
 		.click({ noWaitAfter: true });
 	const actionChrome = await readBottomSheetChrome(
 		page.getByRole("dialog", { name: firstFoodName }),

@@ -390,9 +390,11 @@ const revealIngredientCards = async (page: Page, foodIds: number[]) => {
 		await expect
 			.poll(
 				async () =>
-					(await loadMoreButton.count()) === 0
-						? false
-						: (await loadMoreButton.getAttribute("aria-busy")) === "true",
+					await loadMoreButton.evaluateAll((buttons) =>
+						buttons.some(
+							(button) => button.getAttribute("aria-busy") === "true",
+						),
+					),
 				{
 					message:
 						"The next saved-ingredient page should finish hydrating before another page is requested.",
@@ -629,7 +631,10 @@ test("selection mode exposes the complete card surface, stable geometry, keyboar
 
 	const firstFoodName = await cards.first().locator("strong").innerText();
 	await page
-		.getByRole("button", { name: `Open actions for ${firstFoodName}` })
+		.getByRole("button", {
+			name: `Open actions for ${firstFoodName}`,
+			exact: true,
+		})
 		.click();
 	await page.getByRole("button", { name: "Select item", exact: true }).click();
 	await expect(
@@ -738,7 +743,10 @@ test("normal card actions retain priority over preview and selection", async ({
 		await expect(page).toHaveURL(/\/ingredients\/fridge$/);
 
 		await page
-			.getByRole("button", { name: `Open actions for ${firstFoodName}` })
+			.getByRole("button", {
+				name: `Open actions for ${firstFoodName}`,
+				exact: true,
+			})
 			.click();
 		await expect(page).toHaveURL(/\/ingredients\/fridge\/actions\//);
 		await expect(
@@ -748,7 +756,12 @@ test("normal card actions retain priority over preview and selection", async ({
 		await waitForAppReady(page);
 		await expect(page).toHaveURL(/\/ingredients\/fridge$/);
 
-		await page.getByRole("button", { name: `Remove ${firstFoodName}` }).click();
+		await page
+			.getByRole("button", {
+				name: `Remove ${firstFoodName}`,
+				exact: true,
+			})
+			.click();
 		await expect(page).toHaveURL(/\/ingredients\/fridge$/);
 		await expect(
 			page.getByText("Tap or click delete again to confirm."),
@@ -760,6 +773,7 @@ test("normal card actions retain priority over preview and selection", async ({
 		await page
 			.getByRole("button", {
 				name: `Move to Shopping List: ${firstFoodName}`,
+				exact: true,
 			})
 			.click();
 		await expect(

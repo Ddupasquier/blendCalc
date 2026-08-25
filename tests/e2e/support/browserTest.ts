@@ -6,7 +6,7 @@ import {
 	type Locator,
 	type Page,
 } from "@playwright/test";
-import { mkdir } from "node:fs/promises";
+import { mkdir, readFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import {
 	getAuthenticatedBrowserStatePath,
@@ -24,6 +24,74 @@ type AuthenticatedBrowserWorkerFixture = {
 const formatConsoleError = (message: ConsoleMessage) =>
 	`console.${message.type()}: ${message.text()}`;
 
+const hasUnexpiredAuthenticatedBrowserState = async ({
+	baseURL,
+	storageStatePath,
+}: {
+	baseURL: string;
+	storageStatePath: string;
+}) => {
+	try {
+		const state = JSON.parse(await readFile(storageStatePath, "utf8")) as {
+			cookies?: Array<{
+				domain?: string;
+				expires?: number;
+				name?: string;
+				secure?: boolean;
+			}>;
+		};
+		const expectedOrigin = new URL(baseURL);
+		const minimumReusableExpirySeconds = Date.now() / 1_000 + 5 * 60;
+
+		return Boolean(
+			state.cookies?.some(
+				(cookie) =>
+					cookie.name?.startsWith("sb-") &&
+					cookie.name.endsWith("-auth-token") &&
+					cookie.domain === expectedOrigin.hostname &&
+					cookie.secure === (expectedOrigin.protocol === "https:") &&
+					typeof cookie.expires === "number" &&
+					cookie.expires > minimumReusableExpirySeconds,
+			),
+		);
+	} catch {
+		return false;
+	}
+};
+
+const isStoredBrowserSessionStillAuthenticated = async ({
+	baseURL,
+	storageStatePath,
+}: {
+	baseURL: string;
+	storageStatePath: string;
+}) => {
+	if (
+		!(await hasUnexpiredAuthenticatedBrowserState({
+			baseURL,
+			storageStatePath,
+		}))
+	) {
+		return false;
+	}
+
+	const verificationRequest = await playwrightRequest.newContext({
+		baseURL,
+		extraHTTPHeaders: { origin: baseURL },
+		storageState: storageStatePath,
+	});
+	try {
+		const response = await verificationRequest.get(
+			"/api/user-food-lists/fridge?limit=1&offset=0&sort=recent&source=all&trust=any",
+		);
+		return response.status() !== 401 && response.status() !== 403;
+	} catch {
+		return false;
+	} finally {
+		await verificationRequest.dispose();
+	}
+};
+
 const createAuthenticatedBrowserState = async ({
 	baseURL,
 	parallelWorkerIndex,
@@ -38,6 +106,14 @@ const createAuthenticatedBrowserState = async ({
 		projectName,
 		parallelWorkerIndex,
 	);
+	if (
+		await isStoredBrowserSessionStillAuthenticated({
+			baseURL,
+			storageStatePath,
+		})
+	) {
+		return storageStatePath;
+	}
 	const authenticationRequest = await playwrightRequest.newContext({
 		baseURL,
 		extraHTTPHeaders: { origin: baseURL },

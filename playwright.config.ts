@@ -1,5 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
+delete process.env.NO_COLOR;
+
 const applicationBaseUrl =
 	process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:5174";
 const localPlaywrightWorkerCount = Number.parseInt(
@@ -7,7 +9,10 @@ const localPlaywrightWorkerCount = Number.parseInt(
 	10,
 );
 
-if (!Number.isInteger(localPlaywrightWorkerCount) || localPlaywrightWorkerCount < 1) {
+if (
+	!Number.isInteger(localPlaywrightWorkerCount) ||
+	localPlaywrightWorkerCount < 1
+) {
 	throw new Error("PLAYWRIGHT_WORKERS must be a positive integer.");
 }
 
