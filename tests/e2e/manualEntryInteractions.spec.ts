@@ -1,6 +1,6 @@
 import { expect, test, waitForAppReady } from "./support/browserTest";
 import type { Locator } from "@playwright/test";
-import { createAuthenticatedLocalQaDatabaseClient } from "./support/localQaDatabase";
+import { getAuthenticatedLocalQaDatabaseClient } from "./support/localQaDatabase";
 import {
 	readApprovedManualEntryNutrientCatalog,
 	type ExpectedManualEntryNutrientGroup,
@@ -15,45 +15,38 @@ const escapeRegularExpression = (value: string) =>
 const cleanUpCanonicalCategoryDisplayTestFood = async (
 	parallelWorkerIndex: number,
 ) => {
-	const supabase = await createAuthenticatedLocalQaDatabaseClient(
-		parallelWorkerIndex,
-	);
+	const supabase =
+		await getAuthenticatedLocalQaDatabaseClient(parallelWorkerIndex);
 
-	try {
-		const { data: customFoods, error: customFoodsError } = await supabase
+	const { data: customFoods, error: customFoodsError } = await supabase
+		.from("custom_foods")
+		.select("id, fdc_id")
+		.eq("name_key", canonicalCategoryDisplayTestNameKey);
+	if (customFoodsError) throw customFoodsError;
+
+	for (const customFood of customFoods ?? []) {
+		for (const listType of ["fridge", "shopping"] as const) {
+			const { error: listRemovalError } = await supabase.rpc(
+				"remove_user_food_list_item",
+				{ p_list_type: listType, p_fdc_id: customFood.fdc_id },
+			);
+			if (listRemovalError) throw listRemovalError;
+		}
+	}
+
+	if ((customFoods ?? []).length > 0) {
+		const { error: customFoodRemovalError } = await supabase
 			.from("custom_foods")
-			.select("id, fdc_id")
-			.eq("name_key", canonicalCategoryDisplayTestNameKey);
-		if (customFoodsError) throw customFoodsError;
-
-		for (const customFood of customFoods ?? []) {
-			for (const listType of ["fridge", "shopping"] as const) {
-				const { error: listRemovalError } = await supabase.rpc(
-					"remove_user_food_list_item",
-					{ p_list_type: listType, p_fdc_id: customFood.fdc_id },
-				);
-				if (listRemovalError) throw listRemovalError;
-			}
-		}
-
-		if ((customFoods ?? []).length > 0) {
-			const { error: customFoodRemovalError } = await supabase
-				.from("custom_foods")
-				.delete()
-				.in(
-					"id",
-					(customFoods ?? []).map((customFood) => customFood.id),
-				);
-			if (customFoodRemovalError) throw customFoodRemovalError;
-		}
-	} finally {
-		await supabase.auth.signOut({ scope: "local" });
+			.delete()
+			.in(
+				"id",
+				(customFoods ?? []).map((customFood) => customFood.id),
+			);
+		if (customFoodRemovalError) throw customFoodRemovalError;
 	}
 };
 
-const readRenderedManualEntryNutrientGroups = async (
-	dialog: Locator,
-) =>
+const readRenderedManualEntryNutrientGroups = async (dialog: Locator) =>
 	dialog.locator(".manual-nutrients__group").evaluateAll((groupElements) =>
 		groupElements.map((groupElement) => {
 			const titleElement = groupElement.querySelector(
@@ -101,9 +94,9 @@ const expectRenderedManualEntryNutrientGroups = async (
 		}
 	}
 
-	await expect.poll(
-		() => readRenderedManualEntryNutrientGroups(dialog),
-	).toEqual(expectedGroups);
+	await expect
+		.poll(() => readRenderedManualEntryNutrientGroups(dialog))
+		.toEqual(expectedGroups);
 };
 
 const findSavedIngredientCard = async (
@@ -116,7 +109,14 @@ const findSavedIngredientCard = async (
 		const loadMoreButton = page.getByRole("button", { name: "Load more" });
 		if (!(await loadMoreButton.isVisible().catch(() => false))) break;
 		await loadMoreButton.click();
-		await expect(loadMoreButton).not.toHaveAttribute("aria-busy", "true");
+		await expect
+			.poll(
+				async () =>
+					(await card.isVisible().catch(() => false)) ||
+					!(await loadMoreButton.isVisible().catch(() => false)) ||
+					(await loadMoreButton.getAttribute("aria-busy")) !== "true",
+			)
+			.toBe(true);
 	}
 	await expect(card).toBeVisible();
 	return card;
@@ -152,10 +152,14 @@ test("manual entry defers required warnings until a forward attempt", async ({
 
 	const dialog = page.getByRole("dialog", { name: "Enter Manually" });
 	await expect(dialog).toBeVisible();
-	await expect(dialog.getByText("Name must be at least 3 characters")).toHaveCount(0);
+	await expect(
+		dialog.getByText("Name must be at least 3 characters"),
+	).toHaveCount(0);
 
 	await dialog.getByRole("button", { name: "Continue" }).click();
-	await expect(dialog.getByText("Name must be at least 3 characters")).toBeVisible();
+	await expect(
+		dialog.getByText("Name must be at least 3 characters"),
+	).toBeVisible();
 });
 
 test("manual-entry progress tabs perform the same forward validation", async ({
@@ -171,7 +175,9 @@ test("manual-entry progress tabs perform the same forward validation", async ({
 		"aria-current",
 		"step",
 	);
-	await expect(dialog.getByText("Name must be at least 3 characters")).toBeVisible();
+	await expect(
+		dialog.getByText("Name must be at least 3 characters"),
+	).toBeVisible();
 });
 
 test("manual barcode entry shows input-bound progress until lookup finishes", async ({
@@ -225,52 +231,55 @@ test("manual barcode entry shows input-bound progress until lookup finishes", as
 test("regulated alcohol lookup keeps sparse nutrition honest before Share", async ({
 	page,
 }) => {
-	await page.route(/\/api\/products\/barcode\/(?:850027056715|00850027056715)$/, async (route) => {
-		await route.fulfill({
-			status: 200,
-			contentType: "application/json",
-			body: JSON.stringify({
-				status: "found",
-				draft: {
-					barcode: "00850027056715",
-					name: "Straightaway Espresso Martini",
-					nameProvenance: "source",
-					brandOwner: "Straightaway",
-					servingLabel: "100 g",
-					servingWeightGrams: 100,
-					hasSourceServing: false,
-					nutrients: [],
-					reportedNutrientIds: [],
-					categories: ["Cocktails"],
-					resolvedCategory: "Other",
-					categoryResolution: {
-						categoryOptionId: "other",
-						label: "Other",
-						sourceValue: "Cocktails",
-						confidence: "reviewed",
+	await page.route(
+		/\/api\/products\/barcode\/(?:850027056715|00850027056715)$/,
+		async (route) => {
+			await route.fulfill({
+				status: 200,
+				contentType: "application/json",
+				body: JSON.stringify({
+					status: "found",
+					draft: {
+						barcode: "00850027056715",
+						name: "Straightaway Espresso Martini",
+						nameProvenance: "source",
+						brandOwner: "Straightaway",
+						servingLabel: "100 g",
+						servingWeightGrams: 100,
+						hasSourceServing: false,
+						nutrients: [],
+						reportedNutrientIds: [],
+						categories: ["Cocktails"],
+						resolvedCategory: "Other",
+						categoryResolution: {
+							categoryOptionId: "other",
+							label: "Other",
+							sourceValue: "Cocktails",
+							confidence: "reviewed",
+						},
+						packageQuantity: {
+							label: "100 mL",
+							amount: 100,
+							unit: "mL",
+						},
+						alcoholByVolume: {
+							percent: 20,
+							valueStatus: "reported",
+							basis: "volume-percent",
+							sourceUnit: "% ABV",
+						},
+						regulatoryDisclosure: {
+							profileKey: "us-ttb-alcohol-beverage-v1",
+							evidenceStatus: "source-reported",
+						},
+						source: "cola-cloud",
+						sourceLabel: "COLA Cloud",
+						sourceReference: "24134001000441",
 					},
-					packageQuantity: {
-						label: "100 mL",
-						amount: 100,
-						unit: "mL",
-					},
-					alcoholByVolume: {
-						percent: 20,
-						valueStatus: "reported",
-						basis: "volume-percent",
-						sourceUnit: "% ABV",
-					},
-					regulatoryDisclosure: {
-						profileKey: "us-ttb-alcohol-beverage-v1",
-						evidenceStatus: "source-reported",
-					},
-					source: "cola-cloud",
-					sourceLabel: "COLA Cloud",
-					sourceReference: "24134001000441",
-				},
-			}),
-		});
-	});
+				}),
+			});
+		},
+	);
 
 	await page.goto("/ingredients/fridge/manual-entry");
 	await waitForAppReady(page);
@@ -293,10 +302,14 @@ test("regulated alcohol lookup keeps sparse nutrition honest before Share", asyn
 	);
 	await expect(dialog.getByLabel("Alcohol by volume (%) *")).toHaveValue("20");
 	await expect(dialog.getByLabel("Weight (g) optional")).toHaveValue("");
-	await expect(dialog.getByText("No package serving was reported")).toBeVisible();
+	await expect(
+		dialog.getByText("No package serving was reported"),
+	).toBeVisible();
 
 	await dialog.getByRole("button", { name: "Continue" }).click();
-	await expect(dialog.getByText(/legally omit standard nutrition/i)).toBeVisible();
+	await expect(
+		dialog.getByText(/legally omit standard nutrition/i),
+	).toBeVisible();
 	await expect(dialog.getByLabel("Calories (kcal)")).not.toHaveAttribute(
 		"aria-required",
 		"true",
@@ -440,9 +453,9 @@ test("the category picker remains keyboard-operable and unclipped at 200% zoom",
 		)
 			.filter(
 				(element) =>
-					!element.classList.contains("sr-only")
-					&& element.getClientRects().length > 0
-					&& element.clientWidth > 1,
+					!element.classList.contains("sr-only") &&
+					element.getClientRects().length > 0 &&
+					element.clientWidth > 1,
 			)
 			.map((element) => ({
 				clientWidth: element.clientWidth,
@@ -465,7 +478,9 @@ test("the category picker remains keyboard-operable and unclipped at 200% zoom",
 		expect(control.right).toBeLessThanOrEqual(pickerLayout.panelRight + 1);
 	}
 	for (const textBlock of pickerLayout.textBlocks) {
-		expect(textBlock.scrollWidth).toBeLessThanOrEqual(textBlock.clientWidth + 1);
+		expect(textBlock.scrollWidth).toBeLessThanOrEqual(
+			textBlock.clientWidth + 1,
+		);
 	}
 });
 
@@ -484,21 +499,17 @@ test("manual entry renders every approved DB nutrient group and field", async ({
 		"The authoritative catalog comparison is restricted to disposable local infrastructure.",
 	);
 
-	const supabase = await createAuthenticatedLocalQaDatabaseClient(
+	const supabase = await getAuthenticatedLocalQaDatabaseClient(
 		testInfo.parallelIndex,
 	);
-	let nutrientCatalog;
-	try {
-		nutrientCatalog = await readApprovedManualEntryNutrientCatalog(supabase);
-	} finally {
-		await supabase.auth.signOut({ scope: "local" });
-	}
+	const nutrientCatalog =
+		await readApprovedManualEntryNutrientCatalog(supabase);
 
 	expect(nutrientCatalog.macros).toHaveLength(3);
 	expect(nutrientCatalog.extended).toHaveLength(7);
-	expect(
-		nutrientCatalog.macros.flatMap((group) => group.fields),
-	).toHaveLength(13);
+	expect(nutrientCatalog.macros.flatMap((group) => group.fields)).toHaveLength(
+		13,
+	);
 	expect(
 		nutrientCatalog.extended.flatMap((group) => group.fields),
 	).toHaveLength(55);
@@ -524,10 +535,7 @@ test("manual entry renders every approved DB nutrient group and field", async ({
 	await expect(dialog.getByLabel("Label includes volume")).not.toBeChecked();
 	await dialog.getByRole("button", { name: "Continue" }).click();
 
-	await expectRenderedManualEntryNutrientGroups(
-		dialog,
-		nutrientCatalog.macros,
-	);
+	await expectRenderedManualEntryNutrientGroups(dialog, nutrientCatalog.macros);
 	await expect(
 		dialog.locator(".manual-nutrients__group", { hasText: "Mineral details" }),
 	).toHaveCount(0);

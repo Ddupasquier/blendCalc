@@ -7,9 +7,7 @@
 		INGREDIENT_SEARCH_LOAD_MORE_PAGE_SIZE,
 		INGREDIENT_SEARCH_PAGE_SIZE,
 	} from "$lib/utils/ingredients/ingredientSearchPagination";
-	import {
-		CUSTOM_FOODS_CHANGED_EVENT,
-	} from "$lib/utils/food/custom/customFoods";
+	import { CUSTOM_FOODS_CHANGED_EVENT } from "$lib/utils/food/custom/customFoods";
 	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton/CircleIconButton.svelte";
 	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
@@ -18,12 +16,15 @@
 	import { createEventDispatcher, onMount, tick } from "svelte";
 	import type { IngredientSearchProps } from "./types";
 	import SearchDropdown from "../SearchDropdown/SearchDropdown.svelte";
+	import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 
 	let {
 		onSelect,
 		onAdd = () => {},
 		addingFoodId = null,
-		savedFoodIdentityKeys = new Set<string>(),
+		destinationListKey = MIX_STORAGE_KEYS.fridge,
+		destinationListFoodIdentityKeys = new Set<string>(),
+		otherListFoodIdentityKeys = new Set<string>(),
 		onSearchFocus = () => {},
 		autofocus = false,
 		provenanceOptions = [],
@@ -98,7 +99,8 @@
 				if (
 					abortController.signal.aborted ||
 					requestVersion !== searchRequestVersion
-				) return;
+				)
+					return;
 				results = [];
 				hasMoreResults = false;
 				nextOffset = null;
@@ -133,7 +135,8 @@
 			!hasMoreResults ||
 			loading ||
 			loadingMore
-		) return;
+		)
+			return;
 
 		const requestVersion = searchRequestVersion;
 		const abortController = new AbortController();
@@ -151,7 +154,8 @@
 			if (
 				requestVersion !== searchRequestVersion ||
 				query.trim() !== searchString
-			) return;
+			)
+				return;
 
 			results = [...results, ...page.foods];
 			hasMoreResults = page.hasMore;
@@ -161,7 +165,8 @@
 			if (
 				abortController.signal.aborted ||
 				requestVersion !== searchRequestVersion
-			) return;
+			)
+				return;
 			error = "More search results could not be loaded. Try again.";
 		} finally {
 			if (loadMoreAbortController === abortController) {
@@ -208,10 +213,10 @@
 	);
 	const showEmptySearchMessage = $derived(
 		completedSearchQuery.length > 0 &&
-		completedSearchQuery === query.trim() &&
-		results.length === 0 &&
-		!loading &&
-		!error,
+			completedSearchQuery === query.trim() &&
+			results.length === 0 &&
+			!loading &&
+			!error,
 	);
 
 	$effect(() => {
@@ -235,6 +240,7 @@
 	});
 
 	const select = (food: FoodItem) => {
+		clearTimeout(debounceTimer);
 		abortPendingSearchRequests();
 		searchRequestVersion += 1;
 		onSelect(food);
@@ -270,13 +276,11 @@
 	const moveActiveResult = (direction: 1 | -1) => {
 		const visibleResults = sortedResults();
 		if (visibleResults.length === 0) return;
-		const currentIndex = activeResultIndex >= 0
-			? activeResultIndex
-			: direction === 1
-				? -1
-				: 0;
+		const currentIndex =
+			activeResultIndex >= 0 ? activeResultIndex : direction === 1 ? -1 : 0;
 		activeResultIndex =
-			(currentIndex + direction + visibleResults.length) % visibleResults.length;
+			(currentIndex + direction + visibleResults.length) %
+			visibleResults.length;
 		void keepActiveResultVisible();
 	};
 
@@ -348,9 +352,13 @@
 <div bind:this={searchWrapElement} class="search-wrap">
 	<label class="sr-only" for="ingredient-search">Search ingredients</label>
 	<p id="ingredient-search-keyboard-help" class="sr-only">
-		Use the up and down arrow keys to choose a result, then press Enter to view it.
+		Use the up and down arrow keys to choose a result, then press Enter to view
+		it.
 	</p>
-	<div class="search-toolbar" class:search-toolbar--with-actions={Boolean(actions)}>
+	<div
+		class="search-toolbar"
+		class:search-toolbar--with-actions={Boolean(actions)}
+	>
 		<div
 			class="search-row"
 			class:search-row--active={hasActiveSearch}
@@ -381,8 +389,8 @@
 				aria-controls="ingredient-search-results"
 				aria-describedby="ingredient-search-keyboard-help"
 				aria-expanded={sortedResults().length > 0}
-				aria-activedescendant={activeResultIndex >= 0
-					&& sortedResults()[activeResultIndex]
+				aria-activedescendant={activeResultIndex >= 0 &&
+				sortedResults()[activeResultIndex]
 					? `ingredient-search-result-${sortedResults()[activeResultIndex].fdcId}`
 					: undefined}
 			/>
@@ -433,7 +441,9 @@
 		{hasMoreResults}
 		{loadingMore}
 		contentVersion={`${query.trim()}:${results.length}`}
-		{savedFoodIdentityKeys}
+		{destinationListKey}
+		{destinationListFoodIdentityKeys}
+		{otherListFoodIdentityKeys}
 		{provenanceOptions}
 		onSelect={select}
 		{onAdd}

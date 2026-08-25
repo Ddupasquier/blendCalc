@@ -3,7 +3,6 @@ import type { FoodImageAsset } from "$lib/utils/food/types";
 import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
 import type { ProductRegulatoryDisclosureProfile } from "$lib/utils/food/quality/nutritionCompletenessCatalog";
 import type {
-	CustomIngredientOutcomeState,
 	ManualEntryBarcodeShareMismatch,
 	ManualEntrySummaryItem,
 	ManualEntryValidationItem,
@@ -23,7 +22,6 @@ export type ShareStepProps = {
 	shareWithCatalog: boolean;
 	barcodeShareMismatch: ManualEntryBarcodeShareMismatch;
 	lookingUpBarcode: boolean;
-	allowPlayfulMessages?: boolean;
 	validatingBarcodeShare: boolean;
 	requiresCatalogEvidence: boolean;
 	showOptionalProductImageUpload: boolean;
@@ -38,9 +36,7 @@ export type ShareStepProps = {
 	usesNonstandardNutritionDisclosure: boolean;
 	saveDestination: IngredientListKey;
 	error: string;
-	lastOutcome: CustomIngredientOutcomeState | null;
-	outcomeAction: "move" | "undo" | null;
-	savedMessage: string;
+	placementMessage: string;
 	catalogMessage: string;
 	saving: boolean;
 	catalogSubmissionOnly: boolean;
@@ -53,9 +49,6 @@ export type ShareStepProps = {
 	onNutritionPhotoChange: (file: File | null) => void;
 	onBarcodePhotoChange: (file: File | null) => void;
 	onSaveDestinationChange: (destination: IngredientListKey) => void;
-	onMoveToShopping: () => void | Promise<void>;
-	onMoveToFridge: () => void | Promise<void>;
-	onUndo: () => void | Promise<void>;
 	onBack: () => void;
 	onSubmit: () => void | Promise<void>;
 	onCatalogSubmissionComplete: () => void;

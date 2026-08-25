@@ -8,11 +8,7 @@ import type {
 } from "$lib/utils/food/ocr/nutritionLabelOcr";
 
 export type ManualEntryStepId =
-	| "identity"
-	| "servings"
-	| "macros"
-	| "extended"
-	| "share";
+	"identity" | "servings" | "macros" | "extended" | "share";
 
 export type NutrientValueState = Record<number, number>;
 
@@ -59,13 +55,6 @@ export type ManualEntryStep = {
 export type ManualEntryVolumeOption = {
 	value: ServingMeasureUnit;
 	label: string;
-};
-
-export type CustomIngredientOutcomeState = {
-	food: FoodItem;
-	destination: IngredientListKey;
-	addedToList: boolean;
-	message: string;
 };
 
 export type ManualEntryListMovePromptState = {

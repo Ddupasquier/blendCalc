@@ -104,8 +104,12 @@ describe("IngredientSearch", () => {
 	});
 
 	it("keeps a failed search distinct from a completed search with no matches", async () => {
-		const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
-		vi.mocked(searchFoodPage).mockRejectedValueOnce(new Error("provider failed"));
+		const consoleError = vi
+			.spyOn(console, "error")
+			.mockImplementation(() => {});
+		vi.mocked(searchFoodPage).mockRejectedValueOnce(
+			new Error("provider failed"),
+		);
 
 		render(IngredientSearch, {
 			props: {
@@ -120,9 +124,10 @@ describe("IngredientSearch", () => {
 		);
 
 		await waitFor(
-			() => expect(screen.getByRole("alert")).toHaveTextContent(
-				"We couldn't search foods right now",
-			),
+			() =>
+				expect(screen.getByRole("alert")).toHaveTextContent(
+					"We couldn't search foods right now",
+				),
 			{ timeout: 2000 },
 		);
 		expect(screen.queryByText("Nothing found")).not.toBeInTheDocument();
@@ -131,10 +136,9 @@ describe("IngredientSearch", () => {
 
 	it("uses arrow keys and Enter to select a visible result", async () => {
 		const onSelect = vi.fn();
-		vi.mocked(searchFoodPage).mockResolvedValueOnce(makePage([
-			makeFood(101, "Apple, raw"),
-			makeFood(102, "Banana, raw"),
-		]));
+		vi.mocked(searchFoodPage).mockResolvedValueOnce(
+			makePage([makeFood(101, "Apple, raw"), makeFood(102, "Banana, raw")]),
+		);
 
 		render(IngredientSearch, {
 			props: {
@@ -164,10 +168,7 @@ describe("IngredientSearch", () => {
 		);
 		await fireEvent.keyDown(searchInput, { key: "ArrowDown" });
 		const firstOption = screen.getByRole("row", { name: /apple, raw/i });
-		expect(firstOption).toHaveAttribute(
-			"aria-selected",
-			"true",
-		);
+		expect(firstOption).toHaveAttribute("aria-selected", "true");
 		expect(firstOption.closest(".ingredient-search-card")).toHaveClass(
 			"ingredient-search-card--active",
 		);
@@ -177,10 +178,7 @@ describe("IngredientSearch", () => {
 		);
 		await fireEvent.keyDown(searchInput, { key: "ArrowDown" });
 		const secondOption = screen.getByRole("row", { name: /banana, raw/i });
-		expect(secondOption).toHaveAttribute(
-			"aria-selected",
-			"true",
-		);
+		expect(secondOption).toHaveAttribute("aria-selected", "true");
 		expect(secondOption.closest(".ingredient-search-card")).toHaveClass(
 			"ingredient-search-card--active",
 		);
@@ -194,11 +192,13 @@ describe("IngredientSearch", () => {
 
 	it("wraps keyboard navigation upward without using old shortcut keys", async () => {
 		const onSelect = vi.fn();
-		vi.mocked(searchFoodPage).mockResolvedValueOnce(makePage([
-			makeFood(201, "Apricot, raw"),
-			makeFood(202, "Cherry, raw"),
-			makeFood(203, "Tomato, raw"),
-		]));
+		vi.mocked(searchFoodPage).mockResolvedValueOnce(
+			makePage([
+				makeFood(201, "Apricot, raw"),
+				makeFood(202, "Cherry, raw"),
+				makeFood(203, "Tomato, raw"),
+			]),
+		);
 
 		render(IngredientSearch, {
 			props: {
@@ -240,9 +240,9 @@ describe("IngredientSearch", () => {
 	it("uses the result plus button for adding without opening nutrition", async () => {
 		const onSelect = vi.fn();
 		const onAdd = vi.fn();
-		vi.mocked(searchFoodPage).mockResolvedValueOnce(makePage([
-			makeFood(301, "Spinach, raw"),
-		]));
+		vi.mocked(searchFoodPage).mockResolvedValueOnce(
+			makePage([makeFood(301, "Spinach, raw")]),
+		);
 
 		render(IngredientSearch, {
 			props: {
@@ -273,6 +273,40 @@ describe("IngredientSearch", () => {
 		expect(onSelect).not.toHaveBeenCalled();
 	});
 
+	it("cancels a pending refined search when an existing result is selected", async () => {
+		const onSelect = vi.fn();
+		vi.mocked(searchFoodPage).mockResolvedValueOnce(
+			makePage([makeFood(302, "Spinach, raw")]),
+		);
+
+		render(IngredientSearch, {
+			props: {
+				onSelect,
+				onSearchFocus: vi.fn(),
+			},
+		});
+
+		const searchInput = screen.getByRole("combobox", {
+			name: /search ingredients/i,
+		});
+		await fireEvent.input(searchInput, { target: { value: "spin" } });
+		await waitFor(
+			() => expect(screen.getByText("Spinach, raw")).toBeInTheDocument(),
+			{ timeout: 2000 },
+		);
+
+		await fireEvent.input(searchInput, { target: { value: "spinach" } });
+		await fireEvent.click(
+			screen.getByRole("button", { name: /view nutrition for spinach, raw/i }),
+		);
+		await new Promise((resolve) => setTimeout(resolve, 600));
+
+		expect(onSelect).toHaveBeenCalledWith(
+			expect.objectContaining({ fdcId: 302 }),
+		);
+		expect(searchFoodPage).toHaveBeenCalledTimes(1);
+	});
+
 	it("uses product images and warning edges without changing search actions", async () => {
 		const onSelect = vi.fn();
 		const onAdd = vi.fn();
@@ -285,14 +319,16 @@ describe("IngredientSearch", () => {
 				licenseName: "CC BY-SA",
 				confidence: "source-verified",
 			},
-			preferenceWarnings: [{
-				id: "peanut-warning",
-				level: "warning",
-				category: "allergen",
-				label: "Peanut",
-				code: "FOOD_ALLERGEN_CONTAINS",
-				params: { factLabel: "Peanut" },
-			}],
+			preferenceWarnings: [
+				{
+					id: "peanut-warning",
+					level: "warning",
+					category: "allergen",
+					label: "Peanut",
+					code: "FOOD_ALLERGEN_CONTAINS",
+					params: { factLabel: "Peanut" },
+				},
+			],
 		};
 		vi.mocked(searchFoodPage).mockResolvedValueOnce(makePage([imageFood]));
 
@@ -308,7 +344,8 @@ describe("IngredientSearch", () => {
 		});
 		await fireEvent.input(searchInput, { target: { value: "peanut butter" } });
 		await waitFor(
-			() => expect(screen.getByText("Peanut Butter, Smooth")).toBeInTheDocument(),
+			() =>
+				expect(screen.getByText("Peanut Butter, Smooth")).toBeInTheDocument(),
 			{ timeout: 2000 },
 		);
 
@@ -319,10 +356,7 @@ describe("IngredientSearch", () => {
 		expect(card.querySelector(".card-warning-edge")).toBeInTheDocument();
 		expect(
 			card.querySelector(".ingredient-card-media-lane img"),
-		).toHaveAttribute(
-			"src",
-			"https://images.example.com/peanut-butter.jpg",
-		);
+		).toHaveAttribute("src", "https://images.example.com/peanut-butter.jpg");
 		expect(
 			card.querySelector(".ingredient-search-card__icon"),
 		).not.toBeInTheDocument();
@@ -378,7 +412,9 @@ describe("IngredientSearch", () => {
 		expect(screen.queryByText("SR Legacy")).not.toBeInTheDocument();
 		expect(screen.queryByText("Foundation")).not.toBeInTheDocument();
 		expect(screen.queryByText("Imported")).not.toBeInTheDocument();
-		expect(screen.getAllByLabelText("Verification status: Verified")).toHaveLength(2);
+		expect(
+			screen.getAllByLabelText("Verification status: Verified"),
+		).toHaveLength(2);
 	});
 
 	it("uses the full-height feature lane for fallback symbols", async () => {
@@ -408,20 +444,22 @@ describe("IngredientSearch", () => {
 				".ingredient-card-media__fallback .food-symbol__fallback",
 			),
 		).toBeInTheDocument();
-		expect(container.querySelector(".circular-media-frame")).not.toBeInTheDocument();
+		expect(
+			container.querySelector(".circular-media-frame"),
+		).not.toBeInTheDocument();
 	});
 
-	it("hides the add button when a result is already saved", async () => {
-		vi.mocked(searchFoodPage).mockResolvedValueOnce(makePage([
-			makeFood(302, "Kale, raw"),
-		]));
+	it("identifies a result already saved in the destination list", async () => {
+		vi.mocked(searchFoodPage).mockResolvedValueOnce(
+			makePage([makeFood(302, "Kale, raw")]),
+		);
 
 		render(IngredientSearch, {
 			props: {
 				onSelect: vi.fn(),
 				onAdd: vi.fn(),
 				onSearchFocus: vi.fn(),
-				savedFoodIdentityKeys: new Set(["fdc:302"]),
+				destinationListFoodIdentityKeys: new Set(["fdc:302"]),
 			},
 		});
 
@@ -440,15 +478,15 @@ describe("IngredientSearch", () => {
 		).not.toBeInTheDocument();
 		expect(
 			screen.getByRole("button", {
-				name: /view nutrition for kale, raw, already in fridge or shopping list/i,
+				name: /view nutrition for kale, raw, already in fridge/i,
 			}),
 		).toBeInTheDocument();
 	});
 
 	it("waits for mobile text composition before searching", async () => {
-		vi.mocked(searchFoodPage).mockResolvedValueOnce(makePage([
-			makeFood(401, "Kiwi fruit, raw"),
-		]));
+		vi.mocked(searchFoodPage).mockResolvedValueOnce(
+			makePage([makeFood(401, "Kiwi fruit, raw")]),
+		);
 
 		render(IngredientSearch, {
 			props: {
@@ -469,27 +507,29 @@ describe("IngredientSearch", () => {
 
 		await fireEvent.compositionEnd(searchInput);
 		await waitFor(
-			() => expect(searchFoodPage).toHaveBeenCalledWith("kiwi", {
-				offset: 0,
-				limit: 15,
-				sourceFilter: "all",
-				trustFilter: "any",
-				signal: expect.any(AbortSignal),
-			}),
+			() =>
+				expect(searchFoodPage).toHaveBeenCalledWith("kiwi", {
+					offset: 0,
+					limit: 15,
+					sourceFilter: "all",
+					trustFilter: "any",
+					signal: expect.any(AbortSignal),
+				}),
 			{ timeout: 2000 },
 		);
 	});
 
 	it("loads another page only from the explicit control and offers return to top", async () => {
 		vi.mocked(searchFoodPage)
-			.mockResolvedValueOnce(makePage(
-				[makeFood(501, "Tomato, roma"), makeFood(502, "Tomatoes, raw")],
-				{ hasMore: true, nextOffset: 2, total: 3 },
-			))
-			.mockResolvedValueOnce(makePage(
-				[makeFood(503, "Green tomatoes")],
-				{ total: 3 },
-			));
+			.mockResolvedValueOnce(
+				makePage(
+					[makeFood(501, "Tomato, roma"), makeFood(502, "Tomatoes, raw")],
+					{ hasMore: true, nextOffset: 2, total: 3 },
+				),
+			)
+			.mockResolvedValueOnce(
+				makePage([makeFood(503, "Green tomatoes")], { total: 3 }),
+			);
 
 		const { container } = render(IngredientSearch, {
 			props: {
@@ -505,9 +545,7 @@ describe("IngredientSearch", () => {
 			() => expect(screen.getByText("Tomato, roma")).toBeInTheDocument(),
 			{ timeout: 2000 },
 		);
-		expect(
-			screen.getByRole("button", { name: "Load more" }),
-		).toBeVisible();
+		expect(screen.getByRole("button", { name: "Load more" })).toBeVisible();
 
 		const resultsPanel = container.querySelector<HTMLElement>(".results-panel");
 		expect(resultsPanel).not.toBeNull();
@@ -523,9 +561,7 @@ describe("IngredientSearch", () => {
 		expect(searchFoodPage).toHaveBeenCalledTimes(1);
 
 		await fireEvent(window, new Event("resize"));
-		expect(
-			screen.getByRole("button", { name: "Return to top" }),
-		).toBeVisible();
+		expect(screen.getByRole("button", { name: "Return to top" })).toBeVisible();
 
 		await fireEvent.click(screen.getByRole("button", { name: "Load more" }));
 		await waitFor(() => {

@@ -4,7 +4,6 @@
 	import SelectField from "$lib/components/common/forms/SelectField/SelectField.svelte";
 	import ToggleSwitch from "$lib/components/common/forms/ToggleSwitch/ToggleSwitch.svelte";
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
-	import CustomIngredientOutcome from "$lib/components/ingredients/manual-entry/CustomIngredientOutcome/CustomIngredientOutcome.svelte";
 	import ManualEntryValidationList from "$lib/components/ingredients/manual-entry/ManualEntryValidationList/ManualEntryValidationList.svelte";
 	import ProductImageEvidenceInput from "$lib/components/ingredients/manual-entry/ProductImageEvidenceInput/ProductImageEvidenceInput.svelte";
 	import BarcodeAutofillSuggestion from "$lib/components/ingredients/manual-entry/BarcodeAutofillSuggestion/BarcodeAutofillSuggestion.svelte";
@@ -30,7 +29,6 @@
 		shareWithCatalog,
 		barcodeShareMismatch,
 		lookingUpBarcode,
-		allowPlayfulMessages = true,
 		validatingBarcodeShare,
 		requiresCatalogEvidence,
 		showOptionalProductImageUpload,
@@ -45,9 +43,7 @@
 		usesNonstandardNutritionDisclosure,
 		saveDestination,
 		error,
-		lastOutcome,
-		outcomeAction,
-		savedMessage,
+		placementMessage,
 		catalogMessage,
 		saving,
 		catalogSubmissionOnly,
@@ -60,9 +56,6 @@
 		onNutritionPhotoChange,
 		onBarcodePhotoChange,
 		onSaveDestinationChange,
-		onMoveToShopping,
-		onMoveToFridge,
-		onUndo,
 		onBack,
 		onSubmit,
 		onCatalogSubmissionComplete,
@@ -73,11 +66,14 @@
 	let automaticImagePlacementBusy = $state(false);
 
 	$effect(() => {
-		if (saveDestinationControl) onSaveDestinationControl?.(saveDestinationControl);
+		if (saveDestinationControl)
+			onSaveDestinationControl?.(saveDestinationControl);
 	});
 
 	const formatUnit = (unitName: string) =>
-		unitName.trim().toLowerCase() === "kcal" ? "kcal" : unitName.trim().toLowerCase();
+		unitName.trim().toLowerCase() === "kcal"
+			? "kcal"
+			: unitName.trim().toLowerCase();
 	const catalogSubmissionComplete = $derived(
 		catalogSubmissionOnly && Boolean(catalogMessage),
 	);
@@ -112,13 +108,11 @@
 			aria-live="polite"
 			role="status"
 		>
-			<LoadingSpinner
-				size="large"
-				label="Finding product details"
-				decorative
-			/>
+			<LoadingSpinner size="large" label="Finding product details" decorative />
 			<div>
-				<strong id="barcode-product-lookup-title">Finding product details</strong>
+				<strong id="barcode-product-lookup-title"
+					>Finding product details</strong
+				>
 				<p>
 					Checking blendCalc and available product sources. New products can
 					take a moment.
@@ -133,9 +127,13 @@
 			</div>
 			{#if summaryNutrients.length > 0}
 				<div class="share-step__macro-row">
-					{#each summaryNutrients as nutrient}
+					{#each summaryNutrients as nutrient (nutrient.label)}
 						<span>
-							<strong>{nutrient.value === null ? "—" : `${nutrient.value.toFixed(1)}${formatUnit(nutrient.unitName)}`}</strong>
+							<strong
+								>{nutrient.value === null
+									? "—"
+									: `${nutrient.value.toFixed(1)}${formatUnit(nutrient.unitName)}`}</strong
+							>
 							<small>{nutrient.label}</small>
 						</span>
 					{/each}
@@ -205,45 +203,54 @@
 	{:else}
 		<ManualEntryToggleRow
 			title="Share with community"
-			description={validatingBarcodeShare ? "Checking this barcode before sharing" : shareHelpMessage}
+			description={validatingBarcodeShare
+				? "Checking this barcode before sharing"
+				: shareHelpMessage}
 			disabled={!canShareWithCatalog || validatingBarcodeShare}
 		>
 			{#if validatingBarcodeShare}
-				<LoadingSpinner size="small" label="Checking this barcode before sharing" />
+				<LoadingSpinner
+					size="small"
+					label="Checking this barcode before sharing"
+				/>
 			{:else}
-			<ToggleSwitch
-				id="custom-ingredient-share-product"
-				name="custom-ingredient-share-product"
-				ariaLabel="Share with community"
-				disabled={!canShareWithCatalog || validatingBarcodeShare}
-				checked={shareWithCatalog}
-				onChange={onShareChange}
-			/>
+				<ToggleSwitch
+					id="custom-ingredient-share-product"
+					name="custom-ingredient-share-product"
+					ariaLabel="Share with community"
+					disabled={!canShareWithCatalog || validatingBarcodeShare}
+					checked={shareWithCatalog}
+					onChange={onShareChange}
+				/>
 			{/if}
 		</ManualEntryToggleRow>
 	{/if}
 
 	{#if requiresCatalogEvidence}
-		<section class="share-step__evidence" aria-labelledby="product-evidence-title">
+		<section
+			class="share-step__evidence"
+			aria-labelledby="product-evidence-title"
+		>
 			<div>
 				<strong id="product-evidence-title">Photos for catalog review</strong>
 				<p>
-					These private photos let a moderator confirm the package, available label
-					details, and barcode before other users can find the product.
+					These private photos let a moderator confirm the package, available
+					label details, and barcode before other users can find the product.
 				</p>
 			</div>
-				<ProductImageEvidenceInput
-					trustedImage={trustedProductImage}
-					{frontPhoto}
-					placement={imagePlacement}
-					foodName={normalizedName || "Unnamed ingredient"}
-					brandName={brandOwner}
-					category={activeCategory}
-					required
-					requireFreshPhoto={catalogSubmissionOnly}
-				onFrontPhotoChange={onFrontPhotoChange}
+			<ProductImageEvidenceInput
+				trustedImage={trustedProductImage}
+				{frontPhoto}
+				placement={imagePlacement}
+				foodName={normalizedName || "Unnamed ingredient"}
+				brandName={brandOwner}
+				category={activeCategory}
+				required
+				requireFreshPhoto={catalogSubmissionOnly}
+				{onFrontPhotoChange}
 				onPlacementChange={onImagePlacementChange}
-				onPlacementProcessingStateChange={(busy) => (automaticImagePlacementBusy = busy)}
+				onPlacementProcessingStateChange={(busy) =>
+					(automaticImagePlacementBusy = busy)}
 			/>
 			<PhotoUploadInput
 				id="custom-product-nutrition-photo"
@@ -270,23 +277,27 @@
 		</section>
 	{:else if showOptionalProductImageUpload}
 		<section class="share-step__evidence" aria-labelledby="product-image-title">
-				<ProductImageEvidenceInput
-					trustedImage={trustedProductImage}
-					{frontPhoto}
-					placement={imagePlacement}
-					foodName={normalizedName || "Unnamed ingredient"}
-					brandName={brandOwner}
-					category={activeCategory}
-					description="No trusted DB/API product image was found for this barcode. You can add a front package photo now; it stays private until a moderator approves it."
-				onFrontPhotoChange={onFrontPhotoChange}
+			<ProductImageEvidenceInput
+				trustedImage={trustedProductImage}
+				{frontPhoto}
+				placement={imagePlacement}
+				foodName={normalizedName || "Unnamed ingredient"}
+				brandName={brandOwner}
+				category={activeCategory}
+				description="No trusted DB/API product image was found for this barcode. You can add a front package photo now; it stays private until a moderator approves it."
+				{onFrontPhotoChange}
 				onPlacementChange={onImagePlacementChange}
-				onPlacementProcessingStateChange={(busy) => (automaticImagePlacementBusy = busy)}
+				onPlacementProcessingStateChange={(busy) =>
+					(automaticImagePlacementBusy = busy)}
 			/>
 		</section>
 	{/if}
 
 	{#if !catalogSubmissionOnly}
-		<ManualEntryField forId="custom-ingredient-save-destination" label="Add after saving">
+		<ManualEntryField
+			forId="custom-ingredient-save-destination"
+			label="Add after saving"
+		>
 			<SelectField
 				bind:element={saveDestinationControl}
 				id="custom-ingredient-save-destination"
@@ -302,17 +313,8 @@
 	{#if error}
 		<StatusMessage tone="danger" message={error} />
 	{/if}
-	{#if lastOutcome}
-		<CustomIngredientOutcome
-			outcome={lastOutcome}
-			action={outcomeAction}
-			{allowPlayfulMessages}
-			onMoveToShopping={onMoveToShopping}
-			onMoveToFridge={onMoveToFridge}
-			onUndo={onUndo}
-		/>
-	{:else if savedMessage}
-		<StatusMessage tone="success" message={savedMessage} />
+	{#if placementMessage}
+		<StatusMessage tone="info" message={placementMessage} />
 	{/if}
 	{#if catalogMessage}
 		<StatusMessage tone="success" message={catalogMessage} />
@@ -320,9 +322,7 @@
 
 	<ManualEntryActions
 		{onBack}
-		onNext={catalogSubmissionComplete
-			? onCatalogSubmissionComplete
-			: onSubmit}
+		onNext={catalogSubmissionComplete ? onCatalogSubmissionComplete : onSubmit}
 		nextLabel={catalogSubmissionComplete
 			? "Done"
 			: catalogSubmissionOnly

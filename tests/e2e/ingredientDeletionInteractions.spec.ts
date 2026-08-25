@@ -1,10 +1,6 @@
 import type { Json } from "$lib/types/database.types";
-import {
-	expect,
-	test,
-	waitForAppReady,
-} from "./support/browserTest";
-import { createAuthenticatedLocalQaDatabaseClient } from "./support/localQaDatabase";
+import { expect, test, waitForAppReady } from "./support/browserTest";
+import { getAuthenticatedLocalQaDatabaseClient } from "./support/localQaDatabase";
 
 type IngredientDeletionKeyboardCase = {
 	confirmationKey: "Enter" | "Space";
@@ -34,19 +30,15 @@ const readSavedIngredientRecord = async (
 	foodId: number,
 ) => {
 	const supabase =
-		await createAuthenticatedLocalQaDatabaseClient(parallelWorkerIndex);
-	try {
-		const { data, error } = await supabase
-			.from("user_food_list_items")
-			.select("food")
-			.eq("list_type", listType)
-			.eq("fdc_id", foodId)
-			.maybeSingle();
-		if (error) throw error;
-		return data?.food ?? null;
-	} finally {
-		await supabase.auth.signOut({ scope: "local" });
-	}
+		await getAuthenticatedLocalQaDatabaseClient(parallelWorkerIndex);
+	const { data, error } = await supabase
+		.from("user_food_list_items")
+		.select("food")
+		.eq("list_type", listType)
+		.eq("fdc_id", foodId)
+		.maybeSingle();
+	if (error) throw error;
+	return data?.food ?? null;
 };
 
 const restoreSavedIngredientRecord = async (
@@ -55,16 +47,12 @@ const restoreSavedIngredientRecord = async (
 	food: Json,
 ) => {
 	const supabase =
-		await createAuthenticatedLocalQaDatabaseClient(parallelWorkerIndex);
-	try {
-		const { error } = await supabase.rpc("place_user_food_list_items", {
-			p_foods: [food],
-			p_list_type: listType,
-		});
-		if (error) throw error;
-	} finally {
-		await supabase.auth.signOut({ scope: "local" });
-	}
+		await getAuthenticatedLocalQaDatabaseClient(parallelWorkerIndex);
+	const { error } = await supabase.rpc("place_user_food_list_items", {
+		p_foods: [food],
+		p_list_type: listType,
+	});
+	if (error) throw error;
 };
 
 for (const keyboardCase of keyboardCases) {
@@ -95,7 +83,10 @@ for (const keyboardCase of keyboardCases) {
 
 			const foodName = await firstListItem.locator("strong").innerText();
 			await page
-				.getByRole("button", { name: `Open actions for ${foodName}` })
+				.getByRole("button", {
+					name: `Open actions for ${foodName}`,
+					exact: true,
+				})
 				.click();
 			await expect(page).toHaveURL(
 				new RegExp(`${keyboardCase.route}/actions/${foodId}$`),
@@ -128,9 +119,7 @@ for (const keyboardCase of keyboardCases) {
 
 			await page.keyboard.press(keyboardCase.confirmationKey);
 			await expect(page).toHaveURL(new RegExp(`${keyboardCase.route}$`));
-			await expect(
-				page.locator(`li[data-food-id="${foodId}"]`),
-			).toHaveCount(0);
+			await expect(page.locator(`li[data-food-id="${foodId}"]`)).toHaveCount(0);
 			await expect
 				.poll(() =>
 					readSavedIngredientRecord(

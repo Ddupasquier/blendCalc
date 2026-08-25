@@ -25,7 +25,9 @@
 		renamingItem,
 		scanSignal,
 		searchAddFoodId,
-		savedFoodIdentityKeys,
+		destinationListKey,
+		destinationListFoodIdentityKeys,
+		otherListFoodIdentityKeys,
 		searchViewOpen,
 		provenanceOptions,
 		selectedFood,
@@ -33,7 +35,6 @@
 		correctionFood,
 		sortOptions,
 		canAdjustImagePlacement,
-		allowPlayfulMessages = true,
 		onAddSearchResult,
 		onApplyFilters,
 		onCloseActionSheet,
@@ -70,7 +71,8 @@
 		? `Remove from ${getIngredientListLabel(actionSheetItem.key)}`
 		: ""}
 	removing={removingItem !== null}
-	canAdjustImagePlacement={canAdjustImagePlacement && Boolean(actionSheetItem?.food.image?.sourceReference)}
+	canAdjustImagePlacement={canAdjustImagePlacement &&
+		Boolean(actionSheetItem?.food.image?.sourceReference)}
 	onClose={onCloseActionSheet}
 	onSelectItem={onSelectFromActionSheet}
 	onAdjustImagePlacement={onAdjustImagePlacementFromActionSheet}
@@ -92,11 +94,10 @@
 	onClose={onCloseIngredientSheet}
 	onScannerClose={onCloseBarcodeScanner}
 	{moveConfirmationRouteOpen}
-	{allowPlayfulMessages}
 	onMoveConfirmationOpen={onOpenMoveConfirmation}
 	onMoveConfirmationClose={onCloseMoveConfirmation}
 	onCreate={onCreateManualIngredient}
-	onLookupStateChange={onLookupStateChange}
+	{onLookupStateChange}
 />
 
 <IngredientFilterSheet
@@ -134,9 +135,11 @@
 		onSelect={onSearchSelect}
 		onAdd={onAddSearchResult}
 		addingFoodId={searchAddFoodId}
-		{savedFoodIdentityKeys}
+		{destinationListKey}
+		{destinationListFoodIdentityKeys}
+		{otherListFoodIdentityKeys}
 		{provenanceOptions}
-		onScan={onScan}
+		{onScan}
 		onFilter={onFilterFromSearch}
 		onClose={onCloseSearch}
 	/>
@@ -151,7 +154,7 @@
 		<NutritionDetailView
 			food={selectedFood}
 			showListActions={selectedFoodShowListActions}
-			listMembership={listMembership}
+			{listMembership}
 			{canAdjustImagePlacement}
 			{onImagePlacementSave}
 			{provenanceOptions}
@@ -166,8 +169,7 @@
 	initialFood={correctionFood ?? undefined}
 	submissionIntent="catalog_correction"
 	catalogSubmissionOnly
-	{allowPlayfulMessages}
 	onClose={onCloseCorrection}
 	onCreate={onCreateManualIngredient}
-	onLookupStateChange={onLookupStateChange}
+	{onLookupStateChange}
 />

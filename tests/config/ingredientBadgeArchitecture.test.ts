@@ -7,10 +7,6 @@ describe("ingredient badge architecture", () => {
 			"src/lib/components/ingredients/provenance/IngredientProvenanceBadges/IngredientProvenanceBadges.svelte",
 			"utf8",
 		);
-		const textBadge = readFileSync(
-			"src/lib/components/common/badges/TextBadge/TextBadge.svelte",
-			"utf8",
-		);
 		const textBadgeStyles = readFileSync(
 			"src/lib/components/common/badges/TextBadge/TextBadge.scss",
 			"utf8",
@@ -37,10 +33,10 @@ describe("ingredient badge architecture", () => {
 		);
 
 		expect(ingredientBadges).toContain(
-			'$lib/components/common/badges/TextBadge/TextBadge.svelte',
+			"$lib/components/common/badges/TextBadge/TextBadge.svelte",
 		);
 		expect(ingredientBadges).toContain(
-			'$lib/components/common/badges/VerifiedStatusBadge/VerifiedStatusBadge.svelte',
+			"$lib/components/common/badges/VerifiedStatusBadge/VerifiedStatusBadge.svelte",
 		);
 		expect(ingredientBadges).toContain('variant === "saved-card"');
 		expect(ingredientBadges).toContain(
@@ -52,16 +48,16 @@ describe("ingredient badge architecture", () => {
 		expect(textBadgeStyles).toContain("min-height: 1.25rem");
 		expect(textBadgeStyles).toContain("text-align: center");
 		expect(verifiedStatusBadge).toContain(
-			'$lib/components/common/badges/StatusIconBadge/StatusIconBadge.svelte',
+			"$lib/components/common/badges/StatusIconBadge/StatusIconBadge.svelte",
 		);
 		expect(verifiedStatusBadge).toContain(
-			'$lib/assets/icons/ShieldCheck/ShieldCheck.svelte',
+			"$lib/assets/icons/ShieldCheck/ShieldCheck.svelte",
 		);
 		expect(verifiedStatusBadge).toContain('tone="success"');
 		expect(shieldCheck).toContain('viewBox="0 0 24 24"');
 		expect(shieldCheck).toContain('stroke="currentColor"');
 		expect(nutritionFactsLabel).toContain(
-			'$lib/components/ingredients/provenance/IngredientProvenanceBadges/IngredientProvenanceBadges.svelte',
+			"$lib/components/ingredients/provenance/IngredientProvenanceBadges/IngredientProvenanceBadges.svelte",
 		);
 		expect(nutritionFactsLabel).not.toContain("CustomBadge");
 		expect(nutritionFactsLabel).not.toContain('variant="saved-card"');

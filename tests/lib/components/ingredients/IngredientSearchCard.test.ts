@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import IngredientSearchCard from "$lib/components/ingredients/search/IngredientSearchCard/IngredientSearchCard.svelte";
+import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 
 const food = {
 	fdcId: 1,
@@ -53,11 +54,32 @@ describe("IngredientSearchCard interactions", () => {
 		});
 
 		await fireEvent.click(
-			screen.getByRole("button", { name: "Add Ground Beef to fridge" }),
+			screen.getByRole("button", { name: "Add Ground Beef to Fridge" }),
 		);
 
 		expect(onAdd).toHaveBeenCalledOnce();
 		expect(onAdd).toHaveBeenCalledWith(food);
 		expect(onSelect).not.toHaveBeenCalled();
+	});
+
+	it("labels list placement actions for the active destination", async () => {
+		const onAdd = vi.fn();
+		render(IngredientSearchCard, {
+			props: {
+				...baseProps,
+				destinationListKey: MIX_STORAGE_KEYS.shoppingList,
+				alreadyInOtherList: true,
+				onAdd,
+			},
+		});
+
+		const moveButton = screen.getByRole("button", {
+			name: "Move Ground Beef to Shopping List",
+		});
+		await fireEvent.click(moveButton);
+
+		expect(onAdd).toHaveBeenCalledOnce();
+		expect(onAdd).toHaveBeenCalledWith(food);
+		expect(screen.getByText("Meat · currently in Fridge")).toBeInTheDocument();
 	});
 });
