@@ -11,10 +11,7 @@ describe("request rate-limit policies", () => {
 			windowSeconds: 3600,
 		});
 		expect(
-			getRequestRateLimitPolicy(
-				"POST",
-				"/api/food-compatibility/feedback",
-			),
+			getRequestRateLimitPolicy("POST", "/api/food-compatibility/feedback"),
 		).toMatchObject({
 			scope: "compatibility:feedback",
 			limit: 30,
@@ -23,11 +20,13 @@ describe("request rate-limit policies", () => {
 	});
 
 	it("allows normal search traffic without leaving it unbounded", () => {
-		expect(getRequestRateLimitPolicy("GET", "/api/foods/search")).toMatchObject({
-			scope: "food:search",
-			limit: 180,
-			windowSeconds: 60,
-		});
+		expect(getRequestRateLimitPolicy("GET", "/api/foods/search")).toMatchObject(
+			{
+				scope: "food:search",
+				limit: 180,
+				windowSeconds: 60,
+			},
+		);
 	});
 
 	it("limits signed-out publication concerns separately", () => {
@@ -62,9 +61,19 @@ describe("request rate-limit policies", () => {
 	});
 
 	it("does not add database rate-limit work to ordinary page reads", () => {
-		expect(
-			getRequestRateLimitPolicy("GET", "/ingredients/fridge"),
-		).toBeNull();
+		expect(getRequestRateLimitPolicy("GET", "/ingredients/fridge")).toBeNull();
 		expect(getRequestRateLimitPolicy("POST", "/auth/logout")).toBeNull();
+	});
+
+	it("leaves secret-authenticated internal routes independent of database rate limiting", () => {
+		expect(
+			getRequestRateLimitPolicy(
+				"GET",
+				"/api/internal/food-safety/fda-recall-source",
+			),
+		).toBeNull();
+		expect(
+			getRequestRateLimitPolicy("GET", "/api/internal/analytics/sync"),
+		).toBeNull();
 	});
 });
