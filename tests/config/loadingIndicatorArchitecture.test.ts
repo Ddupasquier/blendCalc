@@ -8,9 +8,6 @@ describe("loading indicator architecture", () => {
 		const search = read(
 			"src/lib/components/ingredients/search/IngredientSearch/IngredientSearch.svelte",
 		);
-		const spinner = read(
-			"src/lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte",
-		);
 		const spinnerStyles = read(
 			"src/lib/components/common/feedback/LoadingSpinner/LoadingSpinner.scss",
 		);
@@ -62,5 +59,13 @@ describe("loading indicator architecture", () => {
 		expect(shareStep).toContain("Finding product details");
 		expect(shareStep).not.toMatch(/class=["'][^"']*spinner/);
 		expect(shareStep).not.toMatch(/@keyframes[^\n]*spin/i);
+	});
+
+	it("protects authenticator recovery sign-out from duplicate submissions", () => {
+		const recoveryPage = read("src/routes/auth/mfa/recovery/+page.svelte");
+
+		expect(recoveryPage).toContain("createPendingSubmit");
+		expect(recoveryPage).toContain("use:enhance={preventDuplicateSignOut}");
+		expect(recoveryPage).toContain("busy={isSigningOut}");
 	});
 });

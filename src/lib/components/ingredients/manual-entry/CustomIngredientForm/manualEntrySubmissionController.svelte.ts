@@ -72,84 +72,83 @@ export const createManualEntrySubmissionController = ({
 		}
 
 		const { normalizedBarcode } = submitState;
-		if (normalizedBarcode) {
-			await barcode.checkManualBarcodeReference();
-		}
+		state.saving = true;
+		try {
+			if (normalizedBarcode) {
+				await barcode.checkManualBarcodeReference();
+			}
 
-		const food = createManualEntryCustomFood({
-			name: form.data.name,
-			nameProvenance: form.data.nameProvenance,
-			brandOwner: form.data.brandOwner,
-			servingLabel: form.getResolvedServingLabel(),
-			servingWeightGrams: form.data.servingWeightGrams,
-			serving: form.data.serving,
-			useVolumeEquivalent: form.data.useVolumeEquivalent,
-			volumeQuantity: form.data.volumeQuantity,
-			volumeUnit: form.data.volumeUnit,
-			barcode: normalizedBarcode,
-			barcodeSource: form.data.barcodeSource,
-			barcodeProvenance: form.data.barcodeProvenance,
-			sourceKey:
-				form.data.barcodeSource !== "manual"
-					? form.data.barcodeReferenceSourceDraft?.sourceKey
+			const food = createManualEntryCustomFood({
+				name: form.data.name,
+				nameProvenance: form.data.nameProvenance,
+				brandOwner: form.data.brandOwner,
+				servingLabel: form.getResolvedServingLabel(),
+				servingWeightGrams: form.data.servingWeightGrams,
+				serving: form.data.serving,
+				useVolumeEquivalent: form.data.useVolumeEquivalent,
+				volumeQuantity: form.data.volumeQuantity,
+				volumeUnit: form.data.volumeUnit,
+				barcode: normalizedBarcode,
+				barcodeSource: form.data.barcodeSource,
+				barcodeProvenance: form.data.barcodeProvenance,
+				sourceKey:
+					form.data.barcodeSource !== "manual"
+						? form.data.barcodeReferenceSourceDraft?.sourceKey
+						: undefined,
+				sourceLabel:
+					form.data.barcodeSource !== "manual"
+						? form.data.barcodeReferenceSourceDraft?.sourceLabel
+						: undefined,
+				sourceDataType:
+					form.data.barcodeSource !== "manual"
+						? form.data.barcodeReferenceSourceDraft?.sourceDataType
+						: undefined,
+				sourcePublishedDate:
+					form.data.barcodeSource !== "manual"
+						? form.data.barcodeReferenceSourceDraft?.sourcePublishedDate
+						: undefined,
+				sourceModifiedDate:
+					form.data.barcodeSource !== "manual"
+						? form.data.barcodeReferenceSourceDraft?.sourceModifiedDate
+						: undefined,
+				foodIdentityType: form.data.foodIdentityType,
+				ingredients: form.data.ingredients,
+				ingredientList: form.data.ingredientList,
+				structuredIngredients: form.data.structuredIngredients,
+				ingredientAnalysis: form.data.ingredientAnalysis,
+				additives: form.data.additives,
+				allergens: form.data.allergens,
+				traces: form.data.traces,
+				dietaryTags: form.data.dietaryTags,
+				labels: form.data.labels,
+				packageQuantity: form.data.packageQuantity,
+				alcoholByVolume: form.data.alcoholByVolume,
+				regulatoryDisclosure: form.data.regulatoryDisclosure,
+				sourceMetadata: form.data.sourceMetadata,
+				activeCategory: form.data.category,
+				categoryOptionId: form.data.categoryOptionId,
+				categorySymbolKey: form.data.categorySymbolKey,
+				categories: form.data.categories,
+				image: form.data.image
+					? applyCardImagePlacementToFoodImage(
+							form.data.image,
+							form.data.imagePlacement,
+						)
 					: undefined,
-			sourceLabel:
-				form.data.barcodeSource !== "manual"
-					? form.data.barcodeReferenceSourceDraft?.sourceLabel
-					: undefined,
-			sourceDataType:
-				form.data.barcodeSource !== "manual"
-					? form.data.barcodeReferenceSourceDraft?.sourceDataType
-					: undefined,
-			sourcePublishedDate:
-				form.data.barcodeSource !== "manual"
-					? form.data.barcodeReferenceSourceDraft?.sourcePublishedDate
-					: undefined,
-			sourceModifiedDate:
-				form.data.barcodeSource !== "manual"
-					? form.data.barcodeReferenceSourceDraft?.sourceModifiedDate
-					: undefined,
-			foodIdentityType: form.data.foodIdentityType,
-			ingredients: form.data.ingredients,
-			ingredientList: form.data.ingredientList,
-			structuredIngredients: form.data.structuredIngredients,
-			ingredientAnalysis: form.data.ingredientAnalysis,
-			additives: form.data.additives,
-			allergens: form.data.allergens,
-			traces: form.data.traces,
-			dietaryTags: form.data.dietaryTags,
-			labels: form.data.labels,
-			packageQuantity: form.data.packageQuantity,
-			alcoholByVolume: form.data.alcoholByVolume,
-			regulatoryDisclosure: form.data.regulatoryDisclosure,
-			sourceMetadata: form.data.sourceMetadata,
-			activeCategory: form.data.category,
-			categoryOptionId: form.data.categoryOptionId,
-			categorySymbolKey: form.data.categorySymbolKey,
-			categories: form.data.categories,
-			image: form.data.image
-				? applyCardImagePlacementToFoodImage(
-					form.data.image,
-					form.data.imagePlacement,
-				)
-				: undefined,
-			fieldProvenance: form.data.fieldProvenance,
-			reportedNutrientIds: form.data.reportedNutrientIds,
-			hasSourceServing:
-				form.data.usesInternal100GramBasis
+				fieldProvenance: form.data.fieldProvenance,
+				reportedNutrientIds: form.data.reportedNutrientIds,
+				hasSourceServing: form.data.usesInternal100GramBasis
 					? false
 					: form.data.barcodeSource === "manual"
 						? form.data.useVolumeEquivalent
 						: form.data.barcodeReferenceSourceDraft?.hasSourceServing,
-			importedNutrients: form.data.importedNutrients,
-			manualEntryNutrientFields: validation.nutrientFields,
-			manualNutrientValues: form.data.manualNutrientValues,
-			manualTouchedNutrientIds: form.data.manualTouchedNutrientIds,
-			customFood: barcode.privateCustomFood,
-		});
+				importedNutrients: form.data.importedNutrients,
+				manualEntryNutrientFields: validation.nutrientFields,
+				manualNutrientValues: form.data.manualNutrientValues,
+				manualTouchedNutrientIds: form.data.manualTouchedNutrientIds,
+				customFood: barcode.privateCustomFood,
+			});
 
-		state.saving = true;
-		try {
 			const catalogSubmissionOnly = getCatalogSubmissionOnly();
 			const result = await saveManualEntryCustomFood({
 				food,
@@ -180,6 +179,9 @@ export const createManualEntrySubmissionController = ({
 			state.catalogMessage = result.catalogMessage;
 			if (catalogSubmissionOnly) return;
 			if (result.resetForm) onReset();
+		} catch {
+			state.error =
+				"We couldn’t save this ingredient. Check your connection and try again.";
 		} finally {
 			state.saving = false;
 		}

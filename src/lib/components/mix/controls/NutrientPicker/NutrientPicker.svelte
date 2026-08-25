@@ -25,7 +25,8 @@
 
 	const availableNutrients = $derived(
 		nutrientCatalog.filter(
-			(nutrient) => !excludedIds.some((id) => id == nutrient.id),
+			(nutrient) =>
+				!excludedIds.some((id) => String(id) === String(nutrient.id)),
 		),
 	);
 	const searchResults = $derived(
@@ -79,8 +80,8 @@
 					<div class="nutrient-picker__goal-copy">
 						<strong>Set a target for {pendingNutrient.label}</strong>
 						<small>
-							There is no reviewed default for this nutrient. Enter the target you
-							want Mix to track.
+							There is no reviewed default for this nutrient. Enter the target
+							you want Mix to track.
 						</small>
 					</div>
 					<div class="nutrient-picker__goal-controls">

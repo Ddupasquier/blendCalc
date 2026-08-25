@@ -11,13 +11,13 @@ describe("saved ingredient move animation", () => {
 
 		expect(savedList).toContain('import { flip } from "svelte/animate"');
 		expect(savedList).toContain("animate:flip");
-		expect(savedList).toContain("getMotionSafeDuration(MOTION_DURATION_MS.reflow)");
+		expect(savedList).toContain(
+			"getMotionSafeDuration(MOTION_DURATION_MS.reflow)",
+		);
 	});
 
 	it("reconciles successful moves locally instead of refreshing both lists", () => {
-		const fridgePage = readSource(
-			"src/routes/ingredients/fridge/+page.svelte",
-		);
+		const fridgePage = readSource("src/routes/ingredients/fridge/+page.svelte");
 		const singleMoveStart = fridgePage.indexOf(
 			"const moveFoodBetweenLists = async",
 		);
@@ -25,20 +25,27 @@ describe("saved ingredient move animation", () => {
 			"const moveSelectedItems = async",
 			singleMoveStart,
 		);
-		const singleMoveWorkflow = fridgePage.slice(
-			singleMoveStart,
+		const actionSheetStart = fridgePage.indexOf(
+			"const openActionSheet",
 			bulkMoveStart,
 		);
+		const singleMoveWorkflow = fridgePage.slice(singleMoveStart, bulkMoveStart);
+		const bulkMoveWorkflow = fridgePage.slice(bulkMoveStart, actionSheetStart);
 
-		expect(fridgePage.match(/notify:\s*false/g)).toHaveLength(5);
-		expect(singleMoveWorkflow).toContain("applyBulkListMove(sourceKey, [food])");
+		expect(singleMoveWorkflow).toContain("notify: false");
+		expect(bulkMoveWorkflow).toContain("notify: false");
+		expect(singleMoveWorkflow).toContain(
+			"applyBulkListMove(sourceKey, [food])",
+		);
 		expect(singleMoveWorkflow).not.toContain("await loadLists()");
+		expect(bulkMoveWorkflow).toContain(
+			"applyBulkListMove(sourceKey, selectedFoods)",
+		);
+		expect(bulkMoveWorkflow).not.toContain("await loadLists()");
 	});
 
 	it("renders both ingredient destinations through one shared list path", () => {
-		const fridgePage = readSource(
-			"src/routes/ingredients/fridge/+page.svelte",
-		);
+		const fridgePage = readSource("src/routes/ingredients/fridge/+page.svelte");
 
 		expect(fridgePage.match(/<SavedIngredientList\b/g)).toHaveLength(1);
 		expect(fridgePage).toContain("foods={activeVisibleList}");

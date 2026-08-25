@@ -2,16 +2,16 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { CatalogMonitorRepository } from "./catalogMonitorRepository.ts";
 import { runCatalogMonitor } from "./runCatalogMonitor.ts";
 
-const jsonResponse = (value: unknown, status = 200) => new Response(
-	JSON.stringify(value),
-	{
+const jsonResponse = (value: unknown, status = 200) =>
+	new Response(JSON.stringify(value), {
 		status,
 		headers: { "content-type": "application/json; charset=utf-8" },
-	},
-);
+	});
 
 const hashSecret = async (value: string) =>
-	new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value)));
+	new Uint8Array(
+		await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value)),
+	);
 
 const secretsMatch = async (provided: string, expected: string) => {
 	const [providedHash, expectedHash] = await Promise.all([
@@ -34,7 +34,7 @@ Deno.serve(async (request) => {
 	if (
 		!expectedSecret ||
 		!providedSecret ||
-		!await secretsMatch(providedSecret, expectedSecret)
+		!(await secretsMatch(providedSecret, expectedSecret))
 	) {
 		return jsonResponse({ error: "Unauthorized" }, 401);
 	}
@@ -44,13 +44,19 @@ Deno.serve(async (request) => {
 		Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ??
 		Deno.env.get("SUPABASE_SECRET_KEY");
 	if (!supabaseUrl || !serviceRoleKey) {
-		return jsonResponse({ error: "Catalog monitor service configuration is incomplete" }, 503);
+		return jsonResponse(
+			{ error: "Catalog monitor service configuration is incomplete" },
+			503,
+		);
 	}
 
 	let invocationSource: "cron" | "manual" | "test" = "cron";
 	try {
 		const body = await request.json();
-		if (body?.invocationSource === "manual" || body?.invocationSource === "test") {
+		if (
+			body?.invocationSource === "manual" ||
+			body?.invocationSource === "test"
+		) {
 			invocationSource = body.invocationSource;
 		}
 	} catch {
@@ -67,10 +73,15 @@ Deno.serve(async (request) => {
 			{
 				usdaApiKey: Deno.env.get("USDA_API_KEY"),
 				openFdaApiKey: Deno.env.get("OPENFDA_API_KEY"),
+				fdaRecallProxyUrl: Deno.env.get("FDA_RECALL_PROXY_URL"),
+				fdaRecallProxySecret: Deno.env.get("FDA_RECALL_PROXY_SECRET"),
 			},
 		);
 		return jsonResponse(result);
 	} catch {
-		return jsonResponse({ error: "Catalog monitoring could not complete" }, 500);
+		return jsonResponse(
+			{ error: "Catalog monitoring could not complete" },
+			500,
+		);
 	}
 });

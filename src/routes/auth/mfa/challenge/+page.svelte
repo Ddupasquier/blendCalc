@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
-	import MfaPageShell from "$lib/components/auth/MfaPageShell/MfaPageShell.svelte";
+	import AccountSecurityPageShell from "$lib/components/auth/AccountSecurityPageShell/AccountSecurityPageShell.svelte";
 	import AuthenticatorVerificationCodeField from "$lib/components/auth/AuthenticatorVerificationCodeField/AuthenticatorVerificationCodeField.svelte";
 	import ActionButton from "$lib/components/common/buttons/ActionButton/ActionButton.svelte";
 	import RoundedActionLink from "$lib/components/common/buttons/RoundedActionLink/RoundedActionLink.svelte";
@@ -21,7 +21,7 @@
 	<title>{formatDocumentTitle("Security Verification")}</title>
 </svelte:head>
 
-<MfaPageShell
+<AccountSecurityPageShell
 	eyebrow="Protected access"
 	title="Confirm it’s you."
 	description="Enter the current code from your authenticator app to continue to protected blendCalc tools."
@@ -50,7 +50,7 @@
 			I can’t use my authenticator
 		</RoundedActionLink>
 	</form>
-</MfaPageShell>
+</AccountSecurityPageShell>
 
 <style lang="scss">
 	@use "./page.scss";

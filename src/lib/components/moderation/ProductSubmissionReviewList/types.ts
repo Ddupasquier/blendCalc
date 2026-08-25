@@ -1,8 +1,8 @@
-import type { ModerationWorkspaceForm } from "$lib/components/moderation/ModerationWorkspace/types";
+import type { ModerationActionFeedback } from "$lib/components/moderation/types";
 import type { ModerationWorkspaceData } from "$lib/server/moderation/moderationWorkspace.server";
 
 export type ProductSubmissionReviewListProps = {
 	submissions: ModerationWorkspaceData["productSubmissions"];
-	form?: ModerationWorkspaceForm;
+	form?: ModerationActionFeedback;
 	showHeading?: boolean;
 };

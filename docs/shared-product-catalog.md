@@ -5,12 +5,12 @@ signed-in user without exposing the account that submitted it.
 
 ## Guide Navigation
 
-| Area | Sections |
-| --- | --- |
-| Intake and evidence | [User flow](#user-flow), [source policy](#source-policy), and [provenance and merging](#provenance-and-merging) |
-| Product changes | [Existing barcodes and label changes](#existing-barcodes-and-label-changes), [serving data](#serving-data), and [source lifecycle](#source-lifecycle) |
-| Runtime and quality | [Runtime source boundary](#runtime-source-boundary), [source quality monitoring](#source-quality-monitoring), and [verification rules](#verification-rules) |
-| Safety and review | [Catalog security](#catalog-security-boundary), [moderation](#moderation), and the [submission improvement plan](#submission-and-moderation-improvement-plan) |
+| Area                | Sections                                                                                                                                                        |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Intake and evidence | [User flow](#user-flow), [source policy](#source-policy), and [provenance and merging](#provenance-and-merging)                                                 |
+| Product changes     | [Existing barcodes and label changes](#existing-barcodes-and-label-changes), [serving data](#serving-data), and [source lifecycle](#source-lifecycle)           |
+| Runtime and quality | [Runtime source boundary](#runtime-source-boundary), [source quality monitoring](#source-quality-monitoring), and [verification rules](#verification-rules)     |
+| Safety and review   | [Catalog security](#catalog-security-boundary), [moderation](#moderation), and the [submission improvement plan](#submission-and-moderation-improvement-plan)   |
 | Supporting features | [Nutrition completeness](#nutrition-completeness-flow), [product identifier QR codes](#product-identifier-qr-codes), and [QA fixtures](#qa-moderation-fixtures) |
 
 ## User Flow
@@ -336,20 +336,20 @@ work, and reports any blocker whose operational contract is not yet deployed. Th
 is read-only: it never repairs, publishes, or removes a product merely to improve its
 result.
 
-| User concept | Semantic owner | Meaning | Missing-value behavior |
-| --- | --- | --- | --- |
-| Last verified | `shared_products.last_verified_at` | Latest evidence-backed verification event accepted by blendCalc | Unknown; never substitute `updated_at`, a provider fetch date, or the current time |
-| Current label since | Explicit manufacturer effective date when supplied; otherwise `shared_product_revisions.label_observed_at` | Manufacturer effective date, or the date blendCalc explicitly observed the current label when no manufacturer date exists | Unknown; revision creation and product update timestamps are not manufacturer label dates |
-| Revision history | `shared_product_revisions` and `shared_product_revision_changes` | Immutable accepted snapshots and evidence-backed field changes | Leave unrecoverable historical differences unknown |
-| Field source | `shared_product_field_provenance` joined to `shared_product_observations` | Selected observation, method, confidence, source reference, and observation date for one accepted field | Unknown; never fall back to the whole-product provider |
-| Source quality | `shared_products.food.sourceMetadata` | Source-reported completeness, schema version, quality tags, dates, languages, and obsolete state | Not reported; absence is not a low-quality verdict |
-| Serving source | `food_servings` | Reported serving and its source, reference, confidence, observation, or revision | No reported serving; the 100g nutrition basis is not a serving claim |
-| Nutrient uncertainty | `food_nutrients`, `generic_food_nutrients`, and parent `nutrientSourceReview` | Source-reported standard error, source key/code, value status, mapping decision, review reference, and derivation method | Unknown uncertainty; absence does not alter nutrient math and nonnumeric source facts never become zero |
-| Compatibility policy | `food_compatibility_policy_versions` | Immutable reviewed match/conflict rules and references for one policy version | No reproducible policy version |
-| Compatibility evidence | `product_compatibility_facts` | Policy-versioned evidence from ingredients, declarations, traces, source identity, or reviewed analysis | No conflict found in available evidence; never proof that a food is safe |
-| Relational ingredient evidence | `product_ingredient_statements` and `product_ingredient_components` | Lossless ordered projection of reported ingredient text/list/tree, including nesting and reported percentages | Keep the source statement unparsed when structure was not reported; never guess boundaries or percentages |
-| Precautionary statement evidence | `product_precautionary_statements` | Exact package statement, normalized statement type/allergens, language, source, observation, and revision | Keep legacy normalized traces as evidence only; never invent exact package wording |
-| Compatibility evaluation | Server read model | `conflict`, `checked`, `incomplete`, or `not_checked`, with explicit evidence coverage and applied policy version | `not_checked` without a user profile; missing evidence never becomes `checked` |
+| User concept                     | Semantic owner                                                                                             | Meaning                                                                                                                   | Missing-value behavior                                                                                    |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Last verified                    | `shared_products.last_verified_at`                                                                         | Latest evidence-backed verification event accepted by blendCalc                                                           | Unknown; never substitute `updated_at`, a provider fetch date, or the current time                        |
+| Current label since              | Explicit manufacturer effective date when supplied; otherwise `shared_product_revisions.label_observed_at` | Manufacturer effective date, or the date blendCalc explicitly observed the current label when no manufacturer date exists | Unknown; revision creation and product update timestamps are not manufacturer label dates                 |
+| Revision history                 | `shared_product_revisions` and `shared_product_revision_changes`                                           | Immutable accepted snapshots and evidence-backed field changes                                                            | Leave unrecoverable historical differences unknown                                                        |
+| Field source                     | `shared_product_field_provenance` joined to `shared_product_observations`                                  | Selected observation, method, confidence, source reference, and observation date for one accepted field                   | Unknown; never fall back to the whole-product provider                                                    |
+| Source quality                   | `shared_products.food.sourceMetadata`                                                                      | Source-reported completeness, schema version, quality tags, dates, languages, and obsolete state                          | Not reported; absence is not a low-quality verdict                                                        |
+| Serving source                   | `food_servings`                                                                                            | Reported serving and its source, reference, confidence, observation, or revision                                          | No reported serving; the 100g nutrition basis is not a serving claim                                      |
+| Nutrient uncertainty             | `food_nutrients`, `generic_food_nutrients`, and parent `nutrientSourceReview`                              | Source-reported standard error, source key/code, value status, mapping decision, review reference, and derivation method  | Unknown uncertainty; absence does not alter nutrient math and nonnumeric source facts never become zero   |
+| Compatibility policy             | `food_compatibility_policy_versions`                                                                       | Immutable reviewed match/conflict rules and references for one policy version                                             | No reproducible policy version                                                                            |
+| Compatibility evidence           | `product_compatibility_facts`                                                                              | Policy-versioned evidence from ingredients, declarations, traces, source identity, or reviewed analysis                   | No conflict found in available evidence; never proof that a food is safe                                  |
+| Relational ingredient evidence   | `product_ingredient_statements` and `product_ingredient_components`                                        | Lossless ordered projection of reported ingredient text/list/tree, including nesting and reported percentages             | Keep the source statement unparsed when structure was not reported; never guess boundaries or percentages |
+| Precautionary statement evidence | `product_precautionary_statements`                                                                         | Exact package statement, normalized statement type/allergens, language, source, observation, and revision                 | Keep legacy normalized traces as evidence only; never invent exact package wording                        |
+| Compatibility evaluation         | Server read model                                                                                          | `conflict`, `checked`, `incomplete`, or `not_checked`, with explicit evidence coverage and applied policy version         | `not_checked` without a user profile; missing evidence never becomes `checked`                            |
 
 API v1 exposes current revision metadata, selected field sources with observation IDs,
 observation dates, bounded evidence methods, and honest review states, source-record
@@ -460,6 +460,33 @@ The generic-dataset contribution audit uses exact identifiers for identity evide
 a balanced search corpus only to measure CNF/CoFID usefulness. It cannot create an
 identity link or source-priority decision from similar names.
 
+### Reviewed product-resolution policy
+
+The active database policy supplies the shared boundaries used by exact-barcode source
+resolution, catalog comparison, category suggestions, USDA generic-food selection, and
+nutrition-completeness assessment. New behavior requires a new reviewed policy version
+or an explicit migration of the active version; a component or provider adapter must
+not introduce its own competing threshold.
+
+An additive deployment can temporarily run against a database that has not received the
+new policy schema. Only exact missing-table or missing-column responses for this policy
+activate rollout compatibility. General application reads and direct category search
+stay available, while policy-dependent automation pauses or preserves provider order;
+the app never substitutes hardcoded ranking or completeness values. The strict policy
+reader remains required for canonical catalog decisions, and permission or unrelated
+database failures are not hidden.
+
+After a successful exact provider lookup, blendCalc stores an expiring outcome for each
+requested field. A fresh `not-reported` or `not-applicable` outcome can skip only that
+provider and field. A fresh exact `product-not-found` outcome can skip that provider's
+product lookup. The next provider still contributes independently, and missing coverage
+for any requested field keeps enrichment active.
+
+Reported coverage confirms only that a provider returned a field at that time. It does
+not select the value, verify it, publish it, or replace source observations and field
+provenance. Failed requests never become absent-field outcomes, and every outcome
+expires under the reviewed provider policy so future source changes can be discovered.
+
 ### Scheduled Product Revalidation
 
 Active canonical products are checked outside user requests through the bounded catalog
@@ -502,7 +529,9 @@ separate route and database permissions.
 FDA recall announcements, FDA enforcement records, and USDA FSIS recalls/public-health
 alerts are ingested with immutable revisions and exact identifiers. The announcement
 channel closes the gap where FDA has published a current notice that has not yet reached
-openFDA enforcement data. Match policy is deliberately conservative:
+openFDA enforcement data. Current announcement reads may pass through blendCalc's
+fixed-origin protected relay when FDA.gov blocks the Edge runtime. Match policy is
+deliberately conservative:
 
 - an exact normalized GTIN can become visible immediately;
 - a strong brand, product, and package identity match requires moderation;

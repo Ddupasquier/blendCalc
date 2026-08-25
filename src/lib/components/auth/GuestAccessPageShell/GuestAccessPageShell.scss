@@ -1,0 +1,53 @@
+@use "../../../../styles/variables" as *;
+
+.guest-access-page-shell {
+	position: relative;
+	isolation: isolate;
+	display: grid;
+	place-items: center;
+	min-height: 100vh;
+	min-height: 100svh;
+	min-height: 100dvh;
+	padding: max($app-gap-lg, env(safe-area-inset-top))
+		max($app-gap-lg, env(safe-area-inset-right))
+		max($app-gap-lg, env(safe-area-inset-bottom))
+		max($app-gap-lg, env(safe-area-inset-left));
+	overflow-x: hidden;
+	overflow-y: auto;
+	background:
+		radial-gradient(circle at 50% 45%, $app-guest-glow, transparent 38%),
+		$app-shell-surface-page;
+}
+
+.guest-access-page-shell__card {
+	position: relative;
+	z-index: 1;
+	display: grid;
+	gap: $app-gap-lg;
+	width: min(100%, 28rem);
+	padding: $app-gap-lg;
+	color: $app-shell-text-primary;
+	background: $app-guest-surface;
+	border: $app-border;
+	border-radius: $app-shell-radius-sheet;
+}
+
+.guest-access-page-shell__card[data-width="wide"] {
+	width: min(100%, 33rem);
+}
+
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
+	.guest-access-page-shell {
+		place-items: start center;
+		padding: max($app-gap-sm, env(safe-area-inset-top))
+			max($app-gap-sm, env(safe-area-inset-right))
+			max($app-gap-sm, env(safe-area-inset-bottom))
+			max($app-gap-sm, env(safe-area-inset-left));
+	}
+
+	.guest-access-page-shell__card {
+		gap: $app-gap-md;
+		padding: $app-shell-card-padding-compact;
+	}
+}

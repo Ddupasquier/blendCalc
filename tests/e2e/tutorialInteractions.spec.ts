@@ -1,16 +1,10 @@
 import type { Page } from "@playwright/test";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Tables } from "$lib/types/database.types";
-import {
-	CURRENT_TUTORIAL_VERSION,
-} from "$lib/utils/tutorial/tutorial";
+import { CURRENT_TUTORIAL_VERSION } from "$lib/utils/tutorial/tutorial";
 import { tutorialSteps } from "$lib/utils/tutorial/steps";
-import {
-	expect,
-	test,
-	waitForAppReady,
-} from "./support/browserTest";
-import { createAuthenticatedLocalQaDatabaseClient } from "./support/localQaDatabase";
+import { expect, test, waitForAppReady } from "./support/browserTest";
+import { getAuthenticatedLocalQaDatabaseClient } from "./support/localQaDatabase";
 
 type TutorialPreference = Tables<"user_tutorial_preferences">;
 
@@ -38,19 +32,22 @@ const writeTutorialPreference = async (
 };
 
 const getTutorialDatabaseFixture = async (parallelWorkerIndex: number) => {
-	const databaseClient = await createAuthenticatedLocalQaDatabaseClient(
-		parallelWorkerIndex,
-	);
+	const databaseClient =
+		await getAuthenticatedLocalQaDatabaseClient(parallelWorkerIndex);
 	const { data, error } = await databaseClient.auth.getUser();
 	if (error || !data.user) {
-		throw error ?? new Error("The tutorial QA account could not be authenticated.");
+		throw (
+			error ?? new Error("The tutorial QA account could not be authenticated.")
+		);
 	}
 	const originalPreference = await readTutorialPreference(
 		databaseClient,
 		data.user.id,
 	);
 	if (!originalPreference) {
-		throw new Error("The tutorial QA account is missing its seeded preference.");
+		throw new Error(
+			"The tutorial QA account is missing its seeded preference.",
+		);
 	}
 
 	return {
@@ -110,12 +107,11 @@ test("onboarding can be dismissed permanently without scheduling a reminder", as
 			dialog.getByRole("button", { name: "Remind me in 7 days" }),
 		).toHaveCount(0);
 
-		const [targetBounds, spotlightBounds, viewFrameBounds] =
-			await Promise.all([
-				page.locator("[data-tutorial-active='true']").boundingBox(),
-				page.locator(".tutorial-spotlight").boundingBox(),
-				page.locator(".view-frame").boundingBox(),
-			]);
+		const [targetBounds, spotlightBounds, viewFrameBounds] = await Promise.all([
+			page.locator("[data-tutorial-active='true']").boundingBox(),
+			page.locator(".tutorial-spotlight").boundingBox(),
+			page.locator(".view-frame").boundingBox(),
+		]);
 		expect(targetBounds).not.toBeNull();
 		expect(spotlightBounds).not.toBeNull();
 		expect(viewFrameBounds).not.toBeNull();

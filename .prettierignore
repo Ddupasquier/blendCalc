@@ -1,0 +1,15 @@
+.svelte-kit/
+.vercel/
+build/
+coverage/
+dist/
+node_modules/
+playwright-report/
+test-results/
+scripts/output/
+supabase/.temp/
+notes/
+docs/local-context/
+package-lock.json
+src/lib/types/database.types.ts
+supabase/migrations/

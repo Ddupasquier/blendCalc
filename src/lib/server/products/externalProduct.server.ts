@@ -1,13 +1,14 @@
-import {
-	type BarcodeProductDraft,
-} from "$lib/utils/barcode/productLookup";
+import { type BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
 import type { FoodImageAsset } from "$lib/utils/food/types";
 import { getProductReferenceCatalog } from "./productReferenceCatalog.server";
 import {
 	applyCachedImageToBarcodeDraft,
+	getBarcodeProductDesiredSourceFieldPaths,
+	getBarcodeProductSupplementSourceFieldPaths,
 	mergeMissingBarcodeProductFields,
 	needsAlcoholBarcodeProductSupplement,
 	needsBarcodeProductSupplement,
+	type ProductSourceFieldPath,
 } from "$lib/utils/barcode/barcodeProductEnrichment";
 import { getNutritionCompletenessCatalog } from "$lib/server/nutrition/nutritionCompletenessCatalog.server";
 import { getNutritionCompletenessProfile } from "$lib/utils/food/quality/nutritionCompletenessCatalog";
@@ -16,6 +17,17 @@ import { lookupUsdaBarcodeProduct } from "$lib/server/products/sources/usdaBarco
 import { lookupOpenFoodFactsBarcodeProduct } from "$lib/server/products/sources/openFoodFactsBarcodeProduct.server";
 import { lookupColaCloudBarcodeProduct } from "$lib/server/products/sources/colaCloudBarcodeProduct.server";
 import { areExternalProductLookupsEnabled } from "./externalProductPolicy.server";
+import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
+import type { Database } from "$lib/types/database.types";
+import type { ProductResolutionPolicy } from "$lib/utils/products/productResolutionPolicy";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { getDefaultProductResolutionPolicy } from "./productResolutionPolicy.server";
+import {
+	readActiveProductSourceFieldCoverage,
+	recordProductSourceFieldCoverage,
+	sourceCoverageConfirmsFieldsUnavailable,
+	sourceCoverageConfirmsProductNotFound,
+} from "./productSourceFieldCoverage.server";
 
 export {
 	lookupUsdaBarcodeProduct,
@@ -30,12 +42,14 @@ export const getRequiredPackagedNutrientIds = async (food?: FoodItem) => {
 	);
 	const profile = food
 		? getNutritionCompletenessProfile(food, catalog)
-		: profiles.find(
-				(item) => item.isDefault && item.regionCode === "US",
-			) ?? profiles.find((item) => item.isDefault) ?? profiles[0];
-	return profile?.nutrients
-		.filter((nutrient) => nutrient.requirementLevel === "required")
-		.map((nutrient) => nutrient.nutrientId) ?? [];
+		: (profiles.find((item) => item.isDefault && item.regionCode === "US") ??
+			profiles.find((item) => item.isDefault) ??
+			profiles[0]);
+	return (
+		profile?.nutrients
+			.filter((nutrient) => nutrient.requirementLevel === "required")
+			.map((nutrient) => nutrient.nutrientId) ?? []
+	);
 };
 
 const getRegulatedAlcoholDisclosureProfileKeys = async () => {
@@ -52,22 +66,33 @@ export const lookupExternalBarcodeProduct = async (
 		openFoodFacts?: typeof lookupOpenFoodFactsBarcodeProduct;
 		colaCloud?: typeof lookupColaCloudBarcodeProduct;
 		getProductReferenceCatalog?: typeof getProductReferenceCatalog;
-		requiredNutrientIds?:
-			| Iterable<number>
-			| PromiseLike<Iterable<number>>;
+		requiredNutrientIds?: Iterable<number> | PromiseLike<Iterable<number>>;
 		cachedImage?: FoodImageAsset | null | PromiseLike<FoodImageAsset | null>;
 		regulatedAlcoholProfileKeys?:
-			| Iterable<string>
-			| PromiseLike<Iterable<string>>;
+			Iterable<string> | PromiseLike<Iterable<string>>;
 		externalLookupsEnabled?: boolean;
+		resolutionPolicy?:
+			ProductResolutionPolicy | PromiseLike<ProductResolutionPolicy>;
+		sourceCoverageSupabase?: SupabaseClient<Database>;
 	} = {},
 ): Promise<BarcodeProductDraft | null> => {
 	const hasInjectedProvider = Boolean(
 		lookups.usda || lookups.openFoodFacts || lookups.colaCloud,
 	);
-	const externalLookupsEnabled = lookups.externalLookupsEnabled ??
-		areExternalProductLookupsEnabled();
+	const externalLookupsEnabled =
+		lookups.externalLookupsEnabled ?? areExternalProductLookupsEnabled();
 	if (!hasInjectedProvider && !externalLookupsEnabled) return null;
+	const sourceCoverageEnabled =
+		!hasInjectedProvider ||
+		Boolean(lookups.resolutionPolicy || lookups.sourceCoverageSupabase);
+	const sourceCoverageSupabase = sourceCoverageEnabled
+		? (lookups.sourceCoverageSupabase ?? getSupabaseAdminClient())
+		: null;
+	const resolutionPolicyPromise = sourceCoverageEnabled
+		? Promise.resolve(
+				lookups.resolutionPolicy ?? getDefaultProductResolutionPolicy(),
+			).catch(() => null)
+		: null;
 
 	const productReferenceCatalogPromise = (
 		lookups.getProductReferenceCatalog ?? getProductReferenceCatalog
@@ -93,11 +118,54 @@ export const lookupExternalBarcodeProduct = async (
 	const lookupUsda = lookups.usda ?? lookupUsdaBarcodeProduct;
 	const lookupOpenFoodFacts =
 		lookups.openFoodFacts ?? lookupOpenFoodFactsBarcodeProduct;
-	const lookupColaCloud = lookups.colaCloud ?? (
-		hasInjectedProvider
-			? async () => null
-			: lookupColaCloudBarcodeProduct
-	);
+	const lookupColaCloud =
+		lookups.colaCloud ??
+		(hasInjectedProvider ? async () => null : lookupColaCloudBarcodeProduct);
+	const lookupProviderWithCoverage = async (
+		providerKey: "usda" | "open-food-facts" | "cola-cloud",
+		requestedFieldPaths: readonly ProductSourceFieldPath[],
+		lookup: () => Promise<BarcodeProductDraft | null>,
+	) => {
+		const resolutionPolicy = resolutionPolicyPromise
+			? await resolutionPolicyPromise
+			: null;
+		if (sourceCoverageSupabase && resolutionPolicy) {
+			try {
+				const coverage = await readActiveProductSourceFieldCoverage(
+					sourceCoverageSupabase,
+					{
+						barcode,
+						providerKey,
+						fieldPaths: ["productIdentity", ...requestedFieldPaths],
+					},
+				);
+				if (
+					sourceCoverageConfirmsProductNotFound(coverage) ||
+					sourceCoverageConfirmsFieldsUnavailable(requestedFieldPaths, coverage)
+				) {
+					return null;
+				}
+			} catch {
+				void 0;
+			}
+		}
+
+		const draft = await lookup();
+		if (sourceCoverageSupabase && resolutionPolicy) {
+			try {
+				await recordProductSourceFieldCoverage(sourceCoverageSupabase, {
+					barcode,
+					providerKey,
+					policy: resolutionPolicy,
+					requestedFieldPaths,
+					draft,
+				});
+			} catch {
+				void 0;
+			}
+		}
+		return draft;
+	};
 	const applyCachedImage = async (draft: BarcodeProductDraft | null) => {
 		if (!draft) return null;
 		return applyCachedImageToBarcodeDraft(draft, await cachedImagePromise);
@@ -106,17 +174,29 @@ export const lookupExternalBarcodeProduct = async (
 		const regulatedAlcoholProfileKeys =
 			await regulatedAlcoholProfileKeysPromise.catch(() => []);
 		if (
-			!needsAlcoholBarcodeProductSupplement(
-				draft,
-				regulatedAlcoholProfileKeys,
-			)
+			!needsAlcoholBarcodeProductSupplement(draft, regulatedAlcoholProfileKeys)
 		) {
 			return draft;
 		}
 		try {
+			const requestedFieldPaths = getBarcodeProductSupplementSourceFieldPaths(
+				draft,
+			).filter((fieldPath) =>
+				[
+					"brandOwner",
+					"package",
+					"alcoholByVolume",
+					"regulatoryDisclosure",
+					"sourceMetadata",
+				].includes(fieldPath),
+			);
 			return mergeMissingBarcodeProductFields(
 				draft,
-				await lookupColaCloud(barcode, productReferenceCatalog),
+				await lookupProviderWithCoverage(
+					"cola-cloud",
+					requestedFieldPaths,
+					() => lookupColaCloud(barcode, productReferenceCatalog),
+				),
 			);
 		} catch {
 			return draft;
@@ -125,7 +205,11 @@ export const lookupExternalBarcodeProduct = async (
 	let firstError: unknown;
 	try {
 		const [usdaDraft, cachedImage] = await Promise.all([
-			lookupUsda(barcode, productReferenceCatalog),
+			lookupProviderWithCoverage(
+				"usda",
+				getBarcodeProductDesiredSourceFieldPaths(),
+				() => lookupUsda(barcode, productReferenceCatalog),
+			),
 			cachedImagePromise,
 		]);
 		if (usdaDraft) {
@@ -138,7 +222,15 @@ export const lookupExternalBarcodeProduct = async (
 				return applyAlcoholSupplement(primaryDraft);
 			}
 			try {
-				const supplement = await lookupOpenFoodFacts(barcode, productReferenceCatalog);
+				const requestedFieldPaths = getBarcodeProductSupplementSourceFieldPaths(
+					primaryDraft,
+					requiredNutrientIds,
+				);
+				const supplement = await lookupProviderWithCoverage(
+					"open-food-facts",
+					requestedFieldPaths,
+					() => lookupOpenFoodFacts(barcode, productReferenceCatalog),
+				);
 				return applyAlcoholSupplement(
 					mergeMissingBarcodeProductFields(primaryDraft, supplement),
 				);
@@ -151,9 +243,10 @@ export const lookupExternalBarcodeProduct = async (
 	}
 
 	try {
-		const openFoodFactsDraft = await lookupOpenFoodFacts(
-			barcode,
-			productReferenceCatalog,
+		const openFoodFactsDraft = await lookupProviderWithCoverage(
+			"open-food-facts",
+			getBarcodeProductDesiredSourceFieldPaths(),
+			() => lookupOpenFoodFacts(barcode, productReferenceCatalog),
 		);
 		if (openFoodFactsDraft) {
 			const draftWithCachedImage = await applyCachedImage(openFoodFactsDraft);
@@ -167,7 +260,11 @@ export const lookupExternalBarcodeProduct = async (
 
 	try {
 		return await applyCachedImage(
-			await lookupColaCloud(barcode, productReferenceCatalog),
+			await lookupProviderWithCoverage(
+				"cola-cloud",
+				getBarcodeProductDesiredSourceFieldPaths(),
+				() => lookupColaCloud(barcode, productReferenceCatalog),
+			),
 		);
 	} catch (error) {
 		throw firstError ?? error;

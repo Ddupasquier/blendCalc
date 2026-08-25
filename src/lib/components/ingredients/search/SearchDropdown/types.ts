@@ -1,5 +1,6 @@
 import type { FoodItem } from "$lib/utils/food/types";
 import type { IngredientProvenanceOption } from "$lib/utils/ingredients/ingredientProvenance";
+import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
 
 export type SearchDropdownProps = {
 	results: FoodItem[];
@@ -8,7 +9,9 @@ export type SearchDropdownProps = {
 	hasMoreResults?: boolean;
 	loadingMore?: boolean;
 	contentVersion?: string | number;
-	savedFoodIdentityKeys?: ReadonlySet<string>;
+	destinationListKey?: IngredientListKey;
+	destinationListFoodIdentityKeys?: ReadonlySet<string>;
+	otherListFoodIdentityKeys?: ReadonlySet<string>;
 	provenanceOptions?: readonly IngredientProvenanceOption[];
 	onSelect: (food: FoodItem) => void;
 	onAdd?: (food: FoodItem) => void | Promise<void>;

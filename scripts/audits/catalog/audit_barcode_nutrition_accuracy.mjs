@@ -24,7 +24,6 @@ import {
 	canonicalizeUsdaNutrients,
 	compareCrossSourceNutrients,
 	compareNutrientMaps,
-	createNutrientKey,
 	createNutrientMap,
 	getOpenFoodFactsServingWeightGrams,
 	getSourceServingWeightGrams,
@@ -44,9 +43,7 @@ const USDA_LIST_PAGE_SIZE = 200;
 const DEFAULT_OFF_DELAY_MS = 4200;
 
 const parseIntegerArgument = (name, fallback) => {
-	const argument = process.argv.find((value) =>
-		value.startsWith(`--${name}=`)
-	);
+	const argument = process.argv.find((value) => value.startsWith(`--${name}=`));
 	if (!argument) return fallback;
 	const value = Number.parseInt(argument.split("=")[1], 10);
 	if (!Number.isSafeInteger(value) || value <= 0) {
@@ -63,7 +60,7 @@ const offDelayMilliseconds = parseIntegerArgument(
 );
 const skipOpenFoodFacts = process.argv.includes("--skip-open-food-facts");
 const reportArgument = process.argv.find((value) =>
-	value.startsWith("--report=")
+	value.startsWith("--report="),
 );
 const reportPath = reportArgument
 	? path.resolve(reportArgument.slice("--report=".length))
@@ -92,9 +89,10 @@ const supabase = createClient(supabaseUrl, serviceRoleKey, {
 	},
 });
 
-const sleep = (milliseconds) => new Promise((resolve) => {
-	setTimeout(resolve, milliseconds);
-});
+const sleep = (milliseconds) =>
+	new Promise((resolve) => {
+		setTimeout(resolve, milliseconds);
+	});
 
 const trace = {
 	usdaRequests: 0,
@@ -119,7 +117,7 @@ const fetchWithRetry = async (
 		} catch (error) {
 			if (attempt === 4) throw error;
 			trace.retries += 1;
-			await sleep(750 * (2 ** attempt));
+			await sleep(750 * 2 ** attempt);
 			continue;
 		}
 		if (response.ok || (allowNotFound && response.status === 404)) {
@@ -133,7 +131,7 @@ const fetchWithRetry = async (
 		await sleep(
 			Number.isFinite(retryAfter) && retryAfter > 0
 				? retryAfter * 1000
-				: 750 * (2 ** attempt),
+				: 750 * 2 ** attempt,
 		);
 	}
 	throw new Error(`Unable to fetch ${url}.`);
@@ -225,33 +223,32 @@ const loadCatalogData = async () => {
 		fieldProvenance,
 		observations,
 		conflicts,
-	] =
-		await Promise.all([
-			queryAll(
-				"food_nutrients",
-				"id,shared_product_id,nutrient_id,amount_per_100g,unit_name,value_origin,source,source_reference,confidence,source_observation_id,shared_product_observation_id",
-				(query) => query.in("shared_product_id", sharedProductIds),
-			),
-			queryAll(
-				"food_servings",
-				"id,shared_product_id,label,gram_weight,amount,unit_key,is_primary,serving_order,source,source_reference,confidence,source_observation_id,shared_product_observation_id",
-				(query) => query.in("shared_product_id", sharedProductIds),
-			),
-			queryAll(
-				"shared_product_field_provenance",
-				"id,shared_product_id,observation_id,field_path,normalized_value,selected,confidence,verification_method",
-				(query) => query.in("shared_product_id", sharedProductIds),
-			),
-			queryAll(
-				"shared_product_observations",
-				"id,barcode,source,source_reference,source_license,raw_payload,normalized_food,observed_at",
-			),
-			queryAll(
-				"shared_product_conflicts",
-				"id,shared_product_id,barcode,field_path,observed_values,severity,status,created_at",
-				(query) => query.in("shared_product_id", sharedProductIds),
-			),
-		]);
+	] = await Promise.all([
+		queryAll(
+			"food_nutrients",
+			"id,shared_product_id,nutrient_id,amount_per_100g,unit_name,value_origin,source,source_reference,confidence,source_observation_id,shared_product_observation_id",
+			(query) => query.in("shared_product_id", sharedProductIds),
+		),
+		queryAll(
+			"food_servings",
+			"id,shared_product_id,label,gram_weight,amount,unit_key,is_primary,serving_order,source,source_reference,confidence,source_observation_id,shared_product_observation_id",
+			(query) => query.in("shared_product_id", sharedProductIds),
+		),
+		queryAll(
+			"shared_product_field_provenance",
+			"id,shared_product_id,observation_id,field_path,normalized_value,selected,confidence,verification_method",
+			(query) => query.in("shared_product_id", sharedProductIds),
+		),
+		queryAll(
+			"shared_product_observations",
+			"id,barcode,source,source_reference,source_license,raw_payload,normalized_food,observed_at",
+		),
+		queryAll(
+			"shared_product_conflicts",
+			"id,shared_product_id,barcode,field_path,observed_values,severity,status,created_at",
+			(query) => query.in("shared_product_id", sharedProductIds),
+		),
+	]);
 
 	return {
 		sharedProducts,
@@ -266,30 +263,35 @@ const loadCatalogData = async () => {
 const fetchUsdaListPage = async (pageNumber) => {
 	const url = new URL("https://api.nal.usda.gov/fdc/v1/foods/list");
 	url.searchParams.set("api_key", usdaApiKey);
-	const response = await fetchWithRetry(url, {
-		method: "POST",
-		headers: {
-			accept: "application/json",
-			"content-type": "application/json",
+	const response = await fetchWithRetry(
+		url,
+		{
+			method: "POST",
+			headers: {
+				accept: "application/json",
+				"content-type": "application/json",
+			},
+			body: JSON.stringify({
+				dataType: ["Branded"],
+				pageSize: USDA_LIST_PAGE_SIZE,
+				pageNumber,
+				sortBy: "fdcId",
+				sortOrder: "desc",
+			}),
 		},
-		body: JSON.stringify({
-			dataType: ["Branded"],
-			pageSize: USDA_LIST_PAGE_SIZE,
-			pageNumber,
-			sortBy: "fdcId",
-			sortOrder: "desc",
-		}),
-	}, { source: "usda" });
+		{ source: "usda" },
+	);
 	return response.json();
 };
 
-const sourceDate = (food) => Date.parse(
-	food?.publicationDate ||
-	food?.publishedDate ||
-	food?.modifiedDate ||
-	food?.availableDate ||
-	"",
-) || 0;
+const sourceDate = (food) =>
+	Date.parse(
+		food?.publicationDate ||
+			food?.publishedDate ||
+			food?.modifiedDate ||
+			food?.availableDate ||
+			"",
+	) || 0;
 
 const selectNewestUsdaTarget = (current, candidate) => {
 	if (!current) return candidate;
@@ -301,9 +303,7 @@ const selectNewestUsdaTarget = (current, candidate) => {
 	const dateDifference =
 		sourceDate(candidate.listFood) - sourceDate(current.listFood);
 	if (dateDifference !== 0) return dateDifference > 0 ? candidate : current;
-	return Number(candidate.fdcId) > Number(current.fdcId)
-		? candidate
-		: current;
+	return Number(candidate.fdcId) > Number(current.fdcId) ? candidate : current;
 };
 
 const buildAuditTargets = async (catalogData) => {
@@ -314,9 +314,7 @@ const buildAuditTargets = async (catalogData) => {
 		const food = product.food ?? {};
 		const sourceKey = food.sourceKey ?? product.source;
 		const sourceReference = String(
-			food.sourceIdentifiers?.usdaFdcId ??
-			product.source_reference ??
-			"",
+			food.sourceIdentifiers?.usdaFdcId ?? product.source_reference ?? "",
 		).trim();
 		targets.set(barcode, {
 			barcode,
@@ -334,11 +332,9 @@ const buildAuditTargets = async (catalogData) => {
 	}
 
 	let pageNumber = 1;
-	let exhausted = false;
-	while (targets.size < auditLimit && !exhausted) {
+	while (targets.size < auditLimit) {
 		const foods = await fetchUsdaListPage(pageNumber);
 		if (!Array.isArray(foods) || foods.length === 0) {
-			exhausted = true;
 			break;
 		}
 		for (const food of foods) {
@@ -385,23 +381,29 @@ const chunk = (values, size) => {
 };
 
 const fetchUsdaDetails = async (targets) => {
-	const fdcIds = [...new Set(
-		targets.map((target) => target.fdcId).filter((value) =>
-			Number.isSafeInteger(value) && value > 0
+	const fdcIds = [
+		...new Set(
+			targets
+				.map((target) => target.fdcId)
+				.filter((value) => Number.isSafeInteger(value) && value > 0),
 		),
-	)];
+	];
 	const foodsByFdcId = new Map();
 	for (const fdcIdBatch of chunk(fdcIds, USDA_BATCH_SIZE)) {
 		const url = new URL("https://api.nal.usda.gov/fdc/v1/foods");
 		url.searchParams.set("api_key", usdaApiKey);
-		const response = await fetchWithRetry(url, {
-			method: "POST",
-			headers: {
-				accept: "application/json",
-				"content-type": "application/json",
+		const response = await fetchWithRetry(
+			url,
+			{
+				method: "POST",
+				headers: {
+					accept: "application/json",
+					"content-type": "application/json",
+				},
+				body: JSON.stringify({ fdcIds: fdcIdBatch, format: "full" }),
 			},
-			body: JSON.stringify({ fdcIds: fdcIdBatch, format: "full" }),
-		}, { source: "usda" });
+			{ source: "usda" },
+		);
 		const foods = await response.json();
 		for (const food of foods ?? []) {
 			foodsByFdcId.set(Number(food.fdcId), food);
@@ -427,18 +429,20 @@ const fetchOpenFoodFactsProduct = async (barcode) => {
 		`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(candidate)}.json`,
 	);
 	url.searchParams.set("fields", OPEN_FOOD_FACTS_FIELDS);
-	const response = await fetchWithRetry(url, {
-		headers: {
-			accept: "application/json",
-			"user-agent": APP_USER_AGENT,
+	const response = await fetchWithRetry(
+		url,
+		{
+			headers: {
+				accept: "application/json",
+				"user-agent": APP_USER_AGENT,
+			},
 		},
-	}, { source: "open-food-facts", allowNotFound: true });
+		{ source: "open-food-facts", allowNotFound: true },
+	);
 	if (response.status === 404) return null;
 	const payload = await response.json();
 	if (payload.status !== 1 || !payload.product) return null;
-	const productBarcode = normalizeBarcode(
-		payload.product.code ?? candidate,
-	);
+	const productBarcode = normalizeBarcode(payload.product.code ?? candidate);
 	return productBarcode === barcode ? payload.product : null;
 };
 
@@ -446,7 +450,7 @@ const fetchOpenFoodFactsProducts = async (targets) => {
 	const productsByBarcode = new Map();
 	if (skipOpenFoodFacts) return productsByBarcode;
 	const sharedCatalogTargets = targets.filter((target) =>
-		Boolean(target.sharedProductId)
+		Boolean(target.sharedProductId),
 	);
 	let completed = 0;
 	for (const target of sharedCatalogTargets) {
@@ -512,10 +516,8 @@ const auditSourceProducts = ({
 				usdaFood,
 				referenceData,
 			);
-			const {
-				nutrientMap: usdaNutrientMap,
-				duplicates,
-			} = createNutrientMap(canonicalNutrients);
+			const { nutrientMap: usdaNutrientMap, duplicates } =
+				createNutrientMap(canonicalNutrients);
 			productAudit.usdaNutrientMap = usdaNutrientMap;
 			productAudit.usdaFood = usdaFood;
 			counters.usdaNutrients += usdaNutrientMap.size;
@@ -565,10 +567,7 @@ const auditSourceProducts = ({
 				}
 			}
 
-			const labelAudit = auditUsdaLabelConsistency(
-				usdaFood,
-				usdaNutrientMap,
-			);
+			const labelAudit = auditUsdaLabelConsistency(usdaFood, usdaNutrientMap);
 			counters.usdaLabelChecks += labelAudit.checked;
 			for (const mismatch of labelAudit.mismatched) {
 				addIssue(issues.sourceData, "usda-label-basis-mismatch", {
@@ -584,9 +583,7 @@ const auditSourceProducts = ({
 					...missing,
 				});
 			}
-			for (const relationship of auditNutrientRelationships(
-				usdaNutrientMap,
-			)) {
+			for (const relationship of auditNutrientRelationships(usdaNutrientMap)) {
 				addIssue(issues.sourceData, "usda-nutrient-relationship", {
 					barcode: target.barcode,
 					fdcId: target.fdcId,
@@ -607,10 +604,8 @@ const auditSourceProducts = ({
 				offProduct,
 				referenceData,
 			);
-			const {
-				nutrientMap: offNutrientMap,
-				duplicates,
-			} = createNutrientMap(offNutrients);
+			const { nutrientMap: offNutrientMap, duplicates } =
+				createNutrientMap(offNutrients);
 			productAudit.openFoodFactsNutrientMap = offNutrientMap;
 			productAudit.openFoodFactsProduct = offProduct;
 			counters.openFoodFactsNutrients += offNutrientMap.size;
@@ -646,9 +641,7 @@ const auditSourceProducts = ({
 					...mismatch,
 				});
 			}
-			for (const relationship of auditNutrientRelationships(
-				offNutrientMap,
-			)) {
+			for (const relationship of auditNutrientRelationships(offNutrientMap)) {
 				addIssue(issues.sourceData, "off-nutrient-relationship", {
 					barcode: target.barcode,
 					...relationship,
@@ -666,11 +659,10 @@ const auditSourceProducts = ({
 			);
 			counters.crossSourceComparisons += crossSource.compared.length;
 			for (const conflict of crossSource.conflicts) {
-				addIssue(
-					issues.crossSourceConflicts,
-					"usda-off-nutrient-conflict",
-					{ barcode: target.barcode, ...conflict },
-				);
+				addIssue(issues.crossSourceConflicts, "usda-off-nutrient-conflict", {
+					barcode: target.barcode,
+					...conflict,
+				});
 			}
 		}
 
@@ -691,11 +683,7 @@ const groupBy = (rows, key) => {
 	return grouped;
 };
 
-const auditSharedCatalog = ({
-	catalogData,
-	productAudits,
-	referenceData,
-}) => {
+const auditSharedCatalog = ({ catalogData, productAudits, referenceData }) => {
 	const issues = [];
 	const backfillCandidates = [];
 	const policyBlockedBackfillCandidates = [];
@@ -791,8 +779,7 @@ const auditSharedCatalog = ({
 				});
 			}
 			const observationId =
-				row.source_observation_id ??
-				row.shared_product_observation_id;
+				row.source_observation_id ?? row.shared_product_observation_id;
 			if (!observationId || !observationsById.has(observationId)) {
 				addIssue(issues, "catalog-nutrient-missing-observation", {
 					sharedProductId: product.id,
@@ -818,11 +805,12 @@ const auditSharedCatalog = ({
 		}
 
 		const sourceKey = food.sourceKey ?? product.source;
-		const sourceMap = sourceKey === "usda"
-			? audit?.usdaNutrientMap
-			: sourceKey === "open-food-facts"
-				? audit?.openFoodFactsNutrientMap
-				: null;
+		const sourceMap =
+			sourceKey === "usda"
+				? audit?.usdaNutrientMap
+				: sourceKey === "open-food-facts"
+					? audit?.openFoodFactsNutrientMap
+					: null;
 		if (sourceMap?.size) {
 			const sourceComparison = compareNutrientMaps({
 				expected: sourceMap,
@@ -856,30 +844,20 @@ const auditSharedCatalog = ({
 					canonicalStorageAllowed: Boolean(
 						sourcePolicy?.canonical_storage_allowed,
 					),
-					canonicalLicenseName:
-						sourcePolicy?.canonical_license_name ?? null,
-					policyReviewedAt:
-						sourcePolicy?.canonical_policy_reviewed_at ?? null,
-					policyNotes:
-						sourcePolicy?.canonical_policy_notes ?? null,
+					canonicalLicenseName: sourcePolicy?.canonical_license_name ?? null,
+					policyReviewedAt: sourcePolicy?.canonical_policy_reviewed_at ?? null,
+					policyNotes: sourcePolicy?.canonical_policy_notes ?? null,
 				};
 				if (candidate.canonicalStorageAllowed) {
 					backfillCandidates.push(candidate);
-					addIssue(
-						issues,
-						"catalog-source-nutrient-missing",
-						candidate,
-					);
+					addIssue(issues, "catalog-source-nutrient-missing", candidate);
 				} else {
 					policyBlockedBackfillCandidates.push(candidate);
 				}
 			}
 		}
 
-		if (
-			audit?.usdaNutrientMap?.size &&
-			audit?.openFoodFactsNutrientMap?.size
-		) {
+		if (audit?.usdaNutrientMap?.size && audit?.openFoodFactsNutrientMap?.size) {
 			const trackedConflictFields = new Set(
 				(conflictsByProduct.get(product.id) ?? [])
 					.filter((conflict) => conflict.status === "open")
@@ -893,23 +871,17 @@ const auditSharedCatalog = ({
 				const nutrientId = Number(conflict.key.split(":")[0]);
 				const fieldPath = `nutrient:${nutrientId}`;
 				if (!trackedConflictFields.has(fieldPath)) {
-					addIssue(
-						issues,
-						"catalog-cross-source-conflict-untracked",
-						{
-							sharedProductId: product.id,
-							barcode,
-							fieldPath,
-							...conflict,
-						},
-					);
+					addIssue(issues, "catalog-cross-source-conflict-untracked", {
+						sharedProductId: product.id,
+						barcode,
+						fieldPath,
+						...conflict,
+					});
 				}
 			}
 		}
 
-		const reportedIds = new Set(
-			(food.reportedNutrientIds ?? []).map(Number),
-		);
+		const reportedIds = new Set((food.reportedNutrientIds ?? []).map(Number));
 		for (const row of normalizedRows) {
 			const shouldBeReported = row.value_origin === "reported";
 			if (reportedIds.has(Number(row.nutrient_id)) !== shouldBeReported) {
@@ -928,9 +900,11 @@ const auditSharedCatalog = ({
 		).filter((entry) => entry.selected);
 		for (const row of normalizedRows) {
 			const nutrientFieldPath = `nutrient:${row.nutrient_id}`;
-			if (!selectedProvenance.some((entry) =>
-				entry.field_path === nutrientFieldPath
-			)) {
+			if (
+				!selectedProvenance.some(
+					(entry) => entry.field_path === nutrientFieldPath,
+				)
+			) {
 				addIssue(issues, "catalog-nutrient-missing-field-provenance", {
 					sharedProductId: product.id,
 					barcode,
@@ -939,29 +913,27 @@ const auditSharedCatalog = ({
 			}
 		}
 
-		const primaryServing = (
-			servingsByProduct.get(product.id) ?? []
-		).find((serving) => serving.is_primary);
+		const primaryServing = (servingsByProduct.get(product.id) ?? []).find(
+			(serving) => serving.is_primary,
+		);
 		if (!primaryServing) {
 			addIssue(issues, "catalog-primary-serving-missing", {
 				sharedProductId: product.id,
 				barcode,
 			});
 		} else {
-			const sourceServingWeight = sourceKey === "usda"
-				? getSourceServingWeightGrams(audit?.usdaFood)
-				: sourceKey === "open-food-facts"
-					? getOpenFoodFactsServingWeightGrams(
-							audit?.openFoodFactsProduct,
-						)
-					: null;
+			const sourceServingWeight =
+				sourceKey === "usda"
+					? getSourceServingWeightGrams(audit?.usdaFood)
+					: sourceKey === "open-food-facts"
+						? getOpenFoodFactsServingWeightGrams(audit?.openFoodFactsProduct)
+						: null;
 			if (
 				sourceServingWeight !== null &&
-				!valuesAgree(
-					primaryServing.gram_weight,
-					sourceServingWeight,
-					{ absoluteTolerance: 0.01, relativeTolerance: 0.001 },
-				)
+				!valuesAgree(primaryServing.gram_weight, sourceServingWeight, {
+					absoluteTolerance: 0.01,
+					relativeTolerance: 0.001,
+				})
 			) {
 				addIssue(issues, "catalog-source-serving-mismatch", {
 					sharedProductId: product.id,
@@ -997,12 +969,12 @@ const auditSharedCatalog = ({
 
 const createTypeCounts = (issues) =>
 	Object.fromEntries(
-		[...issues.reduce((counts, issue) => {
-			counts.set(issue.type, (counts.get(issue.type) ?? 0) + 1);
-			return counts;
-		}, new Map())].sort((left, right) =>
-			left[0].localeCompare(right[0])
-		),
+		[
+			...issues.reduce((counts, issue) => {
+				counts.set(issue.type, (counts.get(issue.type) ?? 0) + 1);
+				return counts;
+			}, new Map()),
+		].sort((left, right) => left[0].localeCompare(right[0])),
 	);
 
 console.log("Loading reference data and active shared catalog...");
@@ -1032,8 +1004,8 @@ const catalogAudit = auditSharedCatalog({
 	referenceData,
 });
 
-const unsafeConversions = referenceData.conversions.filter((conversion) =>
-	conversion.conversion_method === "api_observed_ratio"
+const unsafeConversions = referenceData.conversions.filter(
+	(conversion) => conversion.conversion_method === "api_observed_ratio",
 );
 const report = {
 	generatedAt: new Date().toISOString(),
@@ -1046,8 +1018,8 @@ const report = {
 	requests: trace,
 	referenceData: {
 		definitions: referenceData.definitions.length,
-		approvedMappings: referenceData.mappings.filter((mapping) =>
-			mapping.enabled && mapping.review_status === "approved"
+		approvedMappings: referenceData.mappings.filter(
+			(mapping) => mapping.enabled && mapping.review_status === "approved",
 		).length,
 		conversions: referenceData.conversions.length,
 		equivalences: referenceData.equivalences.length,
@@ -1069,17 +1041,17 @@ const report = {
 		sharedCatalog: catalogAudit.issues,
 	},
 	backfillCandidates: catalogAudit.backfillCandidates,
-	policyBlockedBackfillCandidates:
-		catalogAudit.policyBlockedBackfillCandidates,
+	policyBlockedBackfillCandidates: catalogAudit.policyBlockedBackfillCandidates,
 	auditedProducts: targets.map((target) => ({
 		barcode: target.barcode,
 		fdcId: target.fdcId,
 		sharedProductId: target.sharedProductId,
 		sharedProductName: target.sharedProductName,
-		usdaMatched: sourceAudit.productAudits.get(target.barcode)
-			?.usdaNutrientMap.size > 0,
-		openFoodFactsMatched: sourceAudit.productAudits.get(target.barcode)
-			?.openFoodFactsNutrientMap.size > 0,
+		usdaMatched:
+			sourceAudit.productAudits.get(target.barcode)?.usdaNutrientMap.size > 0,
+		openFoodFactsMatched:
+			sourceAudit.productAudits.get(target.barcode)?.openFoodFactsNutrientMap
+				.size > 0,
 	})),
 };
 
@@ -1087,18 +1059,24 @@ await mkdir(path.dirname(reportPath), { recursive: true });
 await writeFile(reportPath, `${JSON.stringify(report, null, 2)}\n`, "utf8");
 
 console.log("\nBarcode nutrition audit complete.");
-console.log(JSON.stringify({
-	reportPath,
-	scope: report.scope,
-	requests: report.requests,
-	sourceChecks: report.sourceChecks,
-	catalogChecks: report.catalogChecks,
-	issueCounts: report.issueCounts,
-	backfillCandidates: report.backfillCandidates.length,
-	policyBlockedBackfillCandidates:
-		report.policyBlockedBackfillCandidates.length,
-	unsafeObservedConversions: unsafeConversions.length,
-}, null, 2));
+console.log(
+	JSON.stringify(
+		{
+			reportPath,
+			scope: report.scope,
+			requests: report.requests,
+			sourceChecks: report.sourceChecks,
+			catalogChecks: report.catalogChecks,
+			issueCounts: report.issueCounts,
+			backfillCandidates: report.backfillCandidates.length,
+			policyBlockedBackfillCandidates:
+				report.policyBlockedBackfillCandidates.length,
+			unsafeObservedConversions: unsafeConversions.length,
+		},
+		null,
+		2,
+	),
+);
 
 if (
 	sourceAudit.issues.applicationMath.length > 0 ||
@@ -1111,7 +1089,7 @@ if (
 			"catalog-source-nutrient-mismatch",
 			"catalog-reported-state-mismatch",
 			"catalog-cross-source-conflict-untracked",
-		].includes(issue.type)
+		].includes(issue.type),
 	) ||
 	unsafeConversions.length > 0
 ) {

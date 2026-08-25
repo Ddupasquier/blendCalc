@@ -1,6 +1,17 @@
 import { describe, expect, it } from "vitest";
 import { NUTRIENT_IDS, type FoodItem } from "$lib/utils/food/types";
-import { compareCatalogSubmissionToExistingProduct } from "$lib/utils/products/catalogSubmissionComparison";
+import { compareCatalogSubmissionToExistingProduct as compareCatalogSubmissionWithPolicy } from "$lib/utils/products/catalogSubmissionComparison";
+import { PRODUCT_RESOLUTION_POLICY_FIXTURE } from "../../../fixtures/productResolutionPolicy";
+
+const compareCatalogSubmissionToExistingProduct = (
+	submittedFood: FoodItem,
+	existingFood: FoodItem,
+) =>
+	compareCatalogSubmissionWithPolicy(
+		submittedFood,
+		existingFood,
+		PRODUCT_RESOLUTION_POLICY_FIXTURE,
+	);
 
 const createFood = (overrides: Partial<FoodItem> = {}): FoodItem => ({
 	fdcId: -1,
@@ -48,9 +59,21 @@ const createFood = (overrides: Partial<FoodItem> = {}): FoodItem => ({
 	...overrides,
 });
 
+const withCarbohydrates = (value: number) =>
+	createFood({
+		foodNutrients: createFood().foodNutrients.map((nutrient) =>
+			nutrient.nutrientId === NUTRIENT_IDS.CARBS
+				? { ...nutrient, value }
+				: nutrient,
+		),
+	});
+
 describe("catalog submission comparison", () => {
 	it("treats unchanged barcode catalog data as already available", () => {
-		const comparison = compareCatalogSubmissionToExistingProduct(createFood(), createFood());
+		const comparison = compareCatalogSubmissionToExistingProduct(
+			createFood(),
+			createFood(),
+		);
 
 		expect(comparison.matchesExisting).toBe(true);
 		expect(comparison.hasBlockingIdentityMismatch).toBe(false);
@@ -64,7 +87,7 @@ describe("catalog submission comparison", () => {
 				foodNutrients: createFood().foodNutrients.map((nutrient) =>
 					nutrient.nutrientId === NUTRIENT_IDS.CARBS
 						? { ...nutrient, value: 10 }
-						: nutrient
+						: nutrient,
 				),
 			}),
 			createFood(),
@@ -72,7 +95,9 @@ describe("catalog submission comparison", () => {
 
 		expect(comparison.matchesExisting).toBe(false);
 		expect(comparison.hasBlockingIdentityMismatch).toBe(false);
-		expect(comparison.changedFields).toContain(`nutrient:${NUTRIENT_IDS.CARBS}`);
+		expect(comparison.changedFields).toContain(
+			`nutrient:${NUTRIENT_IDS.CARBS}`,
+		);
 		expect(comparison.changes).toContainEqual(
 			expect.objectContaining({
 				field: `nutrient:${NUTRIENT_IDS.CARBS}`,
@@ -81,6 +106,27 @@ describe("catalog submission comparison", () => {
 			}),
 		);
 	});
+
+	it.each([
+		[9, "low"],
+		[6.5, "medium"],
+		[2.5, "high"],
+	] as const)(
+		"applies the reviewed nutrient boundary at %s as %s severity",
+		(submittedValue, expectedSeverity) => {
+			const comparison = compareCatalogSubmissionToExistingProduct(
+				withCarbohydrates(submittedValue),
+				withCarbohydrates(10),
+			);
+
+			expect(comparison.changes).toContainEqual(
+				expect.objectContaining({
+					field: `nutrient:${NUTRIENT_IDS.CARBS}`,
+					severity: expectedSeverity,
+				}),
+			);
+		},
+	);
 
 	it("documents newly reported nutrients and label allergen changes", () => {
 		const comparison = compareCatalogSubmissionToExistingProduct(

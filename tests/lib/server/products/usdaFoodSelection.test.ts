@@ -4,6 +4,7 @@ import {
 	selectPreferredUsdaBarcodeFood,
 } from "$lib/server/products/usdaFoodSelection";
 import type { FoodItem } from "$lib/utils/food/types";
+import { PRODUCT_RESOLUTION_POLICY_FIXTURE } from "../../../fixtures/productResolutionPolicy";
 
 const food = (overrides: Partial<FoodItem>): FoodItem => ({
 	fdcId: 1,
@@ -15,66 +16,86 @@ const food = (overrides: Partial<FoodItem>): FoodItem => ({
 
 describe("USDA food selection", () => {
 	it("selects the newest exact Branded record for a barcode", () => {
-		const selected = selectPreferredUsdaBarcodeFood([
-			food({
-				fdcId: 100,
-				gtinUpc: "021130493609",
-				publishedDate: "2021-10-28",
-				foodNutrients: [{
-					nutrientId: 1008,
-					nutrientName: "Energy",
-					nutrientNumber: "208",
-					unitName: "KCAL",
-					value: 48,
-				}],
-			}),
-			food({
-				fdcId: 200,
-				gtinUpc: "021130493609",
-				publishedDate: "2024-05-01",
-				foodNutrients: [],
-			}),
-			food({
-				fdcId: 300,
-				gtinUpc: "021130493609",
-				dataType: "Foundation",
-				publishedDate: "2025-01-01",
-			}),
-			food({
-				fdcId: 400,
-				gtinUpc: "00021130462506",
-				publishedDate: "2026-01-01",
-			}),
-		], "00021130493609");
+		const selected = selectPreferredUsdaBarcodeFood(
+			[
+				food({
+					fdcId: 100,
+					gtinUpc: "021130493609",
+					publishedDate: "2021-10-28",
+					foodNutrients: [
+						{
+							nutrientId: 1008,
+							nutrientName: "Energy",
+							nutrientNumber: "208",
+							unitName: "KCAL",
+							value: 48,
+						},
+					],
+				}),
+				food({
+					fdcId: 200,
+					gtinUpc: "021130493609",
+					publishedDate: "2024-05-01",
+					foodNutrients: [],
+				}),
+				food({
+					fdcId: 300,
+					gtinUpc: "021130493609",
+					dataType: "Foundation",
+					publishedDate: "2025-01-01",
+				}),
+				food({
+					fdcId: 400,
+					gtinUpc: "00021130462506",
+					publishedDate: "2026-01-01",
+				}),
+			],
+			"00021130493609",
+		);
 
 		expect(selected?.fdcId).toBe(200);
 	});
 
 	it("prefers an active record over a discontinued duplicate", () => {
-		const selected = selectPreferredUsdaBarcodeFood([
-			food({
-				fdcId: 100,
-				gtinUpc: "021130493609",
-				publishedDate: "2025-01-01",
-				discontinuedDate: "2025-02-01",
-			}),
-			food({
-				fdcId: 200,
-				gtinUpc: "021130493609",
-				publishedDate: "2024-01-01",
-			}),
-		], "00021130493609");
+		const selected = selectPreferredUsdaBarcodeFood(
+			[
+				food({
+					fdcId: 100,
+					gtinUpc: "021130493609",
+					publishedDate: "2025-01-01",
+					discontinuedDate: "2025-02-01",
+				}),
+				food({
+					fdcId: 200,
+					gtinUpc: "021130493609",
+					publishedDate: "2024-01-01",
+				}),
+			],
+			"00021130493609",
+		);
 
 		expect(selected?.fdcId).toBe(200);
 	});
 
 	it("uses USDA subtype priority only after text relevance", () => {
-		const ranked = rankUsdaGenericFoods([
-			food({ fdcId: 1, description: "Tomato, raw", dataType: "SR Legacy" }),
-			food({ fdcId: 2, description: "Tomato, raw", dataType: "Foundation" }),
-			food({ fdcId: 3, description: "Soup with tomato", dataType: "Foundation" }),
-			food({ fdcId: 4, description: "Tomato sauce", dataType: "Survey (FNDDS)" }),
-		], "tomato");
+		const ranked = rankUsdaGenericFoods(
+			[
+				food({ fdcId: 1, description: "Tomato, raw", dataType: "SR Legacy" }),
+				food({ fdcId: 2, description: "Tomato, raw", dataType: "Foundation" }),
+				food({
+					fdcId: 3,
+					description: "Soup with tomato",
+					dataType: "Foundation",
+				}),
+				food({
+					fdcId: 4,
+					description: "Tomato sauce",
+					dataType: "Survey (FNDDS)",
+				}),
+			],
+			"tomato",
+			PRODUCT_RESOLUTION_POLICY_FIXTURE,
+		);
 
 		expect(ranked.map((item) => item.fdcId)).toEqual([2, 1, 4, 3]);
 	});

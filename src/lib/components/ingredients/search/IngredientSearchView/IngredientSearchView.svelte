@@ -8,6 +8,8 @@
 	import ViewTop from "$lib/components/common/view/ViewTop/ViewTop.svelte";
 	import BarcodeScanButton from "$lib/components/ingredients/barcode/BarcodeScanButton/BarcodeScanButton.svelte";
 	import type { IngredientSearchViewProps } from "./types";
+	import { getIngredientListLabel } from "$lib/utils/ingredients/ingredientListUi";
+	import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 	import IngredientSearch from "../IngredientSearch/IngredientSearch.svelte";
 
 	let {
@@ -16,7 +18,9 @@
 		onSelect,
 		onAdd,
 		addingFoodId = null,
-		savedFoodIdentityKeys = new Set<string>(),
+		destinationListKey = MIX_STORAGE_KEYS.fridge,
+		destinationListFoodIdentityKeys = new Set<string>(),
+		otherListFoodIdentityKeys = new Set<string>(),
 		provenanceOptions = [],
 		sourceFilter = "all",
 		trustFilter = "any",
@@ -24,6 +28,10 @@
 		onFilter,
 		onClose,
 	}: IngredientSearchViewProps = $props();
+
+	const destinationListLabel = $derived(
+		getIngredientListLabel(destinationListKey),
+	);
 </script>
 
 <ViewFrame className="ingredient-search-view">
@@ -39,7 +47,7 @@
 			<ViewHeader
 				title="Ingredients"
 				titleId="ingredient-search-view-title"
-				subtitle="Search foods, add them to your fridge, and track shopping needs."
+				subtitle={`Search foods and place them directly in your ${destinationListLabel}.`}
 			/>
 		</div>
 	</ViewTop>
@@ -50,14 +58,16 @@
 			{onSelect}
 			{onAdd}
 			{addingFoodId}
-			{savedFoodIdentityKeys}
+			{destinationListKey}
+			{destinationListFoodIdentityKeys}
+			{otherListFoodIdentityKeys}
 			{provenanceOptions}
 			{sourceFilter}
 			{trustFilter}
 			onSearchFocus={() => {}}
 		>
 			{#snippet actions()}
-				<BarcodeScanButton scanning={scanning} compact onclick={onScan} />
+				<BarcodeScanButton {scanning} compact onclick={onScan} />
 				<IconControlButton
 					class="ingredient-search-view__filter"
 					label="Sort ingredients"

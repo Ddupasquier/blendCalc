@@ -36,7 +36,7 @@
 	padding: 0;
 	margin: -1px;
 	overflow: hidden;
-	clip: rect(0, 0, 0, 0);
+	clip-path: inset(50%);
 	white-space: nowrap;
 	border: 0;
 }
@@ -54,7 +54,7 @@
 	padding: 0;
 	margin: -1px;
 	overflow: hidden;
-	clip: rect(0, 0, 0, 0);
+	clip-path: inset(50%);
 	white-space: nowrap;
 	border: 0;
 }
@@ -176,7 +176,8 @@
 	gap: $app-gap-sm;
 	width: 100%;
 	min-height: $app-shell-control-height-compact;
-	padding: $app-shell-control-padding-y-compact $app-shell-control-padding-x-compact;
+	padding: $app-shell-control-padding-y-compact
+		$app-shell-control-padding-x-compact;
 	color: $app-shell-text-primary;
 	background: transparent;
 	border: 0;
@@ -241,7 +242,8 @@
 	font-size: $app-font-size-xs;
 }
 
-@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
 	.select-field[data-layout="inline"] {
 		gap: $app-gap-sm;
 	}

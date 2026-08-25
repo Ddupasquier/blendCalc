@@ -14,6 +14,7 @@ import type {
 } from "$lib/utils/ingredients/ingredientListUi";
 import type { IngredientProvenanceOption } from "$lib/utils/ingredients/ingredientProvenance";
 import type { FoodListSort } from "$lib/utils/list/listNavigation";
+import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
 
 export type IngredientRoutePopinsProps = {
 	activeSheet: IngredientRouteActiveSheet;
@@ -30,7 +31,9 @@ export type IngredientRoutePopinsProps = {
 	renamingItem: IngredientRouteRenameItem;
 	scanSignal: number;
 	searchAddFoodId: number | null;
-	savedFoodIdentityKeys: ReadonlySet<string>;
+	destinationListKey: IngredientListKey;
+	destinationListFoodIdentityKeys: ReadonlySet<string>;
+	otherListFoodIdentityKeys: ReadonlySet<string>;
 	searchViewOpen: boolean;
 	provenanceOptions: readonly IngredientProvenanceOption[];
 	selectedFood: FoodItem | null;
@@ -38,7 +41,6 @@ export type IngredientRoutePopinsProps = {
 	correctionFood: FoodItem | null;
 	sortOptions: readonly IngredientSortOption[];
 	canAdjustImagePlacement: boolean;
-	allowPlayfulMessages?: boolean;
 	onAddSearchResult: (food: FoodItem) => void | Promise<void>;
 	onApplyFilters: (filters: IngredientFilterApplyPayload) => void;
 	onCloseActionSheet: () => void;

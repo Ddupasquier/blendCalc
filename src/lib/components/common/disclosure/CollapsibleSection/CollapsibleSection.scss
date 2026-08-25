@@ -65,7 +65,7 @@
 	padding: 0;
 	margin: -1px;
 	overflow: hidden;
-	clip: rect(0, 0, 0, 0);
+	clip-path: inset(50%);
 	white-space: nowrap;
 	border: 0;
 }
@@ -94,7 +94,8 @@
 	padding-top: $app-gap-md;
 }
 
-@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
 	.collapsible-section summary {
 		min-height: $app-shell-control-height-narrow;
 		padding-inline: $app-shell-control-padding-x-compact;

@@ -8,22 +8,33 @@ const packageMetadata = JSON.parse(await readFile("package.json", "utf8"));
 
 const collectScriptFiles = async (directory) => {
 	const entries = await readdir(directory, { withFileTypes: true });
-	const files = await Promise.all(entries.map(async (entry) => {
-		const entryPath = path.join(directory, entry.name);
-		if (entry.isDirectory()) return collectScriptFiles(entryPath);
-		return entry.isFile() && entry.name.endsWith(".mjs") ? [entryPath] : [];
-	}));
+	const files = await Promise.all(
+		entries.map(async (entry) => {
+			const entryPath = path.join(directory, entry.name);
+			if (entry.isDirectory()) return collectScriptFiles(entryPath);
+			return entry.isFile() && entry.name.endsWith(".mjs") ? [entryPath] : [];
+		}),
+	);
 	return files.flat().sort();
 };
 
-const scriptFiles = (await collectScriptFiles(scriptsRoot))
-	.filter((filePath) => !filePath.includes(ignoredOutputDirectory));
+const scriptFiles = (await collectScriptFiles(scriptsRoot)).filter(
+	(filePath) => !filePath.includes(ignoredOutputDirectory),
+);
 const executableDomainsByOperation = {
 	audits: ["catalog", "food-sources", "security"],
 	backfills: ["catalog", "images"],
 	generators: ["api"],
 	imports: ["nutrition"],
-	operations: ["api", "auth", "database", "recovery", "releases", "users"],
+	operations: [
+		"api",
+		"auth",
+		"database",
+		"quality",
+		"recovery",
+		"releases",
+		"users",
+	],
 	qa: ["catalog", "database"],
 	seeds: ["catalog", "food-safety", "nutrition"],
 };
@@ -55,9 +66,10 @@ describe("repository script headers", () => {
 				executableDomainsByOperation[operation],
 				`${relativePath} must use a recognized ${operation} domain folder`,
 			).toContain(domain);
-			expect(fileName, `${relativePath} must include a script filename`).toMatch(
-				/\.mjs$/u,
-			);
+			expect(
+				fileName,
+				`${relativePath} must include a script filename`,
+			).toMatch(/\.mjs$/u);
 			expect(
 				unexpectedSegments,
 				`${relativePath} is nested more deeply than operation/domain/file`,
@@ -78,9 +90,10 @@ describe("repository script headers", () => {
 				sharedLibraryDomains,
 				`${relativePath} must use a recognized shared-library domain`,
 			).toContain(domain);
-			expect(fileName, `${relativePath} must include a module filename`).toMatch(
-				/\.mjs$/u,
-			);
+			expect(
+				fileName,
+				`${relativePath} must include a module filename`,
+			).toMatch(/\.mjs$/u);
 			expect(
 				unexpectedSegments,
 				`${relativePath} is nested more deeply than lib/domain/file`,
@@ -89,7 +102,9 @@ describe("repository script headers", () => {
 	});
 
 	it("keeps every package script entry point on disk", async () => {
-		for (const [command, definition] of Object.entries(packageMetadata.scripts)) {
+		for (const [command, definition] of Object.entries(
+			packageMetadata.scripts,
+		)) {
 			const scriptPaths = [
 				...definition.matchAll(/(?:^|\s)node\s+(scripts\/[^\s"'`]+\.mjs)/gu),
 			].map((match) => match[1]);
@@ -102,31 +117,37 @@ describe("repository script headers", () => {
 		}
 	});
 
-	it.each(scriptFiles)("documents purpose and execution for %s", async (filePath) => {
-		const source = await readFile(filePath, "utf8");
-		const header = source.match(/^\/\*\*[\s\S]*?\*\//u)?.[0] ?? "";
+	it.each(scriptFiles)(
+		"documents purpose and execution for %s",
+		async (filePath) => {
+			const source = await readFile(filePath, "utf8");
+			const header = source.match(/^\/\*\*[\s\S]*?\*\//u)?.[0] ?? "";
 
-		expect(header).toContain("Purpose:");
-		if (filePath.includes(`${path.sep}lib${path.sep}`)) {
-			expect(header).toContain("Do not run directly");
-		} else {
-			expect(header).toMatch(
-				/(?:Run|Preview|Validate only|Role example|Seed): `[^`]+`/u,
-			);
-			const npmCommands = [...header.matchAll(/npm run ([\w:-]+)/gu)]
-				.map((match) => match[1]);
-			const directScriptPaths = [
-				...header.matchAll(/node (scripts\/[^\s`]+\.mjs)/gu),
-			].map((match) => match[1]);
-			expect(npmCommands.length + directScriptPaths.length).toBeGreaterThan(0);
-			for (const command of npmCommands) {
-				expect(packageMetadata.scripts).toHaveProperty(command);
-			}
-			for (const directScriptPath of directScriptPaths) {
-				expect(directScriptPath).toBe(
-					path.relative(process.cwd(), filePath).split(path.sep).join("/"),
+			expect(header).toContain("Purpose:");
+			if (filePath.includes(`${path.sep}lib${path.sep}`)) {
+				expect(header).toContain("Do not run directly");
+			} else {
+				expect(header).toMatch(
+					/(?:Run|Preview|Validate only|Role example|Seed): `[^`]+`/u,
 				);
+				const npmCommands = [...header.matchAll(/npm run ([\w:-]+)/gu)].map(
+					(match) => match[1],
+				);
+				const directScriptPaths = [
+					...header.matchAll(/node (scripts\/[^\s`]+\.mjs)/gu),
+				].map((match) => match[1]);
+				expect(npmCommands.length + directScriptPaths.length).toBeGreaterThan(
+					0,
+				);
+				for (const command of npmCommands) {
+					expect(packageMetadata.scripts).toHaveProperty(command);
+				}
+				for (const directScriptPath of directScriptPaths) {
+					expect(directScriptPath).toBe(
+						path.relative(process.cwd(), filePath).split(path.sep).join("/"),
+					);
+				}
 			}
-		}
-	});
+		},
+	);
 });

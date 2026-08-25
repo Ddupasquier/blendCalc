@@ -41,10 +41,12 @@ checks never use the hot-reloading development server, so a long cross-browser r
 cannot invalidate modules underneath active tests. The normal development app remains
 available on `http://localhost:5173`; Playwright never reuses or stops that server.
 
-Three populated `qa-browser-*` personas isolate local browser workers. Each worker signs
-in once and writes its own browser state beneath ignored `test-results/`. Two workers
-run by default; set `PLAYWRIGHT_WORKERS=3` for an intentional local comparison. Override
-the local accounts only when a deliberate hosted test run requires it:
+Three populated `qa-browser-*` personas isolate local browser workers. Each project and
+worker validates and reuses its browser state beneath ignored `test-results/`, signing
+in only when that state is missing or no longer authentic. This prevents worker restarts
+and immediate matrix reruns from wasting Auth capacity. Two workers run by default; set
+`PLAYWRIGHT_WORKERS=3` for an intentional local comparison. Override the local accounts
+only when a deliberate hosted test run requires it:
 
 ```bash
 PLAYWRIGHT_QA_EMAILS="first@example.test,second@example.test" \
@@ -57,6 +59,9 @@ production.
 
 Workers never share an account or browser state. Tests that mutate durable data must
 still restore it before finishing because later files may reuse that worker's account.
+The local Auth emulator permits a larger sign-in burst so repeated full matrices do not
+trip a five-minute test-only rate limit; hosted Auth keeps its independently configured
+and audited production limits.
 The complete remote matrix runs each browser project in a separate job with its own
 local Supabase stack. See [Testing Strategy: Parallelism](testing.md#parallelism).
 

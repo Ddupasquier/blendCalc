@@ -18,14 +18,20 @@ describe("animateDirectionalExit", () => {
 		const second = document.createElement("article");
 		const cancelFirst = vi.fn();
 		const cancelSecond = vi.fn();
-		const animateFirst = vi.fn((_keyframes: Keyframe[], _options?: KeyframeAnimationOptions) => ({
-			finished: Promise.resolve(),
-			cancel: cancelFirst,
-		}) as unknown as Animation);
-		const animateSecond = vi.fn((_keyframes: Keyframe[], _options?: KeyframeAnimationOptions) => ({
-			finished: Promise.resolve(),
-			cancel: cancelSecond,
-		}) as unknown as Animation);
+		const animateFirst = vi.fn(
+			(_keyframes: Keyframe[], _options?: KeyframeAnimationOptions) =>
+				({
+					finished: Promise.resolve(),
+					cancel: cancelFirst,
+				}) as unknown as Animation,
+		);
+		const animateSecond = vi.fn(
+			(_keyframes: Keyframe[], _options?: KeyframeAnimationOptions) =>
+				({
+					finished: Promise.resolve(),
+					cancel: cancelSecond,
+				}) as unknown as Animation,
+		);
 		first.animate = animateFirst;
 		second.animate = animateSecond;
 
@@ -130,7 +136,6 @@ describe("animateDirectionalExit", () => {
 	it("uses a temporary visual copy outside clipping containers", async () => {
 		const element = document.createElement("article");
 		const child = document.createElement("span");
-		let animatedTarget: HTMLElement | null = null;
 		child.id = "nested-card-control";
 		element.id = "saved-card";
 		element.append(child);
@@ -150,7 +155,7 @@ describe("animateDirectionalExit", () => {
 			}),
 		});
 		element.animate = vi.fn(function (this: HTMLElement) {
-			animatedTarget = this;
+			this.dataset.animationTarget = "true";
 			return {
 				finished: Promise.resolve(),
 				cancel: vi.fn(),
@@ -166,7 +171,7 @@ describe("animateDirectionalExit", () => {
 		);
 
 		expect(clone).not.toBeNull();
-		expect(animatedTarget).toBe(clone);
+		expect(clone).toHaveAttribute("data-animation-target", "true");
 		expect(element).toHaveStyle({ visibility: "hidden" });
 		expect(clone).toHaveAttribute("aria-hidden", "true");
 		expect(clone).toHaveAttribute("inert");

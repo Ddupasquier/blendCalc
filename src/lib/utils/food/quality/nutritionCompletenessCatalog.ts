@@ -2,12 +2,9 @@ import type { FoodItem } from "$lib/utils/food/types";
 import { resolveFoodIdentityType } from "$lib/utils/food/identity/foodIdentity";
 
 export type NutritionCompletenessProfileScope =
-	| "generic"
-	| "manual"
-	| "packaged";
+	"generic" | "manual" | "packaged";
 export type NutritionCompletenessScope =
-	| NutritionCompletenessProfileScope
-	| "unknown";
+	NutritionCompletenessProfileScope | "unknown";
 export type NutritionRequirementLevel = "required" | "recommended";
 
 export type NutritionCompletenessNutrient = {
@@ -21,6 +18,7 @@ export type NutritionCompletenessNutrient = {
 
 export type NutritionCompletenessProfile = {
 	key: string;
+	assessmentPolicyKey: string;
 	displayName: string;
 	foodScope: NutritionCompletenessProfileScope;
 	regionCode: string;
@@ -32,6 +30,13 @@ export type NutritionCompletenessProfile = {
 	sourceKey: string;
 	sourceReference: string;
 	isDefault: boolean;
+	exactSourceScore: number;
+	mappedSourceScore: number;
+	derivedSourceScore: number;
+	missingSourceScore: number;
+	requiredNutrientWeight: number;
+	recommendedNutrientWeight: number;
+	partialMinimumRatio: number;
 	nutrients: NutritionCompletenessNutrient[];
 };
 
@@ -45,7 +50,8 @@ export type ProductRegulatoryDisclosureProfile = {
 		| "permitted-sparse"
 		| "case-specific"
 		| "unknown";
-	nutritionEvaluationMode: "profile" | "sparse-accepted" | "case-specific" | "unknown";
+	nutritionEvaluationMode:
+		"profile" | "sparse-accepted" | "case-specific" | "unknown";
 	nutritionProfileKey: string | null;
 	regionCode: string;
 	authorityName: string;
@@ -104,9 +110,11 @@ export const getNutritionCompletenessProfile = (
 	);
 	if (disclosureProfile) {
 		if (disclosureProfile.nutritionEvaluationMode !== "profile") return null;
-		return catalog.profiles.find(
-			(profile) => profile.key === disclosureProfile.nutritionProfileKey,
-		) ?? null;
+		return (
+			catalog.profiles.find(
+				(profile) => profile.key === disclosureProfile.nutritionProfileKey,
+			) ?? null
+		);
 	}
 
 	const scope = getNutritionCompletenessScope(food);
@@ -115,14 +123,16 @@ export const getNutritionCompletenessProfile = (
 		(profile) => profile.foodScope === scope,
 	);
 
-	return scopedProfiles.find(
-		(profile) =>
-			profile.isDefault &&
-			profile.regionCode === (scope === "packaged" ? "US" : ""),
-	) ??
+	return (
+		scopedProfiles.find(
+			(profile) =>
+				profile.isDefault &&
+				profile.regionCode === (scope === "packaged" ? "US" : ""),
+		) ??
 		scopedProfiles.find((profile) => profile.isDefault) ??
 		scopedProfiles[0] ??
-		null;
+		null
+	);
 };
 
 export const getProductRegulatoryDisclosureProfile = (
@@ -155,7 +165,9 @@ export const getRegulatedAlcoholDisclosureProfileForFood = (
 		return null;
 	}
 
-	return catalog.regulatoryDisclosureProfiles?.find(
-		(profile) => profile.disclosureKind === "regulated-alcohol",
-	) ?? null;
+	return (
+		catalog.regulatoryDisclosureProfiles?.find(
+			(profile) => profile.disclosureKind === "regulated-alcohol",
+		) ?? null
+	);
 };

@@ -1,4 +1,5 @@
 import type { ModerationWorkspaceData } from "$lib/server/moderation/moderationWorkspace.server";
+import type { ModerationActionFeedback } from "$lib/components/moderation/types";
 
 export type ModerationWorkspaceScope =
 	| "all"
@@ -7,20 +8,8 @@ export type ModerationWorkspaceScope =
 	| "profile-images"
 	| "account-access";
 
-export type ModerationWorkspaceForm = {
-	moderationError?: string;
-	moderationWarning?: string;
-	moderationSuccess?: string;
-	productReviewError?: string;
-	productReviewSuccess?: string;
-	compatibilityReviewError?: string;
-	compatibilityReviewSuccess?: string;
-	profileImageReviewError?: string;
-	profileImageReviewSuccess?: string;
-} | null;
-
 export type ModerationWorkspaceProps = {
 	data: ModerationWorkspaceData;
-	form?: ModerationWorkspaceForm;
+	form?: ModerationActionFeedback;
 	scope?: ModerationWorkspaceScope;
 };

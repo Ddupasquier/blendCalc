@@ -2,6 +2,7 @@
 	import PaginatedListControls from "$lib/components/common/navigation/PaginatedListControls/PaginatedListControls.svelte";
 	import IngredientSearchCard from "$lib/components/ingredients/search/IngredientSearchCard/IngredientSearchCard.svelte";
 	import { getFoodIdentityKey } from "$lib/utils/food/records/foodIdentity";
+	import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 	import type { SearchDropdownProps } from "./types";
 
 	let {
@@ -11,7 +12,9 @@
 		hasMoreResults = false,
 		loadingMore = false,
 		contentVersion = 0,
-		savedFoodIdentityKeys = new Set<string>(),
+		destinationListKey = MIX_STORAGE_KEYS.fridge,
+		destinationListFoodIdentityKeys = new Set<string>(),
+		otherListFoodIdentityKeys = new Set<string>(),
 		provenanceOptions = [],
 		onSelect,
 		onAdd = () => {},
@@ -28,10 +31,7 @@
 </script>
 
 {#if results.length > 0}
-	<div
-		bind:this={resultsPanelElement}
-		class="results-panel"
-	>
+	<div bind:this={resultsPanelElement} class="results-panel">
 		<p class="results-summary sr-only" aria-live="polite">
 			{results.length} results loaded
 		</p>
@@ -43,12 +43,17 @@
 			aria-busy={loadingMore}
 		>
 			{#each results as food, index (food.fdcId)}
+				{@const foodIdentityKey = getFoodIdentityKey(food)}
 				<IngredientSearchCard
 					{food}
 					{index}
 					active={activeResultIndex === index}
 					adding={addingFoodId === food.fdcId}
-					saved={savedFoodIdentityKeys.has(getFoodIdentityKey(food))}
+					{destinationListKey}
+					alreadyInDestinationList={destinationListFoodIdentityKeys.has(
+						foodIdentityKey,
+					)}
+					alreadyInOtherList={otherListFoodIdentityKeys.has(foodIdentityKey)}
 					{provenanceOptions}
 					{onSelect}
 					{onAdd}

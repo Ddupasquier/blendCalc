@@ -5,7 +5,6 @@ import {
 import {
 	normalizeMixSectionDisclosureState,
 	normalizeMixSectionOrder,
-	type MixSectionDisclosureState,
 	type MixSectionId,
 } from "$lib/utils/mix/ui/mixSectionOrder";
 
