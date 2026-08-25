@@ -1,55 +1,16 @@
 @use "../../styles/variables" as *;
-@use "../../lib/utils/animation/motion" as motion;
 
-.auth-page {
-	position: relative;
-	isolation: isolate;
+.auth-content {
 	display: grid;
-	place-items: center;
-	min-height: 100vh;
-	min-height: 100svh;
-	min-height: 100dvh;
-	padding: max(clamp($app-gap-md, 5vw, 3rem), env(safe-area-inset-top))
-		max($app-gap-sm, env(safe-area-inset-right))
-		max(clamp($app-gap-md, 5vw, 3rem), env(safe-area-inset-bottom))
-		max($app-gap-sm, env(safe-area-inset-left));
-	overflow-x: hidden;
-	overflow-y: auto;
-	background:
-		radial-gradient(circle at 50% 44%, $app-guest-glow, transparent 38%),
-		$app-bg;
+	gap: $app-gap-md;
 }
 
-.auth-card {
-	position: relative;
-	z-index: 1;
-	display: grid;
-	gap: 1.15rem;
-	width: min(100%, 28rem);
-	padding: clamp(1.25rem, 4vw, 1.75rem);
-	background: $app-guest-surface;
-	border: $app-border;
-	border-radius: $app-guest-card-radius;
-	backdrop-filter: blur(0.35rem);
-
-	&::before {
-		position: absolute;
-		top: -1px;
-		left: 12%;
-		width: 28%;
-		height: 3px;
-		background: $app-highlight;
-		border-radius: 0 0 $app-radius-pill $app-radius-pill;
-		content: "";
-	}
-}
-
-.auth-card__header {
+.auth-content__header {
 	display: grid;
 	gap: $app-gap-sm;
 
 	h1 {
-		color: $app-primary;
+		color: $app-shell-text-primary;
 		font-family: $app-font-family-display;
 		font-size: $app-font-size-page-title;
 		font-weight: $app-font-weight-bold;
@@ -58,37 +19,45 @@
 	}
 
 	p {
-		color: $app-muted;
+		color: $app-shell-text-muted;
 		font-size: $app-font-size-md;
 		line-height: $app-line-height-ui;
+	}
+
+	.auth-eyebrow {
+		color: $app-shell-text-primary;
+		font-size: $app-font-size-xs;
 	}
 }
 
 .auth-brand {
 	width: fit-content;
-	color: $app-muted;
+	color: $app-shell-text-muted;
 	font-size: $app-font-size-sm;
 	font-weight: $app-font-weight-bold;
 	letter-spacing: $app-letter-spacing-data;
 	text-decoration: none;
 
 	&::before {
-		margin-right: 0.35rem;
+		margin-right: $app-gap-xs;
 		content: "←";
 	}
 
 	&:hover {
-		color: $app-primary;
+		color: $app-shell-text-primary;
+	}
+
+	&:focus-visible {
+		outline: $app-focus-outline;
+		outline-offset: $app-focus-outline-offset;
 	}
 }
 
 .auth-eyebrow {
 	width: fit-content;
-	padding: $app-gap-inline-compact 0.55rem;
-	color: $app-primary !important;
-	background: $app-accent;
-	border-radius: $app-radius-pill;
-	font-size: $app-font-size-xs !important;
+	padding: $app-gap-inline-compact $app-gap-sm;
+	background: $app-shell-accent-soft;
+	border-radius: $app-shell-radius-pill;
 	font-weight: $app-font-weight-heavy;
 	letter-spacing: $app-letter-spacing-wide;
 	text-transform: uppercase;
@@ -97,35 +66,6 @@
 .email-form {
 	display: grid;
 	gap: $app-gap-sm;
-
-	label {
-		display: grid;
-		gap: $app-gap-xs;
-		color: $app-primary;
-		font-size: $app-font-size-md;
-		font-weight: $app-font-weight-bold;
-	}
-
-	input {
-		width: 100%;
-		height: calc($app-control-height + 0.6rem);
-		padding: 0 $app-gap-md;
-		color: $app-primary;
-		background: color-mix(in srgb, $app-bg 84%, transparent);
-		border: $app-border;
-		border-radius: $app-radius;
-		font-size: $app-font-size-md;
-		box-sizing: border-box;
-		transition:
-			border-color motion.$duration-state motion.$easing-standard,
-			background motion.$duration-state motion.$easing-standard;
-
-		&:focus {
-			background: $app-bg;
-			border-color: $app-primary;
-			outline: none;
-		}
-	}
 }
 
 .email-form__actions {
@@ -135,99 +75,33 @@
 	margin-top: $app-gap-inline-compact;
 }
 
-.password-reset-button {
+.password-reset-action {
 	justify-self: center;
-	padding: $app-gap-inline-compact;
-	color: $app-primary;
-	background: transparent;
-	font-size: $app-font-size-sm;
-	font-weight: $app-button-font-weight;
-	line-height: $app-button-line-height;
-	text-decoration: none;
-	text-underline-offset: 0.2rem;
-
-	&:hover {
-		text-decoration: underline;
-	}
 }
 
-.email-button,
-.google-button {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	gap: $app-gap-sm;
-	width: 100%;
-	min-height: $app-shell-control-height-narrow;
-	padding: 0.65rem 0.85rem;
-	border-radius: $app-radius-pill;
-	font-family: $app-button-font-family;
-	font-weight: $app-button-font-weight;
-	line-height: $app-button-line-height;
-
-	&:hover {
-		background: $app-btn-bg-hover;
-	}
-
-	&:disabled {
-		cursor: wait;
-		opacity: 0.65;
-	}
-}
-
-.email-button {
-	color: $app-highlight-text;
-	background: $app-highlight;
-
-	&:hover {
-		background: $app-highlight-hover;
-	}
-}
-
-.google-button {
-	color: $app-primary;
-	background: $app-bg;
-	border: $app-border;
-
-	&:hover {
-		background: $app-section-bg;
-		border-color: $app-primary;
-	}
-
-	> span:first-child {
-		display: grid;
-		place-items: center;
-		width: 1.35rem;
-		height: 1.35rem;
-		color: $app-shell-text-on-accent;
-		background: $app-shell-accent-primary;
-		border-radius: $app-radius-pill;
-		font-weight: $app-font-weight-heavy;
-	}
-}
-
-.email-button--secondary {
-	color: $app-primary;
-	background: transparent;
-	border: $app-border;
-
-	&:hover {
-		background: $app-accent;
-	}
+.google-button__icon {
+	display: grid;
+	place-items: center;
+	width: $app-shell-control-icon-size;
+	height: $app-shell-control-icon-size;
+	color: $app-shell-text-on-accent;
+	background: $app-shell-accent-primary;
+	border-radius: $app-shell-radius-pill;
+	font-weight: $app-font-weight-heavy;
 }
 
 .auth-divider {
 	display: grid;
 	grid-template-columns: 1fr auto 1fr;
-	gap: 0.6rem;
+	gap: $app-gap-sm;
 	align-items: center;
-	color: $app-muted;
+	color: $app-shell-text-muted;
 	font-size: $app-font-size-sm;
 	font-weight: $app-font-weight-bold;
 
 	span {
 		height: 1px;
-		background: $app-border-color;
+		background: $app-shell-border-subtle;
 	}
 
 	em {
@@ -241,7 +115,7 @@
 	display: flex;
 	gap: $app-gap-sm;
 	align-items: flex-start;
-	color: $app-muted;
+	color: $app-shell-text-muted;
 	font-size: $app-font-size-xs;
 	line-height: $app-line-height-ui;
 
@@ -253,41 +127,22 @@
 }
 
 @media (max-width: $app-breakpoint-xs) {
-	.auth-card {
-		gap: $app-gap-md;
-		padding: $app-gap-md;
-	}
-
 	.email-form__actions {
 		grid-template-columns: 1fr;
 	}
 
-	.auth-card__header h1 {
+	.auth-content__header h1 {
 		font-size: $app-font-size-2xl;
 	}
 
-	.auth-card__header p,
-	.email-form label {
-		font-size: $app-font-size-sm;
-	}
-
-	.email-form input,
-	.email-button,
-	.google-button {
-		min-height: $app-shell-control-height-narrow;
+	.auth-content__header p,
+	.email-form {
 		font-size: $app-font-size-sm;
 	}
 }
 
 @media (max-height: $app-breakpoint-height-compact) {
-	.auth-page {
-		place-items: start center;
-		padding-block: max($app-gap-sm, env(safe-area-inset-top))
-			max($app-gap-sm, env(safe-area-inset-bottom));
-	}
-
-	.auth-card {
+	.auth-content {
 		gap: $app-gap-sm;
-		padding: $app-gap-md;
 	}
 }
