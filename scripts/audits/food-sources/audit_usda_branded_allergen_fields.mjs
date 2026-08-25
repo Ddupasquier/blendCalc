@@ -14,7 +14,8 @@ import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 config({ path: path.resolve(__dirname, "../../../.env") });
 
-const API_KEY = process.env.VITE_FDC_API_KEY;
+const API_KEY =
+	process.env.FDC_API_KEY?.trim() || process.env.VITE_FDC_API_KEY?.trim();
 const BASE_URL = "https://api.nal.usda.gov/fdc/v1";
 const DEFAULT_QUERIES = [
 	"whole milk",
@@ -25,7 +26,7 @@ const DEFAULT_QUERIES = [
 ];
 
 if (!API_KEY || API_KEY === "your_api_key_here") {
-	console.error("Missing API key. Set VITE_FDC_API_KEY in your .env file.");
+	console.error("Missing API key. Set FDC_API_KEY in your .env file.");
 	process.exit(1);
 }
 

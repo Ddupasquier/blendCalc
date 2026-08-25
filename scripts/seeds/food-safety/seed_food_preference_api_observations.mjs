@@ -17,7 +17,8 @@ config({ path: ".env", quiet: true });
 
 const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const fdcApiKey = process.env.VITE_FDC_API_KEY;
+const fdcApiKey =
+	process.env.FDC_API_KEY?.trim() || process.env.VITE_FDC_API_KEY?.trim();
 const dryRun = process.argv.includes("--dry-run");
 const explicitQueries = process.argv
 	.slice(2)
@@ -125,7 +126,10 @@ const canonicalizeAllergen = (value) => {
 		["Wheat", /\b(wheat|durum|semolina)\b/],
 		["Gluten", /\b(gluten|barley|rye|malt)\b/],
 		["Peanut", /\b(peanut|peanuts)\b/],
-		["Tree Nut", /\b(tree nut|tree nuts|almond|cashew|hazelnut|pecan|pistachio|walnut)\b/],
+		[
+			"Tree Nut",
+			/\b(tree nut|tree nuts|almond|cashew|hazelnut|pecan|pistachio|walnut)\b/,
+		],
 		["Fish", /\b(fish|anchovy|cod|salmon|tuna)\b/],
 		["Shellfish", /\b(shellfish|shrimp|crab|lobster|crustacean|crustaceans)\b/],
 		["Sesame", /\b(sesame|tahini)\b/],
@@ -259,7 +263,13 @@ const addAllergenObservations = ({
 	}
 };
 
-const addDietaryObservations = ({ source, query, product, values, sourceField }) => {
+const addDietaryObservations = ({
+	source,
+	query,
+	product,
+	values,
+	sourceField,
+}) => {
 	for (const value of getUniqueValues(values)) {
 		const label = canonicalizeDietary(value);
 		if (!label) continue;
@@ -280,7 +290,13 @@ const addDietaryObservations = ({ source, query, product, values, sourceField })
 	}
 };
 
-const addIngredientObservations = ({ source, query, product, ingredientText, sourceField }) => {
+const addIngredientObservations = ({
+	source,
+	query,
+	product,
+	ingredientText,
+	sourceField,
+}) => {
 	for (const ingredient of splitIngredients(ingredientText)) {
 		addObservation({
 			source,
@@ -302,7 +318,9 @@ const addIngredientObservations = ({ source, query, product, ingredientText, sou
 const fetchJson = async (url, options = {}, label = "API request") => {
 	const response = await fetch(url, options);
 	if (!response.ok) {
-		throw new Error(`${label} failed: ${response.status} ${response.statusText}`);
+		throw new Error(
+			`${label} failed: ${response.status} ${response.statusText}`,
+		);
 	}
 	return await response.json();
 };
@@ -396,7 +414,8 @@ const collectOpenFoodFacts = async (query) => {
 			source: "open-food-facts",
 			query,
 			product,
-			ingredientText: productData.ingredients_text_en ?? productData.ingredients_text,
+			ingredientText:
+				productData.ingredients_text_en ?? productData.ingredients_text,
 			sourceField: "ingredients_text",
 		});
 	}
@@ -571,5 +590,7 @@ if (dryRun) {
 	console.log("Dry run complete. No rows were written.");
 } else {
 	await upsertObservations();
-	console.log("Food preference API observations saved and option catalog rebuilt.");
+	console.log(
+		"Food preference API observations saved and option catalog rebuilt.",
+	);
 }

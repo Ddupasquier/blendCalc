@@ -72,7 +72,7 @@ the browser; every other credential stays server-only. Use the ignored
 | Configuration                                                                                  | When it is needed                                                                                                                                              |
 | ---------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_PUBLISHABLE_KEY`                                       | Normal app authentication and data access                                                                                                                      |
-| `VITE_FDC_API_KEY`                                                                             | USDA FoodData Central lookups                                                                                                                                  |
+| `FDC_API_KEY`                                                                                  | Server-only USDA FoodData Central lookups in the app and maintenance scripts                                                                                   |
 | `PUBLIC_SITE_URL`                                                                              | Production authentication callbacks and canonical links                                                                                                        |
 | `PUBLIC_TURNSTILE_SITE_KEY`                                                                    | Auth bot protection after the matching hosted secret is configured                                                                                             |
 | `COLA_CLOUD_API_KEY`                                                                           | Optional server-only U.S. alcohol-label enrichment                                                                                                             |
@@ -86,6 +86,11 @@ the browser; every other credential stays server-only. Use the ignored
 Never prefix a server secret with `PUBLIC_` or `VITE_`. Both local env files are
 ignored and must not be committed. See [Authentication](docs/authentication.md) for the
 complete hosted configuration and verification checklist.
+
+Older local environments may still contain `VITE_FDC_API_KEY`. Runtime and maintenance
+scripts accept it only as a temporary compatibility fallback; new local and hosted
+configuration must use `FDC_API_KEY` so the credential can never enter the browser
+bundle.
 
 The scheduled catalog monitor also requires Vault values named
 `blendcalc_project_url` and `blendcalc_catalog_monitor_cron_secret`. Keep the monitor's

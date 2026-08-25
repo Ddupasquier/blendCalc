@@ -23,7 +23,8 @@ config({ path: ".env", quiet: true });
 
 const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const fdcApiKey = process.env.VITE_FDC_API_KEY;
+const fdcApiKey =
+	process.env.FDC_API_KEY?.trim() || process.env.VITE_FDC_API_KEY?.trim();
 const dryRun = process.argv.includes("--dry-run");
 const deepSweep = process.argv.includes("--deep");
 const rebuildMappingsOnly = process.argv.includes("--rebuild-mappings-only");
@@ -249,7 +250,13 @@ const DEEP_SWEEP_QUERIES = [
 ];
 
 const queries = [
-	...new Set(explicitQueries.length > 0 ? explicitQueries : deepSweep ? DEEP_SWEEP_QUERIES : DEFAULT_QUERIES),
+	...new Set(
+		explicitQueries.length > 0
+			? explicitQueries
+			: deepSweep
+				? DEEP_SWEEP_QUERIES
+				: DEFAULT_QUERIES,
+	),
 ];
 
 const sleep = (milliseconds) =>
@@ -273,16 +280,15 @@ const parseRetryAfterHeader = (value) => {
 };
 
 const getRetryDelays = (status) =>
-	status === 429
-		? RATE_LIMIT_RETRY_DELAYS_MS
-		: TEMPORARY_ERROR_RETRY_DELAYS_MS;
+	status === 429 ? RATE_LIMIT_RETRY_DELAYS_MS : TEMPORARY_ERROR_RETRY_DELAYS_MS;
 
 const cleanSourceCategory = (value) => {
 	const normalized = normalizeFoodCategoryValue(value);
 	if (!normalized) return null;
 	if (normalized.length > MAX_CATEGORY_LENGTH) return null;
 	if (/^\d+$/.test(normalized)) return null;
-	if (["foods", "food", "products", "product"].includes(normalized)) return null;
+	if (["foods", "food", "products", "product"].includes(normalized))
+		return null;
 	return {
 		category_id: toFoodCategoryId(normalized),
 		label: toFoodCategoryLabel(normalized),
@@ -396,8 +402,10 @@ const createSupabaseClient = () => {
 const fetchAllRows = async (buildQuery) => {
 	const rows = [];
 	for (let from = 0; ; from += SUPABASE_PAGE_SIZE) {
-		const { data, error } = await buildQuery()
-			.range(from, from + SUPABASE_PAGE_SIZE - 1);
+		const { data, error } = await buildQuery().range(
+			from,
+			from + SUPABASE_PAGE_SIZE - 1,
+		);
 		if (error) throw error;
 		rows.push(...(data ?? []));
 		if (!data || data.length < SUPABASE_PAGE_SIZE) break;
@@ -425,13 +433,13 @@ const collectOpenFoodFactsCategories = async (query) => {
 		"code",
 		"product_name",
 		"brands",
-			"categories",
-			"categories_tags",
-			"categories_hierarchy",
-			"main_category",
-			"food_groups",
-			"food_groups_tags",
-		].join(",");
+		"categories",
+		"categories_tags",
+		"categories_hierarchy",
+		"main_category",
+		"food_groups",
+		"food_groups_tags",
+	].join(",");
 	const url = new URL(OPEN_FOOD_FACTS_URL);
 	url.searchParams.set("search_terms", query);
 	url.searchParams.set("search_simple", "1");
@@ -671,7 +679,9 @@ const collectFdcBrandedDetailCategories = async (query) => {
 			});
 		}
 
-		for (const value of getFoodCategoryValues(detail.foodCategory ?? food.foodCategory)) {
+		for (const value of getFoodCategoryValues(
+			detail.foodCategory ?? food.foodCategory,
+		)) {
 			addCategoryObservation({
 				source: "fdc-branded-detail",
 				query,
@@ -737,10 +747,7 @@ const rebuildCategoryMappings = async (supabase = createSupabaseClient()) => {
 		),
 	]);
 
-	const mappingRows = groupObservationsForMappings(
-		observationRows,
-		optionRows,
-	);
+	const mappingRows = groupObservationsForMappings(observationRows, optionRows);
 
 	const { error: deleteMappingsError } = await supabase
 		.from("custom_food_category_mappings")
@@ -763,7 +770,9 @@ const rebuildCategoryMappings = async (supabase = createSupabaseClient()) => {
 
 if (rebuildMappingsOnly) {
 	const mappingCount = await rebuildCategoryMappings();
-	console.log(`Rebuilt ${mappingCount} category mappings from stored API observations.`);
+	console.log(
+		`Rebuilt ${mappingCount} category mappings from stored API observations.`,
+	);
 } else {
 	for (const [index, query] of queries.entries()) {
 		console.log(`[${index + 1}/${queries.length}] ${query}`);
@@ -787,20 +796,23 @@ if (rebuildMappingsOnly) {
 		await sleep(REQUEST_DELAY_MS);
 	}
 
-	const categories = [...observations.values()].reduce((summary, observation) => {
-		const existing = summary.get(observation.category_id);
-		if (existing) {
-			existing.observations += observation.observation_count;
-			existing.sources.add(observation.source);
+	const categories = [...observations.values()].reduce(
+		(summary, observation) => {
+			const existing = summary.get(observation.category_id);
+			if (existing) {
+				existing.observations += observation.observation_count;
+				existing.sources.add(observation.source);
+				return summary;
+			}
+			summary.set(observation.category_id, {
+				label: observation.label,
+				observations: observation.observation_count,
+				sources: new Set([observation.source]),
+			});
 			return summary;
-		}
-		summary.set(observation.category_id, {
-			label: observation.label,
-			observations: observation.observation_count,
-			sources: new Set([observation.source]),
-		});
-		return summary;
-	}, new Map());
+		},
+		new Map(),
+	);
 
 	console.log(
 		`Collected ${observations.size} category observations for ${categories.size} category options.`,
