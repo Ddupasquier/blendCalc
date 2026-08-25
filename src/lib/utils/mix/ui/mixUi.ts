@@ -77,7 +77,9 @@ export const getNutrientMeta = (
 	id: string | number,
 	nutrientLists: NutrientMeta[][],
 ) => {
-	return nutrientLists.flat().find((nutrient) => nutrient.id == id);
+	return nutrientLists
+		.flat()
+		.find((nutrient) => String(nutrient.id) === String(id));
 };
 
 export const mergeNutrientOptions = (...optionLists: NutrientOption[][]) => {
@@ -154,10 +156,12 @@ export const getFoodNutrientChips = (
 export const normalizeServingUnit = (value: unknown, food?: FoodItem) => {
 	if (typeof value !== "string") return null;
 	const normalizedValue = value.trim();
-	if (getSourceServingMeasureOption(normalizedValue, food)) return normalizedValue;
+	if (getSourceServingMeasureOption(normalizedValue, food))
+		return normalizedValue;
 	return (
-		SERVING_MEASURE_ALIASES[normalizedValue.toLowerCase().replace(/\s+/g, "")] ??
-		null
+		SERVING_MEASURE_ALIASES[
+			normalizedValue.toLowerCase().replace(/\s+/g, "")
+		] ?? null
 	);
 };
 
@@ -179,9 +183,9 @@ export const getDefaultServingAmount = (
 	}
 
 	const sourceServingOptions = getSourceServingMeasureOptions(food);
-	const primarySourceServingOption = sourceServingOptions.find(
-		(option) => option.serving.isPrimary,
-	) ?? sourceServingOptions[0];
+	const primarySourceServingOption =
+		sourceServingOptions.find((option) => option.serving.isPrimary) ??
+		sourceServingOptions[0];
 	if (primarySourceServingOption) {
 		return {
 			quantity: 1,
@@ -196,11 +200,8 @@ export const getDefaultServingAmount = (
 	const preferredWeightUnit = preferences.preferredWeightUnit ?? "g";
 	const preferredQuantity =
 		preferredWeightUnit === "oz"
-			? convertServingQuantityToUnit(
-					preferredServingGrams,
-					"g",
-					"oz",
-				) ?? preferredServingGrams
+			? (convertServingQuantityToUnit(preferredServingGrams, "g", "oz") ??
+				preferredServingGrams)
 			: preferredServingGrams;
 
 	return {

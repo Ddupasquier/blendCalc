@@ -27,6 +27,12 @@ An unfinished, account-scoped Mix draft may survive navigation through the appro
 temporary-state boundary. Durable goals, section preferences, and saved recipes remain
 database-owned.
 
+Mix draft saves are serialized in edit order so a slower older request cannot replace a
+newer change. A failed latest save remains visible without discarding the open draft.
+Goal-preset, reset, and recipe actions expose one pending state, reject duplicate
+triggers, preserve recoverable input, and keep their dialog open when the authoritative
+write fails.
+
 ## Header
 
 - Show `Mix`, friendly supporting copy, unsaved/loaded state, one circular options

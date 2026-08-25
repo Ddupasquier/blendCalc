@@ -45,7 +45,9 @@ test("saved recipes default closed and expose their complete details on demand",
 	await summary.click();
 	await expect(details).toHaveAttribute("open", "");
 	await expect(card.getByText(/10 ingredients/)).toBeVisible();
-	await expect(card.getByRole("button", { name: "Load QA Morning Green" })).toBeVisible();
+	await expect(
+		card.getByRole("button", { name: "Load QA Morning Green" }),
+	).toBeVisible();
 	await card.evaluate(async (element) => {
 		await Promise.all(
 			element
@@ -90,10 +92,13 @@ test("saved recipe deletion requires two deliberate activations", async ({
 	await expect(
 		card.getByRole("button", { name: "Confirm deletion of QA Morning Green" }),
 	).toBeVisible();
-	await expect(page.getByText("4 recipes")).toBeVisible();
+	await expect(page.locator(".saved-recipe-card")).toHaveCount(4);
+	await expect(card).toBeVisible();
 });
 
-test("saved recipe search filters by recipe and ingredient text", async ({ page }) => {
+test("saved recipe search filters by recipe and ingredient text", async ({
+	page,
+}) => {
 	await page.goto("/saved");
 	await waitForAppReady(page);
 
@@ -101,7 +106,9 @@ test("saved recipe search filters by recipe and ingredient text", async ({ page 
 		name: "Search saved recipes by name or ingredient",
 	});
 	await search.fill("Morning Green");
-	await expect(page.getByText("QA Morning Green", { exact: true })).toBeVisible();
+	await expect(
+		page.getByText("QA Morning Green", { exact: true }),
+	).toBeVisible();
 	await expect(page.getByText("QA Berry Repeat", { exact: true })).toBeHidden();
 	await search.fill("Mango");
 	await expect(page.locator(".saved-recipe-card")).toHaveCount(1);
