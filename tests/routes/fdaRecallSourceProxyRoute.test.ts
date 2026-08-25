@@ -57,6 +57,16 @@ describe("FDA recall source proxy route", () => {
 		}
 	});
 
+	it("rejects unsupported official source names", async () => {
+		await expect(
+			GET(
+				createEvent(
+					"http://localhost/api/internal/food-safety/fda-recall-source?source=unknown",
+				) as never,
+			),
+		).rejects.toMatchObject({ status: 400 });
+	});
+
 	it("relays only the bounded official FDA recall index", async () => {
 		const fetchMock = vi.fn().mockResolvedValue(
 			new Response(JSON.stringify([{ path: "/safety/example" }]), {
@@ -107,5 +117,53 @@ describe("FDA recall source proxy route", () => {
 			expect.objectContaining({ pathname: sourcePath }),
 			expect.any(Object),
 		);
+	});
+
+	it("relays the fixed bounded USDA FSIS recall dataset", async () => {
+		const fetchMock = vi.fn().mockResolvedValue(
+			new Response(
+				JSON.stringify([
+					{
+						field_recall_number_export: "017-2026",
+						field_title: "Example Foods Recalls Ready-To-Eat Product",
+					},
+				]),
+				{
+					status: 200,
+					headers: {
+						"content-type": "application/json",
+						etag: '"fsis-recalls"',
+					},
+				},
+			),
+		);
+		vi.stubGlobal("fetch", fetchMock);
+
+		const response = await GET(
+			createEvent(
+				"http://localhost/api/internal/food-safety/fda-recall-source?source=fsis",
+			) as never,
+		);
+
+		expect(response.status).toBe(200);
+		expect(response.headers.get("etag")).toBe('"fsis-recalls"');
+		expect(await response.json()).toHaveLength(1);
+		expect(fetchMock).toHaveBeenCalledWith(
+			expect.objectContaining({
+				hostname: "www.fsis.usda.gov",
+				pathname: "/fsis/api/recall/v/1",
+			}),
+			expect.objectContaining({ signal: expect.any(AbortSignal) }),
+		);
+	});
+
+	it("does not allow arbitrary paths through the FSIS source", async () => {
+		await expect(
+			GET(
+				createEvent(
+					"http://localhost/api/internal/food-safety/fda-recall-source?source=fsis&sourcePath=%2Fprivate",
+				) as never,
+			),
+		).rejects.toMatchObject({ status: 400 });
 	});
 });

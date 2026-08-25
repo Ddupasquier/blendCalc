@@ -240,9 +240,11 @@ The scheduled monitoring layer has a separate pgTAP and TypeScript corpus:
 Provider availability is not a database assertion. Before enabling the hosted monitor,
 perform one secret-authenticated deployed-function smoke run with each configured
 source and confirm that a failed source records an isolated retry without clearing
-stored alerts or blocking other work. When direct FDA announcement reads are unavailable
-from Edge, verify the protected app relay with both the announcement index and one
-allowed FDA recall detail path before treating current-announcement coverage as active.
+stored alerts or blocking other work. When direct official-source reads are unavailable
+from Edge, verify the protected app relay with the FDA announcement index, one allowed
+FDA recall detail path, and the fixed FSIS dataset. The FSIS smoke result must contain
+at least one source-shaped normalized alert and must preserve conditional cache
+validators before treating that source as active.
 
 A separate remote staging project can be added later for real-device and hosted-preview
 QA. It should use the same migrations and synthetic fixtures, never a production data

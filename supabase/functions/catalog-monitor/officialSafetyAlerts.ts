@@ -21,6 +21,8 @@ const MAX_OPEN_FDA_SKIP = 25_000;
 const FDA_ANNOUNCEMENT_INITIAL_LOOKBACK_DAYS = 90;
 const FDA_ANNOUNCEMENT_REFRESH_LOOKBACK_DAYS = 14;
 const FDA_ANNOUNCEMENT_BATCH_SIZE = 10;
+const FSIS_INITIAL_LOOKBACK_DAYS = 90;
+const FSIS_REFRESH_LOOKBACK_DAYS = 14;
 
 const asObject = (value: unknown): JsonObject =>
 	value && typeof value === "object" && !Array.isArray(value)
@@ -33,6 +35,12 @@ const asString = (value: unknown) =>
 const asStringArray = (value: unknown) =>
 	(Array.isArray(value) ? value : []).flatMap((entry) => {
 		const text = asString(entry);
+		return text ? [text] : [];
+	});
+
+const asTextArray = (value: unknown) =>
+	(Array.isArray(value) ? value : [value]).flatMap((entry) => {
+		const text = htmlToText(entry);
 		return text ? [text] : [];
 	});
 
@@ -128,14 +136,16 @@ const collectLabeledIdentifiers = (text: string) => {
 		"information",
 	]);
 	for (const match of text.matchAll(
-		/\b(upc|gtin|ean)(?:\s*(?:code|no\.?|number))?\s*[:#-]?\s*(\d{8,14})\b/gi,
+		/\b(upc|gtin|ean|bar\s*codes?)(?:\s*(?:code|no\.?|number))?\s*[:#-]?\s*(\d{8,14}(?:(?:\s*[,;]\s*(?:and\s+)?|\s+and\s+)\d{8,14}){0,9})\b/gi,
 	)) {
-		const normalizedValue = normalizeGtin(match[2]);
-		if (normalizedValue) {
+		const identifierType = /^(?:upc|bar)/i.test(match[1]) ? "upc" : "gtin";
+		for (const candidate of match[2].matchAll(/\d{8,14}/g)) {
+			const normalizedValue = normalizeGtin(candidate[0]);
+			if (!normalizedValue) continue;
 			identifiers.push({
-				type: match[1].toLowerCase() === "upc" ? "upc" : "gtin",
+				type: identifierType,
 				normalizedValue,
-				sourceText: match[0],
+				sourceText: candidate[0],
 			});
 		}
 	}
@@ -328,69 +338,120 @@ export const normalizeFsisAlert = (
 	record: JsonObject,
 ): NormalizedOfficialSafetyAlert | null => {
 	const externalAlertId = firstString(record, [
+		"field_recall_number_export",
+		"field_recall_number",
 		"Recall_Number",
 		"recall_number",
 		"id",
 		"RecallID",
 	]);
-	const productDescription = firstString(record, [
+	const productItems = asTextArray(record.field_product_items);
+	const title = firstString(record, [
+		"field_title",
 		"Product",
 		"product_description",
 		"ProductDescription",
 		"Title",
 	]);
+	const productDescription = productItems.join("; ") || title;
 	if (!externalAlertId || !productDescription) return null;
-	const codeInformation = firstString(record, [
-		"Code_Info",
-		"code_information",
-		"CodeInformation",
-	]);
-	const packageDescription = firstString(record, [
-		"Product_Quantity",
-		"package_description",
-		"PackageDescription",
-	]);
-	const status = firstString(record, ["Status", "status"]) ?? "active";
+	const summary = htmlToText(record.field_summary);
+	const codeInformation =
+		firstString(record, ["Code_Info", "code_information", "CodeInformation"]) ??
+		(productItems.join("; ") || null);
+	const packageDescription =
+		firstString(record, [
+			"Product_Quantity",
+			"package_description",
+			"PackageDescription",
+		]) ??
+		(productItems.join("; ") || null);
+	const activeNotice = firstString(record, ["field_active_notice"]);
+	const status =
+		firstString(record, ["field_recall_type", "Status", "status"]) ??
+		(activeNotice === "False" ? "closed" : "active");
 	const sourceUrl =
-		firstString(record, ["Recall_URL", "recall_url", "url"]) ??
-		FSIS_SOURCE_PAGE;
+		firstString(record, [
+			"field_recall_url",
+			"Recall_URL",
+			"recall_url",
+			"url",
+		]) ?? FSIS_SOURCE_PAGE;
 	const reportDate = parseCompactDate(
-		firstString(record, ["Recall_Date", "report_date", "PublicationDate"]),
+		firstString(record, [
+			"field_recall_date",
+			"Recall_Date",
+			"report_date",
+			"PublicationDate",
+		]),
 	);
+	const lastModifiedDate = parseCompactDate(record.field_last_modified_date);
+	const titleOrganization =
+		title?.match(/^(.+?)\s+(?:recalls?|issues?|announces?)\b/i)?.[1]?.trim() ??
+		null;
+	const quotedProductNames = productItems.flatMap((item) =>
+		[...item.matchAll(/[“"]([^”"]{2,120})[”"]/g)].map((match) => match[1]),
+	);
+	const sourceUrlValue = sourceUrl.startsWith("http://www.fsis.usda.gov/")
+		? sourceUrl.replace("http://", "https://")
+		: sourceUrl;
+	const isActive = activeNotice
+		? activeNotice.toLowerCase() === "true"
+		: !/closed|completed|terminated|inactive/i.test(status);
+	const identifierText = [codeInformation, packageDescription, summary]
+		.filter((value): value is string => Boolean(value))
+		.join(" ");
 	return {
 		externalAlertId,
 		recallNumber: externalAlertId,
-		eventId: firstString(record, ["Event_ID", "event_id"]),
-		alertType: /public health alert/i.test(productDescription)
+		eventId: firstString(record, [
+			"field_recall_number",
+			"Event_ID",
+			"event_id",
+		]),
+		alertType: /public health alert/i.test(`${title ?? ""} ${status}`)
 			? "public_health_alert"
 			: "recall",
-		classification: firstString(record, ["Class", "classification"]),
+		classification: firstString(record, [
+			"field_recall_classification",
+			"field_risk_level",
+			"Class",
+			"classification",
+		]),
 		status,
 		productDescription,
-		reason: firstString(record, ["Reason", "reason_for_recall"]),
-		recallingOrganization: firstString(record, ["Company", "recalling_firm"]),
-		distributionPattern: firstString(record, [
-			"Distribution",
-			"distribution_pattern",
-		]),
+		reason:
+			asTextArray(record.field_recall_reason).join("; ") ||
+			firstString(record, ["Reason", "reason_for_recall"]),
+		recallingOrganization:
+			firstString(record, ["Company", "recalling_firm"]) ?? titleOrganization,
+		distributionPattern:
+			asTextArray(record.field_states).join(", ") ||
+			firstString(record, ["Distribution", "distribution_pattern"]),
 		packageDescription,
 		codeInformation,
-		sourceUrl: sourceUrl.startsWith("https://") ? sourceUrl : FSIS_SOURCE_PAGE,
+		sourceUrl: sourceUrlValue.startsWith("https://")
+			? sourceUrlValue
+			: FSIS_SOURCE_PAGE,
 		reportDate,
 		recallInitiatedAt: reportDate,
 		terminatedAt: parseCompactDate(
 			firstString(record, ["Termination_Date", "termination_date"]),
 		),
-		sourceUpdatedAt: reportDate ? `${reportDate}T00:00:00.000Z` : null,
-		isActive: !/closed|completed|terminated/i.test(status),
+		sourceUpdatedAt: lastModifiedDate
+			? `${lastModifiedDate}T00:00:00.000Z`
+			: reportDate
+				? `${reportDate}T00:00:00.000Z`
+				: null,
+		isActive,
 		brandNames: uniqueStrings([
+			titleOrganization,
+			...quotedProductNames,
 			firstString(record, ["Brand", "brand_name"]),
 			firstString(record, ["Company", "recalling_firm"]),
 		]),
 		identifiers: deduplicateIdentifiers(
-			collectLabeledIdentifiers(
-				`${codeInformation ?? ""} ${packageDescription ?? ""}`,
-			),
+			collectLabeledIdentifiers(identifierText),
 		),
 	};
 };
@@ -467,15 +528,15 @@ type FdaAnnouncementDataset = {
 	notModified: boolean;
 };
 
-type FdaRecallProxyConfiguration = {
+type OfficialFoodSafetySourceProxyConfiguration = {
 	url?: string;
 	secret?: string;
 	protectionBypassSecret?: string;
 };
 
-const addFdaRecallProxyHeaders = (
+const addOfficialFoodSafetyProxyHeaders = (
 	headers: Headers,
-	proxy: FdaRecallProxyConfiguration,
+	proxy: OfficialFoodSafetySourceProxyConfiguration,
 ) => {
 	if (!proxy.url || !proxy.secret) return;
 	headers.set("authorization", `Bearer ${proxy.secret}`);
@@ -484,16 +545,22 @@ const addFdaRecallProxyHeaders = (
 	}
 };
 
-const buildFdaRecallProxyUrl = (proxyUrl: string, sourceUrl?: URL) => {
+const buildOfficialFoodSafetyProxyUrl = (
+	proxyUrl: string,
+	options: { source?: "fda" | "fsis"; sourceUrl?: URL } = {},
+) => {
 	const url = new URL(proxyUrl);
-	if (sourceUrl) url.searchParams.set("sourcePath", sourceUrl.pathname);
+	if (options.source === "fsis") url.searchParams.set("source", "fsis");
+	if (options.sourceUrl) {
+		url.searchParams.set("sourcePath", options.sourceUrl.pathname);
+	}
 	return url;
 };
 
 const fetchFdaAnnouncementDataset = async (
 	etag: string | null,
 	lastModified: string | null,
-	proxy: FdaRecallProxyConfiguration,
+	proxy: OfficialFoodSafetySourceProxyConfiguration,
 ): Promise<FdaAnnouncementDataset> => {
 	const headers = new Headers({
 		accept: "application/json",
@@ -501,12 +568,12 @@ const fetchFdaAnnouncementDataset = async (
 	});
 	if (etag) headers.set("if-none-match", etag);
 	if (lastModified) headers.set("if-modified-since", lastModified);
-	addFdaRecallProxyHeaders(headers, proxy);
+	addOfficialFoodSafetyProxyHeaders(headers, proxy);
 	let response: Response;
 	try {
 		response = await fetch(
 			proxy.url && proxy.secret
-				? buildFdaRecallProxyUrl(proxy.url)
+				? buildOfficialFoodSafetyProxyUrl(proxy.url)
 				: FDA_RECALL_ANNOUNCEMENTS_URL,
 			{
 				headers,
@@ -619,7 +686,7 @@ const fetchFdaRecallAnnouncementPage = async (
 	lastSuccessfulAt: string | null,
 	cursor: JsonObject,
 	pageSize: number,
-	proxy: FdaRecallProxyConfiguration,
+	proxy: OfficialFoodSafetySourceProxyConfiguration,
 ): Promise<SafetyAlertPage> => {
 	const offset = Math.max(0, Number(cursor.fdaAnnouncementOffset) || 0);
 	const previousSweepComplete = cursor.fdaAnnouncementSweepComplete === true;
@@ -697,7 +764,7 @@ const fetchFdaRecallAnnouncementPage = async (
 			}
 			const detailHtml = await fetchSafetyAlertText(
 				proxy.url && proxy.secret
-					? buildFdaRecallProxyUrl(proxy.url, sourceUrl)
+					? buildOfficialFoodSafetyProxyUrl(proxy.url, { sourceUrl })
 					: sourceUrl,
 				proxy.url && proxy.secret ? detailHeaders : undefined,
 			);
@@ -749,7 +816,7 @@ export const fetchOpenFdaAlertPage = async (
 	cursor: JsonObject,
 	pageSize: number,
 	apiKey?: string,
-	proxy: FdaRecallProxyConfiguration = {},
+	proxy: OfficialFoodSafetySourceProxyConfiguration = {},
 ): Promise<SafetyAlertPage> => {
 	const [enforcementResult, announcementResult] = await Promise.allSettled([
 		fetchOpenFdaEnforcementAlertPage(
@@ -823,33 +890,144 @@ export const fetchOpenFdaAlertPage = async (
 	};
 };
 
-export const fetchFsisAlertPage = async (): Promise<SafetyAlertPage> => {
-	const response = await fetchSafetyAlertJson(new URL(FSIS_RECALL_URL));
-	const object = asObject(response);
-	const records = Array.isArray(response)
-		? response
+export const fetchFsisAlertPage = async (
+	lastSuccessfulAt: string | null = null,
+	cursor: JsonObject = {},
+	pageSize = 500,
+	proxy: OfficialFoodSafetySourceProxyConfiguration = {},
+): Promise<SafetyAlertPage> => {
+	const offset = Math.max(0, Number(cursor.fsisOffset) || 0);
+	const previousSweepComplete = cursor.fsisSweepComplete === true;
+	const cutoffDate =
+		asString(cursor.fsisCutoffDate) ??
+		parseCompactDate(
+			subtractDays(
+				lastSuccessfulAt ?? new Date().toISOString(),
+				lastSuccessfulAt
+					? FSIS_REFRESH_LOOKBACK_DAYS
+					: FSIS_INITIAL_LOOKBACK_DAYS,
+			),
+		);
+	const headers = new Headers({
+		accept: "application/json",
+		"user-agent": "blendCalc catalog safety monitor",
+	});
+	if (offset === 0 && previousSweepComplete) {
+		const etag = asString(cursor.fsisEtag);
+		const lastModified = asString(cursor.fsisLastModified);
+		if (etag) headers.set("if-none-match", etag);
+		if (lastModified) headers.set("if-modified-since", lastModified);
+	}
+	addOfficialFoodSafetyProxyHeaders(headers, proxy);
+	const requestUrl =
+		proxy.url && proxy.secret
+			? buildOfficialFoodSafetyProxyUrl(proxy.url, { source: "fsis" })
+			: new URL(FSIS_RECALL_URL);
+	let response: Response;
+	try {
+		response = await fetch(requestUrl, {
+			headers,
+			signal: AbortSignal.timeout(45_000),
+		});
+	} catch (error) {
+		throw new SafetyAlertRequestError(
+			"FSIS recall request failed",
+			isRequestTimeout(error) ? "request_timed_out" : "provider_unavailable",
+		);
+	}
+	if (response.status === 304) {
+		return {
+			providerKey: "usda-fsis-recalls",
+			alerts: [],
+			nextCursor: {
+				fsisOffset: 0,
+				fsisCutoffDate: cutoffDate,
+				fsisEtag: asString(cursor.fsisEtag),
+				fsisLastModified: asString(cursor.fsisLastModified),
+				fsisSweepComplete: true,
+				hasMore: false,
+			},
+			sourceUpdatedAt: null,
+		};
+	}
+	if (response.status === 429) {
+		throw new SafetyAlertRequestError(
+			"FSIS recall source rate limited the request",
+			"rate_limited",
+		);
+	}
+	if (!response.ok) {
+		throw new SafetyAlertRequestError(
+			`FSIS recall source returned ${response.status}`,
+			response.status === 401 || response.status === 403
+				? "access_denied"
+				: "provider_unavailable",
+		);
+	}
+	const value = await response.json();
+	const object = asObject(value);
+	const records = Array.isArray(value)
+		? value
 		: Array.isArray(object.results)
 			? object.results
 			: Array.isArray(object.data)
 				? object.data
+				: null;
+	if (!records) {
+		throw new SafetyAlertRequestError(
+			"FSIS recall response was invalid",
+			"invalid_response",
+		);
+	}
+	const eligibleRecords = records
+		.flatMap((entry) => {
+			const rawPayload = asObject(entry);
+			const normalizedAlert = normalizeFsisAlert(rawPayload);
+			if (!normalizedAlert) return [];
+			const sourceDate =
+				normalizedAlert.sourceUpdatedAt?.slice(0, 10) ??
+				normalizedAlert.reportDate;
+			return normalizedAlert.isActive ||
+				!cutoffDate ||
+				(sourceDate !== null && sourceDate >= cutoffDate)
+				? [{ rawPayload, normalizedAlert }]
 				: [];
+		})
+		.sort(
+			(left, right) =>
+				(left.normalizedAlert.sourceUpdatedAt ?? "").localeCompare(
+					right.normalizedAlert.sourceUpdatedAt ?? "",
+				) ||
+				left.normalizedAlert.externalAlertId.localeCompare(
+					right.normalizedAlert.externalAlertId,
+				),
+		);
+	const limit = Math.max(1, Math.min(pageSize, 1000));
+	const selectedRecords = eligibleRecords.slice(offset, offset + limit);
 	const alerts = await Promise.all(
-		records
-			.flatMap((entry) => {
-				const rawPayload = asObject(entry);
-				const normalizedAlert = normalizeFsisAlert(rawPayload);
-				return normalizedAlert ? [{ rawPayload, normalizedAlert }] : [];
-			})
-			.map(async ({ rawPayload, normalizedAlert }) => ({
-				rawPayload,
-				normalizedAlert,
-				contentHash: await hashJson(normalizedAlert),
-			})),
+		selectedRecords.map(async ({ rawPayload, normalizedAlert }) => ({
+			rawPayload,
+			normalizedAlert,
+			contentHash: await hashJson(normalizedAlert),
+		})),
 	);
+	const nextOffset = offset + selectedRecords.length;
+	const hasMore = nextOffset < eligibleRecords.length;
 	return {
 		providerKey: "usda-fsis-recalls",
 		alerts,
-		nextCursor: { hasMore: false },
+		nextCursor: {
+			fsisOffset: hasMore ? nextOffset : 0,
+			fsisCutoffDate: hasMore
+				? cutoffDate
+				: parseCompactDate(
+						subtractDays(new Date().toISOString(), FSIS_REFRESH_LOOKBACK_DAYS),
+					),
+			fsisEtag: response.headers.get("etag"),
+			fsisLastModified: response.headers.get("last-modified"),
+			fsisSweepComplete: !hasMore,
+			hasMore,
+		},
 		sourceUpdatedAt:
 			alerts
 				.map(({ normalizedAlert }) => normalizedAlert.sourceUpdatedAt)
@@ -907,13 +1085,6 @@ export const buildProbableSafetyAlertMatches = (
 	alert: NormalizedOfficialSafetyAlert,
 	candidates: CatalogSafetyMatchCandidate[],
 ): ProbableSafetyAlertMatch[] => {
-	if (
-		alert.identifiers.some((identifier) =>
-			["gtin", "upc"].includes(identifier.type),
-		)
-	) {
-		return [];
-	}
 	const alertBrandWords = alert.brandNames
 		.map(words)
 		.filter((value) => value.size > 0);

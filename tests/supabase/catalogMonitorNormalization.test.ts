@@ -7,6 +7,7 @@ import {
 } from "../../supabase/functions/catalog-monitor/providerProducts.ts";
 import {
 	buildProbableSafetyAlertMatches,
+	fetchFsisAlertPage,
 	fetchOpenFdaAlertPage,
 	normalizeFdaRecallAnnouncement,
 	normalizeFsisAlert,
@@ -91,7 +92,7 @@ describe("official food safety alert normalization and matching", () => {
 		},
 	];
 
-	it("extracts exact package identifiers from openFDA records", () => {
+	it("extracts exact identifiers while retaining strong variant review candidates", () => {
 		const alert = normalizeOpenFdaAlert({
 			recall_number: "F-0001-2026",
 			status: "Ongoing",
@@ -120,7 +121,15 @@ describe("official food safety alert normalization and matching", () => {
 			]),
 		);
 		expect(alert?.isActive).toBe(true);
-		expect(buildProbableSafetyAlertMatches(alert!, candidates)).toEqual([]);
+		expect(buildProbableSafetyAlertMatches(alert!, candidates)).toEqual([
+			expect.objectContaining({
+				sharedProductId: candidates[0].id,
+				evidence: expect.objectContaining({
+					matchBasis: "brand_product_package",
+					requiresModeratorReview: true,
+				}),
+			}),
+		]);
 	});
 
 	it("queues strong brand, product, and package agreement for review", () => {
@@ -166,26 +175,87 @@ describe("official food safety alert normalization and matching", () => {
 		).toEqual([]);
 	});
 
-	it("normalizes FSIS records without claiming unprovided identifiers", () => {
+	it("normalizes the current FSIS dataset fields without inventing identifiers", () => {
 		const alert = normalizeFsisAlert({
-			Recall_Number: "023-2026",
-			Product: "Ready-to-eat chicken salad",
-			Company: "Example Kitchen",
-			Class: "Class I",
-			Status: "Active",
-			Recall_Date: "2026-08-14",
-			Code_Info: "Lot CHK-44",
+			field_title:
+				"Example Kitchen Recalls Ready-To-Eat Chicken Salad Products",
+			field_recall_number_export: "023-2026",
+			field_recall_url:
+				"http://www.fsis.usda.gov/recalls-alerts/example-kitchen-recall",
+			field_active_notice: "True",
+			field_states: ["Nationwide"],
+			field_product_items: [
+				"12-oz. packages containing “Example Kitchen Chicken Salad” Lot CHK-44",
+			],
+			field_recall_classification: "Class I",
+			field_recall_date: "2026-08-14",
+			field_last_modified_date: "2026-08-15",
+			field_recall_reason: ["Possible contamination"],
+			field_recall_type: "Active Recall",
 		});
 
 		expect(alert).toMatchObject({
 			externalAlertId: "023-2026",
 			alertType: "recall",
 			classification: "Class I",
+			productDescription:
+				"12-oz. packages containing “Example Kitchen Chicken Salad” Lot CHK-44",
+			recallingOrganization: "Example Kitchen",
+			distributionPattern: "Nationwide",
+			sourceUrl:
+				"https://www.fsis.usda.gov/recalls-alerts/example-kitchen-recall",
+			sourceUpdatedAt: "2026-08-15T00:00:00.000Z",
 			isActive: true,
 		});
 		expect(alert?.identifiers).toEqual([
 			expect.objectContaining({ type: "lot_code", normalizedValue: "CHK-44" }),
 		]);
+		expect(alert?.brandNames).toEqual(
+			expect.arrayContaining([
+				"Example Kitchen",
+				"Example Kitchen Chicken Salad",
+			]),
+		);
+	});
+
+	it("uses the protected relay and conditional cache validators for FSIS", async () => {
+		const fetchMock = vi.fn(
+			async (input: string | URL | Request, init?: RequestInit) => {
+				const url = new URL(String(input));
+				expect(url.searchParams.get("source")).toBe("fsis");
+				const headers = new Headers(init?.headers);
+				expect(headers.get("authorization")).toBe("Bearer proxy-secret");
+				expect(headers.get("if-none-match")).toBe('"fsis-previous"');
+				return new Response(null, {
+					status: 304,
+					headers: { etag: '"fsis-previous"' },
+				});
+			},
+		);
+		vi.stubGlobal("fetch", fetchMock);
+
+		try {
+			const page = await fetchFsisAlertPage(
+				"2026-08-14T00:00:00.000Z",
+				{
+					fsisSweepComplete: true,
+					fsisEtag: '"fsis-previous"',
+				},
+				100,
+				{
+					url: "https://blendcalc.example/api/internal/food-safety/fda-recall-source",
+					secret: "proxy-secret",
+				},
+			);
+
+			expect(page.alerts).toEqual([]);
+			expect(page.nextCursor).toMatchObject({
+				fsisSweepComplete: true,
+				fsisEtag: '"fsis-previous"',
+			});
+		} finally {
+			vi.unstubAllGlobals();
+		}
 	});
 
 	it("ingests the current FDA Taylor Farms Cyclospora announcement without inventing UPCs", () => {
@@ -271,6 +341,67 @@ describe("official food safety alert normalization and matching", () => {
 			]),
 		);
 		expect(values).not.toContain("00681131532999");
+	});
+
+	it("extracts the current FDA exact-barcode recall corpus and affected lots", () => {
+		const currentRecallFixtures = [
+			{
+				record: {
+					path: "/safety/recalls-market-withdrawals-safety-alerts/everything-sprouts-llc-recalls-alfalfa-sprouts-due-potential-e-coli-and-salmonella-risk",
+					field_change_date_2: "08/22/2026",
+					field_brand_name: "Everything Sprouts, Calco",
+					field_product_description: "Alfalfa Sprouts",
+					field_recall_reason_description:
+						"Potential Salmonella and Shiga toxin-producing E. coli contamination",
+					field_company_name: "Everything Sprouts, LLC",
+					field_regulated_product_field: "Food &amp; Beverages",
+				},
+				detailHtml:
+					"The containers bear the following bar codes: 860014523113, 860014523120, and 850079470149. Lot 222; Lot 223; Lot 225; Lot 226; Lot 230",
+				expectedIdentifiers: [
+					"00860014523113",
+					"00860014523120",
+					"00850079470149",
+					"222",
+					"223",
+					"225",
+					"226",
+					"230",
+				],
+			},
+			{
+				record: {
+					path: "/safety/recalls-market-withdrawals-safety-alerts/hampton-grocers-inc-recalls-its-8-ounce-packages-lacnola-lactation-granola-because-possible-health",
+					field_change_date_2: "08/14/2026",
+					field_brand_name: "The Hampton Grocer",
+					field_product_description: "Lacnola Lactation Granola",
+					field_recall_reason_description: "Potential Salmonella contamination",
+					field_company_name: "The Hampton Grocer, Inc.",
+					field_regulated_product_field: "Food &amp; Beverages",
+				},
+				detailHtml:
+					"UPC: 850035324554. Lot HGLC-102125. Lot HGLC-021326. Best by 21OCT2026. Best by 13FEB2027.",
+				expectedIdentifiers: [
+					"00850035324554",
+					"HGLC-102125",
+					"HGLC-021326",
+					"21OCT2026",
+					"13FEB2027",
+				],
+			},
+		];
+
+		for (const fixture of currentRecallFixtures) {
+			const alert = normalizeFdaRecallAnnouncement(
+				fixture.record,
+				fixture.detailHtml,
+			);
+			const normalizedIdentifiers =
+				alert?.identifiers.map(({ normalizedValue }) => normalizedValue) ?? [];
+			expect(normalizedIdentifiers).toEqual(
+				expect.arrayContaining(fixture.expectedIdentifiers),
+			);
+		}
 	});
 
 	it("filters non-human-food announcements and closes terminated notices", () => {
