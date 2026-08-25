@@ -8,6 +8,15 @@ it, not in a generic folder that merely describes what kind of file it is.
 Visual implementation and token selection follow the Ingredients-derived system in
 [`style-guide.md`](style-guide.md).
 
+## Quick Navigation
+
+| Area                    | Sections                                                                                                                   |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Application placement   | [Application Source](#application-source), [Components](#components), [Routes](#routes), and [Domain Logic](#domain-logic) |
+| Naming and verification | [Naming](#naming) and [Tests](#tests)                                                                                      |
+| Supporting material     | [Scripts](#scripts) and [Documentation](#documentation)                                                                    |
+| Final placement check   | [Ownership Check](#ownership-check)                                                                                        |
+
 ## Application Source
 
 ```text
@@ -166,14 +175,11 @@ checklist.
 
 Repository setup and the stable developer command surface remain in the root
 [`README.md`](../README.md). Script execution and organization remain in
-[`scripts/README.md`](../scripts/README.md). `docs/work-queue.md` is the only active
-priority and task list. Detailed QA reproduction packets under `docs/QA/`, recovery
-context under `docs/local-context/`, and the audit method under `docs/dev-rules/`
-support that queue without owning another backlog. The ignored
-`docs/local-context/proposed-commits.md` ledger organizes an explicitly authorized
-commit batch by branch, feature, and intention without owning task priority or granting
-commit permission. Settled decisions remain in the decision log and completed
-verification remains in the QA archive.
+[`scripts/README.md`](../scripts/README.md). The audit method remains under
+`docs/dev-rules/`. Active project tracking, temporary recovery material, commit planning,
+and manual QA evidence are workflow artifacts rather than maintained repository
+documentation. Tracked documents must not link to or depend on those machine-local
+files.
 
 Keep a focused document as one file. When a long document contains independently owned
 domains, preserve its established path as a short index and move each domain into a

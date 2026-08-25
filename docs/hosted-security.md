@@ -5,19 +5,29 @@ backup policy, recovery drill, and emergency procedures. Authentication behavior
 in [`authentication.md`](authentication.md); database policies and tables live in
 [`supabase-schema.md`](supabase-schema.md).
 
+## Quick Navigation
+
+| Need                                       | Sections                                                                                |
+| ------------------------------------------ | --------------------------------------------------------------------------------------- |
+| Understand the required production posture | [MVP Targets](#mvp-targets) and [Current Hosted Baseline](#current-hosted-baseline)     |
+| Audit the hosted project                   | [Read-Only Hosted Audit](#read-only-hosted-audit)                                       |
+| Protect and restore data                   | [Protected Backups](#protected-backups) and [Recovery Drill](#recovery-drill)           |
+| Operate the system                         | [Routine Schedule](#routine-schedule) and [Emergency Procedures](#emergency-procedures) |
+| Review provider guidance                   | [External References](#external-references)                                             |
+
 ## MVP Targets
 
-| Target | Approved baseline |
-| --- | --- |
-| Maximum database data loss | 24 hours |
-| Recovery target | Restore essential service within 4 hours |
-| Direct Postgres access | Trusted operator networks only |
-| Hosted CI database access | None |
-| Managed backups | Completed daily physical backup |
-| Additional recovery copy | Protected logical public-schema/data backup plus Storage files |
-| Privileged authentication | TOTP enrolled and AAL2 required for moderator, administrator, and developer actions |
-| Bot protection | CAPTCHA token supplied by the browser before hosted CAPTCHA is enabled |
-| Auth event review | Failed sign-ins, recovery, MFA, role, block, and token-revocation events reviewed through hosted logs |
+| Target                     | Approved baseline                                                                                     |
+| -------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Maximum database data loss | 24 hours                                                                                              |
+| Recovery target            | Restore essential service within 4 hours                                                              |
+| Direct Postgres access     | Trusted operator networks only                                                                        |
+| Hosted CI database access  | None                                                                                                  |
+| Managed backups            | Completed daily physical backup                                                                       |
+| Additional recovery copy   | Protected logical public-schema/data backup plus Storage files                                        |
+| Privileged authentication  | TOTP enrolled and AAL2 required for moderator, administrator, and developer actions                   |
+| Bot protection             | CAPTCHA token supplied by the browser before hosted CAPTCHA is enabled                                |
+| Auth event review          | Failed sign-ins, recovery, MFA, role, block, and token-revocation events reviewed through hosted logs |
 
 Point-in-time recovery is not an MVP requirement while daily recovery stays verified.
 Reconsider it when losing up to one day of data or a four-hour recovery becomes
@@ -130,13 +140,13 @@ confirming the requested recovery point and expected downtime.
 
 ## Routine Schedule
 
-| Frequency | Action |
-| --- | --- |
-| Before every release | Run the hosted audit and verify the newest managed backup is recent |
-| Monthly | Create and checksum-verify a protected database/Storage backup |
-| Quarterly | Perform the complete disposable local recovery drill |
-| After role or Auth changes | Review elevated assignments, callback URLs, MFA capability, and Auth audit events |
-| After an incident | Preserve relevant hosted logs, rotate affected credentials, run the audit, and record the recovery result |
+| Frequency                  | Action                                                                                                    |
+| -------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Before every release       | Run the hosted audit and verify the newest managed backup is recent                                       |
+| Monthly                    | Create and checksum-verify a protected database/Storage backup                                            |
+| Quarterly                  | Perform the complete disposable local recovery drill                                                      |
+| After role or Auth changes | Review elevated assignments, callback URLs, MFA capability, and Auth audit events                         |
+| After an incident          | Preserve relevant hosted logs, rotate affected credentials, run the audit, and record the recovery result |
 
 GitHub's required `Hosted Auth Health` check is deliberately narrower than the operator
 audit: it proves that the canonical site and public Auth endpoint are reachable using

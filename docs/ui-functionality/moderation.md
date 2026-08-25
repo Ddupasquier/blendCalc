@@ -7,6 +7,15 @@ under `/profile/privileged-tools/*`, and the legacy compatibility routes
 Only authorized moderators, administrators, and developers may enter these views. Role,
 account-control, and notification rules live in [Moderation](../moderation.md).
 
+## Quick Navigation
+
+| Responsibility         | Sections                                                                                                                              |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Account decisions      | [Account Review](#account-review)                                                                                                     |
+| Product decisions      | [Catalog Submission Review](#catalog-submission-review) and [Catalog Review And Data Operations](#catalog-review-and-data-operations) |
+| Safety feedback        | [Food Warning Review And Follow-Up](#food-warning-review-and-follow-up)                                                               |
+| Reported profile media | [Profile Image Report Review](#profile-image-report-review)                                                                           |
+
 The elevated-role-only Profile launcher uses the verified role title and opens one
 compact bottom sheet containing only destinations granted by that role's current
 `app_role_permissions` rows. Each destination opens a route-backed right sheet with

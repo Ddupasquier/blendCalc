@@ -5,6 +5,15 @@ should fail close to the defect, run only the infrastructure they need, and have
 clear owner. Browser coverage is essential, but it does not replace fast logic tests,
 database enforcement tests, compiler checks, or direct human verification.
 
+## Quick Navigation
+
+| Need                          | Sections                                                                                                                                      |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Choose the correct test owner | [Ownership](#ownership), [ownership problems](#ownership-problems-to-avoid), and [choosing a layer](#choosing-a-layer)                        |
+| Run an efficient test pass    | [Development workflow](#development-workflow), [parallelism](#parallelism), and [quiet output](#quiet-output)                                 |
+| Verify a release boundary     | [Remote verification](#remote-verification), [browser matrix](#browser-matrix), and [database and QA boundaries](#database-and-qa-boundaries) |
+| Avoid fragile coverage        | [Avoid](#avoid)                                                                                                                               |
+
 ## Ownership
 
 | Layer                        | Use it for                                                                                                                                                                                | Do not use it for                                         |

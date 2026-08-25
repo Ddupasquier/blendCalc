@@ -5,6 +5,14 @@ and database-integration testing. The local stack is isolated from the linked pr
 project and contains only disposable QA data. The [Testing Strategy](testing.md) decides
 which layer owns a test; this guide covers the local database environment.
 
+## Quick Navigation
+
+| Need                               | Sections                                                                                                                                                              |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Start or understand the test stack | [First Run](#first-run), [Seeded Personas](#seeded-personas), and [Commands](#commands)                                                                               |
+| Promote or mutate data safely      | [Production Migration Promotion](#production-migration-promotion), [Safety Boundary](#safety-boundary), and [Manual QA Database Changes](#manual-qa-database-changes) |
+| Build representative coverage      | [What This Enables](#what-this-enables), [Verification Corpus Standard](#verification-corpus-standard), and [Food-Safety Corpus](#food-safety-corpus)                 |
+
 ## First Run
 
 ```bash

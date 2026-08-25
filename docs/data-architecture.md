@@ -5,6 +5,15 @@
 blendCalc uses Supabase as the permanent source of truth for account data and the
 canonical food catalog. Browser storage is not a second database.
 
+## Quick Navigation
+
+| Area                         | Sections                                                                                                                                                                           |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Request and persistence flow | [API correction boundary](#api-correction-boundary), [read flow](#read-flow), [write flow](#write-flow), and [browser state](#browser-state)                                       |
+| External and scheduled data  | [External sources](#external-sources) and [operational analytics](#operational-analytics)                                                                                          |
+| Food calculations and policy | [Serving provenance](#serving-provenance-and-conversion), [nutrient uncertainty](#nutrient-values-and-uncertainty), and [compatibility policy](#server-owned-compatibility-policy) |
+| Code ownership               | [Module boundaries](#module-boundaries) and [adding durable data](#adding-durable-data)                                                                                            |
+
 ## API Correction Boundary
 
 Public-data concerns are accepted only by the server route and stored in private
