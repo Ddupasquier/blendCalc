@@ -20,26 +20,28 @@ export const GET: RequestHandler = async ({ locals, params }) => {
 		"INVALID_BARCODE",
 	);
 
-	const draft = requireAppValue(
-		await lookupBarcodeProductDraft(getSupabaseAdminClient(), barcode),
-		404,
-		"PRODUCT_NOT_FOUND",
-	);
-	await completeServerBackgroundTask(persistFoodImageAsset({
-		image: draft.image,
+	const draft = await lookupBarcodeProductDraft(
+		getSupabaseAdminClient(),
 		barcode,
-		productName: draft.name,
-		brandName: draft.brandOwner,
-		sharedProductId:
-			draft.source === "shared-catalog"
-				? draft.sourceReference
-				: undefined,
-	}).catch((error) => {
-		console.warn(
-			"Food image cache could not be updated after barcode lookup.",
-			error instanceof Error ? error.message : error,
-		);
-	}));
+	);
+	if (!draft) {
+		return json({ status: "not-found", barcode });
+	}
+	await completeServerBackgroundTask(
+		persistFoodImageAsset({
+			image: draft.image,
+			barcode,
+			productName: draft.name,
+			brandName: draft.brandOwner,
+			sharedProductId:
+				draft.source === "shared-catalog" ? draft.sourceReference : undefined,
+		}).catch((error) => {
+			console.warn(
+				"Food image cache could not be updated after barcode lookup.",
+				error instanceof Error ? error.message : error,
+			);
+		}),
+	);
 	return json({
 		status: "found",
 		draft,
