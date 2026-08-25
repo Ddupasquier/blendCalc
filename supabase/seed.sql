@@ -1024,6 +1024,80 @@ values
 		}'::jsonb
 	);
 
+-- Current FDA recall identity fixtures pair the official July 18, 2026 Taylor Farms
+-- notice with government WIC product-identity records. Nutrition remains absent rather
+-- than being inferred from a similar lettuce product.
+with qa_taylor_recall_products (
+	fixture_number,
+	barcode,
+	product_name,
+	package_amount,
+	package_label
+) as (
+	values
+		(1, '00681131328944', 'Marketside Iceberg Salad, 12 Ounce', 12::numeric, '12 oz'),
+		(2, '00681131328951', 'Marketside Iceberg Salad, 24 Ounce', 24::numeric, '24 oz'),
+		(3, '00681131328968', 'Marketside Shredded Iceberg Lettuce, 8 Ounce', 8::numeric, '8 oz'),
+		(4, '00681131532099', 'Marketside Shredded Iceberg Lettuce, 16 Ounce', 16::numeric, '16 oz')
+)
+insert into private.qa_catalog_product_fixtures (
+	product_id,
+	revision_id,
+	observation_id,
+	barcode,
+	product_name,
+	brand_owner,
+	category_option_id,
+	source_reference,
+	evidence_reference,
+	food
+)
+select
+	('82600000-0000-4000-8000-' || lpad((fixture_number * 10 + 1)::text, 12, '0'))::uuid,
+	('82600000-0000-4000-8000-' || lpad((fixture_number * 10 + 2)::text, 12, '0'))::uuid,
+	('82600000-0000-4000-8000-' || lpad((fixture_number * 10 + 3)::text, 12, '0'))::uuid,
+	barcode,
+	product_name,
+	'Marketside',
+	'qa-vegetables',
+	'local-qa-government-product-identity:' || barcode,
+	'https://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/taylor-fresh-foods-recalls-iceberg-lettuce-central-mexico-because-possible-health-risk',
+	jsonb_build_object(
+		'fdcId', 9260000 + fixture_number,
+		'description', product_name,
+		'nameProvenance', 'source',
+		'brandOwner', 'Marketside',
+		'foodNutrients', jsonb_build_array(),
+		'reportedNutrientIds', jsonb_build_array(),
+		'dataType', 'Branded',
+		'foodIdentityType', 'packaged',
+		'hasSourceServing', false,
+		'foodServings', jsonb_build_array(),
+		'gtinUpc', barcode,
+		'barcode', barcode,
+		'packageQuantity', jsonb_build_object(
+			'label', package_label,
+			'amount', package_amount,
+			'unit', 'oz'
+		),
+		'sourceMetadata', jsonb_build_object(
+			'language', 'en',
+			'marketCountries', jsonb_build_array('United States'),
+			'revision', 1,
+			'schemaVersion', 1,
+			'qualityWarningTags', jsonb_build_array('nutrition-not-reported')
+		),
+		'categories', jsonb_build_array('Vegetables and Vegetable Products'),
+		'categoryOptionId', 'qa-vegetables',
+		'barcodeSource', 'community',
+		'sourceKey', 'shared-catalog',
+		'sourceLabel', 'blendCalc Community',
+		'sourceDataType', 'local-qa-government-product-identity',
+		'trustStatus', 'moderator-reviewed',
+		'sharedProductConfidence', 'moderator-reviewed'
+	)
+from qa_taylor_recall_products;
+
 with qa_generic_foods (
 	fixture_number,
 	barcode,
@@ -1505,6 +1579,50 @@ on conflict (barcode) do update set
 
 alter table public.shared_products
 	enable trigger set_shared_product_category_from_submission;
+
+perform public.record_official_food_safety_alert(
+	'open-fda-food-enforcement',
+	jsonb_build_object(
+		'externalAlertId', 'announcement:taylor-fresh-foods-recalls-iceberg-lettuce-central-mexico-because-possible-health-risk',
+		'recallNumber', null,
+		'eventId', null,
+		'alertType', 'recall',
+		'classification', null,
+		'status', 'active',
+		'productDescription', 'Iceberg lettuce',
+		'reason', 'Possible Cyclospora contamination',
+		'recallingOrganization', 'Taylor Fresh Foods',
+		'distributionPattern', null,
+		'packageDescription', 'Marketside Iceberg Salad 12 oz and 24 oz; Marketside Shredded Lettuce 8 oz and 16 oz',
+		'codeInformation', 'Best-if-used-by dates from July 18, 2026 through August 3, 2026',
+		'sourceUrl', 'https://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/taylor-fresh-foods-recalls-iceberg-lettuce-central-mexico-because-possible-health-risk',
+		'reportDate', '2026-07-18',
+		'recallInitiatedAt', '2026-07-18',
+		'terminatedAt', null,
+		'sourceUpdatedAt', '2026-07-18T11:40:32.000Z',
+		'isActive', true,
+		'brandNames', jsonb_build_array('Marketside', 'Taylor Fresh Foods'),
+		'identifiers', jsonb_build_array()
+	),
+	jsonb_build_object(
+		'fixture', 'QA-088',
+		'officialNotice', 'Taylor Fresh Foods iceberg lettuce recall',
+		'productIdentityEvidence', 'Government WIC approved-product records'
+	),
+	jsonb_build_object(
+		'fixture', 'QA-088',
+		'identityEvidence', 'Cross-source government product identity reviewed for local QA'
+	),
+	repeat('c', 64),
+	jsonb_build_array(
+		jsonb_build_object('type', 'upc', 'normalizedValue', '00681131328944', 'sourceText', 'UPC 681131328944'),
+		jsonb_build_object('type', 'upc', 'normalizedValue', '00681131328951', 'sourceText', 'UPC 681131328951'),
+		jsonb_build_object('type', 'upc', 'normalizedValue', '00681131328968', 'sourceText', 'UPC 681131328968'),
+		jsonb_build_object('type', 'upc', 'normalizedValue', '00681131532099', 'sourceText', 'UPC 681131532099')
+	),
+	jsonb_build_array(),
+	'2026-08-14T00:00:00Z'
+);
 
 insert into public.shared_product_revisions (
 	id,

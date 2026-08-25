@@ -324,7 +324,7 @@ select is(
 			or product.source_reference like 'local-qa:%'
 			or product.source = 'usda'
 	),
-		111::bigint,
+		115::bigint,
 	'the local catalog contains all focused and source-shaped QA foods'
 );
 
@@ -424,8 +424,13 @@ select ok(
 				select 1 from public.food_nutrients nutrient
 				where nutrient.shared_product_id = product.id
 			)
+			and not coalesce(
+				product.food #> '{sourceMetadata,qualityWarningTags}'
+					@> '["nutrition-not-reported"]'::jsonb,
+				false
+			)
 	),
-	'every local catalog product has normalized nutrient data'
+	'every local catalog product has normalized nutrient data or an explicit missing-nutrition state'
 );
 
 select ok(
