@@ -59,19 +59,19 @@ cp .env.moderation.example .env.moderation.local
 Use `.env` for browser-safe and normal runtime configuration. Use the ignored
 `.env.moderation.local` only for privileged local operations.
 
-| Configuration                                                         | When it is needed                                                               |
-| --------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| `PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_PUBLISHABLE_KEY`              | Normal app authentication and data access                                       |
-| `VITE_FDC_API_KEY`                                                    | USDA FoodData Central lookups                                                   |
-| `PUBLIC_SITE_URL`                                                     | Production authentication callbacks and canonical links                         |
-| `PUBLIC_TURNSTILE_SITE_KEY`                                           | Auth bot protection after the matching hosted secret is configured              |
-| `COLA_CLOUD_API_KEY`                                                  | Optional server-only U.S. alcohol-label enrichment                              |
-| `USDA_API_KEY`, `OPENFDA_API_KEY`, `CATALOG_MONITOR_CRON_SECRET`      | Deployed catalog-monitor Edge Function; openFDA key is optional but recommended |
-| `FDA_RECALL_PROXY_URL`, `FDA_RECALL_PROXY_SECRET`                     | Protected app-server relay for current FDA notices when Edge egress is blocked  |
-| `SUPABASE_SERVICE_ROLE_KEY`                                           | Protected server work, moderation, and trusted scripts                          |
-| `SUPABASE_PROJECT_ID`, `SUPABASE_DB_PASSWORD`                         | Linked Supabase administration and guarded migration delivery                   |
-| `RESEND_API_KEY`, `MODERATION_EMAIL_FROM`, `MODERATION_SUPPORT_EMAIL` | Optional moderation email delivery                                              |
-| `VERCEL_ANALYTICS_ACCESS_TOKEN`, `VERCEL_TEAM_ID`, `CRON_SECRET`      | Production aggregate analytics synchronization                                  |
+| Configuration                                                                                  | When it is needed                                                                                                                                              |
+| ---------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_PUBLISHABLE_KEY`                                       | Normal app authentication and data access                                                                                                                      |
+| `VITE_FDC_API_KEY`                                                                             | USDA FoodData Central lookups                                                                                                                                  |
+| `PUBLIC_SITE_URL`                                                                              | Production authentication callbacks and canonical links                                                                                                        |
+| `PUBLIC_TURNSTILE_SITE_KEY`                                                                    | Auth bot protection after the matching hosted secret is configured                                                                                             |
+| `COLA_CLOUD_API_KEY`                                                                           | Optional server-only U.S. alcohol-label enrichment                                                                                                             |
+| `USDA_API_KEY`, `OPENFDA_API_KEY`, `CATALOG_MONITOR_CRON_SECRET`                               | Deployed catalog-monitor Edge Function; openFDA key is optional but recommended                                                                                |
+| `FDA_RECALL_PROXY_URL`, `FDA_RECALL_PROXY_SECRET`, `FDA_RECALL_PROXY_PROTECTION_BYPASS_SECRET` | Protected app-server relay for current FDA notices when Edge egress is blocked; the optional bypass secret is required only for a deployment-protected preview |
+| `SUPABASE_SERVICE_ROLE_KEY`                                                                    | Protected server work, moderation, and trusted scripts                                                                                                         |
+| `SUPABASE_PROJECT_ID`, `SUPABASE_DB_PASSWORD`                                                  | Linked Supabase administration and guarded migration delivery                                                                                                  |
+| `RESEND_API_KEY`, `MODERATION_EMAIL_FROM`, `MODERATION_SUPPORT_EMAIL`                          | Optional moderation email delivery                                                                                                                             |
+| `VERCEL_ANALYTICS_ACCESS_TOKEN`, `VERCEL_TEAM_ID`, `CRON_SECRET`                               | Production aggregate analytics synchronization                                                                                                                 |
 
 Never prefix a server secret with `PUBLIC_` or `VITE_`. Both local env files are
 ignored and must not be committed. See [Authentication](docs/authentication.md) for the

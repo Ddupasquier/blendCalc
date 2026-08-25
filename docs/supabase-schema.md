@@ -1598,7 +1598,10 @@ The hourly cron call requires Vault secrets named `blendcalc_project_url` and
 service key; `OPENFDA_API_KEY` is optional but recommended for regular use.
 `FDA_RECALL_PROXY_URL` and `FDA_RECALL_PROXY_SECRET` connect it to the protected
 fixed-origin app-server relay when FDA.gov denies Edge traffic; the same proxy secret
-must be configured server-side in the deployed app. Enable
+must be configured server-side in the deployed app.
+`FDA_RECALL_PROXY_PROTECTION_BYPASS_SECRET` is optional and is sent only to that fixed
+relay when its Vercel preview uses Deployment Protection. Production does not require
+it when the canonical domain is public. Enable
 `catalog_monitor_settings.enabled` only after the deployed function and matching secret
 have passed an authenticated dry run.
 
