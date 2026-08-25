@@ -145,6 +145,30 @@ Three external-source records serve different purposes:
 Coverage never becomes evidence. Provider errors do not create coverage, expired
 coverage cannot suppress a lookup, and a later provider update remains discoverable.
 
+### Current Cache Layers
+
+Caching reduces repeated work but never promotes provider output into canonical data.
+The active layers are:
+
+| Layer                                | Current behavior                                                                                                                                            | Durability and boundary                                                                               |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Shared catalog and imported datasets | Exact product and generic-food reads use Supabase before provider enrichment                                                                                | Durable canonical or licensed dataset data; this is the preferred read path                           |
+| Provider request memory cache        | Keeps the 250 most recently used USDA and Open Food Facts request records in each running server process                                                    | Process-local acceleration only; resets on a cold start                                               |
+| `product_api_cache`                  | Stores keyed USDA and Open Food Facts payloads, status, expiry, and optional ETag; concurrent identical requests are coalesced                              | Durable private licensed cache; never exposed by blendCalcAPI and never treated as canonical evidence |
+| USDA request policy                  | Generic search: 12 hours; exact branded search and detail: 30 days; stale-on-provider-error: up to 30 additional days                                       | Persistent through `product_api_cache`                                                                |
+| Open Food Facts request policy       | Exact product: 7 days; product-not-found: 12 hours; stale-on-provider-error: up to 30 additional days                                                       | Persistent through `product_api_cache`                                                                |
+| COLA Cloud request policy            | No response payload cache; requests use a transient no-op store until retention rights are reviewed                                                         | No durable raw response storage; source-field coverage may still prevent unnecessary repeat lookups   |
+| Source-field coverage                | Records whether a provider reported, omitted, could not apply, or could not find each requested exact-barcode field                                         | Durable expiring lookup knowledge; suppresses known-unhelpful calls but is not provenance             |
+| Server reference catalogs            | Nutrient, serving, product-source, food-safety, completeness, and application reference rows are cached with in-flight coalescing, generally for 10 minutes | Process-local DB-read acceleration; Supabase remains authoritative                                    |
+| Product images                       | Reuses eligible `food_image_assets` rows and resolved placement metadata before requesting another image                                                    | Durable licensed asset metadata; public image use still requires complete rights metadata             |
+| Scheduled provider snapshots         | Revalidation stores normalized hashes, provider revisions, and immutable observations for changed existing catalog products                                 | Durable evidence and change detection; unchanged responses do not create duplicate observations       |
+| blendCalcAPI responses               | Successful authenticated reads use `private, max-age=60, stale-while-revalidate=300`; errors use `no-store`                                                 | Browser-private response cache only; no shared CDN caching while the API remains authenticated        |
+
+The provider request cache, source-field coverage, source observations, canonical catalog,
+and blendCalcAPI publication gate are intentionally separate. A cache hit can save a
+network request, but only licensed evidence selected through the canonical revision
+workflow can become blendCalcAPI output.
+
 Exact USDA barcode lookup preserves its bounded detail read because the detail record
 adds category and availability metadata omitted by search results. Shared caching and
 request coalescing prevent repeated outbound detail calls. Stable UCUM unit codes and
