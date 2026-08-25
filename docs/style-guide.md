@@ -47,13 +47,13 @@ changes; do not preserve competing generations of the same visual system.
 
 ## Guide Navigation
 
-| Area | Sections |
-| --- | --- |
-| Foundations | [Visual direction](#visual-direction), [color](#color-system), and [typography](#typography) |
-| Layout | [Spacing and layout](#spacing-and-layout), [borders and focus](#borders-focus-and-depth), and responsive rules |
-| Reusable UI | [Component selection](#component-selection), [feedback](#feedback-and-user-facing-messages), [badges](#badges-and-privileged-actions), and [motion](#motion-and-interaction) |
-| Ingredients reference | [Ingredients page patterns](#ingredients-page-patterns), including cards, media, search, manual entry, and nutrition details |
-| Implementation | [SCSS ownership](#scss-and-file-ownership), [applying the system](#applying-the-system-to-any-ui-change), and the [review checklist](#review-checklist) |
+| Area                  | Sections                                                                                                                                                                     |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Foundations           | [Visual direction](#visual-direction), [color](#color-system), and [typography](#typography)                                                                                 |
+| Layout                | [Spacing and layout](#spacing-and-layout), [borders and focus](#borders-focus-and-depth), and responsive rules                                                               |
+| Reusable UI           | [Component selection](#component-selection), [feedback](#feedback-and-user-facing-messages), [badges](#badges-and-privileged-actions), and [motion](#motion-and-interaction) |
+| Ingredients reference | [Ingredients page patterns](#ingredients-page-patterns), including cards, media, search, manual entry, and nutrition details                                                 |
+| Implementation        | [SCSS ownership](#scss-and-file-ownership), [applying the system](#applying-the-system-to-any-ui-change), and the [review checklist](#review-checklist)                      |
 
 ## Sources Of Truth
 
@@ -146,15 +146,15 @@ theme surface as permanent black-label paper.
 
 ### Semantic Supporting Colors
 
-| Role                  | Token                  | Value     | Use                                               |
-| --------------------- | ---------------------- | --------- | ------------------------------------------------- |
+| Role                  | Token                  | Value     | Use                                                        |
+| --------------------- | ---------------------- | --------- | ---------------------------------------------------------- |
 | Warning amber         | `$app-highlight`       | `#f4b942` | Ordinary ingredient-card warning edge and privileged crown |
-| Warning hover/strong  | `$app-highlight-hover` | `#d99a24` | Strong warning emphasis, not ordinary copy        |
-| Error base            | `$app-danger-bg`       | `#e7b0b8` | Source color for error surfaces                   |
-| Destructive brown-red | `$app-danger-action`   | `#9c5f46` | Destructive/strong error treatment                |
-| Warning base          | `$app-warning-bg`      | `#efc6a9` | Source color for warning surfaces                 |
-| Custom base           | `$app-custom-bg`       | `#cbb8e8` | Private unmatched custom-food tint                |
-| Custom strong         | `$app-custom-strong`   | `#7b5fa3` | Custom-food text/accent where needed              |
+| Warning hover/strong  | `$app-highlight-hover` | `#d99a24` | Strong warning emphasis, not ordinary copy                 |
+| Error base            | `$app-danger-bg`       | `#e7b0b8` | Source color for error surfaces                            |
+| Destructive brown-red | `$app-danger-action`   | `#9c5f46` | Destructive/strong error treatment                         |
+| Warning base          | `$app-warning-bg`      | `#efc6a9` | Source color for warning surfaces                          |
+| Custom base           | `$app-custom-bg`       | `#cbb8e8` | Private unmatched custom-food tint                         |
+| Custom strong         | `$app-custom-strong`   | `#7b5fa3` | Custom-food text/accent where needed                       |
 
 `StatusMessage` derives its final warning and danger surfaces from the semantic colors
 above. Use the component rather than reproducing those color mixes.
@@ -213,14 +213,14 @@ roles preserve fluid scaling without allowing each route to invent a different c
 
 ### Line Heights
 
-| Token                       | Value  | Typical use                                      |
-| --------------------------- | ------ | ------------------------------------------------ |
-| `$app-line-height-none`     | `0`    | Inner wrappers that must contribute no text box  |
-| `$app-line-height-tight`    | `1`    | Icons, badges, and single-line compact data      |
-| `$app-line-height-heading`  | `1.1`  | Display headings and compact multiline labels    |
-| `$app-line-height-compact`  | `1.2`  | Dense metadata and short supporting information  |
-| `$app-line-height-ui`       | `1.35` | Standard interface copy, prompts, and form help  |
-| `$app-line-height-body`     | `1.45` | Longer reading content and descriptive paragraphs |
+| Token                      | Value  | Typical use                                       |
+| -------------------------- | ------ | ------------------------------------------------- |
+| `$app-line-height-none`    | `0`    | Inner wrappers that must contribute no text box   |
+| `$app-line-height-tight`   | `1`    | Icons, badges, and single-line compact data       |
+| `$app-line-height-heading` | `1.1`  | Display headings and compact multiline labels     |
+| `$app-line-height-compact` | `1.2`  | Dense metadata and short supporting information   |
+| `$app-line-height-ui`      | `1.35` | Standard interface copy, prompts, and form help   |
+| `$app-line-height-body`    | `1.45` | Longer reading content and descriptive paragraphs |
 
 ### Tracking
 
@@ -397,51 +397,53 @@ change together.
 
 Check the existing primitive before writing markup or SCSS.
 
-| Need                                  | Use                          | Notes                                                                                               |
-| ------------------------------------- | ---------------------------- | --------------------------------------------------------------------------------------------------- |
-| Main rectangular CTA                  | `RoundedActionButton`        | Current Ingredients action shape; supports primary, outline, quiet, soft, neutral, and dashed roles |
-| Existing compact/general CTA contract | `ActionButton`               | Reuse where already established; do not create a third rectangular button family                    |
-| Circular icon action                  | `CircleIconButton`           | Default for every icon-only action; owns size, loading, pressed/disabled state, and centering       |
-| Clustered icon control                | `IconControlButton`          | Squarish exception for dense horizontal toolbar/input rows such as Search, Barcode, and Filters     |
-| Compact chip/filter action            | `PillButton`                 | Selected state must also be exposed through `aria-pressed`                                          |
-| Tabs or step progress                 | `SegmentedControl`           | Pill tabs for Fridge/Shopping; progress variant for manual entry                                    |
-| Back or close                         | `BackButton` / `CloseButton` | Do not recreate chevrons, circles, or hit areas                                                     |
-| Collapse                              | `CollapsibleSection`         | Chevron stays left; badges/actions stay right; shared open/close motion preserves mounted content   |
-| Specialized disclosure indicator      | `DisclosureChevron`          | Right when closed, animated down when open; use instead of local chevron rotation                    |
-| Bottom overlay                        | `BottomSheet`                | Owns handle, title, focus, close behavior, safe area, and navigation clearance; no duplicate top Back control |
-| Right-side data view                  | `RightSheet`                 | Search and full-content slide-in views                                                              |
-| Sheet action row                      | `BottomSheetAction`          | Owns row geometry and circular leading icon                                                         |
-| Status feedback                       | `StatusMessage`              | Info, success, warning, and danger; use approved friendly copy                                      |
-| Optional delight copy                 | `SecondaryDelightMessage`    | One quiet DB-backed secondary line in an already successful, empty, or non-danger summary; never critical instructions |
-| Input-bound loading                   | `InputLoadingFrame`          | Spinner appears inside the related input/select                                                     |
-| General loading                       | `LoadingSpinner`             | Never draw a feature-local spinner                                                                  |
-| Photo input                           | `PhotoUploadInput`           | Single/multiple photo prompt, count, status, and validation                                         |
-| Toggle                                | `ToggleSwitch`               | Boolean settings; do not use a checkbox as an on/off switch                                         |
-| Fixed-choice dropdown                 | `SelectField`                | Accessible combobox and top-layer listbox with shared label, helper, keyboard/typeahead, focus, disabled, and responsive states; a hidden native select preserves required validation and form submission |
-| Compact metadata badge                | `TextBadge`                  | Owns centering, tone, padding, and truncation                                                       |
-| Action-required count                 | `ActionRequiredCountBadge`   | Red circled count for pending privileged work; render only above zero                               |
-| Structured metadata pill              | `MetadataPill`               | Ingredient labels, kcal, goal progress, and other compact label/value or label/icon metadata        |
-| Verified evidence                     | `VerifiedStatusBadge`        | Detail/search contexts where verification helps a decision                                          |
-| Privileged group marker               | `PrivilegedActionBadge`      | One crown in the owning group header, not every child action                                        |
-| Centered icon wrapper                 | `CenteredIcon`               | Required inner alignment layer for icon controls                                                    |
-| Noninteractive circular icon          | `CircularIconFrame`          | Compose through a focused component such as `StatusIconBadge`                                       |
-| Progressive list footer               | `PaginatedListControls`      | Explicit Load more and Return to top; never numbered page navigation                                |
-| List filter/sort sheet                 | `ListSortSheet`              | Route-backed bottom sheet; may combine optional `Show` filters with sorting                          |
-| Confirmation modal                    | `ConfirmationDialog`         | Destructive or consequential decisions requiring explicit confirmation                              |
-| Text-entry modal                      | `TextInputDialog`            | Focused rename/edit prompt with shared validation and action layout                                 |
-| Guided feature tour                   | `TutorialOverlay`            | Route-aware modal guidance with one rounded spotlight and a collision-aware instruction card        |
-| Repeated-tap safety                   | `TwoStepConfirmation`        | In-place double activation such as ingredient deletion                                              |
-| Privileged action container           | `PrivilegedActionGroup`      | Groups privileged moderator, admin, or developer actions and owns one crown                         |
-| Moderator review list                 | `ModeratorReviewList`        | Shared queue count, record spacing, and calm empty state for privileged review work                 |
-| Moderator review card                 | `ModeratorReviewCard`        | Identity/status header followed by evidence and decision content in one consistent card shell       |
-| Privileged tool help                  | `PrivilegedToolInformationSheet` | Contextual purpose, review flow, decision effect, and guardrail opened from one circular info action |
-| Numeric amount                        | `NumberInput`                | Shared number semantics and control styling                                                         |
-| Text or multiline entry               | `TextField`                  | Shared label, helper, focus, disabled, text, search, and textarea presentation                       |
-| Single checkbox                       | `CheckboxField`              | Full-row checkbox target with shared focus, disabled, and responsive behavior                        |
-| Draggable numeric range               | `RangeInput`                 | Native range semantics with shared track, fill, thumb, focus, disabled, and semantic-tone states    |
-| Accelerating amount control           | `AcceleratingStepButton`     | Tap-by-one and progressive hold behavior                                                            |
-| Full product image                    | `ProductImageFrame`          | Contained, non-stretched detailed image using any saved moderator orientation correction             |
-| Image placement                       | `ImagePlacementEditor`       | Shared preview, presets, drag/zoom, and restore flow                                                |
+| Need                                  | Use                              | Notes                                                                                                                                                                                                     |
+| ------------------------------------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Main rectangular CTA                  | `RoundedActionButton`            | Current Ingredients action shape; supports primary, outline, quiet, soft, neutral, and dashed roles                                                                                                       |
+| Existing compact/general CTA contract | `ActionButton`                   | Reuse where already established; do not create a third rectangular button family                                                                                                                          |
+| Circular icon action                  | `CircleIconButton`               | Default for every icon-only action; owns size, loading, pressed/disabled state, and centering                                                                                                             |
+| Clustered icon control                | `IconControlButton`              | Squarish exception for dense horizontal toolbar/input rows such as Search, Barcode, and Filters                                                                                                           |
+| Compact chip/filter action            | `PillButton`                     | Selected state must also be exposed through `aria-pressed`                                                                                                                                                |
+| Tabs or step progress                 | `SegmentedControl`               | Pill tabs for Fridge/Shopping; progress variant for manual entry                                                                                                                                          |
+| Back or close                         | `BackButton` / `CloseButton`     | Do not recreate chevrons, circles, or hit areas                                                                                                                                                           |
+| Collapse                              | `CollapsibleSection`             | Chevron stays left; badges/actions stay right; shared open/close motion preserves mounted content                                                                                                         |
+| Specialized disclosure indicator      | `DisclosureChevron`              | Right when closed, animated down when open; use instead of local chevron rotation                                                                                                                         |
+| Bottom overlay                        | `BottomSheet`                    | Owns handle, title, focus, close behavior, safe area, and navigation clearance; no duplicate top Back control                                                                                             |
+| Right-side data view                  | `RightSheet`                     | Search and full-content slide-in views                                                                                                                                                                    |
+| Sheet action row                      | `BottomSheetAction`              | Owns row geometry and circular leading icon                                                                                                                                                               |
+| Status feedback                       | `StatusMessage`                  | Info, success, warning, and danger; use approved friendly copy                                                                                                                                            |
+| Optional delight copy                 | `SecondaryDelightMessage`        | One quiet DB-backed secondary line in an already successful, empty, or non-danger summary; never critical instructions                                                                                    |
+| Input-bound loading                   | `InputLoadingFrame`              | Spinner appears inside the related input/select                                                                                                                                                           |
+| General loading                       | `LoadingSpinner`                 | Never draw a feature-local spinner                                                                                                                                                                        |
+| Photo input                           | `PhotoUploadInput`               | Single/multiple photo prompt, count, status, and validation                                                                                                                                               |
+| Toggle                                | `ToggleSwitch`                   | Boolean settings; do not use a checkbox as an on/off switch                                                                                                                                               |
+| Fixed-choice dropdown                 | `SelectField`                    | Accessible combobox and top-layer listbox with shared label, helper, keyboard/typeahead, focus, disabled, and responsive states; a hidden native select preserves required validation and form submission |
+| Compact metadata badge                | `TextBadge`                      | Owns centering, tone, padding, and truncation                                                                                                                                                             |
+| Action-required count                 | `ActionRequiredCountBadge`       | Red circled count for pending privileged work; render only above zero                                                                                                                                     |
+| Structured metadata pill              | `MetadataPill`                   | Ingredient labels, kcal, goal progress, and other compact label/value or label/icon metadata                                                                                                              |
+| Verified evidence                     | `VerifiedStatusBadge`            | Detail/search contexts where verification helps a decision                                                                                                                                                |
+| Privileged group marker               | `PrivilegedActionBadge`          | One crown in the owning group header, not every child action                                                                                                                                              |
+| Centered icon wrapper                 | `CenteredIcon`                   | Required inner alignment layer for icon controls                                                                                                                                                          |
+| Noninteractive circular icon          | `CircularIconFrame`              | Compose through a focused component such as `StatusIconBadge`                                                                                                                                             |
+| Progressive list footer               | `PaginatedListControls`          | Explicit Load more and Return to top; never numbered page navigation                                                                                                                                      |
+| List filter/sort sheet                | `ListSortSheet`                  | Route-backed bottom sheet; may combine optional `Show` filters with sorting                                                                                                                               |
+| Confirmation modal                    | `ConfirmationDialog`             | Destructive or consequential decisions requiring explicit confirmation                                                                                                                                    |
+| Text-entry modal                      | `TextInputDialog`                | Focused rename/edit prompt with shared validation and action layout                                                                                                                                       |
+| Guided feature tour                   | `TutorialOverlay`                | Route-aware modal guidance with one rounded spotlight and a collision-aware instruction card                                                                                                              |
+| Signed-out entry surface              | `GuestAccessPageShell`           | Shared floating-food background, responsive guest card, safe-area spacing, and light/dark surfaces                                                                                                        |
+| Authenticated security surface        | `AccountSecurityPageShell`       | Shared responsive card and heading hierarchy for MFA, recovery, and password-security routes                                                                                                              |
+| Repeated-tap safety                   | `TwoStepConfirmation`            | In-place double activation such as ingredient deletion                                                                                                                                                    |
+| Privileged action container           | `PrivilegedActionGroup`          | Groups privileged moderator, admin, or developer actions and owns one crown                                                                                                                               |
+| Moderator review list                 | `ModeratorReviewList`            | Shared queue count, record spacing, and calm empty state for privileged review work                                                                                                                       |
+| Moderator review card                 | `ModeratorReviewCard`            | Identity/status header followed by evidence and decision content in one consistent card shell                                                                                                             |
+| Privileged tool help                  | `PrivilegedToolInformationSheet` | Contextual purpose, review flow, decision effect, and guardrail opened from one circular info action                                                                                                      |
+| Numeric amount                        | `NumberInput`                    | Shared number semantics and control styling                                                                                                                                                               |
+| Text, credential, or multiline entry  | `TextField`                      | Shared label, helper, focus, disabled, text, search, email, password, and textarea presentation                                                                                                           |
+| Single checkbox                       | `CheckboxField`                  | Full-row checkbox target with shared focus, disabled, and responsive behavior                                                                                                                             |
+| Draggable numeric range               | `RangeInput`                     | Native range semantics with shared track, fill, thumb, focus, disabled, and semantic-tone states                                                                                                          |
+| Accelerating amount control           | `AcceleratingStepButton`         | Tap-by-one and progressive hold behavior                                                                                                                                                                  |
+| Full product image                    | `ProductImageFrame`              | Contained, non-stretched detailed image using any saved moderator orientation correction                                                                                                                  |
+| Image placement                       | `ImagePlacementEditor`           | Shared preview, presets, drag/zoom, and restore flow                                                                                                                                                      |
 
 When a need does not fit this table, first decide whether an existing component should
 gain a reusable variant. Do not copy it and rename the copy.
@@ -453,21 +455,21 @@ gain a reusable variant. Do not copy it and rename the copy.
 The visual baseline includes every state that appears after an Ingredients interaction,
 not only the default page.
 
-| Surface                    | Current Ingredients implementation              | Styling/behavior expectation                                                                             |
-| -------------------------- | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| Manual entry               | `ManualEntrySheet` → `BottomSheet`              | Full-height-capable bottom sheet, shared handle, no redundant top Back control, state preserved while open |
-| Sort/filter                | `IngredientFilterSheet` → `BottomSheet`         | Compact grouped controls, pill selections, one clear Apply action                                        |
-| Ingredient actions         | `IngredientActionSheet` → `BottomSheet`         | Reusable action rows; ordinary actions first and privileged group last                                   |
-| Image placement            | `IngredientImagePlacementSheet` → `BottomSheet` | Shared editor and exact card preview; privileged treatment comes from the owning group                   |
-| Search                     | `RightSheet` + `IngredientSearchView`           | Full-content right-side view with shared shell and close behavior                                        |
+| Surface                    | Current Ingredients implementation              | Styling/behavior expectation                                                                                                                                                                       |
+| -------------------------- | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Manual entry               | `ManualEntrySheet` → `BottomSheet`              | Full-height-capable bottom sheet, shared handle, no redundant top Back control, state preserved while open                                                                                         |
+| Sort/filter                | `IngredientFilterSheet` → `BottomSheet`         | Compact grouped controls, pill selections, one clear Apply action                                                                                                                                  |
+| Ingredient actions         | `IngredientActionSheet` → `BottomSheet`         | Reusable action rows; ordinary actions first and privileged group last                                                                                                                             |
+| Image placement            | `IngredientImagePlacementSheet` → `BottomSheet` | Shared editor and exact card preview; privileged treatment comes from the owning group                                                                                                             |
+| Search                     | `RightSheet` + `IngredientSearchView`           | Full-content right-side view with shared shell and close behavior                                                                                                                                  |
 | Nutrition detail           | `RightSheet` + `NutritionDetailView`            | Full-content detail view using the same right-sheet bounds; static food information and list actions come first, every disclosure is grouped at the bottom, and privileged disclosures remain last |
-| Rename                     | `TextInputDialog`                               | Focused dialog with label, helper text/error, cancel, and save actions                                   |
-| Destructive confirmation   | `TwoStepConfirmation` or `ConfirmationDialog`   | Explain the required confirmation and never rely on color alone                                          |
-| Barcode scanner            | `BarcodeScannerDialog`                          | High-contrast modal camera surface, trapped/restored focus, Escape close, manual-entry fallback          |
-| Category selection         | `FoodCategoryPicker`                            | Searchable bounded panel; never a native select containing the entire catalog                            |
-| Search suggestions/results | `SearchDropdown` / search cards                 | Bounded, readable result region with keyboard navigation and explicit loading/empty states               |
-| Autofill conflict          | `BarcodeAutofillSuggestion`                     | Clear known-product summary and two direct choices; do not expose provider internals                     |
-| Completion result          | `CustomIngredientOutcome`                       | Polite live status plus compact next actions                                                             |
+| Rename                     | `TextInputDialog`                               | Focused dialog with label, helper text/error, cancel, and save actions                                                                                                                             |
+| Destructive confirmation   | `TwoStepConfirmation` or `ConfirmationDialog`   | Explain the required confirmation and never rely on color alone                                                                                                                                    |
+| Barcode scanner            | `BarcodeScannerDialog`                          | High-contrast modal camera surface, trapped/restored focus, Escape close, manual-entry fallback                                                                                                    |
+| Category selection         | `FoodCategoryPicker`                            | Searchable bounded panel; never a native select containing the entire catalog                                                                                                                      |
+| Search suggestions/results | `SearchDropdown` / search cards                 | Bounded, readable result region with keyboard navigation and explicit loading/empty states                                                                                                         |
+| Autofill conflict          | `BarcodeAutofillSuggestion`                     | Clear known-product summary and two direct choices; do not expose provider internals                                                                                                               |
+| Successful manual entry    | `NutritionDetailView`                           | Close the entry sheet once, open the stable saved-food route, and do not repeat list actions in a post-save panel                                                                                  |
 
 Major overlay states use readable path routes so reload, Back, and direct navigation are
 predictable. Do not replace them with query-only state or an unaddressable local modal.
@@ -866,7 +868,7 @@ editing a view or component:
 9. If the difference is likely to repeat, create or extend a reusable component and
    update this guide.
 10. If the difference establishes a new mandatory practice, propose or update a
-   development rule.
+    development rule.
 
 Do not copy unfinished Mix or Saved Recipes markup/styles into a new view simply because
 they already exist.

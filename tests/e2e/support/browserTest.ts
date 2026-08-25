@@ -51,12 +51,17 @@ const createAuthenticatedBrowserState = async ({
 				password: account.password,
 			},
 		});
-		expect(response.ok(), "The local QA account could not sign in.").toBe(true);
 		const actionResult = (await response.json()) as {
+			message?: string;
 			location?: string;
 			status?: number;
 			type?: string;
 		};
+		if (!response.ok()) {
+			throw new Error(
+				`The local QA account could not sign in (HTTP ${response.status()}${actionResult.message ? `: ${actionResult.message}` : ""}).`,
+			);
+		}
 		expect(actionResult).toMatchObject({
 			location: "/ingredients/fridge",
 			status: 303,
@@ -77,8 +82,7 @@ export const test = playwrightTest.extend<
 	authenticatedBrowserStatePath: [
 		async ({}, use, workerInfo) => {
 			const storageStatePath = await createAuthenticatedBrowserState({
-				baseURL:
-					process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:5174",
+				baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:5174",
 				parallelWorkerIndex: workerInfo.parallelIndex,
 				projectName: workerInfo.project.name,
 			});
@@ -121,16 +125,75 @@ export const test = playwrightTest.extend<
 });
 
 export const waitForAppReady = async (page: Page) => {
-	await expect(page.locator("html")).toHaveAttribute(
-		"data-app-ready",
-		"true",
-		{ timeout: 30_000 },
-	);
+	await expect(page.locator("html")).toHaveAttribute("data-app-ready", "true", {
+		timeout: 30_000,
+	});
 	const dailyWelcome = page.locator(".daily-welcome");
 	if (await dailyWelcome.isVisible()) {
 		await dailyWelcome.click();
+		await dailyWelcome.evaluateAll((elements) => {
+			for (const element of elements) {
+				for (const animation of element.getAnimations({ subtree: true })) {
+					try {
+						animation.finish();
+					} catch {
+						animation.cancel();
+					}
+				}
+			}
+		});
 		await expect(dailyWelcome).toBeHidden();
 	}
+};
+
+export const signInLocalQaAccount = async ({
+	page,
+	email,
+	nextPath,
+}: {
+	page: Page;
+	email: string;
+	nextPath: string;
+}) => {
+	const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:5174";
+	const password =
+		process.env.PLAYWRIGHT_QA_PASSWORD ?? "BlendCalc-Local-QA-2026!";
+	let lastFailure = "The local QA sign-in did not complete.";
+
+	for (let attempt = 1; attempt <= 3; attempt += 1) {
+		await page.context().clearCookies();
+		const response = await page.request.post("/auth?/emailSignIn", {
+			headers: { origin: baseURL },
+			form: { email, next: nextPath, password },
+		});
+		const actionResult = (await response.json()) as {
+			location?: string;
+			message?: string;
+			status?: number;
+			type?: string;
+		};
+		if (
+			response.ok() &&
+			actionResult.type === "redirect" &&
+			actionResult.location === nextPath
+		) {
+			await page.goto(nextPath);
+			try {
+				await expect(page).toHaveURL((url) => url.pathname === nextPath, {
+					timeout: 5_000,
+				});
+				await waitForAppReady(page);
+				return;
+			} catch {
+				lastFailure = `The local QA session redirected to ${page.url()}.`;
+			}
+		} else {
+			lastFailure = `The local QA sign-in returned HTTP ${response.status()}${actionResult.message ? `: ${actionResult.message}` : ""}.`;
+		}
+		await page.waitForTimeout(attempt * 250);
+	}
+
+	throw new Error(lastFailure);
 };
 
 export const waitForVisualStability = async (page: Page) => {
@@ -157,20 +220,22 @@ export const expectFocusOutlineInsideBoundary = async (
 	await focusTarget.focus();
 	await expect(focusTarget).toBeFocused();
 
-	const [focusTargetBounds, clippingBoundaryBounds, focusOutline] = await Promise.all([
-		focusTarget.boundingBox(),
-		clippingBoundary.boundingBox(),
-		focusTarget.evaluate((element) => {
-			const styles = window.getComputedStyle(element);
-			const outlineWidthPixels = Number.parseFloat(styles.outlineWidth) || 0;
-			const outlineOffsetPixels = Number.parseFloat(styles.outlineOffset) || 0;
+	const [focusTargetBounds, clippingBoundaryBounds, focusOutline] =
+		await Promise.all([
+			focusTarget.boundingBox(),
+			clippingBoundary.boundingBox(),
+			focusTarget.evaluate((element) => {
+				const styles = window.getComputedStyle(element);
+				const outlineWidthPixels = Number.parseFloat(styles.outlineWidth) || 0;
+				const outlineOffsetPixels =
+					Number.parseFloat(styles.outlineOffset) || 0;
 
-			return {
-				extentPixels: Math.max(0, outlineWidthPixels + outlineOffsetPixels),
-				style: styles.outlineStyle,
-			};
-		}),
-	]);
+				return {
+					extentPixels: Math.max(0, outlineWidthPixels + outlineOffsetPixels),
+					style: styles.outlineStyle,
+				};
+			}),
+		]);
 
 	expect(focusTargetBounds).not.toBeNull();
 	expect(clippingBoundaryBounds).not.toBeNull();
@@ -185,12 +250,12 @@ export const expectFocusOutlineInsideBoundary = async (
 	const clippingBoundaryBottom =
 		clippingBoundaryBounds!.y + clippingBoundaryBounds!.height;
 
-	expect(focusTargetBounds!.x - focusOutline.extentPixels).toBeGreaterThanOrEqual(
-		clippingBoundaryBounds!.x - tolerancePixels,
-	);
-	expect(focusTargetBounds!.y - focusOutline.extentPixels).toBeGreaterThanOrEqual(
-		clippingBoundaryBounds!.y - tolerancePixels,
-	);
+	expect(
+		focusTargetBounds!.x - focusOutline.extentPixels,
+	).toBeGreaterThanOrEqual(clippingBoundaryBounds!.x - tolerancePixels);
+	expect(
+		focusTargetBounds!.y - focusOutline.extentPixels,
+	).toBeGreaterThanOrEqual(clippingBoundaryBounds!.y - tolerancePixels);
 	expect(focusTargetRight + focusOutline.extentPixels).toBeLessThanOrEqual(
 		clippingBoundaryRight + tolerancePixels,
 	);

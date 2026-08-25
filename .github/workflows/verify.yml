@@ -24,6 +24,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - name: Use Node.js 24
         uses: actions/setup-node@v7
         with:
@@ -35,6 +37,12 @@ jobs:
         run: npm run version:check
       - name: Audit dependencies
         run: npm audit --audit-level=high
+      - name: Lint TypeScript, Svelte, and SCSS
+        run: npm run lint
+      - name: Check source formatting
+        run: npm run format:check
+        env:
+          FORMAT_BASE_REF: ${{ github.event.pull_request.base.sha || github.event.before }}
       - name: Check Svelte and TypeScript
         run: npm run check
       - name: Run Vitest

@@ -1,0 +1,24 @@
+{
+	"plugins": ["prettier-plugin-svelte"],
+	"printWidth": 80,
+	"semi": true,
+	"singleQuote": false,
+	"tabWidth": 2,
+	"trailingComma": "all",
+	"useTabs": true,
+	"overrides": [
+		{
+			"files": "*.md",
+			"options": {
+				"proseWrap": "preserve",
+				"useTabs": false
+			}
+		},
+		{
+			"files": "*.{yml,yaml}",
+			"options": {
+				"useTabs": false
+			}
+		}
+	]
+}

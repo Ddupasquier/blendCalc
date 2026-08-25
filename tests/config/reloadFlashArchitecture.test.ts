@@ -5,9 +5,7 @@ const readSource = (path: string) => readFileSync(path, "utf8");
 
 describe("reload-flash architecture", () => {
 	it("preserves enhanced form values while one server invalidation completes", () => {
-		const pendingSubmit = readSource(
-			"src/lib/utils/forms/pendingSubmit.ts",
-		);
+		const pendingSubmit = readSource("src/lib/utils/forms/pendingSubmit.ts");
 		const profile = readSource("src/routes/profile/+page.svelte");
 
 		expect(pendingSubmit).toContain("update({ reset: false })");
@@ -19,7 +17,9 @@ describe("reload-flash architecture", () => {
 			"src/lib/components/moderation/AccountAccessReviewList/AccountAccessReviewList.svelte",
 		);
 
-		expect(accountAccessReviewList).toContain('import { goto } from "$app/navigation"');
+		expect(accountAccessReviewList).toContain(
+			'import { goto } from "$app/navigation"',
+		);
 		expect(accountAccessReviewList).toContain("onsubmit={submitAccountSearch}");
 		expect(accountAccessReviewList).toContain("event.preventDefault()");
 		expect(accountAccessReviewList).toContain("await goto(href");
@@ -49,7 +49,7 @@ describe("reload-flash architecture", () => {
 		);
 		expect(fridge).toContain("listLoading={showListLoadingIndicator}");
 		expect(fridge).toContain("readIngredientListWindow");
-		expect(fridge).toContain("addFoodToListState(MIX_STORAGE_KEYS.fridge, food)");
+		expect(fridge).toContain("addFoodToListState(destinationListKey, food)");
 		expect(fridge).toContain("removeFoodFromListState(key, foodId)");
 		expect(fridge).toContain(
 			"renameFoodInListState(key, food.fdcId, description)",
@@ -79,14 +79,16 @@ describe("reload-flash architecture", () => {
 	it("hydrates direct nutrition routes with the selected food before SSR", () => {
 		const fridge = readSource("src/routes/ingredients/fridge/+page.svelte");
 		const selectedFoodStart = fridge.indexOf("let selectedFood = $state");
-		const routeEffectStart = fridge.indexOf("$effect(() => {", selectedFoodStart);
+		const routeEffectStart = fridge.indexOf(
+			"$effect(() => {",
+			selectedFoodStart,
+		);
 
 		expect(fridge).toContain(
 			"const initialIngredientRouteState = getIngredientRouteState(page.url)",
 		);
-		expect(fridge).toContain(
-			"const initialRouteFood = initialIngredientData?.routeFood ??",
-		);
+		expect(fridge).toContain("const initialRouteFood =");
+		expect(fridge).toContain("initialIngredientData?.routeFood ??");
 		expect(fridge).toContain("findIngredientRouteFood(");
 		expect(fridge.slice(selectedFoodStart, routeEffectStart)).toContain(
 			"initialIngredientRouteState.view === INGREDIENT_ROUTE_VIEWS.nutrition",
