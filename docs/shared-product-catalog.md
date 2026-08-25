@@ -455,7 +455,7 @@ barcodes to each source and treat availability, nutrient depth, useful metadata,
 and calls per lookup as operational evidence—not blanket trust.
 
 The maintained report and benchmark commands, options, and interpretation notes belong
-in [`../scripts/README.md`](../scripts/README.md#source-quality-audits).
+in [`../scripts/README.md`](../scripts/README.md#source-coverage-and-quality).
 The generic-dataset contribution audit uses exact identifiers for identity evidence and
 a balanced search corpus only to measure CNF/CoFID usefulness. It cannot create an
 identity link or source-priority decision from similar names.

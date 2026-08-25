@@ -3,17 +3,26 @@
 blendCalc uses separate version streams so one kind of change does not incorrectly
 force every other part of the system to change versions.
 
+## Quick Navigation
+
+| Need                    | Sections                                      |
+| ----------------------- | --------------------------------------------- |
+| Inspect active versions | [Current Versions](#current-versions)         |
+| Release the application | [Application Releases](#application-releases) |
+| Evolve API v1           | [API Releases](#api-releases)                 |
+| Preserve compatibility  | [Compatibility Rules](#compatibility-rules)   |
+
 ## Current Versions
 
-| Area | Current version | Source of truth | Purpose |
-| --- | --- | --- | --- |
-| Application release | `1.0.0` | `package.json` | Web/mobile product release |
-| Application build | `1.0.0+<deployment>` | SvelteKit build configuration | Exact deployed build identification |
-| Catalog API | URL `/api/v1`, response `1.0`, OpenAPI `1.0.0` | `src/lib/api/v1/types.ts` and OpenAPI | Stable consumer contract |
-| Database schema | Timestamped migrations | `supabase/migrations` | Ordered, forward-only database changes |
-| Catalog product | Per-product revision number | `shared_product_revisions` | Product-label and evidence history |
-| Image placement | Placement version | `food_image_assets.placement_version` | Crop and positioning behavior |
-| Transient browser state | Feature-specific schema versions | Each owning utility | Safe draft/session migrations |
+| Area                    | Current version                                | Source of truth                       | Purpose                                |
+| ----------------------- | ---------------------------------------------- | ------------------------------------- | -------------------------------------- |
+| Application release     | `1.0.0`                                        | `package.json`                        | Web/mobile product release             |
+| Application build       | `1.0.0+<deployment>`                           | SvelteKit build configuration         | Exact deployed build identification    |
+| Catalog API             | URL `/api/v1`, response `1.0`, OpenAPI `1.0.0` | `src/lib/api/v1/types.ts` and OpenAPI | Stable consumer contract               |
+| Database schema         | Timestamped migrations                         | `supabase/migrations`                 | Ordered, forward-only database changes |
+| Catalog product         | Per-product revision number                    | `shared_product_revisions`            | Product-label and evidence history     |
+| Image placement         | Placement version                              | `food_image_assets.placement_version` | Crop and positioning behavior          |
+| Transient browser state | Feature-specific schema versions               | Each owning utility                   | Safe draft/session migrations          |
 
 ## Application Releases
 

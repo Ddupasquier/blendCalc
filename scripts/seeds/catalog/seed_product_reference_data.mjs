@@ -34,20 +34,25 @@ config({ path: ".env", quiet: true });
 
 const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const fdcApiKey = process.env.VITE_FDC_API_KEY;
+const fdcApiKey =
+	process.env.FDC_API_KEY?.trim() || process.env.VITE_FDC_API_KEY?.trim();
 const requestedSampleSize = Number(
-	process.argv.find((argument) => argument.startsWith("--sample-size="))?.split("=")[1] ??
-		200,
+	process.argv
+		.find((argument) => argument.startsWith("--sample-size="))
+		?.split("=")[1] ?? 200,
 );
 const sampleSize = Number.isFinite(requestedSampleSize)
 	? Math.max(20, Math.min(1000, Math.floor(requestedSampleSize)))
 	: 200;
-const pageSize = Math.min(50, Math.ceil(sampleSize / PRODUCT_REFERENCE_QUERIES.length));
+const pageSize = Math.min(
+	50,
+	Math.ceil(sampleSize / PRODUCT_REFERENCE_QUERIES.length),
+);
 const observedAt = new Date().toISOString();
 
 if (!supabaseUrl || !serviceRoleKey || !fdcApiKey) {
 	throw new Error(
-		"PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, and VITE_FDC_API_KEY are required.",
+		"PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, and FDC_API_KEY are required.",
 	);
 }
 
@@ -61,7 +66,11 @@ const supabase = createClient(supabaseUrl, serviceRoleKey, {
 });
 
 const normalizeAlias = (value) =>
-	String(value ?? "").trim().toLowerCase().replaceAll(".", "").replace(/\s+/g, "");
+	String(value ?? "")
+		.trim()
+		.toLowerCase()
+		.replaceAll(".", "")
+		.replace(/\s+/g, "");
 
 const addCount = (map, key, amount = 1) => {
 	map.set(key, (map.get(key) ?? 0) + amount);
@@ -87,31 +96,30 @@ const readReferenceRows = async () => {
 		requiredResult,
 		sharedSourceResult,
 		sharedProductsResult,
-	] =
-		await Promise.all([
-			supabase
-				.from("nutrient_definitions")
-				.select("nutrient_id, nutrient_name, nutrient_number, default_unit_name")
-				.range(0, 999),
-			supabase
-				.from("nutrient_manual_entry_fields")
-				.select("nutrient_id, observation_count")
-				.eq("enabled", true),
-			supabase
-				.from("nutrient_manual_entry_required_nutrients")
-				.select("nutrient_id")
-				.eq("enabled", true),
-			supabase
-				.from("ingredient_provenance_options")
-				.select("filter_label, description")
-				.eq("dimension", "source")
-				.eq("value", "shared-catalog")
-				.single(),
-			supabase
-				.from("shared_products")
-				.select("id", { count: "exact", head: true })
-				.eq("status", "active"),
-		]);
+	] = await Promise.all([
+		supabase
+			.from("nutrient_definitions")
+			.select("nutrient_id, nutrient_name, nutrient_number, default_unit_name")
+			.range(0, 999),
+		supabase
+			.from("nutrient_manual_entry_fields")
+			.select("nutrient_id, observation_count")
+			.eq("enabled", true),
+		supabase
+			.from("nutrient_manual_entry_required_nutrients")
+			.select("nutrient_id")
+			.eq("enabled", true),
+		supabase
+			.from("ingredient_provenance_options")
+			.select("filter_label, description")
+			.eq("dimension", "source")
+			.eq("value", "shared-catalog")
+			.single(),
+		supabase
+			.from("shared_products")
+			.select("id", { count: "exact", head: true })
+			.eq("status", "active"),
+	]);
 	for (const result of [
 		definitionsResult,
 		manualFieldsResult,
@@ -155,7 +163,9 @@ const fetchUsdaFoods = async () => {
 			const payload = await response.json();
 			foods.push(...(payload.foods ?? []));
 		} catch (error) {
-			console.warn(`USDA sample query “${query}” was skipped: ${error.message}`);
+			console.warn(
+				`USDA sample query “${query}” was skipped: ${error.message}`,
+			);
 		}
 		if (foods.length >= sampleSize) break;
 		await wait(150);
@@ -178,7 +188,10 @@ const fetchOpenFoodFactsFoods = async () => {
 		);
 		try {
 			const response = await fetchWithRetry(url, {
-				headers: { accept: "application/json", "user-agent": "blendCalc reference-data seed" },
+				headers: {
+					accept: "application/json",
+					"user-agent": "blendCalc reference-data seed",
+				},
 			});
 			const payload = await response.json();
 			foods.push(...(payload.products ?? []));
@@ -201,12 +214,19 @@ const fetchOpenFoodFactsTaxonomy = async () => {
 };
 
 const getSourceDisplayName = (title, fallback) => {
-	const cleaned = String(title ?? "").replace(/\s+/g, " ").trim();
+	const cleaned = String(title ?? "")
+		.replace(/\s+/g, " ")
+		.trim();
 	if (!cleaned) return fallback;
 	return cleaned.split(/\s+[|–—-]\s+/)[0].trim() || fallback;
 };
 
-const seedSources = async ({ usdaCount, offCount, sharedSource, sharedProductCount }) => {
+const seedSources = async ({
+	usdaCount,
+	offCount,
+	sharedSource,
+	sharedProductCount,
+}) => {
 	const observationCounts = {
 		usda: usdaCount,
 		"open-food-facts": offCount,
@@ -228,7 +248,9 @@ const seedSources = async ({ usdaCount, offCount, sharedSource, sharedProductCou
 			homepage_url: request.homepageUrl,
 			api_base_url: request.apiBaseUrl,
 			terms_url: request.termsUrl,
-			attribution_text: isShared ? sharedSource.description : request.attributionText,
+			attribution_text: isShared
+				? sharedSource.description
+				: request.attributionText,
 			enabled: true,
 			observation_count: observationCounts[request.key] ?? 0,
 			first_observed_at: observedAt,
@@ -283,12 +305,13 @@ const seedNutrientMappings = async ({
 	offFoods,
 	taxonomy,
 }) => {
-	const { data: existingMappings, error: existingMappingsError } = await supabase
-		.from("nutrient_source_mappings")
-		.select(
-			"source_key, source_nutrient_key, source_unit_name, source_nutrient_name, nutrient_id, priority, mapping_method, confidence, enabled, review_status, review_reference, reviewed_at, first_observed_at, provenance",
-		)
-		.range(0, 4999);
+	const { data: existingMappings, error: existingMappingsError } =
+		await supabase
+			.from("nutrient_source_mappings")
+			.select(
+				"source_key, source_nutrient_key, source_unit_name, source_nutrient_name, nutrient_id, priority, mapping_method, confidence, enabled, review_status, review_reference, reviewed_at, first_observed_at, provenance",
+			)
+			.range(0, 4999);
 	if (existingMappingsError) throw existingMappingsError;
 
 	const usdaCounts = collectUsdaNutrients(usdaFoods);
@@ -369,12 +392,14 @@ const seedNutrientMappings = async ({
 		}
 	}
 
-	const observedMappings = [...new Map(
-		mappings.map((mapping) => [
-			`${mapping.source_key}\u0000${mapping.source_nutrient_key}\u0000${mapping.source_unit_name}`,
-			mapping,
-		]),
-	).values()];
+	const observedMappings = [
+		...new Map(
+			mappings.map((mapping) => [
+				`${mapping.source_key}\u0000${mapping.source_nutrient_key}\u0000${mapping.source_unit_name}`,
+				mapping,
+			]),
+		).values(),
+	];
 	const uniqueMappings = preserveReviewedSourceNutrientMappings({
 		existingMappings: existingMappings ?? [],
 		observedMappings,
@@ -451,8 +476,7 @@ const seedNutrientConversions = async ({ mappings, definitions }) => {
 				provenance: {
 					seed: "scripts/seeds/catalog/seed_product_reference_data.mjs",
 					authority: "U.S. Food and Drug Administration",
-					sourceReference:
-						"https://www.fda.gov/media/129863/download",
+					sourceReference: "https://www.fda.gov/media/129863/download",
 					rule: "1 IU vitamin D equals 0.025 micrograms",
 				},
 			});
@@ -465,9 +489,14 @@ const seedNutrientConversions = async ({ mappings, definitions }) => {
 			.map((mapping) => mapping.source_key),
 	)) {
 		const conversionKey = `${sourceKey}\u0000${1114}\u0000IU\u0000UG`;
-		if (rows.some((row) =>
-			`${row.source_key}\u0000${row.nutrient_id}\u0000${row.from_unit_name}\u0000${row.to_unit_name}` === conversionKey
-		)) continue;
+		if (
+			rows.some(
+				(row) =>
+					`${row.source_key}\u0000${row.nutrient_id}\u0000${row.from_unit_name}\u0000${row.to_unit_name}` ===
+					conversionKey,
+			)
+		)
+			continue;
 		rows.push({
 			source_key: sourceKey,
 			nutrient_id: 1114,
@@ -493,20 +522,21 @@ const seedNutrientConversions = async ({ mappings, definitions }) => {
 	return rows;
 };
 
-const collectServingLabels = (usdaFoods, offFoods) => [
-	...usdaFoods.flatMap((food) => [
-		food.householdServingFullText,
-		food.servingSize && food.servingSizeUnit
-			? `${food.servingSize} ${food.servingSizeUnit}`
-			: null,
-	]),
-	...offFoods.flatMap((food) => [
-		food.serving_size,
-		food.serving_quantity && food.serving_quantity_unit
-			? `${food.serving_quantity} ${food.serving_quantity_unit}`
-			: null,
-	]),
-].filter(Boolean);
+const collectServingLabels = (usdaFoods, offFoods) =>
+	[
+		...usdaFoods.flatMap((food) => [
+			food.householdServingFullText,
+			food.servingSize && food.servingSizeUnit
+				? `${food.servingSize} ${food.servingSizeUnit}`
+				: null,
+		]),
+		...offFoods.flatMap((food) => [
+			food.serving_size,
+			food.serving_quantity && food.serving_quantity_unit
+				? `${food.serving_quantity} ${food.serving_quantity_unit}`
+				: null,
+		]),
+	].filter(Boolean);
 
 const seedServingMeasures = async (usdaFoods, offFoods) => {
 	const labels = collectServingLabels(usdaFoods, offFoods);
@@ -515,7 +545,11 @@ const seedServingMeasures = async (usdaFoods, offFoods) => {
 		let count = 0;
 		for (const label of labels) {
 			const normalizedLabel = normalizeAlias(label);
-			if (request.aliases.some((alias) => normalizedLabel.includes(normalizeAlias(alias)))) {
+			if (
+				request.aliases.some((alias) =>
+					normalizedLabel.includes(normalizeAlias(alias)),
+				)
+			) {
 				count += 1;
 			}
 		}
@@ -523,14 +557,16 @@ const seedServingMeasures = async (usdaFoods, offFoods) => {
 	}
 	const defaultByDimension = new Map();
 	for (const dimension of ["weight", "volume"]) {
-		const candidates = SERVING_MEASURE_REQUESTS
-			.filter((request) => request.dimension === dimension)
-			.sort(
-				(left, right) =>
-					(observations.get(right.key) ?? 0) - (observations.get(left.key) ?? 0),
-			);
+		const candidates = SERVING_MEASURE_REQUESTS.filter(
+			(request) => request.dimension === dimension,
+		).sort(
+			(left, right) =>
+				(observations.get(right.key) ?? 0) - (observations.get(left.key) ?? 0),
+		);
 		if (!candidates[0] || (observations.get(candidates[0].key) ?? 0) === 0) {
-			throw new Error(`No ${dimension} serving unit was observed in the API samples.`);
+			throw new Error(
+				`No ${dimension} serving unit was observed in the API samples.`,
+			);
 		}
 		defaultByDimension.set(dimension, candidates[0].key);
 	}
@@ -553,7 +589,11 @@ const seedServingMeasures = async (usdaFoods, offFoods) => {
 			source_reference: UCUM_STANDARD_REFERENCE.specificationUrl,
 			observed_at: observedAt,
 		});
-		for (const alias of new Set([request.key, request.shortLabel, ...request.aliases])) {
+		for (const alias of new Set([
+			request.key,
+			request.shortLabel,
+			...request.aliases,
+		])) {
 			const normalizedAlias = normalizeAlias(alias);
 			if (!normalizedAlias) continue;
 			aliasRows.push({
@@ -607,14 +647,20 @@ const main = async () => {
 		definitions: referenceRows.definitions,
 	});
 	const servings = await seedServingMeasures(usdaFoods, offFoods);
-	console.log(JSON.stringify({
-		usdaProducts: usdaFoods.length,
-		openFoodFactsProducts: offFoods.length,
-		nutrientMappings: mappings.length,
-		nutrientConversions: conversions.length,
-		servingUnits: servings.unitRows.length,
-		servingAliases: servings.aliasRows.length,
-	}, null, 2));
+	console.log(
+		JSON.stringify(
+			{
+				usdaProducts: usdaFoods.length,
+				openFoodFactsProducts: offFoods.length,
+				nutrientMappings: mappings.length,
+				nutrientConversions: conversions.length,
+				servingUnits: servings.unitRows.length,
+				servingAliases: servings.aliasRows.length,
+			},
+			null,
+			2,
+		),
+	);
 };
 
 await main();

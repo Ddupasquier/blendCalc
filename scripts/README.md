@@ -22,6 +22,17 @@ All commands require Node.js 24. Database-writing and privileged workflows norma
 load ignored credentials from `.env.moderation.local`; provider-only audits may use
 `.env`. Never pass secrets on the command line or place generated data in tracked files.
 
+## Quick Navigation
+
+| Need                                  | Go to                                                                                                                                                                           |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Pick and run a safe entry point       | [Choose The Right Entry Point](#choose-the-right-entry-point) and [Safety Before Execution](#safety-before-execution)                                                           |
+| Find a script owner                   | [Directory Map](#directory-map)                                                                                                                                                 |
+| Work with databases or QA             | [Local Database And QA](#local-database-and-qa) and [Linked Migration Delivery](#linked-migration-delivery)                                                                     |
+| Audit, import, seed, or backfill data | [Catalog And API Audits](#catalog-and-api-audits), [Imports And Reference Seeds](#imports-and-reference-seeds), and [Catalog Backfills](#catalog-backfills)                     |
+| Run protected operations              | [Hosted Security And Recovery](#hosted-security-and-recovery), [Privileged Operations](#privileged-operations), and [API References And Releases](#api-references-and-releases) |
+| Add or move a script                  | [Maintaining This Directory](#maintaining-this-directory)                                                                                                                       |
+
 ## Safety Before Execution
 
 | Workflow type                            | Required practice                                                                                     |
@@ -85,6 +96,23 @@ start or reset only localhost Supabase, writes an ignored test environment, appl
 
 The full persona inventory, safe reset behavior, and database QA workflow live in
 [Database Testing](../docs/database-testing.md).
+
+## Visible Verification Dashboard
+
+`operations/quality/run_verification_dashboard.mjs` runs the maintained verification
+layers in one live terminal view. It stores duration estimates in ignored `.cache/`
+state and writes complete diagnostics only for failed stages under ignored
+`test-results/verification-dashboard/`.
+
+| Command                  | Scope                                                                                          |
+| ------------------------ | ---------------------------------------------------------------------------------------------- |
+| `npm run verify:quick`   | Formatting, lint, Svelte/TypeScript, and Vitest                                                |
+| `npm run verify:feature` | Quick Check, production build, and desktop/compact Chromium                                    |
+| `npm run verify:release` | Dependency audit, source gates, disposable database, build, and the complete Playwright matrix |
+
+Use the VS Code tasks with the same names for a dedicated visible terminal. Continue to
+run the narrowest direct test while editing; the dashboard is for confidence passes,
+not a reason to rerun every layer after a small change.
 
 ## Linked Migration Delivery
 

@@ -6,6 +6,15 @@ Profile manages optional identity, display theme, avatar, food-preference, tutor
 session settings. Detailed privacy and storage rules live in
 [User Profiles](../user-profiles.md).
 
+## Quick Navigation
+
+| Area                         | Sections                                                                                                                |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Profile navigation           | [Settings Surfaces](#settings-surfaces)                                                                                 |
+| Personal settings            | [Identity](#identity), [Light/Dark Mode](#lightdark-mode), [Playful Messages](#playful-messages), and [Avatar](#avatar) |
+| Food and onboarding settings | [Food Preferences](#food-preferences) and [Tutorial And Session](#tutorial-and-session)                                 |
+| Elevated access              | [Privileged Tools](#privileged-tools)                                                                                   |
+
 ## Settings Surfaces
 
 - Keep the Profile route as a compact summary and settings menu rather than rendering

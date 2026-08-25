@@ -6,6 +6,15 @@ stored, promoted, rendered, or redistributed; those decisions belong to
 [`data-source-licensing.md`](../data-source-licensing.md) and the database source
 policy.
 
+## Quick Navigation
+
+| Need                          | Sections                                                                                                                |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Follow source intake          | [Intake Flow](#intake-flow)                                                                                             |
+| Compare provider capabilities | [Active Intake Sources](#active-intake-sources) and [Registered But Inactive Sources](#registered-but-inactive-sources) |
+| Decide what to preserve       | [Useful Fields To Preserve](#useful-fields-to-preserve) and [Ownership Boundaries](#ownership-boundaries)               |
+| Add a provider safely         | [Adding A Source](#adding-a-source)                                                                                     |
+
 ## Intake Flow
 
 1. Read the active blendCalc catalog and legal source cache first.

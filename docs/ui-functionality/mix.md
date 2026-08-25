@@ -6,6 +6,16 @@ Mix combines selected foods, amount and serving controls, explicit nutrient goal
 nutrient shape, warnings, practical adjustments, contribution details, and recipe
 saving.
 
+## Quick Navigation
+
+| Flow                  | Sections                                                                                                                  |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Understand Mix state  | [Routes And Page State](#routes-and-page-state), [Header](#header), and [Section Organization](#section-organization)     |
+| Configure nutrition   | [Nutrient Goals](#nutrient-goals) and [Nutrient Shape](#nutrient-shape)                                                   |
+| Build the combination | [Add Ingredients](#add-ingredients) and [Selected Ingredients](#selected-ingredients)                                     |
+| Review outcomes       | [Warnings](#warnings), [Suggested Adjustments](#suggested-adjustments), and [Contribution Details](#contribution-details) |
+| Save the result       | [Loaded Recipe State](#loaded-recipe-state) and [Save Review](#save-review)                                               |
+
 ## Routes And Page State
 
 Meaningful overlays and modes use child routes with shallow history so the Mix stays

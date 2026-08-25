@@ -7,18 +7,27 @@ This directory documents two separate boundaries:
 2. **Provider reference files** — sampled documentation of external payloads used to
    maintain source adapters. These files are not runtime contracts.
 
+## Quick Navigation
+
+| Need                                | Sections                                                                                                            |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Understand API access and stability | [API v1 Status](#api-v1-status), [Versioning](#versioning), and [Privacy And Rights](#privacy-and-rights)           |
+| Inspect available reads             | [Read Endpoints](#read-endpoints)                                                                                   |
+| Understand publication rules        | [What Can Be Published](#what-can-be-published) and [Corrections And Rapid Removal](#corrections-and-rapid-removal) |
+| Maintain provider samples           | [Provider Reference Files](#provider-reference-files)                                                               |
+
 ## API v1 Status
 
-| Property | Current value |
-| --- | --- |
-| Status | Internal, read-only preview |
-| Access | Existing authenticated blendCalc Supabase session |
-| Base path | `/api/v1` |
-| Response version | `1.0` |
-| OpenAPI version | `1.0.0` |
-| Live provider requests | None; reads use stored canonical data only |
-| Public API keys | Not available |
-| Public release | Blocked pending the reviewed release process |
+| Property               | Current value                                     |
+| ---------------------- | ------------------------------------------------- |
+| Status                 | Internal, read-only preview                       |
+| Access                 | Existing authenticated blendCalc Supabase session |
+| Base path              | `/api/v1`                                         |
+| Response version       | `1.0`                                             |
+| OpenAPI version        | `1.0.0`                                           |
+| Live provider requests | None; reads use stored canonical data only        |
+| Public API keys        | Not available                                     |
+| Public release         | Blocked pending the reviewed release process      |
 
 The executable contract is split between:
 
@@ -34,12 +43,12 @@ browser session. Public bearer keys and anonymous catalog access do not exist ye
 
 ## Read Endpoints
 
-| Method and path | Returns |
-| --- | --- |
-| `GET /api/v1/products/{barcode}` | One publication-ready canonical product identified by exact GTIN |
+| Method and path                            | Returns                                                              |
+| ------------------------------------------ | -------------------------------------------------------------------- |
+| `GET /api/v1/products/{barcode}`           | One publication-ready canonical product identified by exact GTIN     |
 | `GET /api/v1/products/{barcode}/revisions` | Bounded approved revision metadata and evidence-backed field changes |
-| `GET /api/v1/foods/search?q={query}` | Bounded, paginated publication-ready catalog search results |
-| `GET /api/v1/categories` | Bounded, paginated enabled canonical categories |
+| `GET /api/v1/foods/search?q={query}`       | Bounded, paginated publication-ready catalog search results          |
+| `GET /api/v1/categories`                   | Bounded, paginated enabled canonical categories                      |
 
 All successful responses use the same envelope:
 
@@ -120,14 +129,14 @@ source for correction, attribution, privacy, or rights review.
 
 Related operational routes are deliberately outside `/api/v1`:
 
-| Method and path | Responsibility |
-| --- | --- |
-| `POST /api/publication-concerns` | Submit one bounded concern and receive an opaque tracking identifier |
-| `GET /api/moderation/catalog/products/{productId}/provenance` | Read private accepted and candidate evidence with an elevated role |
-| `GET /api/moderation/publication-concerns` | Read unresolved concerns and active holds with elevated AAL2 access |
-| `PATCH /api/moderation/publication-concerns` | Record a reviewed concern resolution |
-| `POST /api/moderation/publication-holds` | Withhold one exact product, image, dataset release, or source |
-| `DELETE /api/moderation/publication-holds` | Release a reviewed hold without deleting its history |
+| Method and path                                               | Responsibility                                                       |
+| ------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `POST /api/publication-concerns`                              | Submit one bounded concern and receive an opaque tracking identifier |
+| `GET /api/moderation/catalog/products/{productId}/provenance` | Read private accepted and candidate evidence with an elevated role   |
+| `GET /api/moderation/publication-concerns`                    | Read unresolved concerns and active holds with elevated AAL2 access  |
+| `PATCH /api/moderation/publication-concerns`                  | Record a reviewed concern resolution                                 |
+| `POST /api/moderation/publication-holds`                      | Withhold one exact product, image, dataset release, or source        |
+| `DELETE /api/moderation/publication-holds`                    | Release a reviewed hold without deleting its history                 |
 
 Publication holds are reversible. They never delete the canonical product, revision,
 observation, image, or submitted evidence. The stable operator entry point is
@@ -145,13 +154,13 @@ an API release from the application package version.
 
 ## Provider Reference Files
 
-| File | Purpose |
-| --- | --- |
-| [`source-data-inventory.md`](source-data-inventory.md) | Maintained map of provider capabilities, useful fields, and intake ownership |
-| [`food-data-central.reference.ts`](food-data-central.reference.ts) | Sampled USDA FoodData Central search and detail payload shape |
-| [`open-food-facts.reference.ts`](open-food-facts.reference.ts) | Sampled Open Food Facts search and detail payload shape |
-| [`api-structure-summary.json`](api-structure-summary.json) | Machine-readable summary of the sampled provider structures |
-| [`catalog-field-lineage.md`](catalog-field-lineage.md) | App-owned API v1 population and publication lineage |
+| File                                                               | Purpose                                                                      |
+| ------------------------------------------------------------------ | ---------------------------------------------------------------------------- |
+| [`source-data-inventory.md`](source-data-inventory.md)             | Maintained map of provider capabilities, useful fields, and intake ownership |
+| [`food-data-central.reference.ts`](food-data-central.reference.ts) | Sampled USDA FoodData Central search and detail payload shape                |
+| [`open-food-facts.reference.ts`](open-food-facts.reference.ts)     | Sampled Open Food Facts search and detail payload shape                      |
+| [`api-structure-summary.json`](api-structure-summary.json)         | Machine-readable summary of the sampled provider structures                  |
+| [`catalog-field-lineage.md`](catalog-field-lineage.md)             | App-owned API v1 population and publication lineage                          |
 
 The generated provider files are documentation only. They describe observed samples,
 not complete vendor guarantees, and must never be imported into runtime code. Runtime

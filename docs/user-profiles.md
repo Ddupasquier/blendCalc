@@ -8,6 +8,15 @@ This document owns profile behavior and privacy. Auth configuration belongs in
 [`style-guide.md`](style-guide.md), and profile table/storage shape in
 [`supabase-schema.md`](supabase-schema.md).
 
+## Quick Navigation
+
+| Area                         | Sections                                                                                                                |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Identity and appearance      | [Identity And Email Privacy](#identity-and-email-privacy) and [Appearance](#appearance)                                 |
+| Optional account preferences | [Playful Messages](#playful-messages) and [Food Safety Preferences](#food-safety-preferences)                           |
+| Profile media and policy     | [Profile Images](#profile-images) and [Content Policy And Moderation Boundary](#content-policy-and-moderation-boundary) |
+| Verification                 | [Change Verification](#change-verification)                                                                             |
+
 ## Identity And Email Privacy
 
 - The application does not send the authenticated email address to the shared layout UI.

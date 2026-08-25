@@ -9,6 +9,14 @@ Food records retain their source snapshot for reconstruction and audit, while
 values. A missing normalized row remains missing; readers do not silently recover it
 from legacy embedded JSON.
 
+## Quick Navigation
+
+| Need                           | Sections                                                                                                            |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| Understand canonical ownership | [Data Ownership](#data-ownership) and [Synchronization](#synchronization)                                           |
+| Read nutrient data             | [Application Reads](#application-reads), [Access Control](#access-control), and [Example Queries](#example-queries) |
+| Change the model safely        | [Change Workflow](#change-workflow)                                                                                 |
+
 ## Data Ownership
 
 - `nutrient_definitions` owns canonical nutrient identity, number, name, unit, and

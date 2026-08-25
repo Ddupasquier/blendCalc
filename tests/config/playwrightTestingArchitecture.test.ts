@@ -12,12 +12,8 @@ describe("Playwright browser-testing architecture", () => {
 	it("runs authenticated desktop and mobile projects with isolated parallel workers", () => {
 		const playwrightConfig = readSource("playwright.config.ts");
 		const browserTestSupport = readSource("tests/e2e/support/browserTest.ts");
-		const localQaAccounts = readSource(
-			"tests/e2e/support/localQaAccounts.ts",
-		);
-		const localQaPersonas = readSource(
-			"scripts/lib/qa/local_qa_personas.mjs",
-		);
+		const localQaAccounts = readSource("tests/e2e/support/localQaAccounts.ts");
+		const localQaPersonas = readSource("scripts/lib/qa/local_qa_personas.mjs");
 		for (const project of [
 			"desktop-chromium",
 			"desktop-firefox",
@@ -35,6 +31,15 @@ describe("Playwright browser-testing architecture", () => {
 		expect(browserTestSupport).toContain('scope: "worker"');
 		expect(browserTestSupport).toContain("workerInfo.parallelIndex");
 		expect(browserTestSupport).toContain("playwrightRequest.newContext");
+		expect(browserTestSupport).toContain(
+			"isStoredBrowserSessionStillAuthenticated",
+		);
+		expect(browserTestSupport).toContain(
+			"cookie.expires > minimumReusableExpirySeconds",
+		);
+		expect(browserTestSupport).toContain(
+			'"/api/user-food-lists/fridge?limit=1&offset=0&sort=recent&source=all&trust=any"',
+		);
 		expect(browserTestSupport).not.toContain("browser.newPage");
 		expect(localQaAccounts).toContain("PLAYWRIGHT_QA_EMAILS");
 		expect(localQaPersonas).toContain(
@@ -87,9 +92,7 @@ describe("Playwright browser-testing architecture", () => {
 	});
 
 	it("keeps generated test and build artifacts out of source control", () => {
-		const localQaAccounts = readSource(
-			"tests/e2e/support/localQaAccounts.ts",
-		);
+		const localQaAccounts = readSource("tests/e2e/support/localQaAccounts.ts");
 		const gitignore = readSource(".gitignore");
 		expect(localQaAccounts).toContain(
 			"test-results/authenticated-browser-state/",
@@ -100,6 +103,11 @@ describe("Playwright browser-testing architecture", () => {
 		expect(gitignore).toContain("/coverage/");
 		expect(gitignore).toContain("/dist/");
 		expect(gitignore).toContain("*.tsbuildinfo");
+	});
+
+	it("prevents inherited terminal color settings from conflicting with Playwright", () => {
+		const playwrightConfig = readSource("playwright.config.ts");
+		expect(playwrightConfig).toContain("delete process.env.NO_COLOR");
 	});
 
 	it("runs remote browser projects and database verification in isolated jobs", () => {
@@ -153,7 +161,9 @@ describe("Playwright browser-testing architecture", () => {
 	it("exposes one deterministic client-readiness signal before browser interaction", () => {
 		const rootLayout = readSource("src/routes/+layout.svelte");
 		expect(rootLayout).toContain('dataset.appReady = "true"');
-		expect(rootLayout).toContain("delete document.documentElement.dataset.appReady");
+		expect(rootLayout).toContain(
+			"delete document.documentElement.dataset.appReady",
+		);
 	});
 
 	it("does not duplicate migrated browser interactions in jsdom component tests", () => {

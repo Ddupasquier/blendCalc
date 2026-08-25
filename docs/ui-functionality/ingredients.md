@@ -6,6 +6,16 @@ Ingredients owns food discovery, barcode scanning, manual food entry, nutrition 
 and Fridge/Shopping List management. Its completed interaction and visual patterns are
 the baseline for other views.
 
+## Quick Navigation
+
+| Flow                  | Sections                                                                                                                   |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Discover food         | [Page Controls](#page-controls), [Food Search](#food-search), [Barcode Scanning](#barcode-scanning), and [Search](#search) |
+| Enter food manually   | [Manual Entry](#manual-entry)                                                                                              |
+| Understand food       | [Nutrition Details](#nutrition-details) and [Food-Preference Results](#food-preference-results)                            |
+| Manage lists          | [Fridge And Shopping List](#fridge-and-shopping-list)                                                                      |
+| Verify the experience | [Responsive And Accessibility Checks](#responsive-and-accessibility-checks)                                                |
+
 ## Page Controls
 
 - Keep the page title, short helper text, search, barcode action, filter action, and

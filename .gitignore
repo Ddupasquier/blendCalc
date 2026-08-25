@@ -19,7 +19,8 @@ node_modules
 Thumbs.db
 
 # Editor and local workspace state
-/.vscode/
+/.vscode/*
+!/.vscode/tasks.json
 /.idea/
 *.swp
 *.swo

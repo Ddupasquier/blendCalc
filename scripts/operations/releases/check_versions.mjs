@@ -19,6 +19,8 @@ const apiContractVersionPattern = /^(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
 const readText = (relativePath) =>
 	readFileSync(resolve(repositoryRoot, relativePath), "utf8");
 const readJson = (relativePath) => JSON.parse(readText(relativePath));
+const escapeRegularExpression = (value) =>
+	value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const requireCondition = (condition, message) => {
 	if (!condition) failures.push(message);
 };
@@ -26,11 +28,11 @@ const requireCondition = (condition, message) => {
 const packageMetadata = readJson("package.json");
 const packageLock = readJson("package-lock.json");
 const configuredNodeMajor = Number.parseInt(readText(".nvmrc").trim(), 10);
-const portableNodeMajor = Number.parseInt(
-	readText(".node-version").trim(),
+const portableNodeMajor = Number.parseInt(readText(".node-version").trim(), 10);
+const activeNodeMajor = Number.parseInt(
+	process.versions.node.split(".")[0],
 	10,
 );
-const activeNodeMajor = Number.parseInt(process.versions.node.split(".")[0], 10);
 const expectedNodeEngine = `>=${configuredNodeMajor} <${configuredNodeMajor + 1}`;
 const appVersion = packageMetadata.version;
 const lockRootVersion = packageLock.packages?.[""]?.version;
@@ -95,7 +97,9 @@ requireCondition(
 
 const [apiMajor = "", apiMinor = ""] = apiVersion.split(".");
 const openApiVersion = openApi.info?.version ?? "";
-const openApiVersionMatch = String(openApiVersion).match(semanticVersionPattern);
+const openApiVersionMatch = String(openApiVersion).match(
+	semanticVersionPattern,
+);
 requireCondition(
 	Boolean(openApiVersionMatch),
 	`OpenAPI info.version must be semantic versioning; received ${JSON.stringify(openApiVersion)}.`,
@@ -166,15 +170,19 @@ requireCondition(
 	"API route tests must use BLENDCALC_API_V1 instead of repeating a literal contract version.",
 );
 requireCondition(
-	versioningDocumentation.includes(
-		`| Application release | \`${appVersion}\` |`,
-	),
+	new RegExp(
+		"\\|\\s*Application release\\s*\\|\\s*`" +
+			escapeRegularExpression(appVersion) +
+			"`\\s*\\|",
+	).test(versioningDocumentation),
 	`docs/versioning.md must list application release ${appVersion}.`,
 );
 requireCondition(
-	versioningDocumentation.includes(
-		`| Application build | \`${appVersion}+<deployment>\` |`,
-	),
+	new RegExp(
+		"\\|\\s*Application build\\s*\\|\\s*`" +
+			escapeRegularExpression(`${appVersion}+<deployment>`) +
+			"`\\s*\\|",
+	).test(versioningDocumentation),
 	`docs/versioning.md must list build prefix ${appVersion}+<deployment>.`,
 );
 requireCondition(

@@ -6,6 +6,15 @@ tests never depend on production data or external food providers. The
 [Testing Strategy](testing.md) decides which layer owns a test; this guide covers
 Playwright setup and authoring.
 
+## Quick Navigation
+
+| Need                                   | Sections                                                                    |
+| -------------------------------------- | --------------------------------------------------------------------------- |
+| Decide what Playwright owns            | [Ownership](#ownership)                                                     |
+| Start the isolated browser environment | [Local Test Environment](#local-test-environment) and [Commands](#commands) |
+| Add stable browser coverage            | [Writing Tests](#writing-tests)                                             |
+| Record browser evidence honestly       | [QA Evidence](#qa-evidence)                                                 |
+
 ## Ownership
 
 Use Playwright when correctness depends on a real browser rendering and interaction
