@@ -1,4 +1,5 @@
 import { readFoodCategoryPickerData } from "$lib/server/products/categoryPicker.server";
+import { getProductResolutionPolicyIfAvailable } from "$lib/server/products/productResolutionPolicy.server";
 import { throwAppError } from "$lib/server/errors/appError.server";
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
@@ -18,11 +19,15 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 		.map((category) => category.trim().slice(0, MAX_QUERY_LENGTH))
 		.filter(Boolean)
 		.slice(0, MAX_SOURCE_CATEGORIES);
-	const data = await readFoodCategoryPickerData(locals.supabase, {
-		productName: readSearchValue(url, "productName"),
-		query: readSearchValue(url, "query"),
-		sourceCategories,
-	});
+	const data = await readFoodCategoryPickerData(
+		locals.supabase,
+		{
+			productName: readSearchValue(url, "productName"),
+			query: readSearchValue(url, "query"),
+			sourceCategories,
+		},
+		await getProductResolutionPolicyIfAvailable(),
+	);
 
 	return json(data, {
 		headers: {

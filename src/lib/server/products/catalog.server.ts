@@ -13,14 +13,8 @@ import type { FoodItem } from "$lib/utils/food/types";
 import type { IngredientProvenanceFilters } from "$lib/utils/ingredients/ingredientProvenance";
 import type { SharedProductSubmissionResult } from "$lib/utils/products/catalog";
 import type { CatalogSubmissionIntent } from "$lib/utils/products/catalog";
-import {
-	compareCatalogSubmissionToExistingProduct,
-	type CatalogSubmissionComparison,
-} from "$lib/utils/products/catalogSubmissionComparison";
-import {
-	createCatalogUpdateSummary,
-	readCatalogUpdateSummary,
-} from "$lib/utils/products/catalogUpdateReview";
+import { compareCatalogSubmissionToExistingProduct } from "$lib/utils/products/catalogSubmissionComparison";
+import { readCatalogUpdateSummary } from "$lib/utils/products/catalogUpdateReview";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
 	buildModeratorReviewedCatalogBundle,
@@ -57,6 +51,7 @@ import {
 	getActiveCanonicalCatalogRecordByBarcode,
 	searchApprovedCatalogRecords,
 } from "./catalogRead.server";
+import { getDefaultProductResolutionPolicy } from "./productResolutionPolicy.server";
 
 type ProductSubmissionContext = {
 	reviewFlags?: string[];
@@ -100,7 +95,9 @@ export class ProductSubmissionBlockedError extends Error {
 		super("Catalog product submission is blocked.");
 		this.name = "ProductSubmissionBlockedError";
 		this.blockedUntil = suspension.sharing_suspended_until;
-		this.displayBlockedUntil = formatBlockDate(suspension.sharing_suspended_until);
+		this.displayBlockedUntil = formatBlockDate(
+			suspension.sharing_suspended_until,
+		);
 	}
 }
 
@@ -164,7 +161,9 @@ export const validateSharedProductFood = (
 		}
 		nutrientIds.add(nutrient.nutrientId);
 		if (!Number.isFinite(nutrient.value) || nutrient.value < 0) {
-			issues.push(`${nutrient.nutrientName || "A nutrient"} has an invalid value.`);
+			issues.push(
+				`${nutrient.nutrientName || "A nutrient"} has an invalid value.`,
+			);
 		}
 	}
 
@@ -207,7 +206,9 @@ const assertKnownSubmissionNutrients = async (food: FoodItem) => {
 			(definition) => definition.nutrient_id,
 		),
 	);
-	const unknownIds = nutrientIds.filter((nutrientId) => !knownIds.has(nutrientId));
+	const unknownIds = nutrientIds.filter(
+		(nutrientId) => !knownIds.has(nutrientId),
+	);
 	if (unknownIds.length > 0) {
 		throw new Error(
 			`Unknown nutrient identifiers cannot be submitted: ${unknownIds.join(", ")}.`,
@@ -266,9 +267,16 @@ export const submitProductForCatalog = async (
 	const submissionFood = applyCanonicalFoodCategory(food, selectedCategory);
 	const submissionIntent = context.intent ?? "catalog_share";
 
-	const existingCatalogFood = await getSharedProductByBarcode(admin, validation.barcode);
+	const [existingCatalogFood, resolutionPolicy] = await Promise.all([
+		getSharedProductByBarcode(admin, validation.barcode),
+		getDefaultProductResolutionPolicy(),
+	]);
 	const existingCatalogComparison = existingCatalogFood
-		? compareCatalogSubmissionToExistingProduct(submissionFood, existingCatalogFood)
+		? compareCatalogSubmissionToExistingProduct(
+				submissionFood,
+				existingCatalogFood,
+				resolutionPolicy,
+			)
 		: null;
 	if (existingCatalogComparison?.matchesExisting) {
 		return {
@@ -278,22 +286,23 @@ export const submitProductForCatalog = async (
 		};
 	}
 	const labelObservedAt = new Date().toISOString();
-	const catalogUpdateTarget = existingCatalogFood?.sharedProductId && existingCatalogComparison
-		? await readCatalogUpdateTarget(admin, existingCatalogFood.sharedProductId)
-		: null;
+	const catalogUpdateTarget =
+		existingCatalogFood?.sharedProductId && existingCatalogComparison
+			? await readCatalogUpdateTarget(
+					admin,
+					existingCatalogFood.sharedProductId,
+				)
+			: null;
 	const effectiveSubmissionIntent = resolveCatalogSubmissionIntent({
 		requestedIntent: submissionIntent,
 		existingComparison: existingCatalogComparison,
 	});
 
-	const existingSubmission = await findPendingCatalogSubmission(
-		admin,
-		{
-			barcode: validation.barcode,
-			userId,
-			updateTarget: catalogUpdateTarget,
-		},
-	);
+	const existingSubmission = await findPendingCatalogSubmission(admin, {
+		barcode: validation.barcode,
+		userId,
+		updateTarget: catalogUpdateTarget,
+	});
 	if (existingSubmission) {
 		return {
 			status: "pending",
@@ -305,6 +314,7 @@ export const submitProductForCatalog = async (
 	const sourceAssessment = await assessCatalogProductSources(
 		admin,
 		validation.barcode,
+		{ policy: resolutionPolicy },
 	);
 	const preparedReview = prepareCatalogSubmissionReview({
 		submissionFood,
@@ -324,8 +334,7 @@ export const submitProductForCatalog = async (
 	) {
 		return {
 			status: "source-mismatch",
-			message:
-				`This barcode belongs to “${preparedReview.sourceMismatchName}”. Your ingredient was saved privately, but it was not shared.`,
+			message: `This barcode belongs to “${preparedReview.sourceMismatchName}”. Your ingredient was saved privately, but it was not shared.`,
 			evidenceAccepted: false,
 		};
 	}
@@ -350,11 +359,12 @@ export const submitProductForCatalog = async (
 		updateSummary: catalogUpdateSummary,
 		labelObservedAt,
 		hasExactSourceMatch: Boolean(matchedDraft && !needsSourceComparisonReview),
-		matchedSource: matchedDraft?.source === "open-food-facts"
-			? "open-food-facts"
-			: matchedDraft?.source === "usda"
-				? "usda"
-				: null,
+		matchedSource:
+			matchedDraft?.source === "open-food-facts"
+				? "open-food-facts"
+				: matchedDraft?.source === "usda"
+					? "usda"
+					: null,
 		matchedReference: matchedDraft?.sourceReference,
 		report,
 		evidencePaths,
@@ -369,13 +379,16 @@ export const submitProductForCatalog = async (
 		};
 	}
 
-	if (matchedDraft && !needsSourceComparisonReview && !hasSourceMatchedImageEvidence) {
+	if (
+		matchedDraft &&
+		!needsSourceComparisonReview &&
+		!hasSourceMatchedImageEvidence
+	) {
 		if (!verificationBundle) {
 			throw new Error("Product verification could not be prepared.");
 		}
-		const source = matchedDraft.source === "open-food-facts"
-			? "open-food-facts"
-			: "usda";
+		const source =
+			matchedDraft.source === "open-food-facts" ? "open-food-facts" : "usda";
 		try {
 			const sharedProductId = await publishCatalogSubmission({
 				submissionId,
@@ -395,7 +408,10 @@ export const submitProductForCatalog = async (
 				sharedProductId,
 			});
 		} catch (publishError) {
-			await admin.from("shared_product_submissions").delete().eq("id", submissionId);
+			await admin
+				.from("shared_product_submissions")
+				.delete()
+				.eq("id", submissionId);
 			throw publishError;
 		}
 		return {
@@ -448,7 +464,9 @@ export const approveCommunityProductSubmission = async (
 	const admin = getSupabaseAdminClient();
 	const { data: submission, error } = await admin
 		.from("shared_product_submissions")
-		.select("id, barcode, product_name, brand_owner, category_option_id, food, status, evidence_complete, evidence_paths, validation_report, submission_kind, target_shared_product_id, change_summary")
+		.select(
+			"id, barcode, product_name, brand_owner, category_option_id, food, status, evidence_complete, evidence_paths, validation_report, submission_kind, target_shared_product_id, change_summary",
+		)
 		.eq("id", submissionId)
 		.single();
 	if (error || !submission) throw error ?? new Error("Submission not found.");
@@ -459,10 +477,12 @@ export const approveCommunityProductSubmission = async (
 		throw new Error("Complete label evidence is required before approval.");
 	}
 
-	const submittedFood = normalizeFoodForStorage(submission.food as unknown as FoodItem);
+	const submittedFood = normalizeFoodForStorage(
+		submission.food as unknown as FoodItem,
+	);
 	const category =
-		await readFoodCategoryOption(admin, submission.category_option_id)
-		?? await resolveFoodCategoryOption(admin, submittedFood.categories ?? []);
+		(await readFoodCategoryOption(admin, submission.category_option_id)) ??
+		(await resolveFoodCategoryOption(admin, submittedFood.categories ?? []));
 	if (!category) {
 		throw new Error(
 			"Select a canonical food category before approving this product.",
@@ -487,11 +507,15 @@ export const approveCommunityProductSubmission = async (
 		? await getSharedProductByBarcode(admin, submission.barcode)
 		: null;
 	if (submission.submission_kind === "product_update" && !currentFood) {
-		throw new Error("The active catalog product could not be loaded for this update.");
+		throw new Error(
+			"The active catalog product could not be loaded for this update.",
+		);
 	}
 	const changes = parsedUpdateSummary?.changes ?? [];
 	if (submission.submission_kind === "product_update" && changes.length === 0) {
-		throw new Error("The catalog update does not include any reviewable changes.");
+		throw new Error(
+			"The catalog update does not include any reviewable changes.",
+		);
 	}
 	const verificationBundle =
 		submission.submission_kind === "product_update" && currentFood

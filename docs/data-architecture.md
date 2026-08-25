@@ -109,6 +109,33 @@ observations remain in their licensed cache/evidence boundary, while accepted ca
 fields retain their own provenance. Existing records receive the same applicable
 backfill as future writes.
 
+Product-resolution decisions use the active server-only database policy. That reviewed
+version owns name-overlap boundaries, numeric comparison thresholds, serving tolerance,
+field-selection weights, provider subtype ranks, category scoring, and nutrition-
+completeness scoring. Runtime code must fail closed when required policy data is absent;
+it must not restore a private fallback constant.
+
+During an additive rollout, an application instance may briefly reach a database that
+does not yet contain the new policy tables or columns. Only an exact missing-schema
+response for those objects may enter rollout compatibility: the app shell and direct
+category search remain available, policy-dependent automatic suggestions pause,
+provider search preserves provider order, and nutrition-completeness assessment is
+reported as unavailable instead of being guessed. The server retries the schema shortly.
+Permission failures and unrelated database errors still fail closed.
+
+Three external-source records serve different purposes:
+
+- the request cache stores a provider response briefly to reduce network work and allow
+  a bounded stale-on-outage response;
+- expiring source-field coverage records that a successful exact lookup reported or did
+  not report one requested field, allowing that same missing field to be skipped until
+  its provider-specific expiry; and
+- source observations plus selected field provenance preserve durable evidence for a
+  canonical decision.
+
+Coverage never becomes evidence. Provider errors do not create coverage, expired
+coverage cannot suppress a lookup, and a later provider update remains discoverable.
+
 Exact USDA barcode lookup preserves its bounded detail read because the detail record
 adds category and availability metadata omitted by search results. Shared caching and
 request coalescing prevent repeated outbound detail calls. Stable UCUM unit codes and

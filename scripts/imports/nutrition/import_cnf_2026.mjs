@@ -111,13 +111,15 @@ const normalizeSearchText = (...values) =>
 		.join(" ");
 
 const csvRows = (filePath) =>
-	createReadStream(filePath).pipe(parse({
-		bom: true,
-		columns: true,
-		relax_column_count: true,
-		skip_empty_lines: true,
-		trim: true,
-	}));
+	createReadStream(filePath).pipe(
+		parse({
+			bom: true,
+			columns: true,
+			relax_column_count: true,
+			skip_empty_lines: true,
+			trim: true,
+		}),
+	);
 
 const readCsvRows = async (filePath) => {
 	const rows = [];
@@ -141,10 +143,13 @@ const withRetries = async (operation, label) => {
 			return await operation();
 		} catch (error) {
 			lastError = error;
-			if (attempt < 3) await new Promise((resolve) => setTimeout(resolve, attempt * 500));
+			if (attempt < 3)
+				await new Promise((resolve) => setTimeout(resolve, attempt * 500));
 		}
 	}
-	throw new Error(`${label} failed after three attempts: ${lastError?.message ?? lastError}`);
+	throw new Error(
+		`${label} failed after three attempts: ${lastError?.message ?? lastError}`,
+	);
 };
 
 const upsertBatch = async (table, rows, onConflict) => {
@@ -195,7 +200,10 @@ const deleteDatasetRows = async () => {
 		"generic_food_nutrients",
 		"generic_food_records",
 	]) {
-		const { error } = await supabase.from(table).delete().eq("dataset_key", DATASET_KEY);
+		const { error } = await supabase
+			.from(table)
+			.delete()
+			.eq("dataset_key", DATASET_KEY);
 		if (error) throw error;
 	}
 };
@@ -205,7 +213,9 @@ const importReferenceRows = async (referenceGroups) => {
 		"generic_food_dataset_reference_rows",
 		"dataset_key,reference_type,source_key",
 	);
-	for (const [referenceType, { keyField, rows }] of Object.entries(referenceGroups)) {
+	for (const [referenceType, { keyField, rows }] of Object.entries(
+		referenceGroups,
+	)) {
 		for (const row of rows) {
 			await writer.add({
 				dataset_key: DATASET_KEY,
@@ -267,26 +277,26 @@ const measureNames = new Map(
 );
 const foodKeys = new Set(foodRows.map((row) => String(row.Food_Code)));
 
-let datasetMetadata = {};
-let canonicalNutrients = new Map();
-const [{ data: dataset, error: datasetError }, { data: definitions, error: definitionError }] =
-	await Promise.all([
-		supabase
-			.from("generic_food_datasets")
-			.select("key, import_enabled, license_review_status, metadata")
-			.eq("key", DATASET_KEY)
-			.single(),
-		supabase
-			.from("nutrient_definitions")
-			.select("nutrient_id, nutrient_number, nutrient_name, default_unit_name"),
-	]);
+const [
+	{ data: dataset, error: datasetError },
+	{ data: definitions, error: definitionError },
+] = await Promise.all([
+	supabase
+		.from("generic_food_datasets")
+		.select("key, import_enabled, license_review_status, metadata")
+		.eq("key", DATASET_KEY)
+		.single(),
+	supabase
+		.from("nutrient_definitions")
+		.select("nutrient_id, nutrient_number, nutrient_name, default_unit_name"),
+]);
 if (datasetError) throw datasetError;
 if (definitionError) throw definitionError;
 if (!dataset.import_enabled || dataset.license_review_status !== "approved") {
 	throw new Error(`${DATASET_KEY} is not approved and enabled for import.`);
 }
-datasetMetadata = dataset.metadata ?? {};
-canonicalNutrients = new Map(
+const datasetMetadata = dataset.metadata ?? {};
+const canonicalNutrients = new Map(
 	(definitions ?? []).flatMap((definition) =>
 		definition.nutrient_number
 			? [[String(definition.nutrient_number), definition]]
@@ -359,7 +369,9 @@ for (const row of foodRows) {
 		description: row.Food_Description_EN,
 		alternate_description: textOrNull(row.Alternate_Description_EN),
 		food_group_key: foodGroupKey,
-		food_group_name: foodGroupKey ? foodGroups.get(foodGroupKey) ?? null : null,
+		food_group_name: foodGroupKey
+			? (foodGroups.get(foodGroupKey) ?? null)
+			: null,
 		source_food_code: textOrNull(row.Food_Source_Code),
 		external_reference: textOrNull(row.USDA_NDB_Code),
 		scientific_name: textOrNull(row.ScientificName),
@@ -409,7 +421,10 @@ await importReferenceRows({
 	food_source: { keyField: "Food_Source_Code", rows: foodSourceRows },
 	food_group: { keyField: "CNF_Food_Group_Code", rows: foodGroupRows },
 	nutrient_definition: { keyField: "Nutrient_Code", rows: nutrientNameRows },
-	nutrient_source: { keyField: "Nutrient_Source_Code", rows: nutrientSourceRows },
+	nutrient_source: {
+		keyField: "Nutrient_Source_Code",
+		rows: nutrientSourceRows,
+	},
 	measure_type: { keyField: "Measure_Type_Code", rows: measureTypeRows },
 	measure_name: { keyField: "Measure_Code", rows: measureNameRows },
 });
@@ -426,12 +441,17 @@ for await (const row of csvRows(downloadedPaths.nutrientAmounts)) {
 	const sourceNutrientKey = String(row.Nutrient_Code);
 	const amount = numberOrNull(row.Nutrient_Amount);
 	const nutrientDefinition = nutrientNames.get(sourceNutrientKey);
-	if (!foodKeys.has(foodKey) || !nutrientDefinition || amount === null || amount < 0) {
+	if (
+		!foodKeys.has(foodKey) ||
+		!nutrientDefinition ||
+		amount === null ||
+		amount < 0
+	) {
 		invalidNutrientCount += 1;
 		continue;
 	}
 	const nutrientId = compatibleCanonicalNutrientKeys.has(sourceNutrientKey)
-		? canonicalNutrients.get(sourceNutrientKey)?.nutrient_id ?? null
+		? (canonicalNutrients.get(sourceNutrientKey)?.nutrient_id ?? null)
 		: null;
 	if (!nutrientId) unmappedNutrientKeys.add(sourceNutrientKey);
 	await nutrientWriter.add({
@@ -466,7 +486,13 @@ for await (const row of csvRows(downloadedPaths.measureWeights)) {
 	const measure = measureNames.get(measureKey);
 	const measureType = measureTypes.get(measureTypeKey);
 	const gramWeight = numberOrNull(row.Measure_Weight_Conversion);
-	if (!foodKeys.has(foodKey) || !measure || !measureType || gramWeight === null || gramWeight < 0) {
+	if (
+		!foodKeys.has(foodKey) ||
+		!measure ||
+		!measureType ||
+		gramWeight === null ||
+		gramWeight < 0
+	) {
 		invalidMeasureCount += 1;
 		continue;
 	}
@@ -478,7 +504,9 @@ for await (const row of csvRows(downloadedPaths.measureWeights)) {
 		description: measure.Measure_Description_and_Unit_EN,
 		gram_weight: gramWeight,
 		is_household_measure: measureTypeKey === "6" && gramWeight > 0,
-		source_updated_at: dateOrNull(row.Measure_Weight_Conversion_Last_Updated_Date),
+		source_updated_at: dateOrNull(
+			row.Measure_Weight_Conversion_Last_Updated_Date,
+		),
 		metadata: {
 			descriptionFr: textOrNull(measure.Measure_Description_and_Unit_FR),
 		},

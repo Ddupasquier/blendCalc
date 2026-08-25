@@ -18,27 +18,31 @@ export const readNutritionCompletenessCatalog = async (
 		: supabase
 				.from("nutrient_definitions")
 				.select("nutrient_id, nutrient_name, default_unit_name");
-	const [profilesResult, profileNutrientsResult, definitionsResult, disclosureProfilesResult] =
-		await Promise.all([
-			supabase
-				.from("nutrition_completeness_profiles")
-				.select(
-					"key, display_name, food_scope, region_code, complete_label, resolved_label, partial_label, limited_label, description, source_key, source_reference, is_default",
-				)
-				.eq("enabled", true)
-				.order("food_scope", { ascending: true })
-				.order("region_code", { ascending: true })
-				.order("key", { ascending: true }),
-			supabase
-				.from("nutrition_completeness_profile_nutrients")
-				.select(
-					"profile_key, nutrient_id, requirement_level, display_order, reason",
-				)
-				.order("profile_key", { ascending: true })
-				.order("display_order", { ascending: true }),
-			definitionsPromise,
-			readProductRegulatoryDisclosureProfiles(supabase),
-		]);
+	const [
+		profilesResult,
+		profileNutrientsResult,
+		definitionsResult,
+		disclosureProfilesResult,
+	] = await Promise.all([
+		supabase
+			.from("nutrition_completeness_profiles")
+			.select(
+				"key, assessment_policy_key, display_name, food_scope, region_code, complete_label, resolved_label, partial_label, limited_label, description, source_key, source_reference, is_default, exact_source_score, mapped_source_score, derived_source_score, missing_source_score, required_nutrient_weight, recommended_nutrient_weight, partial_minimum_ratio",
+			)
+			.eq("enabled", true)
+			.order("food_scope", { ascending: true })
+			.order("region_code", { ascending: true })
+			.order("key", { ascending: true }),
+		supabase
+			.from("nutrition_completeness_profile_nutrients")
+			.select(
+				"profile_key, nutrient_id, requirement_level, display_order, reason",
+			)
+			.order("profile_key", { ascending: true })
+			.order("display_order", { ascending: true }),
+		definitionsPromise,
+		readProductRegulatoryDisclosureProfiles(supabase),
+	]);
 
 	if (profilesResult.error) throw profilesResult.error;
 	if (profileNutrientsResult.error) throw profileNutrientsResult.error;
@@ -96,7 +100,9 @@ export const readNutritionCompletenessCatalog = async (
 			);
 		}
 		const nutrients = nutrientsByProfile.get(row.key) ?? [];
-		if (!nutrients.some((nutrient) => nutrient.requirementLevel === "required")) {
+		if (
+			!nutrients.some((nutrient) => nutrient.requirementLevel === "required")
+		) {
 			throw new Error(
 				`Nutrition completeness profile ${row.key} has no required nutrients.`,
 			);
@@ -104,6 +110,7 @@ export const readNutritionCompletenessCatalog = async (
 
 		return {
 			key: row.key,
+			assessmentPolicyKey: row.assessment_policy_key,
 			displayName: row.display_name,
 			foodScope: row.food_scope as NutritionCompletenessProfileScope,
 			regionCode: row.region_code,
@@ -115,12 +122,21 @@ export const readNutritionCompletenessCatalog = async (
 			sourceKey: row.source_key,
 			sourceReference: row.source_reference,
 			isDefault: row.is_default,
+			exactSourceScore: row.exact_source_score,
+			mappedSourceScore: row.mapped_source_score,
+			derivedSourceScore: row.derived_source_score,
+			missingSourceScore: row.missing_source_score,
+			requiredNutrientWeight: row.required_nutrient_weight,
+			recommendedNutrientWeight: row.recommended_nutrient_weight,
+			partialMinimumRatio: row.partial_minimum_ratio,
 			nutrients,
 		} satisfies NutritionCompletenessProfile;
 	});
 
 	if (profiles.length === 0) {
-		throw new Error("No enabled nutrition completeness profiles are available.");
+		throw new Error(
+			"No enabled nutrition completeness profiles are available.",
+		);
 	}
 
 	const regulatoryDisclosureProfiles = disclosureProfilesResult;

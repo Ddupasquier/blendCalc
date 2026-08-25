@@ -61,9 +61,9 @@ export const buildProductSubmissionReviewFlags = ({
 		...requestedFlags,
 		...(existingComparison
 			? [
-				"Barcode exists in the active shared catalog, but the submitted label data differs. Review as a catalog update request.",
-				...existingComparison.issues,
-			]
+					"Barcode exists in the active shared catalog, but the submitted label data differs. Review as a catalog update request.",
+					...existingComparison.issues,
+				]
 			: []),
 		...(sourceComparison?.issues ?? []),
 	]);
@@ -105,27 +105,29 @@ export const prepareCatalogSubmissionReview = (input: {
 	labelObservedAt: string;
 }): PreparedCatalogSubmissionReview => {
 	const {
+		resolutionPolicy,
 		usdaDraft,
 		openFoodFactsDraft,
 		mergedDraft: matchedDraft,
 	} = input.sourceAssessment;
 	const canonicalCategory = input.existingComparison
 		? input.selectedCategory
-		: matchedDraft?.categoryResolution ?? input.selectedCategory;
+		: (matchedDraft?.categoryResolution ?? input.selectedCategory);
 	const canonicalSubmissionFood = applyCanonicalFoodCategory(
 		input.submissionFood,
 		canonicalCategory,
 	);
 	const sourceComparison = matchedDraft
 		? compareCatalogSubmissionToExistingProduct(
-			canonicalSubmissionFood,
-			createCatalogFoodFromDraft(matchedDraft, canonicalCategory),
-		)
+				canonicalSubmissionFood,
+				createCatalogFoodFromDraft(matchedDraft, canonicalCategory),
+				resolutionPolicy,
+			)
 		: null;
-	const sourceMismatchName = !input.existingComparison &&
-			sourceComparison?.hasBlockingIdentityMismatch
-		? matchedDraft?.name
-		: undefined;
+	const sourceMismatchName =
+		!input.existingComparison && sourceComparison?.hasBlockingIdentityMismatch
+			? matchedDraft?.name
+			: undefined;
 	const reviewFlags = buildProductSubmissionReviewFlags({
 		requestedFlags: input.requestedReviewFlags,
 		existingComparison: input.existingComparison,
@@ -133,51 +135,51 @@ export const prepareCatalogSubmissionReview = (input: {
 	});
 	const needsSourceComparisonReview = reviewFlags.length > 0;
 	const catalogUpdateSummary =
-		input.existingComparison &&
-		input.existingCatalogFood &&
-		input.updateTarget
+		input.existingComparison && input.existingCatalogFood && input.updateTarget
 			? createCatalogUpdateSummary({
-				comparison: input.existingComparison,
-				baseRevisionNumber: input.updateTarget.baseRevisionNumber,
-				observedAt: input.labelObservedAt,
-				sourceChecks: [
-					createCatalogUpdateSourceCheck({
-						source: "usda",
-						status: input.sourceAssessment.usdaLookupStatus,
-						checkedAt: input.labelObservedAt,
-						sourceReference: usdaDraft?.sourceReference,
-						sourceFood: usdaDraft
-							? createCatalogFoodFromDraft(
-								usdaDraft,
-								usdaDraft.categoryResolution ?? input.selectedCategory,
-							)
-							: null,
-						submittedFood: canonicalSubmissionFood,
-						currentFood: input.existingCatalogFood,
-					}),
-					createCatalogUpdateSourceCheck({
-						source: "open-food-facts",
-						status: input.sourceAssessment.openFoodFactsLookupStatus,
-						checkedAt: input.labelObservedAt,
-						sourceReference: openFoodFactsDraft?.sourceReference,
-						sourceFood: openFoodFactsDraft
-							? createCatalogFoodFromDraft(
-								openFoodFactsDraft,
-								openFoodFactsDraft.categoryResolution ??
-									input.selectedCategory,
-							)
-							: null,
-						submittedFood: canonicalSubmissionFood,
-						currentFood: input.existingCatalogFood,
-					}),
-				],
-			})
+					comparison: input.existingComparison,
+					baseRevisionNumber: input.updateTarget.baseRevisionNumber,
+					observedAt: input.labelObservedAt,
+					sourceChecks: [
+						createCatalogUpdateSourceCheck({
+							source: "usda",
+							status: input.sourceAssessment.usdaLookupStatus,
+							checkedAt: input.labelObservedAt,
+							sourceReference: usdaDraft?.sourceReference,
+							sourceFood: usdaDraft
+								? createCatalogFoodFromDraft(
+										usdaDraft,
+										usdaDraft.categoryResolution ?? input.selectedCategory,
+									)
+								: null,
+							submittedFood: canonicalSubmissionFood,
+							currentFood: input.existingCatalogFood,
+							resolutionPolicy,
+						}),
+						createCatalogUpdateSourceCheck({
+							source: "open-food-facts",
+							status: input.sourceAssessment.openFoodFactsLookupStatus,
+							checkedAt: input.labelObservedAt,
+							sourceReference: openFoodFactsDraft?.sourceReference,
+							sourceFood: openFoodFactsDraft
+								? createCatalogFoodFromDraft(
+										openFoodFactsDraft,
+										openFoodFactsDraft.categoryResolution ??
+											input.selectedCategory,
+									)
+								: null,
+							submittedFood: canonicalSubmissionFood,
+							currentFood: input.existingCatalogFood,
+							resolutionPolicy,
+						}),
+					],
+				})
 			: null;
 	const hasSourceMatchedImageEvidence = Boolean(
 		matchedDraft &&
-			!needsSourceComparisonReview &&
-			!canonicalSubmissionFood.image?.imageUrl &&
-			input.evidencePaths.front,
+		!needsSourceComparisonReview &&
+		!canonicalSubmissionFood.image?.imageUrl &&
+		input.evidencePaths.front,
 	);
 	const evidenceComplete = hasSourceMatchedImageEvidence
 		? true
@@ -199,11 +201,12 @@ export const prepareCatalogSubmissionReview = (input: {
 	);
 	const verificationBundle = matchedDraft
 		? buildCombinedSourceCatalogBundle(
-			canonicalSubmissionFood,
-			matchedDraft,
-			sourceDrafts,
-			canonicalCategory,
-		)
+				canonicalSubmissionFood,
+				matchedDraft,
+				sourceDrafts,
+				canonicalCategory,
+				resolutionPolicy,
+			)
 		: null;
 	const report: CatalogSubmissionValidationReport = {
 		valid: true,

@@ -3,12 +3,10 @@ import {
 	productNamesAreUnrelated,
 	productNamesDiffer,
 } from "$lib/utils/products/productIdentity";
+import type { ProductResolutionPolicy } from "$lib/utils/products/productResolutionPolicy";
 
 export type ProductDifferenceValue =
-	| string
-	| number
-	| Record<string, string | number>
-	| null;
+	string | number | Record<string, string | number> | null;
 
 export type NormalizedProductDifference = {
 	field: string;
@@ -24,6 +22,7 @@ export type NormalizedProductDifference = {
 };
 
 export type ProductDifferenceOptions = {
+	resolutionPolicy: ProductResolutionPolicy;
 	submittedNutrientIds?: ReadonlySet<number>;
 	previousNutrientIds?: ReadonlySet<number>;
 	includeAddedNutrients?: boolean;
@@ -36,12 +35,17 @@ export const normalizeComparisonText = (value?: string | null) =>
 		.replace(/[^a-z0-9]+/g, " ")
 		.trim();
 
-export const getRelativeDifference = (left: number, right: number) => {
+export const getRelativeDifference = (
+	left: number,
+	right: number,
+	minimumRatioDenominator: number,
+) => {
 	const absoluteDifference = Math.abs(left - right);
 	return {
 		absoluteDifference,
 		differenceRatio:
-			absoluteDifference / Math.max(Math.abs(left), Math.abs(right), 0.001),
+			absoluteDifference /
+			Math.max(Math.abs(left), Math.abs(right), minimumRatioDenominator),
 	};
 };
 
@@ -50,7 +54,8 @@ const getChangeType = (
 	submittedValue: ProductDifferenceValue,
 ) => {
 	if (previousValue === null || previousValue === "") return "added" as const;
-	if (submittedValue === null || submittedValue === "") return "removed" as const;
+	if (submittedValue === null || submittedValue === "")
+		return "removed" as const;
 	return "changed" as const;
 };
 
@@ -64,13 +69,16 @@ const getServingWeight = (food: FoodItem) =>
 	food.customServingWeightGrams ?? food.servingSize ?? null;
 
 const normalizeTextList = (values?: string[]) =>
-	[...new Set((values ?? []).map(normalizeComparisonText).filter(Boolean))].sort();
+	[
+		...new Set((values ?? []).map(normalizeComparisonText).filter(Boolean)),
+	].sort();
 
 const addTextDifference = (
 	differences: NormalizedProductDifference[],
 	field: string,
 	submittedValue: string | null,
 	previousValue: string | null,
+	minimumRelatedTokenOverlap: number,
 ) => {
 	if (!productNamesDiffer(submittedValue, previousValue)) return;
 	differences.push({
@@ -78,7 +86,11 @@ const addTextDifference = (
 		changeType: getChangeType(previousValue, submittedValue),
 		previousValue,
 		submittedValue,
-		textRelationship: productNamesAreUnrelated(submittedValue, previousValue)
+		textRelationship: productNamesAreUnrelated(
+			submittedValue,
+			previousValue,
+			minimumRelatedTokenOverlap,
+		)
 			? "unrelated"
 			: "different",
 	});
@@ -103,13 +115,12 @@ const addListDifference = (
 	});
 };
 
-const getNutrientMap = (
-	food: FoodItem,
-	includedIds?: ReadonlySet<number>,
-) =>
+const getNutrientMap = (food: FoodItem, includedIds?: ReadonlySet<number>) =>
 	new Map(
 		food.foodNutrients
-			.filter((nutrient) => !includedIds || includedIds.has(nutrient.nutrientId))
+			.filter(
+				(nutrient) => !includedIds || includedIds.has(nutrient.nutrientId),
+			)
 			.map((nutrient) => [nutrient.nutrientId, nutrient]),
 	);
 
@@ -121,7 +132,7 @@ const getNutrientValue = (nutrient?: FoodNutrient) =>
 export const compareNormalizedFoods = (
 	submittedFood: FoodItem,
 	previousFood: FoodItem,
-	options: ProductDifferenceOptions = {},
+	options: ProductDifferenceOptions,
 ): NormalizedProductDifference[] => {
 	const differences: NormalizedProductDifference[] = [];
 
@@ -130,6 +141,7 @@ export const compareNormalizedFoods = (
 		"productName",
 		submittedFood.description,
 		previousFood.description,
+		options.resolutionPolicy.minimumRelatedNameTokenOverlap,
 	);
 
 	if (submittedFood.brandOwner?.trim()) {
@@ -138,6 +150,7 @@ export const compareNormalizedFoods = (
 			"brandOwner",
 			submittedFood.brandOwner.trim(),
 			previousFood.brandOwner?.trim() || null,
+			options.resolutionPolicy.minimumRelatedNameTokenOverlap,
 		);
 	}
 
@@ -146,6 +159,7 @@ export const compareNormalizedFoods = (
 		"category",
 		getComparableCategoryText(submittedFood) || null,
 		getComparableCategoryText(previousFood) || null,
+		options.resolutionPolicy.minimumRelatedNameTokenOverlap,
 	);
 
 	const submittedServing = getServingWeight(submittedFood);
@@ -161,7 +175,11 @@ export const compareNormalizedFoods = (
 			submittedValue: submittedServing,
 			...(previousServing === null
 				? {}
-				: getRelativeDifference(submittedServing, previousServing)),
+				: getRelativeDifference(
+						submittedServing,
+						previousServing,
+						options.resolutionPolicy.numericDifferenceRatioFloor,
+					)),
 		});
 	}
 
@@ -171,6 +189,7 @@ export const compareNormalizedFoods = (
 			"householdServing",
 			submittedFood.householdServingFullText.trim(),
 			previousFood.householdServingFullText?.trim() || null,
+			options.resolutionPolicy.minimumRelatedNameTokenOverlap,
 		);
 	}
 
@@ -180,6 +199,7 @@ export const compareNormalizedFoods = (
 			"ingredients",
 			submittedFood.ingredients.trim(),
 			previousFood.ingredients?.trim() || null,
+			options.resolutionPolicy.minimumRelatedNameTokenOverlap,
 		);
 	}
 
@@ -224,6 +244,7 @@ export const compareNormalizedFoods = (
 		const numericDifference = getRelativeDifference(
 			submittedNutrient.value,
 			previousNutrient.value,
+			options.resolutionPolicy.numericDifferenceRatioFloor,
 		);
 		if (!unitMismatch && numericDifference.absoluteDifference === 0) continue;
 		differences.push({

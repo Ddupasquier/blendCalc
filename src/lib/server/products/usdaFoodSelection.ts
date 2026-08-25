@@ -1,18 +1,15 @@
 import { normalizeBarcode } from "$lib/utils/barcode/barcode";
 import type { FoodItem } from "$lib/utils/food/types";
 import { createIngredientSearchRelevanceComparator } from "$lib/utils/ingredients/ingredientSearchRelevance";
+import type { ProductResolutionPolicy } from "$lib/utils/products/productResolutionPolicy";
 
-const USDA_GENERIC_DATA_TYPE_PRIORITY: Record<string, number> = {
-	foundation: 0,
-	"sr legacy": 1,
-	"survey (fndds)": 2,
-	branded: 3,
-};
+const normalizeDataType = (value?: string) =>
+	value?.trim().toLocaleLowerCase() ?? "";
 
-const normalizeDataType = (value?: string) => value?.trim().toLocaleLowerCase() ?? "";
-
-const getDataTypePriority = (food: FoodItem) =>
-	USDA_GENERIC_DATA_TYPE_PRIORITY[normalizeDataType(food.dataType)] ?? 100;
+const getDataTypePriority = (food: FoodItem, policy: ProductResolutionPolicy) =>
+	policy.rankValues
+		.get("usda-generic-data-type")
+		?.get(normalizeDataType(food.dataType)) ?? Number.MAX_SAFE_INTEGER;
 
 const parseSourceDate = (value?: string) => {
 	const milliseconds = value ? Date.parse(value) : Number.NaN;
@@ -28,7 +25,8 @@ const getNewestSourceDate = (food: FoodItem) =>
 	);
 
 const compareNewestUsdaRecord = (left: FoodItem, right: FoodItem) =>
-	Number(Boolean(left.discontinuedDate)) - Number(Boolean(right.discontinuedDate)) ||
+	Number(Boolean(left.discontinuedDate)) -
+		Number(Boolean(right.discontinuedDate)) ||
 	getNewestSourceDate(right) - getNewestSourceDate(left) ||
 	parseSourceDate(right.modifiedDate) - parseSourceDate(left.modifiedDate) ||
 	(right.foodNutrients?.length ?? 0) - (left.foodNutrients?.length ?? 0) ||
@@ -41,29 +39,34 @@ export const selectPreferredUsdaBarcodeFood = (
 	const canonicalBarcode = normalizeBarcode(barcode);
 	if (!canonicalBarcode) return null;
 
-	return [...foods]
-		.filter(
-			(food) =>
-				normalizeDataType(food.dataType) === "branded" &&
-				food.gtinUpc &&
-				normalizeBarcode(food.gtinUpc) === canonicalBarcode,
-		)
-		.sort(compareNewestUsdaRecord)[0] ?? null;
+	return (
+		[...foods]
+			.filter(
+				(food) =>
+					normalizeDataType(food.dataType) === "branded" &&
+					food.gtinUpc &&
+					normalizeBarcode(food.gtinUpc) === canonicalBarcode,
+			)
+			.sort(compareNewestUsdaRecord)[0] ?? null
+	);
 };
 
 export const rankUsdaGenericFoods = (
 	foods: readonly FoodItem[],
 	query: string,
+	policy: ProductResolutionPolicy,
 ) => {
 	const compareRelevance = createIngredientSearchRelevanceComparator(query);
 	return foods
 		.map((food, originalIndex) => ({ food, originalIndex }))
-		.sort((left, right) =>
-			compareRelevance(left.food, right.food) ||
-			getDataTypePriority(left.food) - getDataTypePriority(right.food) ||
-			left.food.description.localeCompare(right.food.description) ||
-			left.food.fdcId - right.food.fdcId ||
-			left.originalIndex - right.originalIndex,
+		.sort(
+			(left, right) =>
+				compareRelevance(left.food, right.food) ||
+				getDataTypePriority(left.food, policy) -
+					getDataTypePriority(right.food, policy) ||
+				left.food.description.localeCompare(right.food.description) ||
+				left.food.fdcId - right.food.fdcId ||
+				left.originalIndex - right.originalIndex,
 		)
 		.map(({ food }) => food);
 };

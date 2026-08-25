@@ -15,6 +15,7 @@ import {
 } from "$lib/server/products/sourceMetrics.server";
 import { summarizeUsdaFoodQuality } from "$lib/utils/food/sources/sourceQuality";
 import { fetchCachedProductApiJson } from "$lib/server/products/productApiRequests.server";
+import { getProductResolutionPolicyIfAvailable } from "$lib/server/products/productResolutionPolicy.server";
 
 const FDC_BASE_URL = "https://api.nal.usda.gov/fdc/v1";
 const SEARCH_CACHE_MILLISECONDS = 12 * 60 * 60 * 1000;
@@ -70,6 +71,7 @@ const searchUsdaFoodsWithTrace = async (
 ): Promise<FoodItem[]> => {
 	const normalizedQuery = query.trim().replace(/\s+/g, " ");
 	if (!normalizedQuery) return [];
+	const resolutionPolicy = await getProductResolutionPolicyIfAvailable();
 	const exactQuery = buildUsdaExactSearchQuery(normalizedQuery);
 	const partialQuery = buildUsdaPartialSearchQuery(normalizedQuery);
 	if (!exactQuery || !partialQuery) return [];
@@ -77,14 +79,15 @@ const searchUsdaFoodsWithTrace = async (
 		await getProductReferenceCatalog(),
 		"usda",
 	);
-	const addProvenance = (foods: FoodItem[]) => foods.map((food) => ({
-		...food,
-		sourceKey: usdaSource.key,
-		sourceLabel: usdaSource.displayName,
-		sourceDataType: food.dataType,
-		sourcePublishedDate: food.publishedDate ?? food.publicationDate,
-		sourceModifiedDate: food.modifiedDate,
-	}));
+	const addProvenance = (foods: FoodItem[]) =>
+		foods.map((food) => ({
+			...food,
+			sourceKey: usdaSource.key,
+			sourceLabel: usdaSource.displayName,
+			sourceDataType: food.dataType,
+			sourcePublishedDate: food.publishedDate ?? food.publicationDate,
+			sourceModifiedDate: food.modifiedDate,
+		}));
 
 	const exactData = await fetchUsdaJson<FdcSearchResponse>({
 		path: "/foods/search",
@@ -106,8 +109,11 @@ const searchUsdaFoodsWithTrace = async (
 		(exactData.foods ?? []).map(normalizeFdcFood),
 	);
 	if (exactFoods.length > 0) {
-		return rankUsdaGenericFoods(exactFoods, normalizedQuery)
-			.slice(0, SEARCH_RESULT_LIMIT);
+		return (
+			resolutionPolicy
+				? rankUsdaGenericFoods(exactFoods, normalizedQuery, resolutionPolicy)
+				: exactFoods
+		).slice(0, SEARCH_RESULT_LIMIT);
 	}
 
 	const partialData = await fetchUsdaJson<FdcSearchResponse>({
@@ -126,9 +132,13 @@ const searchUsdaFoodsWithTrace = async (
 		ttlMilliseconds: SEARCH_CACHE_MILLISECONDS,
 		trace,
 	});
-	return rankUsdaGenericFoods(
-		addProvenance((partialData.foods ?? []).map(normalizeFdcFood)),
-		normalizedQuery,
+	const partialFoods = addProvenance(
+		(partialData.foods ?? []).map(normalizeFdcFood),
+	);
+	return (
+		resolutionPolicy
+			? rankUsdaGenericFoods(partialFoods, normalizedQuery, resolutionPolicy)
+			: partialFoods
 	).slice(0, SEARCH_RESULT_LIMIT);
 };
 
@@ -189,7 +199,10 @@ export const getUsdaFoodById = async (
 		trace,
 	});
 	const normalizedFood = normalizeFdcFood(food);
-	const source = getProductDataSource(await getProductReferenceCatalog(), "usda");
+	const source = getProductDataSource(
+		await getProductReferenceCatalog(),
+		"usda",
+	);
 	return {
 		...normalizedFood,
 		sourceKey: source.key,

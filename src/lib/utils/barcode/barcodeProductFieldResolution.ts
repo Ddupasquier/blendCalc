@@ -5,8 +5,11 @@ import type {
 	FoodFieldSource,
 	FoodTrackedField,
 } from "$lib/utils/food/types";
-
-export const BARCODE_PRODUCT_FIELD_RESOLUTION_POLICY_VERSION = 1;
+import {
+	getProductResolutionRank,
+	getProductResolutionScoringWeight,
+	type ProductResolutionPolicy,
+} from "$lib/utils/products/productResolutionPolicy";
 
 const TRACKED_FIELDS: FoodTrackedField[] = [
 	"productName",
@@ -29,18 +32,6 @@ const TRACKED_FIELDS: FoodTrackedField[] = [
 	"sourceMetadata",
 ];
 
-const CONFIDENCE_RANK: Record<
-	NonNullable<FoodFieldSource["confidence"]>,
-	number
-> = {
-	unknown: 0,
-	imported: 1,
-	"user-reported": 2,
-	"source-verified": 3,
-	corroborated: 4,
-	"moderator-reviewed": 5,
-};
-
 const toTimestamp = (value?: string) => {
 	if (!value) return 0;
 	const timestamp = Date.parse(value);
@@ -53,78 +44,102 @@ const getDraftTimestamp = (draft: BarcodeProductDraft) =>
 		toTimestamp(draft.sourcePublishedDate),
 	);
 
-const getArrayScore = (values?: unknown[]) => values?.length ?? 0;
+const getArrayScore = (values: unknown[] | undefined, weight: number) =>
+	(values?.length ?? 0) * weight;
 
 const getFieldCompleteness = (
 	draft: BarcodeProductDraft,
 	field: FoodTrackedField,
+	policy: ProductResolutionPolicy,
 ) => {
+	const weight = (metricKey: string) =>
+		getProductResolutionScoringWeight(policy, `field:${field}`, metricKey);
 	switch (field) {
 		case "productName":
-			return draft.name.trim().length;
+			return draft.name.trim().length * weight("text-character");
 		case "brandOwner":
-			return draft.brandOwner.trim().length;
+			return draft.brandOwner.trim().length * weight("text-character");
 		case "image":
 			return draft.image?.imageUrl
-				? 1 + Number(Boolean(draft.image.thumbnailUrl))
+				? weight("primary-image") +
+						Number(Boolean(draft.image.thumbnailUrl)) *
+							weight("thumbnail-image")
 				: 0;
 		case "categories":
-			return getArrayScore(draft.categories) +
-				(draft.categoryResolution ? 10 : 0) +
-				Number(Boolean(draft.resolvedCategory));
-			case "serving":
-				return Number(draft.hasSourceServing === true) * 10 +
-					Number(draft.servingWeightGrams > 0) +
-					Number(Boolean(draft.servingLabel.trim())) +
-					Number(Boolean(draft.volumeEquivalent)) +
-					Number(Boolean(draft.serving?.origin && draft.serving.origin !== "unknown"));
+			return (
+				getArrayScore(draft.categories, weight("source-item")) +
+				Number(Boolean(draft.categoryResolution)) *
+					weight("canonical-resolution") +
+				Number(Boolean(draft.resolvedCategory)) * weight("canonical-value")
+			);
+		case "serving":
+			return (
+				Number(draft.hasSourceServing === true) * weight("source-serving") +
+				Number(draft.servingWeightGrams > 0) * weight("positive-weight") +
+				Number(Boolean(draft.servingLabel.trim())) * weight("display-label") +
+				Number(Boolean(draft.volumeEquivalent)) * weight("volume-equivalent") +
+				Number(
+					Boolean(draft.serving?.origin && draft.serving.origin !== "unknown"),
+				) *
+					weight("known-origin")
+			);
 		case "ingredients":
-			return (draft.ingredients?.trim().length ?? 0) +
-				getArrayScore(draft.ingredientList) * 10;
+			return (
+				(draft.ingredients?.trim().length ?? 0) * weight("text-character") +
+				getArrayScore(draft.ingredientList, weight("structured-item"))
+			);
 		case "allergens":
-			return getArrayScore(draft.allergens);
+			return getArrayScore(draft.allergens, weight("source-item"));
 		case "traces":
-			return getArrayScore(draft.traces);
+			return getArrayScore(draft.traces, weight("source-item"));
 		case "precautionaryStatements":
-			return getArrayScore(draft.precautionaryStatements);
+			return getArrayScore(
+				draft.precautionaryStatements,
+				weight("source-item"),
+			);
 		case "dietaryTags":
-			return getArrayScore(draft.dietaryTags);
+			return getArrayScore(draft.dietaryTags, weight("source-item"));
 		case "labels":
-			return getArrayScore(draft.labels);
+			return getArrayScore(draft.labels, weight("source-item"));
 		case "structuredIngredients":
-			return getArrayScore(draft.structuredIngredients);
+			return getArrayScore(draft.structuredIngredients, weight("source-item"));
 		case "ingredientAnalysis":
 			return draft.ingredientAnalysis
 				? Object.values(draft.ingredientAnalysis).filter((value) =>
-					Array.isArray(value) ? value.length > 0 : value !== undefined
-				).length
+						Array.isArray(value) ? value.length > 0 : value !== undefined,
+					).length * weight("populated-property")
 				: 0;
 		case "additives":
-			return getArrayScore(draft.additives);
+			return getArrayScore(draft.additives, weight("source-item"));
 		case "package":
 			return draft.packageQuantity
 				? Object.values(draft.packageQuantity).filter(
-					(value) => value !== undefined && value !== null && value !== "",
-				).length
+						(value) => value !== undefined && value !== null && value !== "",
+					).length * weight("populated-property")
 				: 0;
 		case "alcoholByVolume":
 			return draft.alcoholByVolume &&
 				Number.isFinite(draft.alcoholByVolume.percent) &&
 				draft.alcoholByVolume.percent >= 0
-				? 1
+				? weight("reported-value")
 				: 0;
 		case "regulatoryDisclosure":
-			return draft.regulatoryDisclosure?.profileKey.trim() ? 1 : 0;
+			return draft.regulatoryDisclosure?.profileKey.trim()
+				? weight("profile-key")
+				: 0;
 		case "sourceMetadata":
 			return draft.sourceMetadata
 				? Object.values(draft.sourceMetadata).filter((value) =>
-					Array.isArray(value)
-						? value.length > 0
-						: value !== undefined && value !== null && value !== ""
-				).length
+						Array.isArray(value)
+							? value.length > 0
+							: value !== undefined && value !== null && value !== "",
+					).length * weight("populated-property")
 				: 0;
 		case "nutrition":
-			return draft.nutrients.filter(isValidNutrient).length;
+			return getArrayScore(
+				draft.nutrients.filter(isValidNutrient),
+				weight("source-item"),
+			);
 	}
 };
 
@@ -137,7 +152,8 @@ const isValidNutrient = (nutrient: FoodNutrient) =>
 const hasFieldValue = (
 	draft: BarcodeProductDraft,
 	field: FoodTrackedField,
-) => getFieldCompleteness(draft, field) > 0;
+	policy: ProductResolutionPolicy,
+) => getFieldCompleteness(draft, field, policy) > 0;
 
 type FieldCandidate = {
 	draft: BarcodeProductDraft;
@@ -146,10 +162,22 @@ type FieldCandidate = {
 	timestamp: number;
 };
 
-const compareCandidates = (left: FieldCandidate, right: FieldCandidate) => {
+const compareCandidates = (
+	left: FieldCandidate,
+	right: FieldCandidate,
+	policy: ProductResolutionPolicy,
+) => {
 	const confidenceDifference =
-		CONFIDENCE_RANK[right.source.confidence ?? "unknown"] -
-		CONFIDENCE_RANK[left.source.confidence ?? "unknown"];
+		getProductResolutionRank(
+			policy,
+			"field-confidence",
+			right.source.confidence ?? "unknown",
+		) -
+		getProductResolutionRank(
+			policy,
+			"field-confidence",
+			left.source.confidence ?? "unknown",
+		);
 	if (confidenceDifference !== 0) return confidenceDifference;
 
 	const completenessDifference = right.completeness - left.completeness;
@@ -166,20 +194,23 @@ const compareCandidates = (left: FieldCandidate, right: FieldCandidate) => {
 const selectFieldCandidate = (
 	drafts: BarcodeProductDraft[],
 	field: FoodTrackedField,
+	policy: ProductResolutionPolicy,
 ) =>
 	drafts
 		.flatMap((draft): FieldCandidate[] => {
 			const source = draft.fieldProvenance?.[field];
-			return source && hasFieldValue(draft, field)
-				? [{
-					draft,
-					source,
-					completeness: getFieldCompleteness(draft, field),
-					timestamp: getDraftTimestamp(draft),
-				}]
+			return source && hasFieldValue(draft, field, policy)
+				? [
+						{
+							draft,
+							source,
+							completeness: getFieldCompleteness(draft, field, policy),
+							timestamp: getDraftTimestamp(draft),
+						},
+					]
 				: [];
 		})
-		.sort(compareCandidates)[0];
+		.sort((left, right) => compareCandidates(left, right, policy))[0];
 
 const applySelectedField = (
 	result: BarcodeProductDraft,
@@ -208,10 +239,10 @@ const applySelectedField = (
 			return {
 				...result,
 				servingLabel: selected.servingLabel,
-					servingWeightGrams: selected.servingWeightGrams,
-					hasSourceServing: selected.hasSourceServing,
-					serving: selected.serving,
-					volumeEquivalent: selected.volumeEquivalent,
+				servingWeightGrams: selected.servingWeightGrams,
+				hasSourceServing: selected.hasSourceServing,
+				serving: selected.serving,
+				volumeEquivalent: selected.volumeEquivalent,
 			};
 		case "ingredients":
 			return {
@@ -294,10 +325,19 @@ const isNutrientSource = (
 const compareNutrientCandidates = (
 	left: NutrientCandidate,
 	right: NutrientCandidate,
+	policy: ProductResolutionPolicy,
 ) => {
 	const confidenceDifference =
-		CONFIDENCE_RANK[right.source.confidence ?? "unknown"] -
-		CONFIDENCE_RANK[left.source.confidence ?? "unknown"];
+		getProductResolutionRank(
+			policy,
+			"field-confidence",
+			right.source.confidence ?? "unknown",
+		) -
+		getProductResolutionRank(
+			policy,
+			"field-confidence",
+			left.source.confidence ?? "unknown",
+		);
 	if (confidenceDifference !== 0) return confidenceDifference;
 
 	const reportedDifference =
@@ -316,6 +356,7 @@ const compareNutrientCandidates = (
 const resolveNutrients = (
 	drafts: BarcodeProductDraft[],
 	servingWeightGrams: number,
+	policy: ProductResolutionPolicy,
 ) => {
 	const candidatesById = new Map<number, NutrientCandidate[]>();
 	for (const draft of drafts) {
@@ -323,10 +364,10 @@ const resolveNutrients = (
 			const fieldSource = draft.fieldProvenance?.nutrition;
 			const source = nutrient.source
 				? {
-					source: nutrient.source,
-					sourceReference: nutrient.sourceReference,
-					confidence: nutrient.confidence ?? "unknown",
-				}
+						source: nutrient.source,
+						sourceReference: nutrient.sourceReference,
+						confidence: nutrient.confidence ?? "unknown",
+					}
 				: fieldSource && isNutrientSource(fieldSource.source)
 					? { ...fieldSource, source: fieldSource.source }
 					: undefined;
@@ -343,24 +384,25 @@ const resolveNutrients = (
 	}
 
 	const selected = [...candidatesById.values()]
-		.map((candidates) => candidates.sort(compareNutrientCandidates)[0])
+		.map(
+			(candidates) =>
+				candidates.sort((left, right) =>
+					compareNutrientCandidates(left, right, policy),
+				)[0],
+		)
 		.filter((candidate): candidate is NutrientCandidate => Boolean(candidate))
-		.sort((left, right) =>
-			left.nutrient.nutrientId - right.nutrient.nutrientId
+		.sort(
+			(left, right) => left.nutrient.nutrientId - right.nutrient.nutrientId,
 		);
 	const nutrients = selected.map(({ draft, nutrient, source }) => ({
-		...scaleNutrient(
-			nutrient,
-			draft.servingWeightGrams,
-			servingWeightGrams,
-		),
+		...scaleNutrient(nutrient, draft.servingWeightGrams, servingWeightGrams),
 		source: source.source,
 		sourceReference: source.sourceReference,
 		confidence: source.confidence ?? "unknown",
 	}));
 	const reportedNutrientIds = selected
 		.filter(({ draft, nutrient }) =>
-			draft.reportedNutrientIds.includes(nutrient.nutrientId)
+			draft.reportedNutrientIds.includes(nutrient.nutrientId),
 		)
 		.map(({ nutrient }) => nutrient.nutrientId);
 	const nutrientSources = new Map(
@@ -375,23 +417,31 @@ const resolveNutrients = (
 		reportedNutrientIds,
 		fieldSource:
 			nutrientSources.size === 1
-				? nutrientSources.values().next().value as FoodFieldSource
+				? (nutrientSources.values().next().value as FoodFieldSource)
 				: undefined,
 	};
 };
 
-const getDraftCompleteness = (draft: BarcodeProductDraft) =>
+const getDraftCompleteness = (
+	draft: BarcodeProductDraft,
+	policy: ProductResolutionPolicy,
+) =>
 	TRACKED_FIELDS.reduce(
-		(total, field) => total + Number(hasFieldValue(draft, field)),
-		Number(Boolean(draft.name.trim())) + Number(Boolean(draft.brandOwner.trim())),
+		(total, field) => total + getFieldCompleteness(draft, field, policy),
+		Number(Boolean(draft.name.trim())) +
+			Number(Boolean(draft.brandOwner.trim())),
 	);
 
-const selectBaseDraft = (drafts: BarcodeProductDraft[]) =>
+const selectBaseDraft = (
+	drafts: BarcodeProductDraft[],
+	policy: ProductResolutionPolicy,
+) =>
 	[...drafts].sort((left, right) => {
 		const completenessDifference =
-			getDraftCompleteness(right) - getDraftCompleteness(left);
+			getDraftCompleteness(right, policy) - getDraftCompleteness(left, policy);
 		if (completenessDifference !== 0) return completenessDifference;
-		const timestampDifference = getDraftTimestamp(right) - getDraftTimestamp(left);
+		const timestampDifference =
+			getDraftTimestamp(right) - getDraftTimestamp(left);
 		if (timestampDifference !== 0) return timestampDifference;
 		return `${left.source}:${left.sourceReference ?? ""}`.localeCompare(
 			`${right.source}:${right.sourceReference ?? ""}`,
@@ -400,25 +450,25 @@ const selectBaseDraft = (drafts: BarcodeProductDraft[]) =>
 
 export const resolveBarcodeProductFields = (
 	inputDrafts: Array<BarcodeProductDraft | null | undefined>,
+	policy: ProductResolutionPolicy,
 ): BarcodeProductDraft | null => {
-	const firstDraft = inputDrafts.find(
-		(draft): draft is BarcodeProductDraft => Boolean(draft),
+	const firstDraft = inputDrafts.find((draft): draft is BarcodeProductDraft =>
+		Boolean(draft),
 	);
 	if (!firstDraft) return null;
-	const drafts = inputDrafts.filter(
-		(draft): draft is BarcodeProductDraft =>
-			Boolean(draft && draft.barcode === firstDraft.barcode),
+	const drafts = inputDrafts.filter((draft): draft is BarcodeProductDraft =>
+		Boolean(draft && draft.barcode === firstDraft.barcode),
 	);
-	const base = selectBaseDraft(drafts);
+	const base = selectBaseDraft(drafts, policy);
 	if (!base) return null;
 
 	let result: BarcodeProductDraft = {
 		...base,
 		fieldProvenance: { ...base.fieldProvenance },
 	};
-	let fieldProvenance: FoodFieldProvenance = {};
+	const fieldProvenance: FoodFieldProvenance = {};
 	for (const field of TRACKED_FIELDS) {
-		const candidate = selectFieldCandidate(drafts, field);
+		const candidate = selectFieldCandidate(drafts, field, policy);
 		if (!candidate) continue;
 		result = applySelectedField(result, field, candidate.draft);
 		fieldProvenance[field] = candidate.source;
@@ -427,6 +477,7 @@ export const resolveBarcodeProductFields = (
 	const resolvedNutrients = resolveNutrients(
 		drafts,
 		result.servingWeightGrams,
+		policy,
 	);
 	if (resolvedNutrients.nutrients.length > 0) {
 		result = {

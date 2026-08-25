@@ -7,7 +7,10 @@ import {
 describe("product identity", () => {
 	it("accepts formatting-only name differences", () => {
 		expect(
-			productNamesDiffer("Strawberry Jelly, Strawberry", "strawberry jelly strawberry"),
+			productNamesDiffer(
+				"Strawberry Jelly, Strawberry",
+				"strawberry jelly strawberry",
+			),
 		).toBe(false);
 	});
 
@@ -16,13 +19,18 @@ describe("product identity", () => {
 			productNamesAreUnrelated(
 				"Strawberry Jelly, Strawberry updated",
 				"Strawberry Jelly, Strawberry",
+				0.2,
 			),
 		).toBe(false);
 	});
 
 	it("blocks an unrelated name for the same barcode", () => {
 		expect(
-			productNamesAreUnrelated("Motor oil", "Strawberry Jelly, Strawberry"),
+			productNamesAreUnrelated(
+				"Motor oil",
+				"Strawberry Jelly, Strawberry",
+				0.2,
+			),
 		).toBe(true);
 	});
 });

@@ -1,10 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import {
-	lookupExternalBarcodeProduct,
-} from "$lib/server/products/externalProduct.server";
+import { lookupExternalBarcodeProduct } from "$lib/server/products/externalProduct.server";
 import { areExternalProductLookupsEnabled } from "$lib/server/products/externalProductPolicy.server";
 import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
 import type { ProductReferenceCatalog } from "$lib/utils/food/reference/productReferenceCatalog";
+import { PRODUCT_RESOLUTION_POLICY_FIXTURE } from "../../../fixtures/productResolutionPolicy";
 
 const makeDraft = (
 	source: BarcodeProductDraft["source"],
@@ -18,21 +17,22 @@ const makeDraft = (
 	servingLabel: "125g",
 	servingWeightGrams: 125,
 	hasSourceServing: true,
-	nutrients: [{
-		nutrientId: 1079,
-		nutrientName: "Fiber, total dietary",
-		nutrientNumber: "291",
-		unitName: "G",
-		value: 2,
-		source: source === "usda" ? "usda" : "open-food-facts",
-		confidence: "unknown",
-	}],
+	nutrients: [
+		{
+			nutrientId: 1079,
+			nutrientName: "Fiber, total dietary",
+			nutrientNumber: "291",
+			unitName: "G",
+			value: 2,
+			source: source === "usda" ? "usda" : "open-food-facts",
+			confidence: "unknown",
+		},
+	],
 	reportedNutrientIds: [1079],
 	categories: ["Pasta sauces"],
 	image,
 	source,
-	sourceLabel:
-		source === "usda" ? "USDA FoodData Central" : "Open Food Facts",
+	sourceLabel: source === "usda" ? "USDA FoodData Central" : "Open Food Facts",
 	sourceReference: source === "usda" ? "2658692" : "021130493609",
 	fieldProvenance: {
 		nutrition: {
@@ -49,12 +49,12 @@ const makeDraft = (
 		},
 		...(image
 			? {
-				image: {
-					source: image.source,
-					sourceReference: image.sourceReference,
-					confidence: image.confidence,
-				},
-			}
+					image: {
+						source: image.source,
+						sourceReference: image.sourceReference,
+						confidence: image.confidence,
+					},
+				}
 			: {}),
 	},
 	...overrides,
@@ -98,10 +98,7 @@ describe("external barcode product lookup", () => {
 	});
 
 	it("starts provider lookup without waiting on unrelated completeness metadata", async () => {
-		const openFoodFactsDraft = makeDraft(
-			"open-food-facts",
-			openFoodFactsImage,
-		);
+		const openFoodFactsDraft = makeDraft("open-food-facts", openFoodFactsImage);
 		const usda = vi.fn().mockResolvedValue(null);
 		const lookup = lookupExternalBarcodeProduct(openFoodFactsDraft.barcode, {
 			usda,
@@ -136,22 +133,22 @@ describe("external barcode product lookup", () => {
 
 	it("requests a supplement when a required nutrient is missing", async () => {
 		const usdaDraft = makeDraft("usda");
-		const openFoodFacts = vi.fn().mockResolvedValue(makeDraft(
-			"open-food-facts",
-			undefined,
-			{
-				nutrients: [{
-					nutrientId: 1003,
-					nutrientName: "Protein",
-					nutrientNumber: "203",
-					unitName: "G",
-					value: 1,
-					source: "open-food-facts",
-					confidence: "unknown",
-				}],
+		const openFoodFacts = vi.fn().mockResolvedValue(
+			makeDraft("open-food-facts", undefined, {
+				nutrients: [
+					{
+						nutrientId: 1003,
+						nutrientName: "Protein",
+						nutrientNumber: "203",
+						unitName: "G",
+						value: 1,
+						source: "open-food-facts",
+						confidence: "unknown",
+					},
+				],
 				reportedNutrientIds: [1003],
-			},
-		));
+			}),
+		);
 
 		const result = await lookupExternalBarcodeProduct(usdaDraft.barcode, {
 			usda: vi.fn().mockResolvedValue(usdaDraft),
@@ -162,8 +159,7 @@ describe("external barcode product lookup", () => {
 
 		expect(openFoodFacts).toHaveBeenCalledOnce();
 		expect(result?.nutrients.map((item) => item.nutrientId)).toEqual([
-			1079,
-			1003,
+			1079, 1003,
 		]);
 	});
 
@@ -221,7 +217,9 @@ describe("external barcode product lookup", () => {
 
 		const result = await lookupExternalBarcodeProduct(usdaDraft.barcode, {
 			usda: vi.fn().mockResolvedValue(usdaDraft),
-			openFoodFacts: vi.fn().mockRejectedValue(new Error("Image source unavailable")),
+			openFoodFacts: vi
+				.fn()
+				.mockRejectedValue(new Error("Image source unavailable")),
 			getProductReferenceCatalog,
 		});
 
@@ -315,24 +313,28 @@ describe("external barcode product lookup", () => {
 	});
 
 	it("uses Open Food Facts when USDA is unavailable", async () => {
-		const openFoodFactsDraft = makeDraft("open-food-facts", openFoodFactsImage, {
-			barcode: "03017620422003",
-			name: "Nutella",
-			sourceReference: "03017620422003",
-			nutrients: [
-				{
-					nutrientId: 1008,
-					nutrientName: "Energy",
-					nutrientNumber: "208",
-					unitName: "KCAL",
-					value: 539,
-					source: "open-food-facts",
-					sourceReference: "03017620422003",
-					confidence: "unknown",
-				},
-			],
-			reportedNutrientIds: [1008],
-		});
+		const openFoodFactsDraft = makeDraft(
+			"open-food-facts",
+			openFoodFactsImage,
+			{
+				barcode: "03017620422003",
+				name: "Nutella",
+				sourceReference: "03017620422003",
+				nutrients: [
+					{
+						nutrientId: 1008,
+						nutrientName: "Energy",
+						nutrientNumber: "208",
+						unitName: "KCAL",
+						value: 539,
+						source: "open-food-facts",
+						sourceReference: "03017620422003",
+						confidence: "unknown",
+					},
+				],
+				reportedNutrientIds: [1008],
+			},
+		);
 		const usda = vi.fn().mockRejectedValue(new Error("USDA unavailable"));
 		const openFoodFacts = vi.fn().mockResolvedValue(openFoodFactsDraft);
 
@@ -356,6 +358,50 @@ describe("external barcode product lookup", () => {
 		expect(result?.nutrients).toHaveLength(1);
 		expect(usda).toHaveBeenCalledOnce();
 		expect(openFoodFacts).toHaveBeenCalledOnce();
+	});
+
+	it("skips a provider while its exact not-found coverage remains active", async () => {
+		let providerKey = "";
+		const query = {
+			select: () => query,
+			eq: (column: string, value: string) => {
+				if (column === "provider_key") providerKey = value;
+				return query;
+			},
+			in: () => query,
+			gt: async () => ({
+				data:
+					providerKey === "usda"
+						? [
+								{
+									field_path: "productIdentity",
+									coverage_status: "product-not-found",
+									expires_at: "2026-09-01T00:00:00.000Z",
+								},
+							]
+						: [],
+				error: null,
+			}),
+			upsert: vi.fn(async () => ({ error: null })),
+		};
+		const usda = vi.fn();
+		const openFoodFactsDraft = makeDraft("open-food-facts", openFoodFactsImage);
+		const openFoodFacts = vi.fn().mockResolvedValue(openFoodFactsDraft);
+
+		const result = await lookupExternalBarcodeProduct(
+			openFoodFactsDraft.barcode,
+			{
+				usda,
+				openFoodFacts,
+				getProductReferenceCatalog,
+				resolutionPolicy: PRODUCT_RESOLUTION_POLICY_FIXTURE,
+				sourceCoverageSupabase: { from: vi.fn(() => query) } as never,
+			},
+		);
+
+		expect(usda).not.toHaveBeenCalled();
+		expect(openFoodFacts).toHaveBeenCalledOnce();
+		expect(result).toEqual(openFoodFactsDraft);
 	});
 
 	it("uses COLA Cloud only after USDA and Open Food Facts have no match", async () => {
@@ -396,23 +442,22 @@ describe("external barcode product lookup", () => {
 		});
 
 		expect(result).toEqual(colaCloudDraft);
-		expect(providerOrder).toEqual([
-			"usda",
-			"open-food-facts",
-			"cola-cloud",
-		]);
+		expect(providerOrder).toEqual(["usda", "open-food-facts", "cola-cloud"]);
 	});
 
 	it("does not spend COLA Cloud quota when an existing provider matches", async () => {
 		const openFoodFactsDraft = makeDraft("open-food-facts");
 		const colaCloud = vi.fn();
 
-		const result = await lookupExternalBarcodeProduct(openFoodFactsDraft.barcode, {
-			usda: vi.fn().mockResolvedValue(null),
-			openFoodFacts: vi.fn().mockResolvedValue(openFoodFactsDraft),
-			colaCloud,
-			getProductReferenceCatalog,
-		});
+		const result = await lookupExternalBarcodeProduct(
+			openFoodFactsDraft.barcode,
+			{
+				usda: vi.fn().mockResolvedValue(null),
+				openFoodFacts: vi.fn().mockResolvedValue(openFoodFactsDraft),
+				colaCloud,
+				getProductReferenceCatalog,
+			},
+		);
 
 		expect(result).toEqual(openFoodFactsDraft);
 		expect(colaCloud).not.toHaveBeenCalled();
@@ -531,6 +576,8 @@ describe("external barcode product lookup", () => {
 
 		expect(colaCloud).not.toHaveBeenCalled();
 		expect(result?.nutrients).toHaveLength(2);
-		expect(result?.nutrients.every((nutrient) => nutrient.value === 0)).toBe(true);
+		expect(result?.nutrients.every((nutrient) => nutrient.value === 0)).toBe(
+			true,
+		);
 	});
 });

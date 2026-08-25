@@ -1,4 +1,7 @@
-import { resolveFoodNutrient, type NutrientResolutionMethod } from "$lib/utils/food/nutrients/foodNutrients";
+import {
+	resolveFoodNutrient,
+	type NutrientResolutionMethod,
+} from "$lib/utils/food/nutrients/foodNutrients";
 import type { FoodItem } from "$lib/utils/food/types";
 import {
 	getNutritionCompletenessProfile,
@@ -38,13 +41,6 @@ const createSourceCounts = (): Record<NutrientResolutionMethod, number> => ({
 	derived: 0,
 	missing: 0,
 });
-
-const sourceScores: Record<NutrientResolutionMethod, number> = {
-	exact: 3,
-	mapped: 2,
-	derived: 1,
-	missing: 0,
-};
 
 const hasReportedAlcoholByVolume = (food: FoodItem) =>
 	food.alcoholByVolume !== undefined &&
@@ -114,6 +110,12 @@ export const assessNutritionCompleteness = (
 	}
 
 	const sourceCounts = createSourceCounts();
+	const sourceScores: Record<NutrientResolutionMethod, number> = {
+		exact: profile.exactSourceScore,
+		mapped: profile.mappedSourceScore,
+		derived: profile.derivedSourceScore,
+		missing: profile.missingSourceScore,
+	};
 
 	const details = profile.nutrients.map((nutrient) => {
 		const resolved = resolveFoodNutrient(food, nutrient.nutrientId);
@@ -146,19 +148,26 @@ export const assessNutritionCompleteness = (
 	const completeCount = requiredDetails.length - missingCount;
 	const weightedMaximum = details.reduce(
 		(total, detail) =>
-			total + (detail.requirementLevel === "required" ? 4 : 1) * 3,
+			total +
+			(detail.requirementLevel === "required"
+				? profile.requiredNutrientWeight
+				: profile.recommendedNutrientWeight) *
+				profile.exactSourceScore,
 		0,
 	);
 	const weightedScore = details.reduce(
 		(total, detail) =>
 			total +
-			(detail.requirementLevel === "required" ? 4 : 1) *
+			(detail.requirementLevel === "required"
+				? profile.requiredNutrientWeight
+				: profile.recommendedNutrientWeight) *
 				sourceScores[detail.source],
 		0,
 	);
-	const score = weightedMaximum > 0
-		? Math.round((weightedScore / weightedMaximum) * 100)
-		: 0;
+	const score =
+		weightedMaximum > 0
+			? Math.round((weightedScore / weightedMaximum) * 100)
+			: 0;
 	const requiredMappedCount = requiredDetails.filter(
 		(detail) => detail.source === "mapped" || detail.source === "derived",
 	).length;
@@ -194,7 +203,10 @@ export const assessNutritionCompleteness = (
 		};
 	}
 
-	if (completeCount >= Math.ceil(requiredDetails.length * 0.6)) {
+	if (
+		completeCount >=
+		Math.ceil(requiredDetails.length * profile.partialMinimumRatio)
+	) {
 		return {
 			status: "partial",
 			label: profile.partialLabel,

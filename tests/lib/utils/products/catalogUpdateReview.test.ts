@@ -1,23 +1,36 @@
 import { describe, expect, it } from "vitest";
 import type { FoodItem } from "$lib/utils/food/types";
-import { compareCatalogSubmissionToExistingProduct } from "$lib/utils/products/catalogSubmissionComparison";
+import { compareCatalogSubmissionToExistingProduct as compareCatalogSubmissionWithPolicy } from "$lib/utils/products/catalogSubmissionComparison";
 import {
 	createCatalogUpdateSourceCheck,
 	createCatalogUpdateSummary,
 	formatCatalogChangeValue,
 	readCatalogUpdateSummary,
 } from "$lib/utils/products/catalogUpdateReview";
+import { PRODUCT_RESOLUTION_POLICY_FIXTURE } from "../../../fixtures/productResolutionPolicy";
+
+const compareCatalogSubmissionToExistingProduct = (
+	submittedFood: FoodItem,
+	existingFood: FoodItem,
+) =>
+	compareCatalogSubmissionWithPolicy(
+		submittedFood,
+		existingFood,
+		PRODUCT_RESOLUTION_POLICY_FIXTURE,
+	);
 
 const createFood = (description: string, calories: number): FoodItem => ({
 	fdcId: -1,
 	description,
-	foodNutrients: [{
-		nutrientId: 1008,
-		nutrientName: "Energy",
-		nutrientNumber: "208",
-		unitName: "KCAL",
-		value: calories,
-	}],
+	foodNutrients: [
+		{
+			nutrientId: 1008,
+			nutrientName: "Energy",
+			nutrientNumber: "208",
+			unitName: "KCAL",
+			value: calories,
+		},
+	],
 });
 
 describe("catalog update review", () => {
@@ -32,6 +45,7 @@ describe("catalog update review", () => {
 			sourceFood: submittedFood,
 			submittedFood,
 			currentFood,
+			resolutionPolicy: PRODUCT_RESOLUTION_POLICY_FIXTURE,
 		});
 
 		expect(sourceCheck.supportsSubmittedValues).toBe(true);
@@ -47,6 +61,7 @@ describe("catalog update review", () => {
 			checkedAt: "2026-07-19T20:00:00.000Z",
 			submittedFood: food,
 			currentFood: food,
+			resolutionPolicy: PRODUCT_RESOLUTION_POLICY_FIXTURE,
 		});
 
 		expect(sourceCheck.supportsSubmittedValues).toBeNull();
@@ -68,9 +83,12 @@ describe("catalog update review", () => {
 		});
 
 		expect(readCatalogUpdateSummary(summary)).toEqual(summary);
-		expect(summary.changes[0]?.previousValue).toEqual({ value: 40, unit: "KCAL" });
-		expect(formatCatalogChangeValue(summary.changes[0]?.submittedValue ?? null)).toBe(
-			"50 KCAL",
-		);
+		expect(summary.changes[0]?.previousValue).toEqual({
+			value: 40,
+			unit: "KCAL",
+		});
+		expect(
+			formatCatalogChangeValue(summary.changes[0]?.submittedValue ?? null),
+		).toBe("50 KCAL");
 	});
 });

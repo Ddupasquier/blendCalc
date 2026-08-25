@@ -4,9 +4,11 @@ import {
 	type CatalogSubmissionComparison,
 	type CatalogSubmissionFieldChange,
 } from "$lib/utils/products/catalogSubmissionComparison";
+import type { ProductResolutionPolicy } from "$lib/utils/products/productResolutionPolicy";
 
 export type CatalogUpdateSource = "usda" | "open-food-facts";
-export type CatalogUpdateSourceCheckStatus = "exact-match" | "not-found" | "error";
+export type CatalogUpdateSourceCheckStatus =
+	"exact-match" | "not-found" | "error";
 
 export type CatalogUpdateSourceCheck = {
 	source: CatalogUpdateSource;
@@ -34,6 +36,7 @@ export const createCatalogUpdateSourceCheck = (input: {
 	sourceFood?: FoodItem | null;
 	submittedFood: FoodItem;
 	currentFood: FoodItem;
+	resolutionPolicy: ProductResolutionPolicy;
 }): CatalogUpdateSourceCheck => {
 	if (input.status !== "exact-match" || !input.sourceFood) {
 		return {
@@ -50,10 +53,12 @@ export const createCatalogUpdateSourceCheck = (input: {
 	const submittedComparison = compareCatalogSubmissionToExistingProduct(
 		input.submittedFood,
 		input.sourceFood,
+		input.resolutionPolicy,
 	);
 	const currentComparison = compareCatalogSubmissionToExistingProduct(
 		input.currentFood,
 		input.sourceFood,
+		input.resolutionPolicy,
 	);
 	return {
 		source: input.source,
@@ -79,7 +84,9 @@ export const createCatalogUpdateSummary = (input: {
 	sourceChecks: input.sourceChecks,
 });
 
-export const readCatalogUpdateSummary = (value: unknown): CatalogUpdateSummary | null => {
+export const readCatalogUpdateSummary = (
+	value: unknown,
+): CatalogUpdateSummary | null => {
 	if (!value || typeof value !== "object" || Array.isArray(value)) return null;
 	const record = value as Partial<CatalogUpdateSummary>;
 	if (record.version !== 1 || !Array.isArray(record.changes)) return null;

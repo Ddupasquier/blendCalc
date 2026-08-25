@@ -15,6 +15,31 @@ export type BarcodeProductSupplementPlan = MissingBarcodeProductFields & {
 	missingNutrientIds: number[];
 };
 
+export type ProductSourceFieldPath =
+	"productIdentity" | FoodTrackedField | `nutrient:${number}`;
+
+const PRODUCT_SOURCE_COVERAGE_FIELDS: readonly FoodTrackedField[] = [
+	"productName",
+	"brandOwner",
+	"nutrition",
+	"image",
+	"categories",
+	"serving",
+	"ingredients",
+	"allergens",
+	"traces",
+	"precautionaryStatements",
+	"dietaryTags",
+	"labels",
+	"structuredIngredients",
+	"ingredientAnalysis",
+	"additives",
+	"package",
+	"alcoholByVolume",
+	"regulatoryDisclosure",
+	"sourceMetadata",
+];
+
 const isValidNutrient = (nutrient: FoodNutrient) =>
 	Number.isSafeInteger(nutrient.nutrientId) &&
 	nutrient.nutrientId > 0 &&
@@ -26,11 +51,12 @@ const hasNutrition = (draft: BarcodeProductDraft) =>
 
 const hasImage = (draft: BarcodeProductDraft) => Boolean(draft.image?.imageUrl);
 
-const hasCategories = (draft: BarcodeProductDraft) => Boolean(
-	draft.resolvedCategory ||
+const hasCategories = (draft: BarcodeProductDraft) =>
+	Boolean(
+		draft.resolvedCategory ||
 		draft.categoryResolution ||
 		draft.categories?.some((category) => category.trim()),
-);
+	);
 
 const hasServing = (draft: BarcodeProductDraft) =>
 	draft.hasSourceServing === true &&
@@ -43,25 +69,24 @@ const hasValues = (values?: string[]) =>
 const hasStructuredIngredients = (draft: BarcodeProductDraft) =>
 	Boolean(draft.structuredIngredients?.length);
 
-const hasIngredientAnalysis = (
-	analysis: FoodIngredientAnalysis | undefined,
-) => Boolean(
-	analysis &&
-	(
-		hasValues(analysis.ingredientTags) ||
-		hasValues(analysis.analysisTags) ||
-		hasValues(analysis.derivedTraceTags) ||
-		analysis.percentAnalysis !== undefined ||
-		analysis.percentEstimate !== undefined ||
-		analysis.percentKnown !== undefined ||
-		analysis.percentUnknown !== undefined
-	),
-);
+const hasIngredientAnalysis = (analysis: FoodIngredientAnalysis | undefined) =>
+	Boolean(
+		analysis &&
+		(hasValues(analysis.ingredientTags) ||
+			hasValues(analysis.analysisTags) ||
+			hasValues(analysis.derivedTraceTags) ||
+			analysis.percentAnalysis !== undefined ||
+			analysis.percentEstimate !== undefined ||
+			analysis.percentKnown !== undefined ||
+			analysis.percentUnknown !== undefined),
+	);
 
 const hasPrecautionaryStatements = (draft: BarcodeProductDraft) =>
 	Boolean(
-		draft.precautionaryStatements?.some((statement) =>
-			statement.text.trim() && statement.allergens.some((allergen) => allergen.trim())
+		draft.precautionaryStatements?.some(
+			(statement) =>
+				statement.text.trim() &&
+				statement.allergens.some((allergen) => allergen.trim()),
 		),
 	);
 
@@ -83,8 +108,7 @@ export const getMissingBarcodeProductFields = (
 	image: !hasImage(draft),
 	categories: !hasCategories(draft),
 	serving: !hasServing(draft),
-	ingredients:
-		!draft.ingredients?.trim() || !hasValues(draft.ingredientList),
+	ingredients: !draft.ingredients?.trim() || !hasValues(draft.ingredientList),
 	allergens: !hasObservedField(draft, "allergens", draft.allergens),
 	traces: !hasObservedField(draft, "traces", draft.traces),
 	precautionaryStatements:
@@ -106,7 +130,9 @@ export const getBarcodeProductSupplementPlan = (
 	requiredNutrientIds: Iterable<number> = [],
 ): BarcodeProductSupplementPlan => {
 	const availableIds = new Set(
-		draft.nutrients.filter(isValidNutrient).map((nutrient) => nutrient.nutrientId),
+		draft.nutrients
+			.filter(isValidNutrient)
+			.map((nutrient) => nutrient.nutrientId),
 	);
 	return {
 		...getMissingBarcodeProductFields(draft),
@@ -117,19 +143,70 @@ export const getBarcodeProductSupplementPlan = (
 	};
 };
 
+export const getBarcodeProductDesiredSourceFieldPaths = (
+	requiredNutrientIds: Iterable<number> = [],
+): ProductSourceFieldPath[] => [
+	"productIdentity",
+	...PRODUCT_SOURCE_COVERAGE_FIELDS,
+	...[...requiredNutrientIds].map(
+		(nutrientId): ProductSourceFieldPath => `nutrient:${nutrientId}`,
+	),
+];
+
+export const getBarcodeProductSupplementSourceFieldPaths = (
+	draft: BarcodeProductDraft,
+	requiredNutrientIds: Iterable<number> = [],
+): ProductSourceFieldPath[] => {
+	const plan = getBarcodeProductSupplementPlan(draft, requiredNutrientIds);
+	return [
+		...(
+			Object.entries(plan) as Array<
+				[keyof BarcodeProductSupplementPlan, boolean | number[]]
+			>
+		)
+			.filter(
+				(entry): entry is [FoodTrackedField, true] =>
+					entry[0] !== "missingNutrientIds" &&
+					entry[0] !== "ingredientList" &&
+					entry[1] === true,
+			)
+			.map(([field]) => field),
+		...plan.missingNutrientIds.map(
+			(nutrientId): ProductSourceFieldPath => `nutrient:${nutrientId}`,
+		),
+	];
+};
+
+export const barcodeProductDraftReportsSourceField = (
+	draft: BarcodeProductDraft,
+	fieldPath: ProductSourceFieldPath,
+) => {
+	if (fieldPath === "productIdentity") return Boolean(draft.name.trim());
+	if (fieldPath.startsWith("nutrient:")) {
+		const nutrientId = Number(fieldPath.slice("nutrient:".length));
+		return draft.nutrients.some(
+			(nutrient) =>
+				nutrient.nutrientId === nutrientId && isValidNutrient(nutrient),
+		);
+	}
+	return !getMissingBarcodeProductFields(draft)[fieldPath as FoodTrackedField];
+};
+
 export const needsBarcodeProductSupplement = (
 	draft: BarcodeProductDraft,
 	requiredNutrientIds: Iterable<number> = [],
 ) => {
 	const plan = getBarcodeProductSupplementPlan(draft, requiredNutrientIds);
-	return plan.missingNutrientIds.length > 0 ||
+	return (
+		plan.missingNutrientIds.length > 0 ||
 		Object.entries(plan).some(
 			([field, missing]) =>
 				field !== "missingNutrientIds" &&
 				field !== "alcoholByVolume" &&
 				field !== "regulatoryDisclosure" &&
 				missing === true,
-		);
+		)
+	);
 };
 
 export const needsAlcoholBarcodeProductSupplement = (
@@ -163,20 +240,25 @@ export const getSupplementedBarcodeProductFields = (
 	const missing = getMissingBarcodeProductFields(primary);
 	const supplementMissing = getMissingBarcodeProductFields(supplement);
 	const primaryNutrientIds = new Set(
-		primary.nutrients.filter(isValidNutrient).map((nutrient) => nutrient.nutrientId),
+		primary.nutrients
+			.filter(isValidNutrient)
+			.map((nutrient) => nutrient.nutrientId),
 	);
 	const addsNutrition = supplement.nutrients.some(
-		(nutrient) => isValidNutrient(nutrient) && !primaryNutrientIds.has(nutrient.nutrientId),
+		(nutrient) =>
+			isValidNutrient(nutrient) && !primaryNutrientIds.has(nutrient.nutrientId),
 	);
-	return (Object.keys(missing) as FoodTrackedField[]).filter((field) =>
-		Boolean(
-			supplement.fieldProvenance?.[field] ||
+	return (Object.keys(missing) as FoodTrackedField[]).filter(
+		(field) =>
+			Boolean(
+				supplement.fieldProvenance?.[field] ||
 				(field === "image" && supplement.image?.source) ||
-				(field === "nutrition" && supplement.nutrients.some((item) => item.source)),
-		) &&
+				(field === "nutrition" &&
+					supplement.nutrients.some((item) => item.source)),
+			) &&
 			(field === "nutrition"
 				? addsNutrition
-				: missing[field] && !supplementMissing[field])
+				: missing[field] && !supplementMissing[field]),
 	);
 };
 
@@ -206,10 +288,8 @@ const inferFieldSource = (
 	return undefined;
 };
 
-const getFieldSource = (
-	draft: BarcodeProductDraft,
-	field: FoodTrackedField,
-) => draft.fieldProvenance?.[field] ?? inferFieldSource(draft, field);
+const getFieldSource = (draft: BarcodeProductDraft, field: FoodTrackedField) =>
+	draft.fieldProvenance?.[field] ?? inferFieldSource(draft, field);
 
 const scaleNutrients = (
 	nutrients: FoodNutrient[],
@@ -285,19 +365,24 @@ export const mergeMissingBarcodeProductFields = (
 	const useSupplementIngredients = supplementedFields.has("ingredients");
 	const useSupplementAllergens = supplementedFields.has("allergens");
 	const useSupplementTraces = supplementedFields.has("traces");
-	const useSupplementPrecautionaryStatements =
-		supplementedFields.has("precautionaryStatements");
+	const useSupplementPrecautionaryStatements = supplementedFields.has(
+		"precautionaryStatements",
+	);
 	const useSupplementDietaryTags = supplementedFields.has("dietaryTags");
 	const useSupplementLabels = supplementedFields.has("labels");
-	const useSupplementStructuredIngredients =
-		supplementedFields.has("structuredIngredients");
+	const useSupplementStructuredIngredients = supplementedFields.has(
+		"structuredIngredients",
+	);
 	const useSupplementIngredientAnalysis =
 		supplementedFields.has("ingredientAnalysis");
 	const useSupplementAdditives = supplementedFields.has("additives");
 	const useSupplementPackage = supplementedFields.has("package");
 	const useSupplementSourceMetadata = supplementedFields.has("sourceMetadata");
-	const useSupplementAlcoholByVolume = supplementedFields.has("alcoholByVolume");
-	const useSupplementRegulatoryDisclosure = supplementedFields.has("regulatoryDisclosure");
+	const useSupplementAlcoholByVolume =
+		supplementedFields.has("alcoholByVolume");
+	const useSupplementRegulatoryDisclosure = supplementedFields.has(
+		"regulatoryDisclosure",
+	);
 	if (
 		!useSupplementProductName &&
 		!useSupplementBrandOwner &&
@@ -344,7 +429,9 @@ export const mergeMissingBarcodeProductFields = (
 			supplement.servingWeightGrams,
 			nextServingWeight,
 		);
-		const nutrientIds = new Set(nutrients.map((nutrient) => nutrient.nutrientId));
+		const nutrientIds = new Set(
+			nutrients.map((nutrient) => nutrient.nutrientId),
+		);
 		const addedNutrients = supplementNutrients.filter(
 			(nutrient) => !nutrientIds.has(nutrient.nutrientId),
 		);
@@ -352,7 +439,7 @@ export const mergeMissingBarcodeProductFields = (
 		reportedNutrientIds = [
 			...new Set([...reportedNutrientIds, ...supplement.reportedNutrientIds]),
 		].filter((nutrientId) =>
-			nutrients.some((nutrient) => nutrient.nutrientId === nutrientId)
+			nutrients.some((nutrient) => nutrient.nutrientId === nutrientId),
 		);
 		if (!hasNutrition(primary)) {
 			provenance = withFieldSource(provenance, "nutrition", supplement);
@@ -391,7 +478,11 @@ export const mergeMissingBarcodeProductFields = (
 		provenance = withFieldSource(provenance, "labels", supplement);
 	}
 	if (useSupplementStructuredIngredients) {
-		provenance = withFieldSource(provenance, "structuredIngredients", supplement);
+		provenance = withFieldSource(
+			provenance,
+			"structuredIngredients",
+			supplement,
+		);
 	}
 	if (useSupplementIngredientAnalysis) {
 		provenance = withFieldSource(provenance, "ingredientAnalysis", supplement);
@@ -409,7 +500,11 @@ export const mergeMissingBarcodeProductFields = (
 		provenance = withFieldSource(provenance, "alcoholByVolume", supplement);
 	}
 	if (useSupplementRegulatoryDisclosure) {
-		provenance = withFieldSource(provenance, "regulatoryDisclosure", supplement);
+		provenance = withFieldSource(
+			provenance,
+			"regulatoryDisclosure",
+			supplement,
+		);
 	}
 
 	return {
@@ -428,52 +523,47 @@ export const mergeMissingBarcodeProductFields = (
 		hasSourceServing: useSupplementServing
 			? supplement.hasSourceServing
 			: primary.hasSourceServing,
-		serving: useSupplementServing
-			? supplement.serving
-			: primary.serving,
+		serving: useSupplementServing ? supplement.serving : primary.serving,
 		volumeEquivalent: useSupplementServing
 			? supplement.volumeEquivalent
 			: primary.volumeEquivalent,
 		nutrients,
 		reportedNutrientIds,
-			ingredients: useSupplementIngredients
-				? supplement.ingredients
-				: primary.ingredients,
-			ingredientList: useSupplementIngredients
-				? supplement.ingredientList
-				: primary.ingredientList,
-			allergens: useSupplementAllergens
-				? supplement.allergens
-				: primary.allergens,
-			traces: useSupplementTraces ? supplement.traces : primary.traces,
-			precautionaryStatements: useSupplementPrecautionaryStatements
-				? supplement.precautionaryStatements
-				: primary.precautionaryStatements,
-			dietaryTags: useSupplementDietaryTags
-				? supplement.dietaryTags
-				: primary.dietaryTags,
-			labels: useSupplementLabels ? supplement.labels : primary.labels,
-			structuredIngredients: useSupplementStructuredIngredients
-				? supplement.structuredIngredients
-				: primary.structuredIngredients,
-			ingredientAnalysis: useSupplementIngredientAnalysis
-				? supplement.ingredientAnalysis
-				: primary.ingredientAnalysis,
-			additives: useSupplementAdditives
-				? supplement.additives
-				: primary.additives,
-			packageQuantity:
-				primary.packageQuantity ?? supplement.packageQuantity,
-			sourceMetadata: primary.sourceMetadata ?? supplement.sourceMetadata,
-			alcoholByVolume: useSupplementAlcoholByVolume
-				? supplement.alcoholByVolume
-				: primary.alcoholByVolume,
-			regulatoryDisclosure: useSupplementRegulatoryDisclosure
-				? supplement.regulatoryDisclosure
-				: primary.regulatoryDisclosure,
-		image: useSupplementImage
-			? supplement.image
-			: primary.image,
+		ingredients: useSupplementIngredients
+			? supplement.ingredients
+			: primary.ingredients,
+		ingredientList: useSupplementIngredients
+			? supplement.ingredientList
+			: primary.ingredientList,
+		allergens: useSupplementAllergens
+			? supplement.allergens
+			: primary.allergens,
+		traces: useSupplementTraces ? supplement.traces : primary.traces,
+		precautionaryStatements: useSupplementPrecautionaryStatements
+			? supplement.precautionaryStatements
+			: primary.precautionaryStatements,
+		dietaryTags: useSupplementDietaryTags
+			? supplement.dietaryTags
+			: primary.dietaryTags,
+		labels: useSupplementLabels ? supplement.labels : primary.labels,
+		structuredIngredients: useSupplementStructuredIngredients
+			? supplement.structuredIngredients
+			: primary.structuredIngredients,
+		ingredientAnalysis: useSupplementIngredientAnalysis
+			? supplement.ingredientAnalysis
+			: primary.ingredientAnalysis,
+		additives: useSupplementAdditives
+			? supplement.additives
+			: primary.additives,
+		packageQuantity: primary.packageQuantity ?? supplement.packageQuantity,
+		sourceMetadata: primary.sourceMetadata ?? supplement.sourceMetadata,
+		alcoholByVolume: useSupplementAlcoholByVolume
+			? supplement.alcoholByVolume
+			: primary.alcoholByVolume,
+		regulatoryDisclosure: useSupplementRegulatoryDisclosure
+			? supplement.regulatoryDisclosure
+			: primary.regulatoryDisclosure,
+		image: useSupplementImage ? supplement.image : primary.image,
 		categories: useSupplementCategories
 			? supplement.categories
 			: primary.categories,
