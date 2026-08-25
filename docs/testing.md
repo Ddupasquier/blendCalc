@@ -5,6 +5,15 @@ should fail close to the defect, run only the infrastructure they need, and have
 clear owner. Browser coverage is essential, but it does not replace fast logic tests,
 database enforcement tests, compiler checks, or direct human verification.
 
+## Quick Navigation
+
+| Need                          | Sections                                                                                                                                      |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Choose the correct test owner | [Ownership](#ownership), [ownership problems](#ownership-problems-to-avoid), and [choosing a layer](#choosing-a-layer)                        |
+| Run an efficient test pass    | [Development workflow](#development-workflow), [parallelism](#parallelism), and [quiet output](#quiet-output)                                 |
+| Verify a release boundary     | [Remote verification](#remote-verification), [browser matrix](#browser-matrix), and [database and QA boundaries](#database-and-qa-boundaries) |
+| Avoid fragile coverage        | [Avoid](#avoid)                                                                                                                               |
+
 ## Ownership
 
 | Layer                        | Use it for                                                                                                                                                                                | Do not use it for                                         |
@@ -99,6 +108,22 @@ Rerun only browser failures with:
 ```bash
 npx playwright test --last-failed
 ```
+
+Use the visible terminal dashboard when a complete progress view is more useful than
+compact output:
+
+| Profile       | Command                  | Ownership                                                                                            |
+| ------------- | ------------------------ | ---------------------------------------------------------------------------------------------------- |
+| Quick Check   | `npm run verify:quick`   | Formatting, lint, Svelte/TypeScript, and Vitest                                                      |
+| Feature Check | `npm run verify:feature` | Quick Check, production build, and desktop/compact Chromium                                          |
+| Release Check | `npm run verify:release` | Dependency audit, source gates, disposable database, build, and the complete local Playwright matrix |
+
+VS Code exposes the same three profiles through **Terminal → Run Task**. Each task opens
+one dedicated terminal and shows stage progress, elapsed time, an estimate based on
+ignored local duration history, the current test when the runner reports it, and the
+failure-log path when a stage fails. This is a presentation layer over the maintained
+commands; it does not replace focused iteration, GitHub's isolated browser jobs, or
+manual physical-device verification.
 
 ### Feature Confidence
 

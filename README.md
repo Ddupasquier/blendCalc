@@ -3,21 +3,30 @@
 blendCalc helps people understand food, organize what they have, build food
 combinations, and compare those combinations with personal nutrition goals.
 
-The project is a private, pre-release SvelteKit application. Its shared catalog and
+The project is a pre-MVP SvelteKit application. Its shared catalog and
 internal API are designed around evidence-backed food data: missing information stays
 missing, source attribution stays attached, and external providers contribute fields
 without becoming blanket authorities.
 
+## Quick Navigation
+
+| Goal                               | Start here                                                                  |
+| ---------------------------------- | --------------------------------------------------------------------------- |
+| Understand the product             | [What The App Does](#what-the-app-does) and [Technology](#technology)       |
+| Run the app locally                | [Start Developing](#start-developing)                                       |
+| Find a maintained command          | [Command Guide](#command-guide)                                             |
+| Understand repository ownership    | [Repository Map](#repository-map)                                           |
+| Find rules or domain documentation | [Documentation](#documentation) and the [Documentation Map](docs/README.md) |
+
 ## What The App Does
 
-- Searches generic foods, packaged products, and the approved blendCalc catalog.
-- Scans barcodes and combines complementary source data field by field.
-- Organizes account-backed Fridge and Shopping List items.
-- Builds mixtures with serving controls, nutrition goals, warnings, and suggestions.
-- Saves reusable recipes without overwriting the original unless the user chooses to.
-- Shows ingredient statements, allergens, package disclosures, provenance, images, and
-  detailed nutrition when that evidence exists.
-- Supports user profiles, food preferences, image evidence, and elevated moderation.
+| Area                   | Capability                                                                                                                                                             |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Find food              | Search generic foods, packaged products, and the approved blendCalc catalog; scan barcodes; and combine complementary source data field by field.                      |
+| Organize food          | Keep account-backed Fridge and Shopping List items mutually exclusive and easy to move.                                                                                |
+| Build and save         | Create a Mix with serving controls, explicit nutrition goals, warnings, and suggestions, then save reusable Recipes without overwriting the original unless requested. |
+| Understand food        | Review ingredients, allergens, package disclosures, source history, images, and detailed nutrition when that evidence exists.                                          |
+| Personalize and review | Save profile and food-preference settings, submit image or label evidence, and expose permission-scoped review and operations tools to elevated roles.                 |
 
 ## Technology
 
@@ -56,19 +65,20 @@ cp .env.example .env
 cp .env.moderation.example .env.moderation.local
 ```
 
-Use `.env` for browser-safe and normal runtime configuration. Use the ignored
-`.env.moderation.local` only for privileged local operations.
+Use `.env` for the local application runtime. Only `PUBLIC_*` values are intended for
+the browser; every other credential stays server-only. Use the ignored
+`.env.moderation.local` for privileged CLI and linked-database operations.
 
 | Configuration                                                                                  | When it is needed                                                                                                                                              |
 | ---------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_PUBLISHABLE_KEY`                                       | Normal app authentication and data access                                                                                                                      |
-| `VITE_FDC_API_KEY`                                                                             | USDA FoodData Central lookups                                                                                                                                  |
+| `FDC_API_KEY`                                                                                  | Server-only USDA FoodData Central lookups in the app and maintenance scripts                                                                                   |
 | `PUBLIC_SITE_URL`                                                                              | Production authentication callbacks and canonical links                                                                                                        |
 | `PUBLIC_TURNSTILE_SITE_KEY`                                                                    | Auth bot protection after the matching hosted secret is configured                                                                                             |
 | `COLA_CLOUD_API_KEY`                                                                           | Optional server-only U.S. alcohol-label enrichment                                                                                                             |
 | `USDA_API_KEY`, `OPENFDA_API_KEY`, `CATALOG_MONITOR_CRON_SECRET`                               | Deployed catalog-monitor Edge Function; openFDA key is optional but recommended                                                                                |
 | `FDA_RECALL_PROXY_URL`, `FDA_RECALL_PROXY_SECRET`, `FDA_RECALL_PROXY_PROTECTION_BYPASS_SECRET` | Protected app-server relay for current FDA notices when Edge egress is blocked; the optional bypass secret is required only for a deployment-protected preview |
-| `SUPABASE_SERVICE_ROLE_KEY`                                                                    | Protected server work, moderation, and trusted scripts                                                                                                         |
+| `SUPABASE_SERVICE_ROLE_KEY`                                                                    | Protected server reads and writes, request quotas, catalog and food-safety policy, Profile operations, privileged review, and trusted scripts                  |
 | `SUPABASE_PROJECT_ID`, `SUPABASE_DB_PASSWORD`                                                  | Linked Supabase administration and guarded migration delivery                                                                                                  |
 | `RESEND_API_KEY`, `MODERATION_EMAIL_FROM`, `MODERATION_SUPPORT_EMAIL`                          | Optional moderation email delivery                                                                                                                             |
 | `VERCEL_ANALYTICS_ACCESS_TOKEN`, `VERCEL_TEAM_ID`, `CRON_SECRET`                               | Production aggregate analytics synchronization                                                                                                                 |
@@ -76,6 +86,11 @@ Use `.env` for browser-safe and normal runtime configuration. Use the ignored
 Never prefix a server secret with `PUBLIC_` or `VITE_`. Both local env files are
 ignored and must not be committed. See [Authentication](docs/authentication.md) for the
 complete hosted configuration and verification checklist.
+
+Older local environments may still contain `VITE_FDC_API_KEY`. Runtime and maintenance
+scripts accept it only as a temporary compatibility fallback; new local and hosted
+configuration must use `FDC_API_KEY` so the credential can never enter the browser
+bundle.
 
 The scheduled catalog monitor also requires Vault values named
 `blendcalc_project_url` and `blendcalc_catalog_monitor_cron_secret`. Keep the monitor's
@@ -124,6 +139,9 @@ intentionally omitted.
 | `npm run test:e2e:ui`          | Open Playwright's interactive test explorer.                              |
 | `npm run test:e2e:update`      | Review and update tracked Chromium visual snapshots.                      |
 | `npm run test:e2e:install`     | Install Chromium, Firefox, and WebKit for Playwright.                     |
+| `npm run verify:quick`         | Show source checks and Vitest in the live verification dashboard.         |
+| `npm run verify:feature`       | Add a production build and desktop/compact Chromium to the dashboard.     |
+| `npm run verify:release`       | Run the complete local release confidence profile in the dashboard.       |
 
 Use the [Testing Strategy](docs/testing.md) to choose a test layer. Browser setup lives
 in [Browser Testing](docs/browser-testing.md); database fixtures and personas live in
@@ -209,11 +227,11 @@ Start with the [Documentation Map](docs/README.md). It identifies the one mainta
 owner for each subject so rules, contracts, schema details, and QA instructions do not
 drift into duplicate copies.
 
-Before changing the repository, read:
-
-1. [Development Rules](docs/dev-rules/dev-rules.md)
-2. [Work Queue](docs/work-queue.md)
-3. The task-specific documents linked from the documentation map
+| Before changing...           | Read                                                                                 |
+| ---------------------------- | ------------------------------------------------------------------------------------ |
+| Anything                     | [Development Rules](docs/dev-rules/dev-rules.md)                                     |
+| A specific feature or system | The task-specific owner in the [Documentation Map](docs/README.md)                   |
+| API v1                       | [API Structures](docs/api-structures/README.md) and [Versioning](docs/versioning.md) |
 
 The internal API overview and OpenAPI entry point are in
 [API Structures](docs/api-structures/README.md). Application and API releases are

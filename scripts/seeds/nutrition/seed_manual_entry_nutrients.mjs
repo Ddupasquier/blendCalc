@@ -27,7 +27,8 @@ const projectRoot = path.resolve(scriptDirectory, "../../..");
 config({ path: path.join(projectRoot, ".env.moderation.local"), quiet: true });
 config({ path: path.join(projectRoot, ".env"), quiet: true });
 
-const FDC_API_KEY = process.env.VITE_FDC_API_KEY;
+const FDC_API_KEY =
+	process.env.FDC_API_KEY?.trim() || process.env.VITE_FDC_API_KEY?.trim();
 const SUPABASE_URL = process.env.PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const BASE_URL = "https://api.nal.usda.gov/fdc/v1";
@@ -106,10 +107,18 @@ const parseArguments = (argumentsList) => {
 				options.pages = parsePositiveInteger(value, options.pages, "pages");
 				break;
 			case "page-size":
-				options.pageSize = parsePositiveInteger(value, options.pageSize, "page-size");
+				options.pageSize = parsePositiveInteger(
+					value,
+					options.pageSize,
+					"page-size",
+				);
 				break;
 			case "concurrency":
-				options.concurrency = parsePositiveInteger(value, options.concurrency, "concurrency");
+				options.concurrency = parsePositiveInteger(
+					value,
+					options.concurrency,
+					"concurrency",
+				);
 				break;
 			case "dry-run":
 				options.dryRun = true;
@@ -119,12 +128,15 @@ const parseArguments = (argumentsList) => {
 		}
 	}
 
-	options.queries = options.queries.length > 0 ? options.queries : DEFAULT_QUERIES;
+	options.queries =
+		options.queries.length > 0 ? options.queries : DEFAULT_QUERIES;
 	return options;
 };
 
 const normalizeUnit = (unit) => {
-	const normalized = String(unit ?? "").trim().toUpperCase();
+	const normalized = String(unit ?? "")
+		.trim()
+		.toUpperCase();
 	const units = {
 		G: "g",
 		MG: "mg",
@@ -146,7 +158,9 @@ const titleCase = (value) =>
 const formatDisplayLabel = (name, unit) => {
 	const normalizedName = titleCase(String(name ?? "").replace(/, total$/i, ""));
 	const normalizedUnit = normalizeUnit(unit);
-	return normalizedUnit ? `${normalizedName} (${normalizedUnit})` : normalizedName;
+	return normalizedUnit
+		? `${normalizedName} (${normalizedUnit})`
+		: normalizedName;
 };
 
 const classifyNutrient = ({ nutrientId, nutrientName, unitName, catalog }) => {
@@ -190,13 +204,10 @@ const fetchOpenFoodFactsPage = async (query) => {
 	url.searchParams.set("action", "process");
 	url.searchParams.set("json", "1");
 	url.searchParams.set("page_size", String(OPEN_FOOD_FACTS_PAGE_SIZE));
-	url.searchParams.set("fields", [
-		"code",
-		"product_name",
-		"brands",
-		"categories",
-		"nutriments",
-	].join(","));
+	url.searchParams.set(
+		"fields",
+		["code", "product_name", "brands", "categories", "nutriments"].join(","),
+	);
 
 	const response = await fetchWithRetry(url, {
 		headers: {
@@ -216,8 +227,13 @@ const fetchOpenFoodFactsPage = async (query) => {
 	};
 };
 
-const collectFdcObservations = ({ pages, databaseDefinitions, manualEntryCatalog }) => {
-	const nutrientDefinitions = createNutrientDefinitionCatalog(databaseDefinitions);
+const collectFdcObservations = ({
+	pages,
+	databaseDefinitions,
+	manualEntryCatalog,
+}) => {
+	const nutrientDefinitions =
+		createNutrientDefinitionCatalog(databaseDefinitions);
 	const observations = new Map();
 	const ignoredNutrients = new Map();
 
@@ -229,19 +245,20 @@ const collectFdcObservations = ({ pages, databaseDefinitions, manualEntryCatalog
 			for (const nutrient of food.foodNutrients ?? []) {
 				const sourceNutrientId = Number(nutrient.nutrientId);
 				const nutrientName = String(nutrient.nutrientName ?? "").trim();
-				const nutrientNumber = String(nutrient.nutrientNumber ?? "").trim() || null;
+				const nutrientNumber =
+					String(nutrient.nutrientNumber ?? "").trim() || null;
 				const unitName = normalizeUnit(nutrient.unitName);
-				if (!Number.isFinite(sourceNutrientId) || !nutrientName || !unitName) continue;
+				if (!Number.isFinite(sourceNutrientId) || !nutrientName || !unitName)
+					continue;
 
-				const definition = nutrientDefinitions.resolve(
-					sourceNutrientId,
-					nutrientNumber,
-				) ?? nutrientDefinitions.register({
-					nutrient_id: sourceNutrientId,
-					nutrient_name: nutrientName,
-					nutrient_number: nutrientNumber,
-					default_unit_name: unitName,
-				});
+				const definition =
+					nutrientDefinitions.resolve(sourceNutrientId, nutrientNumber) ??
+					nutrientDefinitions.register({
+						nutrient_id: sourceNutrientId,
+						nutrient_name: nutrientName,
+						nutrient_number: nutrientNumber,
+						default_unit_name: unitName,
+					});
 				if (!definition) continue;
 
 				const classification = classifyNutrient({
@@ -251,7 +268,10 @@ const collectFdcObservations = ({ pages, databaseDefinitions, manualEntryCatalog
 					catalog: manualEntryCatalog,
 				});
 				if (!classification) {
-					ignoredNutrients.set(nutrientName, (ignoredNutrients.get(nutrientName) ?? 0) + 1);
+					ignoredNutrients.set(
+						nutrientName,
+						(ignoredNutrients.get(nutrientName) ?? 0) + 1,
+					);
 					continue;
 				}
 
@@ -387,10 +407,7 @@ const upsertInChunks = async ({
 		const chunk = records.slice(start, start + chunkSize);
 		const { error } = await supabase
 			.from(table)
-			.upsert(
-				chunk,
-				onConflict ? { ignoreDuplicates, onConflict } : undefined,
-			);
+			.upsert(chunk, onConflict ? { ignoreDuplicates, onConflict } : undefined);
 		if (error) {
 			throw new Error(
 				`${table} write failed at rows ${start + 1}-${start + chunk.length}: ${error.message}`,
@@ -398,7 +415,9 @@ const upsertInChunks = async ({
 			);
 		}
 		if (records.length >= 10_000 && (start + chunk.length) % 10_000 === 0) {
-			console.log(`${table}: ${start + chunk.length}/${records.length} rows processed`);
+			console.log(
+				`${table}: ${start + chunk.length}/${records.length} rows processed`,
+			);
 		}
 	}
 };
@@ -410,7 +429,7 @@ if (
 	!SERVICE_ROLE_KEY
 ) {
 	console.error(
-		"Missing VITE_FDC_API_KEY, PUBLIC_SUPABASE_URL, or SUPABASE_SERVICE_ROLE_KEY.",
+		"Missing FDC_API_KEY, PUBLIC_SUPABASE_URL, or SUPABASE_SERVICE_ROLE_KEY.",
 	);
 	process.exit(1);
 }
@@ -433,7 +452,9 @@ try {
 				),
 			supabase
 				.from("nutrient_definitions")
-				.select("nutrient_id, nutrient_name, nutrient_number, default_unit_name")
+				.select(
+					"nutrient_id, nutrient_name, nutrient_number, default_unit_name",
+				)
 				.limit(5000),
 			supabase
 				.from("nutrient_source_mappings")
@@ -485,7 +506,9 @@ try {
 		);
 	}
 	if (fdcResult.values.length === 0) {
-		throw new Error("Every FDC nutrient request failed; refusing to record an empty run.");
+		throw new Error(
+			"Every FDC nutrient request failed; refusing to record an empty run.",
+		);
 	}
 	const {
 		nutrientDefinitions,
@@ -516,21 +539,26 @@ try {
 	const nutrientDefinitionRows = [...nutrientDefinitions.values()];
 	const observationRows = [...observations.values()];
 
-	console.log(`Collected ${observationRows.length} manual-entry nutrient observations.`);
+	console.log(
+		`Collected ${observationRows.length} manual-entry nutrient observations.`,
+	);
 	console.log(
 		`Source requests: FDC ${fdcResult.values.length}/${requests.length} succeeded; Open Food Facts ${openFoodFactsResult.values.length}/${options.queries.length} succeeded.`,
 	);
 	console.table(
 		Object.entries(
 			observationRows.reduce((counts, observation) => {
-				counts[observation.group_title] = (counts[observation.group_title] ?? 0) + 1;
+				counts[observation.group_title] =
+					(counts[observation.group_title] ?? 0) + 1;
 				return counts;
 			}, {}),
 		).map(([group, count]) => ({ group, count })),
 	);
 
 	if (options.dryRun) {
-		console.log(`Dry run. Would upsert ${nutrientDefinitionRows.length} definitions and ${observationRows.length} observations.`);
+		console.log(
+			`Dry run. Would upsert ${nutrientDefinitionRows.length} definitions and ${observationRows.length} observations.`,
+		);
 		console.log("Top ignored FDC nutrients:");
 		console.table(
 			[...ignoredFdcNutrients.entries()]
@@ -548,7 +576,11 @@ try {
 		process.exit(0);
 	}
 
-	await upsertInChunks({ supabase, table: "nutrient_definitions", records: nutrientDefinitionRows });
+	await upsertInChunks({
+		supabase,
+		table: "nutrient_definitions",
+		records: nutrientDefinitionRows,
+	});
 	await upsertInChunks({
 		supabase,
 		table: "nutrient_manual_entry_observations",
@@ -560,7 +592,9 @@ try {
 	const { error } = await supabase.rpc("sync_nutrient_manual_entry_fields");
 	if (error) throw error;
 
-	console.log(`Seeded ${nutrientDefinitionRows.length} nutrient definitions and ${observationRows.length} observations.`);
+	console.log(
+		`Seeded ${nutrientDefinitionRows.length} nutrient definitions and ${observationRows.length} observations.`,
+	);
 } catch (error) {
 	console.error(error);
 	process.exit(1);

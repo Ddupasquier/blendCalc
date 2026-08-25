@@ -1,5 +1,14 @@
 # Public API Release Review
 
+## Quick Navigation
+
+| Need                                   | Sections                                                                                  |
+| -------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Understand why public access is closed | [Current Status](#current-status) and [Release Conditions](#release-conditions)           |
+| Prepare professional review            | [Review Packet](#review-packet) and [Required Terms Decisions](#required-terms-decisions) |
+| Review official references             | [Official Review References](#official-review-references)                                 |
+| Record approval and release safely     | [Approval And Release Procedure](#approval-and-release-procedure)                         |
+
 ## Current Status
 
 blendCalc API v1 is an **internal, read-only preview for signed-in blendCalc accounts**.
@@ -17,15 +26,15 @@ Privacy Notice.
 Every area below needs a dated approval or a dated correction list from a qualified
 reviewer. One approval cannot silently stand in for a different subject.
 
-| Review area | What the review must settle | Current state |
-| --- | --- | --- |
-| Acceptable use | Who may access the API; prohibited abuse, evasion, re-identification, credential sharing, and unsafe automation; suspension and termination; request and rate limits | Pending |
-| Privacy | Data collected from API consumers and concern reporters; purposes, vendors, retention, deletion, correction, export, security, breach response, and applicable regional rights | Pending |
-| Source and asset attribution | Downstream display and preservation of field-level source, dataset release, image credit, licence, excluded rights, and non-endorsement requirements | Pending |
-| Correction and removal | Product correction, rights notice, privacy report, rapid withholding, response expectations, counter-evidence, restoration, and audit retention | Engineering workflow complete; terms review pending |
-| Community submission rights | The permission users grant for reviewing, storing, revising, displaying, and redistributing accepted product facts and images through the app and API | Pending |
-| Health and nutrition disclaimer | Clear limits of nutrition, allergen, preference, serving, goal, and recommendation data without making unsupported health or safety claims | Pending |
-| Warranty and liability | Availability, accuracy, reliance, third-party data, indemnity, damages, governing law, dispute terms, and enforceability | Pending professional drafting |
+| Review area                     | What the review must settle                                                                                                                                                    | Current state                                       |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------- |
+| Acceptable use                  | Who may access the API; prohibited abuse, evasion, re-identification, credential sharing, and unsafe automation; suspension and termination; request and rate limits           | Pending                                             |
+| Privacy                         | Data collected from API consumers and concern reporters; purposes, vendors, retention, deletion, correction, export, security, breach response, and applicable regional rights | Pending                                             |
+| Source and asset attribution    | Downstream display and preservation of field-level source, dataset release, image credit, licence, excluded rights, and non-endorsement requirements                           | Pending                                             |
+| Correction and removal          | Product correction, rights notice, privacy report, rapid withholding, response expectations, counter-evidence, restoration, and audit retention                                | Engineering workflow complete; terms review pending |
+| Community submission rights     | The permission users grant for reviewing, storing, revising, displaying, and redistributing accepted product facts and images through the app and API                          | Pending                                             |
+| Health and nutrition disclaimer | Clear limits of nutrition, allergen, preference, serving, goal, and recommendation data without making unsupported health or safety claims                                     | Pending                                             |
+| Warranty and liability          | Availability, accuracy, reliance, third-party data, indemnity, damages, governing law, dispute terms, and enforceability                                                       | Pending professional drafting                       |
 
 No status in this table means blendCalc has received legal approval. Public access may
 be considered only after every required area is approved and every requested correction

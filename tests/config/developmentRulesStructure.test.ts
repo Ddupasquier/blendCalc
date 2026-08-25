@@ -15,7 +15,9 @@ describe("development rules documentation", () => {
 		expect(rules).toContain("source of truth");
 		expect(rules).toContain("dev-rules-audit.md");
 		expect(audit).toContain("[development rules](dev-rules.md)");
-		expect(audit).toMatch(/An audit finding never\s+overrides a (?:settled )?rule\./);
+		expect(audit).toMatch(
+			/An audit finding never\s+overrides a (?:settled )?rule\./,
+		);
 	});
 
 	it("keeps completed audit summaries out of the active documents", () => {
@@ -51,6 +53,26 @@ describe("development rules documentation", () => {
 		expect(rules).toContain("one polite live region");
 		expect(rules).toContain('id="rule-dependency-supply-chain"');
 		expect(rules).toContain("version-pinned package scripts");
-		expect(rules).toContain("never approve\nall current or future scripts through a wildcard");
+		expect(rules).toContain(
+			"never approve\nall current or future scripts through a wildcard",
+		);
+	});
+
+	it("keeps every individual rule available in the document outline", () => {
+		const outlinedRuleCount = [
+			...rules.matchAll(
+				/<a id="rule-[^"]+"><\/a>\n\n#### Rule [0-9]+[a-z]*(?:\.[0-9]+[a-z]?)? — .+/g,
+			),
+		].length;
+		const ruleHeadingCount = [
+			...rules.matchAll(/^#### Rule [0-9]+[a-z]*(?:\.[0-9]+[a-z]?)? — .+$/gm),
+		].length;
+
+		expect(rules).toContain("## Rule Finder");
+		expect(ruleHeadingCount).toBeGreaterThan(100);
+		expect(outlinedRuleCount).toBe(ruleHeadingCount);
+		expect(rules).not.toMatch(
+			/<a id="rule-[^"]+"><\/a>\n\n\*\*[0-9]+[a-z]*(?:\.[0-9]+[a-z]?)?\.\*\*/,
+		);
 	});
 });

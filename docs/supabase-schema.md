@@ -1930,6 +1930,5 @@ When schema changes:
 11. Promote application code that requires the new schema only after the production
     migration and current `main` application are verified. Delay destructive contract
     cleanup to a later release.
-12. Add a local-only QA item to the appropriate priority tracker linked from
-    `docs/QA/qa-tasks.md` if the change affects user-visible data, moderation behavior,
-    or data-entry flow.
+12. Add or update the applicable QA coverage when the change affects user-visible data,
+    privileged review behavior, or data entry.

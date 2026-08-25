@@ -21,15 +21,18 @@ config({ path: path.join(projectRoot, ".env.moderation.local"), quiet: true });
 config({ path: path.join(projectRoot, ".env"), quiet: true });
 
 const FDC_BASE_URL = "https://api.nal.usda.gov/fdc/v1";
-const OPEN_FOOD_FACTS_SEARCH_URL = "https://world.openfoodfacts.org/cgi/search.pl";
-const OPEN_FOOD_FACTS_PRODUCT_URL = "https://world.openfoodfacts.org/api/v2/product";
+const OPEN_FOOD_FACTS_SEARCH_URL =
+	"https://world.openfoodfacts.org/cgi/search.pl";
+const OPEN_FOOD_FACTS_PRODUCT_URL =
+	"https://world.openfoodfacts.org/api/v2/product";
 const OUTPUT_DIRECTORY = path.join(projectRoot, "docs", "api-structures");
 const DEFAULT_SAMPLE_LIMIT = 3;
 const MAX_QUERY_READS = 24;
 const MAX_ARRAY_SAMPLES = 50;
 const APP_USER_AGENT = createAppUserAgent("API structure reference generator");
 
-const fdcApiKey = process.env.VITE_FDC_API_KEY;
+const fdcApiKey =
+	process.env.FDC_API_KEY?.trim() || process.env.VITE_FDC_API_KEY?.trim();
 const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -60,7 +63,11 @@ const parseArguments = (argumentsList) => {
 				if (value) options.queries.push(value);
 				break;
 			case "samples":
-				options.sampleLimit = parsePositiveInteger(value, DEFAULT_SAMPLE_LIMIT, "samples");
+				options.sampleLimit = parsePositiveInteger(
+					value,
+					DEFAULT_SAMPLE_LIMIT,
+					"samples",
+				);
 				break;
 			default:
 				throw new Error(`Unknown option: --${flag}`);
@@ -96,12 +103,13 @@ const uniqueValues = (values) => {
 };
 
 const getObservedQueries = async (explicitQueries, sampleLimit) => {
-	if (explicitQueries.length > 0) return uniqueValues(explicitQueries).slice(0, sampleLimit);
+	if (explicitQueries.length > 0)
+		return uniqueValues(explicitQueries).slice(0, sampleLimit);
 
 	const supabase = createSupabaseClient();
 	if (!supabase) {
 		throw new Error(
-			"No explicit query terms were provided and Supabase env vars are missing. Pass --query=\"milk\" or configure PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.",
+			'No explicit query terms were provided and Supabase env vars are missing. Pass --query="milk" or configure PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.',
 		);
 	}
 
@@ -141,14 +149,18 @@ const getObservedQueries = async (explicitQueries, sampleLimit) => {
 const fetchJson = async (url, options = {}, label = "API request") => {
 	const response = await fetch(url, options);
 	if (!response.ok) {
-		throw new Error(`${label} failed: ${response.status} ${response.statusText}`);
+		throw new Error(
+			`${label} failed: ${response.status} ${response.statusText}`,
+		);
 	}
 	return await response.json();
 };
 
 const buildFdcSearchUrl = (query) => {
 	if (!fdcApiKey || fdcApiKey === "your_api_key_here") {
-		throw new Error("VITE_FDC_API_KEY is required to generate FoodData Central structures.");
+		throw new Error(
+			"FDC_API_KEY is required to generate FoodData Central structures.",
+		);
 	}
 
 	const url = new URL(`${FDC_BASE_URL}/foods/search`);
@@ -178,9 +190,7 @@ const fetchFdcSamples = async (queries) => {
 		searchResponses.push(searchResponse);
 
 		const fdcIds = uniqueValues(
-			(searchResponse.foods ?? [])
-				.map((food) => food.fdcId)
-				.filter(Boolean),
+			(searchResponse.foods ?? []).map((food) => food.fdcId).filter(Boolean),
 		).slice(0, 2);
 
 		for (const fdcId of fdcIds) {
@@ -324,7 +334,9 @@ const renderPropertyName = (value) =>
 	isValidIdentifier(value) ? value : JSON.stringify(value);
 
 const sortProperties = (properties) =>
-	[...properties.entries()].sort(([left], [right]) => left.localeCompare(right));
+	[...properties.entries()].sort(([left], [right]) =>
+		left.localeCompare(right),
+	);
 
 const renderSchema = (schema, indentLevel = 0) => {
 	const indentation = "\t".repeat(indentLevel);
@@ -351,13 +363,15 @@ const renderSchema = (schema, indentLevel = 0) => {
 		if (schema.properties.size === 0) {
 			typeParts.push("Record<string, never>");
 		} else {
-			const properties = sortProperties(schema.properties).map(([key, property]) => {
-				const optional = property.seen < schema.samples ? "?" : "";
-				return `${childIndentation}${renderPropertyName(key)}${optional}: ${renderSchema(
-					property.schema,
-					indentLevel + 1,
-				)};`;
-			});
+			const properties = sortProperties(schema.properties).map(
+				([key, property]) => {
+					const optional = property.seen < schema.samples ? "?" : "";
+					return `${childIndentation}${renderPropertyName(key)}${optional}: ${renderSchema(
+						property.schema,
+						indentLevel + 1,
+					)};`;
+				},
+			);
 			typeParts.push(`{\n${properties.join("\n")}\n${indentation}}`);
 		}
 	}
@@ -434,10 +448,15 @@ When new external food APIs are added to the app, update \`scripts/generators/ap
 
 const main = async () => {
 	const options = parseArguments(process.argv.slice(2));
-	const queries = await getObservedQueries(options.queries, options.sampleLimit);
+	const queries = await getObservedQueries(
+		options.queries,
+		options.sampleLimit,
+	);
 	await mkdir(OUTPUT_DIRECTORY, { recursive: true });
 
-	console.log(`Generating API structure references from ${queries.length} observed queries.`);
+	console.log(
+		`Generating API structure references from ${queries.length} observed queries.`,
+	);
 	console.log(`Queries: ${queries.join(", ")}`);
 
 	const [fdcSamples, openFoodFactsSamples] = await Promise.all([
@@ -449,8 +468,14 @@ const main = async () => {
 		"food-data-central.reference.ts",
 		[
 			createHeader("USDA FoodData Central", queries),
-			renderTypeAlias("FoodDataCentralSearchResponse", fdcSamples.searchResponses),
-			renderTypeAlias("FoodDataCentralFoodDetailResponse", fdcSamples.detailResponses),
+			renderTypeAlias(
+				"FoodDataCentralSearchResponse",
+				fdcSamples.searchResponses,
+			),
+			renderTypeAlias(
+				"FoodDataCentralFoodDetailResponse",
+				fdcSamples.detailResponses,
+			),
 		].join("\n"),
 	);
 
@@ -458,8 +483,14 @@ const main = async () => {
 		"open-food-facts.reference.ts",
 		[
 			createHeader("Open Food Facts", queries),
-			renderTypeAlias("OpenFoodFactsSearchResponse", openFoodFactsSamples.searchResponses),
-			renderTypeAlias("OpenFoodFactsProductResponse", openFoodFactsSamples.productResponses),
+			renderTypeAlias(
+				"OpenFoodFactsSearchResponse",
+				openFoodFactsSamples.searchResponses,
+			),
+			renderTypeAlias(
+				"OpenFoodFactsProductResponse",
+				openFoodFactsSamples.productResponses,
+			),
 		].join("\n"),
 	);
 
@@ -496,7 +527,9 @@ const main = async () => {
 	);
 
 	await writeReadme();
-	console.log(`Wrote API structure references to ${path.relative(projectRoot, OUTPUT_DIRECTORY)}.`);
+	console.log(
+		`Wrote API structure references to ${path.relative(projectRoot, OUTPUT_DIRECTORY)}.`,
+	);
 };
 
 main().catch((error) => {

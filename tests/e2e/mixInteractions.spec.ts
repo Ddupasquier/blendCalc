@@ -56,6 +56,22 @@ const openMixSection = async (
 	await expect
 		.poll(() => details.evaluate((element) => element.getAnimations().length))
 		.toBe(0);
+	await page.evaluate(
+		() =>
+			new Promise<void>((resolve) => {
+				requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+			}),
+	);
+	await page
+		.locator(".view-top")
+		.first()
+		.evaluate(async (element) => {
+			await Promise.all(
+				element
+					.getAnimations({ subtree: true })
+					.map((animation) => animation.finished.catch(() => undefined)),
+			);
+		});
 	return section;
 };
 
@@ -981,11 +997,7 @@ test("the reusable segmented control switches Mix ingredient sources by pointer 
 	await page.goto("/mix");
 	await waitForAppReady(page);
 
-	const chooser = page.locator(".ingredient-chooser");
-	const details = chooser.locator(":scope > details");
-	if ((await details.getAttribute("open")) === null) {
-		await details.locator(":scope > summary").click();
-	}
+	const chooser = await openMixSection(page, ".ingredient-chooser");
 	const fridgeTab = chooser.getByRole("tab", { name: /Fridge/ });
 	const shoppingTab = chooser.getByRole("tab", { name: /Shopping List/ });
 	await expect(fridgeTab).toHaveAttribute("aria-selected", "true");

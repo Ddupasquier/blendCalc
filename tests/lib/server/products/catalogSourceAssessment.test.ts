@@ -3,6 +3,7 @@ import { assessCatalogProductSources } from "$lib/server/products/catalogSourceA
 import type { Database } from "$lib/types/database.types";
 import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { PRODUCT_RESOLUTION_POLICY_FIXTURE } from "../../../fixtures/productResolutionPolicy";
 
 const makeDraft = (
 	source: "usda" | "open-food-facts",
@@ -15,16 +16,19 @@ const makeDraft = (
 	servingLabel: "100 g",
 	servingWeightGrams: 100,
 	hasSourceServing: false,
-	nutrients: source === "usda"
-		? [{
-			nutrientId: 1008,
-			nutrientName: "Energy",
-			nutrientNumber: "208",
-			unitName: "KCAL",
-			value: 48,
-			source: "usda",
-		}]
-		: [],
+	nutrients:
+		source === "usda"
+			? [
+					{
+						nutrientId: 1008,
+						nutrientName: "Energy",
+						nutrientNumber: "208",
+						unitName: "KCAL",
+						value: 48,
+						source: "usda",
+					},
+				]
+			: [],
 	reportedNutrientIds: source === "usda" ? [1008] : [],
 	source,
 	sourceLabel: source === "usda" ? "USDA FoodData Central" : "Open Food Facts",
@@ -33,7 +37,9 @@ const makeDraft = (
 });
 
 const supabase = {} as SupabaseClient<Database>;
-const resolveCategory = vi.fn(async (_supabase, draft: BarcodeProductDraft) => draft);
+const resolveCategory = vi.fn(
+	async (_supabase, draft: BarcodeProductDraft) => draft,
+);
 
 describe("catalog source assessment", () => {
 	it("merges independently useful fields from both exact-barcode sources", async () => {
@@ -42,18 +48,21 @@ describe("catalog source assessment", () => {
 			"00021130493609",
 			{
 				usda: vi.fn().mockResolvedValue(makeDraft("usda")),
-				openFoodFacts: vi.fn().mockResolvedValue(makeDraft("open-food-facts", {
-					ingredients: "Tomatoes, onions",
-					allergens: ["milk"],
-					image: {
-						source: "open-food-facts",
-						role: "front",
-						imageUrl: "https://example.com/product.jpg",
-						licenseName: "CC BY-SA",
-						confidence: "imported",
-					},
-				})),
+				openFoodFacts: vi.fn().mockResolvedValue(
+					makeDraft("open-food-facts", {
+						ingredients: "Tomatoes, onions",
+						allergens: ["milk"],
+						image: {
+							source: "open-food-facts",
+							role: "front",
+							imageUrl: "https://example.com/product.jpg",
+							licenseName: "CC BY-SA",
+							confidence: "imported",
+						},
+					}),
+				),
 				resolveCategory,
+				policy: PRODUCT_RESOLUTION_POLICY_FIXTURE,
 			},
 		);
 
@@ -75,31 +84,36 @@ describe("catalog source assessment", () => {
 			supabase,
 			"00021130493609",
 			{
-				usda: vi.fn().mockResolvedValue(makeDraft("usda", {
-					ingredients: "Tomatoes",
-					ingredientList: ["Tomatoes"],
-					sourceModifiedDate: "2025-01-01T00:00:00.000Z",
-					fieldProvenance: {
-						ingredients: {
-							source: "usda",
-							sourceReference: "2658692",
-							confidence: "unknown",
+				usda: vi.fn().mockResolvedValue(
+					makeDraft("usda", {
+						ingredients: "Tomatoes",
+						ingredientList: ["Tomatoes"],
+						sourceModifiedDate: "2025-01-01T00:00:00.000Z",
+						fieldProvenance: {
+							ingredients: {
+								source: "usda",
+								sourceReference: "2658692",
+								confidence: "unknown",
+							},
 						},
-					},
-				})),
-				openFoodFacts: vi.fn().mockResolvedValue(makeDraft("open-food-facts", {
-					ingredients: "Tomatoes, onions, garlic",
-					ingredientList: ["Tomatoes", "onions", "garlic"],
-					sourceModifiedDate: "2026-01-01T00:00:00.000Z",
-					fieldProvenance: {
-						ingredients: {
-							source: "open-food-facts",
-							sourceReference: "00021130493609",
-							confidence: "unknown",
+					}),
+				),
+				openFoodFacts: vi.fn().mockResolvedValue(
+					makeDraft("open-food-facts", {
+						ingredients: "Tomatoes, onions, garlic",
+						ingredientList: ["Tomatoes", "onions", "garlic"],
+						sourceModifiedDate: "2026-01-01T00:00:00.000Z",
+						fieldProvenance: {
+							ingredients: {
+								source: "open-food-facts",
+								sourceReference: "00021130493609",
+								confidence: "unknown",
+							},
 						},
-					},
-				})),
+					}),
+				),
 				resolveCategory,
+				policy: PRODUCT_RESOLUTION_POLICY_FIXTURE,
 			},
 		);
 
@@ -117,11 +131,14 @@ describe("catalog source assessment", () => {
 			supabase,
 			"00021130493609",
 			{
-				usda: vi.fn().mockResolvedValue(makeDraft("usda", {
-					allergens: ["milk"],
-				})),
+				usda: vi.fn().mockResolvedValue(
+					makeDraft("usda", {
+						allergens: ["milk"],
+					}),
+				),
 				openFoodFacts: vi.fn().mockResolvedValue(makeDraft("open-food-facts")),
 				resolveCategory,
+				policy: PRODUCT_RESOLUTION_POLICY_FIXTURE,
 			},
 		);
 
@@ -136,6 +153,7 @@ describe("catalog source assessment", () => {
 				usda: vi.fn().mockRejectedValue(new Error("Unavailable")),
 				openFoodFacts: vi.fn().mockResolvedValue(makeDraft("open-food-facts")),
 				resolveCategory,
+				policy: PRODUCT_RESOLUTION_POLICY_FIXTURE,
 			},
 		);
 

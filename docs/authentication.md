@@ -20,6 +20,14 @@ live in [`supabase-schema.md`](supabase-schema.md). Production network restricti
 backups, recovery, hosted audits, and incident response live in
 [`hosted-security.md`](hosted-security.md).
 
+## Quick Navigation
+
+| Need                            | Sections                                                                                            |
+| ------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Configure local and hosted Auth | [Environment Variables](#environment-variables) and [Supabase Dashboard](#supabase-dashboard)       |
+| Enforce account security        | [Account Security Settings](#account-security-settings) and [Database Security](#database-security) |
+| Prove the complete setup        | [Verification](#verification)                                                                       |
+
 ## Environment Variables
 
 Local `.env`:
