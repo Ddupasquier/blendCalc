@@ -1,4 +1,5 @@
 import { createHash, timingSafeEqual } from "node:crypto";
+import { fetchWithExternalRequestPolicy } from "$lib/server/http/externalRequest.server";
 
 const FDA_ORIGIN = "https://www.fda.gov";
 const FDA_RECALL_INDEX_PATH =
@@ -72,9 +73,10 @@ export const fetchFdaRecallSource = async ({
 	if (ifNoneMatch) headers.set("if-none-match", ifNoneMatch);
 	if (ifModifiedSince) headers.set("if-modified-since", ifModifiedSince);
 
-	const upstreamResponse = await fetch(sourceUrl, {
+	const upstreamResponse = await fetchWithExternalRequestPolicy(sourceUrl, {
 		headers,
-		signal: AbortSignal.timeout(45_000),
+		timeoutMilliseconds: 45_000,
+		acceptedStatusCodes: [304],
 	});
 	if (upstreamResponse.status === 304) {
 		return {
