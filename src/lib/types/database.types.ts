@@ -4767,57 +4767,88 @@ export type Database = {
       }
       nutrition_completeness_profiles: {
         Row: {
+          assessment_policy_key: string
           complete_label: string
           created_at: string
+          derived_source_score: number
           description: string
           display_name: string
           enabled: boolean
+          exact_source_score: number
           food_scope: string
           is_default: boolean
           key: string
           limited_label: string
+          mapped_source_score: number
+          missing_source_score: number
           partial_label: string
+          partial_minimum_ratio: number
+          recommended_nutrient_weight: number
           region_code: string
+          required_nutrient_weight: number
           resolved_label: string
           source_key: string
           source_reference: string
           updated_at: string
         }
         Insert: {
+          assessment_policy_key: string
           complete_label: string
           created_at?: string
+          derived_source_score?: number
           description: string
           display_name: string
           enabled?: boolean
+          exact_source_score?: number
           food_scope: string
           is_default?: boolean
           key: string
           limited_label: string
+          mapped_source_score?: number
+          missing_source_score?: number
           partial_label: string
+          partial_minimum_ratio?: number
+          recommended_nutrient_weight?: number
           region_code?: string
+          required_nutrient_weight?: number
           resolved_label: string
           source_key: string
           source_reference: string
           updated_at?: string
         }
         Update: {
+          assessment_policy_key?: string
           complete_label?: string
           created_at?: string
+          derived_source_score?: number
           description?: string
           display_name?: string
           enabled?: boolean
+          exact_source_score?: number
           food_scope?: string
           is_default?: boolean
           key?: string
           limited_label?: string
+          mapped_source_score?: number
+          missing_source_score?: number
           partial_label?: string
+          partial_minimum_ratio?: number
+          recommended_nutrient_weight?: number
           region_code?: string
+          required_nutrient_weight?: number
           resolved_label?: string
           source_key?: string
           source_reference?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "nutrition_completeness_profiles_assessment_policy_key_fkey"
+            columns: ["assessment_policy_key"]
+            isOneToOne: false
+            referencedRelation: "product_resolution_policy_versions"
+            referencedColumns: ["key"]
+          },
           {
             foreignKeyName: "nutrition_completeness_profiles_source_key_fkey"
             columns: ["source_key"]
@@ -5693,6 +5724,185 @@ export type Database = {
           },
         ]
       }
+      product_resolution_difference_thresholds: {
+        Row: {
+          comparison_context: string
+          created_at: string
+          evaluation_order: number
+          minimum_absolute_difference: number
+          minimum_difference_ratio: number
+          policy_key: string
+          severity: string
+        }
+        Insert: {
+          comparison_context: string
+          created_at?: string
+          evaluation_order: number
+          minimum_absolute_difference: number
+          minimum_difference_ratio: number
+          policy_key: string
+          severity: string
+        }
+        Update: {
+          comparison_context?: string
+          created_at?: string
+          evaluation_order?: number
+          minimum_absolute_difference?: number
+          minimum_difference_ratio?: number
+          policy_key?: string
+          severity?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_resolution_difference_thresholds_policy_key_fkey"
+            columns: ["policy_key"]
+            isOneToOne: false
+            referencedRelation: "product_resolution_policy_versions"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      product_resolution_ignored_terms: {
+        Row: {
+          created_at: string
+          policy_key: string
+          term: string
+          term_context: string
+        }
+        Insert: {
+          created_at?: string
+          policy_key: string
+          term: string
+          term_context: string
+        }
+        Update: {
+          created_at?: string
+          policy_key?: string
+          term?: string
+          term_context?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_resolution_ignored_terms_policy_key_fkey"
+            columns: ["policy_key"]
+            isOneToOne: false
+            referencedRelation: "product_resolution_policy_versions"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      product_resolution_policy_versions: {
+        Row: {
+          category_suggestion_minimum_score: number
+          created_at: string
+          display_name: string
+          enabled: boolean
+          is_default: boolean
+          key: string
+          minimum_related_name_token_overlap: number
+          numeric_difference_ratio_floor: number
+          reviewed_at: string
+          serving_weight_tolerance_grams: number
+          source_reference: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          category_suggestion_minimum_score: number
+          created_at?: string
+          display_name: string
+          enabled?: boolean
+          is_default?: boolean
+          key: string
+          minimum_related_name_token_overlap: number
+          numeric_difference_ratio_floor: number
+          reviewed_at: string
+          serving_weight_tolerance_grams: number
+          source_reference: string
+          updated_at?: string
+          version: number
+        }
+        Update: {
+          category_suggestion_minimum_score?: number
+          created_at?: string
+          display_name?: string
+          enabled?: boolean
+          is_default?: boolean
+          key?: string
+          minimum_related_name_token_overlap?: number
+          numeric_difference_ratio_floor?: number
+          reviewed_at?: string
+          serving_weight_tolerance_grams?: number
+          source_reference?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: []
+      }
+      product_resolution_rank_values: {
+        Row: {
+          created_at: string
+          policy_key: string
+          rank_value: number
+          ranking_context: string
+          value_key: string
+        }
+        Insert: {
+          created_at?: string
+          policy_key: string
+          rank_value: number
+          ranking_context: string
+          value_key: string
+        }
+        Update: {
+          created_at?: string
+          policy_key?: string
+          rank_value?: number
+          ranking_context?: string
+          value_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_resolution_rank_values_policy_key_fkey"
+            columns: ["policy_key"]
+            isOneToOne: false
+            referencedRelation: "product_resolution_policy_versions"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      product_resolution_scoring_weights: {
+        Row: {
+          created_at: string
+          metric_key: string
+          policy_key: string
+          scoring_context: string
+          weight: number
+        }
+        Insert: {
+          created_at?: string
+          metric_key: string
+          policy_key: string
+          scoring_context: string
+          weight: number
+        }
+        Update: {
+          created_at?: string
+          metric_key?: string
+          policy_key?: string
+          scoring_context?: string
+          weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_resolution_scoring_weights_policy_key_fkey"
+            columns: ["policy_key"]
+            isOneToOne: false
+            referencedRelation: "product_resolution_policy_versions"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
       product_safety_alert_notifications: {
         Row: {
           alert_match_id: string
@@ -5879,6 +6089,115 @@ export type Database = {
           {
             foreignKeyName: "product_source_evaluations_source_key_fkey"
             columns: ["source_key"]
+            isOneToOne: false
+            referencedRelation: "product_data_sources"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      product_source_field_coverage: {
+        Row: {
+          barcode: string
+          checked_at: string
+          coverage_status: string
+          created_at: string
+          expires_at: string
+          field_path: string
+          policy_key: string
+          provider_key: string
+          provider_revision: string | null
+          source_reference: string | null
+          updated_at: string
+        }
+        Insert: {
+          barcode: string
+          checked_at: string
+          coverage_status: string
+          created_at?: string
+          expires_at: string
+          field_path: string
+          policy_key: string
+          provider_key: string
+          provider_revision?: string | null
+          source_reference?: string | null
+          updated_at?: string
+        }
+        Update: {
+          barcode?: string
+          checked_at?: string
+          coverage_status?: string
+          created_at?: string
+          expires_at?: string
+          field_path?: string
+          policy_key?: string
+          provider_key?: string
+          provider_revision?: string | null
+          source_reference?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_source_field_coverage_policy_key_fkey"
+            columns: ["policy_key"]
+            isOneToOne: false
+            referencedRelation: "product_resolution_policy_versions"
+            referencedColumns: ["key"]
+          },
+          {
+            foreignKeyName: "product_source_field_coverage_policy_provider_fkey"
+            columns: ["policy_key", "provider_key"]
+            isOneToOne: false
+            referencedRelation: "product_source_field_coverage_policies"
+            referencedColumns: ["policy_key", "provider_key"]
+          },
+          {
+            foreignKeyName: "product_source_field_coverage_provider_key_fkey"
+            columns: ["provider_key"]
+            isOneToOne: false
+            referencedRelation: "product_data_sources"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      product_source_field_coverage_policies: {
+        Row: {
+          created_at: string
+          not_found_coverage_ttl_seconds: number
+          not_reported_coverage_ttl_seconds: number
+          policy_key: string
+          provider_key: string
+          reported_coverage_ttl_seconds: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          not_found_coverage_ttl_seconds: number
+          not_reported_coverage_ttl_seconds: number
+          policy_key: string
+          provider_key: string
+          reported_coverage_ttl_seconds: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          not_found_coverage_ttl_seconds?: number
+          not_reported_coverage_ttl_seconds?: number
+          policy_key?: string
+          provider_key?: string
+          reported_coverage_ttl_seconds?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_source_field_coverage_policies_policy_key_fkey"
+            columns: ["policy_key"]
+            isOneToOne: false
+            referencedRelation: "product_resolution_policy_versions"
+            referencedColumns: ["key"]
+          },
+          {
+            foreignKeyName: "product_source_field_coverage_policies_provider_key_fkey"
+            columns: ["provider_key"]
             isOneToOne: false
             referencedRelation: "product_data_sources"
             referencedColumns: ["key"]
