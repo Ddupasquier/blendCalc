@@ -95,8 +95,7 @@ export interface FoodImageAsset {
 	confidence: "source-verified" | "moderator-reviewed" | "imported";
 	canonicalStatus?: "candidate" | "selected";
 	canonicalSelectionMethod?:
-		| "exact-licensed-source"
-		| "moderator-approved-community";
+		"exact-licensed-source" | "moderator-approved-community";
 	canonicalSelectedAt?: string;
 	cropX?: number;
 	cropY?: number;
@@ -147,10 +146,7 @@ export interface FoodServing {
 }
 
 export type FoodIdentityType =
-	| "generic"
-	| "packaged"
-	| "private-custom"
-	| "unknown";
+	"generic" | "packaged" | "private-custom" | "unknown";
 
 export type FoodStructuredIngredient = {
 	id?: string;
@@ -164,10 +160,28 @@ export type FoodStructuredIngredient = {
 	ingredients?: FoodStructuredIngredient[];
 };
 
+export type FoodIngredientAllergenDeclarationStatement = {
+	type: "contains" | FoodPrecautionaryStatementType;
+	text: string;
+	allergens: string[];
+};
+
+export type FoodIngredientAllergenDeclarationAnalysis = {
+	method: "bounded-ingredient-label-pattern";
+	sourceField: string;
+	languageCode?: string;
+	languageStatus: "supported" | "unsupported" | "unknown";
+	extractionStatus: "parsed" | "none" | "skipped";
+	contains: string[];
+	mayContain: string[];
+	statements: FoodIngredientAllergenDeclarationStatement[];
+};
+
 export type FoodIngredientAnalysis = {
 	ingredientTags: string[];
 	analysisTags: string[];
 	derivedTraceTags: string[];
+	allergenDeclarationAnalysis?: FoodIngredientAllergenDeclarationAnalysis;
 	percentAnalysis?: number;
 	percentEstimate?: number;
 	percentKnown?: number;
@@ -286,13 +300,9 @@ export type FoodTrackedField =
 	| "sourceMetadata";
 
 export type FoodDescriptiveSourceField =
-	| "scientificName"
-	| "alternateDescription"
-	| "preparation";
+	"scientificName" | "alternateDescription" | "preparation";
 
-export type FoodProvenanceField =
-	| FoodTrackedField
-	| FoodDescriptiveSourceField;
+export type FoodProvenanceField = FoodTrackedField | FoodDescriptiveSourceField;
 
 export type FoodFieldSource = {
 	source:
@@ -451,11 +461,7 @@ export interface FoodItem {
 	customFood?: boolean;
 	barcode?: string;
 	barcodeSource?:
-		| "open-food-facts"
-		| "cola-cloud"
-		| "usda"
-		| "manual"
-		| "community";
+		"open-food-facts" | "cola-cloud" | "usda" | "manual" | "community";
 	barcodeProvenance?: FoodBarcodeProvenance;
 	sourceKey?: string;
 	sourceLabel?: string;

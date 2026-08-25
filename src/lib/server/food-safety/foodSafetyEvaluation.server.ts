@@ -5,9 +5,7 @@ import type {
 	FoodCompatibilityRegulatoryContext,
 	FoodCompatibilitySummary,
 } from "$lib/utils/food/quality/compatibility";
-import {
-	getFoodCompatibilityEvaluation,
-} from "$lib/utils/food/quality/foodCompatibilityEvaluation";
+import { getFoodCompatibilityEvaluation } from "$lib/utils/food/quality/foodCompatibilityEvaluation";
 import {
 	buildFoodIngredientPresentation,
 	buildFoodPreferenceWarningEvidence,
@@ -17,10 +15,7 @@ import {
 	isAuthoritativeGenericFood,
 	resolveFoodIdentityType,
 } from "$lib/utils/food/identity/foodIdentity";
-import type {
-	FoodItem,
-	FoodAllergenDisclosure,
-} from "$lib/utils/food/types";
+import type { FoodItem, FoodAllergenDisclosure } from "$lib/utils/food/types";
 import {
 	getResolvedFoodPreferences,
 	getUnresolvedFoodPreferences,
@@ -36,10 +31,7 @@ import type {
 	FoodPreferenceWarning,
 	FoodPreferenceWarningLevel,
 } from "$lib/utils/profile/foodPreferenceWarnings";
-import type {
-	AppIssueCode,
-	AppIssueParams,
-} from "$lib/utils/errors/appIssues";
+import type { AppIssueCode, AppIssueParams } from "$lib/utils/errors/appIssues";
 
 const normalizeValue = (value: string) =>
 	value
@@ -55,7 +47,8 @@ const normalizeValue = (value: string) =>
 		.replace(/\s+/g, " ")
 		.trim();
 
-const normalizeKey = (value: string) => normalizeValue(value).replace(/\s+/g, "-");
+const normalizeKey = (value: string) =>
+	normalizeValue(value).replace(/\s+/g, "-");
 
 const createStructuredFact = (
 	value: string,
@@ -66,11 +59,12 @@ const createStructuredFact = (
 	label: value.trim(),
 	category,
 	factType,
-	sourceType: factType === "may_contain"
-		? "label_trace_field"
-		: factType === "dietary_claim"
-			? "label_dietary_field"
-			: "label_allergen_field",
+	sourceType:
+		factType === "may_contain"
+			? "label_trace_field"
+			: factType === "dietary_claim"
+				? "label_dietary_field"
+				: "label_allergen_field",
 	sourceText: value,
 	confidence: "confirmed",
 });
@@ -83,12 +77,13 @@ const getValueLanguageCode = (value: string) =>
 		/^([a-z]{2,3}(?:-[A-Z]{2})?):/i.exec(value.trim())?.[1],
 	);
 
-const getFoodLanguageCodes = (food: FoodItem) => [...new Set([
-	food.sourceMetadata?.language,
-	...(food.sourceMetadata?.languages ?? []),
-]
-	.map(getPrimaryLanguageCode)
-	.filter(Boolean))];
+const getFoodLanguageCodes = (food: FoodItem) => [
+	...new Set(
+		[food.sourceMetadata?.language, ...(food.sourceMetadata?.languages ?? [])]
+			.map(getPrimaryLanguageCode)
+			.filter(Boolean),
+	),
+];
 
 const aliasMatchesLanguage = (
 	alias: FoodCompatibilityIngredientAlias,
@@ -114,10 +109,9 @@ const getAliasDerivedFacts = (
 		value: string,
 		factType: "contains" | "may_contain" | "ingredient_present",
 		sourceType:
-			| "label_allergen_field"
-			| "label_trace_field"
-			| "label_ingredient_field",
+			"label_allergen_field" | "label_trace_field" | "label_ingredient_field",
 		requireExact: boolean,
+		sourceText = value,
 	) => {
 		const normalizedValue = normalizeValue(value);
 		if (!normalizedValue) return [];
@@ -137,8 +131,9 @@ const getAliasDerivedFacts = (
 			...matches.map((match) => match.normalizedAlias.length),
 		);
 		return matches
-			.filter((match) =>
-				requireExact || match.normalizedAlias.length === longestAliasLength
+			.filter(
+				(match) =>
+					requireExact || match.normalizedAlias.length === longestAliasLength,
 			)
 			.map(({ alias }) => ({
 				slug: alias.tagSlug,
@@ -146,7 +141,7 @@ const getAliasDerivedFacts = (
 				category: alias.tagCategory,
 				factType,
 				sourceType,
-				sourceText: value.trim(),
+				sourceText: sourceText.trim(),
 				confidence: "confirmed" as const,
 			}));
 	};
@@ -164,30 +159,40 @@ const getAliasDerivedFacts = (
 		}
 	};
 	visitStructuredIngredients(food.structuredIngredients ?? []);
+	const allergenDeclarationStatements =
+		food.ingredientAnalysis?.allergenDeclarationAnalysis?.statements ?? [];
 
 	return [
 		...(food.allergens ?? []).flatMap((value) =>
-			getMatches(value, "contains", "label_allergen_field", true)
+			getMatches(value, "contains", "label_allergen_field", true),
 		),
 		...(food.traces ?? []).flatMap((value) =>
-			getMatches(value, "may_contain", "label_trace_field", true)
+			getMatches(value, "may_contain", "label_trace_field", true),
 		),
-		...[...(food.ingredientList ?? []), ...structuredIngredientTexts]
-			.flatMap((value) =>
+		...[...(food.ingredientList ?? []), ...structuredIngredientTexts].flatMap(
+			(value) =>
 				getMatches(
 					value,
 					"ingredient_present",
 					"label_ingredient_field",
 					false,
-				)
+				),
+		),
+		...allergenDeclarationStatements.flatMap((statement) =>
+			statement.allergens.flatMap((allergen) =>
+				getMatches(
+					allergen,
+					statement.type === "contains" ? "contains" : "may_contain",
+					"label_ingredient_field",
+					true,
+					statement.text,
+				),
 			),
+		),
 	];
 };
 
-const getDietaryClaimFacts = (
-	food: FoodItem,
-	policy: FoodSafetyPolicy,
-) => {
+const getDietaryClaimFacts = (food: FoodItem, policy: FoodSafetyPolicy) => {
 	const dietaryClaims = new Map(
 		policy.preferenceConflictRules
 			.filter((rule) => rule.preferenceCategory === "dietary")
@@ -197,12 +202,14 @@ const getDietaryClaimFacts = (
 			]),
 	);
 
-	return [...(food.dietaryTags ?? []), ...(food.labels ?? [])].flatMap((value) => {
-		const label = dietaryClaims.get(normalizeValue(value));
-		return label
-			? [createStructuredFact(label, "dietary_claim", "dietary")]
-			: [];
-	});
+	return [...(food.dietaryTags ?? []), ...(food.labels ?? [])].flatMap(
+		(value) => {
+			const label = dietaryClaims.get(normalizeValue(value));
+			return label
+				? [createStructuredFact(label, "dietary_claim", "dietary")]
+				: [];
+		},
+	);
 };
 
 const isCurrentCompatibilityFact = (fact: FoodCompatibilityFact) => {
@@ -210,8 +217,10 @@ const isCurrentCompatibilityFact = (fact: FoodCompatibilityFact) => {
 		(fact as unknown as { sourceType?: unknown }).sourceType ?? "",
 	);
 	if (sourceType === "source_food_identity") return false;
-	return fact.factType !== "ingredient_present" ||
-		sourceType === "label_ingredient_field";
+	return (
+		fact.factType !== "ingredient_present" ||
+		sourceType === "label_ingredient_field"
+	);
 };
 
 const getRuleFieldValue = (
@@ -238,10 +247,7 @@ const getRuleFieldValue = (
 	) {
 		return (food.allergens ?? []).join(" | ");
 	}
-	if (
-		rule.fieldName === "traces" &&
-		rule.sourceType === "label_trace_field"
-	) {
+	if (rule.fieldName === "traces" && rule.sourceType === "label_trace_field") {
 		return (food.traces ?? []).join(" | ");
 	}
 	if (
@@ -283,36 +289,33 @@ const getRuleDerivedCompatibilityFacts = (
 			) {
 				return [];
 			}
-			return [{
-				slug: rule.tagSlug,
-				label: rule.tagLabel,
-				category: rule.tagCategory,
-				factType: rule.factType,
-				sourceType: rule.sourceType,
-				sourceText: match[0],
-				confidence: rule.confidence,
-			}];
+			return [
+				{
+					slug: rule.tagSlug,
+					label: rule.tagLabel,
+					category: rule.tagCategory,
+					factType: rule.factType,
+					sourceType: rule.sourceType,
+					sourceText: match[0],
+					confidence: rule.confidence,
+				},
+			];
 		});
 
-const getCompatibilityFacts = (
-	food: FoodItem,
-	policy: FoodSafetyPolicy,
-) => {
+const getCompatibilityFacts = (food: FoodItem, policy: FoodSafetyPolicy) => {
 	const facts = [
-		...(food.compatibilitySummary?.allFacts ?? [])
-			.filter(isCurrentCompatibilityFact),
+		...(food.compatibilitySummary?.allFacts ?? []).filter(
+			isCurrentCompatibilityFact,
+		),
 		...(food.allergens ?? []).map((value) =>
-			createStructuredFact(value, "contains", "allergen")
+			createStructuredFact(value, "contains", "allergen"),
 		),
 		...(food.traces ?? []).map((value) =>
-			createStructuredFact(value, "may_contain", "allergen")
+			createStructuredFact(value, "may_contain", "allergen"),
 		),
 		...getAliasDerivedFacts(food, policy),
 		...getDietaryClaimFacts(food, policy),
-		...getRuleDerivedCompatibilityFacts(
-			food,
-			policy.compatibilityMatchRules,
-		),
+		...getRuleDerivedCompatibilityFacts(food, policy.compatibilityMatchRules),
 	];
 	const uniqueFacts = new Map(
 		facts.map((fact) => [
@@ -325,10 +328,10 @@ const getCompatibilityFacts = (
 
 const factMatches = (fact: FoodCompatibilityFact, value: string) => {
 	const normalized = normalizeValue(value);
-	return [fact.slug, fact.label, fact.sourceText]
-		.some((candidate) =>
-			typeof candidate === "string" && normalizeValue(candidate) === normalized
-		);
+	return [fact.slug, fact.label, fact.sourceText].some(
+		(candidate) =>
+			typeof candidate === "string" && normalizeValue(candidate) === normalized,
+	);
 };
 
 const getFactIssue = (
@@ -390,25 +393,23 @@ const getConflictFact = (
 	policy: FoodSafetyPolicy,
 ) => {
 	const matchingRules = policy.preferenceConflictRules
-		.filter((rule) =>
-			normalizeValue(rule.preferenceSlug) === normalizeValue(preference) ||
-			normalizeValue(rule.preferenceLabel) === normalizeValue(preference)
+		.filter(
+			(rule) =>
+				normalizeValue(rule.preferenceSlug) === normalizeValue(preference) ||
+				normalizeValue(rule.preferenceLabel) === normalizeValue(preference),
 		)
 		.sort((left, right) => left.priority - right.priority);
 	for (const rule of matchingRules) {
-		const fact = facts.find((candidate) =>
-			[
-				"contains",
-				"may_contain",
-				"ingredient_present",
-				"dietary_conflict",
-			].includes(
-				candidate.factType,
-			) &&
-			(
-				normalizeValue(candidate.slug) === normalizeValue(rule.factSlug) ||
-				normalizeValue(candidate.label) === normalizeValue(rule.factLabel)
-			)
+		const fact = facts.find(
+			(candidate) =>
+				[
+					"contains",
+					"may_contain",
+					"ingredient_present",
+					"dietary_conflict",
+				].includes(candidate.factType) &&
+				(normalizeValue(candidate.slug) === normalizeValue(rule.factSlug) ||
+					normalizeValue(candidate.label) === normalizeValue(rule.factLabel)),
 		);
 		if (fact) {
 			return {
@@ -433,24 +434,23 @@ const getFoodPreferenceWarnings = (
 	for (const resolution of getResolvedFoodPreferences(profile, "allergen")) {
 		const allergen = resolution.rawValue;
 		const canonicalPreference = resolution.tag?.slug ?? "";
-		const directFact = facts.find((fact) =>
-			fact.category === "allergen" &&
-			[
-				"contains",
-				"may_contain",
-				"ingredient_present",
-			].includes(fact.factType) &&
-			factMatches(fact, canonicalPreference)
+		const directFact = facts.find(
+			(fact) =>
+				fact.category === "allergen" &&
+				["contains", "may_contain", "ingredient_present"].includes(
+					fact.factType,
+				) &&
+				factMatches(fact, canonicalPreference),
 		);
 		const relatedFact = directFact
 			? null
 			: getConflictFact(canonicalPreference, facts, policy);
 		const fact = directFact ?? relatedFact?.fact;
 		if (!fact) continue;
-		const level = fact.factType === "may_contain" ||
-				fact.confidence !== "confirmed"
-			? "potential"
-			: relatedFact?.level ?? "warning";
+		const level =
+			fact.factType === "may_contain" || fact.confidence !== "confirmed"
+				? "potential"
+				: (relatedFact?.level ?? "warning");
 		const issue = getFactIssue(fact);
 		warnings.push(
 			buildWarning(
@@ -469,24 +469,18 @@ const getFoodPreferenceWarnings = (
 		);
 	}
 
-	for (
-		const resolution of getResolvedFoodPreferences(
-			profile,
-			"dietary_restriction",
-		)
-	) {
+	for (const resolution of getResolvedFoodPreferences(
+		profile,
+		"dietary_restriction",
+	)) {
 		const restriction = resolution.rawValue;
-		const conflict = getConflictFact(
-			resolution.tag?.slug ?? "",
-			facts,
-			policy,
-		);
+		const conflict = getConflictFact(resolution.tag?.slug ?? "", facts, policy);
 		if (!conflict) continue;
 		warnings.push(
 			buildWarning(
 				`restriction-${normalizeKey(restriction)}-${normalizeKey(conflict.fact.slug)}`,
 				conflict.fact.factType === "may_contain" ||
-						conflict.fact.confidence !== "confirmed"
+					conflict.fact.confidence !== "confirmed"
 					? "potential"
 					: conflict.level,
 				"restriction",
@@ -505,43 +499,43 @@ const getFoodPreferenceWarnings = (
 	return warnings;
 };
 
-const getActivePreferenceValues = (
-	profile: FoodPreferenceProfile | null,
-) => getResolvedFoodPreferences(profile)
-	.map((resolution) => resolution.tag?.slug.trim() ?? "")
-	.filter(Boolean);
+const getActivePreferenceValues = (profile: FoodPreferenceProfile | null) =>
+	getResolvedFoodPreferences(profile)
+		.map((resolution) => resolution.tag?.slug.trim() ?? "")
+		.filter(Boolean);
 
-const getSavedPreferenceCount = (
-	profile: FoodPreferenceProfile | null,
-) => profile
-	? [...profile.allergens, ...profile.dietaryRestrictions]
-		.map((value) => value.trim())
-		.filter(Boolean).length
-	: 0;
+const getSavedPreferenceCount = (profile: FoodPreferenceProfile | null) =>
+	profile
+		? [...profile.allergens, ...profile.dietaryRestrictions]
+				.map((value) => value.trim())
+				.filter(Boolean).length
+		: 0;
 
 const getPreferenceResolutionContext = (
 	profile: FoodPreferenceProfile | null,
 ): FoodCompatibilityPreferenceResolutionContext => {
 	const resolvedPreferences = getResolvedFoodPreferences(profile);
 	return {
-	resolvedCount: resolvedPreferences.length,
-	resolvedPreferences: resolvedPreferences.flatMap((resolution) =>
-		resolution.tag
-			? [{
-				tagId: resolution.tag.id,
-				tagSlug: resolution.tag.slug,
-				label: resolution.tag.label,
-				rawValue: resolution.rawValue,
+		resolvedCount: resolvedPreferences.length,
+		resolvedPreferences: resolvedPreferences.flatMap((resolution) =>
+			resolution.tag
+				? [
+						{
+							tagId: resolution.tag.id,
+							tagSlug: resolution.tag.slug,
+							label: resolution.tag.label,
+							rawValue: resolution.rawValue,
+							type: resolution.ruleType,
+						},
+					]
+				: [],
+		),
+		unresolvedPreferences: getUnresolvedFoodPreferences(profile).map(
+			(resolution) => ({
+				label: resolution.rawValue,
 				type: resolution.ruleType,
-			}]
-			: []
-	),
-	unresolvedPreferences: getUnresolvedFoodPreferences(profile).map(
-		(resolution) => ({
-			label: resolution.rawValue,
-			type: resolution.ruleType,
-		}),
-	),
+			}),
+		),
 	};
 };
 
@@ -556,7 +550,7 @@ const policyCoversPreferences = (
 		]),
 	);
 	return preferences.every((preference) =>
-		coveredPreferences.has(normalizeValue(preference))
+		coveredPreferences.has(normalizeValue(preference)),
 	);
 };
 
@@ -566,7 +560,12 @@ const policyCoversFoodLanguages = (
 ) => {
 	if (resolveFoodIdentityType(food) === "generic") return true;
 	const languages = getFoodLanguageCodes(food);
-	if (languages.length === 0) return true;
+	const hasIngredientLanguageSensitiveEvidence = Boolean(
+		food.ingredients?.trim() ||
+		food.ingredientList?.length ||
+		food.structuredIngredients?.length,
+	);
+	if (languages.length === 0) return !hasIngredientLanguageSensitiveEvidence;
 	const supportedLanguages = new Set(policy.supportedIngredientLanguages);
 	return languages.every((language) => supportedLanguages.has(language));
 };
@@ -578,19 +577,20 @@ const getRegionalProfileTagForPreference = (
 ) => {
 	const normalizedPreference = normalizeValue(preference.tag?.slug ?? "");
 	const directMatch = profile.tags.find((tag) =>
-		[tag.slug, tag.label, tag.sourceLabel]
-			.some((value) => normalizeValue(value) === normalizedPreference)
+		[tag.slug, tag.label, tag.sourceLabel].some(
+			(value) => normalizeValue(value) === normalizedPreference,
+		),
 	);
 	if (directMatch) return directMatch;
 
 	const relatedFactKeys = new Set(
 		policy.preferenceConflictRules
-			.filter((rule) =>
-				rule.preferenceCategory === "allergen" &&
-				[
-					rule.preferenceSlug,
-					rule.preferenceLabel,
-				].some((value) => normalizeValue(value) === normalizedPreference)
+			.filter(
+				(rule) =>
+					rule.preferenceCategory === "allergen" &&
+					[rule.preferenceSlug, rule.preferenceLabel].some(
+						(value) => normalizeValue(value) === normalizedPreference,
+					),
 			)
 			.flatMap((rule) => [
 				normalizeValue(rule.factSlug),
@@ -598,9 +598,10 @@ const getRegionalProfileTagForPreference = (
 			]),
 	);
 
-	return profile.tags.find((tag) =>
-		relatedFactKeys.has(normalizeValue(tag.slug)) ||
-		relatedFactKeys.has(normalizeValue(tag.label))
+	return profile.tags.find(
+		(tag) =>
+			relatedFactKeys.has(normalizeValue(tag.slug)) ||
+			relatedFactKeys.has(normalizeValue(tag.label)),
 	);
 };
 
@@ -631,12 +632,14 @@ export const getFoodCompatibilityRegulatoryContext = (
 			selectionSource,
 			profile: null,
 			coveredPreferences: [],
-			uncoveredPreferences: getResolvedFoodPreferences(profile, "allergen")
-				.map((resolution) => resolution.rawValue),
+			uncoveredPreferences: getResolvedFoodPreferences(profile, "allergen").map(
+				(resolution) => resolution.rawValue,
+			),
 		};
 	}
 
-	const coveredPreferences: FoodCompatibilityRegulatoryContext["coveredPreferences"] = [];
+	const coveredPreferences: FoodCompatibilityRegulatoryContext["coveredPreferences"] =
+		[];
 	const uncoveredPreferences: string[] = [];
 	for (const preference of getResolvedFoodPreferences(profile, "allergen")) {
 		const matchedTag = getRegionalProfileTagForPreference(
@@ -711,14 +714,14 @@ const getAllergenDisclosure = (
 	facts: FoodCompatibilityFact[],
 ): FoodAllergenDisclosure => {
 	const containsEntries = getUniqueAllergenDisclosureEntries(
-		facts.filter((fact) =>
-			fact.category === "allergen" && fact.factType === "contains"
+		facts.filter(
+			(fact) => fact.category === "allergen" && fact.factType === "contains",
 		),
 	);
 	const containsKeys = new Set(containsEntries.map(({ key }) => key));
 	const mayContainEntries = getUniqueAllergenDisclosureEntries(
-		facts.filter((fact) =>
-			fact.category === "allergen" && fact.factType === "may_contain"
+		facts.filter(
+			(fact) => fact.category === "allergen" && fact.factType === "may_contain",
 		),
 	).filter(({ key }) => !containsKeys.has(key));
 
@@ -782,10 +785,8 @@ export const annotateFoodWithFoodSafety = (
 			food,
 			policyVersion: context.policy.version,
 			hasActivePreferences: getSavedPreferenceCount(context.profile) > 0,
-			policyCoversPreferences: policyCoversPreferences(
-				activePreferences,
-				context.policy,
-			) &&
+			policyCoversPreferences:
+				policyCoversPreferences(activePreferences, context.policy) &&
 				policyCoversFoodLanguages(food, context.policy) &&
 				preferenceResolution.unresolvedPreferences.length === 0,
 			conflictCount: preferenceWarnings.length,

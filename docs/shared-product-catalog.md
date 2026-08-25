@@ -168,13 +168,18 @@ Jurisdiction exemptions are retained as context and cannot suppress a warning fo
 explicitly selected personal preference.
 
 The active terminology bundle currently includes reviewed English, French, and Spanish
-aliases for canonical allergen ingredients and declarations. Matching is accent-aware,
-language-scoped when source language is known, and limited to exact declarations or
-token-bounded structured/list ingredients. It does not inspect product names, brands,
-categories, or raw unparsed ingredient prose. Explicitly unsupported source languages
-leave policy coverage incomplete rather than producing an unchecked success. Regional
-labeling exemptions retain reviewed derivative, processing, threshold, and product
-context, but remain explanatory only and never remove a personal warning.
+aliases for canonical allergen ingredients and provider-reported declaration fields.
+Matching is accent-aware, language-scoped when source language is known, and limited to
+exact declarations or token-bounded structured/list ingredients. A separate bounded
+parser recognizes explicit declaration markers embedded in English ingredient-label
+text. It records its method, source field, exact statement, language, language status,
+and extraction status under ingredient analysis; it never turns those derived results
+into provider-reported allergen or trace fields. Known unreviewed languages are skipped,
+and missing language metadata remains explicitly unknown. Either condition leaves
+packaged-food policy coverage incomplete. Product names, brands, and categories are
+never declaration evidence. Regional labeling exemptions retain reviewed derivative,
+processing, threshold, and product context, but remain explanatory only and never
+remove a personal warning.
 
 Package precautionary statements are stored separately from ordinary ingredients and
 provider analysis. Each row preserves exact wording, statement type, normalized
