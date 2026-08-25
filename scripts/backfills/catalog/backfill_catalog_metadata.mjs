@@ -29,7 +29,7 @@ config({ path: ".env", quiet: true });
 const isDryRun = process.argv.includes("--dry-run");
 const cachedOnly = process.argv.includes("--cached-only");
 const limitArgument = process.argv.find((argument) =>
-	argument.startsWith("--limit=")
+	argument.startsWith("--limit="),
 );
 const limit = limitArgument
 	? Number.parseInt(limitArgument.split("=")[1] ?? "", 10)
@@ -127,8 +127,7 @@ const OPEN_FOOD_FACTS_FIELDS = [
 	"tags_sources",
 	"nutriments",
 ].join(",");
-const OPEN_FOOD_FACTS_LEGACY_FIELDS = OPEN_FOOD_FACTS_FIELDS
-	.split(",")
+const OPEN_FOOD_FACTS_LEGACY_FIELDS = OPEN_FOOD_FACTS_FIELDS.split(",")
 	.filter((field) => field !== "countries" && field !== "countries_tags")
 	.join(",");
 const RETRY_DELAYS_MS = [750, 2_000];
@@ -204,9 +203,7 @@ const upsertApiCache = async ({
 		status_code: statusCode,
 		response,
 		fetched_at: fetchedAt.toISOString(),
-		expires_at: new Date(
-			fetchedAt.getTime() + ttlMilliseconds,
-		).toISOString(),
+		expires_at: new Date(fetchedAt.getTime() + ttlMilliseconds).toISOString(),
 		etag: null,
 	});
 	if (error) throw error;
@@ -240,9 +237,6 @@ const cleanValues = (values) => {
 	});
 };
 
-const splitDelimitedValues = (value) =>
-	cleanValues(String(value ?? "").split(/[;,]/));
-
 const splitIngredientList = (value) =>
 	cleanValues(String(value ?? "").split(/,(?![^(]*\))/));
 
@@ -265,7 +259,9 @@ const toSourceTimestamp = (value) => {
 		return undefined;
 	}
 	const timestamp = Date.parse(trimmed);
-	return Number.isFinite(timestamp) ? new Date(timestamp).toISOString() : undefined;
+	return Number.isFinite(timestamp)
+		? new Date(timestamp).toISOString()
+		: undefined;
 };
 
 const hasValues = (value) =>
@@ -273,7 +269,9 @@ const hasValues = (value) =>
 
 const parseSourceServing = (food) => {
 	const quantity = Number(food?.servingSize);
-	const unit = String(food?.servingSizeUnit ?? "").trim().toLocaleLowerCase();
+	const unit = String(food?.servingSizeUnit ?? "")
+		.trim()
+		.toLocaleLowerCase();
 	const factors = new Map([
 		["g", 1],
 		["gram", 1],
@@ -291,21 +289,24 @@ const parseSourceServing = (food) => {
 	const factor = factors.get(unit);
 	if (!Number.isFinite(quantity) || quantity <= 0 || !factor) return null;
 	const gramWeight = quantity * factor;
-	const label = String(food?.householdServingFullText ?? "").trim() ||
+	const label =
+		String(food?.householdServingFullText ?? "").trim() ||
 		`${quantity} ${food.servingSizeUnit}`;
 	return {
 		servingSize: gramWeight,
 		servingSizeUnit: "g",
 		householdServingFullText: label,
 		hasSourceServing: true,
-		foodServings: [{
-			label,
-			gramWeight,
-			isPrimary: true,
-			source: "usda",
-			sourceReference: String(food.fdcId),
-			confidence: "unknown",
-		}],
+		foodServings: [
+			{
+				label,
+				gramWeight,
+				isPrimary: true,
+				source: "usda",
+				sourceReference: String(food.fdcId),
+				confidence: "unknown",
+			},
+		],
 		customServingLabel: label,
 		customServingWeightGrams: gramWeight,
 	};
@@ -338,17 +339,13 @@ const getUsdaMetadata = (food) => {
 			...(food?.allergens ?? []),
 			...declarations.contains,
 		]),
-		traces: cleanValues([
-			...(food?.traces ?? []),
-			...declarations.mayContain,
-		]),
+		traces: cleanValues([...(food?.traces ?? []), ...declarations.mayContain]),
 		precautionaryStatements: declarations.precautionaryStatements,
 		dietaryTags: cleanValues(food?.dietaryTags ?? []),
 		labels: cleanValues(food?.labels ?? []),
 		packageQuantity: packageLabel ? { label: packageLabel } : undefined,
-		sourceMetadata: Object.keys(sourceMetadata).length > 0
-			? sourceMetadata
-			: undefined,
+		sourceMetadata:
+			Object.keys(sourceMetadata).length > 0 ? sourceMetadata : undefined,
 		serving: parseSourceServing(food),
 	};
 };
@@ -367,13 +364,15 @@ const getMissingFields = (food, brandOwner) => ({
 		!food?.ingredientAnalysis ||
 		Object.keys(food.ingredientAnalysis).length === 0,
 	additives: !hasValues(food?.additives),
-	package: !food?.packageQuantity ||
-		Object.keys(food.packageQuantity).length === 0,
-	sourceMetadata: !food?.sourceMetadata ||
-		Object.keys(food.sourceMetadata).length === 0,
+	package:
+		!food?.packageQuantity || Object.keys(food.packageQuantity).length === 0,
+	sourceMetadata:
+		!food?.sourceMetadata || Object.keys(food.sourceMetadata).length === 0,
 	serving:
 		food?.hasSourceServing !== true ||
-		!Number.isFinite(Number(food?.customServingWeightGrams ?? food?.servingSize)) ||
+		!Number.isFinite(
+			Number(food?.customServingWeightGrams ?? food?.servingSize),
+		) ||
 		Number(food?.customServingWeightGrams ?? food?.servingSize) <= 0,
 });
 
@@ -385,7 +384,7 @@ const getUsdaCandidateFields = (product, metadata) => {
 		missing.allergens && metadata.allergens.length > 0 ? "allergens" : null,
 		missing.traces && metadata.traces.length > 0 ? "traces" : null,
 		missing.precautionaryStatements &&
-			metadata.precautionaryStatements.length > 0
+		metadata.precautionaryStatements.length > 0
 			? "precautionaryStatements"
 			: null,
 		missing.dietaryTags && metadata.dietaryTags.length > 0
@@ -393,9 +392,7 @@ const getUsdaCandidateFields = (product, metadata) => {
 			: null,
 		missing.labels && metadata.labels.length > 0 ? "labels" : null,
 		missing.package && metadata.packageQuantity ? "package" : null,
-		missing.sourceMetadata && metadata.sourceMetadata
-			? "sourceMetadata"
-			: null,
+		missing.sourceMetadata && metadata.sourceMetadata ? "sourceMetadata" : null,
 		missing.serving && metadata.serving ? "serving" : null,
 	].filter(Boolean);
 };
@@ -409,14 +406,12 @@ const applyUsdaMetadata = (currentFood, metadata, sourceReference, fields) => {
 	};
 	return {
 		...currentFood,
-		...(fieldSet.has("brandOwner")
-			? { brandOwner: metadata.brandOwner }
-			: {}),
+		...(fieldSet.has("brandOwner") ? { brandOwner: metadata.brandOwner } : {}),
 		...(fieldSet.has("ingredients")
 			? {
-				ingredients: metadata.ingredients,
-				ingredientList: metadata.ingredientList,
-			}
+					ingredients: metadata.ingredients,
+					ingredientList: metadata.ingredientList,
+				}
 			: {}),
 		...(fieldSet.has("allergens") ? { allergens: metadata.allergens } : {}),
 		...(fieldSet.has("traces") ? { traces: metadata.traces } : {}),
@@ -453,8 +448,7 @@ const getTrackedFieldValue = (food, field) => {
 		case "serving":
 			return {
 				label: food.customServingLabel ?? food.householdServingFullText ?? null,
-				weightGrams:
-					food.customServingWeightGrams ?? food.servingSize ?? null,
+				weightGrams: food.customServingWeightGrams ?? food.servingSize ?? null,
 				foodServings: food.foodServings ?? [],
 			};
 		case "package":
@@ -473,22 +467,20 @@ const lookupCachedUsdaDetail = async (product) => {
 		product.source_reference ?? product.food?.sourceReference ?? "",
 	);
 	if (/^[0-9]+$/.test(sourceReference)) {
-		const detail = await readApiCache(
-			"usda",
-			"food-detail",
-			{ fdcId: Number(sourceReference) },
-		);
+		const detail = await readApiCache("usda", "food-detail", {
+			fdcId: Number(sourceReference),
+		});
 		if (normalizeBarcode(detail?.gtinUpc) === canonicalBarcode) return detail;
 	}
 
 	const match = await findFirstBarcodeCandidateMatch(
 		product.barcode,
 		async (candidate) => {
-			const response = await readApiCache(
-				"usda",
-				"barcode-search",
-				{ query: candidate, dataType: "Branded", pageSize: 50 },
-			);
+			const response = await readApiCache("usda", "barcode-search", {
+				query: candidate,
+				dataType: "Branded",
+				pageSize: 50,
+			});
 			const exact = (response?.foods ?? []).find(
 				(food) => normalizeBarcode(food.gtinUpc) === canonicalBarcode,
 			);
@@ -496,11 +488,9 @@ const lookupCachedUsdaDetail = async (product) => {
 		},
 	);
 	if (!match) return null;
-	const detail = await readApiCache(
-		"usda",
-		"food-detail",
-		{ fdcId: Number(match.value.fdcId) },
-	);
+	const detail = await readApiCache("usda", "food-detail", {
+		fdcId: Number(match.value.fdcId),
+	});
 	return normalizeBarcode(detail?.gtinUpc) === canonicalBarcode ? detail : null;
 };
 
@@ -587,80 +577,79 @@ const lookupOpenFoodFacts = async (barcode) => {
 	const canonicalBarcode = normalizeBarcode(barcode);
 	if (!canonicalBarcode) return null;
 	return (
-		await findFirstBarcodeCandidateMatch(barcode, async (candidate) => {
-			const cacheValue = { candidate, fields: OPEN_FOOD_FACTS_FIELDS };
-			const cached = await readApiCache(
-				"open-food-facts",
-				"barcode-product",
-				cacheValue,
-			);
-			const compatibleCached = cached ?? (
-				cachedOnly
-					? await readApiCache(
-						"open-food-facts",
-						"barcode-product",
-						{
-							candidate,
-							fields: OPEN_FOOD_FACTS_LEGACY_FIELDS,
+		(
+			await findFirstBarcodeCandidateMatch(barcode, async (candidate) => {
+				const cacheValue = { candidate, fields: OPEN_FOOD_FACTS_FIELDS };
+				const cached = await readApiCache(
+					"open-food-facts",
+					"barcode-product",
+					cacheValue,
+				);
+				const compatibleCached =
+					cached ??
+					(cachedOnly
+						? await readApiCache("open-food-facts", "barcode-product", {
+								candidate,
+								fields: OPEN_FOOD_FACTS_LEGACY_FIELDS,
+							})
+						: null);
+				if (compatibleCached) {
+					const product = compatibleCached?.product;
+					return normalizeBarcode(product?.code ?? candidate) ===
+						canonicalBarcode
+						? compatibleCached
+						: null;
+				}
+				if (cachedOnly) return null;
+				const url = new URL(
+					`${OPEN_FOOD_FACTS_URL}/${encodeURIComponent(candidate)}.json`,
+				);
+				url.searchParams.set("fields", OPEN_FOOD_FACTS_FIELDS);
+				const response = await fetchJson(
+					url,
+					{
+						headers: {
+							accept: "application/json",
+							"user-agent": APP_USER_AGENT,
 						},
-					)
-					: null
-			);
-			if (compatibleCached) {
-				const product = compatibleCached?.product;
-				return normalizeBarcode(product?.code ?? candidate) === canonicalBarcode
-					? compatibleCached
-					: null;
-			}
-			if (cachedOnly) return null;
-			const url = new URL(
-				`${OPEN_FOOD_FACTS_URL}/${encodeURIComponent(candidate)}.json`,
-			);
-			url.searchParams.set("fields", OPEN_FOOD_FACTS_FIELDS);
-			const response = await fetchJson(
-				url,
-				{
-					headers: {
-						accept: "application/json",
-						"user-agent": APP_USER_AGENT,
 					},
-				},
-				`Open Food Facts metadata ${candidate}`,
-			);
-			await upsertApiCache({
-				provider: "open-food-facts",
-				requestKind: "barcode-product",
-				cacheValue,
-				response,
-				statusCode: response ? 200 : 404,
-				ttlMilliseconds: OPEN_FOOD_FACTS_CACHE_TTL_MS,
-			});
-			if (!response || response.status !== 1 || !response.product) return null;
-			return normalizeBarcode(response.product.code ?? candidate) === canonicalBarcode
-				? response
-				: null;
-		})
-	)?.value ?? null;
+					`Open Food Facts metadata ${candidate}`,
+				);
+				await upsertApiCache({
+					provider: "open-food-facts",
+					requestKind: "barcode-product",
+					cacheValue,
+					response,
+					statusCode: response ? 200 : 404,
+					ttlMilliseconds: OPEN_FOOD_FACTS_CACHE_TTL_MS,
+				});
+				if (!response || response.status !== 1 || !response.product)
+					return null;
+				return normalizeBarcode(response.product.code ?? candidate) ===
+					canonicalBarcode
+					? response
+					: null;
+			})
+		)?.value ?? null
+	);
 };
 
-const [{ data: sourceRows, error: sourceError }, {
-	data: productRows,
-	error: productError,
-}] = await Promise.all([
-		supabase
-			.from("product_data_sources")
-			.select(
-				"key, enabled, canonical_storage_allowed, canonical_license_name",
-			)
-			.in("key", ["usda", "open-food-facts"]),
-		supabase
-			.from("shared_products")
-			.select(
-				"id, barcode, product_name, brand_owner, source, source_reference, food, category_option_id",
-			)
-			.eq("status", "active")
-			.order("barcode"),
-	]);
+const [
+	{ data: sourceRows, error: sourceError },
+	{ data: productRows, error: productError },
+] = await Promise.all([
+	supabase
+		.from("product_data_sources")
+		.select("key, enabled, canonical_storage_allowed, canonical_license_name")
+		.in("key", ["usda", "open-food-facts"]),
+	supabase
+		.from("shared_products")
+		.select(
+			"id, barcode, product_name, brand_owner, source, source_reference, food, category_option_id",
+		)
+		.eq("status", "active")
+		.order("barcode"),
+]);
 
 if (sourceError) throw sourceError;
 if (productError) throw productError;
@@ -671,7 +660,9 @@ if (
 	!usdaPolicy.canonical_storage_allowed ||
 	!usdaPolicy.canonical_license_name
 ) {
-	throw new Error("USDA canonical storage policy is not approved in the database.");
+	throw new Error(
+		"USDA canonical storage policy is not approved in the database.",
+	);
 }
 
 const products = Number.isSafeInteger(limit)
@@ -707,9 +698,7 @@ for (const [index, product] of products.entries()) {
 		}
 
 		const metadata = usdaDetail ? getUsdaMetadata(usdaDetail) : null;
-		const fields = metadata
-			? getUsdaCandidateFields(product, metadata)
-			: [];
+		const fields = metadata ? getUsdaCandidateFields(product, metadata) : [];
 
 		if (usdaDetail && fields.length > 0) {
 			const sourceReference = String(usdaDetail.fdcId);
@@ -766,10 +755,7 @@ for (const [index, product] of products.entries()) {
 				const appliedFields = [];
 				for (const [rpcName, rpcFields] of [
 					["apply_shared_product_external_enrichment", standardFields],
-					[
-						"apply_shared_product_supplemental_enrichment",
-						supplementalFields,
-					],
+					["apply_shared_product_supplemental_enrichment", supplementalFields],
 				]) {
 					if (rpcFields.length === 0) continue;
 					const { data, error } = await supabase.rpc(rpcName, {
@@ -781,10 +767,10 @@ for (const [index, product] of products.entries()) {
 							: {}),
 						p_candidate_fields: rpcFields,
 						p_observations: observations.filter((observation) =>
-							rpcFields.includes(observation.trackedField)
+							rpcFields.includes(observation.trackedField),
 						),
 						p_provenance: provenance.filter((entry) =>
-							rpcFields.includes(entry.fieldPath)
+							rpcFields.includes(entry.fieldPath),
 						),
 					});
 					if (error) throw error;
@@ -802,11 +788,11 @@ for (const [index, product] of products.entries()) {
 
 		const projectedFood = metadata
 			? applyUsdaMetadata(
-				product.food,
-				metadata,
-				String(usdaDetail.fdcId),
-				fields,
-			)
+					product.food,
+					metadata,
+					String(usdaDetail.fdcId),
+					fields,
+				)
 			: product.food;
 		const stillNeedsLicensedMetadata = Object.values(
 			getMissingFields(
@@ -821,21 +807,21 @@ for (const [index, product] of products.entries()) {
 				const offProduct = offResponse?.product;
 				const offHasMetadata = Boolean(
 					offProduct?.ingredients_text_en ||
-						offProduct?.ingredients_text ||
-						offProduct?.ingredients?.length ||
-						offProduct?.ingredients_tags?.length ||
-						offProduct?.ingredients_analysis_tags?.length ||
-						offProduct?.allergens ||
-						offProduct?.allergens_tags?.length ||
-						offProduct?.allergens_hierarchy?.length ||
-						offProduct?.traces ||
-						offProduct?.traces_tags?.length ||
-						offProduct?.traces_hierarchy?.length ||
-						offProduct?.additives_tags?.length ||
-						offProduct?.labels ||
-						offProduct?.labels_tags?.length ||
-						offProduct?.product_quantity ||
-						offProduct?.last_modified_t,
+					offProduct?.ingredients_text ||
+					offProduct?.ingredients?.length ||
+					offProduct?.ingredients_tags?.length ||
+					offProduct?.ingredients_analysis_tags?.length ||
+					offProduct?.allergens ||
+					offProduct?.allergens_tags?.length ||
+					offProduct?.allergens_hierarchy?.length ||
+					offProduct?.traces ||
+					offProduct?.traces_tags?.length ||
+					offProduct?.traces_hierarchy?.length ||
+					offProduct?.additives_tags?.length ||
+					offProduct?.labels ||
+					offProduct?.labels_tags?.length ||
+					offProduct?.product_quantity ||
+					offProduct?.last_modified_t,
 				);
 				if (offHasMetadata) {
 					summary.openFoodFactsMetadataCached += 1;
@@ -856,5 +842,7 @@ for (const [index, product] of products.entries()) {
 	}
 }
 
-console.log(JSON.stringify({ dryRun: isDryRun, cachedOnly, ...summary }, null, 2));
+console.log(
+	JSON.stringify({ dryRun: isDryRun, cachedOnly, ...summary }, null, 2),
+);
 if (summary.errors > 0) process.exitCode = 1;

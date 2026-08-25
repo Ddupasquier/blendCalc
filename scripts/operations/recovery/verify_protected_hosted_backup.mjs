@@ -16,7 +16,9 @@ if (!backupArgument || !isAbsolute(backupArgument)) {
 const backupDirectory = resolve(backupArgument);
 const backupDirectoryMode = statSync(backupDirectory).mode & 0o777;
 if ((backupDirectoryMode & 0o077) !== 0) {
-	throw new Error("Backup directory permissions must deny group and public access.");
+	throw new Error(
+		"Backup directory permissions must deny group and public access.",
+	);
 }
 
 const getSafeBackupPath = (relativePath) => {
@@ -46,22 +48,21 @@ for (const relativePath of requiredFiles) {
 	const filePath = getSafeBackupPath(relativePath);
 	const fileStats = statSync(filePath);
 	if (!fileStats.isFile() || fileStats.size === 0) {
-		throw new Error(`Required backup file is empty or invalid: ${relativePath}`);
+		throw new Error(
+			`Required backup file is empty or invalid: ${relativePath}`,
+		);
 	}
 	if ((fileStats.mode & 0o077) !== 0) {
 		throw new Error(`Backup file permissions are too broad: ${relativePath}`);
 	}
 }
 
-const checksumLines = readFileSync(
-	join(backupDirectory, "SHA256SUMS"),
-	"utf8",
-)
+const checksumLines = readFileSync(join(backupDirectory, "SHA256SUMS"), "utf8")
 	.split("\n")
 	.filter(Boolean);
 const checksums = new Map(
 	checksumLines.map((line) => {
-		const match = line.match(/^([a-f0-9]{64})  (.+)$/);
+		const match = line.match(/^([a-f0-9]{64}) {2}(.+)$/);
 		if (!match) throw new Error(`Invalid SHA256SUMS entry: ${line}`);
 		const listedPath = match[2];
 		const normalizedPath = isAbsolute(listedPath)
@@ -89,11 +90,7 @@ for (const storageObject of storageManifest.objects ?? []) {
 	if (!bucketName || !objectPath || !Number.isFinite(sizeBytes)) {
 		throw new Error("Storage manifest contains an incomplete object entry.");
 	}
-	const relativePath = join(
-		"storage",
-		bucketName,
-		objectPath,
-	);
+	const relativePath = join("storage", bucketName, objectPath);
 	const filePath = getSafeBackupPath(relativePath);
 	const fileStats = statSync(filePath);
 	if (fileStats.size !== sizeBytes) {

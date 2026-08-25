@@ -1,7 +1,18 @@
 import { describe, expect, it } from "vitest";
 import { NUTRIENT_IDS, type FoodItem } from "$lib/utils/food/types";
-import { compareCatalogSubmissionToExistingProduct } from "$lib/utils/products/catalogSubmissionComparison";
+import { compareCatalogSubmissionToExistingProduct as compareCatalogSubmissionWithPolicy } from "$lib/utils/products/catalogSubmissionComparison";
 import { mergeCatalogUpdateFood } from "$lib/utils/products/catalogUpdateMerge";
+import { PRODUCT_RESOLUTION_POLICY_FIXTURE } from "../../../fixtures/productResolutionPolicy";
+
+const compareCatalogSubmissionToExistingProduct = (
+	submittedFood: FoodItem,
+	existingFood: FoodItem,
+) =>
+	compareCatalogSubmissionWithPolicy(
+		submittedFood,
+		existingFood,
+		PRODUCT_RESOLUTION_POLICY_FIXTURE,
+	);
 
 const nutrient = (nutrientId: number, value: number, unitName = "G") => ({
 	nutrientId,
@@ -44,10 +55,7 @@ describe("catalog update merging", () => {
 				nutrient(NUTRIENT_IDS.CALORIES, 350, "KCAL"),
 				nutrient(NUTRIENT_IDS.CARBS, 40),
 			],
-			reportedNutrientIds: [
-				NUTRIENT_IDS.CALORIES,
-				NUTRIENT_IDS.CARBS,
-			],
+			reportedNutrientIds: [NUTRIENT_IDS.CALORIES, NUTRIENT_IDS.CARBS],
 		};
 		const comparison = compareCatalogSubmissionToExistingProduct(
 			submittedFood,

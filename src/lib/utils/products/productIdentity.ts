@@ -17,7 +17,9 @@ const getProductNameTokenOverlap = (
 	const leftTokens = new Set(tokenizeProductIdentity(left));
 	const rightTokens = new Set(tokenizeProductIdentity(right));
 	if (leftTokens.size === 0 || rightTokens.size === 0) return 0;
-	const shared = [...leftTokens].filter((token) => rightTokens.has(token)).length;
+	const shared = [...leftTokens].filter((token) =>
+		rightTokens.has(token),
+	).length;
 	return shared / Math.min(leftTokens.size, rightTokens.size);
 };
 
@@ -28,15 +30,14 @@ export const productNamesDiffer = (
 	const normalizedLeft = normalizeProductIdentityText(left);
 	const normalizedRight = normalizeProductIdentityText(right);
 	return Boolean(
-		normalizedLeft &&
-			normalizedRight &&
-			normalizedLeft !== normalizedRight,
+		normalizedLeft && normalizedRight && normalizedLeft !== normalizedRight,
 	);
 };
 
 export const productNamesAreUnrelated = (
-	left?: string | null,
-	right?: string | null,
+	left: string | null | undefined,
+	right: string | null | undefined,
+	minimumRelatedTokenOverlap: number,
 ) => {
 	const normalizedLeft = normalizeProductIdentityText(left);
 	const normalizedRight = normalizeProductIdentityText(right);
@@ -47,5 +48,8 @@ export const productNamesAreUnrelated = (
 	) {
 		return false;
 	}
-	return getProductNameTokenOverlap(normalizedLeft, normalizedRight) < 0.2;
+	return (
+		getProductNameTokenOverlap(normalizedLeft, normalizedRight) <
+		minimumRelatedTokenOverlap
+	);
 };

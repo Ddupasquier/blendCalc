@@ -3,6 +3,7 @@ import {
 	readFoodCategoryPickerData,
 	scoreFoodCategoryCandidate,
 } from "$lib/server/products/categoryPicker.server";
+import { PRODUCT_RESOLUTION_POLICY_FIXTURE } from "../../../fixtures/productResolutionPolicy";
 
 const proteinBars = {
 	id: "protein-bars",
@@ -34,17 +35,24 @@ const snacks = {
 	symbol_key: "generic",
 };
 
-const createQuery = (candidateRows: typeof proteinBars[], commonRows: typeof proteinBars[]) => {
+const createQuery = (
+	candidateRows: (typeof proteinBars)[],
+	commonRows: (typeof proteinBars)[],
+) => {
 	let commonOnly = false;
 	const query = {
 		select: () => query,
 		eq: (column: string, value: unknown) => {
-			if (column === "verification_status" && value === "multi_source_verified") {
+			if (
+				column === "verification_status" &&
+				value === "multi_source_verified"
+			) {
 				commonOnly = true;
 			}
 			return query;
 		},
 		or: () => query,
+		ilike: () => query,
 		order: () => query,
 		limit: async () => ({
 			data: commonOnly ? commonRows : candidateRows,
@@ -58,8 +66,18 @@ describe("food category picker ranking", () => {
 	it("ranks a specific early-name match above a broad category", () => {
 		const context = ["Chocolate Dough Protein Bar"];
 
-		expect(scoreFoodCategoryCandidate(proteinBars, context)).toBeGreaterThan(
-			scoreFoodCategoryCandidate(bars, context),
+		expect(
+			scoreFoodCategoryCandidate(
+				proteinBars,
+				context,
+				PRODUCT_RESOLUTION_POLICY_FIXTURE,
+			),
+		).toBeGreaterThan(
+			scoreFoodCategoryCandidate(
+				bars,
+				context,
+				PRODUCT_RESOLUTION_POLICY_FIXTURE,
+			),
 		);
 	});
 
@@ -70,12 +88,20 @@ describe("food category picker ranking", () => {
 			from,
 		};
 
-		const initialResult = await readFoodCategoryPickerData(supabase as never, {
-			productName: "Chocolate Dough Protein Bar",
-		});
-		const searchResult = await readFoodCategoryPickerData(supabase as never, {
-			query: "protein bar",
-		});
+		const initialResult = await readFoodCategoryPickerData(
+			supabase as never,
+			{
+				productName: "Chocolate Dough Protein Bar",
+			},
+			PRODUCT_RESOLUTION_POLICY_FIXTURE,
+		);
+		const searchResult = await readFoodCategoryPickerData(
+			supabase as never,
+			{
+				query: "protein bar",
+			},
+			PRODUCT_RESOLUTION_POLICY_FIXTURE,
+		);
 
 		expect(initialResult.suggestions[0]).toMatchObject({
 			id: "protein-bars",
@@ -88,5 +114,20 @@ describe("food category picker ranking", () => {
 		expect(searchResult.suggestions).toEqual([]);
 		expect(searchResult.common).toEqual([]);
 		expect(from).toHaveBeenCalledTimes(3);
+	});
+
+	it("keeps direct category search available while reviewed policy is rolling out", async () => {
+		const from = vi.fn(() => createQuery([proteinBars], [snacks]));
+		const result = await readFoodCategoryPickerData(
+			{ from } as never,
+			{ query: "protein" },
+			null,
+		);
+
+		expect(result).toEqual({
+			suggestions: [],
+			common: [],
+			results: [expect.objectContaining({ id: "protein-bars" })],
+		});
 	});
 });

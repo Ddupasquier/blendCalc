@@ -7,13 +7,13 @@ database enforcement tests, compiler checks, or direct human verification.
 
 ## Ownership
 
-| Layer | Use it for | Do not use it for |
-| --- | --- | --- |
-| TypeScript and Svelte checks | Type contracts, Svelte diagnostics, and compile-time integration | Runtime or visual behavior |
-| Vitest | Calculations, normalization, validation, serializers, server handlers, provider adapters, isolated callbacks, synthetic failures, architecture, and migration-source guards | Routed browser interactions already covered by Playwright |
-| Local Supabase and pgTAP | Migrations, constraints, indexes, triggers, functions, grants, RLS, Auth hooks, Storage policies, and transactions | Browser presentation |
-| Playwright | Rendered flows, client routing, overlays, forms, focus, keyboard, pointer/touch behavior, responsive bounds, browser engines, structural accessibility, hydration, and approved snapshots | Exhaustive calculation matrices or direct schema proof |
-| Manual QA | Physical-device permissions, installed-browser sign-off, VoiceOver, TalkBack, camera behavior, OS integration, and subjective visual approval | Repeatable behavior repository automation can prove |
+| Layer                        | Use it for                                                                                                                                                                                | Do not use it for                                         |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| TypeScript and Svelte checks | Type contracts, Svelte diagnostics, and compile-time integration                                                                                                                          | Runtime or visual behavior                                |
+| Vitest                       | Calculations, normalization, validation, serializers, server handlers, provider adapters, isolated callbacks, synthetic failures, architecture, and migration-source guards               | Routed browser interactions already covered by Playwright |
+| Local Supabase and pgTAP     | Migrations, constraints, indexes, triggers, functions, grants, RLS, Auth hooks, Storage policies, and transactions                                                                        | Browser presentation                                      |
+| Playwright                   | Rendered flows, client routing, overlays, forms, focus, keyboard, pointer/touch behavior, responsive bounds, browser engines, structural accessibility, hydration, and approved snapshots | Exhaustive calculation matrices or direct schema proof    |
+| Manual QA                    | Physical-device permissions, installed-browser sign-off, VoiceOver, TalkBack, camera behavior, OS integration, and subjective visual approval                                             | Repeatable behavior repository automation can prove       |
 
 One assertion gets one primary owner. Different layers may cover the same feature at
 different boundaries:
@@ -24,16 +24,28 @@ different boundaries:
 - Vitest proves every goal-evaluation branch. Playwright proves that changing a goal
   updates the rendered result.
 
+## Lint And Formatting Ownership
+
+`npm run lint` is the blocking TypeScript, JavaScript, Svelte, and SCSS correctness
+check. `npm run lint:code:all` also prints explicitly nonblocking migration warnings for
+older unkeyed Svelte collections, route resolution, and legacy reactive collections.
+
+Prettier is adopted without a repository-wide churn-only rewrite. New supported files
+must pass `npm run format:check` locally and in CI. Use
+`npm run format -- <paths...>` when deliberately normalizing an existing file, and use
+`npm run format:check:all` only to measure the remaining historical formatting debt.
+Once an existing file is intentionally normalized, keep it formatted in later changes.
+
 ## Ownership Problems To Avoid
 
-| Problem | Why it hurts | Correct owner |
-| --- | --- | --- |
-| The same click flow exists in jsdom and Playwright | Both tests break for one UI change without adding confidence | Keep the routed Playwright flow; retain only an isolated callback or failure branch in Vitest |
-| A browser test checks source text or migration SQL | It starts the slowest layer without proving browser behavior | Use a focused Vitest architecture guard or the local database suite |
-| A component test tries to prove layout, focus clipping, or responsive behavior | jsdom does not perform real layout or browser focus painting | Use Playwright at the required viewport |
-| Playwright creates impossible provider or database failures through UI hacks | The setup becomes brittle and less honest than the contract | Inject the failure in a server/unit test; keep one real user-facing failure flow in Playwright when deterministic |
-| Several browser workers share one mutable account | Tests race persisted state and become flaky | Give every worker an isolated user and storage state; isolate each remote job's database |
-| Manual QA repeats a deterministic browser flow | Regressions rely on memory and consume repeated human effort | Move the reproducible flow to Playwright and keep manual QA for hardware or judgment |
+| Problem                                                                        | Why it hurts                                                 | Correct owner                                                                                                     |
+| ------------------------------------------------------------------------------ | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| The same click flow exists in jsdom and Playwright                             | Both tests break for one UI change without adding confidence | Keep the routed Playwright flow; retain only an isolated callback or failure branch in Vitest                     |
+| A browser test checks source text or migration SQL                             | It starts the slowest layer without proving browser behavior | Use a focused Vitest architecture guard or the local database suite                                               |
+| A component test tries to prove layout, focus clipping, or responsive behavior | jsdom does not perform real layout or browser focus painting | Use Playwright at the required viewport                                                                           |
+| Playwright creates impossible provider or database failures through UI hacks   | The setup becomes brittle and less honest than the contract  | Inject the failure in a server/unit test; keep one real user-facing failure flow in Playwright when deterministic |
+| Several browser workers share one mutable account                              | Tests race persisted state and become flaky                  | Give every worker an isolated user and storage state; isolate each remote job's database                          |
+| Manual QA repeats a deterministic browser flow                                 | Regressions rely on memory and consume repeated human effort | Move the reproducible flow to Playwright and keep manual QA for hardware or judgment                              |
 
 When adding Playwright coverage, inspect the older component and route tests for the
 same observable behavior. Delete only the replaced assertion; keep calculations,
@@ -105,6 +117,8 @@ unrelated source-only edits.
 Before promoting browser-facing work to a release branch, run:
 
 ```bash
+npm run lint
+npm run format:check
 npm test
 npm run check
 npm run build

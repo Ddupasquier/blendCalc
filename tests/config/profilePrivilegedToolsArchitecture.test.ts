@@ -8,9 +8,7 @@ describe("Profile privileged tools architecture", () => {
 		const actionSheet = readSource(
 			"src/lib/components/profile/ProfilePrivilegedToolsSheet/ProfilePrivilegedToolsSheet.svelte",
 		);
-		const routeState = readSource(
-			"src/lib/utils/profile/profileRouteState.ts",
-		);
+		const routeState = readSource("src/lib/utils/profile/profileRouteState.ts");
 
 		for (const routeName of [
 			"product-submissions",
@@ -65,8 +63,12 @@ describe("Profile privileged tools architecture", () => {
 			expect(workspaceServer).toContain(permission);
 		}
 		expect(catalogReviewServer).toContain("moderation.catalog.review");
-		expect(catalogReviewServer).not.toContain("data_operations.catalog_health.read");
-		expect(dataOperationsServer).toContain("data_operations.catalog_health.read");
+		expect(catalogReviewServer).not.toContain(
+			"data_operations.catalog_health.read",
+		);
+		expect(dataOperationsServer).toContain(
+			"data_operations.catalog_health.read",
+		);
 		expect(dataOperationsServer).not.toContain("moderation.catalog.review");
 	});
 
@@ -133,15 +135,33 @@ describe("Profile privileged tools architecture", () => {
 		const workspaceView = readSource(
 			"src/lib/components/moderation/ModerationWorkspace/ModerationWorkspace.svelte",
 		);
+		const focusedWorkspaceView = readSource(
+			"src/lib/components/moderation/PrivilegedToolWorkspaceView/PrivilegedToolWorkspaceView.svelte",
+		);
+		const focusedReviewListTypes = [
+			"src/lib/components/moderation/ProductSubmissionReviewList/types.ts",
+			"src/lib/components/moderation/FoodWarningReportReviewList/types.ts",
+			"src/lib/components/moderation/ProfileImageReportReviewList/types.ts",
+		].map(readSource);
 
-		for (const componentName of [
-			"ProductSubmissionReviewList",
-			"FoodWarningReportReviewList",
-			"ProfileImageReportReviewList",
-			"AccountAccessReviewList",
-		]) {
-			expect(workspaceView).toContain(componentName);
+		for (const [routeName, componentName] of [
+			["product-submissions", "ProductSubmissionReviewList"],
+			["food-warning-reports", "FoodWarningReportReviewList"],
+			["profile-images", "ProfileImageReportReviewList"],
+			["account-access", "AccountAccessReviewList"],
+		] as const) {
+			const focusedRoute = readSource(
+				`src/routes/profile/privileged-tools/${routeName}/+page.svelte`,
+			);
+			expect(focusedRoute).toContain(componentName);
+			expect(focusedRoute).toContain("PrivilegedToolWorkspaceView");
 		}
+		expect(focusedWorkspaceView).not.toContain("ModerationWorkspace");
+		expect(focusedWorkspaceView).toContain("{@render children()}");
+		for (const focusedReviewListType of focusedReviewListTypes) {
+			expect(focusedReviewListType).not.toContain("ModerationWorkspace/types");
+		}
+		expect(workspaceView).toContain("ProductSubmissionReviewList");
 		expect(workspaceView).not.toContain("<article");
 		expect(workspaceView).not.toContain("<form");
 	});

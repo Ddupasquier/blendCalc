@@ -1,6 +1,7 @@
 @use "../../../../../styles/variables" as *;
 @use "../../../../utils/animation/motion" as motion;
-@use "../../card/IngredientCardMediaLane/IngredientCardLayout" as ingredient-card-layout;
+@use "../../card/IngredientCardMediaLane/IngredientCardLayout" as
+	ingredient-card-layout;
 
 .ingredient-search-card {
 	@include ingredient-card-layout.frame;
@@ -16,7 +17,7 @@
 	background: $app-shell-surface-soft;
 }
 
-.ingredient-search-card--saved {
+.ingredient-search-card--without-placement-action {
 	grid-template-columns: minmax(0, 1fr) auto;
 }
 

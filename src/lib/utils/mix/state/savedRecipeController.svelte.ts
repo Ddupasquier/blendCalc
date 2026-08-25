@@ -64,34 +64,52 @@ export const createSavedRecipeController = ({
 	};
 
 	const saveAsNew = async (name: string) => {
-		if (!validateName(name)) return;
+		if (state.busy || !validateName(name)) return;
 		state.busy = true;
 		state.error = "";
-		const result = await saveNewSavedRecipe(buildSavedRecipeInput(name));
-		state.busy = false;
-		if (!result.ok) {
-			state.error = getSaveErrorMessage(result.reason);
-			return;
+		try {
+			const result = await saveNewSavedRecipe(buildSavedRecipeInput(name));
+			if (!result.ok) {
+				state.error = getSaveErrorMessage(result.reason);
+				return;
+			}
+			setLoadedRecipe({
+				id: result.recipe.id,
+				name: result.recipe.name,
+				isDirty: false,
+			});
+			onRecipeSaved();
+		} catch {
+			state.error = getSaveErrorMessage("unavailable");
+		} finally {
+			state.busy = false;
 		}
-		setLoadedRecipe({ id: result.recipe.id, name: result.recipe.name, isDirty: false });
-		onRecipeSaved();
 	};
 
 	const overwrite = async (name: string) => {
-		if (!state.loaded || !validateName(name)) return;
+		if (state.busy || !state.loaded || !validateName(name)) return;
 		state.busy = true;
 		state.error = "";
-		const result = await saveExistingSavedRecipe(
-			state.loaded.id,
-			buildSavedRecipeInput(name),
-		);
-		state.busy = false;
-		if (!result.ok) {
-			state.error = getSaveErrorMessage(result.reason);
-			return;
+		try {
+			const result = await saveExistingSavedRecipe(
+				state.loaded.id,
+				buildSavedRecipeInput(name),
+			);
+			if (!result.ok) {
+				state.error = getSaveErrorMessage(result.reason);
+				return;
+			}
+			setLoadedRecipe({
+				id: result.recipe.id,
+				name: result.recipe.name,
+				isDirty: false,
+			});
+			onRecipeSaved();
+		} catch {
+			state.error = getSaveErrorMessage("unavailable");
+		} finally {
+			state.busy = false;
 		}
-		setLoadedRecipe({ id: result.recipe.id, name: result.recipe.name, isDirty: false });
-		onRecipeSaved();
 	};
 
 	return {
@@ -105,4 +123,6 @@ export const createSavedRecipeController = ({
 	};
 };
 
-export type SavedRecipeController = ReturnType<typeof createSavedRecipeController>;
+export type SavedRecipeController = ReturnType<
+	typeof createSavedRecipeController
+>;

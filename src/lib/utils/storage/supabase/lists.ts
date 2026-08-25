@@ -1,5 +1,8 @@
 import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
-import { normalizeFoodForStorage, deduplicateFoodItemsByApplicationId } from "$lib/utils/food/records/foodRecords";
+import {
+	normalizeFoodForStorage,
+	deduplicateFoodItemsByApplicationId,
+} from "$lib/utils/food/records/foodRecords";
 import { deduplicateFoodItemsByIdentity } from "$lib/utils/food/records/foodIdentity";
 import type { FoodItem } from "$lib/utils/food/types";
 import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
@@ -22,12 +25,7 @@ export type CloudListPlacementResult =
 	| "error";
 
 export type CloudListRenameResult =
-	| "renamed"
-	| "duplicate"
-	| "missing"
-	| "unchanged"
-	| "invalid"
-	| "error";
+	"renamed" | "duplicate" | "missing" | "unchanged" | "invalid" | "error";
 
 export type CloudIngredientListIndex = Record<
 	IngredientListKey,
@@ -60,7 +58,7 @@ const placeFoodsThroughServer = async (
 			body: JSON.stringify(body),
 		});
 		if (!response.ok) return null;
-		const payload = await response.json() as { result?: unknown };
+		const payload = (await response.json()) as { result?: unknown };
 		return payload.result;
 	} catch {
 		return null;
@@ -103,9 +101,10 @@ export const readCloudIngredientListIndex = async (
 	};
 
 	for (const row of rows) {
-		const key = row.list_type === "fridge"
-			? MIX_STORAGE_KEYS.fridge
-			: MIX_STORAGE_KEYS.shoppingList;
+		const key =
+			row.list_type === "fridge"
+				? MIX_STORAGE_KEYS.fridge
+				: MIX_STORAGE_KEYS.shoppingList;
 		index[key].foodIds.push(Number(row.fdc_id));
 		index[key].foodIdentityKeys.push(
 			row.food_identity_key ?? `fdc:${row.fdc_id}`,
@@ -118,14 +117,14 @@ export const readCloudIngredientListIndex = async (
 export const writeCloudIngredientList = async (
 	key: IngredientListKey,
 	foods: FoodItem[],
-	context?: CloudDataContext,
+	_context?: CloudDataContext,
 ) => {
 	if (foods.length === 0) return true;
 
 	const result = await placeFoodsThroughServer(key, {
-		foods: deduplicateFoodItemsByIdentity(deduplicateFoodItemsByApplicationId(foods)).map((food) =>
-			normalizeFoodForStorage(food),
-		),
+		foods: deduplicateFoodItemsByIdentity(
+			deduplicateFoodItemsByApplicationId(foods),
+		).map((food) => normalizeFoodForStorage(food)),
 	});
 
 	return result === "added" || result === "duplicate";
@@ -163,7 +162,7 @@ export const placeCloudIngredientListItem = async (
 	key: IngredientListKey,
 	food: FoodItem,
 	allowMove = false,
-	context?: CloudDataContext,
+	_context?: CloudDataContext,
 ): Promise<CloudListPlacementResult> => {
 	const result = await placeFoodsThroughServer(key, {
 		allowMove,
@@ -215,7 +214,7 @@ export const removeCloudIngredientListItem = async (
 			headers: { accept: "application/json" },
 		});
 		if (!response.ok) return false;
-		const payload = await response.json() as { removed?: unknown };
+		const payload = (await response.json()) as { removed?: unknown };
 		return payload.removed === true;
 	} catch {
 		return false;

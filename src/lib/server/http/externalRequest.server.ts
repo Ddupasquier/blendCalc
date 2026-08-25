@@ -31,9 +31,7 @@ const getRetryAfterMilliseconds = (response: Response) => {
 };
 
 const canRetryRequest = (method: string, headers: Headers) =>
-	method === "GET" ||
-	method === "HEAD" ||
-	headers.has("idempotency-key");
+	method === "GET" || method === "HEAD" || headers.has("idempotency-key");
 
 export const fetchWithExternalRequestPolicy = async (
 	input: string | URL | Request,
@@ -56,11 +54,14 @@ export const fetchWithExternalRequestPolicy = async (
 	const acceptedStatuses = new Set(acceptedStatusCodes);
 
 	for (let attempt = 1; attempt <= attempts; attempt += 1) {
-		let retryDelayMilliseconds: number | null = null;
+		let retryDelayMilliseconds: number;
 		const controller = new AbortController();
 		const abortFromCaller = () => controller.abort(requestInit.signal?.reason);
 		if (requestInit.signal?.aborted) abortFromCaller();
-		else requestInit.signal?.addEventListener("abort", abortFromCaller, { once: true });
+		else
+			requestInit.signal?.addEventListener("abort", abortFromCaller, {
+				once: true,
+			});
 		const timeout = setTimeout(
 			() => controller.abort(new Error("External request timed out.")),
 			Math.max(1, timeoutMilliseconds),
@@ -92,11 +93,16 @@ export const fetchWithExternalRequestPolicy = async (
 			) {
 				return response;
 			}
-			retryDelayMilliseconds = retryAfterMilliseconds ??
+			retryDelayMilliseconds =
+				retryAfterMilliseconds ??
 				DEFAULT_RETRY_DELAY_MILLISECONDS * 2 ** (attempt - 1);
 		} catch (error) {
 			onAttemptFailure?.();
-			if (!retryAllowed || attempt === attempts || requestInit.signal?.aborted) {
+			if (
+				!retryAllowed ||
+				attempt === attempts ||
+				requestInit.signal?.aborted
+			) {
 				throw error;
 			}
 			retryDelayMilliseconds =
@@ -106,7 +112,7 @@ export const fetchWithExternalRequestPolicy = async (
 			requestInit.signal?.removeEventListener("abort", abortFromCaller);
 		}
 
-		if (retryDelayMilliseconds !== null) await sleep(retryDelayMilliseconds);
+		await sleep(retryDelayMilliseconds);
 	}
 
 	throw new Error("External request could not be completed.");

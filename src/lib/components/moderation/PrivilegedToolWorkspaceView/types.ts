@@ -1,8 +1,5 @@
-import type {
-	ModerationWorkspaceForm,
-	ModerationWorkspaceProps,
-	ModerationWorkspaceScope,
-} from "$lib/components/moderation/ModerationWorkspace/types";
+import type { Snippet } from "svelte";
+import type { StatusMessageTone } from "$lib/components/common/feedback/StatusMessage/types";
 import type { PrivilegedToolInformationKey } from "$lib/components/moderation/PrivilegedToolInformationSheet/types";
 
 export type PrivilegedToolWorkspaceViewProps = {
@@ -10,8 +7,8 @@ export type PrivilegedToolWorkspaceViewProps = {
 	title: string;
 	subtitle: string;
 	informationKey: PrivilegedToolInformationKey;
-	data: ModerationWorkspaceProps["data"];
-	form?: ModerationWorkspaceForm;
-	scope: Exclude<ModerationWorkspaceScope, "all">;
+	feedbackMessage?: string;
+	feedbackTone?: StatusMessageTone;
 	onClose: () => void;
+	children: Snippet;
 };

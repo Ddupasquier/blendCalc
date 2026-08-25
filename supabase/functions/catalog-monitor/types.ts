@@ -98,6 +98,13 @@ export type ProbableSafetyAlertMatch = {
 	evidence: JsonObject;
 };
 
+export type SafetyAlertErrorCode =
+	| "rate_limited"
+	| "provider_unavailable"
+	| "access_denied"
+	| "request_timed_out"
+	| "invalid_response";
+
 export type SafetyAlertPage = {
 	providerKey: SafetyAlertIngestionClaim["provider_key"];
 	alerts: Array<{
@@ -107,6 +114,10 @@ export type SafetyAlertPage = {
 	}>;
 	nextCursor: JsonObject;
 	sourceUpdatedAt: string | null;
+	sourceErrors?: Array<{
+		source: string;
+		code: SafetyAlertErrorCode;
+	}>;
 };
 
 export type CatalogMonitorRunSummary = {

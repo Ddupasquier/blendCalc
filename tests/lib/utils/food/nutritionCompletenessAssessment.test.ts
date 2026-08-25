@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { assessNutritionCompleteness } from "$lib/utils/food/quality/nutritionCompletenessAssessment";
+import type { NutritionCompletenessCatalog } from "$lib/utils/food/quality/nutritionCompletenessCatalog";
 import { NUTRIENT_IDS, type FoodItem } from "$lib/utils/food/types";
 
 const completeFood = {
@@ -52,6 +53,46 @@ const resolvedFood = {
 		},
 	],
 } satisfies FoodItem;
+
+const boundaryCatalog: NutritionCompletenessCatalog = {
+	profiles: [
+		{
+			key: "boundary-profile",
+			assessmentPolicyKey: "boundary-policy",
+			displayName: "Boundary profile",
+			foodScope: "generic",
+			regionCode: "",
+			completeLabel: "Complete",
+			resolvedLabel: "Resolved",
+			partialLabel: "Partial",
+			limitedLabel: "Limited",
+			description: "Boundary test profile",
+			sourceKey: "test",
+			sourceReference: "test",
+			isDefault: true,
+			exactSourceScore: 3,
+			mappedSourceScore: 2,
+			derivedSourceScore: 1,
+			missingSourceScore: 0,
+			requiredNutrientWeight: 4,
+			recommendedNutrientWeight: 1,
+			partialMinimumRatio: 0.75,
+			nutrients: [
+				[NUTRIENT_IDS.CALORIES, "Energy", "KCAL"],
+				[NUTRIENT_IDS.FAT, "Fat", "G"],
+				[NUTRIENT_IDS.CARBS, "Carbohydrate", "G"],
+				[NUTRIENT_IDS.PROTEIN, "Protein", "G"],
+			].map(([nutrientId, label, unitName], displayOrder) => ({
+				nutrientId: Number(nutrientId),
+				label: String(label),
+				unitName: String(unitName),
+				requirementLevel: "required" as const,
+				displayOrder,
+				reason: "Boundary coverage",
+			})),
+		},
+	],
+};
 
 describe("nutrition completeness assessment", () => {
 	it("marks complete exact required data", () => {
@@ -197,5 +238,27 @@ describe("nutrition completeness assessment", () => {
 			status: "unavailable",
 			profileKey: null,
 		});
+	});
+
+	it("uses the reviewed partial threshold at its exact boundary", () => {
+		const threeOfFour = {
+			...completeFood,
+			foodNutrients: completeFood.foodNutrients.filter(
+				(nutrient) => nutrient.nutrientId !== NUTRIENT_IDS.PROTEIN,
+			),
+		};
+		const twoOfFour = {
+			...threeOfFour,
+			foodNutrients: threeOfFour.foodNutrients.filter(
+				(nutrient) => nutrient.nutrientId !== NUTRIENT_IDS.CARBS,
+			),
+		};
+
+		expect(
+			assessNutritionCompleteness(threeOfFour, boundaryCatalog).status,
+		).toBe("partial");
+		expect(assessNutritionCompleteness(twoOfFour, boundaryCatalog).status).toBe(
+			"limited",
+		);
 	});
 });

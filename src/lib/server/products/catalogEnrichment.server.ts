@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { completeServerBackgroundTask } from "$lib/server/runtime/backgroundTask.server";
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
-import type { Database, Json } from "$lib/types/database.types";
+import type { Json } from "$lib/types/database.types";
 import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
 import type { ProductReferenceCatalog } from "$lib/utils/food/reference/productReferenceCatalog";
 import { normalizeFoodForStorage } from "$lib/utils/food/records/foodRecords";
@@ -18,14 +18,16 @@ const canPromoteSourceToCanonicalCatalog = (
 ): fieldSource is FoodFieldSource & {
 	source: "usda" | "open-food-facts";
 	sourceReference: string;
-} => Boolean(
-	fieldSource &&
+} =>
+	Boolean(
+		fieldSource &&
 		fieldSource.sourceReference?.trim() &&
 		(fieldSource.source === "usda" ||
 			fieldSource.source === "open-food-facts") &&
-		productReferenceCatalog.sources[fieldSource.source]?.canonicalStorageAllowed &&
+		productReferenceCatalog.sources[fieldSource.source]
+			?.canonicalStorageAllowed &&
 		productReferenceCatalog.sources[fieldSource.source]?.canonicalLicenseName,
-);
+	);
 
 const SUPPLEMENTAL_ENRICHMENT_FIELDS = new Set<FoodTrackedField>([
 	"productName",
@@ -117,21 +119,22 @@ const preserveCanonicalIdentity = (
 	currentFood: FoodItem,
 	enrichedFood: FoodItem,
 	sharedProductId: string,
-): FoodItem => normalizeFoodForStorage({
-	...enrichedFood,
-	fdcId: currentFood.fdcId,
-	dataType: "Shared Product",
-	foodIdentityType: "packaged",
-	customFood: false,
-	sharedProductId,
-	sharedProductConfidence: currentFood.sharedProductConfidence,
-	barcodeSource: currentFood.barcodeSource,
-	sourceKey: currentFood.sourceKey,
-	sourceLabel: currentFood.sourceLabel,
-	sourceDataType: currentFood.sourceDataType,
-	sourcePublishedDate: currentFood.sourcePublishedDate,
-	sourceModifiedDate: currentFood.sourceModifiedDate,
-});
+): FoodItem =>
+	normalizeFoodForStorage({
+		...enrichedFood,
+		fdcId: currentFood.fdcId,
+		dataType: "Shared Product",
+		foodIdentityType: "packaged",
+		customFood: false,
+		sharedProductId,
+		sharedProductConfidence: currentFood.sharedProductConfidence,
+		barcodeSource: currentFood.barcodeSource,
+		sourceKey: currentFood.sourceKey,
+		sourceLabel: currentFood.sourceLabel,
+		sourceDataType: currentFood.sourceDataType,
+		sourcePublishedDate: currentFood.sourcePublishedDate,
+		sourceModifiedDate: currentFood.sourceModifiedDate,
+	});
 
 export const persistSharedProductExternalEnrichment = async (input: {
 	sharedProductId: string;
@@ -151,7 +154,8 @@ export const persistSharedProductExternalEnrichment = async (input: {
 
 	const category = input.enrichedDraft.categoryResolution
 		? {
-				categoryOptionId: input.enrichedDraft.categoryResolution.categoryOptionId,
+				categoryOptionId:
+					input.enrichedDraft.categoryResolution.categoryOptionId,
 				label: input.enrichedDraft.categoryResolution.label,
 				sourceValue: input.enrichedDraft.categoryResolution.sourceValue,
 				confidence: input.enrichedDraft.categoryResolution.confidence,
@@ -176,7 +180,8 @@ export const persistSharedProductExternalEnrichment = async (input: {
 			throw new Error(`Unsupported enrichment source for ${field}.`);
 		}
 		const sourceLicense =
-			input.productReferenceCatalog.sources[source.source]?.canonicalLicenseName;
+			input.productReferenceCatalog.sources[source.source]
+				?.canonicalLicenseName;
 		if (!sourceLicense) {
 			throw new Error(`Canonical storage policy is missing for ${field}.`);
 		}
@@ -205,7 +210,9 @@ export const persistSharedProductExternalEnrichment = async (input: {
 	const provenance = supportedFields.map((field) => {
 		const source = input.enrichedDraft.fieldProvenance?.[field];
 		if (!source) {
-			throw new Error(`Explicit enrichment provenance is missing for ${field}.`);
+			throw new Error(
+				`Explicit enrichment provenance is missing for ${field}.`,
+			);
 		}
 		return {
 			fieldPath: field,
@@ -230,9 +237,12 @@ export const persistSharedProductExternalEnrichment = async (input: {
 	>(
 		values: Value[],
 		fields: FoodTrackedField[],
-	) => values.filter((value) =>
-		fields.includes((value.trackedField ?? value.fieldPath) as FoodTrackedField),
-	);
+	) =>
+		values.filter((value) =>
+			fields.includes(
+				(value.trackedField ?? value.fieldPath) as FoodTrackedField,
+			),
+		);
 	const task = (async () => {
 		const appliedFields: string[] = [];
 		if (standardFields.length > 0) {
@@ -282,8 +292,10 @@ export const persistSharedProductExternalEnrichment = async (input: {
 	})();
 
 	await completeServerBackgroundTask(
-		task.then(() => undefined).catch((error) => {
-			console.error("Canonical product enrichment failed.", error);
-		}),
+		task
+			.then(() => undefined)
+			.catch((error) => {
+				console.error("Canonical product enrichment failed.", error);
+			}),
 	);
 };

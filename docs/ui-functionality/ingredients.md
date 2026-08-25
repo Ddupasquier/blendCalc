@@ -23,6 +23,18 @@ the baseline for other views.
   a `44px` combined target.
 - Wider layouts keep the complete page controls visible.
 
+## Food Search
+
+- Search inherits its destination from the route that opened it: Fridge search places
+  food in Fridge, and Shopping List search places food in Shopping List.
+- A result outside both lists offers an explicit Add action for the destination. A
+  result in the other list offers an explicit Move action. A result already in the
+  destination shows that membership and offers no duplicate placement action.
+- Adding or moving a result keeps search open and updates list membership immediately.
+  Opening the card remains the separate path to Nutrition Details.
+- Fridge and Shopping List membership remains exclusive throughout search placement;
+  never instruct users to open another view merely to complete a known list move.
+
 ## Barcode Scanning
 
 - Open the shared scanner dialog and show a clear camera, loading, cancel, and close
@@ -88,6 +100,8 @@ Required behavior:
 - show the shared spinner inside the barcode input as soon as a complete valid barcode
   queues a lookup, keep it visible through the request, and block forward navigation
   until that lookup settles;
+- claim one submit lock before the final barcode confirmation begins, keep that lock
+  through the authoritative save, and recover with editable input after failure;
 - allow destination choice between Fridge and Shopping List;
 - offer shared-catalog submission only for eligible, explicitly shared product data;
 - automatically orient and frame each newly chosen product image when OCR confidently

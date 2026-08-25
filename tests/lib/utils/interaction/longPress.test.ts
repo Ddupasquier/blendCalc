@@ -1,10 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { longPress } from "$lib/utils/interaction/longPress";
 
-const pointerEvent = (
-	type: string,
-	options: Partial<PointerEvent> = {},
-) => {
+const pointerEvent = (type: string, options: Partial<PointerEvent> = {}) => {
 	const event = new MouseEvent(type, {
 		bubbles: true,
 		button: options.button ?? 0,
@@ -62,11 +59,10 @@ describe("longPress", () => {
 		const button = document.createElement("button");
 		const onClick = vi.fn();
 		button.addEventListener("click", onClick);
-		let action: ReturnType<typeof longPress>;
 		const onLongPress = vi.fn(() => {
 			action.update({ onLongPress, disabled: true });
 		});
-		action = longPress(button, { onLongPress });
+		const action = longPress(button, { onLongPress });
 
 		button.dispatchEvent(pointerEvent("pointerdown"));
 		vi.advanceTimersByTime(500);

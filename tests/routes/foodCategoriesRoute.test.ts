@@ -2,10 +2,16 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
 	readFoodCategoryPickerData: vi.fn(),
+	getProductResolutionPolicyIfAvailable: vi.fn(),
 }));
 
 vi.mock("$lib/server/products/categoryPicker.server", () => ({
 	readFoodCategoryPickerData: mocks.readFoodCategoryPickerData,
+}));
+
+vi.mock("$lib/server/products/productResolutionPolicy.server", () => ({
+	getProductResolutionPolicyIfAvailable:
+		mocks.getProductResolutionPolicyIfAvailable,
 }));
 
 import { GET } from "../../src/routes/api/food-categories/+server";
@@ -15,6 +21,7 @@ const pickerData = {
 	common: [],
 	results: [],
 };
+const productResolutionPolicy = { version: 1 };
 
 const createEvent = (userId: string | null) => ({
 	locals: {
@@ -30,6 +37,9 @@ describe("food category picker route", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mocks.readFoodCategoryPickerData.mockResolvedValue(pickerData);
+		mocks.getProductResolutionPolicyIfAvailable.mockResolvedValue(
+			productResolutionPolicy,
+		);
 	});
 
 	it("requires a signed-in user", async () => {
@@ -53,6 +63,7 @@ describe("food category picker route", () => {
 				query: "protein",
 				sourceCategories: ["snacks"],
 			},
+			productResolutionPolicy,
 		);
 	});
 });

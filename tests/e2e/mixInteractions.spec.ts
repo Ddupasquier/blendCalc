@@ -1,18 +1,22 @@
 import {
 	expect,
 	expectCompactHeaderHidesAndRevealsWithScroll,
+	signInLocalQaAccount,
 	test,
 	waitForAppReady,
 } from "./support/browserTest";
 import {
+	captureAndClearLocalQaIngredientLists,
 	captureLocalQaMixGoalConfiguration,
 	deleteLocalQaSavedRecipesByNamePrefix,
 	readLocalQaSavedRecipesByNamePrefix,
+	restoreLocalQaIngredientLists,
 	restoreLocalQaMixGoalConfiguration,
 	saveLocalQaMixGoalConfiguration,
 	saveLocalQaMixState,
 } from "./support/localQaDatabase";
 import { getLocalQaAccountForWorker } from "./support/localQaAccounts";
+import type { Json } from "$lib/types/database.types";
 
 const escapeRegularExpression = (value: string) =>
 	value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -130,7 +134,9 @@ const saveCurrentMixAsNew = async (
 	await expect(page).toHaveURL(/\/mix\/save$/);
 	const dialog = page.getByRole("dialog", { name: "Review & Save Mix" });
 	await dialog.getByLabel("Mix name").fill(recipeName);
-	await dialog.getByRole("button", { name: "Save Recipe", exact: true }).click();
+	await dialog
+		.getByRole("button", { name: "Save Recipe", exact: true })
+		.click();
 	await expect(dialog).toBeHidden();
 	await expect(page).toHaveURL(/\/mix$/);
 };
@@ -153,22 +159,6 @@ const openMixOptions = async (page: import("@playwright/test").Page) => {
 	const dialog = page.getByRole("dialog", { name: "Mix options" });
 	await expect(dialog).toBeVisible();
 	return dialog;
-};
-
-const signInAsLocalQaPersona = async (
-	page: import("@playwright/test").Page,
-	email: string,
-	nextPath: string,
-) => {
-	await page.context().clearCookies();
-	await page.goto(`/auth?next=${encodeURIComponent(nextPath)}`);
-	await page.getByLabel("Email").fill(email);
-	await page.getByLabel("Password", { exact: true }).fill(
-		process.env.PLAYWRIGHT_QA_PASSWORD ?? "BlendCalc-Local-QA-2026!",
-	);
-	await page.getByRole("button", { name: "Sign in", exact: true }).click();
-	await expect(page).toHaveURL(new RegExp(`${escapeRegularExpression(nextPath)}$`));
-	await waitForAppReady(page);
 };
 
 const expectInnerListScrollPassesToMixPage = async ({
@@ -200,10 +190,40 @@ const expectInnerListScrollPassesToMixPage = async ({
 		)
 		.toBe(true);
 	await expect(list.getByRole("button", { name: loadMoreLabel })).toBeVisible();
-	await expect(list.getByRole("button", { name: "Return to top" })).toBeVisible();
+	await expect(
+		list.getByRole("button", { name: "Return to top" }),
+	).toBeVisible();
 
-	await list.hover();
-	const mainScrollBefore = await mixPage.evaluate((element) => element.scrollTop);
+	await list.evaluate((listElement) => {
+		const mixPageElement = listElement.closest(".mix-page");
+		if (!(mixPageElement instanceof HTMLElement)) {
+			throw new Error("The Mix page scroll surface was unavailable.");
+		}
+		const mixPageBounds = mixPageElement.getBoundingClientRect();
+		const listBounds = listElement.getBoundingClientRect();
+		const maximumScroll =
+			mixPageElement.scrollHeight - mixPageElement.clientHeight;
+		const scrollWithRoomBelow = Math.max(0, maximumScroll - 500);
+		const scrollThatPlacesListNearTop =
+			mixPageElement.scrollTop + listBounds.top - mixPageBounds.top - 80;
+		mixPageElement.scrollTop = Math.min(
+			scrollWithRoomBelow,
+			Math.max(0, scrollThatPlacesListNearTop),
+		);
+	});
+	const listBounds = await list.boundingBox();
+	if (!listBounds) {
+		throw new Error(
+			"The bounded Mix list did not have visible browser geometry.",
+		);
+	}
+	await page.mouse.move(
+		listBounds.x + listBounds.width / 2,
+		listBounds.y + Math.min(listBounds.height / 2, 80),
+	);
+	const mainScrollBefore = await mixPage.evaluate(
+		(element) => element.scrollTop,
+	);
 	const mainMaximumScroll = await mixPage.evaluate(
 		(element) => element.scrollHeight - element.clientHeight,
 	);
@@ -223,18 +243,20 @@ const readRenderedMixGoals = (
 ) =>
 	goalsSection.locator(".goal-input").evaluateAll((goalCards) =>
 		goalCards.map((goalCard) => ({
-			name:
-				goalCard.querySelector(".goal-label")?.textContent?.trim() ?? "",
+			name: goalCard.querySelector(".goal-label")?.textContent?.trim() ?? "",
 			rule:
-				(goalCard.querySelector(
-					".goal-input__type .select-field__native",
-				) as HTMLSelectElement | null)?.value ?? "",
+				(
+					goalCard.querySelector(
+						".goal-input__type .select-field__native",
+					) as HTMLSelectElement | null
+				)?.value ?? "",
 			target:
-				(goalCard.querySelector(
-					".goal-input__number",
-				) as HTMLInputElement | null)?.value ?? "",
-			unit:
-				goalCard.querySelector(".goal-unit")?.textContent?.trim() ?? "",
+				(
+					goalCard.querySelector(
+						".goal-input__number",
+					) as HTMLInputElement | null
+				)?.value ?? "",
+			unit: goalCard.querySelector(".goal-unit")?.textContent?.trim() ?? "",
 		})),
 	);
 
@@ -291,7 +313,9 @@ const selectGoalRule = async (
 		name: `Goal rule for ${nutrientLabel}`,
 	});
 	await rule.click();
-	await goalsSection.getByRole("option", { name: ruleLabel, exact: true }).click();
+	await goalsSection
+		.getByRole("option", { name: ruleLabel, exact: true })
+		.click();
 };
 
 test("compact Mix header follows main-page scroll direction", async ({
@@ -310,7 +334,9 @@ test("compact Mix header follows main-page scroll direction", async ({
 	);
 });
 
-test("Mix disclosures expose animated open and closed state", async ({ page }) => {
+test("Mix disclosures expose animated open and closed state", async ({
+	page,
+}) => {
 	await page.goto("/mix");
 	await waitForAppReady(page);
 	const { details, summary } = await openMixGoals(page);
@@ -320,14 +346,20 @@ test("Mix disclosures expose animated open and closed state", async ({ page }) =
 		"transform",
 		"matrix(0, 1, -1, 0, 0, 0)",
 	);
-	await summary.click();
-	await expect(details).not.toHaveAttribute("open", "");
+	await summary.focus();
+	await summary.press("Enter");
 	await expect(summary).toHaveAttribute("aria-expanded", "false");
+	await details.evaluate((element) => {
+		for (const animation of element.getAnimations({ subtree: true })) {
+			animation.finish();
+		}
+	});
+	await expect(details).not.toHaveAttribute("open", "");
 	await expect(summary.locator(".disclosure-chevron")).toHaveCSS(
 		"transform",
 		"matrix(1, 0, 0, 1, 0, 0)",
 	);
-	await summary.click();
+	await summary.press("Enter");
 	await expect(details).toHaveAttribute("open", "");
 });
 
@@ -354,10 +386,12 @@ test("the shared styled select supports keyboard navigation and Escape", async (
 	await preset.press("Enter");
 	await expect(preset).toContainText("Balanced");
 	await expect(nativePreset).not.toHaveValue("");
-	expect(
-		await nativePreset.locator("option:checked").textContent(),
-	).toContain("Balanced");
-	await expect(page.getByText("Moderate calories, protein, carbs, fiber, and sugar.")).toBeVisible();
+	expect(await nativePreset.locator("option:checked").textContent()).toContain(
+		"Balanced",
+	);
+	await expect(
+		page.getByText("Moderate calories, protein, carbs, fiber, and sugar."),
+	).toBeVisible();
 });
 
 test("goal presets preserve explicit extras only when requested and survive a new session", async ({
@@ -368,8 +402,9 @@ test("goal presets preserve explicit extras only when requested and survive a ne
 		"One isolated browser worker owns this durable goal mutation.",
 	);
 
-	const originalGoalConfiguration =
-		await captureLocalQaMixGoalConfiguration(testInfo.parallelIndex);
+	const originalGoalConfiguration = await captureLocalQaMixGoalConfiguration(
+		testInfo.parallelIndex,
+	);
 	try {
 		await page.goto("/mix");
 		await waitForAppReady(page);
@@ -389,7 +424,9 @@ test("goal presets preserve explicit extras only when requested and survive a ne
 			expect(targetText).toMatch(/(?:=|≥|≤|–)/);
 			expect(targetText).toMatch(/\b(?:kcal|g|mg|mcg|iu)\b/i);
 		}
-		await goalsSection.getByRole("button", { name: "Apply", exact: true }).click();
+		await goalsSection
+			.getByRole("button", { name: "Apply", exact: true })
+			.click();
 		await expect(balancedPreview).toBeHidden();
 		const balancedGoals = await readRenderedMixGoals(goalsSection);
 		expect(balancedGoals).toHaveLength(balancedTargetCount);
@@ -424,14 +461,18 @@ test("goal presets preserve explicit extras only when requested and survive a ne
 			name: "Keep goals not included in this preset",
 		});
 		await keepOtherGoals.check();
-		await goalsSection.getByRole("button", { name: "Apply", exact: true }).click();
+		await goalsSection
+			.getByRole("button", { name: "Apply", exact: true })
+			.click();
 		await expect(
 			goalsSection.getByRole("slider", { name: /Set Potassium.* goal/ }),
 		).toBeVisible();
 
 		await selectGoalPreset(page, "Low Sugar");
 		await keepOtherGoals.uncheck();
-		await goalsSection.getByRole("button", { name: "Apply", exact: true }).click();
+		await goalsSection
+			.getByRole("button", { name: "Apply", exact: true })
+			.click();
 		await expect(
 			goalsSection.getByRole("slider", { name: /Set Potassium.* goal/ }),
 		).toHaveCount(0);
@@ -467,10 +508,13 @@ test("goal presets preserve explicit extras only when requested and survive a ne
 			replacementGoals,
 		);
 
-		const persistedGoalConfiguration =
-			await captureLocalQaMixGoalConfiguration(testInfo.parallelIndex);
+		const persistedGoalConfiguration = await captureLocalQaMixGoalConfiguration(
+			testInfo.parallelIndex,
+		);
 		expect(persistedGoalConfiguration.goalTemplateCustomized).toBe(false);
-		expect(persistedGoalConfiguration.sourceGoalTemplateVersionId).not.toBeNull();
+		expect(
+			persistedGoalConfiguration.sourceGoalTemplateVersionId,
+		).not.toBeNull();
 		expect(
 			persistedGoalConfiguration.goals.some(
 				(goal) => goal.nutrient_id === 1092,
@@ -484,7 +528,9 @@ test("goal presets preserve explicit extras only when requested and survive a ne
 	}
 });
 
-test("goal sliders and number inputs stay synchronized", async ({ page }, testInfo) => {
+test("goal sliders and number inputs stay synchronized", async ({
+	page,
+}, testInfo) => {
 	test.skip(
 		testInfo.project.name !== "desktop-chromium",
 		"A single deterministic browser owns this temporary state mutation.",
@@ -533,9 +579,8 @@ test("goal sliders and number inputs stay synchronized", async ({ page }, testIn
 			const configuration = await captureLocalQaMixGoalConfiguration(
 				testInfo.parallelIndex,
 			);
-			return configuration.goals.find(
-				(goal) => goal.nutrient_id === 1008,
-			)?.target_amount;
+			return configuration.goals.find((goal) => goal.nutrient_id === 1008)
+				?.target_amount;
 		})
 		.toBe(Number(originalValue));
 });
@@ -584,8 +629,9 @@ test("Mix warning severity follows under-target and over-target goal states", as
 		"One isolated browser worker owns this temporary goal and Mix state.",
 	);
 
-	const originalGoalConfiguration =
-		await captureLocalQaMixGoalConfiguration(testInfo.parallelIndex);
+	const originalGoalConfiguration = await captureLocalQaMixGoalConfiguration(
+		testInfo.parallelIndex,
+	);
 	try {
 		await saveLocalQaMixState(testInfo.parallelIndex, {
 			version: 1,
@@ -618,8 +664,12 @@ test("Mix warning severity follows under-target and over-target goal states", as
 			"data-attention-tone",
 			"warning",
 		);
-		await expect(warningsSection.locator('[data-warning-id="under-1008"]')).toHaveCount(1);
-		await expect(warningsSection.locator('[role="status"]')).not.toContainText("urgent");
+		await expect(
+			warningsSection.locator('[data-warning-id="under-1008"]'),
+		).toHaveCount(1);
+		await expect(warningsSection.locator('[role="status"]')).not.toContainText(
+			"urgent",
+		);
 
 		await selectGoalRule(goalsSection, "Calories", "At most");
 		await caloriesGoal.fill("0");
@@ -630,8 +680,12 @@ test("Mix warning severity follows under-target and over-target goal states", as
 			"data-attention-tone",
 			"danger",
 		);
-		await expect(warningsSection.locator('[data-warning-id="over-1008"]')).toHaveCount(1);
-		await expect(warningsSection.locator('[role="status"]')).toContainText("urgent");
+		await expect(
+			warningsSection.locator('[data-warning-id="over-1008"]'),
+		).toHaveCount(1);
+		await expect(warningsSection.locator('[role="status"]')).toContainText(
+			"urgent",
+		);
 	} finally {
 		await restoreLocalQaMixGoalConfiguration(
 			testInfo.parallelIndex,
@@ -648,11 +702,11 @@ test("Mix preference warnings preserve evidence and clear independently", async 
 		"The dedicated preference persona is mutated by one deterministic browser.",
 	);
 
-	await signInAsLocalQaPersona(
+	await signInLocalQaAccount({
 		page,
-		"qa-preferences@blendcalc.local",
-		"/mix",
-	);
+		email: "qa-preferences@blendcalc.local",
+		nextPath: "/mix",
+	});
 	const chooser = await openMixSection(page, ".ingredient-chooser");
 	const search = chooser.getByRole("searchbox", { name: "Find ingredients" });
 	const originalSelectionState = new Map<string, boolean>();
@@ -790,37 +844,77 @@ test("Mix preference warnings preserve evidence and clear independently", async 
 	}
 });
 
-test("an empty Mix leads with one open Add ingredients path", async ({ page }) => {
-	await page.context().clearCookies();
-	await page.goto("/auth?next=/mix");
-	await page.getByLabel("Email").fill("qa-empty@blendcalc.local");
-	await page.getByLabel("Password", { exact: true }).fill(
-		process.env.PLAYWRIGHT_QA_PASSWORD ?? "BlendCalc-Local-QA-2026!",
+test("an empty Mix leads with one open Add ingredients path", async ({
+	page,
+}, testInfo) => {
+	test.skip(
+		testInfo.project.name !== "desktop-chromium",
+		"This authoritative empty-state workflow temporarily clears one local QA account; the deterministic layout contract needs one browser owner rather than concurrent database mutation.",
 	);
-	await page.getByRole("button", { name: "Sign in", exact: true }).click();
-	await expect(page).toHaveURL(/\/mix$/);
-	await waitForAppReady(page);
+	const originalConfiguration = await captureLocalQaMixGoalConfiguration(
+		testInfo.parallelIndex,
+	);
+	const originalIngredientLists = await captureAndClearLocalQaIngredientLists(
+		testInfo.parallelIndex,
+	);
+	try {
+		const originalMixState =
+			typeof originalConfiguration.mixState === "object" &&
+			originalConfiguration.mixState !== null &&
+			!Array.isArray(originalConfiguration.mixState)
+				? (originalConfiguration.mixState as Record<string, Json | undefined>)
+				: {};
+		await saveLocalQaMixState(testInfo.parallelIndex, {
+			...originalMixState,
+			selectedFoodIds: [],
+			servingGrams: {},
+			servingQuantities: {},
+			servingUnits: {},
+		});
+		await page.goto("/mix");
+		await waitForAppReady(page);
 
-	const firstBuilderSection = page
-		.locator(".mix-builder > .mix-panel-section")
-		.first();
-	await expect(firstBuilderSection).toHaveAttribute("aria-label", "Add ingredients");
-	await expect(firstBuilderSection.locator(":scope > details")).toHaveAttribute(
-		"open",
-		"",
-	);
-	await expect(page.getByText("No ingredients selected")).toHaveCount(0);
-	const ingredientsLink = firstBuilderSection.getByRole("link", {
-		name: "Go to Ingredients",
-	});
-	await expect(ingredientsLink).toHaveAttribute("href", "/ingredients/fridge");
-	await ingredientsLink.click();
-	await expect(page).toHaveURL(/\/ingredients\/fridge$/);
+		const firstBuilderSection = page
+			.locator(".mix-builder > .mix-panel-section")
+			.first();
+		await expect(firstBuilderSection).toHaveAttribute(
+			"aria-label",
+			"Add ingredients",
+		);
+		await expect(
+			firstBuilderSection.locator(":scope > details"),
+		).toHaveAttribute("open", "");
+		await expect(page.getByText("No ingredients selected")).toHaveCount(0);
+		const ingredientsLink = firstBuilderSection.getByRole("link", {
+			name: "Go to Ingredients",
+		});
+		await expect(ingredientsLink).toHaveAttribute(
+			"href",
+			"/ingredients/fridge",
+		);
+		await ingredientsLink.click();
+		await expect(page).toHaveURL(/\/ingredients\/fridge$/);
+	} finally {
+		await Promise.all([
+			restoreLocalQaMixGoalConfiguration(
+				testInfo.parallelIndex,
+				originalConfiguration,
+			),
+			restoreLocalQaIngredientLists(
+				testInfo.parallelIndex,
+				originalIngredientLists,
+			),
+		]);
+	}
 });
 
 test("bounded Mix ingredient lists hand continued scrolling to the main page", async ({
 	page,
-}) => {
+}, testInfo) => {
+	test.skip(
+		testInfo.project.name.startsWith("mobile-"),
+		"Playwright's emulated phone projects cannot prove native touch scroll chaining; physical iOS Safari and Android Chrome own this gesture.",
+	);
 	await page.goto("/mix");
 	await waitForAppReady(page);
 
@@ -844,7 +938,9 @@ test("bounded Mix ingredient lists hand continued scrolling to the main page", a
 	});
 });
 
-test("selected ingredients progressively load and can be filtered", async ({ page }) => {
+test("selected ingredients progressively load and can be filtered", async ({
+	page,
+}) => {
 	await page.goto("/mix");
 	await waitForAppReady(page);
 
@@ -958,7 +1054,9 @@ test("Mix ingredient chooser preserves selection across search, sorting, paginat
 		};
 
 		await card.scrollIntoViewIfNeeded();
-		const nameBounds = await card.getByText(name, { exact: true }).boundingBox();
+		const nameBounds = await card
+			.getByText(name, { exact: true })
+			.boundingBox();
 		expect(nameBounds).not.toBeNull();
 		await page.mouse.click(
 			nameBounds!.x + nameBounds!.width / 2,
@@ -1000,7 +1098,9 @@ test("Mix ingredient chooser preserves selection across search, sorting, paginat
 		10,
 	);
 	expect(originalSelectedCount).toBeGreaterThan(0);
-	await chooser.getByRole("button", { name: "Filter and sort ingredients" }).click();
+	await chooser
+		.getByRole("button", { name: "Filter and sort ingredients" })
+		.click();
 	await expect(page).toHaveURL(/\/mix\/ingredients\/filters$/);
 	let filterSheet = page.getByRole("dialog", {
 		name: "Filter and sort ingredients",
@@ -1023,7 +1123,9 @@ test("Mix ingredient chooser preserves selection across search, sorting, paginat
 		`${originalSelectedCount} selected`,
 	);
 
-	await chooser.getByRole("button", { name: "Filter and sort ingredients" }).click();
+	await chooser
+		.getByRole("button", { name: "Filter and sort ingredients" })
+		.click();
 	filterSheet = page.getByRole("dialog", {
 		name: "Filter and sort ingredients",
 	});
@@ -1045,18 +1147,23 @@ test("Mix ingredient chooser preserves selection across search, sorting, paginat
 			card.querySelector("button")?.getAttribute("aria-label"),
 		),
 	);
-	const loadMore = chooser.getByRole("button", { name: "Load more ingredients" });
+	const loadMore = chooser.getByRole("button", {
+		name: "Load more ingredients",
+	});
 	await expect(loadMore).toBeVisible();
 	await loadMore.click();
-	await expect.poll(() => chooserCards.count()).toBeGreaterThan(firstPageNames.length);
+	await expect
+		.poll(() => chooserCards.count())
+		.toBeGreaterThan(firstPageNames.length);
 	await expect
 		.poll(() =>
-			chooserCards.evaluateAll((cards, originalCardCount) =>
-				cards
-					.slice(0, originalCardCount)
-					.map((card) =>
-						card.querySelector("button")?.getAttribute("aria-label"),
-					),
+			chooserCards.evaluateAll(
+				(cards, originalCardCount) =>
+					cards
+						.slice(0, originalCardCount)
+						.map((card) =>
+							card.querySelector("button")?.getAttribute("aria-label"),
+						),
 				firstPageCardIds.length,
 			),
 		)
@@ -1066,10 +1173,9 @@ test("Mix ingredient chooser preserves selection across search, sorting, paginat
 	);
 
 	await chooser.getByRole("tab", { name: /Shopping List/ }).click();
-	await expect(chooser.getByRole("tab", { name: /Shopping List/ })).toHaveAttribute(
-		"aria-selected",
-		"true",
-	);
+	await expect(
+		chooser.getByRole("tab", { name: /Shopping List/ }),
+	).toHaveAttribute("aria-selected", "true");
 	await chooserSearch.fill("broccoli");
 	const shoppingSelection = chooser.getByRole("button", {
 		name: /^(?:Add|Remove) Broccoli (?:to|from) this mix/,
@@ -1112,7 +1218,9 @@ test("compact Mix chooser cards keep long names clear of the selection control",
 	if ((await details.getAttribute("open")) === null) {
 		await details.locator(":scope > summary").click();
 	}
-	await chooser.getByRole("searchbox", { name: "Find ingredients" }).fill("strawberry");
+	await chooser
+		.getByRole("searchbox", { name: "Find ingredients" })
+		.fill("strawberry");
 	const card = chooser
 		.getByRole("button", {
 			name: /^(?:Add|Remove) Strawberry Jelly, Strawberry (?:to|from) this mix/,
@@ -1154,9 +1262,13 @@ test("selected ingredient amount controls change once and restore the original v
 		name: "Quantity for Mango, Raw",
 	});
 	const originalValue = await quantity.inputValue();
-	await selectedSection.getByRole("button", { name: "Use more Mango, Raw" }).click();
+	await selectedSection
+		.getByRole("button", { name: "Use more Mango, Raw" })
+		.click();
 	await expect(quantity).not.toHaveValue(originalValue);
-	await selectedSection.getByRole("button", { name: "Use less Mango, Raw" }).click();
+	await selectedSection
+		.getByRole("button", { name: "Use less Mango, Raw" })
+		.click();
 	await expect(quantity).toHaveValue(originalValue);
 });
 
@@ -1188,8 +1300,14 @@ test("safe Mix suggestions apply practical increases and reductions once and und
 			tolerance_ratio: 0.05,
 			upper_amount: null,
 		}));
-	const saveSpinachScenario = async (grams: number, targets: Record<number, number>) => {
-		await saveLocalQaMixGoalConfiguration(testInfo.parallelIndex, makeExactGoals(targets));
+	const saveSpinachScenario = async (
+		grams: number,
+		targets: Record<number, number>,
+	) => {
+		await saveLocalQaMixGoalConfiguration(
+			testInfo.parallelIndex,
+			makeExactGoals(targets),
+		);
 		await saveLocalQaMixState(testInfo.parallelIndex, {
 			version: 1,
 			selected: nutrientOptions.map((nutrient) => nutrient.id),
@@ -1201,7 +1319,10 @@ test("safe Mix suggestions apply practical increases and reductions once and und
 		});
 	};
 	const readSpinachQuantity = async () => {
-		const selectedSection = await openMixSection(page, ".selected-ingredients-panel");
+		const selectedSection = await openMixSection(
+			page,
+			".selected-ingredients-panel",
+		);
 		return selectedSection.getByRole("spinbutton", {
 			name: "Quantity for Spinach, Raw",
 		});
@@ -1217,7 +1338,10 @@ test("safe Mix suggestions apply practical increases and reductions once and und
 	}) => {
 		await page.goto("/mix");
 		await waitForAppReady(page);
-		const suggestionsSection = await openMixSection(page, ".nutrient-adjustments");
+		const suggestionsSection = await openMixSection(
+			page,
+			".nutrient-adjustments",
+		);
 		const suggestion = suggestionsSection
 			.locator(".nutrient-adjustment")
 			.filter({ hasText: "Spinach, Raw" });
@@ -1225,7 +1349,9 @@ test("safe Mix suggestions apply practical increases and reductions once and und
 		await expect(suggestion).toContainText(
 			`${direction} to ${expectedGrams.toLocaleString("en-US", { maximumFractionDigits: 3 })} g`,
 		);
-		await expect(suggestion).toContainText("Uses one reported serving: 1 cup (30 g)");
+		await expect(suggestion).toContainText(
+			"Uses one reported serving: 1 cup (30 g)",
+		);
 		await expect(
 			suggestion.locator(".nutrient-adjustment__impacts .metadata-pill"),
 		).not.toHaveCount(0);
@@ -1234,10 +1360,14 @@ test("safe Mix suggestions apply practical increases and reductions once and und
 		await expect(quantity).toHaveValue(String(startingGrams));
 		await suggestion.getByRole("button", { name: "Apply" }).click();
 		await expect(quantity).toHaveValue(String(expectedGrams));
-		await expect(suggestionsSection.getByText("Spinach, Raw updated.")).toBeVisible();
+		await expect(
+			suggestionsSection.getByText("Spinach, Raw updated."),
+		).toBeVisible();
 		await suggestionsSection.getByRole("button", { name: "Undo" }).click();
 		await expect(quantity).toHaveValue(String(startingGrams));
-		await expect(suggestionsSection.getByRole("button", { name: "Undo" })).toHaveCount(0);
+		await expect(
+			suggestionsSection.getByRole("button", { name: "Undo" }),
+		).toHaveCount(0);
 	};
 
 	try {
@@ -1269,7 +1399,10 @@ test("safe Mix suggestions apply practical increases and reductions once and und
 		});
 	} finally {
 		if (!page.isClosed()) await page.close();
-		await restoreLocalQaMixGoalConfiguration(testInfo.parallelIndex, originalGoalConfiguration);
+		await restoreLocalQaMixGoalConfiguration(
+			testInfo.parallelIndex,
+			originalGoalConfiguration,
+		);
 	}
 });
 
@@ -1281,8 +1414,9 @@ test("Mix preserves exact grams across package, household, and weight-only servi
 		"One isolated browser worker owns this temporary Mix-state mutation.",
 	);
 
-	const originalGoalConfiguration =
-		await captureLocalQaMixGoalConfiguration(testInfo.parallelIndex);
+	const originalGoalConfiguration = await captureLocalQaMixGoalConfiguration(
+		testInfo.parallelIndex,
+	);
 	try {
 		await saveLocalQaMixState(testInfo.parallelIndex, {
 			version: 1,
@@ -1341,16 +1475,22 @@ test("Mix preserves exact grams across package, household, and weight-only servi
 			name: "Measure for Banana, Raw",
 		});
 		await bananaMeasure.click();
-		await page.getByRole("option", { name: "medium banana", exact: true }).click();
+		await page
+			.getByRole("option", { name: "medium banana", exact: true })
+			.click();
 		await expect(bananaQuantity).toHaveValue("1");
 		await expect(bananaCard).toContainText(/118\s*g equivalent/i);
 
-		await bananaCard.getByRole("button", { name: "Use more Banana, Raw" }).click();
+		await bananaCard
+			.getByRole("button", { name: "Use more Banana, Raw" })
+			.click();
 		await expect(bananaQuantity).toHaveValue("2");
 		await expect(bananaCard).toContainText(/236\s*g equivalent/i);
 		await bananaQuantity.fill("1.5");
 		await expect(bananaCard).toContainText(/177\s*g equivalent/i);
-		await bananaCard.getByRole("button", { name: "Use less Banana, Raw" }).click();
+		await bananaCard
+			.getByRole("button", { name: "Use less Banana, Raw" })
+			.click();
 		await expect(bananaQuantity).toHaveValue("0.5");
 		await expect(bananaCard).toContainText(/59\s*g equivalent/i);
 
@@ -1398,8 +1538,9 @@ test("explicit nutrient goals preserve zero, units, independent rules, and synch
 		"One isolated browser worker owns this durable goal mutation.",
 	);
 
-	const originalGoalConfiguration =
-		await captureLocalQaMixGoalConfiguration(testInfo.parallelIndex);
+	const originalGoalConfiguration = await captureLocalQaMixGoalConfiguration(
+		testInfo.parallelIndex,
+	);
 	try {
 		await page.goto("/mix");
 		await waitForAppReady(page);
@@ -1537,8 +1678,9 @@ test("Mix goal values, units, trace precision, and statuses stay synchronized ac
 		"One isolated browser worker owns this temporary Mix-state mutation.",
 	);
 
-	const originalGoalConfiguration =
-		await captureLocalQaMixGoalConfiguration(testInfo.parallelIndex);
+	const originalGoalConfiguration = await captureLocalQaMixGoalConfiguration(
+		testInfo.parallelIndex,
+	);
 	try {
 		await saveLocalQaMixState(testInfo.parallelIndex, {
 			version: 1,
@@ -1559,10 +1701,7 @@ test("Mix goal values, units, trace precision, and statuses stay synchronized ac
 		await page.goto("/mix");
 		await waitForAppReady(page);
 		const goalsSection = await openMixSection(page, ".goals-panel");
-		const shapeSection = await openMixSection(
-			page,
-			".nutrient-shape-panel",
-		);
+		const shapeSection = await openMixSection(page, ".nutrient-shape-panel");
 		const contributionsSection = await openMixSection(
 			page,
 			".contribution-breakdown",
@@ -1621,7 +1760,9 @@ test("Mix goal values, units, trace precision, and statuses stay synchronized ac
 			.allTextContents();
 		expect(impactValues.length).toBeGreaterThan(0);
 		for (const impactValue of impactValues) {
-			expect(impactValue).toMatch(/[+−](?:<0\.001|\d[\d,.]*)\s(?:kcal|g|mg|mcg|iu)/i);
+			expect(impactValue).toMatch(
+				/[+−](?:<0\.001|\d[\d,.]*)\s(?:kcal|g|mg|mcg|iu)/i,
+			);
 		}
 
 		const readGoalStatus = async (nutrientLabel: string) => {
@@ -1719,18 +1860,19 @@ test("Mix options expose keyboard reorganization and restore the section order",
 		name: "Drag Nutrient shape to reorder",
 	});
 	const readSectionOrder = () =>
-		organizer.locator("[data-mix-section-id]").evaluateAll((elements) =>
-			elements.map((element) =>
-				element.getAttribute("data-mix-section-id"),
-			),
-		);
+		organizer
+			.locator("[data-mix-section-id]")
+			.evaluateAll((elements) =>
+				elements.map((element) => element.getAttribute("data-mix-section-id")),
+			);
 	const initialOrder = await readSectionOrder();
 	const initialPosition = initialOrder.indexOf("nutrient-shape");
 	expect(initialPosition).toBeGreaterThanOrEqual(0);
 	const movementKey =
 		initialPosition === initialOrder.length - 1 ? "ArrowUp" : "ArrowDown";
 	const returnKey = movementKey === "ArrowDown" ? "ArrowUp" : "ArrowDown";
-	const movedPosition = initialPosition + (movementKey === "ArrowDown" ? 1 : -1);
+	const movedPosition =
+		initialPosition + (movementKey === "ArrowDown" ? 1 : -1);
 	await nutrientShapeHandle.focus();
 	await nutrientShapeHandle.press(movementKey);
 	await expect(
@@ -1755,7 +1897,9 @@ test("Mix options expose keyboard reorganization and restore the section order",
 	await expect(page).toHaveURL(/\/mix$/);
 });
 
-test("the Mix save dialog accepts text and cancels without saving", async ({ page }) => {
+test("the Mix save dialog accepts text and cancels without saving", async ({
+	page,
+}) => {
 	await page.goto("/mix");
 	await waitForAppReady(page);
 	await page.getByRole("button", { name: "Save mix" }).click();
@@ -1778,8 +1922,9 @@ test("Mix recipes save once, reject duplicate names, and preserve overwrite and 
 	);
 
 	const recipePrefix = "QA Goal Persistence Mix";
-	const originalGoalConfiguration =
-		await captureLocalQaMixGoalConfiguration(testInfo.parallelIndex);
+	const originalGoalConfiguration = await captureLocalQaMixGoalConfiguration(
+		testInfo.parallelIndex,
+	);
 	try {
 		await deleteLocalQaSavedRecipesByNamePrefix(
 			testInfo.parallelIndex,
@@ -1809,7 +1954,9 @@ test("Mix recipes save once, reject duplicate names, and preserve overwrite and 
 		});
 		await proteinGoal.fill("32");
 		await proteinGoal.blur();
-		await expect(page.getByText("Unsaved changes", { exact: true })).toBeVisible();
+		await expect(
+			page.getByText("Unsaved changes", { exact: true }),
+		).toBeVisible();
 
 		await page.getByRole("button", { name: "Save mix" }).click();
 		await expect(page).toHaveURL(/\/mix\/save$/);
@@ -1822,23 +1969,33 @@ test("Mix recipes save once, reject duplicate names, and preserve overwrite and 
 		await dialog.getByRole("button", { name: "Cancel" }).click();
 		await expect(page).toHaveURL(/\/mix$/);
 		await expect
-			.poll(async () =>
-				(await readLocalQaSavedRecipesByNamePrefix(
-					testInfo.parallelIndex,
-					recipePrefix,
-				)).length)
+			.poll(
+				async () =>
+					(
+						await readLocalQaSavedRecipesByNamePrefix(
+							testInfo.parallelIndex,
+							recipePrefix,
+						)
+					).length,
+			)
 			.toBe(0);
 
 		await saveCurrentMixAsNew(page, recipePrefix);
 		await expect(page.locator(".mix-header")).toContainText(recipePrefix);
 		await expect(page.getByRole("button", { name: "Save mix" })).toBeDisabled();
-		await expect(page.getByText("Unsaved changes", { exact: true })).toHaveCount(0);
+		await expect(
+			page.getByText("Unsaved changes", { exact: true }),
+		).toHaveCount(0);
 		await expect
-			.poll(async () =>
-				(await readLocalQaSavedRecipesByNamePrefix(
-					testInfo.parallelIndex,
-					recipePrefix,
-				)).length)
+			.poll(
+				async () =>
+					(
+						await readLocalQaSavedRecipesByNamePrefix(
+							testInfo.parallelIndex,
+							recipePrefix,
+						)
+					).length,
+			)
 			.toBe(1);
 
 		await page.reload();
@@ -1869,18 +2026,24 @@ test("Mix recipes save once, reject duplicate names, and preserve overwrite and 
 			"You already have a saved recipe with this name.",
 		);
 		await expect
-			.poll(async () =>
-				(await readLocalQaSavedRecipesByNamePrefix(
-					testInfo.parallelIndex,
-					recipePrefix,
-				)).length)
+			.poll(
+				async () =>
+					(
+						await readLocalQaSavedRecipesByNamePrefix(
+							testInfo.parallelIndex,
+							recipePrefix,
+						)
+					).length,
+			)
 			.toBe(1);
 		await dialog.getByRole("button", { name: "Cancel" }).click();
 
 		await page.goto("/saved");
 		await waitForAppReady(page);
 		let savedCard = await openSavedRecipeCard(page, recipePrefix);
-		await savedCard.getByRole("button", { name: `Load ${recipePrefix}` }).click();
+		await savedCard
+			.getByRole("button", { name: `Load ${recipePrefix}` })
+			.click();
 		await expect(page).toHaveURL(/\/mix$/);
 		await expect(page.locator(".mix-header")).toContainText(recipePrefix);
 		await expect(page.getByRole("button", { name: "Save mix" })).toBeDisabled();
@@ -1916,10 +2079,13 @@ test("Mix recipes save once, reject duplicate names, and preserve overwrite and 
 		await expect(page.locator(".mix-header")).toContainText(copiedRecipeName);
 		await expect
 			.poll(async () =>
-				(await readLocalQaSavedRecipesByNamePrefix(
-					testInfo.parallelIndex,
-					recipePrefix,
-				)).map((recipe) => recipe.name))
+				(
+					await readLocalQaSavedRecipesByNamePrefix(
+						testInfo.parallelIndex,
+						recipePrefix,
+					)
+				).map((recipe) => recipe.name),
+			)
 			.toEqual([recipePrefix, copiedRecipeName]);
 
 		await page.reload();
@@ -1934,7 +2100,9 @@ test("Mix recipes save once, reject duplicate names, and preserve overwrite and 
 		await waitForAppReady(page);
 		savedCard = await openSavedRecipeCard(page, recipePrefix);
 		await expect(savedCard).toBeVisible();
-		await expect(await openSavedRecipeCard(page, copiedRecipeName)).toBeVisible();
+		await expect(
+			await openSavedRecipeCard(page, copiedRecipeName),
+		).toBeVisible();
 	} finally {
 		await deleteLocalQaSavedRecipesByNamePrefix(
 			testInfo.parallelIndex,
@@ -1956,8 +2124,9 @@ test("Mix reset actions cancel safely, preserve their intended state, detach sav
 	);
 
 	const recipeName = "QA Reset Persistence Mix";
-	const originalGoalConfiguration =
-		await captureLocalQaMixGoalConfiguration(testInfo.parallelIndex);
+	const originalGoalConfiguration = await captureLocalQaMixGoalConfiguration(
+		testInfo.parallelIndex,
+	);
 	const persistenceGoalSignature = JSON.stringify(persistenceGoals);
 	const currentGoalSignature = async () =>
 		JSON.stringify(
@@ -1978,11 +2147,15 @@ test("Mix reset actions cancel safely, preserve their intended state, detach sav
 		expectedPath: RegExp,
 	) => {
 		const options = await openMixOptions(page);
-		await options.getByRole("button", { name: actionLabel, exact: true }).click();
+		await options
+			.getByRole("button", { name: actionLabel, exact: true })
+			.click();
 		await expect(page).toHaveURL(expectedPath);
 		const confirmation = page.getByRole("alertdialog", { name: dialogName });
 		await expect(confirmation).toBeVisible();
-		await confirmation.getByRole("button", { name: "Cancel", exact: true }).click();
+		await confirmation
+			.getByRole("button", { name: "Cancel", exact: true })
+			.click();
 		await expect(page).toHaveURL(/\/mix$/);
 	};
 	const confirmReset = async (
@@ -1991,7 +2164,9 @@ test("Mix reset actions cancel safely, preserve their intended state, detach sav
 		confirmLabel: string,
 	) => {
 		const options = await openMixOptions(page);
-		await options.getByRole("button", { name: actionLabel, exact: true }).click();
+		await options
+			.getByRole("button", { name: actionLabel, exact: true })
+			.click();
 		const confirmation = page.getByRole("alertdialog", { name: dialogName });
 		await confirmation
 			.getByRole("button", { name: confirmLabel, exact: true })
@@ -2023,7 +2198,9 @@ test("Mix reset actions cancel safely, preserve their intended state, detach sav
 		).toBeVisible();
 		await page.goBack();
 		await expect(page).toHaveURL(/\/mix\/options$/);
-		await expect(page.getByRole("dialog", { name: "Mix options" })).toBeVisible();
+		await expect(
+			page.getByRole("dialog", { name: "Mix options" }),
+		).toBeVisible();
 		await page.goForward();
 		await expect(page).toHaveURL(/\/mix\/reset-goals$/);
 		await page.reload();
@@ -2091,7 +2268,9 @@ test("Mix reset actions cancel safely, preserve their intended state, detach sav
 		const resetGoalSignature = await currentGoalSignature();
 		await page.goBack();
 		await expect(page).toHaveURL(/\/mix\/options$/);
-		await expect(page.getByRole("dialog", { name: "Mix options" })).toBeVisible();
+		await expect(
+			page.getByRole("dialog", { name: "Mix options" }),
+		).toBeVisible();
 		await expectSelectedIngredientCount(0);
 		await expect.poll(currentGoalSignature).toBe(resetGoalSignature);
 		await page.goForward();

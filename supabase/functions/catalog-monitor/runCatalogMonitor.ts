@@ -44,33 +44,45 @@ const processProductJob = async (
 	try {
 		if (job.provider_key === "open-food-facts") {
 			const metadata = await fetchOpenFoodFactsMetadata(job.source_reference);
-			if (await repository.confirmProviderMetadataUnchanged(
-				job,
-				metadata.providerRevision,
-				metadata.providerUpdatedAt,
-			)) {
+			if (
+				await repository.confirmProviderMetadataUnchanged(
+					job,
+					metadata.providerRevision,
+					metadata.providerUpdatedAt,
+				)
+			) {
 				summary.productJobsUnchanged += 1;
 				return;
 			}
 		}
 
 		if (job.provider_key === "usda" && !usdaApiKey) {
-			throw new ProviderRequestError("USDA API key is not configured", "provider_unavailable");
+			throw new ProviderRequestError(
+				"USDA API key is not configured",
+				"provider_unavailable",
+			);
 		}
 
 		const previousSnapshot = await repository.readLatestProviderSnapshot(job);
-		const snapshot = job.provider_key === "open-food-facts"
-			? await fetchOpenFoodFactsSnapshot(job.source_reference)
-			: await fetchUsdaSnapshot(job.source_reference, usdaApiKey!);
-		const changes = compareProviderSnapshots(previousSnapshot, snapshot.normalizedSnapshot);
-		const result = await repository.recordProviderSnapshot(job, snapshot, changes);
+		const snapshot =
+			job.provider_key === "open-food-facts"
+				? await fetchOpenFoodFactsSnapshot(job.source_reference)
+				: await fetchUsdaSnapshot(job.source_reference, usdaApiKey!);
+		const changes = compareProviderSnapshots(
+			previousSnapshot,
+			snapshot.normalizedSnapshot,
+		);
+		const result = await repository.recordProviderSnapshot(
+			job,
+			snapshot,
+			changes,
+		);
 		if (result === "changed") summary.productJobsChanged += 1;
 		else summary.productJobsUnchanged += 1;
 	} catch (error) {
 		const code = errorCode(error);
-		const result = error instanceof ProviderRequestError
-			? error.result
-			: "invalid_response";
+		const result =
+			error instanceof ProviderRequestError ? error.result : "invalid_response";
 		try {
 			await repository.completeProductJob(job, result, code);
 		} catch {
@@ -86,17 +98,30 @@ const processSafetyAlertSource = async (
 	claim: SafetyAlertIngestionClaim,
 	pageSize: number,
 	openFdaApiKey: string | undefined,
+	fdaRecallProxyUrl: string | undefined,
+	fdaRecallProxySecret: string | undefined,
 	summary: CatalogMonitorRunSummary,
 ) => {
 	try {
-		const page = claim.provider_key === "open-fda-food-enforcement"
-			? await fetchOpenFdaAlertPage(
-				claim.last_successful_at,
-				claim.cursor_value,
-				pageSize,
-				openFdaApiKey,
-			)
-			: await fetchFsisAlertPage();
+		const page =
+			claim.provider_key === "open-fda-food-enforcement"
+				? await fetchOpenFdaAlertPage(
+						claim.last_successful_at,
+						claim.cursor_value,
+						pageSize,
+						openFdaApiKey,
+						{
+							url: fdaRecallProxyUrl,
+							secret: fdaRecallProxySecret,
+						},
+					)
+				: await fetchFsisAlertPage();
+		for (const sourceError of page.sourceErrors ?? []) {
+			summary.errors.push({
+				scope: `safety:${claim.provider_key}:${sourceError.source}`,
+				code: sourceError.code,
+			});
+		}
 		const candidates = await repository.readSafetyMatchCandidates();
 		for (const alert of page.alerts) {
 			const probableMatches = buildProbableSafetyAlertMatches(
@@ -144,6 +169,8 @@ export const runCatalogMonitor = async (
 	environment: {
 		usdaApiKey?: string;
 		openFdaApiKey?: string;
+		fdaRecallProxyUrl?: string;
+		fdaRecallProxySecret?: string;
 	},
 ) => {
 	const settings = await repository.readSettings();
@@ -161,6 +188,8 @@ export const runCatalogMonitor = async (
 				claim,
 				settings.safety_alert_page_size,
 				environment.openFdaApiKey,
+				environment.fdaRecallProxyUrl,
+				environment.fdaRecallProxySecret,
 				summary,
 			);
 		}

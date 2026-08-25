@@ -1,5 +1,5 @@
 <script lang="ts">
-	import ModerationWorkspace from "$lib/components/moderation/ModerationWorkspace/ModerationWorkspace.svelte";
+	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import PrivilegedToolRightSheet from "$lib/components/moderation/PrivilegedToolRightSheet/PrivilegedToolRightSheet.svelte";
 	import type { PrivilegedToolWorkspaceViewProps } from "./types";
 
@@ -8,13 +8,16 @@
 		title,
 		subtitle,
 		informationKey,
-		data,
-		form = null,
-		scope,
+		feedbackMessage,
+		feedbackTone = "info",
 		onClose,
+		children,
 	}: PrivilegedToolWorkspaceViewProps = $props();
 </script>
 
 <PrivilegedToolRightSheet {id} {title} {subtitle} {informationKey} {onClose}>
-	<ModerationWorkspace {data} {form} {scope} />
+	{#if feedbackMessage}
+		<StatusMessage tone={feedbackTone} message={feedbackMessage} />
+	{/if}
+	{@render children()}
 </PrivilegedToolRightSheet>

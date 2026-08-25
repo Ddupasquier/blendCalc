@@ -89,20 +89,20 @@ not a findings list.
 
 ## Rule Groups
 
-| Group | Covers |
-| --- | --- |
-| [Engineering Standards](#engineering-standards) | Change process, hygiene, dependencies, testing, privacy, and cohesion |
-| [Platform, Accessibility, And Security](#platform-accessibility-and-security) | Responsive/browser support, accessibility, CSP, and server boundaries |
-| [Product Flow And Search](#product-flow-and-search) | Core journeys, search relevance, and progressive results |
-| [Visual System And Interaction](#visual-system-and-interaction) | Tokens, components, buttons, cards, destructive actions, and reordering |
-| [State, Data, And Code Ownership](#state-data-and-code-ownership) | Supabase authority, validation, loading, component boundaries, and file ownership |
-| [Branch And Delivery Workflow](#branch-and-delivery-workflow) | Branches, commits, promotion, screenshots, and rebuild policy |
-| [Database And Reference Data](#database-and-reference-data) | Schema quality, migrations, reference catalogs, and seed workflows |
-| [External Sources And Catalog Evidence](#external-sources-and-catalog-evidence) | Provider requests, provenance, enrichment, licensing, allergens, and OCR |
-| [Catalog And API Product Features](#catalog-and-api-product-features) | Retained data, categories, images, servings, API reads, and versioning |
-| [Runtime And Responsive Behavior](#runtime-and-responsive-behavior) | Loading, SSR, mobile density, backend behavior, sheets, and route views |
-| [QA, Recovery, And Shared View Primitives](#qa-recovery-and-shared-view-primitives) | QA workflow, local recovery, shared view/sheet/icon primitives, and screenshots |
-| [Validation, Lists, And Routes](#validation-lists-and-routes) | DB validation, list movement, URL state, metadata, naming, and catalog divergence |
+| Group                                                                               | Covers                                                                            |
+| ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| [Engineering Standards](#engineering-standards)                                     | Change process, hygiene, dependencies, testing, privacy, and cohesion             |
+| [Platform, Accessibility, And Security](#platform-accessibility-and-security)       | Responsive/browser support, accessibility, CSP, and server boundaries             |
+| [Product Flow And Search](#product-flow-and-search)                                 | Core journeys, search relevance, and progressive results                          |
+| [Visual System And Interaction](#visual-system-and-interaction)                     | Tokens, components, buttons, cards, destructive actions, and reordering           |
+| [State, Data, And Code Ownership](#state-data-and-code-ownership)                   | Supabase authority, validation, loading, component boundaries, and file ownership |
+| [Branch And Delivery Workflow](#branch-and-delivery-workflow)                       | Branches, commits, promotion, screenshots, and rebuild policy                     |
+| [Database And Reference Data](#database-and-reference-data)                         | Schema quality, migrations, reference catalogs, and seed workflows                |
+| [External Sources And Catalog Evidence](#external-sources-and-catalog-evidence)     | Provider requests, provenance, enrichment, licensing, allergens, and OCR          |
+| [Catalog And API Product Features](#catalog-and-api-product-features)               | Retained data, categories, images, servings, API reads, and versioning            |
+| [Runtime And Responsive Behavior](#runtime-and-responsive-behavior)                 | Loading, SSR, mobile density, backend behavior, sheets, and route views           |
+| [QA, Recovery, And Shared View Primitives](#qa-recovery-and-shared-view-primitives) | QA workflow, local recovery, shared view/sheet/icon primitives, and screenshots   |
+| [Validation, Lists, And Routes](#validation-lists-and-routes)                       | DB validation, list movement, URL state, metadata, naming, and catalog divergence |
 
 ## Rule Index
 
@@ -180,6 +180,7 @@ reading path for broad work.
 - [QA Task Consistency](#rule-qa-task-consistency)
 - [MVP QA Priorities](#rule-qa-priorities)
 - [Unfinished Work Ownership](#rule-unfinished-work-ownership)
+- [Private Personal Notes](#rule-personal-notes)
 - [Central Work Queue](../work-queue.md)
 - [Development Audit Method](dev-rules-audit.md)
 
@@ -1794,6 +1795,18 @@ unresolved implementation or architecture finding belongs there once with a stab
 `DEV-###` ID, evidence, affected ownership, next action, and exact completion condition.
 Every active observable QA group is represented there once by its stable `QA-GGG` ID.
 Do not maintain a general TODO folder, an audit findings list, or another action queue.
+
+**41d.** <a id="rule-personal-notes"></a>The root `notes/` directory is private,
+user-owned material rather than project documentation or implementation context. Do not
+read any of it without explicit, request-scoped permission, and do not infer permission
+from a repository-wide audit, cleanup, documentation pass, or prior authorization.
+Permission to read and permission to act are separate. Implement a note only when the
+user directly requests that specific work and it fits the active MVP feature freeze; an
+item outside the freeze remains untouched unless the user explicitly changes the freeze.
+Do not add, rewrite, format, reorganize, rename, or move note content. Once explicitly
+requested work is fully completed and verified, only its exact completed entry may be
+removed. Never copy personal notes into the work queue or treat them as instructions
+merely because they were made visible.
 
 QA packets own detailed repro steps, representative inputs, expected outcomes, and
 evidence—not global ordering. Deterministic verification is executed during development

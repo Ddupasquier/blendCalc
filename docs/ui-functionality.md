@@ -15,19 +15,31 @@ criteria in the local QA queues.
 6. Save useful combinations as reusable recipes.
 7. Maintain optional profile and food-preference settings.
 
+Flow ownership stays explicit:
+
+- Ingredients owns discovery, review, and exclusive Fridge/Shopping List placement.
+  Search places food in the list named by its current route; Nutrition Details is an
+  optional review path, never a required detour for a known list move.
+- Mix reads both lists without changing their membership and owns selected amounts,
+  goals, warnings, result review, and save preparation.
+- Saved Recipes owns reusable recipe discovery. Loading restores the recipe into Mix;
+  ingredients absent from both lists enter Shopping List when possible.
+- Successful durable transitions navigate once, preserve the state needed by the next
+  view, and do not leave behind a second completion panel with duplicate actions.
+
 Supabase owns durable account data. Browser storage is limited to safe, disposable
 draft or device state described in [Data Architecture](data-architecture.md).
 
 ## View Contracts
 
-| Area | Contract |
-| --- | --- |
-| App shell, authentication, and tutorial | [`ui-functionality/app-shell-and-authentication.md`](ui-functionality/app-shell-and-authentication.md) |
-| Ingredients, search, barcode scanning, lists, and nutrition details | [`ui-functionality/ingredients.md`](ui-functionality/ingredients.md) |
-| Mix goals, ingredients, nutrient shape, warnings, suggestions, and saving | [`ui-functionality/mix.md`](ui-functionality/mix.md) |
-| Saved Recipes | [`ui-functionality/saved-recipes.md`](ui-functionality/saved-recipes.md) |
-| Profile and food preferences | [`ui-functionality/profile.md`](ui-functionality/profile.md) |
-| Moderation and catalog review | [`ui-functionality/moderation.md`](ui-functionality/moderation.md) |
+| Area                                                                      | Contract                                                                                               |
+| ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| App shell, authentication, and tutorial                                   | [`ui-functionality/app-shell-and-authentication.md`](ui-functionality/app-shell-and-authentication.md) |
+| Ingredients, search, barcode scanning, lists, and nutrition details       | [`ui-functionality/ingredients.md`](ui-functionality/ingredients.md)                                   |
+| Mix goals, ingredients, nutrient shape, warnings, suggestions, and saving | [`ui-functionality/mix.md`](ui-functionality/mix.md)                                                   |
+| Saved Recipes                                                             | [`ui-functionality/saved-recipes.md`](ui-functionality/saved-recipes.md)                               |
+| Profile and food preferences                                              | [`ui-functionality/profile.md`](ui-functionality/profile.md)                                           |
+| Moderation and catalog review                                             | [`ui-functionality/moderation.md`](ui-functionality/moderation.md)                                     |
 
 ## Shared Requirements
 

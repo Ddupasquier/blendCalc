@@ -5,7 +5,7 @@ import {
 	waitForAppReady,
 } from "./support/browserTest";
 import type { Locator, Page } from "@playwright/test";
-import { createAuthenticatedLocalQaDatabaseClient } from "./support/localQaDatabase";
+import { getAuthenticatedLocalQaDatabaseClient } from "./support/localQaDatabase";
 
 type CapturedEntryAnimation = {
 	duration: number | undefined;
@@ -73,14 +73,12 @@ const installEntryAnimationCapture = async (
 				captureWindow.__blendCalcEntryAnimationFrame = undefined;
 				return;
 			}
-			captureWindow.__blendCalcEntryAnimationFrame = requestAnimationFrame(
-				captureAnimation,
-			);
+			captureWindow.__blendCalcEntryAnimationFrame =
+				requestAnimationFrame(captureAnimation);
 		};
 
-		captureWindow.__blendCalcEntryAnimationFrame = requestAnimationFrame(
-			captureAnimation,
-		);
+		captureWindow.__blendCalcEntryAnimationFrame =
+			requestAnimationFrame(captureAnimation);
 	}, elementSelector);
 };
 
@@ -127,7 +125,9 @@ const expectBottomSheetPlacement = async (
 	});
 
 	await expect
-		.poll(async () => panel.evaluate((element) => element.getAnimations().length))
+		.poll(async () =>
+			panel.evaluate((element) => element.getAnimations().length),
+		)
 		.toBe(0);
 	const geometry = await page.evaluate(() => {
 		const panel = document.querySelector<HTMLElement>(
@@ -153,12 +153,12 @@ const expectBottomSheetPlacement = async (
 		};
 	});
 	expect(geometry).not.toBeNull();
-	expect(Math.abs(geometry!.panelBottom - geometry!.navigationTop)).toBeLessThanOrEqual(
-		2,
-	);
-	expect(Math.abs(geometry!.backdropTop - geometry!.headerBottom)).toBeLessThanOrEqual(
-		2,
-	);
+	expect(
+		Math.abs(geometry!.panelBottom - geometry!.navigationTop),
+	).toBeLessThanOrEqual(2);
+	expect(
+		Math.abs(geometry!.backdropTop - geometry!.headerBottom),
+	).toBeLessThanOrEqual(2);
 	expect(
 		Math.abs(geometry!.backdropBottom - geometry!.navigationTop),
 	).toBeLessThanOrEqual(2);
@@ -173,9 +173,9 @@ const readBottomSheetChrome = async (dialog: Locator) => {
 	await expect(panel).toHaveCount(1);
 	await expect(handle).toHaveCount(1);
 	await expect(title).toHaveCount(1);
-	await expect(dialog.getByRole("button", { name: /^Back(?:\b|$)/ })).toHaveCount(
-		0,
-	);
+	await expect(
+		dialog.getByRole("button", { name: /^Back(?:\b|$)/ }),
+	).toHaveCount(0);
 
 	const chrome = await dialog.evaluate((element) => {
 		const panel = element.querySelector<HTMLElement>(
@@ -231,18 +231,28 @@ const expectMatchingBottomSheetChrome = (
 		titleLineHeight: expected.titleLineHeight,
 		titleMargin: expected.titleMargin,
 	});
-	expect(Math.abs(actual.handleHeight - expected.handleHeight)).toBeLessThanOrEqual(
-		1,
-	);
-	expect(Math.abs(actual.handleWidth - expected.handleWidth)).toBeLessThanOrEqual(1);
+	expect(
+		Math.abs(actual.handleHeight - expected.handleHeight),
+	).toBeLessThanOrEqual(1);
+	expect(
+		Math.abs(actual.handleWidth - expected.handleWidth),
+	).toBeLessThanOrEqual(1);
 };
 
 const waitForBottomSheetToSettle = async (dialog: Locator) => {
 	const panel = dialog.locator(".sheet-base__panel--bottom");
 	await expect(panel).toBeVisible();
 	await expect
-		.poll(() => panel.evaluate((element) => element.getAnimations().length))
-		.toBe(0);
+		.poll(() =>
+			panel.evaluate((element) =>
+				element
+					.getAnimations()
+					.every((animation) =>
+						["finished", "idle"].includes(animation.playState),
+					),
+			),
+		)
+		.toBe(true);
 };
 
 const expectIngredientSearchEntersFromRight = async (
@@ -251,10 +261,7 @@ const expectIngredientSearchEntersFromRight = async (
 ) => {
 	await page.goto(listRoute);
 	await waitForAppReady(page);
-	await installEntryAnimationCapture(
-		page,
-		".sheet-base__panel--right",
-	);
+	await installEntryAnimationCapture(page, ".sheet-base__panel--right");
 	await page
 		.getByRole("button", { name: "Open ingredient search" })
 		.click({ noWaitAfter: true });
@@ -278,7 +285,9 @@ const expectIngredientSearchEntersFromRight = async (
 	await expect
 		.poll(() => panel.evaluate((element) => element.getAnimations().length))
 		.toBe(0);
-	await expect(searchDialog.getByRole("combobox", { name: "Search ingredients" })).toBeFocused();
+	await expect(
+		searchDialog.getByRole("combobox", { name: "Search ingredients" }),
+	).toBeFocused();
 };
 
 const reachManualEntryExtendedStep = async (dialog: Locator) => {
@@ -331,7 +340,9 @@ test("URL-backed ingredient overlays close through Escape and browser history", 
 	await expect(page).toHaveURL(/\/ingredients\/fridge$/);
 	await expect(manualEntryButton).toBeFocused();
 
-	const sortButton = page.getByRole("button", { name: "Sort saved ingredients" });
+	const sortButton = page.getByRole("button", {
+		name: "Sort saved ingredients",
+	});
 	await sortButton.click();
 	await expect(page).toHaveURL(/\/ingredients\/fridge\/filters$/);
 	await expect(page.getByRole("dialog", { name: "Sort" })).toBeVisible();
@@ -339,7 +350,9 @@ test("URL-backed ingredient overlays close through Escape and browser history", 
 	await expect(page).toHaveURL(/\/ingredients\/fridge$/);
 	await expect(sortButton).toBeFocused();
 
-	const searchButton = page.getByRole("button", { name: "Open ingredient search" });
+	const searchButton = page.getByRole("button", {
+		name: "Open ingredient search",
+	});
 	await searchButton.click();
 	await expect(page).toHaveURL(/\/ingredients\/fridge\/search$/);
 	await expect(page.getByRole("dialog", { name: "Ingredients" })).toBeVisible();
@@ -357,8 +370,12 @@ test("manual entry closes through every supported sheet control without activati
 	const manualEntryButton = page.getByRole("button", {
 		name: "Enter a custom ingredient manually",
 	});
-	const sortButton = page.getByRole("button", { name: "Sort saved ingredients" });
-	const manualEntryDialog = page.getByRole("dialog", { name: "Enter Manually" });
+	const sortButton = page.getByRole("button", {
+		name: "Sort saved ingredients",
+	});
+	const manualEntryDialog = page.getByRole("dialog", {
+		name: "Enter Manually",
+	});
 	const sortDialog = page.getByRole("dialog", { name: "Sort" });
 	const openManualEntry = async () => {
 		await manualEntryButton.click({ noWaitAfter: true });
@@ -443,7 +460,9 @@ test("long manual entry content scrolls beneath persistent shared sheet chrome",
 			scrollTop: element.scrollTop,
 		};
 	});
-	expect(scrollMetrics.scrollHeight).toBeGreaterThan(scrollMetrics.clientHeight);
+	expect(scrollMetrics.scrollHeight).toBeGreaterThan(
+		scrollMetrics.clientHeight,
+	);
 	expect(scrollMetrics.scrollTop).toBeGreaterThan(0);
 	await expect(lastField).toBeVisible();
 	await expect(continueButton).toBeVisible();
@@ -455,8 +474,12 @@ test("long manual entry content scrolls beneath persistent shared sheet chrome",
 		handle.boundingBox(),
 		page.evaluate(() => window.scrollY),
 	]);
-	expect(Math.abs(bottomGeometry[0]!.y - initialGeometry[0]!.y)).toBeLessThanOrEqual(1);
-	expect(Math.abs(bottomGeometry[1]!.y - initialGeometry[1]!.y)).toBeLessThanOrEqual(1);
+	expect(
+		Math.abs(bottomGeometry[0]!.y - initialGeometry[0]!.y),
+	).toBeLessThanOrEqual(1);
+	expect(
+		Math.abs(bottomGeometry[1]!.y - initialGeometry[1]!.y),
+	).toBeLessThanOrEqual(1);
 	expect(bottomGeometry[2]).toBe(initialGeometry[2]);
 
 	await content.evaluate((element) => {
@@ -493,7 +516,9 @@ test("short and filled bottom sheets honor shared responsive height bounds", asy
 		await page
 			.getByRole("button", { name: "Enter a custom ingredient manually" })
 			.click();
-		const manualEntryDialog = page.getByRole("dialog", { name: "Enter Manually" });
+		const manualEntryDialog = page.getByRole("dialog", {
+			name: "Enter Manually",
+		});
 		await expect(manualEntryDialog).toBeVisible();
 		await waitForBottomSheetToSettle(manualEntryDialog);
 		const bounds = await page.evaluate(() => {
@@ -516,15 +541,24 @@ test("short and filled bottom sheets honor shared responsive height bounds", asy
 		});
 		expect(bounds).not.toBeNull();
 		const availableShellHeight = bounds!.navigationTop - bounds!.headerBottom;
-		const sharedMaximumHeight = Math.min(viewport.height * 0.8, availableShellHeight);
+		const sharedMaximumHeight = Math.min(
+			viewport.height * 0.8,
+			availableShellHeight,
+		);
 
 		expect(sortHeight).toBeGreaterThan(0);
 		expect(sortHeight).toBeLessThan(sharedMaximumHeight - 1);
 		expect(bounds!.panelHeight).toBeGreaterThan(sortHeight);
-		expect(Math.abs(bounds!.panelHeight - sharedMaximumHeight)).toBeLessThanOrEqual(2);
+		expect(
+			Math.abs(bounds!.panelHeight - sharedMaximumHeight),
+		).toBeLessThanOrEqual(2);
 		expect(bounds!.panelTop).toBeGreaterThanOrEqual(bounds!.headerBottom - 1);
-		expect(Math.abs(bounds!.panelBottom - bounds!.navigationTop)).toBeLessThanOrEqual(2);
-		await manualEntryDialog.getByRole("button", { name: "Close sheet" }).click();
+		expect(
+			Math.abs(bounds!.panelBottom - bounds!.navigationTop),
+		).toBeLessThanOrEqual(2);
+		await manualEntryDialog
+			.getByRole("button", { name: "Close sheet" })
+			.click();
 	}
 });
 
@@ -545,11 +579,15 @@ test("ingredient search enters from the right in both saved-list contexts", asyn
 	] as const) {
 		await page.goto(`${listRoute}/search`);
 		await waitForAppReady(page);
-		await expect(page.getByRole("dialog", { name: "Ingredients" })).toBeVisible();
+		await expect(
+			page.getByRole("dialog", { name: "Ingredients" }),
+		).toBeVisible();
 		await page.reload();
 		await waitForAppReady(page);
 		await expect(page).toHaveURL(new RegExp(`${listRoute}/search$`));
-		await expect(page.getByRole("dialog", { name: "Ingredients" })).toBeVisible();
+		await expect(
+			page.getByRole("dialog", { name: "Ingredients" }),
+		).toBeVisible();
 		await page.getByRole("button", { name: "Back to ingredients" }).click();
 		await expect(page).toHaveURL(new RegExp(`${listRoute}$`));
 	}
@@ -589,9 +627,11 @@ test("search scanner and saved-list sort return to the active search context", a
 		const partialQuery = query.slice(0, 4);
 		const initialSearchResponse = page.waitForResponse((response) => {
 			const responseUrl = new URL(response.url());
-			return responseUrl.pathname === "/api/foods/search"
-				&& responseUrl.searchParams.get("q") === partialQuery
-				&& response.ok();
+			return (
+				responseUrl.pathname === "/api/foods/search" &&
+				responseUrl.searchParams.get("q") === partialQuery &&
+				response.ok()
+			);
 		});
 		await searchInput.fill(partialQuery);
 		await initialSearchResponse;
@@ -625,16 +665,7 @@ test("search scanner and saved-list sort return to the active search context", a
 		await expect(page).toHaveURL(new RegExp(`${listRoute}/search$`));
 		await expect(searchInput).toHaveValue(partialQuery);
 
-		const completeSearchResponse = query === partialQuery
-			? Promise.resolve()
-			: page.waitForResponse((response) => {
-					const responseUrl = new URL(response.url());
-					return responseUrl.pathname === "/api/foods/search"
-						&& responseUrl.searchParams.get("q") === query
-						&& response.ok();
-				});
 		await searchInput.fill(query);
-		await completeSearchResponse;
 		const result = searchDialog.getByRole("row", { name: resultName });
 		await expect(result).toBeVisible();
 		await result.getByRole("button", { name: /^View nutrition for / }).click();
@@ -660,7 +691,10 @@ test("partial ingredient words combine every eligible source and remain selectab
 	const search = async (query: string) => {
 		const responsePromise = page.waitForResponse((response) => {
 			const url = new URL(response.url());
-			return url.pathname === "/api/foods/search" && url.searchParams.get("q") === query;
+			return (
+				url.pathname === "/api/foods/search" &&
+				url.searchParams.get("q") === query
+			);
 		});
 		await searchInput.fill(query);
 		const response = await responsePromise;
@@ -691,11 +725,13 @@ test("partial ingredient words combine every eligible source and remain selectab
 		partialTomatoNames.length,
 	);
 	expect(
-		await searchResults.locator(".ingredient-search-card__copy strong").allTextContents(),
+		await searchResults
+			.locator(".ingredient-search-card__copy strong")
+			.allTextContents(),
 	).toEqual(partialTomatoNames);
-	expect(new Set(partialTomatoResults.foods.map((food) => food.fdcId)).size).toBe(
-		partialTomatoResults.foods.length,
-	);
+	expect(
+		new Set(partialTomatoResults.foods.map((food) => food.fdcId)).size,
+	).toBe(partialTomatoResults.foods.length);
 	const partialTomatoSourceKeys = new Set(
 		partialTomatoResults.foods.map((food) => food.sourceKey),
 	);
@@ -737,7 +773,9 @@ test("partial ingredient words combine every eligible source and remain selectab
 		partialTomatoNames.length,
 	);
 	expect(
-		await searchResults.locator(".ingredient-search-card__copy strong").allTextContents(),
+		await searchResults
+			.locator(".ingredient-search-card__copy strong")
+			.allTextContents(),
 	).toEqual(partialTomatoNames);
 	const completedTomatoNames = completedWordResults.foods.map(
 		(food) => food.description,
@@ -842,15 +880,17 @@ test("phone search pagination loads only on request and preserves ordered result
 			);
 		});
 	const readRenderedFoodIds = () =>
-		searchResults.locator(".ingredient-search-card").evaluateAll((cards) =>
-			cards.map((card) => card.id.replace("ingredient-search-result-", "")),
-		);
+		searchResults
+			.locator(".ingredient-search-card")
+			.evaluateAll((cards) =>
+				cards.map((card) => card.id.replace("ingredient-search-result-", "")),
+			);
 
 	const firstPageResponsePromise = waitForSearchPage("food", 0);
 	await searchInput.fill("food");
 	const firstPageResponse = await firstPageResponsePromise;
 	expect(firstPageResponse.status()).toBe(200);
-	const firstPage = await firstPageResponse.json() as {
+	const firstPage = (await firstPageResponse.json()) as {
 		foods: Array<{ fdcId: number }>;
 		hasMore: boolean;
 		nextOffset: number | null;
@@ -861,16 +901,18 @@ test("phone search pagination loads only on request and preserves ordered result
 	expect(firstPage.foods).toHaveLength(15);
 	await expect(searchResults.getByRole("row")).toHaveCount(15);
 	const firstPageIds = await readRenderedFoodIds();
-	expect(firstPageIds).toEqual(firstPage.foods.map((food) => String(food.fdcId)));
+	expect(firstPageIds).toEqual(
+		firstPage.foods.map((food) => String(food.fdcId)),
+	);
 
 	await resultsPanel.evaluate((element) => {
 		element.scrollTop = element.scrollHeight;
 		element.dispatchEvent(new Event("scroll"));
 	});
 	await page.waitForTimeout(3_000);
-	expect(
-		searchRequests.filter(({ query }) => query === "food"),
-	).toEqual([{ limit: 15, offset: 0, query: "food" }]);
+	expect(searchRequests.filter(({ query }) => query === "food")).toEqual([
+		{ limit: 15, offset: 0, query: "food" },
+	]);
 
 	let loadMoreButton = searchDialog.getByRole("button", { name: "Load more" });
 	await expect(loadMoreButton).toBeVisible();
@@ -887,7 +929,7 @@ test("phone search pagination loads only on request and preserves ordered result
 	});
 	const secondPageResponse = await secondPageResponsePromise;
 	expect(secondPageResponse.status()).toBe(200);
-	const secondPage = await secondPageResponse.json() as {
+	const secondPage = (await secondPageResponse.json()) as {
 		foods: Array<{ fdcId: number }>;
 		hasMore: boolean;
 		nextOffset: number | null;
@@ -908,9 +950,9 @@ test("phone search pagination loads only on request and preserves ordered result
 			({ query, offset }) => query === "food" && offset === 15,
 		),
 	).toHaveLength(1);
-	expect(await resultsPanel.evaluate((element) => element.scrollTop)).toBeGreaterThanOrEqual(
-		scrollTopBeforeAppend - 2,
-	);
+	expect(
+		await resultsPanel.evaluate((element) => element.scrollTop),
+	).toBeGreaterThanOrEqual(scrollTopBeforeAppend - 2);
 
 	loadMoreButton = searchDialog.getByRole("button", { name: "Load more" });
 	await loadMoreButton.scrollIntoViewIfNeeded();
@@ -918,7 +960,7 @@ test("phone search pagination loads only on request and preserves ordered result
 	await loadMoreButton.click();
 	const finalPageResponse = await finalPageResponsePromise;
 	expect(finalPageResponse.status()).toBe(200);
-	const finalPage = await finalPageResponse.json() as {
+	const finalPage = (await finalPageResponse.json()) as {
 		foods: Array<{ fdcId: number }>;
 		hasMore: boolean;
 		nextOffset: number | null;
@@ -940,15 +982,15 @@ test("phone search pagination loads only on request and preserves ordered result
 	});
 	await expect(returnToTopButton).toBeVisible();
 	await returnToTopButton.click();
-	await expect.poll(
-		() => resultsPanel.evaluate((element) => element.scrollTop),
-	).toBeLessThanOrEqual(1);
+	await expect
+		.poll(() => resultsPanel.evaluate((element) => element.scrollTop))
+		.toBeLessThanOrEqual(1);
 
 	const resetQueryResponsePromise = waitForSearchPage("tomato", 0);
 	await searchInput.fill("tomato");
 	const resetQueryResponse = await resetQueryResponsePromise;
 	expect(resetQueryResponse.status()).toBe(200);
-	const resetQueryPage = await resetQueryResponse.json() as {
+	const resetQueryPage = (await resetQueryResponse.json()) as {
 		foods: Array<{ fdcId: number }>;
 		hasMore: boolean;
 		total: number;
@@ -1023,7 +1065,9 @@ test("shared ingredient bottom sheets enter from below and preserve app chrome b
 	);
 });
 
-test("shared ingredient bottom sheets render identical chrome", async ({ page }) => {
+test("shared ingredient bottom sheets render identical chrome", async ({
+	page,
+}) => {
 	await page.goto("/ingredients/fridge");
 	await waitForAppReady(page);
 
@@ -1083,7 +1127,9 @@ test("inside interactions and browser focus changes keep routed overlays open", 
 
 	await expect(page).toHaveURL(/\/ingredients\/fridge\/manual-entry$/);
 	await expect(foodNameInput).toHaveValue("Overlay persistence test");
-	await expect(page.getByRole("dialog", { name: "Enter Manually" })).toBeVisible();
+	await expect(
+		page.getByRole("dialog", { name: "Enter Manually" }),
+	).toBeVisible();
 	await backgroundPage.close();
 });
 
@@ -1122,7 +1168,9 @@ test("right-sheet view frames keep edge focus outlines inside their clipping bou
 		ingredientSearchView,
 	);
 
-	const searchInput = page.getByRole("combobox", { name: "Search ingredients" });
+	const searchInput = page.getByRole("combobox", {
+		name: "Search ingredients",
+	});
 	await searchInput.fill("spinach");
 	const nutritionButton = page
 		.getByRole("button", { name: /^View nutrition for / })
@@ -1134,7 +1182,10 @@ test("right-sheet view frames keep edge focus outlines inside their clipping bou
 	const nutritionBackButton = nutritionDetailView.getByRole("button", {
 		name: "Back to ingredients",
 	});
-	await expectFocusOutlineInsideBoundary(nutritionBackButton, nutritionDetailView);
+	await expectFocusOutlineInsideBoundary(
+		nutritionBackButton,
+		nutritionDetailView,
+	);
 	const nutritionBackButtonPresentation = await nutritionBackButton.evaluate(
 		(element) => {
 			const styles = window.getComputedStyle(element);
@@ -1145,13 +1196,16 @@ test("right-sheet view frames keep edge focus outlines inside their clipping bou
 			};
 		},
 	);
-	expect(Math.abs(
-		nutritionBackButtonPresentation.width - nutritionBackButtonPresentation.height,
-	)).toBeLessThanOrEqual(1);
+	expect(
+		Math.abs(
+			nutritionBackButtonPresentation.width -
+				nutritionBackButtonPresentation.height,
+		),
+	).toBeLessThanOrEqual(1);
 	expect(nutritionBackButtonPresentation.width).toBeLessThan(40);
-	expect(Number.parseFloat(nutritionBackButtonPresentation.borderRadius)).toBeGreaterThanOrEqual(
-		nutritionBackButtonPresentation.width / 2 - 1,
-	);
+	expect(
+		Number.parseFloat(nutritionBackButtonPresentation.borderRadius),
+	).toBeGreaterThanOrEqual(nutritionBackButtonPresentation.width / 2 - 1);
 	await nutritionBackButton.press("Enter");
 	await expect(page).toHaveURL(/\/ingredients\/fridge$/);
 	await expect(
@@ -1174,20 +1228,24 @@ test("nutrition details separate personalized warnings from source allergen disc
 		"Preference mutation is restricted to disposable local infrastructure.",
 	);
 
-	const supabase = await createAuthenticatedLocalQaDatabaseClient(
+	const supabase = await getAuthenticatedLocalQaDatabaseClient(
 		testInfo.parallelIndex,
 	);
 	const { data: authenticatedUserData, error: authenticatedUserError } =
 		await supabase.auth.getUser();
 	if (authenticatedUserError || !authenticatedUserData.user) {
-		throw authenticatedUserError ?? new Error("The QA user could not be authenticated.");
+		throw (
+			authenticatedUserError ??
+			new Error("The QA user could not be authenticated.")
+		);
 	}
 	const userId = authenticatedUserData.user.id;
-	const { data: originalPreferences, error: preferenceReadError } = await supabase
-		.from("user_food_preferences")
-		.select("allergens,dietary_restrictions")
-		.eq("user_id", userId)
-		.single();
+	const { data: originalPreferences, error: preferenceReadError } =
+		await supabase
+			.from("user_food_preferences")
+			.select("allergens,dietary_restrictions")
+			.eq("user_id", userId)
+			.single();
 	if (preferenceReadError) throw preferenceReadError;
 
 	try {
@@ -1207,7 +1265,9 @@ test("nutrition details separate personalized warnings from source allergen disc
 			nutritionDetails.getByText("Check this ingredient"),
 		).toBeVisible();
 		await expect(
-			nutritionDetails.getByText(/current package label is the final authority/i),
+			nutritionDetails.getByText(
+				/current package label is the final authority/i,
+			),
 		).toBeVisible();
 
 		const ingredientsHeading = nutritionDetails.getByRole("heading", {
@@ -1230,7 +1290,9 @@ test("nutrition details separate personalized warnings from source allergen disc
 		await expect(nutritionDetails.getByText("Soy, Wheat")).toBeVisible();
 		await expect(mayContainHeading).toBeVisible();
 		await expect(
-			mayContainHeading.locator("xpath=..").getByText("Peanut", { exact: true }),
+			mayContainHeading
+				.locator("xpath=..")
+				.getByText("Peanut", { exact: true }),
 		).toBeVisible();
 		await expect(dietaryLabelsHeading).toBeVisible();
 		await expect(
@@ -1261,8 +1323,8 @@ test("nutrition details separate personalized warnings from source allergen disc
 				const previousHeading = headingOrder[index - 1];
 				return Boolean(
 					previousHeading &&
-						previousHeading.compareDocumentPosition(heading) &
-							Node.DOCUMENT_POSITION_FOLLOWING,
+					previousHeading.compareDocumentPosition(heading) &
+						Node.DOCUMENT_POSITION_FOLLOWING,
 				);
 			});
 		});
@@ -1275,7 +1337,6 @@ test("nutrition details separate personalized warnings from source allergen disc
 				dietary_restrictions: originalPreferences.dietary_restrictions,
 			})
 			.eq("user_id", userId);
-		await supabase.auth.signOut({ scope: "local" });
 	}
 });
 
@@ -1307,12 +1368,16 @@ test("the Food passport keeps catalog depth optional and responsive", async ({
 	await expect(
 		passportDetails.getByText(/does not mean zero, none, or allergen-free/i),
 	).toBeVisible();
-	await expect(passportDetails.locator("summary").filter({
-		hasText: "Product details",
-	})).toBeVisible();
-	expect(await passportDetails.evaluate(
-		(element) => element.scrollWidth <= element.clientWidth + 1,
-	)).toBe(true);
+	await expect(
+		passportDetails.locator("summary").filter({
+			hasText: "Product details",
+		}),
+	).toBeVisible();
+	expect(
+		await passportDetails.evaluate(
+			(element) => element.scrollWidth <= element.clientWidth + 1,
+		),
+	).toBe(true);
 });
 
 test("nutrition details preserve the complete source-backed food record", async ({
@@ -1331,20 +1396,24 @@ test("nutrition details preserve the complete source-backed food record", async 
 		"Preference mutation is restricted to disposable local infrastructure.",
 	);
 
-	const supabase = await createAuthenticatedLocalQaDatabaseClient(
+	const supabase = await getAuthenticatedLocalQaDatabaseClient(
 		testInfo.parallelIndex,
 	);
 	const { data: authenticatedUserData, error: authenticatedUserError } =
 		await supabase.auth.getUser();
 	if (authenticatedUserError || !authenticatedUserData.user) {
-		throw authenticatedUserError ?? new Error("The QA user could not be authenticated.");
+		throw (
+			authenticatedUserError ??
+			new Error("The QA user could not be authenticated.")
+		);
 	}
 	const userId = authenticatedUserData.user.id;
-	const { data: originalPreferences, error: preferenceReadError } = await supabase
-		.from("user_food_preferences")
-		.select("allergens,dietary_restrictions")
-		.eq("user_id", userId)
-		.single();
+	const { data: originalPreferences, error: preferenceReadError } =
+		await supabase
+			.from("user_food_preferences")
+			.select("allergens,dietary_restrictions")
+			.eq("user_id", userId)
+			.single();
 	if (preferenceReadError) throw preferenceReadError;
 
 	const replacePreferences = async (
@@ -1360,10 +1429,7 @@ test("nutrition details preserve the complete source-backed food record", async 
 			.eq("user_id", userId);
 		if (error) throw error;
 	};
-	const searchAndOpenNutrition = async (
-		query: string,
-		resultName: RegExp,
-	) => {
+	const searchAndOpenNutrition = async (query: string, resultName: RegExp) => {
 		await page.goto("/ingredients/fridge/search");
 		await waitForAppReady(page);
 		const searchDialog = page.getByRole("dialog", { name: "Ingredients" });
@@ -1372,9 +1438,11 @@ test("nutrition details preserve the complete source-backed food record", async 
 		});
 		const responsePromise = page.waitForResponse((response) => {
 			const url = new URL(response.url());
-			return url.pathname === "/api/foods/search" &&
+			return (
+				url.pathname === "/api/foods/search" &&
 				url.searchParams.get("q") === query &&
-				response.ok();
+				response.ok()
+			);
 		});
 		await searchInput.fill(query);
 		await responsePromise;
@@ -1391,14 +1459,19 @@ test("nutrition details preserve the complete source-backed food record", async 
 		);
 		await expect(disclosures.first()).toBeVisible();
 		expect(await disclosures.count()).toBeGreaterThan(0);
-		expect(await disclosures.evaluateAll((elements) =>
-			elements.every((element) => !(element as HTMLDetailsElement).open),
-		)).toBe(true);
+		expect(
+			await disclosures.evaluateAll((elements) =>
+				elements.every((element) => !(element as HTMLDetailsElement).open),
+			),
+		).toBe(true);
 	};
 	const openDisclosure = async (nutritionDetails: Locator, title: string) => {
-		const summary = nutritionDetails.locator("summary").filter({
-			hasText: title,
-		}).first();
+		const summary = nutritionDetails
+			.locator("summary")
+			.filter({
+				hasText: title,
+			})
+			.first();
 		const details = summary.locator("..");
 		await summary.click();
 		await expect(details).toHaveAttribute("open", "");
@@ -1408,9 +1481,12 @@ test("nutrition details preserve the complete source-backed food record", async 
 		nutritionDetails: Locator,
 		title: string,
 	) => {
-		const summary = nutritionDetails.locator("summary").filter({
-			hasText: title,
-		}).first();
+		const summary = nutritionDetails
+			.locator("summary")
+			.filter({
+				hasText: title,
+			})
+			.first();
 		const details = summary.locator("..");
 		await summary.focus();
 		await expect(summary).toBeFocused();
@@ -1425,26 +1501,49 @@ test("nutrition details preserve the complete source-backed food record", async 
 			"Sempio",
 			/^Gochu Jang Hot & Sweet Chili Sauce,/,
 		);
-		await expect(gochuDetails.getByRole("heading", { name: "Ingredients" })).toBeVisible();
-		await expect(gochuDetails.getByText(/red pepper paste \(wheat flour/i)).toBeVisible();
-		await expect(gochuDetails.getByRole("heading", { name: "Contains" })).toBeVisible();
-		await expect(gochuDetails.getByText("Soy, Wheat", { exact: true })).toBeVisible();
-		await expect(gochuDetails.getByRole("heading", { name: "May contain" })).toBeVisible();
-		await expect(gochuDetails.getByText("Peanut", { exact: true })).toBeVisible();
-		await expect(gochuDetails.getByRole("heading", { name: "Dietary labels" })).toBeVisible();
-		await expect(gochuDetails.getByText("Vegetarian", { exact: true })).toBeVisible();
+		await expect(
+			gochuDetails.getByRole("heading", { name: "Ingredients" }),
+		).toBeVisible();
+		await expect(
+			gochuDetails.getByText(/red pepper paste \(wheat flour/i),
+		).toBeVisible();
+		await expect(
+			gochuDetails.getByRole("heading", { name: "Contains" }),
+		).toBeVisible();
+		await expect(
+			gochuDetails.getByText("Soy, Wheat", { exact: true }),
+		).toBeVisible();
+		await expect(
+			gochuDetails.getByRole("heading", { name: "May contain" }),
+		).toBeVisible();
+		await expect(
+			gochuDetails.getByText("Peanut", { exact: true }),
+		).toBeVisible();
+		await expect(
+			gochuDetails.getByRole("heading", { name: "Dietary labels" }),
+		).toBeVisible();
+		await expect(
+			gochuDetails.getByText("Vegetarian", { exact: true }),
+		).toBeVisible();
 		await expectAllDisclosuresClosed(gochuDetails);
-		await expect(gochuDetails.getByText("Adjust card image placement")).toHaveCount(0);
+		await expect(
+			gochuDetails.getByText("Adjust card image placement"),
+		).toHaveCount(0);
 		await expect(
 			gochuDetails.locator("summary").filter({ hasText: "Food passport" }),
 		).toContainText(/Verified|Shared record/);
 
-		const gochuFoodPassport = await openDisclosure(gochuDetails, "Food passport");
+		const gochuFoodPassport = await openDisclosure(
+			gochuDetails,
+			"Food passport",
+		);
 		await expect(
 			gochuFoodPassport.getByRole("heading", { name: "Information available" }),
 		).toBeVisible();
 		await expect(
-			gochuFoodPassport.getByText(/does not mean zero, none, or allergen-free/i),
+			gochuFoodPassport.getByText(
+				/does not mean zero, none, or allergen-free/i,
+			),
 		).toBeVisible();
 		const productDetails = await openDisclosureWithKeyboard(
 			gochuFoodPassport,
@@ -1458,25 +1557,43 @@ test("nutrition details preserve the complete source-backed food record", async 
 			"Packaged product",
 			"2 tbsp (30 g)",
 		]) {
-			await expect(productDetails.getByText(expectedText, { exact: true }).first()).toBeVisible();
+			await expect(
+				productDetails.getByText(expectedText, { exact: true }).first(),
+			).toBeVisible();
 		}
-		expect(await productDetails.locator("dd").allTextContents()).not.toContain("");
+		expect(await productDetails.locator("dd").allTextContents()).not.toContain(
+			"",
+		);
 
 		const snickersDetails = await searchAndOpenNutrition(
 			"05000159461122",
 			/^Snickers,/,
 		);
-		await expect(snickersDetails.getByText("Not checked against food settings")).toBeVisible();
-		await expect(snickersDetails.getByRole("heading", { name: "Contains" })).toBeVisible();
-		await expect(snickersDetails.getByText(/Egg.*Milk.*Peanut.*Soy/i)).toBeVisible();
-		await expect(snickersDetails.getByRole("heading", { name: "May contain" })).toBeVisible();
-		await expect(snickersDetails.getByText("May contain nuts.", { exact: true })).toBeVisible();
+		await expect(
+			snickersDetails.getByText("Not checked against food settings"),
+		).toBeVisible();
+		await expect(
+			snickersDetails.getByRole("heading", { name: "Contains" }),
+		).toBeVisible();
+		await expect(
+			snickersDetails.getByText(/Egg.*Milk.*Peanut.*Soy/i),
+		).toBeVisible();
+		await expect(
+			snickersDetails.getByRole("heading", { name: "May contain" }),
+		).toBeVisible();
+		await expect(
+			snickersDetails.getByText("May contain nuts.", { exact: true }),
+		).toBeVisible();
 		const snickersIngredientDetails = await openDisclosure(
 			snickersDetails,
 			"Ingredient details",
 		);
-		await expect(snickersIngredientDetails.getByRole("heading", { name: "Additives" })).toBeVisible();
-		await expect(snickersIngredientDetails.getByText("E322, E322i", { exact: true })).toBeVisible();
+		await expect(
+			snickersIngredientDetails.getByRole("heading", { name: "Additives" }),
+		).toBeVisible();
+		await expect(
+			snickersIngredientDetails.getByText("E322, E322i", { exact: true }),
+		).toBeVisible();
 
 		await replacePreferences([], ["gluten-free"]);
 		const blueberryDetails = await searchAndOpenNutrition(
@@ -1510,7 +1627,9 @@ test("nutrition details preserve the complete source-backed food record", async 
 			"Source: USDA FoodData Central.",
 		]) {
 			await expect(
-				blueberryProductDetails.getByText(expectedText, { exact: true }).first(),
+				blueberryProductDetails
+					.getByText(expectedText, { exact: true })
+					.first(),
 			).toBeVisible();
 		}
 		await expect(
@@ -1518,11 +1637,18 @@ test("nutrition details preserve the complete source-backed food record", async 
 		).toHaveAttribute("href", "https://fdc.nal.usda.gov/");
 		await expect(
 			blueberryProductDetails.getByRole("link", { name: /CC0 1\.0/i }),
-		).toHaveAttribute("href", "https://creativecommons.org/publicdomain/zero/1.0/");
-		expect((await blueberryProductDetails.locator("dd").allTextContents()).every(
-			(value) => value.trim().length > 0,
-		)).toBe(true);
-		await expect(blueberryProductDetails).not.toContainText(/observationId|policyVersion|sharedProductId/i);
+		).toHaveAttribute(
+			"href",
+			"https://creativecommons.org/publicdomain/zero/1.0/",
+		);
+		expect(
+			(await blueberryProductDetails.locator("dd").allTextContents()).every(
+				(value) => value.trim().length > 0,
+			),
+		).toBe(true);
+		await expect(blueberryProductDetails).not.toContainText(
+			/observationId|policyVersion|sharedProductId/i,
+		);
 
 		await page.goto("/ingredients/fridge/nutrition/-9818016");
 		await waitForAppReady(page);
@@ -1533,24 +1659,36 @@ test("nutrition details preserve the complete source-backed food record", async 
 		await replacePreferences([], []);
 		await page.goto(blueberryNutritionUrl);
 		await waitForAppReady(page);
-		await expect(page.getByText("Not checked against food settings")).toBeVisible();
+		await expect(
+			page.getByText("Not checked against food settings"),
+		).toBeVisible();
 
 		const shrimpDetails = await searchAndOpenNutrition(
 			"Crustaceans, Shrimp",
 			/^Crustaceans, Shrimp, Mixed Species, Raw \(May Contain Additives To Retain Moisture\),/i,
 		);
 		const shrimpNutritionFacts = shrimpDetails.locator(".nf-label");
-		await expect(shrimpNutritionFacts.locator(".vital-list .nf-row")).toHaveCount(6);
-		expect(await shrimpNutritionFacts.locator(".extra-list .nf-row").count()).toBeGreaterThan(0);
+		await expect(
+			shrimpNutritionFacts.locator(".vital-list .nf-row"),
+		).toHaveCount(6);
+		expect(
+			await shrimpNutritionFacts.locator(".extra-list .nf-row").count(),
+		).toBeGreaterThan(0);
 		const secondaryValues = await shrimpNutritionFacts
 			.locator(".extra-list .nf-value")
 			.allTextContents();
-		expect(secondaryValues.every((value) => Number.parseFloat(value) !== 0)).toBe(true);
+		expect(
+			secondaryValues.every((value) => Number.parseFloat(value) !== 0),
+		).toBe(true);
 		await expect(
-			shrimpNutritionFacts.locator(".vital-list .nf-row").filter({ hasText: "Dietary Fiber" }),
+			shrimpNutritionFacts
+				.locator(".vital-list .nf-row")
+				.filter({ hasText: "Dietary Fiber" }),
 		).toContainText("0");
 		await expect(
-			shrimpNutritionFacts.locator(".vital-list .nf-row").filter({ hasText: "Total Sugars" }),
+			shrimpNutritionFacts
+				.locator(".vital-list .nf-row")
+				.filter({ hasText: "Total Sugars" }),
 		).toContainText("0");
 
 		await page.goto("/ingredients/fridge");
@@ -1562,23 +1700,39 @@ test("nutrition details preserve the complete source-backed food record", async 
 		const savedGochuButton = page.getByRole("button", {
 			name: /^Preview Gochu Jang Hot & Sweet Chili Sauce/,
 		});
-		for (let attempt = 0; attempt < 20 && !(await savedGochuButton.isVisible().catch(() => false)); attempt += 1) {
+		for (
+			let attempt = 0;
+			attempt < 20 && !(await savedGochuButton.isVisible().catch(() => false));
+			attempt += 1
+		) {
 			const loadMoreButton = page.getByRole("button", { name: "Load more" });
 			if (!(await loadMoreButton.isVisible().catch(() => false))) break;
 			await expect(loadMoreButton).toBeEnabled();
-			const renderedCardCount = await fridgeList.locator("li[data-food-id]").count();
+			const renderedCardCount = await fridgeList
+				.locator("li[data-food-id]")
+				.count();
 			await loadMoreButton.click();
-			await expect.poll(async () =>
-				(await savedGochuButton.isVisible().catch(() => false)) ||
-				(await fridgeList.locator("li[data-food-id]").count()) > renderedCardCount,
-			).toBe(true);
+			await expect
+				.poll(
+					async () =>
+						(await savedGochuButton.isVisible().catch(() => false)) ||
+						(await fridgeList.locator("li[data-food-id]").count()) >
+							renderedCardCount,
+				)
+				.toBe(true);
 		}
 		await expect(savedGochuButton).toBeVisible();
 		await savedGochuButton.click();
-		await expect(page).toHaveURL(/\/ingredients\/fridge\/nutrition\/9100003(?:\?actions=hide)?$/);
+		await expect(page).toHaveURL(
+			/\/ingredients\/fridge\/nutrition\/9100003(?:\?actions=hide)?$/,
+		);
 		const savedGochuDetails = page.locator(".nutrition-detail-view");
-		await expect(savedGochuDetails.getByRole("heading", { name: "Ingredients" })).toBeVisible();
-		await expect(savedGochuDetails.getByText("Soy, Wheat", { exact: true })).toBeVisible();
+		await expect(
+			savedGochuDetails.getByRole("heading", { name: "Ingredients" }),
+		).toBeVisible();
+		await expect(
+			savedGochuDetails.getByText("Soy, Wheat", { exact: true }),
+		).toBeVisible();
 	} finally {
 		await supabase
 			.from("user_food_preferences")
@@ -1587,6 +1741,5 @@ test("nutrition details preserve the complete source-backed food record", async 
 				dietary_restrictions: originalPreferences.dietary_restrictions,
 			})
 			.eq("user_id", userId);
-		await supabase.auth.signOut({ scope: "local" });
 	}
 });

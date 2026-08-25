@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
-	import MfaPageShell from "$lib/components/auth/MfaPageShell/MfaPageShell.svelte";
+	import AccountSecurityPageShell from "$lib/components/auth/AccountSecurityPageShell/AccountSecurityPageShell.svelte";
 	import AuthenticatorVerificationCodeField from "$lib/components/auth/AuthenticatorVerificationCodeField/AuthenticatorVerificationCodeField.svelte";
 	import ActionButton from "$lib/components/common/buttons/ActionButton/ActionButton.svelte";
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
@@ -26,7 +26,7 @@
 	<title>{formatDocumentTitle("Authenticator Setup")}</title>
 </svelte:head>
 
-<MfaPageShell
+<AccountSecurityPageShell
 	eyebrow="Protected access"
 	title="Set up your authenticator."
 	description="Protected blendCalc tools require a rotating code in addition to your password."
@@ -38,7 +38,8 @@
 	{#if enrollment}
 		<div class="mfa-enrollment">
 			<p class="mfa-enrollment__instructions">
-				Scan this code with Google Authenticator or another authenticator app. Use the current six-digit code it creates below.
+				Scan this code with Google Authenticator or another authenticator app.
+				Use the current six-digit code it creates below.
 			</p>
 			<div class="mfa-enrollment__qr">
 				<img src={enrollment.qrCodeDataUrl} alt="Authenticator setup QR code" />
@@ -71,7 +72,11 @@
 				title="Before you begin"
 				message="Have an authenticator app ready. Setup stays private and the QR code is shown only during this step."
 			/>
-			<form method="POST" action="?/beginEnrollment" use:enhance={preventDuplicateSubmit}>
+			<form
+				method="POST"
+				action="?/beginEnrollment"
+				use:enhance={preventDuplicateSubmit}
+			>
 				<input type="hidden" name="next" value={returnPath} />
 				<ActionButton type="submit" busy={isSubmitting} fullWidth>
 					Start setup
@@ -79,7 +84,7 @@
 			</form>
 		</div>
 	{/if}
-</MfaPageShell>
+</AccountSecurityPageShell>
 
 <style lang="scss">
 	@use "./page.scss";

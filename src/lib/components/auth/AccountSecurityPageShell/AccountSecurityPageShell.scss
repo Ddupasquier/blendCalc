@@ -1,6 +1,6 @@
 @use "../../../../styles/variables" as *;
 
-.mfa-page {
+.account-security-page-shell {
 	display: grid;
 	place-items: start center;
 	min-height: calc(100vh - $app-shell-header-height - $app-shell-nav-height);
@@ -19,7 +19,7 @@
 	background: $app-shell-surface-page;
 }
 
-.mfa-card {
+.account-security-page-shell__card {
 	display: grid;
 	gap: $app-gap-md;
 	width: min(100%, 28rem);
@@ -29,13 +29,13 @@
 	border-radius: $app-shell-radius-sheet;
 }
 
-.mfa-card__header,
-.mfa-card__content {
+.account-security-page-shell__header,
+.account-security-page-shell__content {
 	display: grid;
 	gap: $app-gap-sm;
 }
 
-.mfa-card__header h1 {
+.account-security-page-shell__header h1 {
 	margin: 0;
 	color: $app-shell-text-primary;
 	font-family: $app-font-family-display;
@@ -44,13 +44,14 @@
 	line-height: $app-line-height-heading;
 }
 
-.mfa-card__header > p:not(.mfa-card__eyebrow) {
+.account-security-page-shell__header
+	> p:not(.account-security-page-shell__eyebrow) {
 	margin: 0;
 	color: $app-shell-text-muted;
 	line-height: $app-line-height-ui;
 }
 
-.mfa-card__eyebrow {
+.account-security-page-shell__eyebrow {
 	width: fit-content;
 	padding: 0.18rem $app-gap-sm;
 	margin: 0;
@@ -64,7 +65,7 @@
 }
 
 @media (max-height: $app-breakpoint-height-compact) {
-	.mfa-page {
+	.account-security-page-shell {
 		place-items: start center;
 		min-height: calc(
 			100vh - $app-shell-header-height-compact - $app-shell-nav-height-compact
@@ -79,7 +80,7 @@
 			);
 	}
 
-	.mfa-card {
+	.account-security-page-shell__card {
 		gap: $app-gap-sm;
 		padding: $app-shell-card-padding-compact;
 	}

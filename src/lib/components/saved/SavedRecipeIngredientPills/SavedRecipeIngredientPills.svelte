@@ -4,7 +4,6 @@
 	import CustomBadge from "$lib/components/common/display/CustomBadge/CustomBadge.svelte";
 	import MetadataPill from "$lib/components/common/display/MetadataPill/MetadataPill.svelte";
 	import { animatedDetails } from "$lib/utils/animation/animatedDetails";
-	import type { FoodItem } from "$lib/utils/food/types";
 	import { isPrivateCustomFood } from "$lib/utils/food/records/foodClassification";
 	import {
 		packIngredientPills,
@@ -12,17 +11,12 @@
 	} from "./ingredientPillLayout";
 	import type { SavedRecipeIngredientPillsProps } from "./types";
 
-	let {
-		foods,
-		visibleLimit = 8,
-	}: SavedRecipeIngredientPillsProps = $props();
+	let { foods, visibleLimit = 8 }: SavedRecipeIngredientPillsProps = $props();
 
 	const visibleFoods = $derived(
 		packIngredientPills(foods.slice(0, visibleLimit)),
 	);
-	const hiddenFoods = $derived(
-		packIngredientPills(foods.slice(visibleLimit)),
-	);
+	const hiddenFoods = $derived(packIngredientPills(foods.slice(visibleLimit)));
 </script>
 
 {#snippet ingredientPills(items: PackedIngredientPill[])}
@@ -69,10 +63,7 @@
 	{@render ingredientPills(visibleFoods)}
 
 	{#if hiddenFoods.length > 0}
-		<details
-			class="saved-recipe-ingredients__overflow"
-			use:animatedDetails
-		>
+		<details class="saved-recipe-ingredients__overflow" use:animatedDetails>
 			<summary>
 				<span class="saved-recipe-ingredients__more-label">
 					+{hiddenFoods.length} more

@@ -1,8 +1,5 @@
 import { searchApprovedSharedProducts } from "$lib/server/products/catalog.server";
-import {
-	requireAppValue,
-	throwAppError,
-} from "$lib/server/errors/appError.server";
+import { requireAppValue } from "$lib/server/errors/appError.server";
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
@@ -22,10 +19,6 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 		query,
 	);
 	return json({
-		foods: await annotateFoodsForUser(
-			locals.supabase,
-			user.id,
-			foods,
-		),
+		foods: await annotateFoodsForUser(locals.supabase, user.id, foods),
 	});
 };

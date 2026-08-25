@@ -7,6 +7,7 @@ import {
 } from "$lib/server/products/catalogVerification.server";
 import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
 import { NUTRIENT_IDS, type FoodItem } from "$lib/utils/food/types";
+import { PRODUCT_RESOLUTION_POLICY_FIXTURE } from "../../../fixtures/productResolutionPolicy";
 
 const nutrient = (nutrientId: number, value: number, unitName = "G") => ({
 	nutrientId,
@@ -36,20 +37,20 @@ const createUsdaDraft = (): BarcodeProductDraft => ({
 	brandOwner: "USDA Brand",
 	servingLabel: "30 g",
 	servingWeightGrams: 30,
-		nutrients: [
-			nutrient(NUTRIENT_IDS.CALORIES, 120, "KCAL"),
+	nutrients: [
+		nutrient(NUTRIENT_IDS.CALORIES, 120, "KCAL"),
 		nutrient(NUTRIENT_IDS.FAT, 2),
 		nutrient(NUTRIENT_IDS.CARBS, 15),
 		nutrient(NUTRIENT_IDS.FIBER, 2),
 		nutrient(NUTRIENT_IDS.SUGAR, 3),
 		nutrient(NUTRIENT_IDS.PROTEIN, 4),
-			nutrient(NUTRIENT_IDS.SODIUM, 100, "MG"),
-		].map((item) => ({
-			...item,
-			source: "usda" as const,
-			sourceReference: "12345",
-			confidence: "unknown" as const,
-		})),
+		nutrient(NUTRIENT_IDS.SODIUM, 100, "MG"),
+	].map((item) => ({
+		...item,
+		source: "usda" as const,
+		sourceReference: "12345",
+		confidence: "unknown" as const,
+	})),
 	reportedNutrientIds: [
 		NUTRIENT_IDS.CALORIES,
 		NUTRIENT_IDS.FAT,
@@ -92,6 +93,7 @@ describe("catalog verification", () => {
 			createUserFood(),
 			createUsdaDraft(),
 			cerealCategory,
+			PRODUCT_RESOLUTION_POLICY_FIXTURE,
 		);
 
 		expect(bundle.canonicalFood.description).toBe("USDA Cereal");
@@ -126,7 +128,9 @@ describe("catalog verification", () => {
 		expect(bundle.conflicts).toEqual(
 			expect.arrayContaining([
 				expect.objectContaining({ fieldPath: "brandOwner" }),
-				expect.objectContaining({ fieldPath: `nutrient:${NUTRIENT_IDS.SUGAR}` }),
+				expect.objectContaining({
+					fieldPath: `nutrient:${NUTRIENT_IDS.SUGAR}`,
+				}),
 			]),
 		);
 	});
@@ -135,8 +139,11 @@ describe("catalog verification", () => {
 		const bundle = buildModeratorReviewedCatalogBundle(createUserFood());
 
 		expect(bundle.observations).toHaveLength(1);
-		expect(bundle.provenance.every((item) => item.confidence === "moderator-reviewed"))
-			.toBe(true);
+		expect(
+			bundle.provenance.every(
+				(item) => item.confidence === "moderator-reviewed",
+			),
+		).toBe(true);
 		expect(bundle.conflicts).toEqual([]);
 	});
 
@@ -146,9 +153,7 @@ describe("catalog verification", () => {
 			...currentFood,
 			brandOwner: "Updated Brand",
 			foodNutrients: currentFood.foodNutrients.map((item) =>
-				item.nutrientId === NUTRIENT_IDS.SUGAR
-					? { ...item, value: 25 }
-					: item
+				item.nutrientId === NUTRIENT_IDS.SUGAR ? { ...item, value: 25 } : item,
 			),
 		};
 		const bundle = buildModeratorReviewedCatalogUpdateBundle(
@@ -176,10 +181,9 @@ describe("catalog verification", () => {
 			],
 		);
 
-		expect(bundle.provenance.map((item) => item.fieldPath).sort()).toEqual([
-			"brandOwner",
-			`nutrient:${NUTRIENT_IDS.SUGAR}`,
-		].sort());
+		expect(bundle.provenance.map((item) => item.fieldPath).sort()).toEqual(
+			["brandOwner", `nutrient:${NUTRIENT_IDS.SUGAR}`].sort(),
+		);
 		expect(bundle.canonicalFood.description).toBe("Submitted Cereal");
 	});
 
@@ -196,10 +200,14 @@ describe("catalog verification", () => {
 
 		const merged = mergeMissingNutrients(primary, supplement);
 		expect(
-			merged.foodNutrients.find((item) => item.nutrientId === NUTRIENT_IDS.SUGAR)?.value,
+			merged.foodNutrients.find(
+				(item) => item.nutrientId === NUTRIENT_IDS.SUGAR,
+			)?.value,
 		).toBe(30);
 		expect(
-			merged.foodNutrients.find((item) => item.nutrientId === NUTRIENT_IDS.SODIUM)?.value,
+			merged.foodNutrients.find(
+				(item) => item.nutrientId === NUTRIENT_IDS.SODIUM,
+			)?.value,
 		).toBe(50);
 	});
 });

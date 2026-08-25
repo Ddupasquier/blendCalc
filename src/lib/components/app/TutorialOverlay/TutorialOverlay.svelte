@@ -170,9 +170,7 @@
 		if (!open || typeof document === "undefined") return;
 
 		await tick();
-		setTargetElement(
-			document.querySelector<HTMLElement>(currentStep.target),
-		);
+		setTargetElement(document.querySelector<HTMLElement>(currentStep.target));
 
 		if (!targetElement) {
 			spotlightRect = null;
@@ -235,7 +233,7 @@
 		saving = true;
 		error = "";
 
-		let saved = false;
+		let saved: boolean;
 		try {
 			saved = await onFinish();
 		} catch {
@@ -254,9 +252,7 @@
 		if (open && !previouslyOpen) {
 			currentStepIndex = 0;
 			error = "";
-			releaseFocus = dialogElement
-				? manageDialogFocus(dialogElement)
-				: null;
+			releaseFocus = dialogElement ? manageDialogFocus(dialogElement) : null;
 			void activateStep(0);
 		} else if (!open && previouslyOpen) {
 			activationId += 1;
@@ -303,8 +299,7 @@
 			element,
 			hadInert: element.hasAttribute("inert"),
 		}));
-		const documentElementOverflow =
-			document.documentElement.style.overflow;
+		const documentElementOverflow = document.documentElement.style.overflow;
 		const bodyOverflow = document.body.style.overflow;
 
 		for (const { element } of previousInertStates) {
@@ -317,18 +312,13 @@
 			for (const { element, hadInert } of previousInertStates) {
 				if (!hadInert) element.removeAttribute("inert");
 			}
-			document.documentElement.style.overflow =
-				documentElementOverflow;
+			document.documentElement.style.overflow = documentElementOverflow;
 			document.body.style.overflow = bodyOverflow;
 		};
 	});
 
 	$effect(() => {
-		if (
-			!open ||
-			typeof ResizeObserver === "undefined" ||
-			!dialogElement
-		) {
+		if (!open || typeof ResizeObserver === "undefined" || !dialogElement) {
 			return;
 		}
 
@@ -349,18 +339,9 @@
 </script>
 
 {#if open}
-	<div
-		class="tutorial-tour"
-		role="presentation"
-		bind:this={tourElement}
-	>
+	<div class="tutorial-tour" role="presentation" bind:this={tourElement}>
 		{#if spotlightRect && spotlightRadii}
-			<svg
-				class="tutorial-shade"
-				aria-hidden="true"
-				width="100%"
-				height="100%"
-			>
+			<svg class="tutorial-shade" aria-hidden="true" width="100%" height="100%">
 				<defs>
 					<mask
 						id="tutorial-spotlight-mask"
@@ -376,10 +357,7 @@
 							width="100%"
 							height="100%"
 						/>
-						<path
-							class="tutorial-shade__mask-cutout"
-							d={spotlightMaskPath}
-						/>
+						<path class="tutorial-shade__mask-cutout" d={spotlightMaskPath} />
 					</mask>
 				</defs>
 				<rect
@@ -424,7 +402,7 @@
 					</p>
 				</div>
 				<div class="tutorial__dots" aria-hidden="true">
-					{#each tutorialSteps as _, index}
+					{#each tutorialSteps as tutorialStep, index (tutorialStep.target)}
 						<span class:active={index === currentStepIndex}></span>
 					{/each}
 				</div>
@@ -439,7 +417,7 @@
 				</div>
 				<p id="tutorial-description">{currentStep.description}</p>
 				<ul>
-					{#each currentStep.points as point}
+					{#each currentStep.points as point (point)}
 						<li>{point}</li>
 					{/each}
 				</ul>
@@ -490,9 +468,7 @@
 							busy={saving}
 							onclick={() => void finishTutorial()}
 						>
-							{mode === "replay"
-								? "Close tutorial"
-								: "Finish tutorial"}
+							{mode === "replay" ? "Close tutorial" : "Finish tutorial"}
 						</RoundedActionButton>
 					{:else}
 						<RoundedActionButton

@@ -1,100 +1,12 @@
 @use "../../../styles/variables" as *;
 
-.password-page {
-	display: grid;
-	place-items: center;
-	min-height: 100vh;
-	min-height: 100svh;
-	min-height: 100dvh;
-	padding: max($app-gap-md, env(safe-area-inset-top))
-		max($app-gap-sm, env(safe-area-inset-right))
-		max($app-gap-md, env(safe-area-inset-bottom))
-		max($app-gap-sm, env(safe-area-inset-left));
-	overflow-x: hidden;
-	overflow-y: auto;
-}
-
-.password-card {
+.password-form {
 	display: grid;
 	gap: $app-gap-md;
-	width: min(100%, 26rem);
-	padding: $app-gap-md;
-	background: $app-section-bg;
-	border: $app-border;
-	border-radius: $app-card-radius;
-
-	header,
-	label {
-		display: grid;
-		gap: $app-gap-xs;
-	}
-
-	h1,
-	label span {
-		color: $app-primary;
-		font-weight: $app-font-weight-bold;
-	}
-
-	h1 {
-		font-family: $app-font-family-display;
-		font-size: $app-font-size-xl;
-	}
-
-	p {
-		color: $app-muted;
-		line-height: $app-line-height-ui;
-	}
-
-	input {
-		height: $app-control-height;
-		padding: 0 $app-gap-md;
-		background: $app-bg;
-		border: $app-border;
-		border-radius: $app-radius;
-	}
-
-	button {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		gap: $app-gap-xs;
-		min-height: $app-shell-control-height-narrow;
-		padding: 0.65rem 1rem;
-		color: $app-btn-text;
-		background: $app-btn-bg;
-		border-radius: $app-radius-pill;
-		font-weight: $app-button-font-weight;
-		line-height: $app-button-line-height;
-	}
-}
-
-@media (max-width: $app-breakpoint-xs) {
-	.password-card button {
-		width: 100%;
-	}
 }
 
 @media (max-height: $app-breakpoint-height-compact) {
-	.password-page {
-		place-items: start center;
-		padding-block: max($app-gap-sm, env(safe-area-inset-top))
-			max($app-gap-sm, env(safe-area-inset-bottom));
-	}
-
-	.password-card {
+	.password-form {
 		gap: $app-gap-sm;
-		padding: $app-gap-sm;
 	}
-}
-
-.password-eyebrow {
-	width: fit-content;
-	padding: 0.18rem $app-gap-sm;
-	color: $app-primary !important;
-	background: $app-accent;
-	border-radius: $app-radius-pill;
-	font-size: $app-font-size-xs;
-	font-weight: $app-font-weight-heavy;
-	letter-spacing: $app-letter-spacing-label;
-	text-transform: uppercase;
 }

@@ -1,60 +1,26 @@
 @use "../styles/variables" as *;
 @use "../lib/utils/animation/motion" as motion;
 
-.landing-page {
-	position: relative;
-	isolation: isolate;
+.landing-content,
+.landing-copy,
+.landing-action {
 	display: grid;
-	place-items: center;
-	min-height: 100vh;
-	min-height: 100svh;
-	min-height: 100dvh;
-	padding: max(clamp($app-gap-md, 5vw, 3rem), env(safe-area-inset-top))
-		max(clamp($app-gap-md, 5vw, 3rem), env(safe-area-inset-right))
-		max(clamp($app-gap-md, 5vw, 3rem), env(safe-area-inset-bottom))
-		max(clamp($app-gap-md, 5vw, 3rem), env(safe-area-inset-left));
-	overflow-x: hidden;
-	overflow-y: auto;
-	background:
-		radial-gradient(circle at 50% 46%, $app-guest-glow, transparent 38%),
-		$app-bg;
 }
 
-.landing-card {
-	position: relative;
-	z-index: 1;
-	display: grid;
-	gap: 1.35rem;
-	width: min(100%, 33rem);
-	padding: clamp(1.35rem, 4vw, 2rem);
-	background: $app-guest-surface;
-	border: $app-border;
-	border-radius: $app-guest-card-radius;
-	backdrop-filter: blur(0.35rem);
-
-	&::before {
-		position: absolute;
-		top: -1px;
-		left: 12%;
-		width: 28%;
-		height: 3px;
-		background: $app-highlight;
-		border-radius: 0 0 $app-radius-pill $app-radius-pill;
-		content: "";
-	}
+.landing-content {
+	gap: $app-gap-lg;
 }
 
 .landing-copy {
-	display: grid;
-	gap: 0.7rem;
+	gap: $app-gap-md;
 }
 
 .landing-eyebrow {
 	width: fit-content;
-	padding: 0.22rem 0.62rem;
-	color: $app-primary;
-	background: $app-accent;
-	border-radius: $app-radius-pill;
+	padding: $app-gap-inline-compact $app-gap-sm;
+	color: $app-shell-text-primary;
+	background: $app-shell-accent-soft;
+	border-radius: $app-shell-radius-pill;
 	font-size: $app-font-size-sm;
 	font-weight: $app-font-weight-heavy;
 	text-transform: uppercase;
@@ -62,7 +28,7 @@
 }
 
 h1 {
-	color: $app-primary;
+	color: $app-shell-text-primary;
 	font-family: $app-font-family-display;
 	font-size: $app-font-size-hero-title;
 	font-weight: $app-font-weight-bold;
@@ -72,25 +38,24 @@ h1 {
 
 .landing-intro {
 	max-width: 30rem;
-	color: $app-muted;
+	color: $app-shell-text-muted;
 	font-size: $app-font-size-md;
 	line-height: $app-line-height-body;
 }
 
 .landing-benefits {
 	display: grid;
-	gap: 0.55rem;
+	gap: $app-gap-sm;
 	list-style: none;
 
 	li {
 		display: flex;
-		gap: 0.6rem;
+		gap: $app-gap-sm;
 		align-items: center;
-		color: $app-primary;
+		color: $app-shell-text-primary;
 		font-size: $app-font-size-md;
 		font-weight: $app-font-weight-semibold;
 	}
-
 
 	:global(.landing-benefit-icon) {
 		--circular-icon-frame-size: #{$app-status-icon-badge-size};
@@ -100,22 +65,21 @@ h1 {
 }
 
 .landing-action {
-	display: grid;
-	gap: 0.65rem;
+	gap: $app-gap-sm;
 	justify-items: start;
 }
 
 a {
 	display: inline-flex;
-	gap: 0.65rem;
+	gap: $app-gap-sm;
 	align-items: center;
 	justify-content: center;
 	width: fit-content;
-	min-height: 2.75rem;
-	padding: 0.7rem 1.1rem;
-	color: $app-highlight-text;
-	background: $app-highlight;
-	border-radius: $app-radius-pill;
+	min-height: $app-shell-control-height-narrow;
+	padding: $app-gap-sm $app-shell-control-padding-x;
+	color: $app-shell-text-on-accent;
+	background: $app-shell-accent-primary;
+	border-radius: $app-shell-radius-pill;
 	font-family: $app-button-font-family;
 	font-weight: $app-button-font-weight;
 	line-height: $app-button-line-height;
@@ -131,21 +95,16 @@ a {
 
 	&:focus-visible {
 		outline: $app-focus-outline;
-		outline-offset: 3px;
+		outline-offset: $app-focus-outline-offset;
 	}
 }
 
 .landing-action p {
-	color: $app-muted;
+	color: $app-shell-text-muted;
 	font-size: $app-font-size-sm;
 }
 
 @media (max-width: $app-breakpoint-xs) {
-	.landing-card {
-		gap: $app-gap-md;
-		padding: $app-gap-md;
-	}
-
 	.landing-copy {
 		gap: $app-gap-sm;
 	}
@@ -161,24 +120,13 @@ a {
 
 	a {
 		width: 100%;
-		min-height: $app-shell-control-height-narrow;
 		padding: $app-gap-xs $app-shell-control-padding-x-compact;
 	}
 }
 
 @media (max-height: $app-breakpoint-height-compact) {
-	.landing-page {
-		place-items: start center;
-		padding-block: max($app-gap-sm, env(safe-area-inset-top))
-			max($app-gap-sm, env(safe-area-inset-bottom));
-	}
-
-	.landing-card,
+	.landing-content,
 	.landing-copy {
 		gap: $app-gap-sm;
-	}
-
-	.landing-card {
-		padding: $app-gap-md;
 	}
 }

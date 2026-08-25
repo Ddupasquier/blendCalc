@@ -51,7 +51,9 @@ const readOptionalCatalogContractRows = async (label, request) => {
 	if (!isCatalogReadinessContractUnavailable(error)) {
 		throw new Error(`${label}: ${error.message}`);
 	}
-	console.error(`${label} is not deployed yet; affected blockers remain unclassified.`);
+	console.error(
+		`${label} is not deployed yet; affected blockers remain unclassified.`,
+	);
 	return [];
 };
 
@@ -64,7 +66,9 @@ const readIssueContracts = async () => {
 		.eq("enabled", true);
 	if (!fullRequest.error) return fullRequest.data ?? [];
 	if (!isCatalogReadinessContractUnavailable(fullRequest.error)) {
-		throw new Error(`Catalog health issue contracts: ${fullRequest.error.message}`);
+		throw new Error(
+			`Catalog health issue contracts: ${fullRequest.error.message}`,
+		);
 	}
 
 	console.error(
@@ -109,9 +113,10 @@ const summarizeSources = (rows, readSource) => {
 		.join(", ");
 };
 
-const readObservation = (row) => Array.isArray(row.shared_product_observations)
-	? row.shared_product_observations[0]
-	: row.shared_product_observations;
+const readObservation = (row) =>
+	Array.isArray(row.shared_product_observations)
+		? row.shared_product_observations[0]
+		: row.shared_product_observations;
 
 const products = await readRows(
 	"Active shared products",
@@ -143,68 +148,70 @@ const [
 	),
 	productIds.length
 		? readRows(
-			"Selected field provenance",
-			supabase
-			.from("shared_product_field_provenance")
-				.select(
-					"shared_product_id, field_path, confidence, verification_method, shared_product_observations(source, source_reference)",
-				)
-				.in("shared_product_id", productIds)
-				.eq("selected", true),
-		)
+				"Selected field provenance",
+				supabase
+					.from("shared_product_field_provenance")
+					.select(
+						"shared_product_id, field_path, confidence, verification_method, shared_product_observations(source, source_reference)",
+					)
+					.in("shared_product_id", productIds)
+					.eq("selected", true),
+			)
 		: [],
 	productIds.length
 		? readRows(
-			"Normalized nutrients",
-			supabase
-			.from("food_nutrients")
-				.select(
-					"shared_product_id, nutrient_id, value_status, mapping_status, source, source_reference, confidence",
-				)
-				.in("shared_product_id", productIds),
-		)
+				"Normalized nutrients",
+				supabase
+					.from("food_nutrients")
+					.select(
+						"shared_product_id, nutrient_id, value_status, mapping_status, source, source_reference, confidence",
+					)
+					.in("shared_product_id", productIds),
+			)
 		: [],
 	productIds.length
 		? readRows(
-			"Normalized servings",
-			supabase
-			.from("food_servings")
-				.select(
-					"shared_product_id, label, source, source_reference, confidence",
-				)
-				.in("shared_product_id", productIds),
-		)
+				"Normalized servings",
+				supabase
+					.from("food_servings")
+					.select(
+						"shared_product_id, label, source, source_reference, confidence",
+					)
+					.in("shared_product_id", productIds),
+			)
 		: [],
 	productIds.length
 		? readRows(
-			"Active images",
-			supabase
-				.from("food_image_assets")
-				.select(
-					"shared_product_id, source, source_reference, license_name, license_url, attribution_text",
-				)
-				.in("shared_product_id", productIds)
-				.eq("status", "active"),
-		)
+				"Active images",
+				supabase
+					.from("food_image_assets")
+					.select(
+						"shared_product_id, source, source_reference, license_name, license_url, attribution_text",
+					)
+					.in("shared_product_id", productIds)
+					.eq("status", "active"),
+			)
 		: [],
 	productIds.length
 		? readRows(
-			"Open catalog conflicts",
-			supabase
-				.from("shared_product_conflicts")
-				.select("shared_product_id, severity")
-				.in("shared_product_id", productIds)
-				.eq("status", "open"),
-		)
+				"Open catalog conflicts",
+				supabase
+					.from("shared_product_conflicts")
+					.select("shared_product_id, severity")
+					.in("shared_product_id", productIds)
+					.eq("status", "open"),
+			)
 		: [],
 	productIds.length
 		? readOptionalCatalogContractRows(
-			"Catalog health issue occurrences",
-			supabase
-				.from("catalog_health_issue_occurrences")
-				.select("occurrence_key, issue_code, shared_product_id, source_reason")
-				.in("shared_product_id", productIds),
-		)
+				"Catalog health issue occurrences",
+				supabase
+					.from("catalog_health_issue_occurrences")
+					.select(
+						"occurrence_key, issue_code, shared_product_id, source_reason",
+					)
+					.in("shared_product_id", productIds),
+			)
 		: [],
 	readIssueContracts(),
 ]);
@@ -215,13 +222,15 @@ const readinessByProduct = new Map(
 const provenanceCounts = groupCounts(provenance, "shared_product_id");
 const nutrientCounts = groupCounts(nutrients, "shared_product_id");
 const servingCounts = groupCounts(servings, "shared_product_id");
-const imageCounts = groupCounts(images, "shared_product_id");
 const provenanceByProduct = groupRows(provenance, "shared_product_id");
 const nutrientsByProduct = groupRows(nutrients, "shared_product_id");
 const servingsByProduct = groupRows(servings, "shared_product_id");
 const imagesByProduct = groupRows(images, "shared_product_id");
 const conflictsByProduct = groupRows(conflicts, "shared_product_id");
-const issueOccurrencesByProduct = groupRows(issueOccurrences, "shared_product_id");
+const issueOccurrencesByProduct = groupRows(
+	issueOccurrences,
+	"shared_product_id",
+);
 const issueContractsByCode = new Map(
 	issueContracts.map((issueContract) => [issueContract.code, issueContract]),
 );
@@ -269,23 +278,26 @@ const report = products.map((product) => {
 		automatedRepairCandidates: productIssues.filter(
 			(issue) => issue.owner === "safe_automated_repair",
 		).length,
-		humanReviewCandidates: productIssues.filter((issue) => [
-			"catalog_review",
-			"data_operations_review",
-			"food_policy_review",
-		].includes(issue.owner)).length,
+		humanReviewCandidates: productIssues.filter((issue) =>
+			[
+				"catalog_review",
+				"data_operations_review",
+				"food_policy_review",
+			].includes(issue.owner),
+		).length,
 		externalReviewCandidates: productIssues.filter(
 			(issue) => issue.owner === "external_review",
 		).length,
-		resolutionActions: [...new Set(productIssues.map(
-			(issue) => issue.resolutionAction,
-		))].sort(),
+		resolutionActions: [
+			...new Set(productIssues.map((issue) => issue.resolutionAction)),
+		].sort(),
 		category: product.category_option_id ? "yes" : "no",
 		fieldSources: provenanceCounts.get(product.id) ?? 0,
 		fieldLineage: (provenanceByProduct.get(product.id) ?? [])
 			.sort((left, right) => left.field_path.localeCompare(right.field_path))
-			.map((row) =>
-				`${row.field_path}=${readObservation(row)?.source ?? "missing"}`
+			.map(
+				(row) =>
+					`${row.field_path}=${readObservation(row)?.source ?? "missing"}`,
 			)
 			.join(", "),
 		nutrients: nutrientCounts.get(product.id) ?? 0,
@@ -309,18 +321,17 @@ const report = products.map((product) => {
 			(row) => row.source,
 		),
 		images: productImages.length,
-		imageSources: summarizeSources(
-			productImages,
-			(row) => row.source,
-		),
-		imageRights: productImages.length === 0
-			? "none"
-			: incompleteImageRights.has(product.id)
-				? "incomplete"
-				: "complete",
+		imageSources: summarizeSources(productImages, (row) => row.source),
+		imageRights:
+			productImages.length === 0
+				? "none"
+				: incompleteImageRights.has(product.id)
+					? "incomplete"
+					: "complete",
 		openConflicts: productConflicts.length,
 		materialConflicts: productConflicts.filter(
-			(conflict) => conflict.severity === "medium" || conflict.severity === "high",
+			(conflict) =>
+				conflict.severity === "medium" || conflict.severity === "high",
 		).length,
 	};
 });
@@ -329,12 +340,14 @@ const summary = buildCatalogReadinessSummary(report);
 if (jsonOutput) {
 	console.log(JSON.stringify({ summary, products: report }, null, 2));
 } else {
-	console.table(report.map((row) => ({
-		...row,
-		reasons: row.reasons.join(", "),
-		issues: row.issues.map((issue) => issue.issueCode).join(", "),
-		resolutionActions: row.resolutionActions.join(", "),
-	})));
+	console.table(
+		report.map((row) => ({
+			...row,
+			reasons: row.reasons.join(", "),
+			issues: row.issues.map((issue) => issue.issueCode).join(", "),
+			resolutionActions: row.resolutionActions.join(", "),
+		})),
+	);
 	console.log(JSON.stringify(summary, null, 2));
 }
 

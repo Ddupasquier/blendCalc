@@ -21,14 +21,14 @@ without becoming blanket authorities.
 
 ## Technology
 
-| Area | Primary tools |
-| --- | --- |
-| Application | SvelteKit, Svelte 5, TypeScript, Sass |
-| Data and authentication | Supabase Postgres, Auth, Storage, and RLS |
-| Food data | blendCalc catalog, USDA FoodData Central, Open Food Facts, imported national datasets, and licensed specialist sources |
-| Image and label processing | Sharp and Tesseract.js |
-| Testing | Vitest, pgTAP, Playwright, and Svelte Check |
-| Deployment | Vercel |
+| Area                       | Primary tools                                                                                                          |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Application                | SvelteKit, Svelte 5, TypeScript, Sass                                                                                  |
+| Data and authentication    | Supabase Postgres, Auth, Storage, and RLS                                                                              |
+| Food data                  | blendCalc catalog, USDA FoodData Central, Open Food Facts, imported national datasets, and licensed specialist sources |
+| Image and label processing | Sharp and Tesseract.js                                                                                                 |
+| Testing                    | Vitest, pgTAP, Playwright, and Svelte Check                                                                            |
+| Deployment                 | Vercel                                                                                                                 |
 
 ## Start Developing
 
@@ -59,18 +59,19 @@ cp .env.moderation.example .env.moderation.local
 Use `.env` for browser-safe and normal runtime configuration. Use the ignored
 `.env.moderation.local` only for privileged local operations.
 
-| Configuration | When it is needed |
-| --- | --- |
-| `PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Normal app authentication and data access |
-| `VITE_FDC_API_KEY` | USDA FoodData Central lookups |
-| `PUBLIC_SITE_URL` | Production authentication callbacks and canonical links |
-| `PUBLIC_TURNSTILE_SITE_KEY` | Auth bot protection after the matching hosted secret is configured |
-| `COLA_CLOUD_API_KEY` | Optional server-only U.S. alcohol-label enrichment |
-| `USDA_API_KEY`, `OPENFDA_API_KEY`, `CATALOG_MONITOR_CRON_SECRET` | Deployed catalog-monitor Edge Function; openFDA key is optional but recommended |
-| `SUPABASE_SERVICE_ROLE_KEY` | Protected server work, moderation, and trusted scripts |
-| `SUPABASE_PROJECT_ID`, `SUPABASE_DB_PASSWORD` | Linked Supabase administration and guarded migration delivery |
-| `RESEND_API_KEY`, `MODERATION_EMAIL_FROM`, `MODERATION_SUPPORT_EMAIL` | Optional moderation email delivery |
-| `VERCEL_ANALYTICS_ACCESS_TOKEN`, `VERCEL_TEAM_ID`, `CRON_SECRET` | Production aggregate analytics synchronization |
+| Configuration                                                         | When it is needed                                                               |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_PUBLISHABLE_KEY`              | Normal app authentication and data access                                       |
+| `VITE_FDC_API_KEY`                                                    | USDA FoodData Central lookups                                                   |
+| `PUBLIC_SITE_URL`                                                     | Production authentication callbacks and canonical links                         |
+| `PUBLIC_TURNSTILE_SITE_KEY`                                           | Auth bot protection after the matching hosted secret is configured              |
+| `COLA_CLOUD_API_KEY`                                                  | Optional server-only U.S. alcohol-label enrichment                              |
+| `USDA_API_KEY`, `OPENFDA_API_KEY`, `CATALOG_MONITOR_CRON_SECRET`      | Deployed catalog-monitor Edge Function; openFDA key is optional but recommended |
+| `FDA_RECALL_PROXY_URL`, `FDA_RECALL_PROXY_SECRET`                     | Protected app-server relay for current FDA notices when Edge egress is blocked  |
+| `SUPABASE_SERVICE_ROLE_KEY`                                           | Protected server work, moderation, and trusted scripts                          |
+| `SUPABASE_PROJECT_ID`, `SUPABASE_DB_PASSWORD`                         | Linked Supabase administration and guarded migration delivery                   |
+| `RESEND_API_KEY`, `MODERATION_EMAIL_FROM`, `MODERATION_SUPPORT_EMAIL` | Optional moderation email delivery                                              |
+| `VERCEL_ANALYTICS_ACCESS_TOKEN`, `VERCEL_TEAM_ID`, `CRON_SECRET`      | Production aggregate analytics synchronization                                  |
 
 Never prefix a server secret with `PUBLIC_` or `VITE_`. Both local env files are
 ignored and must not be committed. See [Authentication](docs/authentication.md) for the
@@ -99,23 +100,30 @@ intentionally omitted.
 
 ### Development And Verification
 
-| Command | Purpose |
-| --- | --- |
-| `npm run dev` | Start the normal development server on port `5173`. |
-| `npm run dev:test` | Start the app on port `5174` against disposable local Supabase. |
-| `npm run build` | Create the production build. |
-| `npm run preview` | Preview the production build. |
-| `npm run check` | Run TypeScript and Svelte diagnostics. |
-| `npm run check:watch` | Keep TypeScript and Svelte diagnostics running while editing. |
-| `npm run check:auth` | Validate authentication environment and endpoint configuration. |
-| `npm test` | Run the non-browser Vitest suite with compact output. |
-| `npm run test:watch -- <path>` | Run focused Vitest checks in watch mode. |
-| `npm run test:e2e` | Run the complete authenticated Playwright browser matrix. |
-| `npm run test:e2e:chromium` | Run desktop and compact Chromium projects. |
-| `npm run test:e2e:headed` | Run desktop Chromium in a visible browser. |
-| `npm run test:e2e:ui` | Open Playwright's interactive test explorer. |
-| `npm run test:e2e:update` | Review and update tracked Chromium visual snapshots. |
-| `npm run test:e2e:install` | Install Chromium, Firefox, and WebKit for Playwright. |
+| Command                        | Purpose                                                                   |
+| ------------------------------ | ------------------------------------------------------------------------- |
+| `npm run dev`                  | Start the normal development server on port `5173`.                       |
+| `npm run dev:test`             | Start the app on port `5174` against disposable local Supabase.           |
+| `npm run build`                | Create the production build.                                              |
+| `npm run preview`              | Preview the production build.                                             |
+| `npm run check`                | Run TypeScript and Svelte diagnostics.                                    |
+| `npm run check:watch`          | Keep TypeScript and Svelte diagnostics running while editing.             |
+| `npm run check:auth`           | Validate authentication environment and endpoint configuration.           |
+| `npm run lint`                 | Run the maintained TypeScript, Svelte, and SCSS lint contract.            |
+| `npm run lint:code`            | Run ESLint for application, test, and script code.                        |
+| `npm run lint:code:all`        | Include tracked migration warnings while auditing code.                   |
+| `npm run lint:styles`          | Run Stylelint for component and app-wide SCSS.                            |
+| `npm run format -- <paths...>` | Apply the maintained Prettier layout to selected source or documentation. |
+| `npm run format:check`         | Verify newly added supported files match the maintained layout.           |
+| `npm run format:check:all`     | Audit remaining legacy formatting debt without rewriting it.              |
+| `npm test`                     | Run the non-browser Vitest suite with compact output.                     |
+| `npm run test:watch -- <path>` | Run focused Vitest checks in watch mode.                                  |
+| `npm run test:e2e`             | Run the complete authenticated Playwright browser matrix.                 |
+| `npm run test:e2e:chromium`    | Run desktop and compact Chromium projects.                                |
+| `npm run test:e2e:headed`      | Run desktop Chromium in a visible browser.                                |
+| `npm run test:e2e:ui`          | Open Playwright's interactive test explorer.                              |
+| `npm run test:e2e:update`      | Review and update tracked Chromium visual snapshots.                      |
+| `npm run test:e2e:install`     | Install Chromium, Firefox, and WebKit for Playwright.                     |
 
 Use the [Testing Strategy](docs/testing.md) to choose a test layer. Browser setup lives
 in [Browser Testing](docs/browser-testing.md); database fixtures and personas live in
@@ -123,55 +131,55 @@ in [Browser Testing](docs/browser-testing.md); database fixtures and personas li
 
 ### Database And QA
 
-| Command | Purpose |
-| --- | --- |
-| `npm run db:test:start` | Start local Supabase and repair missing QA baseline data. |
-| `npm run db:test:reset` | Recreate the exact local QA baseline. |
-| `npm run db:test:verify` | Recreate local Supabase and run every database test. |
-| `npm run db:test:status` | Show local Supabase service status. |
-| `npm run db:test:stop` | Stop local Supabase. |
-| `npm run supabase -- <args>` | Run the repository-installed Supabase CLI. |
-| `npm run db:link` | Link the CLI to the configured blendCalc Supabase project. |
-| `npm run db:new -- <name>` | Create a forward-only migration. |
-| `npm run db:push:dry` | Preview linked migrations without applying them. |
-| `npm run db:push` | Confirm and apply migrations already reviewed on remote `main`. |
-| `npm run db:push:auto` | Apply the same reviewed migrations without another prompt. |
-| `npm run db:lint` | Run linked Supabase database linting. |
-| `npm run db:types` | Regenerate linked Supabase TypeScript types. |
-| `npm run qa:deterministic` | Run safe, read-only deterministic hosted data checks. |
-| `npm run catalog:qa-seed -- <email> <mode>` | Add disposable local catalog review fixtures. |
-| `npm run catalog:qa-clean -- <email>` | Remove those catalog fixtures. |
-| `npm run catalog:qa-image-seed -- <email> <mode>` | Add disposable local image-review fixtures. |
-| `npm run catalog:qa-image-clean -- <email>` | Remove those image fixtures. |
+| Command                                           | Purpose                                                         |
+| ------------------------------------------------- | --------------------------------------------------------------- |
+| `npm run db:test:start`                           | Start local Supabase and repair missing QA baseline data.       |
+| `npm run db:test:reset`                           | Recreate the exact local QA baseline.                           |
+| `npm run db:test:verify`                          | Recreate local Supabase and run every database test.            |
+| `npm run db:test:status`                          | Show local Supabase service status.                             |
+| `npm run db:test:stop`                            | Stop local Supabase.                                            |
+| `npm run supabase -- <args>`                      | Run the repository-installed Supabase CLI.                      |
+| `npm run db:link`                                 | Link the CLI to the configured blendCalc Supabase project.      |
+| `npm run db:new -- <name>`                        | Create a forward-only migration.                                |
+| `npm run db:push:dry`                             | Preview linked migrations without applying them.                |
+| `npm run db:push`                                 | Confirm and apply migrations already reviewed on remote `main`. |
+| `npm run db:push:auto`                            | Apply the same reviewed migrations without another prompt.      |
+| `npm run db:lint`                                 | Run linked Supabase database linting.                           |
+| `npm run db:types`                                | Regenerate linked Supabase TypeScript types.                    |
+| `npm run qa:deterministic`                        | Run safe, read-only deterministic hosted data checks.           |
+| `npm run catalog:qa-seed -- <email> <mode>`       | Add disposable local catalog review fixtures.                   |
+| `npm run catalog:qa-clean -- <email>`             | Remove those catalog fixtures.                                  |
+| `npm run catalog:qa-image-seed -- <email> <mode>` | Add disposable local image-review fixtures.                     |
+| `npm run catalog:qa-image-clean -- <email>`       | Remove those image fixtures.                                    |
 
 Never reset a linked or production database. Real migration pushes fail closed unless
 the exact migration source already exists on remote `main`.
 
 ### Data, Catalog, And Operations
 
-| Command | Purpose |
-| --- | --- |
-| `npm run import:nutrition:cnf -- --dry-run` | Validate the Canadian Nutrient File import without writing. |
-| `npm run import:nutrition:cofid -- --dry-run` | Validate the UK CoFID import without writing. |
-| `npm run audit:usda-branded-allergens` | Inspect USDA branded-food allergen field coverage. |
-| `npm run audit:off-allergens` | Inspect Open Food Facts allergen field coverage. |
-| `npm run audit:api-catalog` | Audit catalog publication readiness and field lineage. |
-| `npm run audit:api-catalog -- --json` | Reassess active products and print machine-repair, review, and unresolved readiness ownership as JSON. |
-| `npm run report:source-quality` | Report stored provider coverage, reliability, and request cost. |
-| `npm run benchmark:source-quality -- --limit=10` | Compare supported product sources over one controlled sample. |
-| `npm run seed:food-preferences -- --dry-run` | Preview food-safety evidence discovery. |
-| `npm run seed:food-categories -- --dry-run` | Preview category evidence discovery and mapping. |
-| `npm run seed:food-categories:deep` | Run the broader category discovery workflow. |
-| `npm run seed:food-categories:rebuild` | Rebuild category mappings from stored observations. |
-| `npm run seed:manual-entry-nutrients -- --dry-run` | Preview manual-entry nutrient-policy observations. |
-| `npm run seed:product-reference-data -- --sample-size=200` | Seed reviewed product-source, nutrient, unit, and serving references. |
-| `npm run backfill:shared-product-categories -- --dry-run` | Preview exact-evidence category repairs. |
-| `npm run backfill:food-images -- --dry-run --limit=25` | Preview reusable licensed product-image discovery. |
-| `npm run generate:api-structures` | Regenerate documentation-only provider payload references. |
-| `npm run moderate -- ...` | Run privileged role or account operations. |
-| `npm run api:publication -- ...` | Review concerns and manage reversible API publication holds. |
-| `npm run version:check` | Verify Node, app, build, API, OpenAPI, test, and documentation versions. |
-| `npm run version:bump -- patch\|minor\|major` | Update application version files without committing or tagging. |
+| Command                                                    | Purpose                                                                                                |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `npm run import:nutrition:cnf -- --dry-run`                | Validate the Canadian Nutrient File import without writing.                                            |
+| `npm run import:nutrition:cofid -- --dry-run`              | Validate the UK CoFID import without writing.                                                          |
+| `npm run audit:usda-branded-allergens`                     | Inspect USDA branded-food allergen field coverage.                                                     |
+| `npm run audit:off-allergens`                              | Inspect Open Food Facts allergen field coverage.                                                       |
+| `npm run audit:api-catalog`                                | Audit catalog publication readiness and field lineage.                                                 |
+| `npm run audit:api-catalog -- --json`                      | Reassess active products and print machine-repair, review, and unresolved readiness ownership as JSON. |
+| `npm run report:source-quality`                            | Report stored provider coverage, reliability, and request cost.                                        |
+| `npm run benchmark:source-quality -- --limit=10`           | Compare supported product sources over one controlled sample.                                          |
+| `npm run seed:food-preferences -- --dry-run`               | Preview food-safety evidence discovery.                                                                |
+| `npm run seed:food-categories -- --dry-run`                | Preview category evidence discovery and mapping.                                                       |
+| `npm run seed:food-categories:deep`                        | Run the broader category discovery workflow.                                                           |
+| `npm run seed:food-categories:rebuild`                     | Rebuild category mappings from stored observations.                                                    |
+| `npm run seed:manual-entry-nutrients -- --dry-run`         | Preview manual-entry nutrient-policy observations.                                                     |
+| `npm run seed:product-reference-data -- --sample-size=200` | Seed reviewed product-source, nutrient, unit, and serving references.                                  |
+| `npm run backfill:shared-product-categories -- --dry-run`  | Preview exact-evidence category repairs.                                                               |
+| `npm run backfill:food-images -- --dry-run --limit=25`     | Preview reusable licensed product-image discovery.                                                     |
+| `npm run generate:api-structures`                          | Regenerate documentation-only provider payload references.                                             |
+| `npm run moderate -- ...`                                  | Run privileged role or account operations.                                                             |
+| `npm run api:publication -- ...`                           | Review concerns and manage reversible API publication holds.                                           |
+| `npm run version:check`                                    | Verify Node, app, build, API, OpenAPI, test, and documentation versions.                               |
+| `npm run version:bump -- patch\|minor\|major`              | Update application version files without committing or tagging.                                        |
 
 Writing commands are deliberately not implied by their preview examples. Read
 [Repository Scripts](scripts/README.md) before running imports, seeds, backfills,
@@ -179,17 +187,17 @@ privileged operations, or direct `node scripts/...` workflows.
 
 ## Repository Map
 
-| Path | Responsibility |
-| --- | --- |
-| `src/routes/` | SvelteKit pages, layouts, endpoints, and route orchestration |
-| `src/lib/components/` | Reusable and feature-owned UI components |
-| `src/lib/utils/` | Pure, browser-safe domain logic |
-| `src/lib/server/` | Server-only persistence, policy, and external-source orchestration |
-| `src/styles/` | App-wide semantic themes and design tokens |
-| `supabase/migrations/` | Immutable migration history and forward-only schema changes |
-| `tests/` | Vitest, Playwright, architecture, route, and database tests |
-| `scripts/` | Audits, imports, seeds, backfills, QA data, and protected operations |
-| `docs/` | Rules, contracts, architecture, operations, and QA documentation |
+| Path                   | Responsibility                                                       |
+| ---------------------- | -------------------------------------------------------------------- |
+| `src/routes/`          | SvelteKit pages, layouts, endpoints, and route orchestration         |
+| `src/lib/components/`  | Reusable and feature-owned UI components                             |
+| `src/lib/utils/`       | Pure, browser-safe domain logic                                      |
+| `src/lib/server/`      | Server-only persistence, policy, and external-source orchestration   |
+| `src/styles/`          | App-wide semantic themes and design tokens                           |
+| `supabase/migrations/` | Immutable migration history and forward-only schema changes          |
+| `tests/`               | Vitest, Playwright, architecture, route, and database tests          |
+| `scripts/`             | Audits, imports, seeds, backfills, QA data, and protected operations |
+| `docs/`                | Rules, contracts, architecture, operations, and QA documentation     |
 
 [Project Structure](docs/project-structure.md) owns exact file placement and naming.
 [Data Architecture](docs/data-architecture.md) owns read, write, cache, and external

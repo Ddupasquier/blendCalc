@@ -48,7 +48,6 @@
 		initialFood,
 		submissionIntent = "catalog_share",
 		catalogSubmissionOnly = false,
-		allowPlayfulMessages = true,
 	}: CustomIngredientFormProps = $props();
 
 	const volumeOptions = SERVING_MEASURE_OPTIONS.filter(
@@ -86,7 +85,6 @@
 	});
 	const outcome = createManualEntryOutcomeController({
 		onCreate: (food, context) => onCreate(food, context),
-		onCollapse: collapseManualEntry,
 		onError: setSubmissionError,
 	});
 	const barcode = createManualEntryBarcodeController({
@@ -115,10 +113,7 @@
 	});
 
 	const goToStep = async (step: string) => {
-		await validation.goToStep(
-			step,
-			barcode.checkManualBarcodeReference,
-		);
+		await validation.goToStep(step, barcode.checkManualBarcodeReference);
 	};
 	const goNext = async () => {
 		await validation.goNext(barcode.checkManualBarcodeReference);
@@ -190,9 +185,10 @@
 	};
 
 	const handleRegulatoryDisclosureChange = (profileKey: string) => {
-		const selectedProfile = referenceData.state.regulatoryDisclosureProfiles.find(
-			(profile) => profile.key === profileKey,
-		);
+		const selectedProfile =
+			referenceData.state.regulatoryDisclosureProfiles.find(
+				(profile) => profile.key === profileKey,
+			);
 		if (!selectedProfile) {
 			form.data.regulatoryDisclosure = undefined;
 			if (form.data.usesInternal100GramBasis) {
@@ -257,8 +253,7 @@
 		barcode: form.data.barcode,
 		categoryWarningMessage: validation.categoryWarningMessage,
 		categorySourceValues:
-			form.data.barcodeReferenceSourceDraft?.categories ??
-			form.data.categories,
+			form.data.barcodeReferenceSourceDraft?.categories ?? form.data.categories,
 		barcodeMessage: form.data.barcodeMessage,
 		barcodeValidationMessage: barcode.barcodeValidationMessage,
 		checkingBarcodeReference: barcode.barcodeReferenceLookupPending,
@@ -307,19 +302,17 @@
 		groups: referenceData.state.nutrientGroups.macros,
 		loading: referenceData.state.loadingNutrients,
 		error: referenceData.state.nutrientError,
-		helper:
-			validation.disclosurePolicy.requiresStandardNutrition
-				? "Enter values from the nutrition label for the serving above. The app stores normalized per-100g values. Fields marked * are required."
-				: form.data.usesInternal100GramBasis
-					? "This label may legally omit standard nutrition. Imported values stay on their reported per-100g basis. Add package values only after entering the package's exact gram serving; everything else stays unknown."
-					: "This label may legally omit standard nutrition. Enter only values the package actually reports; everything else stays unknown.",
+		helper: validation.disclosurePolicy.requiresStandardNutrition
+			? "Enter values from the nutrition label for the serving above. The app stores normalized per-100g values. Fields marked * are required."
+			: form.data.usesInternal100GramBasis
+				? "This label may legally omit standard nutrition. Imported values stay on their reported per-100g basis. Add package values only after entering the package's exact gram serving; everything else stays unknown."
+				: "This label may legally omit standard nutrition. Enter only values the package actually reports; everything else stays unknown.",
 		hideUnavailableStatus: validation.hideMacroUnavailableStatus,
 		validationItems: validation.getAttemptedValidationItems(
 			validation.validationItems.filter((item) => item.step === "macros"),
 		),
 		labelOcrMappings: referenceData.state.nutritionLabelOcrMappings,
-		labelOcrMappingError:
-			referenceData.state.nutritionLabelOcrMappingError,
+		labelOcrMappingError: referenceData.state.nutritionLabelOcrMappingError,
 		nutritionPhoto: form.data.nutritionPhoto,
 		onNutritionPhotoChange: (file) => (form.data.nutritionPhoto = file),
 		onApplyNutritionLabelOcr: (payload) =>
@@ -370,11 +363,9 @@
 		shareWithCatalog: form.data.shareWithCatalog,
 		barcodeShareMismatch: barcode.barcodeShareMismatch,
 		lookingUpBarcode: barcode.state.lookingUpBarcode,
-		allowPlayfulMessages,
 		validatingBarcodeShare: form.data.validatingBarcodeShare,
 		requiresCatalogEvidence: barcode.requiresCatalogEvidence,
-		showOptionalProductImageUpload:
-			barcode.showOptionalProductImageUpload,
+		showOptionalProductImageUpload: barcode.showOptionalProductImageUpload,
 		trustedProductImage: barcode.trustedProductImage,
 		frontPhoto: form.data.frontPhoto,
 		nutritionPhoto: form.data.nutritionPhoto,
@@ -387,9 +378,7 @@
 			!validation.disclosurePolicy.requiresStandardNutrition,
 		saveDestination: outcome.state.saveDestination,
 		error: submission.state.error,
-		lastOutcome: outcome.state.lastOutcome,
-		outcomeAction: outcome.state.outcomeAction,
-		savedMessage: outcome.state.savedMessage,
+		placementMessage: outcome.state.placementMessage,
 		catalogMessage: submission.state.catalogMessage,
 		saving: submission.state.saving,
 		catalogSubmissionOnly,
@@ -416,9 +405,6 @@
 		onSaveDestinationControl: (element) => {
 			saveDestinationControl = element;
 		},
-		onMoveToShopping: outcome.moveLastOutcomeToShopping,
-		onMoveToFridge: outcome.moveLastOutcomeToFridge,
-		onUndo: outcome.undoLastOutcomeAdd,
 		onBack: validation.goBack,
 		onSubmit: submission.handleSubmit,
 		onCatalogSubmissionComplete: () => onClose?.(),
@@ -526,10 +512,6 @@
 	</div>
 </section>
 
-<style lang="scss">
-	@use "./CustomIngredientForm.scss";
-</style>
-
 {#if barcode.state.scannerOpen}
 	<BarcodeScannerDialog
 		open={barcode.state.scannerOpen}
@@ -548,3 +530,7 @@
 	onConfirm={() => outcome.resolveListMovePrompt(true)}
 	onCancel={() => outcome.resolveListMovePrompt(false)}
 />
+
+<style lang="scss">
+	@use "./CustomIngredientForm.scss";
+</style>

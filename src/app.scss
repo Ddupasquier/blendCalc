@@ -67,8 +67,7 @@ p {
 	padding: $app-shell-padding-y
 		max($app-shell-padding-x, env(safe-area-inset-right))
 		calc(
-			$app-shell-nav-height + $app-shell-padding-y +
-				env(safe-area-inset-bottom)
+			$app-shell-nav-height + $app-shell-padding-y + env(safe-area-inset-bottom)
 		)
 		max($app-shell-padding-x, env(safe-area-inset-left));
 }
@@ -89,7 +88,8 @@ p {
 	padding: 0;
 }
 
-@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
 	.app-main--authed {
 		min-height: calc(100vh - $app-shell-header-height-compact);
 		min-height: calc(100dvh - $app-shell-header-height-compact);
@@ -135,7 +135,8 @@ textarea {
 	font-size: $app-font-size-md;
 }
 
-@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
 	button {
 		padding: $app-gap-xs $app-shell-control-padding-x-compact;
 		font-size: $app-font-size-sm;
@@ -164,7 +165,6 @@ a {
 	height: 1px;
 	padding: 0;
 	overflow: hidden;
-	clip: rect(0, 0, 0, 0);
 	clip-path: inset(50%);
 	white-space: nowrap;
 	border: 0;

@@ -51,7 +51,7 @@ const UNIT_ALIASES: Record<string, string> = {
 	MCG: "UG",
 	MG: "MG",
 	UG: "UG",
-	"µG": "UG",
+	µG: "UG",
 };
 
 const MASS_UNIT_GRAMS: Record<string, number> = {
@@ -121,7 +121,7 @@ const findAliasMatches = (
 		.sort(
 			(left, right) =>
 				left.start - right.start ||
-				(right.end - right.start) - (left.end - left.start) ||
+				right.end - right.start - (left.end - left.start) ||
 				left.mapping.priority - right.mapping.priority,
 		)
 		.filter(
@@ -136,11 +136,17 @@ const findAliasMatches = (
 		);
 };
 
-const AMOUNT_PATTERN = /(?<![\d.])(\d+(?:[.,]\d+)?)\s*(kcal|calories?|mcg|µg|ug|mg|g|iu)?(?![\d.]|\s*%)/giu;
+const AMOUNT_PATTERN =
+	/(?<![\d.])(\d+(?:[.,]\d+)?)\s*(kcal|calories?|mcg|µg|ug|mg|g|iu)?(?![\d.]|\s*%)/giu;
 
 const readAmounts = (value: string) =>
 	[...value.matchAll(AMOUNT_PATTERN)]
-		.filter((match) => !value.slice(match.index ?? 0, (match.index ?? 0) + match[0].length + 1).includes("%"))
+		.filter(
+			(match) =>
+				!value
+					.slice(match.index ?? 0, (match.index ?? 0) + match[0].length + 1)
+					.includes("%"),
+		)
 		.map((match) => ({
 			value: Number(match[1].replace(",", ".")),
 			unit: match[2] ?? "",
@@ -194,7 +200,7 @@ const parseServingCandidate = (
 	lines: string[],
 ): NutritionLabelServingCandidate | null => {
 	for (const line of lines) {
-		const servingMatch = /\bserving\s*size\b\s*[:\-]?\s*(.+)$/iu.exec(line);
+		const servingMatch = /\bserving\s*size\b\s*[:-]?\s*(.+)$/iu.exec(line);
 		if (!servingMatch) continue;
 		const servingText = servingMatch[1].trim();
 		const gramMatch = /(?:\(|\b)(\d+(?:[.,]\d+)?)\s*g\b\)?/iu.exec(servingText);
@@ -223,10 +229,7 @@ export const parseNutritionLabelText = ({
 	mappings: NutritionLabelOcrMapping[];
 	confidence?: number;
 }): NutritionLabelOcrResult => {
-	const lines = text
-		.split(/\r?\n/gu)
-		.map(normalizeLine)
-		.filter(Boolean);
+	const lines = text.split(/\r?\n/gu).map(normalizeLine).filter(Boolean);
 	const candidatesByNutrient = new Map<number, NutritionLabelOcrCandidate>();
 
 	for (const line of lines) {

@@ -1,10 +1,7 @@
 import type { Database, Json } from "$lib/types/database.types";
 import { normalizeBarcode } from "$lib/utils/barcode/barcode";
 import type { FoodCompatibilitySummary } from "$lib/utils/food/quality/compatibility";
-import {
-	hydrateFoodWithNormalizedNutrients,
-	type NormalizedNutrientRow,
-} from "$lib/utils/food/nutrients/normalizedNutrients";
+import { hydrateFoodWithNormalizedNutrients } from "$lib/utils/food/nutrients/normalizedNutrients";
 import { hydrateFoodWithNormalizedServings } from "$lib/utils/food/servings/normalizedServings";
 import type {
 	FoodItem,
@@ -34,8 +31,10 @@ import {
 } from "./productSafetyAlerts.server";
 
 const SHARED_PRODUCT_SEARCH_CANDIDATE_LIMIT = 100;
-const SHARED_PRODUCT_COLUMNS = "id, barcode, product_name, brand_owner, category_option_id, compatibility_summary, canonical_provenance, food, source, source_reference, confidence, created_at, updated_at, last_verified_at";
-const FOOD_IMAGE_COLUMNS = "id, barcode, shared_product_id, source, source_reference, image_role, image_url, thumbnail_url, license_name, license_url, attribution_text, confidence, canonical_status, canonical_selection_method, canonical_selected_at, crop_x, crop_y, crop_zoom, rotation_degrees, fit_mode, placement_version, crop_source, placement_method, placement_suggestion_version, placement_suggestion_confidence, placement_suggestion_accepted_at, approved_at, fetched_at";
+const SHARED_PRODUCT_COLUMNS =
+	"id, barcode, product_name, brand_owner, category_option_id, compatibility_summary, canonical_provenance, food, source, source_reference, confidence, created_at, updated_at, last_verified_at";
+const FOOD_IMAGE_COLUMNS =
+	"id, barcode, shared_product_id, source, source_reference, image_role, image_url, thumbnail_url, license_name, license_url, attribution_text, confidence, canonical_status, canonical_selection_method, canonical_selected_at, crop_x, crop_y, crop_zoom, rotation_degrees, fit_mode, placement_version, crop_source, placement_method, placement_suggestion_version, placement_suggestion_confidence, placement_suggestion_accepted_at, approved_at, fetched_at";
 type SharedProductRow = Pick<
 	Database["public"]["Tables"]["shared_products"]["Row"],
 	| "id"
@@ -102,8 +101,7 @@ type FoodImageRow = Pick<
 >;
 
 export type CatalogImageAssociationScope =
-	| "canonical-product-only"
-	| "canonical-and-barcode-fallback";
+	"canonical-product-only" | "canonical-and-barcode-fallback";
 
 type CatalogReadOptions = {
 	imageAssociationScope?: CatalogImageAssociationScope;
@@ -158,8 +156,9 @@ const toFoodImageAsset = (row: FoodImageRow): FoodImageAsset => ({
 	licenseUrl: row.license_url ?? undefined,
 	attributionText: row.attribution_text ?? undefined,
 	confidence: row.confidence as FoodImageAsset["confidence"],
-	canonicalStatus:
-		row.canonical_status as NonNullable<FoodImageAsset["canonicalStatus"]>,
+	canonicalStatus: row.canonical_status as NonNullable<
+		FoodImageAsset["canonicalStatus"]
+	>,
 	canonicalSelectionMethod:
 		(row.canonical_selection_method as FoodImageAsset["canonicalSelectionMethod"]) ??
 		undefined,
@@ -173,16 +172,13 @@ const toFoodImageAsset = (row: FoodImageRow): FoodImageAsset => ({
 	fitMode: row.fit_mode as FoodImageAsset["fitMode"],
 	placementVersion: row.placement_version,
 	cropSource: row.crop_source as FoodImageAsset["cropSource"],
-	placementMethod:
-		row.placement_method as FoodImageAsset["placementMethod"],
-	suggestionVersion:
-		row.placement_suggestion_version ?? undefined,
+	placementMethod: row.placement_method as FoodImageAsset["placementMethod"],
+	suggestionVersion: row.placement_suggestion_version ?? undefined,
 	suggestionConfidence:
 		row.placement_suggestion_confidence === null
 			? undefined
 			: Number(row.placement_suggestion_confidence),
-	suggestionAcceptedAt:
-		row.placement_suggestion_accepted_at ?? undefined,
+	suggestionAcceptedAt: row.placement_suggestion_accepted_at ?? undefined,
 	approvedAt: row.approved_at ?? undefined,
 	fetchedAt: row.fetched_at,
 });
@@ -221,7 +217,10 @@ const readActiveFoodImages = async (
 	] as FoodImageRow[]) {
 		imageRows.set(row.id, row);
 	}
-	if (options.imageAssociationScope === "canonical-product-only" && imageRows.size > 0) {
+	if (
+		options.imageAssociationScope === "canonical-product-only" &&
+		imageRows.size > 0
+	) {
 		const { data: activeHolds, error: holdError } = await supabase
 			.from("api_publication_holds")
 			.select("food_image_asset_id")
@@ -252,8 +251,7 @@ export const removeHeldImagesFromPublicCatalog = (
 export const associateCatalogImagesWithProducts = (
 	products: CatalogProductRow[],
 	images: FoodImageRow[],
-	imageAssociationScope: CatalogImageAssociationScope =
-		"canonical-and-barcode-fallback",
+	imageAssociationScope: CatalogImageAssociationScope = "canonical-and-barcode-fallback",
 ) => {
 	const includeBarcodeFallbacks =
 		imageAssociationScope !== "canonical-product-only";
@@ -286,17 +284,19 @@ export const associateCatalogImagesWithProducts = (
 			[
 				...(imageRowsByProductId.get(product.id) ?? []),
 				...(includeBarcodeFallbacks
-					? imageRowsByBarcode.get(product.barcode) ?? []
+					? (imageRowsByBarcode.get(product.barcode) ?? [])
 					: []),
 			].map((image) => [image.id, image]),
 		);
-		const images = [...matchingRows.values()]
-			.map(toFoodImageAsset);
+		const images = [...matchingRows.values()].map(toFoodImageAsset);
 		const preferredFrontImage = selectPreferredFoodImageAsset(
 			images.filter((image) => image.role === "front"),
 		);
 		const orderedImages = preferredFrontImage
-			? [preferredFrontImage, ...images.filter((image) => image !== preferredFrontImage)]
+			? [
+					preferredFrontImage,
+					...images.filter((image) => image !== preferredFrontImage),
+				]
 			: images;
 		imagesByProduct.set(product.id, orderedImages);
 	}
@@ -366,23 +366,24 @@ const hydrateCatalogRows = async (
 	return rows.map((row) => {
 		const fieldProvenance = fieldProvenanceByProduct.get(row.id) ?? {};
 		const category = row.category_option_id
-			? categories.get(row.category_option_id) ?? null
+			? (categories.get(row.category_option_id) ?? null)
 			: null;
 		const images = imagesByProduct.get(row.id) ?? [];
 		const baseFood = normalizeFoodProductName({
 			...(row.food as unknown as FoodItem),
 			categoryOptionId: row.category_option_id ?? undefined,
 			compatibilitySummary:
-				(row.compatibility_summary as FoodCompatibilitySummary | null) ?? undefined,
+				(row.compatibility_summary as FoodCompatibilitySummary | null) ??
+				undefined,
 			sharedProductId: row.id,
 			sharedProductConfidence:
 				row.confidence as FoodItem["sharedProductConfidence"],
 			customFood: false,
-				image: images[0],
-				precautionaryStatements:
-					precautionaryStatementsByProduct.get(row.id) ??
-					(row.food as unknown as FoodItem).precautionaryStatements,
-				safetyAlerts: safetyAlertsByProduct.get(row.id) ?? [],
+			image: images[0],
+			precautionaryStatements:
+				precautionaryStatementsByProduct.get(row.id) ??
+				(row.food as unknown as FoodItem).precautionaryStatements,
+			safetyAlerts: safetyAlertsByProduct.get(row.id) ?? [],
 		}) as FoodItem;
 		const categorizedFood = category
 			? applyCanonicalFoodCategory(baseFood, category)
@@ -393,8 +394,8 @@ const hydrateCatalogRows = async (
 		);
 		const food = {
 			...hydrateFoodWithNormalizedServings(
-			foodWithNutrients,
-			servingRows.get(row.id) ?? [],
+				foodWithNutrients,
+				servingRows.get(row.id) ?? [],
 			),
 			fieldProvenance: toFoodFieldProvenance(fieldProvenance),
 		};
@@ -456,11 +457,9 @@ export const getActiveCanonicalCatalogRecordByBarcode = async (
 	if (error) throw error;
 	if (!data) return null;
 	return (
-		(await hydrateCatalogRows(
-			supabase,
-			[data as CatalogProductRow],
-			options,
-		))[0] ?? null
+		(
+			await hydrateCatalogRows(supabase, [data as CatalogProductRow], options)
+		)[0] ?? null
 	);
 };
 
@@ -513,9 +512,13 @@ export const searchApprovedCatalogRecords = async (
 ) => {
 	const terms = tokenizeIngredientSearchText(query).slice(0, 6);
 	if (terms.length === 0) return [];
-	const applyFilters = <Request extends {
-		eq: (column: string, value: string) => Request;
-	}>(request: Request) => {
+	const applyFilters = <
+		Request extends {
+			eq: (column: string, value: string) => Request;
+		},
+	>(
+		request: Request,
+	) => {
 		let filteredRequest = request;
 		if (filters.sourceFilter === "usda") {
 			filteredRequest = filteredRequest.eq("source", "usda");
@@ -533,27 +536,32 @@ export const searchApprovedCatalogRecords = async (
 	};
 	if (filters.sourceFilter === "custom") return [];
 
-	let metadataRequest = applyFilters(supabase
-		.from("shared_products")
-		.select(SHARED_PRODUCT_COLUMNS)
-		.eq("status", "active")
-		.order("product_name", { ascending: true })
-		.limit(SHARED_PRODUCT_SEARCH_CANDIDATE_LIMIT));
+	let metadataRequest = applyFilters(
+		supabase
+			.from("shared_products")
+			.select(SHARED_PRODUCT_COLUMNS)
+			.eq("status", "active")
+			.order("product_name", { ascending: true })
+			.limit(SHARED_PRODUCT_SEARCH_CANDIDATE_LIMIT),
+	);
 	for (const term of terms) {
 		metadataRequest = metadataRequest.ilike("search_text", `%${term}%`);
 	}
 
 	const matchingSafetyProductIds =
 		await readActiveProductIdsMatchingSafetyAlertMetadata(terms, supabase);
-	const safetyProductRequest = matchingSafetyProductIds.length === 0
-		? Promise.resolve({ data: [], error: null })
-		: applyFilters(supabase
-			.from("shared_products")
-			.select(SHARED_PRODUCT_COLUMNS)
-			.eq("status", "active")
-			.in("id", matchingSafetyProductIds)
-			.order("product_name", { ascending: true })
-			.limit(SHARED_PRODUCT_SEARCH_CANDIDATE_LIMIT));
+	const safetyProductRequest =
+		matchingSafetyProductIds.length === 0
+			? Promise.resolve({ data: [], error: null })
+			: applyFilters(
+					supabase
+						.from("shared_products")
+						.select(SHARED_PRODUCT_COLUMNS)
+						.eq("status", "active")
+						.in("id", matchingSafetyProductIds)
+						.order("product_name", { ascending: true })
+						.limit(SHARED_PRODUCT_SEARCH_CANDIDATE_LIMIT),
+				);
 	const [metadataResponse, safetyResponse] = await Promise.all([
 		metadataRequest,
 		safetyProductRequest,
@@ -575,22 +583,27 @@ export const searchApprovedCatalogRecords = async (
 				supabase,
 				"any",
 			);
-		const partialMetadataRequest = applyFilters(supabase
-			.from("shared_products")
-			.select(SHARED_PRODUCT_COLUMNS)
-			.eq("status", "active")
-			.or(terms.map((term) => `search_text.ilike.%${term}%`).join(","))
-			.order("product_name", { ascending: true })
-			.limit(SHARED_PRODUCT_SEARCH_CANDIDATE_LIMIT));
-		const partialSafetyRequest = partialSafetyProductIds.length === 0
-			? Promise.resolve({ data: [], error: null })
-			: applyFilters(supabase
+		const partialMetadataRequest = applyFilters(
+			supabase
 				.from("shared_products")
 				.select(SHARED_PRODUCT_COLUMNS)
 				.eq("status", "active")
-				.in("id", partialSafetyProductIds)
+				.or(terms.map((term) => `search_text.ilike.%${term}%`).join(","))
 				.order("product_name", { ascending: true })
-				.limit(SHARED_PRODUCT_SEARCH_CANDIDATE_LIMIT));
+				.limit(SHARED_PRODUCT_SEARCH_CANDIDATE_LIMIT),
+		);
+		const partialSafetyRequest =
+			partialSafetyProductIds.length === 0
+				? Promise.resolve({ data: [], error: null })
+				: applyFilters(
+						supabase
+							.from("shared_products")
+							.select(SHARED_PRODUCT_COLUMNS)
+							.eq("status", "active")
+							.in("id", partialSafetyProductIds)
+							.order("product_name", { ascending: true })
+							.limit(SHARED_PRODUCT_SEARCH_CANDIDATE_LIMIT),
+					);
 		const [partialMetadataResponse, partialSafetyResponse] = await Promise.all([
 			partialMetadataRequest,
 			partialSafetyRequest,

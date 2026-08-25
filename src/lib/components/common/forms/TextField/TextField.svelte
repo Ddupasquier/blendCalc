@@ -12,22 +12,29 @@
 		helper,
 		required = false,
 		disabled = false,
+		minlength,
 		maxlength,
 		showCharacterCount = false,
 		autocomplete,
 		multiline = false,
 		rows = 4,
 		labelVisibility = "visible",
+		"aria-describedby": externalDescribedBy = undefined,
+		"aria-invalid": ariaInvalid = undefined,
 		oninput,
 		onkeydown,
 	}: TextFieldProps = $props();
 
 	const helperId = $derived(helper ? `${id}-helper` : undefined);
 	const characterCountId = $derived(
-		showCharacterCount && maxlength !== undefined ? `${id}-character-count` : undefined,
+		showCharacterCount && maxlength !== undefined
+			? `${id}-character-count`
+			: undefined,
 	);
 	const describedBy = $derived(
-		[helperId, characterCountId].filter(Boolean).join(" ") || undefined,
+		[externalDescribedBy, helperId, characterCountId]
+			.filter(Boolean)
+			.join(" ") || undefined,
 	);
 	let characterCount = $state(0);
 
@@ -35,7 +42,9 @@
 		characterCount = String(value ?? "").length;
 	});
 
-	const handleInput: FormEventHandler<HTMLInputElement | HTMLTextAreaElement> = (event) => {
+	const handleInput: FormEventHandler<
+		HTMLInputElement | HTMLTextAreaElement
+	> = (event) => {
 		characterCount = event.currentTarget.value.length;
 		oninput?.(event);
 	};
@@ -56,11 +65,13 @@
 			{placeholder}
 			{required}
 			{disabled}
+			{minlength}
 			{maxlength}
 			aria-describedby={describedBy}
+			aria-invalid={ariaInvalid}
 			oninput={handleInput}
-			{onkeydown}
-		>{value ?? ""}</textarea>
+			{onkeydown}>{value ?? ""}</textarea
+		>
 	{:else}
 		<input
 			{id}
@@ -69,9 +80,11 @@
 			{placeholder}
 			{required}
 			{disabled}
+			{minlength}
 			{maxlength}
 			{autocomplete}
 			aria-describedby={describedBy}
+			aria-invalid={ariaInvalid}
 			value={value ?? ""}
 			oninput={handleInput}
 			{onkeydown}
@@ -90,7 +103,9 @@
 					aria-atomic="true"
 				>
 					<span aria-hidden="true">{characterCount} / {maxlength}</span>
-					<span class="sr-only">{Math.max(0, maxlength - characterCount)} characters remaining</span>
+					<span class="sr-only"
+						>{Math.max(0, maxlength - characterCount)} characters remaining</span
+					>
 				</small>
 			{/if}
 		</div>

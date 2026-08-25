@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
+	import FoodWarningFollowUpList from "$lib/components/moderation/FoodWarningFollowUpList/FoodWarningFollowUpList.svelte";
+	import FoodWarningReportReviewList from "$lib/components/moderation/FoodWarningReportReviewList/FoodWarningReportReviewList.svelte";
 	import PrivilegedToolWorkspaceView from "$lib/components/moderation/PrivilegedToolWorkspaceView/PrivilegedToolWorkspaceView.svelte";
 	import ProfilePage from "../../+page.svelte";
 	import type { FoodWarningReportsPageProps } from "./types";
@@ -17,8 +19,8 @@
 	title="Food warning reports"
 	subtitle="Review reports about missing or incorrect food warnings, then record the evidence-backed next step."
 	informationKey="food-warning-reports"
-	{data}
-	{form}
-	scope="food-warning-reports"
 	onClose={closeAction}
-/>
+>
+	<FoodWarningReportReviewList reports={data.compatibilityFeedback} {form} />
+	<FoodWarningFollowUpList followUps={data.compatibilityFollowUps} />
+</PrivilegedToolWorkspaceView>
