@@ -382,6 +382,14 @@ rule. Clients may present friendly headings, but they do not rewrite the source
 statement, infer risk severity from the wording, or promote ingredient hypotheses into
 package declarations.
 
+When an explicit English declaration appears inside an ingredient-text field, the
+source adapter stores the bounded parser result as derived ingredient analysis. That
+analysis identifies its parser method, source field, exact wording, statement type,
+language, language support state, and extraction outcome. It does not populate the
+provider-reported allergen or trace arrays. Known unreviewed declaration languages are
+skipped; missing language metadata remains unknown and prevents a packaged food from
+being described as fully checked.
+
 When a provider supplies both a flat trace array and exact precautionary wording for
 the same allergen, the exact statement-linked fact is canonical. Extraction removes
 the duplicate flat trace fact while preserving the lossless statement, source field,

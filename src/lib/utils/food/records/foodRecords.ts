@@ -8,10 +8,11 @@ import type { FoodStructuredIngredient } from "$lib/utils/food/types";
 
 const cloneStructuredIngredients = (
 	ingredients: FoodStructuredIngredient[] | undefined,
-): FoodStructuredIngredient[] | undefined => ingredients?.map((ingredient) => ({
-	...ingredient,
-	ingredients: cloneStructuredIngredients(ingredient.ingredients),
-}));
+): FoodStructuredIngredient[] | undefined =>
+	ingredients?.map((ingredient) => ({
+		...ingredient,
+		ingredients: cloneStructuredIngredients(ingredient.ingredients),
+	}));
 
 export const getCanonicalFoodDescription = (
 	food: Pick<
@@ -28,18 +29,21 @@ export const getCanonicalFoodDescription = (
 
 export const normalizeFoodForStorage = (food: FoodItem): FoodItem => {
 	const normalizedFood = normalizeFoodProductName(food) as FoodItem;
-	const acceptedFoodNutrients = food.foodNutrients.filter((nutrient) =>
-		Number.isSafeInteger(nutrient.nutrientId) &&
-		nutrient.nutrientId > 0 &&
-		Number.isFinite(nutrient.value) &&
-		nutrient.value >= 0
+	const acceptedFoodNutrients = food.foodNutrients.filter(
+		(nutrient) =>
+			Number.isSafeInteger(nutrient.nutrientId) &&
+			nutrient.nutrientId > 0 &&
+			Number.isFinite(nutrient.value) &&
+			nutrient.value >= 0,
 	);
 	const acceptedNutrientIds = new Set(
 		acceptedFoodNutrients.map((nutrient) => nutrient.nutrientId),
 	);
-	const reportedNutrientIds = food.reportedNutrientIds ?? acceptedFoodNutrients
-		.filter((nutrient) => nutrient.valueOrigin === "reported")
-		.map((nutrient) => nutrient.nutrientId);
+	const reportedNutrientIds =
+		food.reportedNutrientIds ??
+		acceptedFoodNutrients
+			.filter((nutrient) => nutrient.valueOrigin === "reported")
+			.map((nutrient) => nutrient.nutrientId);
 	return {
 		fdcId: normalizedFood.fdcId,
 		description: normalizedFood.description,
@@ -70,14 +74,37 @@ export const normalizeFoodForStorage = (food: FoodItem): FoodItem => {
 		gtinUpc: food.gtinUpc,
 		ingredients: food.ingredients,
 		ingredientList: food.ingredientList ? [...food.ingredientList] : undefined,
-		structuredIngredients: cloneStructuredIngredients(food.structuredIngredients),
+		structuredIngredients: cloneStructuredIngredients(
+			food.structuredIngredients,
+		),
 		ingredientAnalysis: food.ingredientAnalysis
 			? {
-				...food.ingredientAnalysis,
-				ingredientTags: [...food.ingredientAnalysis.ingredientTags],
-				analysisTags: [...food.ingredientAnalysis.analysisTags],
-				derivedTraceTags: [...food.ingredientAnalysis.derivedTraceTags],
-			}
+					...food.ingredientAnalysis,
+					ingredientTags: [...food.ingredientAnalysis.ingredientTags],
+					analysisTags: [...food.ingredientAnalysis.analysisTags],
+					derivedTraceTags: [...food.ingredientAnalysis.derivedTraceTags],
+					allergenDeclarationAnalysis: food.ingredientAnalysis
+						.allergenDeclarationAnalysis
+						? {
+								...food.ingredientAnalysis.allergenDeclarationAnalysis,
+								contains: [
+									...food.ingredientAnalysis.allergenDeclarationAnalysis
+										.contains,
+								],
+								mayContain: [
+									...food.ingredientAnalysis.allergenDeclarationAnalysis
+										.mayContain,
+								],
+								statements:
+									food.ingredientAnalysis.allergenDeclarationAnalysis.statements.map(
+										(statement) => ({
+											...statement,
+											allergens: [...statement.allergens],
+										}),
+									),
+							}
+						: undefined,
+				}
 			: undefined,
 		additives: food.additives ? [...food.additives] : undefined,
 		allergens: food.allergens ? [...food.allergens] : undefined,
@@ -99,30 +126,30 @@ export const normalizeFoodForStorage = (food: FoodItem): FoodItem => {
 			: undefined,
 		sourceMetadata: food.sourceMetadata
 			? {
-				...food.sourceMetadata,
-				languages: food.sourceMetadata.languages
-					? [...food.sourceMetadata.languages]
-					: undefined,
-				marketCountries: food.sourceMetadata.marketCountries
-					? [...food.sourceMetadata.marketCountries]
-					: undefined,
-				qualityTags: food.sourceMetadata.qualityTags
-					? [...food.sourceMetadata.qualityTags]
-					: undefined,
-				qualityErrorTags: food.sourceMetadata.qualityErrorTags
-					? [...food.sourceMetadata.qualityErrorTags]
-					: undefined,
-				qualityWarningTags: food.sourceMetadata.qualityWarningTags
-					? [...food.sourceMetadata.qualityWarningTags]
-					: undefined,
-				tagSources: food.sourceMetadata.tagSources
-					? Object.fromEntries(
-						Object.entries(food.sourceMetadata.tagSources).map(
-							([key, sources]) => [key, [...sources]],
-						),
-					)
-					: undefined,
-			}
+					...food.sourceMetadata,
+					languages: food.sourceMetadata.languages
+						? [...food.sourceMetadata.languages]
+						: undefined,
+					marketCountries: food.sourceMetadata.marketCountries
+						? [...food.sourceMetadata.marketCountries]
+						: undefined,
+					qualityTags: food.sourceMetadata.qualityTags
+						? [...food.sourceMetadata.qualityTags]
+						: undefined,
+					qualityErrorTags: food.sourceMetadata.qualityErrorTags
+						? [...food.sourceMetadata.qualityErrorTags]
+						: undefined,
+					qualityWarningTags: food.sourceMetadata.qualityWarningTags
+						? [...food.sourceMetadata.qualityWarningTags]
+						: undefined,
+					tagSources: food.sourceMetadata.tagSources
+						? Object.fromEntries(
+								Object.entries(food.sourceMetadata.tagSources).map(
+									([key, sources]) => [key, [...sources]],
+								),
+							)
+						: undefined,
+				}
 			: undefined,
 		categories: food.categories ? [...food.categories] : undefined,
 		categoryOptionId: food.categoryOptionId,
@@ -130,19 +157,21 @@ export const normalizeFoodForStorage = (food: FoodItem): FoodItem => {
 		image: food.image,
 		fieldProvenance: food.fieldProvenance
 			? Object.fromEntries(
-				Object.entries(food.fieldProvenance).map(([field, source]) => [
-					field,
-					{ ...source },
-				]),
-			)
+					Object.entries(food.fieldProvenance).map(([field, source]) => [
+						field,
+						{ ...source },
+					]),
+				)
 			: undefined,
-		sourceEnrichmentDecisions: food.sourceEnrichmentDecisions?.map((decision) => ({
-			...decision,
-			selectedSource: { ...decision.selectedSource },
-			previousSource: decision.previousSource
-				? { ...decision.previousSource }
-				: undefined,
-		})),
+		sourceEnrichmentDecisions: food.sourceEnrichmentDecisions?.map(
+			(decision) => ({
+				...decision,
+				selectedSource: { ...decision.selectedSource },
+				previousSource: decision.previousSource
+					? { ...decision.previousSource }
+					: undefined,
+			}),
+		),
 		customFood: food.customFood,
 		barcode: food.barcode,
 		barcodeSource: food.barcodeSource,
@@ -175,14 +204,16 @@ export const normalizeFoodForStorage = (food: FoodItem): FoodItem => {
 		compatibilityEvaluation: food.compatibilityEvaluation,
 		allergenDisclosure: food.allergenDisclosure
 			? {
-				contains: [...food.allergenDisclosure.contains],
-				mayContain: [...food.allergenDisclosure.mayContain],
-			}
+					contains: [...food.allergenDisclosure.contains],
+					mayContain: [...food.allergenDisclosure.mayContain],
+				}
 			: undefined,
-		preferenceWarnings: food.preferenceWarnings?.map((warning) => ({ ...warning })),
+		preferenceWarnings: food.preferenceWarnings?.map((warning) => ({
+			...warning,
+		})),
 		safetyAlerts: food.safetyAlerts?.map((alert) => ({ ...alert })),
-		reportedNutrientIds: [...new Set(reportedNutrientIds)].filter((nutrientId) =>
-			acceptedNutrientIds.has(nutrientId)
+		reportedNutrientIds: [...new Set(reportedNutrientIds)].filter(
+			(nutrientId) => acceptedNutrientIds.has(nutrientId),
 		),
 		foodNutrients: acceptedFoodNutrients.map((nutrient) => ({
 			nutrientId: nutrient.nutrientId,
@@ -210,12 +241,13 @@ export const normalizeFoodForStorage = (food: FoodItem): FoodItem => {
 	};
 };
 
-export const normalizeSourceManagedFoodForStorage = (food: FoodItem): FoodItem =>
+export const normalizeSourceManagedFoodForStorage = (
+	food: FoodItem,
+): FoodItem =>
 	normalizeFoodForStorage({
 		...food,
 		description: formatSourceProductName(food.description),
-		nameProvenance:
-			food.nameProvenance === "barcode" ? "barcode" : "source",
+		nameProvenance: food.nameProvenance === "barcode" ? "barcode" : "source",
 	});
 
 export const deduplicateFoodItemsByApplicationId = (foods: FoodItem[]) => {

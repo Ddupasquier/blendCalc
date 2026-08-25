@@ -26,7 +26,7 @@ import {
 import { OPEN_FOOD_FACTS_IMAGE_LICENSE } from "$lib/utils/food/images/foodImages";
 import { createFullImagePlacement } from "$lib/utils/food/images/imagePlacement";
 import { normalizeFoodCategoryValue } from "$lib/utils/food/categories/categoryNormalization.js";
-import { extractExplicitAllergenDeclarations } from "$lib/server/products/allergenDeclarations.server.js";
+import { analyzeIngredientLabelAllergenDeclarations } from "$lib/server/products/allergenDeclarations.server.js";
 import {
 	canonicalizeProductNutrients,
 	getCanonicalProductNutrientId,
@@ -220,7 +220,9 @@ export const parseOpenFoodFactsAlcoholByVolume = (
 	);
 	if (percent === undefined || percent > 100) return undefined;
 	const sourceUnit = String(nutriments.alcohol_unit ?? "").trim();
-	if (!["%vol", "%alc/vol"].includes(normalizeAlcoholByVolumeUnit(sourceUnit))) {
+	if (
+		!["%vol", "%alc/vol"].includes(normalizeAlcoholByVolumeUnit(sourceUnit))
+	) {
 		return undefined;
 	}
 
@@ -278,22 +280,26 @@ const sanitizeStructuredIngredient = (
 
 const getStructuredIngredientTexts = (
 	ingredients: FoodStructuredIngredient[],
-): string[] => ingredients.flatMap((ingredient) => [
-	...(ingredient.text ? [ingredient.text] : []),
-	...(ingredient.ingredients
-		? getStructuredIngredientTexts(ingredient.ingredients)
-		: []),
-]);
+): string[] =>
+	ingredients.flatMap((ingredient) => [
+		...(ingredient.text ? [ingredient.text] : []),
+		...(ingredient.ingredients
+			? getStructuredIngredientTexts(ingredient.ingredients)
+			: []),
+	]);
 
 const normalizeTagSources = (
 	value: OpenFoodFactsProduct["tags_sources"],
 ): Record<string, string[]> | undefined => {
-	if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+	if (!value || typeof value !== "object" || Array.isArray(value))
+		return undefined;
 	const entries = Object.entries(value).flatMap(([key, sources]) => {
 		const normalized = uniqueCleanValues(
 			Array.isArray(sources) ? sources : [sources],
 		);
-		return key.trim() && normalized.length > 0 ? [[key, normalized] as const] : [];
+		return key.trim() && normalized.length > 0
+			? [[key, normalized] as const]
+			: [];
 	});
 	return entries.length > 0 ? Object.fromEntries(entries) : undefined;
 };
@@ -322,11 +328,11 @@ const parseOpenFoodFactsSourceMetadata = (
 			: {}),
 		...(product.countries || product.countries_tags?.length
 			? {
-				marketCountries: uniqueCleanValues([
-					...splitDelimitedValues(product.countries),
-					...(product.countries_tags ?? []),
-				]),
-			}
+					marketCountries: uniqueCleanValues([
+						...splitDelimitedValues(product.countries),
+						...(product.countries_tags ?? []),
+					]),
+				}
 			: {}),
 		...(toOptionalInteger(product.rev) !== undefined
 			? { revision: toOptionalInteger(product.rev) }
@@ -350,10 +356,16 @@ const parseOpenFoodFactsSourceMetadata = (
 			? { qualityTags: uniqueCleanValues(product.data_quality_tags) }
 			: {}),
 		...(product.data_quality_errors_tags?.length
-			? { qualityErrorTags: uniqueCleanValues(product.data_quality_errors_tags) }
+			? {
+					qualityErrorTags: uniqueCleanValues(product.data_quality_errors_tags),
+				}
 			: {}),
 		...(product.data_quality_warnings_tags?.length
-			? { qualityWarningTags: uniqueCleanValues(product.data_quality_warnings_tags) }
+			? {
+					qualityWarningTags: uniqueCleanValues(
+						product.data_quality_warnings_tags,
+					),
+				}
 			: {}),
 		...(typeof product.obsolete === "boolean"
 			? { obsolete: product.obsolete }
@@ -368,28 +380,58 @@ const parseOpenFoodFactsSourceMetadata = (
 	return Object.keys(metadata).length > 0 ? metadata : undefined;
 };
 
+const getOpenFoodFactsIngredientText = (product: OpenFoodFactsProduct) => {
+	const englishIngredients = product.ingredients_text_en?.trim();
+	if (englishIngredients) {
+		return {
+			text: englishIngredients,
+			languageCode: "en",
+			sourceField: "ingredients_text_en",
+		};
+	}
+
+	return {
+		text: product.ingredients_text?.trim() ?? "",
+		languageCode: product.lang?.trim(),
+		sourceField: "ingredients_text",
+	};
+};
+
 const parseOpenFoodFactsMetadata = (product: OpenFoodFactsProduct) => {
-	const ingredients =
-		product.ingredients_text_en?.trim() || product.ingredients_text?.trim();
-	const ingredientDeclarations = extractExplicitAllergenDeclarations(ingredients);
+	const ingredientText = getOpenFoodFactsIngredientText(product);
+	const ingredients = ingredientText.text;
+	const allergenDeclarationAnalysis =
+		analyzeIngredientLabelAllergenDeclarations(ingredients, {
+			languageCode: ingredientText.languageCode,
+			sourceField: ingredientText.sourceField,
+		});
 	const reportedTraceText = product.traces?.trim();
 	const precautionaryStatements: FoodPrecautionaryStatement[] = [
-		...ingredientDeclarations.precautionaryStatements.map((statement) => ({
-			...statement,
-			languageCode: product.lang?.trim() || product.traces_lc?.trim() || undefined,
-		})),
+		...allergenDeclarationAnalysis.statements.flatMap((statement) => {
+			if (statement.type === "contains") return [];
+			const precautionaryStatement: FoodPrecautionaryStatement = {
+				...statement,
+				type: statement.type,
+				languageCode: allergenDeclarationAnalysis.languageCode,
+				sourceField: allergenDeclarationAnalysis.sourceField,
+			};
+			return [precautionaryStatement];
+		}),
 		...(reportedTraceText
-			? [{
-					type: "may_contain" as const,
-					text: reportedTraceText,
-					allergens: uniqueCleanValues([
-						...splitDelimitedValues(product.traces),
-						...(product.traces_tags ?? []),
-						...(product.traces_hierarchy ?? []),
-					]),
-					languageCode: product.traces_lc?.trim() || product.lang?.trim() || undefined,
-					sourceField: "traces",
-				}]
+			? [
+					{
+						type: "may_contain" as const,
+						text: reportedTraceText,
+						allergens: uniqueCleanValues([
+							...splitDelimitedValues(product.traces),
+							...(product.traces_tags ?? []),
+							...(product.traces_hierarchy ?? []),
+						]),
+						languageCode:
+							product.traces_lc?.trim() || product.lang?.trim() || undefined,
+						sourceField: "traces",
+					},
+				]
 			: []),
 	];
 	const structuredIngredients = (product.ingredients ?? [])
@@ -404,25 +446,28 @@ const parseOpenFoodFactsMetadata = (product: OpenFoodFactsProduct) => {
 		derivedTraceTags: uniqueCleanValues(
 			splitDelimitedValues(product.traces_from_ingredients),
 		),
+		...(ingredients ? { allergenDeclarationAnalysis } : {}),
 		...(toOptionalNumber(product.ingredients_percent_analysis) !== undefined
 			? {
-				percentAnalysis: toOptionalNumber(
-					product.ingredients_percent_analysis,
-				),
-			}
+					percentAnalysis: toOptionalNumber(
+						product.ingredients_percent_analysis,
+					),
+				}
 			: {}),
 		...(toOptionalNumber(product.ingredients_percent_estimate) !== undefined
 			? {
-				percentEstimate: toOptionalNumber(
-					product.ingredients_percent_estimate,
-				),
-			}
+					percentEstimate: toOptionalNumber(
+						product.ingredients_percent_estimate,
+					),
+				}
 			: {}),
 		...(toOptionalNumber(product.ingredients_percent_known) !== undefined
 			? { percentKnown: toOptionalNumber(product.ingredients_percent_known) }
 			: {}),
 		...(toOptionalNumber(product.ingredients_percent_unknown) !== undefined
-			? { percentUnknown: toOptionalNumber(product.ingredients_percent_unknown) }
+			? {
+					percentUnknown: toOptionalNumber(product.ingredients_percent_unknown),
+				}
 			: {}),
 	};
 
@@ -439,14 +484,12 @@ const parseOpenFoodFactsMetadata = (product: OpenFoodFactsProduct) => {
 			...splitDelimitedValues(product.allergens),
 			...(product.allergens_tags ?? []),
 			...(product.allergens_hierarchy ?? []),
-			...ingredientDeclarations.contains,
 		]),
 		traces: uniqueCleanValues([
 			...splitDelimitedValues(product.traces),
 			...(product.traces_tags ?? []),
 			...(product.traces_hierarchy ?? []),
 			...splitDelimitedValues(product.traces_from_user),
-			...ingredientDeclarations.mayContain,
 		]),
 		precautionaryStatements,
 		dietaryTags: uniqueCleanValues(product.labels_tags ?? []),
@@ -494,23 +537,43 @@ const parseOpenFoodFactsImage = (
 };
 
 const parseFdcMetadata = (food: FoodItem) => {
-	const declarations = extractExplicitAllergenDeclarations(food.ingredients);
+	const allergenDeclarationAnalysis =
+		analyzeIngredientLabelAllergenDeclarations(food.ingredients, {
+			languageCode: food.sourceMetadata?.language,
+			sourceField: "ingredients",
+		});
+	const ingredientAnalysis: FoodIngredientAnalysis | undefined =
+		food.ingredients || food.ingredientAnalysis
+			? {
+					...food.ingredientAnalysis,
+					ingredientTags: [...(food.ingredientAnalysis?.ingredientTags ?? [])],
+					analysisTags: [...(food.ingredientAnalysis?.analysisTags ?? [])],
+					derivedTraceTags: [
+						...(food.ingredientAnalysis?.derivedTraceTags ?? []),
+					],
+					...(food.ingredients ? { allergenDeclarationAnalysis } : {}),
+				}
+			: undefined;
 	return {
 		ingredients: food.ingredients?.trim() || undefined,
 		ingredientList: food.ingredientList?.length
 			? uniqueCleanValues(food.ingredientList)
 			: splitIngredientList(food.ingredients),
-		allergens: uniqueCleanValues([
-			...(food.allergens ?? []),
-			...declarations.contains,
-		]),
-		traces: uniqueCleanValues([
-			...(food.traces ?? []),
-			...declarations.mayContain,
-		]),
+		ingredientAnalysis,
+		allergens: uniqueCleanValues(food.allergens ?? []),
+		traces: uniqueCleanValues(food.traces ?? []),
 		precautionaryStatements: [
 			...(food.precautionaryStatements ?? []),
-			...declarations.precautionaryStatements,
+			...allergenDeclarationAnalysis.statements.flatMap((statement) => {
+				if (statement.type === "contains") return [];
+				const precautionaryStatement: FoodPrecautionaryStatement = {
+					...statement,
+					type: statement.type,
+					languageCode: allergenDeclarationAnalysis.languageCode,
+					sourceField: allergenDeclarationAnalysis.sourceField,
+				};
+				return [precautionaryStatement];
+			}),
 		],
 		dietaryTags: uniqueCleanValues(food.dietaryTags ?? []),
 		labels: uniqueCleanValues(food.labels ?? []),
@@ -584,12 +647,12 @@ const createOpenFoodFactsFieldProvenance = ({
 		...(nutrients.length > 0 ? { nutrition: source } : {}),
 		...(image
 			? {
-				image: createFieldSource(
-					image.source,
-					image.sourceReference,
-					image.confidence,
-				),
-			}
+					image: createFieldSource(
+						image.source,
+						image.sourceReference,
+						image.confidence,
+					),
+				}
 			: {}),
 		...(metadata.categories.length > 0 ? { categories: source } : {}),
 		...(hasSourceServing ? { serving: source } : {}),
@@ -597,18 +660,19 @@ const createOpenFoodFactsFieldProvenance = ({
 			? { ingredients: source }
 			: {}),
 		...(metadata.allergens.length > 0 ? { allergens: source } : {}),
-			...(metadata.traces.length > 0 ? { traces: source } : {}),
-			...(metadata.precautionaryStatements.length > 0
-				? { precautionaryStatements: source }
-				: {}),
+		...(metadata.traces.length > 0 ? { traces: source } : {}),
+		...(metadata.precautionaryStatements.length > 0
+			? { precautionaryStatements: source }
+			: {}),
 		...(metadata.dietaryTags.length > 0 ? { dietaryTags: source } : {}),
 		...(metadata.labels.length > 0 ? { labels: source } : {}),
 		...(metadata.structuredIngredients.length > 0
 			? { structuredIngredients: source }
 			: {}),
 		...(metadata.ingredientAnalysis.ingredientTags.length > 0 ||
-				metadata.ingredientAnalysis.analysisTags.length > 0 ||
-				metadata.ingredientAnalysis.derivedTraceTags.length > 0
+		metadata.ingredientAnalysis.analysisTags.length > 0 ||
+		metadata.ingredientAnalysis.derivedTraceTags.length > 0 ||
+		metadata.ingredientAnalysis.allergenDeclarationAnalysis
 			? { ingredientAnalysis: source }
 			: {}),
 		...(metadata.additives.length > 0 ? { additives: source } : {}),
@@ -634,14 +698,15 @@ const createFdcFieldProvenance = ({
 	adapterSource?: FoodFieldSource;
 }): FoodFieldProvenance => {
 	const nutrientSource = nutrients.find((nutrient) => nutrient.source);
-	const servingSource = food.foodServings?.find((serving) => serving.isPrimary) ??
+	const servingSource =
+		food.foodServings?.find((serving) => serving.isPrimary) ??
 		food.foodServings?.[0];
 	const mappedSource = adapterSource
 		? createFieldSource(
-			normalizeFieldSource(adapterSource.source),
-			adapterSource.sourceReference,
-			adapterSource.confidence ?? "unknown",
-		)
+				normalizeFieldSource(adapterSource.source),
+				adapterSource.sourceReference,
+				adapterSource.confidence ?? "unknown",
+			)
 		: undefined;
 
 	return {
@@ -649,112 +714,112 @@ const createFdcFieldProvenance = ({
 		...(mappedSource && !food.fieldProvenance?.productName
 			? { productName: mappedSource }
 			: {}),
-		...(mappedSource && food.brandOwner?.trim() && !food.fieldProvenance?.brandOwner
+		...(mappedSource &&
+		food.brandOwner?.trim() &&
+		!food.fieldProvenance?.brandOwner
 			? { brandOwner: mappedSource }
 			: {}),
 		...(nutrients.length > 0 &&
-				(nutrientSource || mappedSource) &&
-				!food.fieldProvenance?.nutrition
+		(nutrientSource || mappedSource) &&
+		!food.fieldProvenance?.nutrition
 			? {
-				nutrition: nutrientSource
-					? createFieldSource(
-						nutrientSource.source ?? "unknown",
-						nutrientSource.sourceReference,
-						nutrientSource.confidence ?? "unknown",
-					)
-					: mappedSource,
-			}
+					nutrition: nutrientSource
+						? createFieldSource(
+								nutrientSource.source ?? "unknown",
+								nutrientSource.sourceReference,
+								nutrientSource.confidence ?? "unknown",
+							)
+						: mappedSource,
+				}
 			: {}),
 		...(image && !food.fieldProvenance?.image
 			? {
-				image: createFieldSource(
-					image.source,
-					image.sourceReference,
-					image.confidence,
-				),
-			}
+					image: createFieldSource(
+						image.source,
+						image.sourceReference,
+						image.confidence,
+					),
+				}
 			: {}),
 		...(mappedSource &&
-				metadata.categories.length > 0 &&
-				!food.fieldProvenance?.categories
+		metadata.categories.length > 0 &&
+		!food.fieldProvenance?.categories
 			? { categories: mappedSource }
 			: {}),
 		...(hasSourceServing &&
-				(servingSource || mappedSource) &&
-				!food.fieldProvenance?.serving
+		(servingSource || mappedSource) &&
+		!food.fieldProvenance?.serving
 			? {
-				serving: servingSource
-					? createFieldSource(
-						servingSource.source ?? "unknown",
-						servingSource.sourceReference,
-						servingSource.confidence ?? "unknown",
-					)
-					: mappedSource,
-			}
+					serving: servingSource
+						? createFieldSource(
+								servingSource.source ?? "unknown",
+								servingSource.sourceReference,
+								servingSource.confidence ?? "unknown",
+							)
+						: mappedSource,
+				}
 			: {}),
 		...(mappedSource &&
-				(metadata.ingredients || metadata.ingredientList.length > 0) &&
-				!food.fieldProvenance?.ingredients
+		(metadata.ingredients || metadata.ingredientList.length > 0) &&
+		!food.fieldProvenance?.ingredients
 			? { ingredients: mappedSource }
 			: {}),
 		...(mappedSource &&
-				metadata.allergens.length > 0 &&
-				!food.fieldProvenance?.allergens
+		metadata.allergens.length > 0 &&
+		!food.fieldProvenance?.allergens
 			? { allergens: mappedSource }
 			: {}),
-			...(mappedSource &&
-					metadata.traces.length > 0 &&
-				!food.fieldProvenance?.traces
-				? { traces: mappedSource }
-				: {}),
-			...(mappedSource &&
-					metadata.precautionaryStatements.length > 0 &&
-					!food.fieldProvenance?.precautionaryStatements
-				? { precautionaryStatements: mappedSource }
-				: {}),
 		...(mappedSource &&
-				metadata.dietaryTags.length > 0 &&
-				!food.fieldProvenance?.dietaryTags
+		metadata.traces.length > 0 &&
+		!food.fieldProvenance?.traces
+			? { traces: mappedSource }
+			: {}),
+		...(mappedSource &&
+		metadata.precautionaryStatements.length > 0 &&
+		!food.fieldProvenance?.precautionaryStatements
+			? { precautionaryStatements: mappedSource }
+			: {}),
+		...(mappedSource &&
+		metadata.dietaryTags.length > 0 &&
+		!food.fieldProvenance?.dietaryTags
 			? { dietaryTags: mappedSource }
 			: {}),
 		...(mappedSource &&
-				metadata.labels.length > 0 &&
-				!food.fieldProvenance?.labels
+		metadata.labels.length > 0 &&
+		!food.fieldProvenance?.labels
 			? { labels: mappedSource }
 			: {}),
 		...(mappedSource &&
-				food.structuredIngredients?.length &&
-				!food.fieldProvenance?.structuredIngredients
+		food.structuredIngredients?.length &&
+		!food.fieldProvenance?.structuredIngredients
 			? { structuredIngredients: mappedSource }
 			: {}),
 		...(mappedSource &&
-				food.ingredientAnalysis &&
-				!food.fieldProvenance?.ingredientAnalysis
+		metadata.ingredientAnalysis &&
+		!food.fieldProvenance?.ingredientAnalysis
 			? { ingredientAnalysis: mappedSource }
 			: {}),
 		...(mappedSource &&
-				food.additives?.length &&
-				!food.fieldProvenance?.additives
+		food.additives?.length &&
+		!food.fieldProvenance?.additives
 			? { additives: mappedSource }
 			: {}),
-		...(mappedSource &&
-				food.packageQuantity &&
-				!food.fieldProvenance?.package
+		...(mappedSource && food.packageQuantity && !food.fieldProvenance?.package
 			? { package: mappedSource }
 			: {}),
 		...(mappedSource &&
-				food.alcoholByVolume &&
-				!food.fieldProvenance?.alcoholByVolume
+		food.alcoholByVolume &&
+		!food.fieldProvenance?.alcoholByVolume
 			? { alcoholByVolume: mappedSource }
 			: {}),
 		...(mappedSource &&
-				food.regulatoryDisclosure &&
-				!food.fieldProvenance?.regulatoryDisclosure
+		food.regulatoryDisclosure &&
+		!food.fieldProvenance?.regulatoryDisclosure
 			? { regulatoryDisclosure: mappedSource }
 			: {}),
 		...(mappedSource &&
-				food.sourceMetadata &&
-				!food.fieldProvenance?.sourceMetadata
+		food.sourceMetadata &&
+		!food.fieldProvenance?.sourceMetadata
 			? { sourceMetadata: mappedSource }
 			: {}),
 	};
@@ -778,16 +843,13 @@ const parseServingBasis = (product: OpenFoodFactsProduct) => {
 			parsedServing,
 		};
 	}
-	const parsedQuantity = servingQuantity === null
-		? null
-		: parseSourceWeight(
-			`${servingQuantity} ${product.serving_quantity_unit ?? ""}`,
-		);
-	if (
-		servingQuantity !== null &&
-		servingQuantity > 0 &&
-		parsedQuantity
-	) {
+	const parsedQuantity =
+		servingQuantity === null
+			? null
+			: parseSourceWeight(
+					`${servingQuantity} ${product.serving_quantity_unit ?? ""}`,
+				);
+	if (servingQuantity !== null && servingQuantity > 0 && parsedQuantity) {
 		return {
 			servingWeightGrams: parsedQuantity.grams,
 			useServingValues: true,
@@ -809,12 +871,17 @@ export const mapOpenFoodFactsProduct = (
 	productReferenceCatalog: ProductReferenceCatalog,
 ): BarcodeProductDraft | null => {
 	const canonicalBarcode = normalizeBarcode(barcode);
-	const sourceName = product.product_name?.trim() || product.generic_name?.trim();
+	const sourceName =
+		product.product_name?.trim() || product.generic_name?.trim();
 	const name = formatSourceProductName(sourceName);
 	if (!canonicalBarcode || !name) return null;
 
-	const { servingWeightGrams, useServingValues, hasExactGramWeight, parsedServing } =
-		parseServingBasis(product);
+	const {
+		servingWeightGrams,
+		useServingValues,
+		hasExactGramWeight,
+		parsedServing,
+	} = parseServingBasis(product);
 	const nutrients = mapOpenFoodFactsNutrients(
 		product.nutriments ?? {},
 		servingWeightGrams,
@@ -825,12 +892,16 @@ export const mapOpenFoodFactsProduct = (
 	const image = parseOpenFoodFactsImage(product, canonicalBarcode);
 	const alcoholByVolume = parseOpenFoodFactsAlcoholByVolume(product.nutriments);
 	const servingLabel =
-		(useServingValues && product.serving_size?.trim()) || `${servingWeightGrams} g`;
+		(useServingValues && product.serving_size?.trim()) ||
+		`${servingWeightGrams} g`;
 	const volumeEquivalent = hasExactGramWeight
-		? parseVolumeEquivalent(product.serving_size) ?? undefined
+		? (parseVolumeEquivalent(product.serving_size) ?? undefined)
 		: undefined;
 
-	const source = getProductDataSource(productReferenceCatalog, "open-food-facts");
+	const source = getProductDataSource(
+		productReferenceCatalog,
+		"open-food-facts",
+	);
 
 	return {
 		barcode: canonicalBarcode,
@@ -842,23 +913,25 @@ export const mapOpenFoodFactsProduct = (
 		hasSourceServing: hasExactGramWeight,
 		serving: hasExactGramWeight
 			? {
-				label: servingLabel,
-				gramWeight: servingWeightGrams,
-				amount: volumeEquivalent?.quantity ?? parsedServing?.quantity,
-				unitKey: volumeEquivalent?.unit ?? parsedServing?.unit,
-				isPrimary: true,
-				measureType: "Package serving",
-				isHouseholdMeasure: Boolean(volumeEquivalent),
-				sourceMeasureKey: "serving_size",
-				origin: "package-label",
-				gramWeightMethod: "source-reported",
-				source: "open-food-facts",
-				sourceReference: canonicalBarcode,
-				confidence: "unknown",
-			}
+					label: servingLabel,
+					gramWeight: servingWeightGrams,
+					amount: volumeEquivalent?.quantity ?? parsedServing?.quantity,
+					unitKey: volumeEquivalent?.unit ?? parsedServing?.unit,
+					isPrimary: true,
+					measureType: "Package serving",
+					isHouseholdMeasure: Boolean(volumeEquivalent),
+					sourceMeasureKey: "serving_size",
+					origin: "package-label",
+					gramWeightMethod: "source-reported",
+					source: "open-food-facts",
+					sourceReference: canonicalBarcode,
+					confidence: "unknown",
+				}
 			: undefined,
 		nutrients,
-		reportedNutrientIds: [...new Set(nutrients.map((nutrient) => nutrient.nutrientId))],
+		reportedNutrientIds: [
+			...new Set(nutrients.map((nutrient) => nutrient.nutrientId)),
+		],
 		foodIdentityType: "packaged",
 		...metadata,
 		alcoholByVolume,
@@ -890,41 +963,47 @@ export const mapFdcBarcodeFood = (
 	const canonicalBarcode = normalizeBarcode(barcode);
 	if (!canonicalBarcode || !food.description) return null;
 
-	const normalizedServing = food.foodServings?.find((serving) => serving.isPrimary) ??
+	const normalizedServing =
+		food.foodServings?.find((serving) => serving.isPrimary) ??
 		food.foodServings?.[0];
 	const parsedServing = parseSourceWeight(
 		`${food.servingSize ?? ""} ${food.servingSizeUnit ?? ""}`,
 	);
-	const hasExactGramWeight = Boolean(
-		normalizedServing || parsedServing,
-	);
-	const servingWeightGrams = normalizedServing?.gramWeight ?? parsedServing?.grams ?? 100;
+	const hasExactGramWeight = Boolean(normalizedServing || parsedServing);
+	const servingWeightGrams =
+		normalizedServing?.gramWeight ?? parsedServing?.grams ?? 100;
 	const servingScale = servingWeightGrams / 100;
 	const metadata = parseFdcMetadata(food);
 	const nutrients = canonicalizeProductNutrients(
 		food.foodNutrients.flatMap((nutrient) => {
 			const value = toNumber(nutrient.value);
-			return value === null ? [] : [{
-				...nutrient,
-				value: value * servingScale,
-			}];
+			return value === null
+				? []
+				: [
+						{
+							...nutrient,
+							value: value * servingScale,
+						},
+					];
 		}),
 		productReferenceCatalog,
 	);
 	const nutrientIds = new Set(nutrients.map((nutrient) => nutrient.nutrientId));
 	const reportedNutrientIds = (
-		food.reportedNutrientIds ?? food.foodNutrients
+		food.reportedNutrientIds ??
+		food.foodNutrients
 			.filter((nutrient) => nutrient.valueOrigin === "reported")
 			.map((nutrient) => nutrient.nutrientId)
 	).map((nutrientId) =>
-		getCanonicalProductNutrientId(productReferenceCatalog, nutrientId)
+		getCanonicalProductNutrientId(productReferenceCatalog, nutrientId),
 	);
 
 	return {
 		barcode: canonicalBarcode,
-		name: food.nameProvenance === "user"
-			? food.description.trim().replace(/\s+/g, " ")
-			: formatSourceProductName(food.description),
+		name:
+			food.nameProvenance === "user"
+				? food.description.trim().replace(/\s+/g, " ")
+				: formatSourceProductName(food.description),
 		nameProvenance: food.nameProvenance ?? "source",
 		brandOwner: food.brandOwner ?? "",
 		servingLabel:
@@ -933,31 +1012,34 @@ export const mapFdcBarcodeFood = (
 			`${servingWeightGrams} g`,
 		servingWeightGrams,
 		hasSourceServing: hasExactGramWeight,
-		serving: normalizedServing ?? (parsedServing
-			? {
-				label: food.householdServingFullText?.trim() || `${servingWeightGrams} g`,
-				gramWeight: servingWeightGrams,
-				amount: parsedServing.quantity,
-				unitKey: parsedServing.unit,
-				isPrimary: true,
-				measureType: "Reported weight",
-				isHouseholdMeasure: false,
-				sourceMeasureKey: "servingSize",
-				origin: "source-weight",
-				gramWeightMethod: "source-reported",
-				source: "usda",
-				sourceReference: String(food.fdcId),
-				confidence: "unknown",
-			}
-			: undefined),
+		serving:
+			normalizedServing ??
+			(parsedServing
+				? {
+						label:
+							food.householdServingFullText?.trim() ||
+							`${servingWeightGrams} g`,
+						gramWeight: servingWeightGrams,
+						amount: parsedServing.quantity,
+						unitKey: parsedServing.unit,
+						isPrimary: true,
+						measureType: "Reported weight",
+						isHouseholdMeasure: false,
+						sourceMeasureKey: "servingSize",
+						origin: "source-weight",
+						gramWeightMethod: "source-reported",
+						source: "usda",
+						sourceReference: String(food.fdcId),
+						confidence: "unknown",
+					}
+				: undefined),
 		nutrients,
-		reportedNutrientIds: [
-			...new Set(reportedNutrientIds),
-		].filter((nutrientId) => nutrientIds.has(nutrientId)),
+		reportedNutrientIds: [...new Set(reportedNutrientIds)].filter(
+			(nutrientId) => nutrientIds.has(nutrientId),
+		),
 		foodIdentityType: "packaged",
 		...metadata,
 		structuredIngredients: food.structuredIngredients,
-		ingredientAnalysis: food.ingredientAnalysis,
 		additives: food.additives,
 		packageQuantity: food.packageQuantity,
 		alcoholByVolume: food.alcoholByVolume,
@@ -975,10 +1057,11 @@ export const mapFdcBarcodeFood = (
 				: undefined,
 		}),
 		volumeEquivalent: hasExactGramWeight
-			? parseVolumeEquivalent(food.householdServingFullText) ?? undefined
+			? (parseVolumeEquivalent(food.householdServingFullText) ?? undefined)
 			: undefined,
 		source: "usda",
-		sourceLabel: getProductDataSource(productReferenceCatalog, "usda").displayName,
+		sourceLabel: getProductDataSource(productReferenceCatalog, "usda")
+			.displayName,
 		sourceReference: String(food.fdcId),
 		sourceKey: "usda",
 		sourceDataType: food.sourceDataType ?? food.dataType,
@@ -1000,13 +1083,13 @@ export const mapSharedCatalogFood = (
 		false,
 	);
 	if (!draft) return null;
-	const sourceKey = food.sourceKey ?? (
-		food.barcodeSource === "usda"
+	const sourceKey =
+		food.sourceKey ??
+		(food.barcodeSource === "usda"
 			? "usda"
 			: food.barcodeSource === "open-food-facts"
 				? "open-food-facts"
-				: "shared-catalog"
-	);
+				: "shared-catalog");
 	const source = getProductDataSource(productReferenceCatalog, sourceKey);
 
 	return {
@@ -1025,7 +1108,7 @@ export const mapSharedCatalogFood = (
 						confidence: "exact",
 						symbolKey: food.symbolKey,
 					}
-					: undefined,
+				: undefined,
 		fieldProvenance: draft.fieldProvenance,
 		sourceKey: source.key,
 		sourceDataType: food.sourceDataType,

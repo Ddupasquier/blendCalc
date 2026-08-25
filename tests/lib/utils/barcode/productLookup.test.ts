@@ -99,20 +99,38 @@ describe("barcode product mapping", () => {
 		});
 		expect(draft?.nutrients).toEqual(
 			expect.arrayContaining([
-				expect.objectContaining({ nutrientId: NUTRIENT_IDS.CALORIES, value: 150 }),
+				expect.objectContaining({
+					nutrientId: NUTRIENT_IDS.CALORIES,
+					value: 150,
+				}),
 				expect.objectContaining({ nutrientId: NUTRIENT_IDS.FAT, value: 3 }),
 				expect.objectContaining({ nutrientId: NUTRIENT_IDS.CARBS, value: 18 }),
 				expect.objectContaining({ nutrientId: NUTRIENT_IDS.FIBER, value: 2.4 }),
 				expect.objectContaining({ nutrientId: NUTRIENT_IDS.SUGAR, value: 6 }),
-				expect.objectContaining({ nutrientId: NUTRIENT_IDS.PROTEIN, value: 3.6 }),
+				expect.objectContaining({
+					nutrientId: NUTRIENT_IDS.PROTEIN,
+					value: 3.6,
+				}),
 			]),
 		);
 		expect(draft?.volumeEquivalent).toEqual({ quantity: 2, unit: "tbsp" });
 		expect(draft?.nutrients).toEqual(
 			expect.arrayContaining([
-				expect.objectContaining({ nutrientId: 1258, value: 1.2, unitName: "G" }),
-				expect.objectContaining({ nutrientId: NUTRIENT_IDS.SODIUM, value: 150, unitName: "MG" }),
-				expect.objectContaining({ nutrientId: NUTRIENT_IDS.CALCIUM, value: 36, unitName: "MG" }),
+				expect.objectContaining({
+					nutrientId: 1258,
+					value: 1.2,
+					unitName: "G",
+				}),
+				expect.objectContaining({
+					nutrientId: NUTRIENT_IDS.SODIUM,
+					value: 150,
+					unitName: "MG",
+				}),
+				expect.objectContaining({
+					nutrientId: NUTRIENT_IDS.CALCIUM,
+					value: 36,
+					unitName: "MG",
+				}),
 			]),
 		);
 		expect(draft?.reportedNutrientIds).toEqual(
@@ -160,7 +178,10 @@ describe("barcode product mapping", () => {
 		});
 		expect(draft?.nutrients).toEqual(
 			expect.arrayContaining([
-				expect.objectContaining({ nutrientId: NUTRIENT_IDS.CALORIES, value: 40 }),
+				expect.objectContaining({
+					nutrientId: NUTRIENT_IDS.CALORIES,
+					value: 40,
+				}),
 				expect.objectContaining({ nutrientId: NUTRIENT_IDS.FAT, value: 4 }),
 				expect.objectContaining({ nutrientId: 1258, value: 0.5 }),
 				expect.objectContaining({ nutrientId: NUTRIENT_IDS.CARBS, value: 1 }),
@@ -341,21 +362,26 @@ describe("barcode product mapping", () => {
 			productReferenceCatalogFixture,
 		);
 
-			expect(draft).toMatchObject({
-				ingredients: "Cultured milk, honey, pectin",
+		expect(draft).toMatchObject({
+			ingredients: "Cultured milk, honey, pectin",
 			ingredientList: ["Cultured milk", "honey", "pectin"],
 			allergens: ["milk"],
 			traces: ["tree nuts"],
 			dietaryTags: ["gluten free"],
-				categories: ["milk and yogurt", "dairy desserts", "dairy products", "yogurts"],
-				fieldProvenance: {
-					ingredients: { source: "open-food-facts" },
-					allergens: { source: "open-food-facts" },
-					traces: { source: "open-food-facts" },
-					dietaryTags: { source: "open-food-facts" },
-					labels: { source: "open-food-facts" },
-				},
-			});
+			categories: [
+				"milk and yogurt",
+				"dairy desserts",
+				"dairy products",
+				"yogurts",
+			],
+			fieldProvenance: {
+				ingredients: { source: "open-food-facts" },
+				allergens: { source: "open-food-facts" },
+				traces: { source: "open-food-facts" },
+				dietaryTags: { source: "open-food-facts" },
+				labels: { source: "open-food-facts" },
+			},
+		});
 	});
 
 	it("preserves structured Open Food Facts package and quality metadata", () => {
@@ -455,13 +481,84 @@ describe("barcode product mapping", () => {
 		expect(draft?.traces).not.toContain("soy");
 	});
 
+	it("keeps derived ingredient declarations separate from provider allergen fields", () => {
+		const draft = mapOpenFoodFactsProduct(
+			{
+				product_name: "English declaration",
+				lang: "fr",
+				ingredients_text_en:
+					"Rice flour, cocoa. Contains milk. May contain peanuts.",
+				nutriments: { "energy-kcal_100g": 100 },
+			},
+			"049000042566",
+			productReferenceCatalogFixture,
+		);
+
+		expect(draft).toMatchObject({
+			allergens: [],
+			traces: [],
+			ingredientAnalysis: {
+				allergenDeclarationAnalysis: {
+					sourceField: "ingredients_text_en",
+					languageCode: "en",
+					languageStatus: "supported",
+					extractionStatus: "parsed",
+					contains: ["milk"],
+					mayContain: ["peanuts"],
+				},
+			},
+			precautionaryStatements: [
+				{
+					type: "may_contain",
+					text: "May contain peanuts",
+					allergens: ["peanuts"],
+					languageCode: "en",
+					sourceField: "ingredients_text_en",
+				},
+			],
+			fieldProvenance: {
+				ingredientAnalysis: { source: "open-food-facts" },
+			},
+		});
+		expect(draft?.fieldProvenance?.allergens).toBeUndefined();
+		expect(draft?.fieldProvenance?.traces).toBeUndefined();
+	});
+
+	it("records unreviewed Open Food Facts declaration languages without parsing them", () => {
+		const draft = mapOpenFoodFactsProduct(
+			{
+				product_name: "French declaration",
+				lang: "fr",
+				ingredients_text: "Riz, cacao. Contient du lait.",
+				nutriments: { "energy-kcal_100g": 100 },
+			},
+			"049000042566",
+			productReferenceCatalogFixture,
+		);
+
+		expect(
+			draft?.ingredientAnalysis?.allergenDeclarationAnalysis,
+		).toMatchObject({
+			sourceField: "ingredients_text",
+			languageCode: "fr",
+			languageStatus: "unsupported",
+			extractionStatus: "skipped",
+			contains: [],
+			mayContain: [],
+		});
+		expect(draft?.allergens).toEqual([]);
+		expect(draft?.traces).toEqual([]);
+	});
+
 	it("keeps Open Food Facts package image metadata with attribution", () => {
 		const draft = mapOpenFoodFactsProduct(
 			{
 				product_name: "Test jelly",
 				brands: "Example Brand",
-				image_front_url: "https://images.openfoodfacts.org/images/products/000/211/304/62506/front_en.3.400.jpg",
-				image_front_small_url: "https://images.openfoodfacts.org/images/products/000/211/304/62506/front_en.3.200.jpg",
+				image_front_url:
+					"https://images.openfoodfacts.org/images/products/000/211/304/62506/front_en.3.400.jpg",
+				image_front_small_url:
+					"https://images.openfoodfacts.org/images/products/000/211/304/62506/front_en.3.200.jpg",
 				nutriments: { "energy-kcal_100g": 50 },
 			},
 			"00021130462506",
@@ -472,8 +569,10 @@ describe("barcode product mapping", () => {
 			source: "open-food-facts",
 			sourceReference: "00021130462506",
 			role: "front",
-			imageUrl: "https://images.openfoodfacts.org/images/products/000/211/304/62506/front_en.3.400.jpg",
-			thumbnailUrl: "https://images.openfoodfacts.org/images/products/000/211/304/62506/front_en.3.200.jpg",
+			imageUrl:
+				"https://images.openfoodfacts.org/images/products/000/211/304/62506/front_en.3.400.jpg",
+			thumbnailUrl:
+				"https://images.openfoodfacts.org/images/products/000/211/304/62506/front_en.3.200.jpg",
 			licenseName: "Creative Commons Attribution-ShareAlike",
 			licenseUrl: "https://world.openfoodfacts.org/terms-of-use",
 			attributionText: "Open Food Facts contributors",
@@ -532,14 +631,62 @@ describe("barcode product mapping", () => {
 				servingSizeUnit: "g",
 				householdServingFullText: "2 tbsp",
 				foodNutrients: [
-					{ nutrientId: NUTRIENT_IDS.CALORIES, nutrientName: "Energy", nutrientNumber: "208", unitName: "KCAL", value: 400 },
-					{ nutrientId: NUTRIENT_IDS.FAT, nutrientName: "Fat", nutrientNumber: "204", unitName: "G", value: 12 },
-					{ nutrientId: NUTRIENT_IDS.CARBS, nutrientName: "Carbs", nutrientNumber: "205", unitName: "G", value: 50 },
-					{ nutrientId: NUTRIENT_IDS.FIBER, nutrientName: "Fiber", nutrientNumber: "291", unitName: "G", value: 6 },
-					{ nutrientId: NUTRIENT_IDS.SUGAR, nutrientName: "Sugar", nutrientNumber: "269", unitName: "G", value: 20 },
-					{ nutrientId: NUTRIENT_IDS.PROTEIN, nutrientName: "Protein", nutrientNumber: "203", unitName: "G", value: 10 },
-					{ nutrientId: NUTRIENT_IDS.SODIUM, nutrientName: "Sodium", nutrientNumber: "307", unitName: "MG", value: 600 },
-					{ nutrientId: NUTRIENT_IDS.VITAMIN_C, nutrientName: "Vitamin C", nutrientNumber: "401", unitName: "MG", value: 20 },
+					{
+						nutrientId: NUTRIENT_IDS.CALORIES,
+						nutrientName: "Energy",
+						nutrientNumber: "208",
+						unitName: "KCAL",
+						value: 400,
+					},
+					{
+						nutrientId: NUTRIENT_IDS.FAT,
+						nutrientName: "Fat",
+						nutrientNumber: "204",
+						unitName: "G",
+						value: 12,
+					},
+					{
+						nutrientId: NUTRIENT_IDS.CARBS,
+						nutrientName: "Carbs",
+						nutrientNumber: "205",
+						unitName: "G",
+						value: 50,
+					},
+					{
+						nutrientId: NUTRIENT_IDS.FIBER,
+						nutrientName: "Fiber",
+						nutrientNumber: "291",
+						unitName: "G",
+						value: 6,
+					},
+					{
+						nutrientId: NUTRIENT_IDS.SUGAR,
+						nutrientName: "Sugar",
+						nutrientNumber: "269",
+						unitName: "G",
+						value: 20,
+					},
+					{
+						nutrientId: NUTRIENT_IDS.PROTEIN,
+						nutrientName: "Protein",
+						nutrientNumber: "203",
+						unitName: "G",
+						value: 10,
+					},
+					{
+						nutrientId: NUTRIENT_IDS.SODIUM,
+						nutrientName: "Sodium",
+						nutrientNumber: "307",
+						unitName: "MG",
+						value: 600,
+					},
+					{
+						nutrientId: NUTRIENT_IDS.VITAMIN_C,
+						nutrientName: "Vitamin C",
+						nutrientNumber: "401",
+						unitName: "MG",
+						value: 20,
+					},
 				],
 				reportedNutrientIds: [
 					NUTRIENT_IDS.CALORIES,
@@ -558,7 +705,10 @@ describe("barcode product mapping", () => {
 
 		expect(draft?.nutrients).toEqual(
 			expect.arrayContaining([
-				expect.objectContaining({ nutrientId: NUTRIENT_IDS.CALORIES, value: 200 }),
+				expect.objectContaining({
+					nutrientId: NUTRIENT_IDS.CALORIES,
+					value: 200,
+				}),
 				expect.objectContaining({ nutrientId: NUTRIENT_IDS.FAT, value: 6 }),
 				expect.objectContaining({ nutrientId: NUTRIENT_IDS.CARBS, value: 25 }),
 				expect.objectContaining({ nutrientId: NUTRIENT_IDS.FIBER, value: 3 }),
@@ -569,8 +719,14 @@ describe("barcode product mapping", () => {
 		expect(draft?.volumeEquivalent).toEqual({ quantity: 2, unit: "tbsp" });
 		expect(draft?.nutrients).toEqual(
 			expect.arrayContaining([
-				expect.objectContaining({ nutrientId: NUTRIENT_IDS.SODIUM, value: 300 }),
-				expect.objectContaining({ nutrientId: NUTRIENT_IDS.VITAMIN_C, value: 10 }),
+				expect.objectContaining({
+					nutrientId: NUTRIENT_IDS.SODIUM,
+					value: 300,
+				}),
+				expect.objectContaining({
+					nutrientId: NUTRIENT_IDS.VITAMIN_C,
+					value: 10,
+				}),
 			]),
 		);
 		expect(draft?.reportedNutrientIds).toContain(NUTRIENT_IDS.VITAMIN_C);
@@ -583,13 +739,13 @@ describe("barcode product mapping", () => {
 			sourcePublishedDate: "2024-05-01",
 			sourceModifiedDate: "2024-04-15",
 			fieldProvenance: {
-					nutrition: { source: "usda", confidence: "unknown" },
-					categories: { source: "usda", confidence: "unknown" },
-					serving: { source: "usda", confidence: "unknown" },
-					ingredients: { source: "usda", confidence: "unknown" },
-					allergens: { source: "usda", confidence: "unknown" },
-				},
-			});
+				nutrition: { source: "usda", confidence: "unknown" },
+				categories: { source: "usda", confidence: "unknown" },
+				serving: { source: "usda", confidence: "unknown" },
+				ingredients: { source: "usda", confidence: "unknown" },
+				allergens: { source: "usda", confidence: "unknown" },
+			},
+		});
 	});
 
 	it("uses the database-derived USDA GRM serving alias", () => {
@@ -741,7 +897,7 @@ describe("barcode product mapping", () => {
 			productReferenceCatalogFixture,
 		);
 
-			expect(draft).toMatchObject({
+		expect(draft).toMatchObject({
 			source: "shared-catalog",
 			sourceLabel: "blendCalc verified catalog",
 			sourceReference: "product-id",
@@ -754,7 +910,7 @@ describe("barcode product mapping", () => {
 		expect(draft?.fieldProvenance?.categories).toBeUndefined();
 	});
 
-	it("keeps explicit USDA ingredient-label allergen declarations", () => {
+	it("keeps derived USDA ingredient declarations separate from reported fields", () => {
 		const draft = mapFdcBarcodeFood(
 			{
 				fdcId: 124,
@@ -768,13 +924,42 @@ describe("barcode product mapping", () => {
 		);
 
 		expect(draft).toMatchObject({
-			allergens: ["Almonds"],
-			traces: ["soy"],
+			allergens: [],
+			traces: [],
+			ingredientAnalysis: {
+				allergenDeclarationAnalysis: {
+					languageStatus: "unknown",
+					extractionStatus: "parsed",
+					contains: ["Almonds"],
+					mayContain: ["soy"],
+					statements: [
+						{
+							type: "contains",
+							text: "Contains Almonds",
+							allergens: ["Almonds"],
+						},
+						{
+							type: "may_contain",
+							text: "May contain soy",
+							allergens: ["soy"],
+						},
+					],
+				},
+			},
+			precautionaryStatements: [
+				{
+					type: "may_contain",
+					text: "May contain soy",
+					allergens: ["soy"],
+					sourceField: "ingredients",
+				},
+			],
 			fieldProvenance: {
-				allergens: { source: "usda", confidence: "unknown" },
-				traces: { source: "usda", confidence: "unknown" },
+				ingredientAnalysis: { source: "usda", confidence: "unknown" },
 			},
 		});
+		expect(draft?.fieldProvenance?.allergens).toBeUndefined();
+		expect(draft?.fieldProvenance?.traces).toBeUndefined();
 	});
 
 	it("does not infer USDA allergens from ordinary ingredient names", () => {
