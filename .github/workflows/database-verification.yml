@@ -4,10 +4,7 @@ on:
   pull_request:
   push:
     branches:
-      - main
-      - staging
-      - mobile-ui-rebuild
-      - "ui-rebuild/**"
+      - "**"
 
 concurrency:
   group: database-${{ github.workflow }}-${{ github.ref }}

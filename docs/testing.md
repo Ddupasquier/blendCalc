@@ -213,9 +213,10 @@ The checked-in workflows use Node.js 24 and a clean dependency install:
   key, management token, or other protected credential.
 
 The stable required conclusions are `Source, Tests, And Build`, `Browser Matrix`,
-`Database Verification`, and `Hosted Auth Health`. Repository protection must require
-all four on `mobile-ui-rebuild`, `staging`, and `main`; feature branches are verified
-through pull requests into the first protected parent they feed.
+`Database Verification`, and `Hosted Auth Health`. Every pushed branch runs the
+maintained gates so a feature can be verified before integration. Repository protection
+must require all four on `staging` and `main`; pull requests target `staging` for normal
+work and `main` only for an explicitly approved release.
 
 ## Browser Matrix
 

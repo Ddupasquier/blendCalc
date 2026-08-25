@@ -955,33 +955,32 @@ not permission to commit, push, merge, or deploy.
 **21.** Verify meaningful changes with `npm run check`, focused tests, and builds when
 scope warrants it.
 
-**22.** For the full mobile UI rebuild, use `mobile-ui-rebuild` as the temporary
-integration branch. Major rebuild sections branch from `mobile-ui-rebuild`, merge back
-into `mobile-ui-rebuild` only after approval and checks, and do not move to `staging`
-until the full rebuild is approved.
+**22.** Start normal work from current `staging` on one short-lived responsibility
+branch. Use a descriptive prefix such as `feat/`, `fix/`, `refactor/`, `chore/`,
+`docs/`, or `test/`, followed by a plain-English outcome. Do not reuse long-lived view
+branches or combine unrelated work merely because it touches the same page.
 
-**22a.** When the user explicitly approves moving work to `main` during the mobile UI
-rebuild, promote it through the complete branch chain in order:
-`ui-rebuild/ingredients` → `mobile-ui-rebuild` → `staging` → `main`. Push every updated
-branch, verify the remote branch heads, and finish by switching the local checkout back
-to the originating working branch. If a change has already landed directly on a parent
-branch, reconcile it onto the working branch and promote it forward again so no parent
-branch is skipped. This workflow does not grant standing permission to commit or push
-unrelated work.
+**22a.** Promote an explicitly approved responsibility branch to `staging` only after
+its maintained local and remote checks pass. Promote `staging` to `main` only for an
+explicitly approved release, recheck the exact staging head, and never skip the staging
+integration boundary. Push and verify every updated branch, then return the local
+checkout to the active feature branch when more work remains. This workflow does not
+grant standing permission to commit, push, merge, deploy, or include unrelated work.
 
-**23.** During the mobile UI rebuild, protected components require explicit written
-approval before alteration. The graph and barcode scanner are currently protected.
+**23.** Stable high-risk components require explicit written approval before material
+alteration. The nutrient chart and barcode scanner are currently protected; preserve
+their approved behavior and focused regression coverage when adjacent work changes.
 
 <a id="rule-figma-screenshots"></a>
 
 #### Rule 24 — Figma Screenshots
 
-Ask for Figma screenshots before implementing
-any new UI element or materially changing an existing UI element during the mobile UI
-rebuild. Do not move forward with implementation until the relevant screenshots, states,
-or explicit visual direction are provided. Match provided screenshots before inventing
-layout details, and name the exact screenshot references in QA notes for any
-screenshot-backed UI change.
+Ask for Figma screenshots before implementing any new UI element or materially changing
+an existing UI element when the user has not already supplied explicit visual direction.
+Do not move forward with implementation until the relevant screenshots, states, or
+written direction are provided. Match provided references before inventing layout
+details, and name the exact screenshot references in QA notes for screenshot-backed UI
+changes.
 
 <a id="rule-ui-refactor-new-components"></a>
 

@@ -5,13 +5,9 @@ on:
     branches:
       - main
       - staging
-      - mobile-ui-rebuild
   push:
     branches:
-      - main
-      - staging
-      - mobile-ui-rebuild
-      - "ui-rebuild/**"
+      - "**"
 
 concurrency:
   group: hosted-auth-${{ github.workflow }}-${{ github.ref }}
