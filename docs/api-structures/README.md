@@ -1,11 +1,17 @@
-# blendCalc API And Provider References
+# blendCalcAPI And Provider References
 
 This directory documents two separate boundaries:
 
-1. **blendCalc API v1** — the app-owned, versioned HTTP contract for approved canonical
+1. **blendCalcAPI v1** — the app-owned, versioned HTTP contract for approved canonical
    catalog data.
 2. **Provider reference files** — sampled documentation of external payloads used to
    maintain source adapters. These files are not runtime contracts.
+
+`blendCalcAPI` is the canonical product name for blendCalc's app-owned food-data API.
+Use `blendCalcAPI v1` when referring to the current contract, `internal blendCalcAPI v1`
+for its current access state, and `public blendCalcAPI` for the planned public service.
+Technical identifiers such as `/api/v1`, `ApiV1*`, database object names, and response
+fields retain their stable versioned names.
 
 ## Quick Navigation
 

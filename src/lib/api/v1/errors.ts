@@ -45,11 +45,11 @@ export const API_V1_ERROR_DEFINITIONS = {
 	},
 	service_unavailable: {
 		status: 503,
-		message: "The blendCalc API is temporarily unavailable.",
+		message: "blendCalcAPI is temporarily unavailable.",
 	},
 	unexpected_error: {
 		status: 500,
-		message: "The blendCalc API could not complete this request.",
+		message: "blendCalcAPI could not complete this request.",
 	},
 } as const;
 

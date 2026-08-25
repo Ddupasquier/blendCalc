@@ -10,7 +10,7 @@ import { normalizeBarcode } from "$lib/utils/barcode/barcode";
 import type { RequestHandler } from "./$types";
 
 export const GET: RequestHandler = async ({ locals, params, url }) => {
-	if (!await hasApiV1CatalogReadAccess(locals)) {
+	if (!(await hasApiV1CatalogReadAccess(locals))) {
 		return apiV1Error("authentication_required");
 	}
 	const barcode = normalizeBarcode(params.barcode);
@@ -37,7 +37,7 @@ export const GET: RequestHandler = async ({ locals, params, url }) => {
 		}
 		return apiV1Success(result.revisions, result.pagination);
 	} catch (error) {
-		console.error("blendCalc API v1 revision-history read failed.", error);
+		console.error("blendCalcAPI v1 revision-history read failed.", error);
 		return apiV1Error("catalog_unavailable");
 	}
 };

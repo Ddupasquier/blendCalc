@@ -20,7 +20,7 @@ const specification = JSON.parse(
 	};
 };
 
-describe("blendCalc API v1 OpenAPI contract", () => {
+describe("blendCalcAPI v1 OpenAPI contract", () => {
 	it("publishes the four read-only internal endpoints", () => {
 		expect(specification.openapi).toBe("3.1.0");
 		expect(Object.keys(specification.paths)).toEqual([
@@ -48,7 +48,9 @@ describe("blendCalc API v1 OpenAPI contract", () => {
 			"x-blendcalc-public-release":
 				BLENDCALC_API_V1_ACCESS_POLICY.publicReleaseStatus,
 		});
-		expect(specification.components.securitySchemes).toHaveProperty("cookieAuth");
+		expect(specification.components.securitySchemes).toHaveProperty(
+			"cookieAuth",
+		);
 		expect(specification.components.schemas).toHaveProperty("Source");
 		expect(specification.components.schemas).toHaveProperty("FieldSource");
 		expect(specification.components.schemas).toHaveProperty("Revision");
@@ -148,9 +150,11 @@ describe("blendCalc API v1 OpenAPI contract", () => {
 	});
 
 	it("allows only bounded public revision values and source tag fields", () => {
-		expect(specification.components.schemas.ProductRevisionValue).toMatchObject({
-			oneOf: expect.any(Array),
-		});
+		expect(specification.components.schemas.ProductRevisionValue).toMatchObject(
+			{
+				oneOf: expect.any(Array),
+			},
+		);
 		expect(specification.components.schemas.SourceRecord).toMatchObject({
 			properties: {
 				tagSources: {
@@ -201,7 +205,15 @@ describe("blendCalc API v1 OpenAPI contract", () => {
 		for (const operation of Object.values(specification.paths)) {
 			const get = operation.get as { responses: Record<string, unknown> };
 			expect(Object.keys(get.responses)).toEqual(
-				expect.arrayContaining(["400", "401", "403", "405", "429", "500", "503"]),
+				expect.arrayContaining([
+					"400",
+					"401",
+					"403",
+					"405",
+					"429",
+					"500",
+					"503",
+				]),
 			);
 		}
 	});

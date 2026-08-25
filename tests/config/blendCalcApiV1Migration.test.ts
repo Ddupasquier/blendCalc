@@ -6,11 +6,13 @@ const migration = readFileSync(
 	"utf8",
 );
 
-describe("blendCalc API v1 catalog reads migration", () => {
+describe("blendCalcAPI v1 catalog reads migration", () => {
 	it("reads active canonical products and their latest revision", () => {
 		expect(migration).toContain("product.status = 'active'");
 		expect(migration).toContain("from public.shared_product_revisions");
-		expect(migration).toContain("order by product_revision.revision_number desc");
+		expect(migration).toContain(
+			"order by product_revision.revision_number desc",
+		);
 	});
 
 	it("keeps direct database access private", () => {

@@ -213,7 +213,7 @@ Official references:
   before changing provider priority or retention.
 
 Current status: suitable as a guarded U.S. alcohol fallback, not as a global alcohol
-catalog or public blendCalc API source.
+catalog or public blendCalcAPI source.
 
 ## FDA Food Safety Notices
 
@@ -543,7 +543,7 @@ Complete every item before enabling production traffic or canonical storage:
 
 ## Public API Release Gate
 
-Do not include a source in a public blendCalc API response unless:
+Do not include a source in a public blendCalcAPI response unless:
 
 - canonical/public storage is explicitly allowed in the database;
 - `api_redistribution_allowed` is explicitly enabled after policy review;

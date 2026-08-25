@@ -6,7 +6,7 @@ import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
 import type { RequestHandler } from "./$types";
 
 export const GET: RequestHandler = async ({ locals, url }) => {
-	if (!await hasApiV1CatalogReadAccess(locals)) {
+	if (!(await hasApiV1CatalogReadAccess(locals))) {
 		return apiV1Error("authentication_required");
 	}
 	let request: ReturnType<typeof readApiV1SearchRequest>;
@@ -22,7 +22,7 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 		const result = await searchApiV1Products(getSupabaseAdminClient(), request);
 		return apiV1Success(result.products, result.pagination);
 	} catch (error) {
-		console.error("blendCalc API v1 product search failed.", error);
+		console.error("blendCalcAPI v1 product search failed.", error);
 		return apiV1Error("catalog_unavailable");
 	}
 };
