@@ -1098,6 +1098,89 @@ select
 	)
 from qa_taylor_recall_products;
 
+-- Current FDA exact-barcode controls published in August 2026. These fixtures keep
+-- product identity and official recall evidence exact while leaving absent nutrition
+-- unknown. They exercise the same announcement-detail UPC extraction used in the
+-- hosted monitor.
+with qa_current_fda_recall_products (
+	fixture_number,
+	barcode,
+	product_name,
+	brand_owner,
+	category_option_id,
+	package_amount,
+	package_label,
+	evidence_reference
+) as (
+	values
+		(1, '00860014523113', 'Calco Alfalfa Sprouts, 5 Ounce', 'Calco', 'qa-vegetables', 5::numeric, '5 oz', 'https://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/everything-sprouts-llc-recalls-alfalfa-sprouts-due-potential-e-coli-and-salmonella-risk'),
+		(2, '00860014523120', 'Calco Alfalfa Sprouts, 5 Ounce', 'Calco', 'qa-vegetables', 5::numeric, '5 oz', 'https://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/everything-sprouts-llc-recalls-alfalfa-sprouts-due-potential-e-coli-and-salmonella-risk'),
+		(3, '00850079470149', 'Calco Alfalfa Sprouts, 5 Ounce', 'Calco', 'qa-vegetables', 5::numeric, '5 oz', 'https://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/everything-sprouts-llc-recalls-alfalfa-sprouts-due-potential-e-coli-and-salmonella-risk'),
+		(4, '00850035324554', 'Lacnola Lactation Granola, 8 Ounce', 'The Hampton Grocer', 'qa-grains', 8::numeric, '8 oz', 'https://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/hampton-grocers-inc-recalls-its-8-ounce-packages-lacnola-lactation-granola-because-possible-health')
+)
+insert into private.qa_catalog_product_fixtures (
+	product_id,
+	revision_id,
+	observation_id,
+	barcode,
+	product_name,
+	brand_owner,
+	category_option_id,
+	source_reference,
+	evidence_reference,
+	food
+)
+select
+	('82700000-0000-4000-8000-' || lpad((fixture_number * 10 + 1)::text, 12, '0'))::uuid,
+	('82700000-0000-4000-8000-' || lpad((fixture_number * 10 + 2)::text, 12, '0'))::uuid,
+	('82700000-0000-4000-8000-' || lpad((fixture_number * 10 + 3)::text, 12, '0'))::uuid,
+	barcode,
+	product_name,
+	brand_owner,
+	category_option_id,
+	'local-qa-official-recall-product:' || barcode,
+	evidence_reference,
+	jsonb_build_object(
+		'fdcId', 9270000 + fixture_number,
+		'description', product_name,
+		'nameProvenance', 'source',
+		'brandOwner', brand_owner,
+		'foodNutrients', jsonb_build_array(),
+		'reportedNutrientIds', jsonb_build_array(),
+		'dataType', 'Branded',
+		'foodIdentityType', 'packaged',
+		'hasSourceServing', false,
+		'foodServings', jsonb_build_array(),
+		'gtinUpc', barcode,
+		'barcode', barcode,
+		'packageQuantity', jsonb_build_object(
+			'label', package_label,
+			'amount', package_amount,
+			'unit', 'oz'
+		),
+		'sourceMetadata', jsonb_build_object(
+			'language', 'en',
+			'marketCountries', jsonb_build_array('United States'),
+			'revision', 1,
+			'schemaVersion', 1,
+			'qualityWarningTags', jsonb_build_array('nutrition-not-reported')
+		),
+		'categories', jsonb_build_array(
+			case
+				when category_option_id = 'qa-grains' then 'Breakfast Cereals'
+				else 'Vegetables and Vegetable Products'
+			end
+		),
+		'categoryOptionId', category_option_id,
+		'barcodeSource', 'community',
+		'sourceKey', 'shared-catalog',
+		'sourceLabel', 'blendCalc Community',
+		'sourceDataType', 'local-qa-official-recall-product',
+		'trustStatus', 'moderator-reviewed',
+		'sharedProductConfidence', 'moderator-reviewed'
+	)
+from qa_current_fda_recall_products;
+
 with qa_generic_foods (
 	fixture_number,
 	barcode,
@@ -1622,6 +1705,97 @@ perform public.record_official_food_safety_alert(
 	),
 	jsonb_build_array(),
 	'2026-08-14T00:00:00Z'
+);
+
+perform public.record_official_food_safety_alert(
+	'open-fda-food-enforcement',
+	jsonb_build_object(
+		'externalAlertId', 'announcement:everything-sprouts-llc-recalls-alfalfa-sprouts-due-potential-e-coli-and-salmonella-risk',
+		'recallNumber', null,
+		'eventId', null,
+		'alertType', 'recall',
+		'classification', null,
+		'status', 'active',
+		'productDescription', 'Alfalfa Sprouts',
+		'reason', 'Potential Salmonella and Shiga toxin-producing E. coli contamination',
+		'recallingOrganization', 'Everything Sprouts, LLC',
+		'distributionPattern', 'Minnesota and Wisconsin',
+		'packageDescription', 'Everything Sprouts and Calco branded Alfalfa Sprouts in 5 oz plastic containers',
+		'codeInformation', 'Lots 222, 223, 225, 226, and 230',
+		'sourceUrl', 'https://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/everything-sprouts-llc-recalls-alfalfa-sprouts-due-potential-e-coli-and-salmonella-risk',
+		'reportDate', '2026-08-22',
+		'recallInitiatedAt', '2026-08-22',
+		'terminatedAt', null,
+		'sourceUpdatedAt', '2026-08-22T00:00:00.000Z',
+		'isActive', true,
+		'brandNames', jsonb_build_array('Everything Sprouts', 'Calco'),
+		'identifiers', jsonb_build_array()
+	),
+	jsonb_build_object(
+		'fixture', 'QA-088',
+		'officialNotice', 'Everything Sprouts and Calco alfalfa sprouts recall'
+	),
+	jsonb_build_object(
+		'fixture', 'QA-088',
+		'identityEvidence', 'Exact UPCs and affected lots published in the current FDA announcement'
+	),
+	repeat('d', 64),
+	jsonb_build_array(
+		jsonb_build_object('type', 'upc', 'normalizedValue', '00860014523113', 'sourceText', 'UPC 860014523113'),
+		jsonb_build_object('type', 'upc', 'normalizedValue', '00860014523120', 'sourceText', 'UPC 860014523120'),
+		jsonb_build_object('type', 'upc', 'normalizedValue', '00850079470149', 'sourceText', 'UPC 850079470149'),
+		jsonb_build_object('type', 'lot_code', 'normalizedValue', '222', 'sourceText', 'Lot 222'),
+		jsonb_build_object('type', 'lot_code', 'normalizedValue', '223', 'sourceText', 'Lot 223'),
+		jsonb_build_object('type', 'lot_code', 'normalizedValue', '225', 'sourceText', 'Lot 225'),
+		jsonb_build_object('type', 'lot_code', 'normalizedValue', '226', 'sourceText', 'Lot 226'),
+		jsonb_build_object('type', 'lot_code', 'normalizedValue', '230', 'sourceText', 'Lot 230')
+	),
+	jsonb_build_array(),
+	'2026-08-22T00:00:00Z'
+);
+
+perform public.record_official_food_safety_alert(
+	'open-fda-food-enforcement',
+	jsonb_build_object(
+		'externalAlertId', 'announcement:hampton-grocers-inc-recalls-its-8-ounce-packages-lacnola-lactation-granola-because-possible-health',
+		'recallNumber', null,
+		'eventId', null,
+		'alertType', 'recall',
+		'classification', null,
+		'status', 'active',
+		'productDescription', 'Lacnola Lactation Granola',
+		'reason', 'Potential Salmonella contamination',
+		'recallingOrganization', 'The Hampton Grocer, Inc.',
+		'distributionPattern', 'Nationwide mail order and Amazon',
+		'packageDescription', 'Pink 8 oz stand-up pouch',
+		'codeInformation', 'Lots HGLC-102125 and HGLC-021326; expiration dates 21OCT2026 and 13FEB2027',
+		'sourceUrl', 'https://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/hampton-grocers-inc-recalls-its-8-ounce-packages-lacnola-lactation-granola-because-possible-health',
+		'reportDate', '2026-08-14',
+		'recallInitiatedAt', '2026-08-14',
+		'terminatedAt', null,
+		'sourceUpdatedAt', '2026-08-18T00:00:00.000Z',
+		'isActive', true,
+		'brandNames', jsonb_build_array('The Hampton Grocer'),
+		'identifiers', jsonb_build_array()
+	),
+	jsonb_build_object(
+		'fixture', 'QA-088',
+		'officialNotice', 'The Hampton Grocer Lacnola Lactation Granola recall'
+	),
+	jsonb_build_object(
+		'fixture', 'QA-088',
+		'identityEvidence', 'Exact UPC, package size, lots, and expiration dates published in the current FDA announcement'
+	),
+	repeat('e', 64),
+	jsonb_build_array(
+		jsonb_build_object('type', 'upc', 'normalizedValue', '00850035324554', 'sourceText', 'UPC 850035324554'),
+		jsonb_build_object('type', 'lot_code', 'normalizedValue', 'HGLC-102125', 'sourceText', 'Lot HGLC-102125'),
+		jsonb_build_object('type', 'lot_code', 'normalizedValue', 'HGLC-021326', 'sourceText', 'Lot HGLC-021326'),
+		jsonb_build_object('type', 'use_by_date', 'normalizedValue', '21OCT2026', 'sourceText', 'Expiration 21OCT2026'),
+		jsonb_build_object('type', 'use_by_date', 'normalizedValue', '13FEB2027', 'sourceText', 'Expiration 13FEB2027')
+	),
+	jsonb_build_array(),
+	'2026-08-18T00:00:00Z'
 );
 
 insert into public.shared_product_revisions (

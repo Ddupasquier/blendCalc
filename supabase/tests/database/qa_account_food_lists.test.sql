@@ -1,6 +1,6 @@
 begin;
 
-select plan(34);
+select plan(35);
 
 select is(
 	(select count(*) from auth.users where email like 'qa-%@blendcalc.local'),
@@ -35,7 +35,7 @@ select ok(
 				('qa-browser-1@blendcalc.local', 60, 40),
 				('qa-browser-2@blendcalc.local', 60, 40),
 				('qa-browser-3@blendcalc.local', 60, 40),
-				('qa-preferences@blendcalc.local', 10, 3),
+				('qa-preferences@blendcalc.local', 14, 3),
 				('qa-empty@blendcalc.local', 0, 0),
 				('qa-onboarding@blendcalc.local', 10, 0),
 				('qa-moderator@blendcalc.local', 3, 3),
@@ -248,6 +248,30 @@ select ok(
 	'the warning persona includes a current exact FDA recall fixture'
 );
 
+select is(
+	(
+		select count(*)
+		from auth.users user_row
+		join public.user_food_list_items item on item.user_id = user_row.id
+		join public.shared_products product on product.id = item.shared_product_id
+		join public.official_food_safety_alert_matches alert_match
+			on alert_match.shared_product_id = product.id
+		join public.official_food_safety_alerts alert on alert.id = alert_match.alert_id
+		where user_row.email = 'qa-preferences@blendcalc.local'
+			and product.barcode in (
+				'00860014523113',
+				'00860014523120',
+				'00850079470149',
+				'00850035324554'
+			)
+			and alert_match.match_type = 'exact_gtin'
+			and alert_match.status = 'active'
+			and alert.is_active
+	),
+	4::bigint,
+	'the warning persona includes every current exact-barcode FDA recall control'
+);
+
 select ok(
 	(
 		select count(*)
@@ -348,7 +372,7 @@ select is(
 			or product.source_reference like 'local-qa:%'
 			or product.source = 'usda'
 	),
-			115::bigint,
+	119::bigint,
 	'the local catalog contains all focused and source-shaped QA foods'
 );
 
