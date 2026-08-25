@@ -109,6 +109,22 @@ Rerun only browser failures with:
 npx playwright test --last-failed
 ```
 
+Use the visible terminal dashboard when a complete progress view is more useful than
+compact output:
+
+| Profile       | Command                  | Ownership                                                                                            |
+| ------------- | ------------------------ | ---------------------------------------------------------------------------------------------------- |
+| Quick Check   | `npm run verify:quick`   | Formatting, lint, Svelte/TypeScript, and Vitest                                                      |
+| Feature Check | `npm run verify:feature` | Quick Check, production build, and desktop/compact Chromium                                          |
+| Release Check | `npm run verify:release` | Dependency audit, source gates, disposable database, build, and the complete local Playwright matrix |
+
+VS Code exposes the same three profiles through **Terminal → Run Task**. Each task opens
+one dedicated terminal and shows stage progress, elapsed time, an estimate based on
+ignored local duration history, the current test when the runner reports it, and the
+failure-log path when a stage fails. This is a presentation layer over the maintained
+commands; it does not replace focused iteration, GitHub's isolated browser jobs, or
+manual physical-device verification.
+
 ### Feature Confidence
 
 Before handing off browser-facing work, run the focused desktop and phone Chromium pass:

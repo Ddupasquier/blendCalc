@@ -1,0 +1,44 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "blendCalc: Quick Check",
+			"type": "shell",
+			"command": "npm run verify:quick",
+			"group": "test",
+			"problemMatcher": [],
+			"presentation": {
+				"reveal": "always",
+				"panel": "dedicated",
+				"clear": true,
+				"focus": true
+			}
+		},
+		{
+			"label": "blendCalc: Feature Check",
+			"type": "shell",
+			"command": "npm run verify:feature",
+			"group": "test",
+			"problemMatcher": [],
+			"presentation": {
+				"reveal": "always",
+				"panel": "dedicated",
+				"clear": true,
+				"focus": true
+			}
+		},
+		{
+			"label": "blendCalc: Release Check",
+			"type": "shell",
+			"command": "npm run verify:release",
+			"group": "test",
+			"problemMatcher": [],
+			"presentation": {
+				"reveal": "always",
+				"panel": "dedicated",
+				"clear": true,
+				"focus": true
+			}
+		}
+	]
+}

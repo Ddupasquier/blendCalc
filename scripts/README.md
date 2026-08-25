@@ -97,6 +97,23 @@ start or reset only localhost Supabase, writes an ignored test environment, appl
 The full persona inventory, safe reset behavior, and database QA workflow live in
 [Database Testing](../docs/database-testing.md).
 
+## Visible Verification Dashboard
+
+`operations/quality/run_verification_dashboard.mjs` runs the maintained verification
+layers in one live terminal view. It stores duration estimates in ignored `.cache/`
+state and writes complete diagnostics only for failed stages under ignored
+`test-results/verification-dashboard/`.
+
+| Command                  | Scope                                                                                          |
+| ------------------------ | ---------------------------------------------------------------------------------------------- |
+| `npm run verify:quick`   | Formatting, lint, Svelte/TypeScript, and Vitest                                                |
+| `npm run verify:feature` | Quick Check, production build, and desktop/compact Chromium                                    |
+| `npm run verify:release` | Dependency audit, source gates, disposable database, build, and the complete Playwright matrix |
+
+Use the VS Code tasks with the same names for a dedicated visible terminal. Continue to
+run the narrowest direct test while editing; the dashboard is for confidence passes,
+not a reason to rerun every layer after a small change.
+
 ## Linked Migration Delivery
 
 `operations/database/push_supabase_db.mjs` protects all real migration delivery. A live

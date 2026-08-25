@@ -134,6 +134,9 @@ intentionally omitted.
 | `npm run test:e2e:ui`          | Open Playwright's interactive test explorer.                              |
 | `npm run test:e2e:update`      | Review and update tracked Chromium visual snapshots.                      |
 | `npm run test:e2e:install`     | Install Chromium, Firefox, and WebKit for Playwright.                     |
+| `npm run verify:quick`         | Show source checks and Vitest in the live verification dashboard.         |
+| `npm run verify:feature`       | Add a production build and desktop/compact Chromium to the dashboard.     |
+| `npm run verify:release`       | Run the complete local release confidence profile in the dashboard.       |
 
 Use the [Testing Strategy](docs/testing.md) to choose a test layer. Browser setup lives
 in [Browser Testing](docs/browser-testing.md); database fixtures and personas live in
