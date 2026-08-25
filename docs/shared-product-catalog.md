@@ -529,7 +529,9 @@ separate route and database permissions.
 FDA recall announcements, FDA enforcement records, and USDA FSIS recalls/public-health
 alerts are ingested with immutable revisions and exact identifiers. The announcement
 channel closes the gap where FDA has published a current notice that has not yet reached
-openFDA enforcement data. Match policy is deliberately conservative:
+openFDA enforcement data. Current announcement reads may pass through blendCalc's
+fixed-origin protected relay when FDA.gov blocks the Edge runtime. Match policy is
+deliberately conservative:
 
 - an exact normalized GTIN can become visible immediately;
 - a strong brand, product, and package identity match requires moderation;

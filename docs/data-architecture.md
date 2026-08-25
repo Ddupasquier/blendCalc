@@ -240,6 +240,11 @@ Official FDA recall announcements and enforcement records share one FDA-owned cu
 with independent bounded offsets; USDA FSIS uses its own cursor, retry, and history.
 An unchanged FDA announcement index is skipped with conditional requests, and an
 unavailable safety source does not stop the other source or product revalidation.
+Because FDA.gov can deny Supabase Edge network traffic while remaining available to the
+deployed app server, current FDA announcement index and detail reads may use the
+fixed-origin, secret-authenticated `/api/internal/food-safety/fda-recall-source` relay.
+The relay accepts no arbitrary upstream host, caps response size, preserves conditional
+request metadata, and remains unavailable to browsers and unauthenticated callers.
 The database matches exact normalized GTINs automatically, sends strong brand/product/
 package identity matches to moderation, and ignores weak title-only similarity. Exact
 and confirmed active matches are hydrated onto catalog-backed foods, enqueue owner-only

@@ -17,13 +17,13 @@ each individual source and asset licence.
 
 ## Ledger Navigation
 
-| Area | Sections |
-| --- | --- |
-| Decision model | [Compliance model](#compliance-model) and [status summary](#status-summary) |
-| Food data | [USDA](#usda-fooddata-central), [Open Food Facts](#open-food-facts), [COLA Cloud](#cola-cloud), [CNF](#canadian-nutrient-file-2026), [CoFID](#uk-cofid-2021), and [Australian data](#australian-food-composition-database-release-3) |
-| Standards and tools | [UCUM](#ucum-unit-standard), [GS1 Digital Link](#gs1-digital-link), and [label OCR](#nutrition-label-ocr-and-tesseractjs) |
-| Images and community data | [Product images](#product-images), [community submissions](#community-and-user-label-data), and [inactive sources](#retired-or-inactive-sources) |
-| Release work | [Known blockers](#known-gaps-and-release-blockers), [source changes](#adding-or-changing-a-source), [public API gate](#public-api-release-gate), and [repository locations](#authoritative-repository-locations) |
+| Area                      | Sections                                                                                                                                                                                                                             |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Decision model            | [Compliance model](#compliance-model) and [status summary](#status-summary)                                                                                                                                                          |
+| Food data                 | [USDA](#usda-fooddata-central), [Open Food Facts](#open-food-facts), [COLA Cloud](#cola-cloud), [CNF](#canadian-nutrient-file-2026), [CoFID](#uk-cofid-2021), and [Australian data](#australian-food-composition-database-release-3) |
+| Standards and tools       | [UCUM](#ucum-unit-standard), [GS1 Digital Link](#gs1-digital-link), and [label OCR](#nutrition-label-ocr-and-tesseractjs)                                                                                                            |
+| Images and community data | [Product images](#product-images), [community submissions](#community-and-user-label-data), and [inactive sources](#retired-or-inactive-sources)                                                                                     |
+| Release work              | [Known blockers](#known-gaps-and-release-blockers), [source changes](#adding-or-changing-a-source), [public API gate](#public-api-release-gate), and [repository locations](#authoritative-repository-locations)                     |
 
 ## Compliance Model
 
@@ -56,22 +56,22 @@ future public API.
 
 ## Status Summary
 
-| Source | Current use | Governing terms | Current engineering status |
-| --- | --- | --- | --- |
-| USDA FoodData Central | Runtime barcode/product data and nutrition | CC0 1.0/public domain | Canonical and API reuse allowed |
-| Open Food Facts | Runtime barcode lookup, licensed cache, package images | ODbL/Database Contents Licence; images under CC BY-SA | Product fields are excluded from API v1; individually licensed images remain eligible |
-| COLA Cloud | Optional exact-barcode U.S. alcohol-label lookup | Proprietary API terms over public TTB records and provider enrichments | Server-only trial; canonical storage, label-image use, and API redistribution blocked |
-| FDA Food Safety Notices | Scheduled FDA recall announcements plus enforcement evidence | openFDA terms and FDA website policy; generally U.S. government information, with stated third-party exceptions and disclaimers | Normalized index/enforcement facts and attribution may be retained; company-authored announcement prose is not copied, raw evidence stays private, and matches are never medical advice |
-| USDA FSIS Recalls and Public Health Alerts | Scheduled official meat, poultry, and egg safety evidence | U.S. government source with USDA website policy and source attribution | Normalized current notices may be retained; provider failures retry independently and conservative matching is required |
-| Canadian Nutrient File 2026 | Imported generic-food composition data | Open Government Licence – Canada | Canonical and API reuse approved in the registry with attribution |
-| UK CoFID 2021 | Imported generic-food composition data | Open Government Licence v3.0 | Canonical and API reuse approved in the registry with attribution |
-| Australian Food Composition Database Release 3 | Candidate generic-food dataset | FSANZ agreement based on CC BY-SA 3.0 Australia | Import and canonical use blocked |
-| UCUM | Reviewed local unit reference standard | UCUM Licence v1.1 | Active as bounded database reference data; no NLM service request |
-| GS1 Digital Link | Local GTIN extraction from supported QR identifiers | GS1 standards terms and trademark/IP notices | Identifier parsing only; no GS1 product-data redistribution |
-| Tesseract.js label OCR | On-device label text recognition | Apache License 2.0 | Allowed as a software dependency; output remains user-confirmed label data |
-| Wikimedia Commons | Schema-supported image source | Per-file licence and attribution | No general import approval; each asset must be reviewed individually |
-| FoodRepo | Retired source candidate | Provider terms | Disabled; no production traffic |
-| Community/user label submissions | Moderated product corrections and additions | User consent plus future blendCalc submission terms | Private evidence is protected; public API grant must be finalized before launch |
+| Source                                         | Current use                                                  | Governing terms                                                                                                                 | Current engineering status                                                                                                                                                              |
+| ---------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| USDA FoodData Central                          | Runtime barcode/product data and nutrition                   | CC0 1.0/public domain                                                                                                           | Canonical and API reuse allowed                                                                                                                                                         |
+| Open Food Facts                                | Runtime barcode lookup, licensed cache, package images       | ODbL/Database Contents Licence; images under CC BY-SA                                                                           | Product fields are excluded from API v1; individually licensed images remain eligible                                                                                                   |
+| COLA Cloud                                     | Optional exact-barcode U.S. alcohol-label lookup             | Proprietary API terms over public TTB records and provider enrichments                                                          | Server-only trial; canonical storage, label-image use, and API redistribution blocked                                                                                                   |
+| FDA Food Safety Notices                        | Scheduled FDA recall announcements plus enforcement evidence | openFDA terms and FDA website policy; generally U.S. government information, with stated third-party exceptions and disclaimers | Normalized index/enforcement facts and attribution may be retained; company-authored announcement prose is not copied, raw evidence stays private, and matches are never medical advice |
+| USDA FSIS Recalls and Public Health Alerts     | Scheduled official meat, poultry, and egg safety evidence    | U.S. government source with USDA website policy and source attribution                                                          | Normalized current notices may be retained; provider failures retry independently and conservative matching is required                                                                 |
+| Canadian Nutrient File 2026                    | Imported generic-food composition data                       | Open Government Licence – Canada                                                                                                | Canonical and API reuse approved in the registry with attribution                                                                                                                       |
+| UK CoFID 2021                                  | Imported generic-food composition data                       | Open Government Licence v3.0                                                                                                    | Canonical and API reuse approved in the registry with attribution                                                                                                                       |
+| Australian Food Composition Database Release 3 | Candidate generic-food dataset                               | FSANZ agreement based on CC BY-SA 3.0 Australia                                                                                 | Import and canonical use blocked                                                                                                                                                        |
+| UCUM                                           | Reviewed local unit reference standard                       | UCUM Licence v1.1                                                                                                               | Active as bounded database reference data; no NLM service request                                                                                                                       |
+| GS1 Digital Link                               | Local GTIN extraction from supported QR identifiers          | GS1 standards terms and trademark/IP notices                                                                                    | Identifier parsing only; no GS1 product-data redistribution                                                                                                                             |
+| Tesseract.js label OCR                         | On-device label text recognition                             | Apache License 2.0                                                                                                              | Allowed as a software dependency; output remains user-confirmed label data                                                                                                              |
+| Wikimedia Commons                              | Schema-supported image source                                | Per-file licence and attribution                                                                                                | No general import approval; each asset must be reviewed individually                                                                                                                    |
+| FoodRepo                                       | Retired source candidate                                     | Provider terms                                                                                                                  | Disabled; no production traffic                                                                                                                                                         |
+| Community/user label submissions               | Moderated product corrections and additions                  | User consent plus future blendCalc submission terms                                                                             | Private evidence is protected; public API grant must be finalized before launch                                                                                                         |
 
 ## USDA FoodData Central
 
@@ -242,8 +242,10 @@ catalog or public blendCalc API source.
   requirement.
 - The scheduled server worker retrieves bounded enforcement pages with an optional
   `OPENFDA_API_KEY` and bounded recent announcement batches. Conditional ETag and
-  last-modified requests avoid downloading an unchanged announcement index. Browsers
-  never call either source.
+  last-modified requests avoid downloading an unchanged announcement index. When
+  FDA.gov denies Supabase Edge network traffic, the worker uses a protected blendCalc
+  app-server relay that is restricted to the fixed FDA recall index and FDA recall
+  detail path. Browsers never call either source or the relay.
 - Raw and normalized changed payloads are immutable private evidence. Public API and
   app surfaces receive only the current normalized notice, FDA attribution, official
   link, and package-check guidance.
@@ -574,18 +576,18 @@ Use `npm run api:publication -- list` for the bounded operator queue and the doc
 
 ## Authoritative Repository Locations
 
-| Responsibility | Location |
-| --- | --- |
-| Human-readable licensing ledger | `docs/data-source-licensing.md` |
-| Source capabilities and intake boundaries | `docs/api-structures/source-data-inventory.md` |
-| Source identity and canonical policy | `product_data_sources` |
-| Imported dataset release policy | `generic_food_datasets` |
-| Per-image licence and attribution | `food_image_assets` |
-| Provider cache | `product_api_cache` |
-| API v1 source attribution mapping | `src/lib/server/api/v1/catalogApi.server.ts` |
-| API v1 row publication gate | `blendcalc_api_v1_product_readiness` |
-| API v1 field lineage | `docs/api-structures/catalog-field-lineage.md` |
-| Runtime provider requests | `src/lib/server/products/sources/` |
-| Request caching/rate controls | `src/lib/server/products/productApiRequests.server.ts` |
-| Shared catalog policy | `docs/shared-product-catalog.md` |
-| Database table map | `docs/supabase-schema.md` |
+| Responsibility                            | Location                                               |
+| ----------------------------------------- | ------------------------------------------------------ |
+| Human-readable licensing ledger           | `docs/data-source-licensing.md`                        |
+| Source capabilities and intake boundaries | `docs/api-structures/source-data-inventory.md`         |
+| Source identity and canonical policy      | `product_data_sources`                                 |
+| Imported dataset release policy           | `generic_food_datasets`                                |
+| Per-image licence and attribution         | `food_image_assets`                                    |
+| Provider cache                            | `product_api_cache`                                    |
+| API v1 source attribution mapping         | `src/lib/server/api/v1/catalogApi.server.ts`           |
+| API v1 row publication gate               | `blendcalc_api_v1_product_readiness`                   |
+| API v1 field lineage                      | `docs/api-structures/catalog-field-lineage.md`         |
+| Runtime provider requests                 | `src/lib/server/products/sources/`                     |
+| Request caching/rate controls             | `src/lib/server/products/productApiRequests.server.ts` |
+| Shared catalog policy                     | `docs/shared-product-catalog.md`                       |
+| Database table map                        | `docs/supabase-schema.md`                              |

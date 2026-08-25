@@ -1595,7 +1595,10 @@ Important behavior:
 The hourly cron call requires Vault secrets named `blendcalc_project_url` and
 `blendcalc_catalog_monitor_cron_secret`. The Edge Function separately requires
 `CATALOG_MONITOR_CRON_SECRET`, `USDA_API_KEY`, and the platform-provided Supabase URL and
-service key; `OPENFDA_API_KEY` is optional but recommended for regular use. Enable
+service key; `OPENFDA_API_KEY` is optional but recommended for regular use.
+`FDA_RECALL_PROXY_URL` and `FDA_RECALL_PROXY_SECRET` connect it to the protected
+fixed-origin app-server relay when FDA.gov denies Edge traffic; the same proxy secret
+must be configured server-side in the deployed app. Enable
 `catalog_monitor_settings.enabled` only after the deployed function and matching secret
 have passed an authenticated dry run.
 

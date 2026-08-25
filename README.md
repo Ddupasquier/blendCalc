@@ -67,6 +67,7 @@ Use `.env` for browser-safe and normal runtime configuration. Use the ignored
 | `PUBLIC_TURNSTILE_SITE_KEY`                                           | Auth bot protection after the matching hosted secret is configured              |
 | `COLA_CLOUD_API_KEY`                                                  | Optional server-only U.S. alcohol-label enrichment                              |
 | `USDA_API_KEY`, `OPENFDA_API_KEY`, `CATALOG_MONITOR_CRON_SECRET`      | Deployed catalog-monitor Edge Function; openFDA key is optional but recommended |
+| `FDA_RECALL_PROXY_URL`, `FDA_RECALL_PROXY_SECRET`                     | Protected app-server relay for current FDA notices when Edge egress is blocked  |
 | `SUPABASE_SERVICE_ROLE_KEY`                                           | Protected server work, moderation, and trusted scripts                          |
 | `SUPABASE_PROJECT_ID`, `SUPABASE_DB_PASSWORD`                         | Linked Supabase administration and guarded migration delivery                   |
 | `RESEND_API_KEY`, `MODERATION_EMAIL_FROM`, `MODERATION_SUPPORT_EMAIL` | Optional moderation email delivery                                              |

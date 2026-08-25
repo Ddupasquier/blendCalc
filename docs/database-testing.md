@@ -36,16 +36,16 @@ All accounts use `BlendCalc-Local-QA-2026!`. `npm run db:test:start` repairs mis
 baseline records without moving a tester's existing list items. Use
 `npm run db:test:reset` whenever the exact baseline below is required.
 
-| Persona | Email | Deterministic state |
-|---|---|---|
-| Populated | `qa-user@blendcalc.local` | 60 Fridge items, 40 Shopping items, one private food, 4 Saved Recipes, one active 10-food Mix, tutorial complete |
-| Warnings | `qa-preferences@blendcalc.local` | Vegan and gluten-free restrictions; peanut and shellfish allergies; 10 foods covering beef, shrimp, dairy, peanut, wheat/soy, egg, tree nuts, sparse alcohol labels, wheat beer, and sulfite disclosure |
-| Empty | `qa-empty@blendcalc.local` | No list items, Saved Recipes, or Mix state; tutorial complete |
-| Onboarding | `qa-onboarding@blendcalc.local` | Guided tour pending, 10 Fridge foods, `QA Morning Green`, and an active Mix so every tour target exists |
-| Moderator | `qa-moderator@blendcalc.local` | Moderator claim, 6 list items, one Saved Recipe, and access to two deterministic catalog-review cases |
-| Admin | `qa-admin@blendcalc.local` | Admin claim, 6 list items, one Saved Recipe, moderation access, and data-health access |
-| Developer | `qa-developer@blendcalc.local` | Developer claim, 6 list items, one Saved Recipe, full privileged capability coverage, and protected-account boundaries |
-| Browser workers 1–3 | `qa-browser-1@blendcalc.local` through `qa-browser-3@blendcalc.local` | Equivalent populated state, including one private food, isolated by Playwright worker; not intended for manual QA |
+| Persona             | Email                                                                 | Deterministic state                                                                                                                                                                                     |
+| ------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Populated           | `qa-user@blendcalc.local`                                             | 60 Fridge items, 40 Shopping items, one private food, 4 Saved Recipes, one active 10-food Mix, tutorial complete                                                                                        |
+| Warnings            | `qa-preferences@blendcalc.local`                                      | Vegan and gluten-free restrictions; peanut and shellfish allergies; 10 foods covering beef, shrimp, dairy, peanut, wheat/soy, egg, tree nuts, sparse alcohol labels, wheat beer, and sulfite disclosure |
+| Empty               | `qa-empty@blendcalc.local`                                            | No list items, Saved Recipes, or Mix state; tutorial complete                                                                                                                                           |
+| Onboarding          | `qa-onboarding@blendcalc.local`                                       | Guided tour pending, 10 Fridge foods, `QA Morning Green`, and an active Mix so every tour target exists                                                                                                 |
+| Moderator           | `qa-moderator@blendcalc.local`                                        | Moderator claim, 6 list items, one Saved Recipe, and access to two deterministic catalog-review cases                                                                                                   |
+| Admin               | `qa-admin@blendcalc.local`                                            | Admin claim, 6 list items, one Saved Recipe, moderation access, and data-health access                                                                                                                  |
+| Developer           | `qa-developer@blendcalc.local`                                        | Developer claim, 6 list items, one Saved Recipe, full privileged capability coverage, and protected-account boundaries                                                                                  |
+| Browser workers 1–3 | `qa-browser-1@blendcalc.local` through `qa-browser-3@blendcalc.local` | Equivalent populated state, including one private food, isolated by Playwright worker; not intended for manual QA                                                                                       |
 
 The populated account includes `QA Morning Green` (10 ingredients), `QA Berry Repeat`,
 `QA Export Berry Mix`, and `QA Server Load`. The Saved view can therefore test collapsed
@@ -59,14 +59,14 @@ fixed-ID submissions are not recreated by `start` after they have been reviewed;
 
 ## Commands
 
-| Command | Purpose |
-|---|---|
-| `npm run db:test:start` | Start the local stack, apply pending local migrations and reference fixtures, wait for Supabase services, and repair missing persona fixtures. |
-| `npm run db:test:reset` | Destroy local data, replay every migration, refresh the local gateway, and reseed reference fixtures and QA accounts after services are ready. |
-| `npm run db:test:verify` | Reset the local database and run all pgTAP database tests. |
-| `npm run db:test:status` | Print local service URLs and status. |
-| `npm run db:test:stop` | Stop the local Supabase stack while retaining its Docker volume. |
-| `npm run dev:test` | Start SvelteKit in test mode against `.env.test.local` at `http://localhost:5174`. |
+| Command                  | Purpose                                                                                                                                        |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run db:test:start`  | Start the local stack, apply pending local migrations and reference fixtures, wait for Supabase services, and repair missing persona fixtures. |
+| `npm run db:test:reset`  | Destroy local data, replay every migration, refresh the local gateway, and reseed reference fixtures and QA accounts after services are ready. |
+| `npm run db:test:verify` | Reset the local database and run all pgTAP database tests.                                                                                     |
+| `npm run db:test:status` | Print local service URLs and status.                                                                                                           |
+| `npm run db:test:stop`   | Stop the local Supabase stack while retaining its Docker volume.                                                                               |
+| `npm run dev:test`       | Start SvelteKit in test mode against `.env.test.local` at `http://localhost:5174`.                                                             |
 
 ## Production Migration Promotion
 
@@ -202,10 +202,10 @@ unavailable dependency into a passing result.
 
 The maintained safety corpus has two deliberately separate layers:
 
-| Layer | Fixture origin | Coverage | Current size |
-|---|---|---|---:|
-| Application | Authored synthetic Open Food Facts-shaped payloads plus synthetic private and generic foods | Provider normalization, ingredient/declaration mapping, policy evaluation, API serialization, and user-facing status copy | 17 cases |
-| Database | Authored synthetic source observations stored in `shared_product_observations` | Relational ingredient projection, reviewed multilingual extraction, exact precautionary statements, immutable policy links, formulation changes, negative controls, and idempotency | 17 observations / 18 assertions |
+| Layer       | Fixture origin                                                                              | Coverage                                                                                                                                                                            |                    Current size |
+| ----------- | ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------: |
+| Application | Authored synthetic Open Food Facts-shaped payloads plus synthetic private and generic foods | Provider normalization, ingredient/declaration mapping, policy evaluation, API serialization, and user-facing status copy                                                           |                        17 cases |
+| Database    | Authored synthetic source observations stored in `shared_product_observations`              | Relational ingredient projection, reviewed multilingual extraction, exact precautionary statements, immutable policy links, formulation changes, negative controls, and idempotency | 17 observations / 18 assertions |
 
 The payloads are original test fixtures. They do not copy private user evidence, real
 package-label prose, secrets, or provider records. Prepared compatibility facts remain
@@ -232,7 +232,9 @@ The scheduled monitoring layer has a separate pgTAP and TypeScript corpus:
 Provider availability is not a database assertion. Before enabling the hosted monitor,
 perform one secret-authenticated deployed-function smoke run with each configured
 source and confirm that a failed source records an isolated retry without clearing
-stored alerts or blocking other work.
+stored alerts or blocking other work. When direct FDA announcement reads are unavailable
+from Edge, verify the protected app relay with both the announcement index and one
+allowed FDA recall detail path before treating current-announcement coverage as active.
 
 A separate remote staging project can be added later for real-device and hosted-preview
 QA. It should use the same migrations and synthetic fixtures, never a production data
