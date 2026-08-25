@@ -2,25 +2,47 @@ import {
 	expect,
 	expectCompactHeaderHidesAndRevealsWithScroll,
 	expectFocusOutlineInsideBoundary,
+	signInLocalQaAccount,
 	test,
 	waitForAppReady,
 } from "./support/browserTest";
-import type { Locator } from "@playwright/test";
-import { getLocalQaAccountForWorker } from "./support/localQaAccounts";
+import type { Locator, Page } from "@playwright/test";
+import { createCurrentAuthenticatorVerificationCode } from "./support/authenticatorVerificationCode";
+import {
+	getAuthenticatedBrowserStatePath,
+	getLocalQaAccountForWorker,
+} from "./support/localQaAccounts";
+import { deleteLocalQaAuthenticatorFactorsForEmail } from "./support/localQaDatabase";
 
 const tinyPng = Buffer.from(
 	"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
 	"base64",
 );
 
+const finishAuthenticatorEnrollment = async (page: Page) => {
+	await page.getByRole("button", { name: "Start setup" }).click();
+	const setupKey = await page
+		.locator(".mfa-enrollment__secret code")
+		.innerText();
+	await page
+		.getByLabel("Six-digit code")
+		.fill(createCurrentAuthenticatorVerificationCode(setupKey));
+	await page.getByRole("button", { name: "Finish setup" }).click();
+};
+
 const openFoodPreferenceDisclosure = async (
 	foodPreferencesView: Locator,
 	title: string,
 ) => {
-	const summary = foodPreferencesView.locator("summary").filter({ hasText: title });
+	const summary = foodPreferencesView
+		.locator("summary")
+		.filter({ hasText: title });
 	const disclosure = summary.locator("xpath=..");
-	if (!await disclosure.evaluate((element) =>
-		(element as HTMLDetailsElement).open)) {
+	if (
+		!(await disclosure.evaluate(
+			(element) => (element as HTMLDetailsElement).open,
+		))
+	) {
 		await summary.click();
 	}
 	return disclosure;
@@ -36,7 +58,9 @@ test("appearance choices use native radios and preview the selected theme", asyn
 	await expect(page).toHaveTitle("Light/Dark Mode · blendCalc");
 
 	const appearanceSheet = page.getByRole("dialog", { name: "Light/Dark Mode" });
-	const themeGroup = appearanceSheet.getByRole("group", { name: "Color theme" });
+	const themeGroup = appearanceSheet.getByRole("group", {
+		name: "Color theme",
+	});
 	await expect(
 		appearanceSheet.getByRole("heading", { name: "Light/Dark Mode" }),
 	).toHaveCount(1);
@@ -84,15 +108,15 @@ test("playful messages persist the exact saved account preference", async ({
 	await preference.click();
 	await sheet.getByRole("button", { name: "Save playful messages" }).click();
 	await expect(page).toHaveURL(/\/profile$/);
-	await expect(page.getByRole("button", { name: /Playful messages/ })).toContainText(
-		"On",
-	);
+	await expect(
+		page.getByRole("button", { name: /Playful messages/ }),
+	).toContainText("On");
 
 	await page.reload();
 	await waitForAppReady(page);
-	await expect(page.getByRole("button", { name: /Playful messages/ })).toContainText(
-		"On",
-	);
+	await expect(
+		page.getByRole("button", { name: /Playful messages/ }),
+	).toContainText("On");
 	await page.getByRole("button", { name: /Playful messages/ }).click();
 	sheet = page.getByRole("dialog", { name: "Playful messages" });
 	preference = sheet.getByRole("switch", { name: "Allow playful messages" });
@@ -128,7 +152,9 @@ test("profile photo selection uses the shared accessible upload control", async 
 	});
 	await expect(page.getByText("playwright-profile.png")).toBeVisible();
 	await expect(
-		profileImageSheet.getByRole("button", { name: "Clear profile photo selection" }),
+		profileImageSheet.getByRole("button", {
+			name: "Clear profile photo selection",
+		}),
 	).toBeVisible();
 });
 
@@ -140,7 +166,9 @@ test("profile selects support keyboard dismissal without changing the value", as
 	await page.getByRole("button", { name: /Food preferences/ }).click();
 	await expect(page).toHaveURL(/\/profile\/food-preferences$/);
 
-	const foodPreferencesView = page.getByRole("dialog", { name: "Food preferences" });
+	const foodPreferencesView = page.getByRole("dialog", {
+		name: "Food preferences",
+	});
 	await openFoodPreferenceDisclosure(
 		foodPreferencesView,
 		"Package-label region",
@@ -171,10 +199,12 @@ test("food preference details explain policy, exact measurements, and ordered pr
 		foodPreferencesView,
 		"Package-label region",
 	);
-	await expect(regionSection.getByText("U.S. Food and Drug Administration"))
-		.toBeVisible();
-	await expect(regionSection.getByText(/Food-safety policy version \d+/))
-		.toBeVisible();
+	await expect(
+		regionSection.getByText("U.S. Food and Drug Administration"),
+	).toBeVisible();
+	await expect(
+		regionSection.getByText(/Food-safety policy version \d+/),
+	).toBeVisible();
 
 	const measurementSection = await openFoodPreferenceDisclosure(
 		foodPreferencesView,
@@ -184,10 +214,14 @@ test("food preference details explain policy, exact measurements, and ordered pr
 		name: "Default serving unit",
 	});
 	await servingUnit.click();
-	await measurementSection.getByRole("option", { name: "g", exact: true }).click();
-	await measurementSection.getByRole("spinbutton", {
-		name: "Default Mix starting amount",
-	}).fill("28.349523125");
+	await measurementSection
+		.getByRole("option", { name: "g", exact: true })
+		.click();
+	await measurementSection
+		.getByRole("spinbutton", {
+			name: "Default Mix starting amount",
+		})
+		.fill("28.349523125");
 	await expect(
 		measurementSection.getByText("28.3495 g = 1 oz · Exact unit conversion"),
 	).toBeVisible();
@@ -196,7 +230,11 @@ test("food preference details explain policy, exact measurements, and ordered pr
 		foodPreferencesView,
 		"Nutrient priorities",
 	);
-	if (await nutrientSection.getByRole("button", { name: "Remove Protein" }).count() === 0) {
+	if (
+		(await nutrientSection
+			.getByRole("button", { name: "Remove Protein" })
+			.count()) === 0
+	) {
 		const nutrientSelect = nutrientSection.getByRole("combobox", {
 			name: "Add a nutrient priority",
 		});
@@ -204,8 +242,9 @@ test("food preference details explain policy, exact measurements, and ordered pr
 		await nutrientSection.getByRole("option", { name: "Protein (g)" }).click();
 		await nutrientSection.getByRole("button", { name: "Add priority" }).click();
 	}
-	await expect(nutrientSection.getByText("Default Mix target: 25 g"))
-		.toBeVisible();
+	await expect(
+		nutrientSection.getByText("Default Mix target: 25 g"),
+	).toBeVisible();
 	await expect(
 		nutrientSection.getByRole("button", { name: "Move Protein down" }),
 	).toBeVisible();
@@ -233,13 +272,17 @@ test("food preferences use database choices and preserve exact custom wording", 
 		).toHaveCount(1);
 	}
 	await expect(
-		foodPreferencesView.locator("summary").filter({ hasText: "Saved preferences" }),
+		foodPreferencesView
+			.locator("summary")
+			.filter({ hasText: "Saved preferences" }),
 	).toHaveCount(0);
 	await expect(
 		foodPreferencesView.locator("summary").filter({ hasText: "Privacy" }),
 	).toHaveCount(0);
 	await expect(
-		foodPreferencesView.getByRole("heading", { name: "Private account settings" }),
+		foodPreferencesView.getByRole("heading", {
+			name: "Private account settings",
+		}),
 	).toBeVisible();
 	const allergenSection = await openFoodPreferenceDisclosure(
 		foodPreferencesView,
@@ -262,9 +305,15 @@ test("food preferences use database choices and preserve exact custom wording", 
 	).toHaveCount(0);
 	await reviewedAllergenSearch.fill("peanut");
 	await allergenSection.getByRole("button", { name: /Peanut/ }).click();
-	await allergenSection.getByLabel("Add a specific allergen").fill(customAllergen);
-	await allergenSection.getByRole("button", { name: "Add", exact: true }).click();
-	await dietarySection.getByLabel("Find reviewed dietary restrictions").fill("vegan");
+	await allergenSection
+		.getByLabel("Add a specific allergen")
+		.fill(customAllergen);
+	await allergenSection
+		.getByRole("button", { name: "Add", exact: true })
+		.click();
+	await dietarySection
+		.getByLabel("Find reviewed dietary restrictions")
+		.fill("vegan");
 	await dietarySection.getByRole("button", { name: /Vegan/ }).click();
 	await expect(allergenSection.locator("summary")).toContainText(
 		"1 active · 1 pending",
@@ -277,8 +326,9 @@ test("food preferences use database choices and preserve exact custom wording", 
 	await expect(
 		allergenSection.getByRole("button", { name: "Remove Peanut" }),
 	).toBeVisible();
-	await expect(allergenSection.getByText(customAllergen, { exact: true }))
-		.toBeVisible();
+	await expect(
+		allergenSection.getByText(customAllergen, { exact: true }),
+	).toBeVisible();
 	await expect(allergenSection.getByText("Waiting for review")).toBeVisible();
 	await foodPreferencesView
 		.getByRole("checkbox", { name: /I understand and want to save/ })
@@ -294,16 +344,21 @@ test("food preferences use database choices and preserve exact custom wording", 
 		.getByRole("button", { name: "Save food preferences" })
 		.click();
 	await expect(page).toHaveURL(/\/profile$/);
-	await expect(page.getByRole("button", { name: /Food preferences/ }))
-		.toContainText("2 active · 1 pending");
+	await expect(
+		page.getByRole("button", { name: /Food preferences/ }),
+	).toContainText("2 active · 1 pending");
 
 	await page.getByRole("button", { name: /Food preferences/ }).click();
 	await expect(page).toHaveURL(/\/profile\/food-preferences$/);
 	foodPreferencesView = page.getByRole("dialog", { name: "Food preferences" });
 	await openFoodPreferenceDisclosure(foodPreferencesView, "Allergens");
-	await openFoodPreferenceDisclosure(foodPreferencesView, "Dietary restrictions");
-	await expect(foodPreferencesView.getByText(customAllergen, { exact: true }))
-		.toBeVisible();
+	await openFoodPreferenceDisclosure(
+		foodPreferencesView,
+		"Dietary restrictions",
+	);
+	await expect(
+		foodPreferencesView.getByText(customAllergen, { exact: true }),
+	).toBeVisible();
 	await expect(
 		foodPreferencesView.getByRole("button", { name: "Remove Peanut" }),
 	).toBeVisible();
@@ -311,11 +366,17 @@ test("food preferences use database choices and preserve exact custom wording", 
 		foodPreferencesView.getByRole("button", { name: "Remove Vegan" }),
 	).toBeVisible();
 
-	await foodPreferencesView.getByRole("button", { name: "Clear allergens" }).click();
+	await foodPreferencesView
+		.getByRole("button", { name: "Clear allergens" })
+		.click();
 	await expect(
-		foodPreferencesView.getByRole("button", { name: `Remove ${customAllergen}` }),
+		foodPreferencesView.getByRole("button", {
+			name: `Remove ${customAllergen}`,
+		}),
 	).toHaveCount(0);
-	await foodPreferencesView.getByRole("button", { name: "Remove Vegan" }).click();
+	await foodPreferencesView
+		.getByRole("button", { name: "Remove Vegan" })
+		.click();
 	await foodPreferencesView
 		.getByRole("button", { name: "Save food preferences" })
 		.click();
@@ -347,14 +408,20 @@ test("compact Profile header leaves and returns with main-page scroll direction"
 	const foodPreferencesBody = page.locator(
 		".profile-food-preference-view__body",
 	);
-	for (const sectionTitle of ["Allergens", "Dietary restrictions", "Nutrient priorities"]) {
+	for (const sectionTitle of [
+		"Allergens",
+		"Dietary restrictions",
+		"Nutrient priorities",
+	]) {
 		await openFoodPreferenceDisclosure(foodPreferencesBody, sectionTitle);
 	}
-	const sheetMaximumScrollTop = await foodPreferencesBody.evaluate((element) => {
-		const nextScrollTop = element.scrollHeight - element.clientHeight;
-		element.scrollTo({ top: nextScrollTop });
-		return nextScrollTop;
-	});
+	const sheetMaximumScrollTop = await foodPreferencesBody.evaluate(
+		(element) => {
+			const nextScrollTop = element.scrollHeight - element.clientHeight;
+			element.scrollTo({ top: nextScrollTop });
+			return nextScrollTop;
+		},
+	);
 	expect(sheetMaximumScrollTop).toBeGreaterThan(0);
 	await expect
 		.poll(() =>
@@ -374,15 +441,21 @@ test("Profile settings use routed sheets and restore launcher focus", async ({
 	const detailsLauncher = page.getByRole("button", { name: /Profile details/ });
 	await detailsLauncher.click();
 	await expect(page).toHaveURL(/\/profile\/details$/);
-	const profileDetailsSheet = page.getByRole("dialog", { name: "Profile details" });
+	const profileDetailsSheet = page.getByRole("dialog", {
+		name: "Profile details",
+	});
 	await expect(profileDetailsSheet).toBeVisible();
 	const bioField = profileDetailsSheet.getByRole("textbox", { name: "Bio" });
 	await expect(bioField).toHaveAttribute("maxlength", "150");
 	const initialBioLength = (await bioField.inputValue()).length;
-	await expect(profileDetailsSheet.getByText(`${initialBioLength} / 150`)).toBeVisible();
+	await expect(
+		profileDetailsSheet.getByText(`${initialBioLength} / 150`),
+	).toBeVisible();
 	await bioField.fill("Profile bio");
 	await expect(profileDetailsSheet.getByText("11 / 150")).toBeVisible();
-	await expect(bioField).toHaveAccessibleDescription("139 characters remaining");
+	await expect(bioField).toHaveAccessibleDescription(
+		"139 characters remaining",
+	);
 	await expect(
 		profileDetailsSheet.getByRole("button", { name: "Close sheet" }),
 	).toBeVisible();
@@ -419,8 +492,7 @@ test("logout ends the session without deleting durable account data", async ({
 		"/auth?/emailSignIn",
 		{
 			headers: {
-				origin:
-					process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:5174",
+				origin: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:5174",
 			},
 			form: {
 				email: qaAccount.email,
@@ -516,20 +588,35 @@ test("logout ends the session without deleting durable account data", async ({
 	expect(protectedProfileResponse.status()).toBe(303);
 	const protectedProfileLocation = protectedProfileResponse.headers().location;
 	if (!protectedProfileLocation) {
-		throw new Error("The protected Profile route did not return a redirect location.");
+		throw new Error(
+			"The protected Profile route did not return a redirect location.",
+		);
 	}
 	const protectedProfileRedirect = new URL(
 		protectedProfileLocation,
 		page.url(),
 	);
-	expect(`${protectedProfileRedirect.pathname}${protectedProfileRedirect.search}`).toBe(
-		"/?next=%2Fprofile",
+	expect(
+		`${protectedProfileRedirect.pathname}${protectedProfileRedirect.search}`,
+	).toBe("/?next=%2Fprofile");
+	const restoredSessionResponse = await page.request.post(
+		"/auth?/emailSignIn",
+		{
+			headers: {
+				origin: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:5174",
+			},
+			form: {
+				email: qaAccount.email,
+				next: "/profile",
+				password: qaAccount.password,
+			},
+		},
 	);
-	await page.goto("/auth?next=/profile");
-	await page.getByLabel("Email").fill(qaAccount.email);
-	await page.getByLabel("Password", { exact: true }).fill(qaAccount.password);
-	await page.getByRole("button", { name: "Sign in", exact: true }).click();
-	await expect(page).toHaveURL(/\/profile$/);
+	expect(
+		restoredSessionResponse.ok(),
+		"The logout test could not restore its isolated browser session.",
+	).toBe(true);
+	await page.goto("/profile");
 	await waitForAppReady(page);
 
 	await expect(
@@ -549,26 +636,34 @@ test("logout ends the session without deleting durable account data", async ({
 	await expect(page.getByRole("tab", { name: /Shopping List/ })).toHaveText(
 		shoppingListTabText,
 	);
+	await page.context().storageState({
+		path: getAuthenticatedBrowserStatePath(
+			testInfo.project.name,
+			testInfo.parallelIndex,
+		),
+	});
 });
 
 test("privileged tools stay hidden from regular accounts and use the shared sheet for elevated accounts", async ({
 	page,
-}) => {
+}, testInfo) => {
+	test.skip(
+		testInfo.project.name !== "desktop-chromium",
+		"One isolated Chromium project owns the shared moderator MFA persona.",
+	);
+	const moderatorEmail = "qa-moderator@blendcalc.local";
+	await deleteLocalQaAuthenticatorFactorsForEmail(moderatorEmail);
 	await page.goto("/profile");
 	await waitForAppReady(page);
 	await expect(
 		page.getByRole("button", { name: /Moderator tools/ }),
 	).toHaveCount(0);
 
-	await page.context().clearCookies();
-	await page.goto("/auth?next=/profile");
-	await page.getByLabel("Email").fill("qa-moderator@blendcalc.local");
-	await page.getByLabel("Password", { exact: true }).fill(
-		process.env.PLAYWRIGHT_QA_PASSWORD ?? "BlendCalc-Local-QA-2026!",
-	);
-	await page.getByRole("button", { name: "Sign in", exact: true }).click();
-	await expect(page).toHaveURL(/\/profile$/);
-	await waitForAppReady(page);
+	await signInLocalQaAccount({
+		page,
+		email: moderatorEmail,
+		nextPath: "/profile",
+	});
 
 	await page.getByRole("button", { name: /Moderator tools/ }).click();
 	await expect(page).toHaveURL(/\/profile\/privileged-tools$/);
@@ -592,7 +687,9 @@ test("privileged tools stay hidden from regular accounts and use the shared shee
 		"Account access",
 	]) {
 		await expect(
-			privilegedToolsSheet.getByRole("button", { name: new RegExp(actionName) }),
+			privilegedToolsSheet.getByRole("button", {
+				name: new RegExp(actionName),
+			}),
 		).toBeEnabled();
 	}
 	await expect(
@@ -601,9 +698,7 @@ test("privileged tools stay hidden from regular accounts and use the shared shee
 		),
 	).toBeVisible();
 	await expect(
-		privilegedToolsSheet.getByText(
-			"Verify your identity to check this queue",
-		),
+		privilegedToolsSheet.getByText("Verify your identity to check this queue"),
 	).toHaveCount(3);
 
 	await privilegedToolsSheet
@@ -615,4 +710,94 @@ test("privileged tools stay hidden from regular accounts and use the shared shee
 	await expect(
 		page.getByRole("heading", { name: "Set up your authenticator." }),
 	).toBeVisible();
+
+	try {
+		await finishAuthenticatorEnrollment(page);
+
+		await expect(page).toHaveURL(
+			/\/profile\/privileged-tools\/product-submissions$/,
+		);
+		const productSubmissionSheet = page.getByRole("dialog", {
+			name: "Product submissions",
+		});
+		await expect(productSubmissionSheet).toBeVisible();
+		await expect(
+			productSubmissionSheet.getByText(/submission(?:s)? waiting for review/),
+		).toBeVisible();
+
+		for (const protectedTool of [
+			{
+				path: "/profile/privileged-tools/catalog-review-work",
+				title: "Catalog review work",
+				content:
+					"Resolve product conflicts, provider changes, and possible recall matches.",
+			},
+			{
+				path: "/profile/privileged-tools/food-warning-reports",
+				title: "Food warning reports",
+				content: "No food warning reports need review",
+			},
+			{
+				path: "/profile/privileged-tools/profile-images",
+				title: "Profile images",
+				content: "No reported profile images need review",
+			},
+			{
+				path: "/profile/privileged-tools/account-access",
+				title: "Account access",
+				content: /accounts$/,
+			},
+		] as const) {
+			await page.goto(protectedTool.path);
+			await waitForAppReady(page);
+			const protectedToolSheet = page.getByRole("dialog", {
+				name: protectedTool.title,
+			});
+			await expect(protectedToolSheet).toBeVisible();
+			await expect(
+				protectedToolSheet.getByText(protectedTool.content).first(),
+			).toBeVisible();
+		}
+	} finally {
+		await deleteLocalQaAuthenticatorFactorsForEmail(moderatorEmail);
+	}
+});
+
+test("administrators can open data operations after direct AAL2 verification", async ({
+	page,
+}, testInfo) => {
+	test.skip(
+		testInfo.project.name !== "desktop-chromium",
+		"One isolated Chromium project owns the shared administrator MFA persona.",
+	);
+	const adminEmail = "qa-admin@blendcalc.local";
+	const dataOperationsPath = "/profile/privileged-tools/data-operations";
+	await deleteLocalQaAuthenticatorFactorsForEmail(adminEmail);
+
+	try {
+		await signInLocalQaAccount({
+			page,
+			email: adminEmail,
+			nextPath: "/profile",
+		});
+		await page.goto(dataOperationsPath);
+		await expect(page).toHaveURL(
+			/\/auth\/mfa\/enroll\?next=%2Fprofile%2Fprivileged-tools%2Fdata-operations$/,
+		);
+		await finishAuthenticatorEnrollment(page);
+
+		await expect(page).toHaveURL((url) => url.pathname === dataOperationsPath);
+		const dataOperationsSheet = page.getByRole("dialog", {
+			name: "Data operations",
+		});
+		await expect(dataOperationsSheet).toBeVisible();
+		await expect(
+			dataOperationsSheet.getByRole("region", { name: "Operational overview" }),
+		).toBeVisible();
+		await expect(
+			dataOperationsSheet.getByText("Automated catalog monitoring"),
+		).toBeVisible();
+	} finally {
+		await deleteLocalQaAuthenticatorFactorsForEmail(adminEmail);
+	}
 });
