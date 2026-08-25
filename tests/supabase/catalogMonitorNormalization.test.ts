@@ -221,6 +221,23 @@ describe("official food safety alert normalization and matching", () => {
 		expect(alert?.identifiers).toEqual([]);
 	});
 
+	it("does not turn generic lot-code labels into package evidence", () => {
+		const alert = normalizeFdaRecallAnnouncement(
+			{
+				path: "/safety/recalls-market-withdrawals-safety-alerts/example-food-recall",
+				field_change_date_2: "08/14/2026",
+				field_brand_name: "Example Foods",
+				field_product_description: "Example salad",
+				field_recall_reason_description: "Possible contamination",
+				field_company_name: "Example Foods",
+				field_regulated_product_field: "Food &amp; Beverages",
+			},
+			"Review the affected products, lot codes, and package information.",
+		);
+
+		expect(alert?.identifiers).toEqual([]);
+	});
+
 	it("accepts only valid explicitly labeled UPCs from FDA announcement details", () => {
 		const alert = normalizeFdaRecallAnnouncement(
 			{
@@ -446,6 +463,7 @@ describe("official food safety alert normalization and matching", () => {
 			const page = await fetchOpenFdaAlertPage(null, {}, 100, undefined, {
 				url: "https://blendcalc.example/api/internal/food-safety/fda-recall-source",
 				secret: "proxy-secret",
+				protectionBypassSecret: "deployment-protection-secret",
 			});
 
 			expect(page.alerts).toHaveLength(1);
@@ -455,6 +473,15 @@ describe("official food safety alert normalization and matching", () => {
 					normalizedValue: "00681131328944",
 				}),
 			);
+			const proxyRequests = fetchMock.mock.calls.filter(
+				([input]) => new URL(String(input)).hostname === "blendcalc.example",
+			);
+			expect(proxyRequests).toHaveLength(2);
+			for (const [, init] of proxyRequests) {
+				expect(
+					new Headers(init?.headers).get("x-vercel-protection-bypass"),
+				).toBe("deployment-protection-secret");
+			}
 		} finally {
 			vi.unstubAllGlobals();
 		}
