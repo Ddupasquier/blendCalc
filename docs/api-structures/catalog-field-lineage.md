@@ -1,4 +1,4 @@
-# Catalog API Field Lineage
+# blendCalcAPI Field Lineage
 
 This guide traces each public API field from the canonical catalog through readiness,
 resolution, and serialization. It does not replace the schema map or provider ledger.

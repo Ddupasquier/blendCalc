@@ -51,23 +51,20 @@ const attributionCatalog = (
 	assetSources,
 });
 
-const defaultAttributionCatalog = () => attributionCatalog({
-	usda: sourceAttribution(
-		"usda",
-		"USDA FoodData Central",
-		"CC0-1.0",
-	),
-	"open-food-facts": sourceAttribution(
-		"open-food-facts",
-		"Open Food Facts",
-		"ODbL-1.0",
-	),
-	"shared-catalog": sourceAttribution(
-		"shared-catalog",
-		"blendCalc Shared Catalog",
-		"blendCalc submission terms",
-	),
-});
+const defaultAttributionCatalog = () =>
+	attributionCatalog({
+		usda: sourceAttribution("usda", "USDA FoodData Central", "CC0-1.0"),
+		"open-food-facts": sourceAttribution(
+			"open-food-facts",
+			"Open Food Facts",
+			"ODbL-1.0",
+		),
+		"shared-catalog": sourceAttribution(
+			"shared-catalog",
+			"blendCalc Shared Catalog",
+			"blendCalc submission terms",
+		),
+	});
 
 const record: ApprovedCatalogRecord = {
 	id: "8dd47c75-17f7-4458-bb24-63cff946a716",
@@ -199,11 +196,13 @@ const record: ApprovedCatalogRecord = {
 		description: "Roasted Onion & Garlic Pasta Sauce",
 		ingredients: "Tomatoes, onion",
 		ingredientList: ["Tomatoes", "Onion"],
-		structuredIngredients: [{
-			id: "en:tomato",
-			text: "Tomatoes",
-			percentEstimate: 80,
-		}],
+		structuredIngredients: [
+			{
+				id: "en:tomato",
+				text: "Tomatoes",
+				percentEstimate: 80,
+			},
+		],
 		ingredientAnalysis: {
 			ingredientTags: ["tomato", "onion"],
 			analysisTags: ["vegan"],
@@ -213,17 +212,19 @@ const record: ApprovedCatalogRecord = {
 		additives: ["e330"],
 		allergens: [" Milk ", "Milk"],
 		traces: ["Celery"],
-		precautionaryStatements: [{
-			type: "shared_facility",
-			text: "Made in a facility that also processes celery",
-			allergens: ["celery"],
-			languageCode: "en",
-			sourceField: "ingredients",
-			sourceReference: "123",
-			observationId: "c09174bc-84a3-4c7b-9740-09dfe15a4f51",
-			revisionId: "a89fc15f-ffcd-4d03-92e9-2b511bb300ca",
-			labelObservedAt: "2026-07-17T10:00:00.000Z",
-		}],
+		precautionaryStatements: [
+			{
+				type: "shared_facility",
+				text: "Made in a facility that also processes celery",
+				allergens: ["celery"],
+				languageCode: "en",
+				sourceField: "ingredients",
+				sourceReference: "123",
+				observationId: "c09174bc-84a3-4c7b-9740-09dfe15a4f51",
+				revisionId: "a89fc15f-ffcd-4d03-92e9-2b511bb300ca",
+				labelObservedAt: "2026-07-17T10:00:00.000Z",
+			},
+		],
 		labels: ["Vegan"],
 		packageQuantity: {
 			label: "24 oz",
@@ -292,22 +293,24 @@ const record: ApprovedCatalogRecord = {
 				confidence: "source-verified",
 			},
 		],
-		foodServings: [{
-			label: "1/2 cup",
-			gramWeight: 125,
-			amount: 0.5,
-			unitKey: "cup",
-			isPrimary: true,
-			measureType: "Package serving",
-			isHouseholdMeasure: true,
-			sourceMeasureKey: "serving_size",
-			origin: "package-label",
-			gramWeightMethod: "source-reported",
-			calculationBasis: "Package reports 1/2 cup as 125g",
-			source: "usda",
-			sourceReference: "123",
-			confidence: "source-verified",
-		}],
+		foodServings: [
+			{
+				label: "1/2 cup",
+				gramWeight: 125,
+				amount: 0.5,
+				unitKey: "cup",
+				isPrimary: true,
+				measureType: "Package serving",
+				isHouseholdMeasure: true,
+				sourceMeasureKey: "serving_size",
+				origin: "package-label",
+				gramWeightMethod: "source-reported",
+				calculationBasis: "Package reports 1/2 cup as 125g",
+				source: "usda",
+				sourceReference: "123",
+				confidence: "source-verified",
+			},
+		],
 		fieldProvenance: {
 			categories: {
 				source: "open-food-facts",
@@ -351,33 +354,35 @@ const record: ApprovedCatalogRecord = {
 			},
 		},
 	},
-	images: [{
-		source: "open-food-facts",
-		sourceReference: "00021130493609",
-		role: "front",
-		imageUrl: "https://images.example/product.jpg",
-		thumbnailUrl: "https://images.example/product-small.jpg",
-		storagePath: "private/path-never-returned.jpg",
-		licenseName: "CC BY-SA 3.0",
-		licenseUrl: "https://creativecommons.org/licenses/by-sa/3.0/",
-		attributionText: "Open Food Facts contributors",
-		confidence: "source-verified",
-		canonicalStatus: "selected",
-		canonicalSelectionMethod: "exact-licensed-source",
-		canonicalSelectedAt: "2026-07-17T09:30:00.000Z",
-		cropX: 60,
-		cropY: 40,
-		cropZoom: 1.5,
-		rotationDegrees: 90,
-		fitMode: "custom",
-		placementVersion: 2,
-		approvedBy: "moderator-never-returned",
-		approvedAt: "2026-07-19T10:00:00.000Z",
-		fetchedAt: "2026-07-17T09:30:00.000Z",
-	}],
+	images: [
+		{
+			source: "open-food-facts",
+			sourceReference: "00021130493609",
+			role: "front",
+			imageUrl: "https://images.example/product.jpg",
+			thumbnailUrl: "https://images.example/product-small.jpg",
+			storagePath: "private/path-never-returned.jpg",
+			licenseName: "CC BY-SA 3.0",
+			licenseUrl: "https://creativecommons.org/licenses/by-sa/3.0/",
+			attributionText: "Open Food Facts contributors",
+			confidence: "source-verified",
+			canonicalStatus: "selected",
+			canonicalSelectionMethod: "exact-licensed-source",
+			canonicalSelectedAt: "2026-07-17T09:30:00.000Z",
+			cropX: 60,
+			cropY: 40,
+			cropZoom: 1.5,
+			rotationDegrees: 90,
+			fitMode: "custom",
+			placementVersion: 2,
+			approvedBy: "moderator-never-returned",
+			approvedAt: "2026-07-19T10:00:00.000Z",
+			fetchedAt: "2026-07-17T09:30:00.000Z",
+		},
+	],
 };
 
-describe("blendCalc API v1 catalog mapping", () => {
+describe("blendCalcAPI v1 catalog mapping", () => {
 	it("preserves real zeroes and represents unavailable values as null", () => {
 		const product = mapApprovedCatalogRecordToApiV1Product(
 			record,
@@ -385,7 +390,9 @@ describe("blendCalc API v1 catalog mapping", () => {
 		);
 
 		expect(product.nutrients[0]?.amountPer100g).toBe(0);
-		expect(product.nutrients[0]?.quality.sourceValueStatus).toBe("reported-zero");
+		expect(product.nutrients[0]?.quality.sourceValueStatus).toBe(
+			"reported-zero",
+		);
 		expect(product.nutrients[0]?.quality).toMatchObject({
 			standardError: 0.2,
 			sourceNutrientKey: "1003",
@@ -430,18 +437,19 @@ describe("blendCalc API v1 catalog mapping", () => {
 			profileApplied: false,
 			conflictCount: 0,
 		});
-		expect(product.compatibilityEvaluation).not.toHaveProperty("regulatoryContext");
-		expect(product.compatibilityEvaluation).not.toHaveProperty("preferenceResolution");
+		expect(product.compatibilityEvaluation).not.toHaveProperty(
+			"regulatoryContext",
+		);
+		expect(product.compatibilityEvaluation).not.toHaveProperty(
+			"preferenceResolution",
+		);
 	});
 
 	it("returns field sources, revision dates, and licensed images without private paths", () => {
-		const product = mapApprovedCatalogRecordToApiV1Product(record,
+		const product = mapApprovedCatalogRecordToApiV1Product(
+			record,
 			attributionCatalog({
-				usda: sourceAttribution(
-					"usda",
-					"USDA FoodData Central",
-					"CC0-1.0",
-				),
+				usda: sourceAttribution("usda", "USDA FoodData Central", "CC0-1.0"),
 				"open-food-facts": sourceAttribution(
 					"open-food-facts",
 					"Open Food Facts",
@@ -472,24 +480,28 @@ describe("blendCalc API v1 catalog mapping", () => {
 		});
 		expect(product.ingredients).toMatchObject({
 			items: ["Tomatoes", "Onion"],
-			structured: [{
-				id: "en:tomato",
-				text: "Tomatoes",
-				percentEstimate: 80,
-			}],
+			structured: [
+				{
+					id: "en:tomato",
+					text: "Tomatoes",
+					percentEstimate: 80,
+				},
+			],
 			analysis: {
 				percentEstimate: 92,
 				derivedTraceTags: ["celery"],
 			},
 			additives: ["e330"],
-				traces: ["Celery"],
-				precautionaryStatements: [{
+			traces: ["Celery"],
+			precautionaryStatements: [
+				{
 					type: "shared_facility",
 					text: "Made in a facility that also processes celery",
 					allergens: ["celery"],
 					observationId: "c09174bc-84a3-4c7b-9740-09dfe15a4f51",
 					revisionId: "a89fc15f-ffcd-4d03-92e9-2b511bb300ca",
-				}],
+				},
+			],
 			labels: ["Vegan"],
 		});
 		expect(product.packageQuantity).toEqual({
@@ -569,49 +581,56 @@ describe("blendCalc API v1 catalog mapping", () => {
 	});
 
 	it("publishes active official safety notices without private match evidence", () => {
-		const product = mapApprovedCatalogRecordToApiV1Product({
-			...record,
-			food: {
-				...record.food,
-				safetyAlerts: [{
-					id: "f7e73167-d6eb-4753-921c-b2a799029e53",
-					providerKey: "open-fda-food-enforcement",
-					sourceName: "openFDA Food Enforcement",
-					sourceAttribution: "U.S. Food and Drug Administration",
-					alertType: "recall",
-					classification: "Class I",
-					status: "Ongoing",
-					productDescription: "Example product",
-					reason: "Possible undeclared milk",
-					recallingOrganization: "Example Foods",
-					sourceUrl: "https://api.fda.gov/food/enforcement.json",
-					reportDate: "2026-08-14",
-					recallInitiatedAt: "2026-08-13",
-					matchType: "exact_gtin",
-					requiresPackageCheck: true,
-					detectedAt: "2026-08-14T12:00:00.000Z",
-				}],
+		const product = mapApprovedCatalogRecordToApiV1Product(
+			{
+				...record,
+				food: {
+					...record.food,
+					safetyAlerts: [
+						{
+							id: "f7e73167-d6eb-4753-921c-b2a799029e53",
+							providerKey: "open-fda-food-enforcement",
+							sourceName: "openFDA Food Enforcement",
+							sourceAttribution: "U.S. Food and Drug Administration",
+							alertType: "recall",
+							classification: "Class I",
+							status: "Ongoing",
+							productDescription: "Example product",
+							reason: "Possible undeclared milk",
+							recallingOrganization: "Example Foods",
+							sourceUrl: "https://api.fda.gov/food/enforcement.json",
+							reportDate: "2026-08-14",
+							recallInitiatedAt: "2026-08-13",
+							matchType: "exact_gtin",
+							requiresPackageCheck: true,
+							detectedAt: "2026-08-14T12:00:00.000Z",
+						},
+					],
+				},
 			},
-		}, defaultAttributionCatalog());
+			defaultAttributionCatalog(),
+		);
 
-		expect(product.safetyAlerts).toEqual([{
-			id: "f7e73167-d6eb-4753-921c-b2a799029e53",
-			type: "recall",
-			classification: "Class I",
-			status: "Ongoing",
-			productDescription: "Example product",
-			reason: "Possible undeclared milk",
-			recallingOrganization: "Example Foods",
-			requiresPackageCheck: true,
-			reportDate: "2026-08-14",
-			recallInitiatedAt: "2026-08-13",
-			source: {
-				key: "open-fda-food-enforcement",
-				name: "openFDA Food Enforcement",
-				url: "https://api.fda.gov/food/enforcement.json",
-				attribution: "U.S. Food and Drug Administration",
+		expect(product.safetyAlerts).toEqual([
+			{
+				id: "f7e73167-d6eb-4753-921c-b2a799029e53",
+				type: "recall",
+				classification: "Class I",
+				status: "Ongoing",
+				productDescription: "Example product",
+				reason: "Possible undeclared milk",
+				recallingOrganization: "Example Foods",
+				requiresPackageCheck: true,
+				reportDate: "2026-08-14",
+				recallInitiatedAt: "2026-08-13",
+				source: {
+					key: "open-fda-food-enforcement",
+					name: "openFDA Food Enforcement",
+					url: "https://api.fda.gov/food/enforcement.json",
+					attribution: "U.S. Food and Drug Administration",
+				},
 			},
-		}]);
+		]);
 		expect(product.safetyAlerts[0]).not.toHaveProperty("matchType");
 		expect(product.safetyAlerts[0]).not.toHaveProperty("detectedAt");
 	});
@@ -642,8 +661,7 @@ describe("blendCalc API v1 catalog mapping", () => {
 			source: "community-reviewed",
 			sourceReference: `private/evidence/${privateSentinel}`,
 		};
-		hostileRecord.food.precautionaryStatements![0].sourceReference =
-			`private/evidence/${privateSentinel}`;
+		hostileRecord.food.precautionaryStatements![0].sourceReference = `private/evidence/${privateSentinel}`;
 		hostileRecord.food.sourceMetadata!.tagSources = {
 			allergens: [
 				"ingredients",
@@ -664,7 +682,9 @@ describe("blendCalc API v1 catalog mapping", () => {
 		const serialized = JSON.stringify(product);
 
 		expect(product.fieldSources.name?.reference).toBeNull();
-		expect(product.ingredients.precautionaryStatements[0]?.sourceReference).toBeNull();
+		expect(
+			product.ingredients.precautionaryStatements[0]?.sourceReference,
+		).toBeNull();
 		expect(product.sourceRecord?.tagSources).toEqual({
 			allergens: ["ingredients"],
 		});
@@ -690,14 +710,16 @@ describe("blendCalc API v1 catalog mapping", () => {
 	it("publishes only the category contract when database rows contain private fields", async () => {
 		const privateSentinel = "PRIVATE-CATEGORY-SENTINEL";
 		const range = vi.fn().mockResolvedValue({
-			data: [{
-				id: "sauces",
-				label: "Sauces",
-				normalized_value: "sauces",
-				updated_at: "2026-07-19T10:00:00.000Z",
-				owner_id: privateSentinel,
-				reviewed_by: privateSentinel,
-			}],
+			data: [
+				{
+					id: "sauces",
+					label: "Sauces",
+					normalized_value: "sauces",
+					updated_at: "2026-07-19T10:00:00.000Z",
+					owner_id: privateSentinel,
+					reviewed_by: privateSentinel,
+				},
+			],
 			error: null,
 			count: 1,
 		});
@@ -707,18 +729,20 @@ describe("blendCalc API v1 catalog mapping", () => {
 		const select = vi.fn().mockReturnValue({ eq });
 		const from = vi.fn().mockReturnValue({ select });
 
-		const result = await readApiV1Categories(
-			{ from } as never,
-			{ limit: 25, offset: 0 },
-		);
+		const result = await readApiV1Categories({ from } as never, {
+			limit: 25,
+			offset: 0,
+		});
 
 		expect(result).toEqual({
-			categories: [{
-				id: "sauces",
-				name: "Sauces",
-				slug: "sauces",
-				updatedAt: "2026-07-19T10:00:00.000Z",
-			}],
+			categories: [
+				{
+					id: "sauces",
+					name: "Sauces",
+					slug: "sauces",
+					updatedAt: "2026-07-19T10:00:00.000Z",
+				},
+			],
 			pagination: {
 				limit: 25,
 				offset: 0,
@@ -743,14 +767,11 @@ describe("blendCalc API v1 catalog mapping", () => {
 			brandOwner: record.fieldProvenance.brandOwner,
 			ingredients: record.fieldProvenance.ingredients,
 		};
-		const product = mapApprovedCatalogRecordToApiV1Product(imageOnlyRecord,
+		const product = mapApprovedCatalogRecordToApiV1Product(
+			imageOnlyRecord,
 			attributionCatalog(
 				{
-					usda: sourceAttribution(
-						"usda",
-						"USDA FoodData Central",
-						"CC0-1.0",
-					),
+					usda: sourceAttribution("usda", "USDA FoodData Central", "CC0-1.0"),
 				},
 				{},
 				{
@@ -775,13 +796,10 @@ describe("blendCalc API v1 catalog mapping", () => {
 			brandOwner: record.fieldProvenance.brandOwner,
 			ingredients: record.fieldProvenance.ingredients,
 		};
-		const product = mapApprovedCatalogRecordToApiV1Product(legacyRecord,
+		const product = mapApprovedCatalogRecordToApiV1Product(
+			legacyRecord,
 			attributionCatalog({
-				usda: sourceAttribution(
-					"usda",
-					"USDA FoodData Central",
-					"CC0-1.0",
-				),
+				usda: sourceAttribution("usda", "USDA FoodData Central", "CC0-1.0"),
 			}),
 		);
 
@@ -838,21 +856,25 @@ describe("blendCalc API v1 catalog mapping", () => {
 
 	it("maps structured revision changes without exposing revision snapshots", async () => {
 		const rpc = vi.fn().mockResolvedValue({
-			data: [{
-				id: "a89fc15f-ffcd-4d03-92e9-2b511bb300ca",
-				revision_number: 2,
-				published_at: "2026-07-19T10:00:00.000Z",
-				label_observed_at: "2026-07-17T10:00:00.000Z",
-				changes: [{
-					field: "ingredients",
-					label: "Ingredients",
-					changeType: "changed",
-					previousValue: "Tomatoes",
-					newValue: "Tomatoes, onion",
-					severity: "medium",
-				}],
-				total_count: 2,
-			}],
+			data: [
+				{
+					id: "a89fc15f-ffcd-4d03-92e9-2b511bb300ca",
+					revision_number: 2,
+					published_at: "2026-07-19T10:00:00.000Z",
+					label_observed_at: "2026-07-17T10:00:00.000Z",
+					changes: [
+						{
+							field: "ingredients",
+							label: "Ingredients",
+							changeType: "changed",
+							previousValue: "Tomatoes",
+							newValue: "Tomatoes, onion",
+							severity: "medium",
+						},
+					],
+					total_count: 2,
+				},
+			],
 			error: null,
 		});
 
@@ -863,20 +885,24 @@ describe("blendCalc API v1 catalog mapping", () => {
 		);
 
 		expect(result).toEqual({
-			revisions: [{
-				id: "a89fc15f-ffcd-4d03-92e9-2b511bb300ca",
-				number: 2,
-				publishedAt: "2026-07-19T10:00:00.000Z",
-				labelObservedAt: "2026-07-17T10:00:00.000Z",
-				changes: [{
-					field: "ingredients",
-					label: "Ingredients",
-					changeType: "changed",
-					previousValue: "Tomatoes",
-					newValue: "Tomatoes, onion",
-					severity: "medium",
-				}],
-			}],
+			revisions: [
+				{
+					id: "a89fc15f-ffcd-4d03-92e9-2b511bb300ca",
+					number: 2,
+					publishedAt: "2026-07-19T10:00:00.000Z",
+					labelObservedAt: "2026-07-17T10:00:00.000Z",
+					changes: [
+						{
+							field: "ingredients",
+							label: "Ingredients",
+							changeType: "changed",
+							previousValue: "Tomatoes",
+							newValue: "Tomatoes, onion",
+							severity: "medium",
+						},
+					],
+				},
+			],
 			pagination: {
 				limit: 25,
 				offset: 0,
@@ -892,39 +918,45 @@ describe("blendCalc API v1 catalog mapping", () => {
 	it("publishes only allowlisted revision fields, labels, and value shapes", async () => {
 		const privateSentinel = "PRIVATE-REVISION-SENTINEL";
 		const rpc = vi.fn().mockResolvedValue({
-			data: [{
-				id: "a89fc15f-ffcd-4d03-92e9-2b511bb300ca",
-				revision_number: 3,
-				published_at: "2026-07-20T10:00:00.000Z",
-				label_observed_at: "2026-07-20T09:00:00.000Z",
-				changes: [
-					{
-						field: "ingredients",
-						label: privateSentinel,
-						changeType: "changed",
-						previousValue: "Tomatoes",
-						newValue: "Tomatoes, onion",
-						severity: "medium",
-					},
-					{
-						field: "nutrient:1003",
-						label: privateSentinel,
-						changeType: "changed",
-						previousValue: { value: 2, unit: "g", evidencePath: privateSentinel },
-						newValue: { value: 3, unit: "g", reviewedBy: privateSentinel },
-						severity: "low",
-					},
-					{
-						field: "moderatorEvidence",
-						label: privateSentinel,
-						changeType: "added",
-						previousValue: null,
-						newValue: { path: privateSentinel },
-						severity: "high",
-					},
-				],
-				total_count: 1,
-			}],
+			data: [
+				{
+					id: "a89fc15f-ffcd-4d03-92e9-2b511bb300ca",
+					revision_number: 3,
+					published_at: "2026-07-20T10:00:00.000Z",
+					label_observed_at: "2026-07-20T09:00:00.000Z",
+					changes: [
+						{
+							field: "ingredients",
+							label: privateSentinel,
+							changeType: "changed",
+							previousValue: "Tomatoes",
+							newValue: "Tomatoes, onion",
+							severity: "medium",
+						},
+						{
+							field: "nutrient:1003",
+							label: privateSentinel,
+							changeType: "changed",
+							previousValue: {
+								value: 2,
+								unit: "g",
+								evidencePath: privateSentinel,
+							},
+							newValue: { value: 3, unit: "g", reviewedBy: privateSentinel },
+							severity: "low",
+						},
+						{
+							field: "moderatorEvidence",
+							label: privateSentinel,
+							changeType: "added",
+							previousValue: null,
+							newValue: { path: privateSentinel },
+							severity: "high",
+						},
+					],
+					total_count: 1,
+				},
+			],
 			error: null,
 		});
 
@@ -956,17 +988,20 @@ describe("blendCalc API v1 catalog mapping", () => {
 	});
 
 	it("returns an empty page instead of a false not-found result", async () => {
-		const rpc = vi.fn()
+		const rpc = vi
+			.fn()
 			.mockResolvedValueOnce({ data: [], error: null })
 			.mockResolvedValueOnce({
-				data: [{
-					id: "a89fc15f-ffcd-4d03-92e9-2b511bb300ca",
-					revision_number: 2,
-					published_at: "2026-07-19T10:00:00.000Z",
-					label_observed_at: "2026-07-17T10:00:00.000Z",
-					changes: [],
-					total_count: 2,
-				}],
+				data: [
+					{
+						id: "a89fc15f-ffcd-4d03-92e9-2b511bb300ca",
+						revision_number: 2,
+						published_at: "2026-07-19T10:00:00.000Z",
+						label_observed_at: "2026-07-17T10:00:00.000Z",
+						changes: [],
+						total_count: 2,
+					},
+				],
 				error: null,
 			});
 
@@ -1008,9 +1043,8 @@ describe("blendCalc API v1 catalog mapping", () => {
 		"preserves release-specific %s attribution when its fields enter the canonical API",
 		(sourceKey, displayName, licenseName) => {
 			const attributedRecord = structuredClone(record);
-			const datasetKey = sourceKey === "health-canada-cnf"
-				? "cnf-2026"
-				: "cofid-2021";
+			const datasetKey =
+				sourceKey === "health-canada-cnf" ? "cnf-2026" : "cofid-2021";
 			for (const fieldSource of Object.values(
 				attributedRecord.fieldProvenance,
 			)) {
@@ -1055,10 +1089,9 @@ describe("blendCalc API v1 catalog mapping", () => {
 	);
 
 	it("fails closed when represented source attribution is unavailable", () => {
-		expect(() => mapApprovedCatalogRecordToApiV1Product(
-			record,
-			attributionCatalog({}),
-		)).toThrow("Required API source attribution is unavailable.");
+		expect(() =>
+			mapApprovedCatalogRecordToApiV1Product(record, attributionCatalog({})),
+		).toThrow("Required API source attribution is unavailable.");
 	});
 
 	it("fails closed when a product has no canonical source lineage", () => {
@@ -1067,82 +1100,93 @@ describe("blendCalc API v1 catalog mapping", () => {
 		unattributedRecord.food.foodNutrients = [];
 		unattributedRecord.food.foodServings = [];
 
-		expect(() => mapApprovedCatalogRecordToApiV1Product(
-			unattributedRecord,
-			defaultAttributionCatalog(),
-		)).toThrow("Required API source attribution is unavailable.");
+		expect(() =>
+			mapApprovedCatalogRecordToApiV1Product(
+				unattributedRecord,
+				defaultAttributionCatalog(),
+			),
+		).toThrow("Required API source attribution is unavailable.");
 	});
 
 	it("builds a complete provider and release attribution catalog", () => {
 		const catalog = mapApiV1SourceAttributionCatalog(
-			[{
-				key: "health-canada-cnf",
-				display_name: "Health Canada Canadian Nutrient File",
-				homepage_url: "https://example.com/cnf",
-				terms_url: "https://example.com/cnf/license",
-				attribution_text: "Required Canada attribution",
-				canonical_license_name: "Open Government Licence – Canada",
-				canonical_policy_reviewed_at: "2026-07-22T00:00:00.000Z",
-				canonical_storage_allowed: true,
-				api_redistribution_allowed: true,
-			}],
-			[{
-				key: "cnf-2026",
-				source_key: "health-canada-cnf",
-				display_name: "Canadian Nutrient File 2026",
-				version: "2026",
-				source_url: "https://example.com/cnf-2026",
-				license_name: "Open Government Licence – Canada",
-				license_url: "https://example.com/cnf/license",
-				attribution_text: "Contains information licensed by Canada.",
-				imported_at: "2026-07-26T00:00:00.000Z",
-				active: true,
-				import_enabled: true,
-				license_review_status: "approved",
-			}],
+			[
+				{
+					key: "health-canada-cnf",
+					display_name: "Health Canada Canadian Nutrient File",
+					homepage_url: "https://example.com/cnf",
+					terms_url: "https://example.com/cnf/license",
+					attribution_text: "Required Canada attribution",
+					canonical_license_name: "Open Government Licence – Canada",
+					canonical_policy_reviewed_at: "2026-07-22T00:00:00.000Z",
+					canonical_storage_allowed: true,
+					api_redistribution_allowed: true,
+				},
+			],
+			[
+				{
+					key: "cnf-2026",
+					source_key: "health-canada-cnf",
+					display_name: "Canadian Nutrient File 2026",
+					version: "2026",
+					source_url: "https://example.com/cnf-2026",
+					license_name: "Open Government Licence – Canada",
+					license_url: "https://example.com/cnf/license",
+					attribution_text: "Contains information licensed by Canada.",
+					imported_at: "2026-07-26T00:00:00.000Z",
+					active: true,
+					import_enabled: true,
+					license_review_status: "approved",
+				},
+			],
 		);
 
 		expect(catalog.sources["health-canada-cnf"]).toMatchObject({
 			licenseName: "Open Government Licence – Canada",
 			redistributionPolicyReviewedAt: "2026-07-22T00:00:00.000Z",
 		});
-		expect(catalog.datasetsBySource["health-canada-cnf"]?.["cnf-2026"])
-			.toMatchObject({
-				dataset: {
-					key: "cnf-2026",
-					version: "2026",
-					importedAt: "2026-07-26T00:00:00.000Z",
-				},
-			});
+		expect(
+			catalog.datasetsBySource["health-canada-cnf"]?.["cnf-2026"],
+		).toMatchObject({
+			dataset: {
+				key: "cnf-2026",
+				version: "2026",
+				importedAt: "2026-07-26T00:00:00.000Z",
+			},
+		});
 	});
 
 	it("withholds an approved dataset whose import date is missing", () => {
 		const catalog = mapApiV1SourceAttributionCatalog(
-			[{
-				key: "health-canada-cnf",
-				display_name: "Health Canada Canadian Nutrient File",
-				homepage_url: "https://example.com/cnf",
-				terms_url: "https://example.com/cnf/license",
-				attribution_text: "Required Canada attribution",
-				canonical_license_name: "Open Government Licence – Canada",
-				canonical_policy_reviewed_at: "2026-07-22T00:00:00.000Z",
-				canonical_storage_allowed: true,
-				api_redistribution_allowed: true,
-			}],
-			[{
-				key: "cnf-2026",
-				source_key: "health-canada-cnf",
-				display_name: "Canadian Nutrient File 2026",
-				version: "2026",
-				source_url: "https://example.com/cnf-2026",
-				license_name: "Open Government Licence – Canada",
-				license_url: "https://example.com/cnf/license",
-				attribution_text: "Contains information licensed by Canada.",
-				imported_at: null,
-				active: true,
-				import_enabled: true,
-				license_review_status: "approved",
-			}],
+			[
+				{
+					key: "health-canada-cnf",
+					display_name: "Health Canada Canadian Nutrient File",
+					homepage_url: "https://example.com/cnf",
+					terms_url: "https://example.com/cnf/license",
+					attribution_text: "Required Canada attribution",
+					canonical_license_name: "Open Government Licence – Canada",
+					canonical_policy_reviewed_at: "2026-07-22T00:00:00.000Z",
+					canonical_storage_allowed: true,
+					api_redistribution_allowed: true,
+				},
+			],
+			[
+				{
+					key: "cnf-2026",
+					source_key: "health-canada-cnf",
+					display_name: "Canadian Nutrient File 2026",
+					version: "2026",
+					source_url: "https://example.com/cnf-2026",
+					license_name: "Open Government Licence – Canada",
+					license_url: "https://example.com/cnf/license",
+					attribution_text: "Contains information licensed by Canada.",
+					imported_at: null,
+					active: true,
+					import_enabled: true,
+					license_review_status: "approved",
+				},
+			],
 		);
 
 		expect(catalog.datasetsBySource["health-canada-cnf"]).toBeUndefined();
@@ -1151,17 +1195,19 @@ describe("blendCalc API v1 catalog mapping", () => {
 
 	it("withholds an API-approved source whose legal attribution is incomplete", () => {
 		const catalog = mapApiV1SourceAttributionCatalog(
-			[{
-				key: "incomplete-source",
-				display_name: "Incomplete source",
-				homepage_url: "https://example.com/incomplete",
-				terms_url: null,
-				attribution_text: "Required credit",
-				canonical_license_name: "Example licence",
-				canonical_policy_reviewed_at: "2026-07-22T00:00:00.000Z",
-				canonical_storage_allowed: true,
-				api_redistribution_allowed: true,
-			}],
+			[
+				{
+					key: "incomplete-source",
+					display_name: "Incomplete source",
+					homepage_url: "https://example.com/incomplete",
+					terms_url: null,
+					attribution_text: "Required credit",
+					canonical_license_name: "Example licence",
+					canonical_policy_reviewed_at: "2026-07-22T00:00:00.000Z",
+					canonical_storage_allowed: true,
+					api_redistribution_allowed: true,
+				},
+			],
 			[],
 		);
 
@@ -1170,9 +1216,7 @@ describe("blendCalc API v1 catalog mapping", () => {
 
 	it("fails closed when a represented dataset release cannot be resolved", () => {
 		const attributedRecord = structuredClone(record);
-		for (const fieldSource of Object.values(
-			attributedRecord.fieldProvenance,
-		)) {
+		for (const fieldSource of Object.values(attributedRecord.fieldProvenance)) {
 			fieldSource.source = "health-canada-cnf";
 			fieldSource.sourceReference = "cnf-2026:101";
 		}
@@ -1185,18 +1229,20 @@ describe("blendCalc API v1 catalog mapping", () => {
 			serving.sourceReference = "cnf-2026:101";
 		}
 
-		expect(() => mapApprovedCatalogRecordToApiV1Product(
-			attributedRecord,
-			attributionCatalog(
-				{
-					"health-canada-cnf": sourceAttribution(
-						"health-canada-cnf",
-						"Health Canada Canadian Nutrient File",
-						"Open Government Licence – Canada",
-					),
-				},
-				{ "health-canada-cnf": {} },
+		expect(() =>
+			mapApprovedCatalogRecordToApiV1Product(
+				attributedRecord,
+				attributionCatalog(
+					{
+						"health-canada-cnf": sourceAttribution(
+							"health-canada-cnf",
+							"Health Canada Canadian Nutrient File",
+							"Open Government Licence – Canada",
+						),
+					},
+					{ "health-canada-cnf": {} },
+				),
 			),
-		)).toThrow("Required API dataset attribution is unavailable.");
+		).toThrow("Required API dataset attribution is unavailable.");
 	});
 });

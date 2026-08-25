@@ -5,11 +5,13 @@ import {
 	normalizeApiV1BoundaryResponse,
 } from "$lib/server/api/v1/http.server";
 
-describe("blendCalc API v1 error responses", () => {
+describe("blendCalcAPI v1 error responses", () => {
 	it.each(Object.entries(API_V1_ERROR_DEFINITIONS))(
 		"returns the stable %s response",
 		async (code, definition) => {
-			const response = apiV1Error(code as keyof typeof API_V1_ERROR_DEFINITIONS);
+			const response = apiV1Error(
+				code as keyof typeof API_V1_ERROR_DEFINITIONS,
+			);
 			expect(response.status).toBe(definition.status);
 			expect(response.headers.get("cache-control")).toBe("private, no-store");
 			expect(response.headers.get("x-blendcalc-api-version")).toBe("1.0");
@@ -29,16 +31,19 @@ describe("blendCalc API v1 error responses", () => {
 		[429, "rate_limited"],
 		[500, "unexpected_error"],
 		[503, "service_unavailable"],
-	])("normalizes an unversioned HTTP %i boundary response", async (status, code) => {
-		const response = normalizeApiV1BoundaryResponse(
-			"/api/v1/categories",
-			new Response("private server detail", { status }),
-		);
-		expect(response.status).toBe(status);
-		const payload = await response.json();
-		expect(payload.error.code).toBe(code);
-		expect(JSON.stringify(payload)).not.toContain("private server detail");
-	});
+	])(
+		"normalizes an unversioned HTTP %i boundary response",
+		async (status, code) => {
+			const response = normalizeApiV1BoundaryResponse(
+				"/api/v1/categories",
+				new Response("private server detail", { status }),
+			);
+			expect(response.status).toBe(status);
+			const payload = await response.json();
+			expect(payload.error.code).toBe(code);
+			expect(JSON.stringify(payload)).not.toContain("private server detail");
+		},
+	);
 
 	it("preserves safe rate-limit response headers", () => {
 		const response = normalizeApiV1BoundaryResponse(

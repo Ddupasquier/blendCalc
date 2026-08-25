@@ -154,7 +154,7 @@ it does not share mutable state with browser jobs or another workflow run.
   provider or hosted-database quota. Provider adapters remain covered through injected
   unit tests, source-shaped Open Food Facts application fixtures, and separate explicit
   live-source audits. Open Food Facts records are not silently republished through the
-  blendCalc API because their redistribution model remains separate from USDA CC0 data.
+  blendCalcAPI because their redistribution model remains separate from USDA CC0 data.
 - Local login-capable users are created only after the local Auth and PostgREST APIs are
   available.
 

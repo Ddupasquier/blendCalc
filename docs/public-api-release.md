@@ -11,7 +11,7 @@
 
 ## Current Status
 
-blendCalc API v1 is an **internal, read-only preview for signed-in blendCalc accounts**.
+blendCalcAPI v1 is an **internal, read-only preview for signed-in blendCalc accounts**.
 Public API keys, developer accounts, billing, and anonymous catalog access do not exist.
 Public access remains blocked in `src/lib/api/v1/accessPolicy.ts` and the OpenAPI status
 metadata until the reviews in this document are complete.

@@ -6,7 +6,7 @@ import { normalizeBarcode } from "$lib/utils/barcode/barcode";
 import type { RequestHandler } from "./$types";
 
 export const GET: RequestHandler = async ({ locals, params }) => {
-	if (!await hasApiV1CatalogReadAccess(locals)) {
+	if (!(await hasApiV1CatalogReadAccess(locals))) {
 		return apiV1Error("authentication_required");
 	}
 	const barcode = normalizeBarcode(params.barcode);
@@ -19,7 +19,7 @@ export const GET: RequestHandler = async ({ locals, params }) => {
 		if (!product) return apiV1Error("product_not_found");
 		return apiV1Success(product);
 	} catch (error) {
-		console.error("blendCalc API v1 product read failed.", error);
+		console.error("blendCalcAPI v1 product read failed.", error);
 		return apiV1Error("catalog_unavailable");
 	}
 };

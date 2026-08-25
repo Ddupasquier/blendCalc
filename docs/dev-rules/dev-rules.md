@@ -1077,7 +1077,7 @@ tests.
 
 #### Rule 26c — Database API Hygiene
 
-Treat database and blendCalc API hygiene
+Treat database and blendCalcAPI hygiene
 as a continuous responsibility, not a one-time cleanup project. Whenever work touches a
 table, column, relationship, RPC, view, trigger, policy, index, seed, repository query,
 or API field, inspect the surrounding domain for orphaned tables, dead or duplicated
@@ -1813,7 +1813,7 @@ omit volume choices when the conversion is unknown or too uncertain.
 
 #### Rule 31f — Catalog Read API
 
-Keep the versioned blendCalc catalog API
+Keep the versioned blendCalcAPI
 separate from both physical database rows and external provider responses. API reads
 must use active canonical `shared_products` plus normalized child records as the source
 of truth, perform no live provider request, return bounded indexed pagination, and use
