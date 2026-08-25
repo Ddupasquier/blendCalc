@@ -10,16 +10,16 @@ execution guidance.
 
 ## Start Here
 
-| If you are...                            | Read first                                                                                                                                                                   |
-| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Starting any change                      | [Development Rules](dev-rules/dev-rules.md), then the matching subject documents below                                                                                       |
-| Adding or moving files                   | [Project Structure](project-structure.md)                                                                                                                                    |
-| Changing UI or behavior                  | [Style Guide](style-guide.md), [UI Functionality](ui-functionality.md), and the matching view contract                                                                       |
-| Changing durable data                    | [Data Architecture](data-architecture.md), [Supabase Schema](supabase-schema.md), and [Database Testing](database-testing.md)                                                |
-| Changing food, catalog, or provider data | [Shared Product Catalog](shared-product-catalog.md), [Source Data Inventory](api-structures/source-data-inventory.md), and [Data Source Licensing](data-source-licensing.md) |
-| Changing API v1                          | [API Structures](api-structures/README.md), [Catalog Field Lineage](api-structures/catalog-field-lineage.md), OpenAPI, and versioned TypeScript contracts                    |
-| Adding or changing tests                 | [Testing Strategy](testing.md) plus the browser or database guide when applicable                                                                                            |
-| Adding or running automated QA           | [Testing Strategy](testing.md), plus the browser or database guide when applicable                                                                                           |
+| If you are...                            | Read first                                                                                                                                                                              |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Starting any change                      | Create or enter its dedicated [feature branch](project-structure.md#feature-branches), read [Development Rules](dev-rules/dev-rules.md), then read the matching subject documents below |
+| Adding or moving files                   | [Project Structure](project-structure.md)                                                                                                                                               |
+| Changing UI or behavior                  | [Style Guide](style-guide.md), [UI Functionality](ui-functionality.md), and the matching view contract                                                                                  |
+| Changing durable data                    | [Data Architecture](data-architecture.md), [Supabase Schema](supabase-schema.md), and [Database Testing](database-testing.md)                                                           |
+| Changing food, catalog, or provider data | [Shared Product Catalog](shared-product-catalog.md), [Source Data Inventory](api-structures/source-data-inventory.md), and [Data Source Licensing](data-source-licensing.md)            |
+| Changing API v1                          | [API Structures](api-structures/README.md), [Catalog Field Lineage](api-structures/catalog-field-lineage.md), OpenAPI, and versioned TypeScript contracts                               |
+| Adding or changing tests                 | [Testing Strategy](testing.md) plus the browser or database guide when applicable                                                                                                       |
+| Adding or running automated QA           | [Testing Strategy](testing.md), plus the browser or database guide when applicable                                                                                                      |
 
 ## Authority
 

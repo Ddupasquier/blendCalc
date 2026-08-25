@@ -921,15 +921,26 @@ API does not survive behind the new components.
 
 ### Branch And Delivery Workflow
 
-**17.** Use the branch gate. Every new feature, major addition, and big change gets its
-own branch from `staging`, merges into `staging` first, and only moves from `staging` to
-`main` after the staging preview is approved.
+**17.** Use the branch gate for every tracked change. Before editing code,
+documentation, tests, configuration, dependencies, scripts, migrations, generated
+artifacts, or other repository-owned files, create or enter one short-lived
+responsibility branch from current `staging`. In this workflow, “feature branch” is the
+umbrella term for `feat/`, `fix/`, `refactor/`, `chore/`, `docs/`, `test/`, and other
+focused change branches. Immediately publish every new local branch to `origin` with an
+upstream before editing tracked files; local-only working branches are not allowed. The
+initial remote branch may point to unchanged `staging` until a commit is approved.
+Publishing that branch pointer is standing workflow authorization only—it does not
+authorize committing or pushing changed content. If the remote branch cannot be
+created, report the blocker and do not begin tracked edits without explicit approval.
+Never make content changes directly on `staging` or `main`. Read-only investigation and
+the explicitly authorized merge or release operation itself do not require another
+branch.
 
 **18.** Treat bypassing staging as a process problem. If a change is headed to `main`
 without going through `staging`, stop and call that out before merging.
 
-**19.** Do not automatically add changes to `staging`. Work should stay on the active
-feature branch or working tree until explicitly approved for staging.
+**19.** Do not automatically add changes to `staging`. Work must stay on the active
+feature branch until explicitly approved for staging.
 
 **20.** Do not auto commit. Show the diff and get explicit approval before committing or
 pushing changes.
@@ -955,10 +966,15 @@ not permission to commit, push, merge, or deploy.
 **21.** Verify meaningful changes with `npm run check`, focused tests, and builds when
 scope warrants it.
 
-**22.** Start normal work from current `staging` on one short-lived responsibility
-branch. Use a descriptive prefix such as `feat/`, `fix/`, `refactor/`, `chore/`,
-`docs/`, or `test/`, followed by a plain-English outcome. Do not reuse long-lived view
-branches or combine unrelated work merely because it touches the same page.
+**22.** At the start of every request, compare the requested outcome with the active
+branch's single responsibility. Continue only when they match. If the prompt introduces
+a separate feature, fix, refactor, migration, test effort, documentation policy, or
+other responsibility, create a new feature branch from current `staging` before
+editing, publish it to `origin`, and set its upstream—without waiting for the user to
+repeat the branch requirement. Use a descriptive prefix such as `feat/`, `fix/`,
+`refactor/`, `chore/`, `docs/`, or `test/`, followed by a plain-English outcome. Do not
+reuse long-lived view branches or combine unrelated work merely because it touches the
+same page.
 
 **22a.** Promote an explicitly approved responsibility branch to `staging` only after
 its maintained local and remote checks pass. Promote `staging` to `main` only for an
@@ -966,6 +982,13 @@ explicitly approved release, recheck the exact staging head, and never skip the 
 integration boundary. Push and verify every updated branch, then return the local
 checkout to the active feature branch when more work remains. This workflow does not
 grant standing permission to commit, push, merge, deploy, or include unrelated work.
+
+**22b.** Preserve interrupted or uncommitted work when a new prompt needs another
+branch. Never stash, discard, stage, or carry unrelated changes merely to switch tasks.
+Create a separate Git worktree from current `staging`, perform the new responsibility on
+its own feature branch, publish that branch pointer to `origin`, and leave the original
+working tree untouched. Branch creation and initial remote publication do not grant
+permission to commit, push changed content, merge, deploy, or include unrelated files.
 
 **23.** Stable high-risk components require explicit written approval before material
 alteration. The nutrient chart and barcode scanner are currently protected; preserve

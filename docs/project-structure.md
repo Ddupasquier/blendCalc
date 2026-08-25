@@ -12,10 +12,38 @@ Visual implementation and token selection follow the Ingredients-derived system 
 
 | Area                    | Sections                                                                                                                   |
 | ----------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Change isolation        | [Feature Branches](#feature-branches)                                                                                      |
 | Application placement   | [Application Source](#application-source), [Components](#components), [Routes](#routes), and [Domain Logic](#domain-logic) |
 | Naming and verification | [Naming](#naming) and [Tests](#tests)                                                                                      |
 | Supporting material     | [Scripts](#scripts) and [Documentation](#documentation)                                                                    |
 | Final placement check   | [Ownership Check](#ownership-check)                                                                                        |
+
+## Feature Branches
+
+The authoritative branch gate is [Development Rules: Branch And Delivery
+Workflow](dev-rules/dev-rules.md#branch-and-delivery-workflow). Apply it before deciding
+where any file belongs:
+
+1. Start every tracked change on a short-lived feature branch created from current
+   `staging`. “Feature branch” includes focused fix, refactor, documentation, test,
+   migration, dependency, script, and maintenance branches.
+2. Immediately publish the new branch to `origin` and set its upstream before editing
+   tracked files. If remote publication fails, report the blocker and pause tracked
+   changes unless the user explicitly approves local-only work.
+3. Give the branch one plain-English responsibility and a matching prefix such as
+   `feat/`, `fix/`, `refactor/`, `docs/`, `test/`, or `chore/`.
+4. Before acting on another prompt, verify that its outcome belongs to the active
+   branch. If it does not, create a separate branch before editing.
+5. When the current working tree contains uncommitted work for another responsibility,
+   preserve it and create a separate Git worktree from `staging`. Do not move, stash,
+   discard, or absorb those changes into the new branch.
+6. Do not edit tracked content directly on `staging` or `main`. Those branches are
+   integration and release boundaries, not development workspaces.
+
+Read-only investigation does not require a branch. Creating a branch or worktree does
+not authorize a commit, content push, merge, deployment, or database change. Publishing
+the initial unchanged branch pointer is required workflow setup, not permission to push
+later commits.
 
 ## Application Source
 
