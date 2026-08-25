@@ -6,7 +6,11 @@ const FDA_RECALL_INDEX_PATH =
 	"/datatables-json/recalls-market-withdrawals.json?_format=json";
 const FDA_RECALL_DETAIL_PATH_PREFIX =
 	"/safety/recalls-market-withdrawals-safety-alerts/";
+const FSIS_RECALL_URL = "https://www.fsis.usda.gov/fsis/api/recall/v/1";
 const MAXIMUM_FDA_RESPONSE_BYTES = 3 * 1024 * 1024;
+const MAXIMUM_FSIS_RESPONSE_BYTES = 16 * 1024 * 1024;
+
+export type OfficialFoodSafetySource = "fda" | "fsis";
 
 const secretsMatch = (provided: string, expected: string) => {
 	const providedHash = createHash("sha256").update(provided).digest();
@@ -14,7 +18,7 @@ const secretsMatch = (provided: string, expected: string) => {
 	return timingSafeEqual(providedHash, expectedHash);
 };
 
-export const isAuthorizedFdaRecallSourceRequest = (
+export const isAuthorizedOfficialFoodSafetySourceRequest = (
 	providedSecret: string | null,
 	expectedSecret: string | undefined,
 ) =>
@@ -39,36 +43,46 @@ const resolveFdaSourceUrl = (sourcePath: string | null) => {
 		: null;
 };
 
-const readBoundedResponse = async (response: Response) => {
+const readBoundedResponse = async (
+	response: Response,
+	maximumResponseBytes: number,
+) => {
 	const declaredLength = Number(response.headers.get("content-length"));
 	if (
 		Number.isFinite(declaredLength) &&
-		declaredLength > MAXIMUM_FDA_RESPONSE_BYTES
+		declaredLength > maximumResponseBytes
 	) {
-		throw new Error("FDA recall source response exceeded the size limit");
+		throw new Error("Official food safety response exceeded the size limit");
 	}
 	const body = new Uint8Array(await response.arrayBuffer());
-	if (body.byteLength > MAXIMUM_FDA_RESPONSE_BYTES) {
-		throw new Error("FDA recall source response exceeded the size limit");
+	if (body.byteLength > maximumResponseBytes) {
+		throw new Error("Official food safety response exceeded the size limit");
 	}
 	return body;
 };
 
-export const fetchFdaRecallSource = async ({
+export const fetchOfficialFoodSafetySource = async ({
+	source,
 	sourcePath,
 	ifNoneMatch,
 	ifModifiedSince,
 }: {
+	source: OfficialFoodSafetySource;
 	sourcePath: string | null;
 	ifNoneMatch: string | null;
 	ifModifiedSince: string | null;
 }) => {
-	const sourceUrl = resolveFdaSourceUrl(sourcePath);
+	const sourceUrl =
+		source === "fsis"
+			? sourcePath
+				? null
+				: new URL(FSIS_RECALL_URL)
+			: resolveFdaSourceUrl(sourcePath);
 	if (!sourceUrl) return { status: "invalid_path" as const };
 
 	const headers = new Headers({
-		accept: sourcePath ? "text/html" : "application/json",
-		"user-agent": "blendCalc FDA recall monitor relay",
+		accept: source === "fda" && sourcePath ? "text/html" : "application/json",
+		"user-agent": "blendCalc official food safety monitor relay",
 	});
 	if (ifNoneMatch) headers.set("if-none-match", ifNoneMatch);
 	if (ifModifiedSince) headers.set("if-modified-since", ifModifiedSince);
@@ -86,14 +100,21 @@ export const fetchFdaRecallSource = async ({
 		};
 	}
 	if (!upstreamResponse.ok) {
-		throw new Error(`FDA recall source returned ${upstreamResponse.status}`);
+		throw new Error(
+			`Official food safety source returned ${upstreamResponse.status}`,
+		);
 	}
 
-	const body = await readBoundedResponse(upstreamResponse);
-	if (!sourcePath) {
+	const body = await readBoundedResponse(
+		upstreamResponse,
+		source === "fsis"
+			? MAXIMUM_FSIS_RESPONSE_BYTES
+			: MAXIMUM_FDA_RESPONSE_BYTES,
+	);
+	if (source === "fsis" || !sourcePath) {
 		const parsedBody = JSON.parse(new TextDecoder().decode(body));
 		if (!Array.isArray(parsedBody)) {
-			throw new Error("FDA recall source returned an invalid index");
+			throw new Error("Official food safety source returned invalid data");
 		}
 	}
 
@@ -102,7 +123,7 @@ export const fetchFdaRecallSource = async ({
 		body,
 		contentType:
 			upstreamResponse.headers.get("content-type") ??
-			(sourcePath
+			(source === "fda" && sourcePath
 				? "text/html; charset=utf-8"
 				: "application/json; charset=utf-8"),
 		etag: upstreamResponse.headers.get("etag"),

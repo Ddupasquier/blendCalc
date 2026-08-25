@@ -117,7 +117,16 @@ const processSafetyAlertSource = async (
 							protectionBypassSecret: fdaRecallProxyProtectionBypassSecret,
 						},
 					)
-				: await fetchFsisAlertPage();
+				: await fetchFsisAlertPage(
+						claim.last_successful_at,
+						claim.cursor_value,
+						pageSize,
+						{
+							url: fdaRecallProxyUrl,
+							secret: fdaRecallProxySecret,
+							protectionBypassSecret: fdaRecallProxyProtectionBypassSecret,
+						},
+					);
 		for (const sourceError of page.sourceErrors ?? []) {
 			summary.errors.push({
 				scope: `safety:${claim.provider_key}:${sourceError.source}`,

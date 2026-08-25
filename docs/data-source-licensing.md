@@ -281,6 +281,10 @@ public alerting product.
 - The server worker processes FSIS through its own cursor, backoff, and error code. It
   stores immutable alert revisions and retains current status without exposing raw
   payloads to browsers or API consumers.
+- The adapter reads the current official `field_*` response contract, retains active
+  and recently updated notices, and uses ETag/Last-Modified validators after a complete
+  sweep. When the Edge network is denied, the same secret-authenticated fixed-origin
+  relay used for FDA notices may fetch only the fixed FSIS endpoint.
 - Exact GTIN evidence may activate a match. Strong identity without an exact identifier
   is reviewed, title-only similarity is ignored, and package/lot/date information is
   retained for a required package check.
