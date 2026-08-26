@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 const scriptsRoot = path.resolve("scripts");
 const ignoredOutputDirectory = `${path.sep}output${path.sep}`;
 const packageMetadata = JSON.parse(await readFile("package.json", "utf8"));
+const scriptDocumentation = await readFile("scripts/README.md", "utf8");
 
 const collectScriptFiles = async (directory) => {
 	const entries = await readdir(directory, { withFileTypes: true });
@@ -27,7 +28,6 @@ const executableDomainsByOperation = {
 	generators: ["api"],
 	imports: ["nutrition"],
 	operations: [
-		"api",
 		"auth",
 		"blendCalcAPI",
 		"database",
@@ -115,6 +115,39 @@ describe("repository script headers", () => {
 					`${command} references missing ${scriptPath}`,
 				).resolves.toBeUndefined();
 			}
+		}
+	});
+
+	it("keeps internal seed and backfill workflows out of the npm command surface", () => {
+		for (const [command, definition] of Object.entries(
+			packageMetadata.scripts,
+		)) {
+			expect(
+				definition,
+				`${command} must use the documented direct script command`,
+			).not.toMatch(/node\s+scripts\/(?:backfills|seeds)\//u);
+		}
+	});
+
+	it("documents every direct executable workflow", () => {
+		const executableScriptPaths = scriptFiles
+			.map((filePath) =>
+				path.relative(process.cwd(), filePath).split(path.sep).join("/"),
+			)
+			.filter((relativePath) => !relativePath.startsWith("scripts/lib/"));
+
+		for (const relativePath of executableScriptPaths) {
+			const packageCommands = Object.entries(packageMetadata.scripts)
+				.filter(([, definition]) => definition.includes(relativePath))
+				.map(([command]) => command);
+			const hasDocumentedPackageCommand = packageCommands.some((command) =>
+				scriptDocumentation.includes(`npm run ${command}`),
+			);
+			expect(
+				scriptDocumentation.includes(relativePath) ||
+					hasDocumentedPackageCommand,
+				`${relativePath} must be documented in scripts/README.md`,
+			).toBe(true);
 		}
 	});
 

@@ -2,9 +2,9 @@
  * Purpose: Query USDA and Open Food Facts with the same active catalog barcodes, measure
  * request cost and field coverage, and record comparable benchmark metrics in Supabase.
  * `--reset-today` deletes only today's prior benchmark-origin metrics before the run.
- * Run: `npm run benchmark:source-quality -- --limit=10`
- * Stable sample: `npm run benchmark:source-quality -- --barcodes=00021130462506,00021130493609`
- * Reset and rerun: `npm run benchmark:source-quality -- --limit=200 --reset-today`
+ * Run: `node scripts/audits/food-sources/benchmark_product_sources.mjs --limit=10`
+ * Stable sample: `node scripts/audits/food-sources/benchmark_product_sources.mjs --barcodes=00021130462506,00021130493609`
+ * Reset and rerun: `node scripts/audits/food-sources/benchmark_product_sources.mjs --limit=200 --reset-today`
  */
 
 import { config } from "dotenv";
@@ -24,25 +24,34 @@ config({ path: ".env", quiet: true });
 const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const usdaApiKey = process.env.FDC_API_KEY || process.env.VITE_FDC_API_KEY;
-const limitArgument = process.argv.find((argument) => argument.startsWith("--limit="));
-const requestedLimit = Number.parseInt(limitArgument?.split("=")[1] ?? "10", 10);
+const limitArgument = process.argv.find((argument) =>
+	argument.startsWith("--limit="),
+);
+const requestedLimit = Number.parseInt(
+	limitArgument?.split("=")[1] ?? "10",
+	10,
+);
 const limit = Math.min(Math.max(requestedLimit, 1), 200);
 const barcodesArgument = process.argv.find((argument) =>
-	argument.startsWith("--barcodes=")
+	argument.startsWith("--barcodes="),
 );
 const requestedBarcodes = barcodesArgument
-	? [...new Set(
-		barcodesArgument
-			.slice("--barcodes=".length)
-			.split(",")
-			.map((barcode) => normalizeBarcode(barcode))
-			.filter(Boolean),
-	)]
+	? [
+			...new Set(
+				barcodesArgument
+					.slice("--barcodes=".length)
+					.split(",")
+					.map((barcode) => normalizeBarcode(barcode))
+					.filter(Boolean),
+			),
+		]
 	: [];
 const resetToday = process.argv.includes("--reset-today");
 
 if (barcodesArgument && requestedBarcodes.length === 0) {
-	throw new Error("--barcodes must contain at least one valid comma-separated GTIN.");
+	throw new Error(
+		"--barcodes must contain at least one valid comma-separated GTIN.",
+	);
 }
 
 if (!supabaseUrl || !serviceRoleKey || !usdaApiKey) {
@@ -70,32 +79,43 @@ if (resetToday) {
 		.eq("metric_date", metricDate)
 		.eq("lookup_origin", "benchmark");
 	if (error) throw error;
-	console.log(`Cleared ${metricDate} benchmark metrics before this controlled run.`);
+	console.log(
+		`Cleared ${metricDate} benchmark metrics before this controlled run.`,
+	);
 }
 
-const sleep = (milliseconds) => new Promise((resolve) => {
-	setTimeout(resolve, milliseconds);
-});
+const sleep = (milliseconds) =>
+	new Promise((resolve) => {
+		setTimeout(resolve, milliseconds);
+	});
 const numeric = (value) =>
 	value !== null && value !== "" && Number.isFinite(Number(value));
 const hasText = (value) => Boolean(String(value ?? "").trim());
-const sourceDate = (food) => Date.parse(
-	food.publishedDate
-	|| food.publicationDate
-	|| food.modifiedDate
-	|| food.availableDate
-	|| "",
-) || 0;
-const selectNewestUsdaMatch = (foods, barcode) => foods
-	.filter((food) =>
-		food.dataType === "Branded"
-		&& normalizeBarcode(food.gtinUpc) === barcode
-	)
-	.sort((left, right) => {
-		const activeDifference = Number(Boolean(left.discontinuedDate))
-			- Number(Boolean(right.discontinuedDate));
-		return activeDifference || sourceDate(right) - sourceDate(left) || right.fdcId - left.fdcId;
-	})[0] ?? null;
+const sourceDate = (food) =>
+	Date.parse(
+		food.publishedDate ||
+			food.publicationDate ||
+			food.modifiedDate ||
+			food.availableDate ||
+			"",
+	) || 0;
+const selectNewestUsdaMatch = (foods, barcode) =>
+	foods
+		.filter(
+			(food) =>
+				food.dataType === "Branded" &&
+				normalizeBarcode(food.gtinUpc) === barcode,
+		)
+		.sort((left, right) => {
+			const activeDifference =
+				Number(Boolean(left.discontinuedDate)) -
+				Number(Boolean(right.discontinuedDate));
+			return (
+				activeDifference ||
+				sourceDate(right) - sourceDate(left) ||
+				right.fdcId - left.fdcId
+			);
+		})[0] ?? null;
 
 const fetchTracked = async (url, options, trace) => {
 	const retryableStatuses = new Set([429, 500, 502, 503, 504]);
@@ -107,7 +127,7 @@ const fetchTracked = async (url, options, trace) => {
 		} catch (error) {
 			trace.apiErrorCount += 1;
 			if (attempt === 3) throw error;
-			await sleep(750 * (2 ** attempt));
+			await sleep(750 * 2 ** attempt);
 			continue;
 		}
 		if (response.ok || response.status === 404) return response;
@@ -116,7 +136,9 @@ const fetchTracked = async (url, options, trace) => {
 			throw new Error(`${url} returned ${response.status}.`);
 		}
 		const retryAfter = Number(response.headers.get("retry-after"));
-		await sleep(Number.isFinite(retryAfter) ? retryAfter * 1000 : 750 * (2 ** attempt));
+		await sleep(
+			Number.isFinite(retryAfter) ? retryAfter * 1000 : 750 * 2 ** attempt,
+		);
 	}
 	throw new Error(`Unable to fetch ${url}.`);
 };
@@ -146,7 +168,9 @@ const benchmarkUsda = async (barcode) => {
 		const match = candidateMatch?.value ?? null;
 		if (!match) return { outcome: "not-found", trace, startedAt };
 
-		const detailUrl = new URL(`https://api.nal.usda.gov/fdc/v1/food/${match.fdcId}`);
+		const detailUrl = new URL(
+			`https://api.nal.usda.gov/fdc/v1/food/${match.fdcId}`,
+		);
 		detailUrl.searchParams.set("api_key", usdaApiKey);
 		const detailResponse = await fetchTracked(
 			detailUrl,
@@ -161,13 +185,14 @@ const benchmarkUsda = async (barcode) => {
 			sourceDataType: food.dataType ?? "Branded",
 			quality: {
 				reportedNutrientCount: new Set(
-					(food.foodNutrients ?? []).map((entry) =>
-						entry.nutrient?.id ?? entry.nutrientId
-					).filter(Boolean),
+					(food.foodNutrients ?? [])
+						.map((entry) => entry.nutrient?.id ?? entry.nutrientId)
+						.filter(Boolean),
 				).size,
 				hasBrand: hasText(food.brandOwner),
 				hasCategory: hasText(food.brandedFoodCategory || food.foodCategory),
-				hasServing: Number(food.servingSize) > 0 && hasText(food.servingSizeUnit),
+				hasServing:
+					Number(food.servingSize) > 0 && hasText(food.servingSizeUnit),
 				hasIngredients: hasText(food.ingredients),
 				hasImage: Boolean(food.image?.imageUrl),
 			},
@@ -204,12 +229,16 @@ const benchmarkOpenFoodFacts = async (barcode, nutrientMappings) => {
 					`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(candidate)}.json`,
 				);
 				url.searchParams.set("fields", openFoodFactsFields);
-				const response = await fetchTracked(url, {
-					headers: {
-						accept: "application/json",
-						"user-agent": APP_USER_AGENT,
+				const response = await fetchTracked(
+					url,
+					{
+						headers: {
+							accept: "application/json",
+							"user-agent": APP_USER_AGENT,
+						},
 					},
-				}, trace);
+					trace,
+				);
 				if (response.status === 404) return null;
 				const data = await response.json();
 				if (data.status !== 1 || !data.product) return null;
@@ -217,17 +246,17 @@ const benchmarkOpenFoodFacts = async (barcode, nutrientMappings) => {
 					return null;
 				}
 				const product = data.product;
-				const nutrientIds = new Set(nutrientMappings.flatMap((mapping) => {
-					const per100Value = product.nutriments?.[
-						`${mapping.source_nutrient_key}_100g`
-					];
-					const servingValue = product.nutriments?.[
-						`${mapping.source_nutrient_key}_serving`
-					];
-					return numeric(per100Value) || numeric(servingValue)
-						? [mapping.nutrient_id]
-						: [];
-				}));
+				const nutrientIds = new Set(
+					nutrientMappings.flatMap((mapping) => {
+						const per100Value =
+							product.nutriments?.[`${mapping.source_nutrient_key}_100g`];
+						const servingValue =
+							product.nutriments?.[`${mapping.source_nutrient_key}_serving`];
+						return numeric(per100Value) || numeric(servingValue)
+							? [mapping.nutrient_id]
+							: [];
+					}),
+				);
 				return {
 					outcome: "matched",
 					trace,
@@ -236,17 +265,15 @@ const benchmarkOpenFoodFacts = async (barcode, nutrientMappings) => {
 						reportedNutrientCount: nutrientIds.size,
 						hasBrand: hasText(product.brands),
 						hasCategory:
-							hasText(product.categories)
-							|| product.categories_tags?.length > 0,
+							hasText(product.categories) ||
+							product.categories_tags?.length > 0,
 						hasServing:
-							hasText(product.serving_size)
-							|| Number(product.serving_quantity) > 0,
+							hasText(product.serving_size) ||
+							Number(product.serving_quantity) > 0,
 						hasIngredients: hasText(
 							product.ingredients_text_en || product.ingredients_text,
 						),
-						hasImage: hasText(
-							product.image_front_url || product.image_url,
-						),
+						hasImage: hasText(product.image_front_url || product.image_url),
 					},
 				};
 			},
@@ -291,34 +318,44 @@ let productQuery = supabase
 	.from("shared_products")
 	.select("barcode, product_name")
 	.eq("status", "active");
-productQuery = requestedBarcodes.length > 0
-	? productQuery.in("barcode", requestedBarcodes)
-	: productQuery.order("created_at", { ascending: true }).limit(limit);
+productQuery =
+	requestedBarcodes.length > 0
+		? productQuery.in("barcode", requestedBarcodes)
+		: productQuery.order("created_at", { ascending: true }).limit(limit);
 
 const [productResult, { data: nutrientMappings, error: mappingError }] =
 	await Promise.all([
 		productQuery,
-			supabase
-				.from("nutrient_source_mappings")
-				.select("source_nutrient_key, nutrient_id")
-				.eq("source_key", "open-food-facts")
-				.eq("enabled", true)
-				.eq("review_status", "approved"),
+		supabase
+			.from("nutrient_source_mappings")
+			.select("source_nutrient_key, nutrient_id")
+			.eq("source_key", "open-food-facts")
+			.eq("enabled", true)
+			.eq("review_status", "approved"),
 	]);
 
 const { error: productError } = productResult;
-const products = requestedBarcodes.length > 0
-	? requestedBarcodes
-		.map((barcode) => productResult.data?.find((product) => product.barcode === barcode))
-		.filter(Boolean)
-	: productResult.data;
+const products =
+	requestedBarcodes.length > 0
+		? requestedBarcodes
+				.map((barcode) =>
+					productResult.data?.find((product) => product.barcode === barcode),
+				)
+				.filter(Boolean)
+		: productResult.data;
 
 if (productError) throw productError;
 if (mappingError) throw mappingError;
-if (!products?.length) throw new Error("No active shared-product barcodes are available.");
-if (requestedBarcodes.length > 0 && products.length !== requestedBarcodes.length) {
+if (!products?.length)
+	throw new Error("No active shared-product barcodes are available.");
+if (
+	requestedBarcodes.length > 0 &&
+	products.length !== requestedBarcodes.length
+) {
 	const foundBarcodes = new Set(products.map((product) => product.barcode));
-	const missingBarcodes = requestedBarcodes.filter((barcode) => !foundBarcodes.has(barcode));
+	const missingBarcodes = requestedBarcodes.filter(
+		(barcode) => !foundBarcodes.has(barcode),
+	);
 	throw new Error(
 		`Active shared products were not found for: ${missingBarcodes.join(", ")}.`,
 	);
@@ -332,7 +369,9 @@ const runResults = {
 for (const [index, product] of products.entries()) {
 	const barcode = normalizeBarcode(product.barcode);
 	if (!barcode) {
-		console.warn(`${index + 1}/${products.length} ${product.product_name}: invalid barcode skipped`);
+		console.warn(
+			`${index + 1}/${products.length} ${product.product_name}: invalid barcode skipped`,
+		);
 		continue;
 	}
 	const [usda, openFoodFacts] = await Promise.all([
@@ -351,20 +390,26 @@ for (const [index, product] of products.entries()) {
 	await sleep(350);
 }
 
-console.table(Object.entries(runResults).map(([source, results]) => ({
-	Source: source,
-	Lookups: results.length,
-	"API calls": results.reduce(
-		(total, result) => total + result.trace.apiRequestCount,
-		0,
-	),
-	"Calls / lookup": Number((results.reduce(
-		(total, result) => total + result.trace.apiRequestCount,
-		0,
-	) / Math.max(results.length, 1)).toFixed(2)),
-	Matches: results.filter((result) => result.outcome === "matched").length,
-	Errors: results.filter((result) => result.outcome === "error").length,
-})));
+console.table(
+	Object.entries(runResults).map(([source, results]) => ({
+		Source: source,
+		Lookups: results.length,
+		"API calls": results.reduce(
+			(total, result) => total + result.trace.apiRequestCount,
+			0,
+		),
+		"Calls / lookup": Number(
+			(
+				results.reduce(
+					(total, result) => total + result.trace.apiRequestCount,
+					0,
+				) / Math.max(results.length, 1)
+			).toFixed(2),
+		),
+		Matches: results.filter((result) => result.outcome === "matched").length,
+		Errors: results.filter((result) => result.outcome === "error").length,
+	})),
+);
 
 console.log(
 	`Recorded an equal-barcode benchmark for ${products.length} products. Run npm run report:source-quality -- --origin=benchmark to compare results.`,

@@ -182,29 +182,18 @@ the exact migration source already exists on remote `main`.
 
 ### Data, Catalog, And Operations
 
-| Command                                                    | Purpose                                                                                                |
-| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `npm run import:nutrition:cnf -- --dry-run`                | Validate the Canadian Nutrient File import without writing.                                            |
-| `npm run import:nutrition:cofid -- --dry-run`              | Validate the UK CoFID import without writing.                                                          |
-| `npm run audit:usda-branded-allergens`                     | Inspect USDA branded-food allergen field coverage.                                                     |
-| `npm run audit:off-allergens`                              | Inspect Open Food Facts allergen field coverage.                                                       |
-| `npm run audit:blendCalcAPI-catalog`                       | Audit blendCalcAPI publication readiness and field lineage.                                            |
-| `npm run audit:blendCalcAPI-catalog -- --json`             | Reassess active products and print machine-repair, review, and unresolved readiness ownership as JSON. |
-| `npm run report:source-quality`                            | Report stored provider coverage, reliability, and request cost.                                        |
-| `npm run benchmark:source-quality -- --limit=10`           | Compare supported product sources over one controlled sample.                                          |
-| `npm run seed:food-preferences -- --dry-run`               | Preview food-safety evidence discovery.                                                                |
-| `npm run seed:food-categories -- --dry-run`                | Preview category evidence discovery and mapping.                                                       |
-| `npm run seed:food-categories:deep`                        | Run the broader category discovery workflow.                                                           |
-| `npm run seed:food-categories:rebuild`                     | Rebuild category mappings from stored observations.                                                    |
-| `npm run seed:manual-entry-nutrients -- --dry-run`         | Preview manual-entry nutrient-policy observations.                                                     |
-| `npm run seed:product-reference-data -- --sample-size=200` | Seed reviewed product-source, nutrient, unit, and serving references.                                  |
-| `npm run backfill:shared-product-categories -- --dry-run`  | Preview exact-evidence category repairs.                                                               |
-| `npm run backfill:food-images -- --dry-run --limit=25`     | Preview reusable licensed product-image discovery.                                                     |
-| `npm run generate:api-structures`                          | Regenerate documentation-only provider payload references.                                             |
-| `npm run moderate -- ...`                                  | Run privileged role or account operations.                                                             |
-| `npm run blendCalcAPI:publication -- ...`                  | Review concerns and manage reversible blendCalcAPI publication holds.                                  |
-| `npm run version:check`                                    | Verify Node, app, build, API, OpenAPI, test, and documentation versions.                               |
-| `npm run version:bump -- patch\|minor\|major`              | Update application version files without committing or tagging.                                        |
+| Command                                        | Purpose                                                                                                |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `npm run import:nutrition:cnf -- --dry-run`    | Validate the Canadian Nutrient File import without writing.                                            |
+| `npm run import:nutrition:cofid -- --dry-run`  | Validate the UK CoFID import without writing.                                                          |
+| `npm run audit:blendCalcAPI-catalog`           | Audit blendCalcAPI publication readiness and field lineage.                                            |
+| `npm run audit:blendCalcAPI-catalog -- --json` | Reassess active products and print machine-repair, review, and unresolved readiness ownership as JSON. |
+| `npm run report:source-quality`                | Report stored provider coverage, reliability, and request cost.                                        |
+| `npm run generate:api-structures`              | Regenerate documentation-only provider payload references.                                             |
+| `npm run moderate -- ...`                      | Run privileged role or account operations.                                                             |
+| `npm run blendCalcAPI:publication -- ...`      | Review concerns and manage reversible blendCalcAPI publication holds.                                  |
+| `npm run version:check`                        | Verify Node, app, build, API, OpenAPI, test, and documentation versions.                               |
+| `npm run version:bump -- patch\|minor\|major`  | Update application version files without committing or tagging.                                        |
 
 Writing commands are deliberately not implied by their preview examples. Read
 [Repository Scripts](scripts/README.md) before running imports, seeds, backfills,

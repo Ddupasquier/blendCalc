@@ -47,7 +47,7 @@ pnpm-debug.log*
 /.vite/
 *.tsbuildinfo
 
-# Generated API audit output
+# Generated internal script output (reports, OCR models, and audit artifacts)
 /scripts/output/
 
 # Local QA task tracker and screenshot references

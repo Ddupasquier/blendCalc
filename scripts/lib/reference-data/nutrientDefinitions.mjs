@@ -2,7 +2,7 @@
  * Purpose: Index canonical nutrient definitions by ID and nutrient number so provider
  * observations reuse existing identities instead of creating duplicates. This is a pure
  * shared module and does not read or write external data.
- * Do not run directly; use `npm run seed:manual-entry-nutrients`.
+ * Do not run directly; use `node scripts/seeds/nutrition/seed_manual_entry_nutrients.mjs`.
  */
 
 const toNutrientId = (value) => {
@@ -21,7 +21,8 @@ export const createNutrientDefinitionCatalog = (definitions) => {
 		if (nutrientId === null) return null;
 
 		const nutrientNumber = normalizeNutrientNumber(definition.nutrient_number);
-		const existing = definitionsById.get(nutrientId) ??
+		const existing =
+			definitionsById.get(nutrientId) ??
 			(nutrientNumber ? definitionsByNumber.get(nutrientNumber) : null);
 		if (existing) return existing;
 
@@ -31,7 +32,8 @@ export const createNutrientDefinitionCatalog = (definitions) => {
 			nutrient_number: nutrientNumber,
 		};
 		definitionsById.set(nutrientId, normalizedDefinition);
-		if (nutrientNumber) definitionsByNumber.set(nutrientNumber, normalizedDefinition);
+		if (nutrientNumber)
+			definitionsByNumber.set(nutrientNumber, normalizedDefinition);
 		return normalizedDefinition;
 	};
 
@@ -43,8 +45,10 @@ export const createNutrientDefinitionCatalog = (definitions) => {
 		},
 		register,
 		resolve(nutrientId, nutrientNumber) {
-			return definitionsById.get(toNutrientId(nutrientId)) ??
-				definitionsByNumber.get(normalizeNutrientNumber(nutrientNumber));
+			return (
+				definitionsById.get(toNutrientId(nutrientId)) ??
+				definitionsByNumber.get(normalizeNutrientNumber(nutrientNumber))
+			);
 		},
 		values() {
 			return definitionsById.values();

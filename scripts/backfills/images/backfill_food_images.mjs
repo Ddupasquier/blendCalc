@@ -2,8 +2,8 @@
  * Purpose: Find reusable Open Food Facts images for existing barcode-backed catalog and
  * private foods, then cache licensed image metadata in `food_image_assets`. The live run
  * writes Supabase rows; always inspect a dry run first and use `--limit` for a small pass.
- * Preview: `npm run backfill:food-images -- --dry-run --limit=25`
- * Execute: `npm run backfill:food-images -- --limit=25`
+ * Preview: `node scripts/backfills/images/backfill_food_images.mjs --dry-run --limit=25`
+ * Execute: `node scripts/backfills/images/backfill_food_images.mjs --limit=25`
  */
 
 import { config } from "dotenv";
@@ -29,7 +29,8 @@ const limit = limitArgument
 	? Number.parseInt(limitArgument.split("=")[1] ?? "", 10)
 	: null;
 
-const OPEN_FOOD_FACTS_PRODUCT_URL = "https://world.openfoodfacts.org/api/v2/product";
+const OPEN_FOOD_FACTS_PRODUCT_URL =
+	"https://world.openfoodfacts.org/api/v2/product";
 const OPEN_FOOD_FACTS_IMAGE_FIELDS = [
 	"code",
 	"product_name",
@@ -80,8 +81,10 @@ const createSupabaseClient = () => {
 const fetchAllRows = async (buildQuery) => {
 	const rows = [];
 	for (let from = 0; ; from += SUPABASE_PAGE_SIZE) {
-		const { data, error } = await buildQuery()
-			.range(from, from + SUPABASE_PAGE_SIZE - 1);
+		const { data, error } = await buildQuery().range(
+			from,
+			from + SUPABASE_PAGE_SIZE - 1,
+		);
 		if (error) throw error;
 		rows.push(...(data ?? []));
 		if (!data || data.length < SUPABASE_PAGE_SIZE) break;
@@ -105,9 +108,7 @@ const parseRetryAfterHeader = (value) => {
 };
 
 const getRetryDelays = (status) =>
-	status === 429
-		? RATE_LIMIT_RETRY_DELAYS_MS
-		: TEMPORARY_ERROR_RETRY_DELAYS_MS;
+	status === 429 ? RATE_LIMIT_RETRY_DELAYS_MS : TEMPORARY_ERROR_RETRY_DELAYS_MS;
 
 const fetchJson = async (url, options = {}, label = "API request") => {
 	for (
@@ -150,12 +151,18 @@ const fetchJson = async (url, options = {}, label = "API request") => {
 };
 
 const getFoodName = (food) =>
-	food?.description || food?.name || food?.productName || food?.product_name || "";
+	food?.description ||
+	food?.name ||
+	food?.productName ||
+	food?.product_name ||
+	"";
 
 const collectBarcodeCandidates = async (supabase) => {
 	const [listItems, customFoods, sharedProducts, existingImages] =
 		await Promise.all([
-			fetchAllRows(() => supabase.from("user_food_list_items").select("id, food")),
+			fetchAllRows(() =>
+				supabase.from("user_food_list_items").select("id, food"),
+			),
 			fetchAllRows(() =>
 				supabase.from("custom_foods").select("id, barcode, food"),
 			),
@@ -282,9 +289,8 @@ const lookupOpenFoodFactsImage = async (barcode) => {
 				`Open Food Facts image lookup for ${candidate}`,
 			);
 			if (!data || data.status !== 1 || !data.product) return null;
-			if (
-				normalizeBarcode(data.product.code ?? candidate) !== canonicalBarcode
-			) return null;
+			if (normalizeBarcode(data.product.code ?? candidate) !== canonicalBarcode)
+				return null;
 
 			return {
 				image: parseOpenFoodFactsImage(data.product, canonicalBarcode),
@@ -322,7 +328,9 @@ const persistFoodImageAsset = async (supabase, image, sharedProductId) => {
 
 const supabase = createSupabaseClient();
 const candidates = await collectBarcodeCandidates(supabase);
-console.log(`Found ${candidates.length} barcode(s) without active front images.`);
+console.log(
+	`Found ${candidates.length} barcode(s) without active front images.`,
+);
 
 const summary = {
 	found: 0,
@@ -334,7 +342,9 @@ const summary = {
 
 for (const [index, candidate] of candidates.entries()) {
 	const label = candidate.labels[0] ? ` — ${candidate.labels[0]}` : "";
-	console.log(`[${index + 1}/${candidates.length}] ${candidate.barcode}${label}`);
+	console.log(
+		`[${index + 1}/${candidates.length}] ${candidate.barcode}${label}`,
+	);
 	try {
 		const image = await lookupOpenFoodFactsImage(candidate.barcode);
 		await sleep(REQUEST_DELAY_MS);

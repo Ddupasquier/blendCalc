@@ -2,8 +2,8 @@
  * Purpose: Sample USDA and Open Food Facts for observed ingredients, allergens, traces,
  * and dietary labels, then persist source observations and rebuild the DB-owned preference
  * option catalog. The live command writes Supabase; custom terms limit the source sweep.
- * Preview: `npm run seed:food-preferences -- --dry-run`
- * Execute: `npm run seed:food-preferences -- "whole milk" "peanut butter"`
+ * Preview: `node scripts/seeds/food-safety/seed_food_preference_api_observations.mjs --dry-run`
+ * Execute: `node scripts/seeds/food-safety/seed_food_preference_api_observations.mjs "whole milk" "peanut butter"`
  */
 
 import { config } from "dotenv";

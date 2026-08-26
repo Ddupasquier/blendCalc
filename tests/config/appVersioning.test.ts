@@ -107,7 +107,7 @@ describe("blendCalc versioning", () => {
 
 	it("does not leave literal product versions in outbound scripts", () => {
 		const scriptFiles = [
-			"scripts/audits/food-sources/audit_openfoodfacts_allergen_fields.mjs",
+			"scripts/audits/food-sources/audit_barcode_provider_experience.mjs",
 			"scripts/backfills/images/backfill_food_images.mjs",
 			"scripts/backfills/catalog/backfill_shared_product_categories.mjs",
 			"scripts/audits/food-sources/benchmark_product_sources.mjs",

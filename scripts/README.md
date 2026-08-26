@@ -50,29 +50,29 @@ as a whole-product authority.
 
 ## Directory Map
 
-| Path                   | Responsibility                                                          |
-| ---------------------- | ----------------------------------------------------------------------- |
-| `audits/catalog/`      | Catalog publication, transparency, and barcode nutrition checks         |
-| `audits/food-sources/` | Provider coverage, quality, request-cost, and contribution checks       |
-| `audits/security/`     | Hosted infrastructure and Auth checks                                   |
-| `backfills/catalog/`   | Idempotent catalog and saved-source enrichment                          |
-| `backfills/images/`    | Image discovery, metadata repair, and automatic placement               |
-| `generators/api/`      | Documentation-only external provider references                         |
-| `imports/nutrition/`   | Licensed national nutrition dataset imports                             |
-| `operations/api/`      | API correction review and reversible publication controls               |
-| `operations/auth/`     | Auth environment verification                                           |
-| `operations/database/` | Local database management and linked migration delivery                 |
-| `operations/quality/`  | Repository linting and formatting verification helpers                  |
-| `operations/recovery/` | Protected hosted backups and offline verification                       |
-| `operations/releases/` | Application and API version consistency                                 |
-| `operations/users/`    | Privileged role and account operations                                  |
-| `qa/catalog/`          | Disposable catalog and image-moderation fixtures                        |
-| `qa/database/`         | Deterministic hosted database and API checks                            |
-| `seeds/catalog/`       | Category, product-source, serving, and nutrient-reference discovery     |
-| `seeds/food-safety/`   | Ingredient, allergen, trace, and dietary evidence discovery             |
-| `seeds/nutrition/`     | Manual-entry nutrient-policy observations                               |
-| `lib/<domain>/`        | Reusable script-only code; never run directly                           |
-| `lib/reference-data/`  | Reviewed source queries, unit standards, and cautious matching catalogs |
+| Path                       | Responsibility                                                          |
+| -------------------------- | ----------------------------------------------------------------------- |
+| `audits/catalog/`          | Catalog publication, transparency, and barcode nutrition checks         |
+| `audits/food-sources/`     | Provider coverage, quality, request-cost, and contribution checks       |
+| `audits/security/`         | Hosted infrastructure and Auth checks                                   |
+| `backfills/catalog/`       | Idempotent catalog and saved-source enrichment                          |
+| `backfills/images/`        | Image discovery, metadata repair, and automatic placement               |
+| `generators/api/`          | Documentation-only external provider references                         |
+| `imports/nutrition/`       | Licensed national nutrition dataset imports                             |
+| `operations/blendCalcAPI/` | blendCalcAPI correction review and reversible publication controls      |
+| `operations/auth/`         | Auth environment verification                                           |
+| `operations/database/`     | Local database management and linked migration delivery                 |
+| `operations/quality/`      | Repository linting and formatting verification helpers                  |
+| `operations/recovery/`     | Protected hosted backups and offline verification                       |
+| `operations/releases/`     | Application and API version consistency                                 |
+| `operations/users/`        | Privileged role and account operations                                  |
+| `qa/catalog/`              | Disposable catalog and image-moderation fixtures                        |
+| `qa/database/`             | Deterministic hosted database and API checks                            |
+| `seeds/catalog/`           | Category, product-source, serving, and nutrient-reference discovery     |
+| `seeds/food-safety/`       | Ingredient, allergen, trace, and dietary evidence discovery             |
+| `seeds/nutrition/`         | Manual-entry nutrient-policy observations                               |
+| `lib/<domain>/`            | Reusable script-only code; never run directly                           |
+| `lib/reference-data/`      | Reviewed source queries, unit standards, and cautious matching catalogs |
 
 ## Local Database And QA
 
@@ -103,6 +103,10 @@ The full persona inventory, safe reset behavior, and database QA workflow live i
 layers in one live terminal view. It stores duration estimates in ignored `.cache/`
 state and writes complete diagnostics only for failed stages under ignored
 `test-results/verification-dashboard/`.
+
+`npm run format:check` runs
+`operations/quality/check_new_file_formatting.mjs` to verify only changed and untracked
+supported files against the maintained Prettier contract.
 
 | Command                  | Scope                                                                                                 |
 | ------------------------ | ----------------------------------------------------------------------------------------------------- |
@@ -152,9 +156,7 @@ separate findings; the audit never promotes data merely to improve its pass rate
 
 | Command                                                                                   | Purpose                                                                                                                         |
 | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `npm run audit:usda-branded-allergens`                                                    | Read-only USDA branded-food ingredient and allergen field sample                                                                |
-| `npm run audit:off-allergens`                                                             | Read-only Open Food Facts ingredient, allergen, trace, and dietary field sample                                                 |
-| `npm run benchmark:source-quality -- --limit=10`                                          | Controlled same-barcode provider comparison recorded as benchmark metrics                                                       |
+| `node scripts/audits/food-sources/benchmark_product_sources.mjs --limit=10`               | Controlled same-barcode provider comparison recorded as benchmark metrics                                                       |
 | `npm run report:source-quality -- --days=30 --origin=runtime`                             | Stored runtime coverage, reliability, cache efficiency, and request cost                                                        |
 | `npm run report:source-quality -- --days=30 --origin=benchmark`                           | Stored controlled-benchmark metrics                                                                                             |
 | `node scripts/audits/food-sources/audit_barcode_provider_experience.mjs --sample-size=50` | Read-only USDA, Open Food Facts, and COLA Cloud exact-barcode coverage, latency, source math, and manual-entry experience audit |
@@ -165,18 +167,23 @@ trust, merge similar food names, or change field-selection policy. Reviewed UCUM
 and conversions live in `lib/reference-data/` and Supabase; product-reference seeding no
 longer depends on the NLM UCUM network service.
 
+The exact-barcode provider audit owns current USDA and Open Food Facts ingredient,
+allergen, trace, and dietary-field coverage. The older provider-specific name-search
+probes were removed because they selected one fuzzy result and duplicated a weaker
+version of that maintained evidence.
+
 ## Imports And Reference Seeds
 
-| Command                                                                     | Write scope                                                                                                                  |
-| --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `npm run import:nutrition:cnf -- --dry-run`                                 | Download and validate Canadian Nutrient File 2026 without replacing dataset rows                                             |
-| `npm run import:nutrition:cofid -- --dry-run`                               | Download and validate UK CoFID 2021 without replacing dataset rows                                                           |
-| `npm run seed:food-preferences -- --dry-run`                                | Preview provider-backed ingredient, allergen, trace, and dietary observations                                                |
-| `npm run seed:food-categories -- --dry-run`                                 | Preview category observations and canonical mapping rebuild                                                                  |
-| `npm run seed:food-categories:deep`                                         | Run the wider category source sweep and rebuild mappings                                                                     |
-| `npm run seed:food-categories:rebuild`                                      | Rebuild mappings from stored observations only                                                                               |
-| `npm run seed:manual-entry-nutrients -- --dry-run --pages=1 --page-size=25` | Preview nutrient metadata and manual-entry policy observations                                                               |
-| `npm run seed:product-reference-data -- --sample-size=200`                  | Idempotently store source identities, nutrient mappings, reviewed unit conversions, servings, and aliases; no dry run exists |
+| Command                                                                                           | Write scope                                                                                                                  |
+| ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `npm run import:nutrition:cnf -- --dry-run`                                                       | Download and validate Canadian Nutrient File 2026 without replacing dataset rows                                             |
+| `npm run import:nutrition:cofid -- --dry-run`                                                     | Download and validate UK CoFID 2021 without replacing dataset rows                                                           |
+| `node scripts/seeds/food-safety/seed_food_preference_api_observations.mjs --dry-run`              | Preview provider-backed ingredient, allergen, trace, and dietary observations                                                |
+| `node scripts/seeds/catalog/seed_custom_food_categories.mjs --dry-run`                            | Preview category observations and canonical mapping rebuild                                                                  |
+| `node scripts/seeds/catalog/seed_custom_food_categories.mjs --deep`                               | Run the wider category source sweep and rebuild mappings                                                                     |
+| `node scripts/seeds/catalog/seed_custom_food_categories.mjs --rebuild-mappings-only`              | Rebuild mappings from stored observations only                                                                               |
+| `node scripts/seeds/nutrition/seed_manual_entry_nutrients.mjs --dry-run --pages=1 --page-size=25` | Preview nutrient metadata and manual-entry policy observations                                                               |
+| `node scripts/seeds/catalog/seed_product_reference_data.mjs --sample-size=200`                    | Idempotently store source identities, nutrient mappings, reviewed unit conversions, servings, and aliases; no dry run exists |
 
 Remove `--dry-run` only after reviewing the script's proposed scope and the governing
 licence, catalog, nutrient, or food-safety documentation.
@@ -185,10 +192,10 @@ licence, catalog, nutrient, or food-safety documentation.
 
 | Command                                                                                               | Purpose and guardrails                                                                                                         |
 | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `npm run backfill:shared-product-categories -- --dry-run`                                             | Preview exact-identity category repair; live mode can remove invalid category links.                                           |
+| `node scripts/backfills/catalog/backfill_shared_product_categories.mjs --dry-run`                     | Preview exact-identity category repair; live mode can remove invalid category links.                                           |
 | `node scripts/backfills/catalog/backfill_source_food_details.mjs --dry-run --limit=10`                | Preview exact USDA identifier or GTIN enrichment for saved snapshots without fuzzy matching or changing user names/categories. |
 | `node scripts/backfills/catalog/backfill_catalog_metadata.mjs --dry-run --cached-only`                | Preview exact-barcode canonical metadata enrichment using only licensed cached data.                                           |
-| `npm run backfill:food-images -- --dry-run --limit=25`                                                | Preview reusable Open Food Facts image discovery and licensed asset metadata.                                                  |
+| `node scripts/backfills/images/backfill_food_images.mjs --dry-run --limit=25`                         | Preview reusable Open Food Facts image discovery and licensed asset metadata.                                                  |
 | `node scripts/backfills/images/backfill_food_image_placements.mjs --dry-run --limit=25`               | Preview OCR-based placement for untouched automatic or legacy front images.                                                    |
 | `node scripts/backfills/images/backfill_food_image_placements.mjs --dry-run --barcode=00000000119993` | Preview one exact image-placement candidate.                                                                                   |
 

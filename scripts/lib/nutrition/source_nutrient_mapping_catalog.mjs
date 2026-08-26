@@ -3,7 +3,7 @@
  * preferring explicit unit matches and refusing ambiguous nutrient identities. It also
  * protects reviewed semantic mappings when a later API-observation seed refreshes counts.
  * This is a pure shared module and does not query or mutate Supabase itself.
- * Do not run directly; use `npm run seed:manual-entry-nutrients`.
+ * Do not run directly; use `node scripts/seeds/nutrition/seed_manual_entry_nutrients.mjs`.
  */
 
 const normalizeKey = (value) =>
@@ -119,13 +119,17 @@ export const createSourceNutrientMappingCatalog = (mappings) => {
 
 	return {
 		resolve({ sourceNutrientKey, sourceUnitName }) {
-			const candidates = mappingsByKey.get(normalizeKey(sourceNutrientKey)) ?? [];
+			const candidates =
+				mappingsByKey.get(normalizeKey(sourceNutrientKey)) ?? [];
 			if (candidates.length === 0) return null;
 
 			const sourceUnit = normalizeUnit(sourceUnitName);
-			return candidates.find(
-				(candidate) => normalizeUnit(candidate.source_unit_name) === sourceUnit,
-			) ?? null;
+			return (
+				candidates.find(
+					(candidate) =>
+						normalizeUnit(candidate.source_unit_name) === sourceUnit,
+				) ?? null
+			);
 		},
 	};
 };
