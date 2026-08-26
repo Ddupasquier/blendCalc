@@ -656,17 +656,18 @@ providers, brands, rights holders, or other reporters. Each row targets exactly 
 bounded HTTPS evidence references, urgency, status, and reviewed resolution. A partial
 unique fingerprint makes repeated unresolved submissions idempotent.
 
-`blendcalc_api_publication_holds` stores reversible blendCalcAPI holds for one exact product,
-image, dataset release, or source. Partial unique indexes permit only one active hold
-per subject. Each row records a reason code, safe public message, private note,
-optional concern, placing actor/time, and release actor/time/note. Releasing updates
-rather than deletes the row.
+`blendcalc_api_publication_holds` stores reversible blendCalcAPI holds for one exact
+product, image, dataset release, or source. Partial unique indexes permit only one
+active hold per subject. Each row records a reason code, safe public message, private
+note, optional concern, placing actor/time, and release actor/time/note. Releasing
+updates rather than deletes the row.
 
 Product holds are mirrored into a high-severity `shared_product_conflicts` row by
-`sync_blendcalc_api_product_publication_hold_conflict`, so the established readiness gate withholds
-the product. `blendcalc_api_v1_source_has_active_hold` makes source/dataset attribution
-fail closed. The trusted API image reader filters active image holds independently.
-Both tables force RLS and grant table access only to `service_role`.
+`sync_blendcalc_api_product_publication_hold_conflict`, so the established readiness
+gate withholds the product. `blendcalc_api_v1_source_has_active_hold` makes
+source/dataset attribution fail closed. The trusted blendCalcAPI image reader filters
+active image holds independently. Both tables force RLS and grant table access only to
+`service_role`.
 
 `blendcalc_api_catalog_product_readiness` is the canonical service-role-only projection
 of shared-catalog readiness for blendCalcAPI consumers. It exposes explicitly named
@@ -674,30 +675,30 @@ of shared-catalog readiness for blendCalcAPI consumers. It exposes explicitly na
 service-only `get_blendcalc_api_catalog_product_readiness_passport` RPC returns the same
 canonical status naming for privileged application reads.
 
-The previous publication table and product-reader names remain temporarily available as
-service-role-only rollout aliases so the deployed application stays functional during
-the expand-and-switch release. They are not canonical owners and must be removed in the
-contract migration after all deployed callers use the `blendcalc_api_...` namespace.
+The expand migration temporarily retained the previous publication table and
+product-reader names as service-role-only rollout aliases. The contract migration
+removes those aliases after all application callers switch to the canonical
+`blendcalc_api_...` namespace.
 
-| Table                                 | Primary Key             | Owner Scope                   | Purpose                                                                                                                    | Key Relationships                                                                     |
-| ------------------------------------- | ----------------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| `shared_product_submissions`          | `id`                    | Submitted by one auth user    | Community product submissions awaiting review or already reviewed                                                          | `submitted_by → auth.users.id`, optional reviewer                                     |
-| `shared_products`                     | `id`                    | Shared catalog                | Approved active shared products searchable by all authenticated users                                                      | Optional approved submission/reviewer                                                 |
-| `shared_product_revisions`            | `id`                    | Shared catalog                | Historical revisions for approved products                                                                                 | `shared_product_id → shared_products.id`                                              |
-| `shared_product_revision_changes`     | `id`                    | Shared catalog history        | Queryable old/new field values attached to an approved product revision                                                    | `revision_id → shared_product_revisions.id`                                           |
-| `shared_product_observations`         | `id`                    | Shared evidence/provenance    | API, user-label, manufacturer, or GS1 observations for a barcode                                                           | Optional submission/user links                                                        |
-| `shared_product_field_provenance`     | `id`                    | Shared evidence/provenance    | Which observation supplied each canonical shared product field                                                             | `shared_product_id`, `observation_id`                                                 |
-| `product_ingredient_statements`       | `id`                    | Shared evidence projection    | Exact reported ingredient statement/list/tree selected for a product, observation, or submission                           | Exactly one owner; optional source observation                                        |
-| `product_ingredient_components`       | `id`                    | Shared evidence projection    | Ordered relational ingredient tree preserving source text, nesting, reported percentages, and source payload               | `statement_id`, optional parent component and reviewed ingredient term                |
-| `product_precautionary_statements`    | `id`                    | Shared evidence projection    | Exact package precautionary wording plus normalized statement type and allergens                                           | Exactly one owner; optional observation and revision links                            |
-| `shared_product_conflicts`            | `id`                    | Shared moderation/provenance  | Open/resolved conflicts between observed values                                                                            | `shared_product_id → shared_products.id`                                              |
-| `catalog_correction_origins`          | `id`                    | Private correction workflow   | Evidence-backed provider changes, field conflicts, and warning reports waiting on or linked to one real catalog correction | Product, base revision, exactly one origin, optional submission and resolved revision |
-| `blendcalc_api_publication_concerns`  | `id`                    | Private blendCalcAPI review   | Evidence-backed correction, rights, attribution, privacy, and source concerns                                              | Exactly one product, image, dataset release, or source target                         |
-| `blendcalc_api_publication_holds`     | `id`                    | Private blendCalcAPI operations | Reversible public-output holds with placing and release audit history                                                    | Exactly one product, image, dataset release, or source target                         |
-| `food_image_assets`                   | `id`                    | Shared image reference        | Source-backed product/ingredient image metadata rendered by ingredient UI                                                  | Optional `shared_product_id → shared_products.id`, optional barcode                   |
-| `product_api_cache`                   | `(provider, cache_key)` | Server cache                  | External API response cache for searches, barcode lookup, and food detail                                                  | No user ownership                                                                     |
-| `user_catalog_submission_enforcement` | `user_id`               | One current row per auth user | Cumulative moderator rejection count and current public-sharing suspension                                                 | `user_id → auth.users.id`, optional latest submission/reviewer                        |
-| `product_submission_blocks`           | `id`                    | One auth user per block event | Immutable history of public catalog submission suspensions                                                                 | `user_id → auth.users.id`, optional source submission                                 |
+| Table                                 | Primary Key             | Owner Scope                     | Purpose                                                                                                                    | Key Relationships                                                                     |
+| ------------------------------------- | ----------------------- | ------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `shared_product_submissions`          | `id`                    | Submitted by one auth user      | Community product submissions awaiting review or already reviewed                                                          | `submitted_by → auth.users.id`, optional reviewer                                     |
+| `shared_products`                     | `id`                    | Shared catalog                  | Approved active shared products searchable by all authenticated users                                                      | Optional approved submission/reviewer                                                 |
+| `shared_product_revisions`            | `id`                    | Shared catalog                  | Historical revisions for approved products                                                                                 | `shared_product_id → shared_products.id`                                              |
+| `shared_product_revision_changes`     | `id`                    | Shared catalog history          | Queryable old/new field values attached to an approved product revision                                                    | `revision_id → shared_product_revisions.id`                                           |
+| `shared_product_observations`         | `id`                    | Shared evidence/provenance      | API, user-label, manufacturer, or GS1 observations for a barcode                                                           | Optional submission/user links                                                        |
+| `shared_product_field_provenance`     | `id`                    | Shared evidence/provenance      | Which observation supplied each canonical shared product field                                                             | `shared_product_id`, `observation_id`                                                 |
+| `product_ingredient_statements`       | `id`                    | Shared evidence projection      | Exact reported ingredient statement/list/tree selected for a product, observation, or submission                           | Exactly one owner; optional source observation                                        |
+| `product_ingredient_components`       | `id`                    | Shared evidence projection      | Ordered relational ingredient tree preserving source text, nesting, reported percentages, and source payload               | `statement_id`, optional parent component and reviewed ingredient term                |
+| `product_precautionary_statements`    | `id`                    | Shared evidence projection      | Exact package precautionary wording plus normalized statement type and allergens                                           | Exactly one owner; optional observation and revision links                            |
+| `shared_product_conflicts`            | `id`                    | Shared moderation/provenance    | Open/resolved conflicts between observed values                                                                            | `shared_product_id → shared_products.id`                                              |
+| `catalog_correction_origins`          | `id`                    | Private correction workflow     | Evidence-backed provider changes, field conflicts, and warning reports waiting on or linked to one real catalog correction | Product, base revision, exactly one origin, optional submission and resolved revision |
+| `blendcalc_api_publication_concerns`  | `id`                    | Private blendCalcAPI review     | Evidence-backed correction, rights, attribution, privacy, and source concerns                                              | Exactly one product, image, dataset release, or source target                         |
+| `blendcalc_api_publication_holds`     | `id`                    | Private blendCalcAPI operations | Reversible public-output holds with placing and release audit history                                                      | Exactly one product, image, dataset release, or source target                         |
+| `food_image_assets`                   | `id`                    | Shared image reference          | Source-backed product/ingredient image metadata rendered by ingredient UI                                                  | Optional `shared_product_id → shared_products.id`, optional barcode                   |
+| `product_api_cache`                   | `(provider, cache_key)` | Server cache                    | External API response cache for searches, barcode lookup, and food detail                                                  | No user ownership                                                                     |
+| `user_catalog_submission_enforcement` | `user_id`               | One current row per auth user   | Cumulative moderator rejection count and current public-sharing suspension                                                 | `user_id → auth.users.id`, optional latest submission/reviewer                        |
+| `product_submission_blocks`           | `id`                    | One auth user per block event   | Immutable history of public catalog submission suspensions                                                                 | `user_id → auth.users.id`, optional source submission                                 |
 
 ### `shared_product_submissions`
 
@@ -1885,15 +1886,14 @@ category, or serving fields.
 | `blendcalc_api_v1_source_is_eligible`                  | Tests a stored source against the DB-owned API redistribution, licence, attribution, and policy-review gate                                                                                            |
 | `blendcalc_api_v1_source_attribution_is_complete`      | Tests a represented source/reference pair for complete provider attribution and, when applicable, an exact active imported dataset release; service role only                                          |
 | `blendcalc_api_v1_source_has_active_hold`              | Tests whether an exact provider or imported dataset release has an unreleased public-API hold; service role only                                                                                       |
-| `blendcalc_api_v1_product_readiness_reasons`           | Applies the enabled DB-backed profile and returns the service-only reasons an active shared product is withheld from blendCalcAPI v1                                                                            |
+| `blendcalc_api_v1_product_readiness_reasons`           | Applies the enabled DB-backed profile and returns the service-only reasons an active shared product is withheld from blendCalcAPI v1                                                                   |
 | `get_blendcalc_api_product_v1`                         | Service-role-only raw reader for one active, publication-ready shared product and its latest revision by GTIN-14                                                                                       |
 | `get_blendcalc_api_product_revision_history_v1`        | Service-role-only raw reader for bounded immutable revision metadata and evidence-backed field changes for one publication-ready GTIN-14                                                               |
 | `search_blendcalc_api_products_v1`                     | Service-role-only partial metadata search for active, publication-ready shared products with bounded pagination and name → brand → category → supporting-metadata relevance                            |
-| `get_blendcalc_api_catalog_product_readiness_passport` | Authenticated AAL2 catalog-review or data-operations passport with canonical blendCalcAPI status naming                                                                                               |
+| `get_blendcalc_api_catalog_product_readiness_passport` | Authenticated AAL2 catalog-review or data-operations passport with canonical blendCalcAPI status naming                                                                                                |
 | `get_catalog_data_operations_health`                   | Returns bounded admin/developer catalog, source, dataset, policy, mapping, revision, and publication-readiness summaries after exact AAL2 data-operations authorization                                |
 | `get_catalog_data_operations_monitor_summary`          | Returns bounded admin/developer monitor configuration, queue counts, and recent run state after exact AAL2 data-operations authorization                                                               |
 | `get_catalog_review_work_summary`                      | Returns bounded material conflicts, provider changes, and possible recall matches after exact AAL2 catalog-review authorization                                                                        |
-| `get_catalog_product_readiness_passport`               | Temporary rollout wrapper for the canonical blendCalcAPI readiness passport; removed by the later contract migration                                                                                  |
 | `get_moderator_data_health`                            | Temporary compatibility wrapper for the previous combined data-health interface                                                                                                                        |
 | `get_pending_profile_image_review_count`               | Service-role-only count of distinct exact profile images with one or more pending reports                                                                                                              |
 | `claim_catalog_revalidation_jobs`                      | Service-only bounded claim of due product/provider jobs using expiring claim tokens                                                                                                                    |
