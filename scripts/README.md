@@ -104,11 +104,12 @@ layers in one live terminal view. It stores duration estimates in ignored `.cach
 state and writes complete diagnostics only for failed stages under ignored
 `test-results/verification-dashboard/`.
 
-| Command                  | Scope                                                                                          |
-| ------------------------ | ---------------------------------------------------------------------------------------------- |
-| `npm run verify:quick`   | Formatting, lint, Svelte/TypeScript, and Vitest                                                |
-| `npm run verify:feature` | Quick Check, production build, and desktop/compact Chromium                                    |
-| `npm run verify:release` | Dependency audit, source gates, disposable database, build, and the complete Playwright matrix |
+| Command                  | Scope                                                                                                 |
+| ------------------------ | ----------------------------------------------------------------------------------------------------- |
+| `npm run verify:quick`   | Formatting, lint, Svelte/TypeScript, and Vitest selected from changed ownership                       |
+| `npm run verify:feature` | Source gates, every Vitest project, and browser specs selected from changed ownership                 |
+| `npm run verify:release` | Dependency audit, source gates, disposable database, build, and bounded blocking browser tiers        |
+| `npm run verify:nightly` | Release confidence plus every scenario in all five browser/device projects; scheduled and nonblocking |
 
 Use the VS Code tasks with the same names for a dedicated visible terminal. Continue to
 run the narrowest direct test while editing; the dashboard is for confidence passes,

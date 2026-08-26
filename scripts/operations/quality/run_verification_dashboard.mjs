@@ -45,20 +45,35 @@ const stage = (
 	...options,
 });
 
-const sourceStages = [
+const sourceContractStages = [
 	stage("versions", "Version contract", "npm", ["run", "version:check"], 3_000),
 	stage("format", "Formatting", "npm", ["run", "format:check"], 8_000),
 	stage("lint", "Lint", "npm", ["run", "lint"], 35_000),
 	stage("types", "Svelte and TypeScript", "npm", ["run", "check"], 55_000),
-	stage(
-		"vitest",
-		"Vitest",
-		"npx",
-		["vitest", "run", "--reporter=verbose"],
-		110_000,
-		{ environment: { BLENDCALC_DATABASE_ENVIRONMENT: "test" }, kind: "vitest" },
-	),
 ];
+
+const affectedUnitStage = stage(
+	"vitest-affected",
+	"Affected Vitest",
+	"node",
+	["scripts/operations/quality/run_affected_tests.mjs", "unit"],
+	45_000,
+	{ kind: "vitest" },
+);
+
+const fullUnitStages = [
+	stage("vitest-node", "Vitest · Node", "npm", ["run", "test:node"], 45_000, {
+		kind: "vitest",
+	}),
+	stage("vitest-dom", "Vitest · DOM", "npm", ["run", "test:dom"], 130_000, {
+		kind: "vitest",
+	}),
+];
+
+const compileOnlyPublicEnvironment = {
+	PUBLIC_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_local_compile_only",
+	PUBLIC_SUPABASE_URL: "http://127.0.0.1:54321",
+};
 
 const buildStage = stage(
 	"build",
@@ -66,58 +81,66 @@ const buildStage = stage(
 	"npm",
 	["run", "build"],
 	55_000,
+	{ environment: compileOnlyPublicEnvironment },
 );
-const browserPreparationStage = stage(
-	"browser-prepare",
-	"Browser test database",
-	"npm",
-	["run", "test:e2e:prepare"],
-	95_000,
-);
-const chromiumStage = stage(
-	"playwright-chromium",
-	"Playwright Chromium",
-	"npx",
-	[
-		"playwright",
-		"test",
-		"--project=desktop-chromium",
-		"--project=mobile-chromium",
-		"--reporter=line",
-	],
-	300_000,
-	{ kind: "playwright" },
+const affectedBrowserStage = stage(
+	"playwright-affected",
+	"Affected browser flows",
+	"node",
+	["scripts/operations/quality/run_affected_tests.mjs", "browser", "--prepare"],
+	180_000,
+	{
+		environment: { PLAYWRIGHT_PROGRESS_REPORTER: "line" },
+		kind: "playwright",
+	},
 );
 const browserMatrixStage = stage(
 	"playwright-matrix",
-	"Playwright browser matrix",
+	"Blocking browser tiers",
 	"npx",
-	["playwright", "test", "--reporter=line"],
-	720_000,
-	{ kind: "playwright" },
+	["playwright", "test"],
+	480_000,
+	{
+		environment: {
+			PLAYWRIGHT_ENFORCE_DURATION_BUDGETS: "true",
+			PLAYWRIGHT_PROGRESS_REPORTER: "line",
+		},
+		kind: "playwright",
+	},
+);
+const exhaustiveBrowserMatrixStage = stage(
+	"playwright-exhaustive",
+	"Exhaustive browser matrix",
+	"npx",
+	["playwright", "test"],
+	900_000,
+	{
+		environment: {
+			PLAYWRIGHT_ENFORCE_DURATION_BUDGETS: "true",
+			PLAYWRIGHT_EXHAUSTIVE_MATRIX: "true",
+			PLAYWRIGHT_PROGRESS_REPORTER: "line",
+		},
+		kind: "playwright",
+	},
 );
 
 export const verificationProfiles = {
 	quick: {
 		label: "Quick Check",
-		description: "Source contracts and the complete non-browser test suite.",
-		stages: sourceStages,
+		description:
+			"Source contracts plus unit tests selected from changed ownership.",
+		stages: [...sourceContractStages, affectedUnitStage],
 	},
 	feature: {
 		label: "Feature Check",
 		description:
-			"Quick Check plus a production build and desktop/compact Chromium flows.",
-		stages: [
-			...sourceStages,
-			buildStage,
-			browserPreparationStage,
-			chromiumStage,
-		],
+			"Source contracts, every unit test, and browser flows selected from changed ownership.",
+		stages: [...sourceContractStages, ...fullUnitStages, affectedBrowserStage],
 	},
 	release: {
 		label: "Release Check",
 		description:
-			"Dependency, source, database, build, and complete local browser confidence.",
+			"Dependency, source, database, build, and blocking browser-tier confidence.",
 		stages: [
 			stage(
 				"dependencies",
@@ -126,7 +149,8 @@ export const verificationProfiles = {
 				["audit", "--audit-level=high"],
 				20_000,
 			),
-			...sourceStages,
+			...sourceContractStages,
+			...fullUnitStages,
 			buildStage,
 			stage(
 				"database",
@@ -135,8 +159,32 @@ export const verificationProfiles = {
 				["run", "db:test:verify"],
 				240_000,
 			),
-			browserPreparationStage,
 			browserMatrixStage,
+		],
+	},
+	nightly: {
+		label: "Nightly Check",
+		description:
+			"Release confidence plus every test in all five browser/device projects.",
+		stages: [
+			stage(
+				"dependencies",
+				"Dependency audit",
+				"npm",
+				["audit", "--audit-level=high"],
+				20_000,
+			),
+			...sourceContractStages,
+			...fullUnitStages,
+			buildStage,
+			stage(
+				"database",
+				"Disposable database",
+				"npm",
+				["run", "db:test:verify"],
+				240_000,
+			),
+			exhaustiveBrowserMatrixStage,
 		],
 	},
 };
@@ -398,7 +446,7 @@ const main = async () => {
 	const profile = verificationProfiles[profileKey];
 	if (!profile) {
 		console.error(
-			`Unknown verification profile ${JSON.stringify(profileKey)}. Use quick, feature, or release.`,
+			`Unknown verification profile ${JSON.stringify(profileKey)}. Use quick, feature, release, or nightly.`,
 		);
 		process.exitCode = 2;
 		return;
