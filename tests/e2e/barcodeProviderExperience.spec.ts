@@ -243,9 +243,27 @@ test("manual entry shows an exact recall when product details are unavailable", 
 								status: "ongoing",
 								productDescription: "Everything Sprouts Alfalfa Sprouts",
 								reason: "Potential Salmonella and E. coli contamination.",
+								packageDescription: "5 oz clear plastic package",
+								codeInformation: "Lot 2026-ALFALFA",
 								sourceUrl: "https://www.fda.gov/example-recall",
 								matchType: "exact_gtin",
 								requiresPackageCheck: true,
+								detectedAt: "2026-08-25T00:00:00.000Z",
+							},
+							{
+								id: "recall-2",
+								providerKey: "fda-recalls",
+								sourceName: "FDA Recalls",
+								sourceAttribution: "U.S. Food and Drug Administration",
+								alertType: "recall",
+								status: "ongoing",
+								productDescription: "Calco Alfalfa Sprouts",
+								reason: "Potential Salmonella contamination.",
+								recallingOrganization: "Everything Sprouts, LLC",
+								sourceUrl: "https://www.fda.gov/second-example-recall",
+								recallInitiatedAt: "2026-08-22",
+								matchType: "exact_gtin",
+								requiresPackageCheck: false,
 								detectedAt: "2026-08-25T00:00:00.000Z",
 							},
 						],
@@ -265,16 +283,56 @@ test("manual entry shows an exact recall when product details are unavailable", 
 	await expect(
 		dialog.getByText("Check your package", { exact: true }),
 	).toBeVisible();
-	await dialog
-		.locator("summary")
-		.filter({ hasText: "Official food safety notices" })
-		.click();
+	const recallDetailsButton = dialog.getByRole("button", {
+		name: "View recall notices",
+	});
+	await recallDetailsButton.click();
+	await expect(page).toHaveURL(
+		/\/ingredients\/fridge\/manual-entry\/recall-notice$/,
+	);
+	await expect(page).toHaveTitle(/Official Recall Notice/);
+	const officialNoticeDialog = page.getByRole("dialog", {
+		name: "Official safety notices",
+	});
+	await expect(officialNoticeDialog).toBeVisible();
 	await expect(
-		dialog.getByText("Everything Sprouts Alfalfa Sprouts"),
+		officialNoticeDialog.getByText("Everything Sprouts Alfalfa Sprouts"),
 	).toBeVisible();
 	await expect(
-		dialog.getByRole("link", { name: "Read the official notice" }),
+		officialNoticeDialog.getByText("Calco Alfalfa Sprouts", { exact: true }),
+	).toBeVisible();
+	await expect(
+		officialNoticeDialog.getByText("5 oz clear plastic package"),
+	).toBeVisible();
+	await expect(
+		officialNoticeDialog.getByText("Lot 2026-ALFALFA"),
+	).toBeVisible();
+	await expect(
+		officialNoticeDialog.getByRole("link", {
+			name: "Read the official notice",
+		}),
+	).toHaveCount(2);
+	await expect(
+		officialNoticeDialog
+			.getByRole("link", { name: "Read the official notice" })
+			.nth(0),
 	).toHaveAttribute("href", "https://www.fda.gov/example-recall");
+	await expect(
+		officialNoticeDialog
+			.getByRole("link", { name: "Read the official notice" })
+			.nth(1),
+	).toHaveAttribute("href", "https://www.fda.gov/second-example-recall");
+	await officialNoticeDialog.getByRole("button", { name: "Done" }).click();
+	await expect(page).toHaveURL(/\/ingredients\/fridge\/manual-entry$/);
+	await expect(officialNoticeDialog).toBeHidden();
+	await expect(recallDetailsButton).toBeFocused();
+
+	await recallDetailsButton.click();
+	await expect(officialNoticeDialog).toBeVisible();
+	await page.goBack();
+	await expect(page).toHaveURL(/\/ingredients\/fridge\/manual-entry$/);
+	await expect(officialNoticeDialog).toBeHidden();
+	await expect(recallDetailsButton).toBeFocused();
 	await expect(dialog.getByLabel("Food name")).toHaveValue("");
 });
 

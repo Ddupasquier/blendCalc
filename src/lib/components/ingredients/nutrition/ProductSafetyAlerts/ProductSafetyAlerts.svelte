@@ -1,19 +1,54 @@
 <script lang="ts">
-	import CollapsibleSection from "$lib/components/common/disclosure/CollapsibleSection/CollapsibleSection.svelte";
+	import { page } from "$app/state";
+	import ActionButton from "$lib/components/common/buttons/ActionButton/ActionButton.svelte";
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
+	import ProductSafetyAlertInformationSheet from "$lib/components/ingredients/nutrition/ProductSafetyAlertInformationSheet/ProductSafetyAlertInformationSheet.svelte";
+	import {
+		buildIngredientRouteHref,
+		getActiveIngredientRouteUrl,
+		getIngredientRouteState,
+		INGREDIENT_ROUTE_MODALS,
+	} from "$lib/utils/ingredients/ingredientRouteState";
+	import { navigateShallowRoute } from "$lib/utils/navigation/shallowRouteNavigation";
+	import { SHALLOW_ROUTE_PAGE_STATE_KEYS } from "$lib/utils/navigation/shallowRouteState";
 	import type { ProductSafetyAlertsProps } from "./types";
 
-	let {
-		food,
-		alerts: providedAlerts,
-		mode = "all",
-	}: ProductSafetyAlertsProps = $props();
+	let { food, alerts: providedAlerts }: ProductSafetyAlertsProps = $props();
 	const alerts = $derived(providedAlerts ?? food?.safetyAlerts ?? []);
-	const showSummary = $derived(mode !== "details");
-	const showDetails = $derived(mode !== "summary");
 	const requiresPackageCheck = $derived(
 		alerts.some((alert) => alert.requiresPackageCheck),
 	);
+	const ingredientPageUrl = $derived.by(() => {
+		if (page.url?.href) return new URL(page.url.href);
+		if (typeof window !== "undefined") return new URL(window.location.href);
+		return new URL("https://blendcalc.local/ingredients/fridge");
+	});
+	const activeIngredientRouteUrl = $derived.by(() => {
+		try {
+			return getActiveIngredientRouteUrl(
+				ingredientPageUrl,
+				page.state.ingredientRouteHref,
+			);
+		} catch {
+			return ingredientPageUrl;
+		}
+	});
+	const informationSheetOpen = $derived(
+		getIngredientRouteState(activeIngredientRouteUrl).modal ===
+			INGREDIENT_ROUTE_MODALS.recallNotice,
+	);
+
+	const setInformationSheetOpen = (open: boolean) => {
+		const href = buildIngredientRouteHref(activeIngredientRouteUrl, {
+			modal: open ? INGREDIENT_ROUTE_MODALS.recallNotice : null,
+		});
+		navigateShallowRoute({
+			href,
+			pageState: page.state,
+			routeStateKey: SHALLOW_ROUTE_PAGE_STATE_KEYS.ingredients,
+			replace: !open,
+		});
+	};
 </script>
 
 {#if alerts.length > 0}
@@ -21,66 +56,36 @@
 		class="product-safety-alerts"
 		aria-label="Official food safety alerts"
 	>
-		{#if showSummary}
-			<StatusMessage
-				tone="danger"
-				iconPlacement="top-end"
-				title={requiresPackageCheck
-					? "Check your package"
-					: "Active food safety recall"}
-			>
-				<p class="product-safety-alerts__summary">
+		<StatusMessage
+			tone="danger"
+			iconPlacement="top-end"
+			title={requiresPackageCheck
+				? "Check your package"
+				: "Active food safety recall"}
+		>
+			<div class="product-safety-alerts__summary">
+				<p>
 					{requiresPackageCheck
-						? "This product may be part of an active recall. Check the lot or date code on your package against the official notice."
-						: "This product appears in an active official recall. Review the official notice before using it."}
+						? "This product may be part of an active recall. Check the affected package details before using it."
+						: "This product appears in an active official recall. Review the recall details before using it."}
 				</p>
-			</StatusMessage>
-		{/if}
-
-		{#if showDetails}
-			<CollapsibleSection
-				title="Official food safety notices"
-				badge={String(alerts.length)}
-				surface="panel"
-				tone="danger"
-			>
-				<div class="product-safety-alerts__details">
-					{#each alerts as alert}
-						<article class="product-safety-alerts__notice">
-							<div class="product-safety-alerts__heading">
-								<strong>{alert.productDescription}</strong>
-								{#if alert.classification}
-									<span>{alert.classification}</span>
-								{/if}
-							</div>
-							{#if alert.reason}
-								<p>{alert.reason}</p>
-							{/if}
-							{#if alert.requiresPackageCheck}
-								<p>
-									<strong>Check your package:</strong> The notice is limited by package,
-									lot, or date information.
-								</p>
-							{/if}
-							<p class="product-safety-alerts__source">
-								{alert.sourceAttribution}
-								{#if alert.reportDate}
-									· Reported {alert.reportDate}{/if}
-							</p>
-							<a href={alert.sourceUrl} target="_blank" rel="noreferrer">
-								Read the official notice
-							</a>
-						</article>
-					{/each}
-					<p class="product-safety-alerts__disclaimer">
-						Official recall data is safety information, not medical advice. If
-						anyone may be ill or injured, contact a qualified medical
-						professional.
-					</p>
-				</div>
-			</CollapsibleSection>
-		{/if}
+				<ActionButton
+					type="button"
+					variant="ghost"
+					size="small"
+					onclick={() => setInformationSheetOpen(true)}
+				>
+					{alerts.length === 1 ? "View recall details" : "View recall notices"}
+				</ActionButton>
+			</div>
+		</StatusMessage>
 	</section>
+
+	<ProductSafetyAlertInformationSheet
+		open={informationSheetOpen}
+		{alerts}
+		onClose={() => setInformationSheetOpen(false)}
+	/>
 {/if}
 
 <style lang="scss">
