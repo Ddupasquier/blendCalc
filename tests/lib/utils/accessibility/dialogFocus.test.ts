@@ -28,7 +28,9 @@ describe("dialog focus management", () => {
 		expect(firstButton).toHaveFocus();
 		dialog.remove();
 		await Promise.resolve();
-		await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+		await new Promise<void>((resolve) =>
+			requestAnimationFrame(() => resolve()),
+		);
 		expect(trigger).toHaveFocus();
 	});
 
@@ -78,7 +80,9 @@ describe("dialog focus management", () => {
 		cleanup();
 		dialog.remove();
 		await Promise.resolve();
-		await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+		await new Promise<void>((resolve) =>
+			requestAnimationFrame(() => resolve()),
+		);
 		expect(trigger).toHaveFocus();
 	});
 
@@ -98,7 +102,32 @@ describe("dialog focus management", () => {
 		dialog.remove();
 		parentDialogButton.focus();
 		await Promise.resolve();
-		await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+		await new Promise<void>((resolve) =>
+			requestAnimationFrame(() => resolve()),
+		);
 		expect(trigger).toHaveFocus();
+	});
+
+	it("restores a replacement trigger resolved after route-backed content rerenders", async () => {
+		let currentTrigger = document.createElement("button");
+		const dialog = document.createElement("div");
+		const firstButton = document.createElement("button");
+		dialog.append(firstButton);
+		document.body.append(currentTrigger, dialog);
+
+		const cleanup = manageDialogFocus(dialog, () => currentTrigger);
+		await Promise.resolve();
+		expect(firstButton).toHaveFocus();
+
+		const replacementTrigger = document.createElement("button");
+		currentTrigger.replaceWith(replacementTrigger);
+		currentTrigger = replacementTrigger;
+		cleanup();
+		dialog.remove();
+		await Promise.resolve();
+		await new Promise<void>((resolve) =>
+			requestAnimationFrame(() => resolve()),
+		);
+		expect(replacementTrigger).toHaveFocus();
 	});
 });

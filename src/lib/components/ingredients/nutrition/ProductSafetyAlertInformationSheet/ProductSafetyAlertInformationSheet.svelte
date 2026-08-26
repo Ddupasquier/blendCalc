@@ -4,8 +4,12 @@
 	import BottomSheet from "$lib/components/common/sheets/BottomSheet/BottomSheet.svelte";
 	import type { ProductSafetyAlertInformationSheetProps } from "./types";
 
-	let { open, alerts, onClose }: ProductSafetyAlertInformationSheetProps =
-		$props();
+	let {
+		open,
+		alerts,
+		returnFocusTarget,
+		onClose,
+	}: ProductSafetyAlertInformationSheetProps = $props();
 
 	const officialNoticeDateFormatter = new Intl.DateTimeFormat(undefined, {
 		dateStyle: "medium",
@@ -32,6 +36,7 @@
 		: "Official safety notices"}
 	titleId="product-safety-alert-information-title"
 	comfortable
+	{returnFocusTarget}
 	{onClose}
 >
 	<div class="product-safety-alert-information">

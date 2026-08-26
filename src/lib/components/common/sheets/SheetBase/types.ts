@@ -1,4 +1,5 @@
 import type { Snippet } from "svelte";
+import type { DialogReturnFocusTarget } from "$lib/utils/accessibility/dialogFocus";
 
 export type SheetPlacement = "bottom" | "right";
 
@@ -16,6 +17,7 @@ export type SheetBaseProps = {
 	comfortable?: boolean;
 	className?: string;
 	panelClass?: string;
+	returnFocusTarget?: DialogReturnFocusTarget;
 	children: Snippet;
 	onClose?: () => void;
 };
