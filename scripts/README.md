@@ -107,6 +107,8 @@ state and writes complete diagnostics only for failed stages under ignored
 `npm run format:check` runs
 `operations/quality/check_new_file_formatting.mjs` to verify only changed and untracked
 supported files against the maintained Prettier contract.
+`scripts/operations/quality/run_affected_tests.mjs` maps changed paths to the smallest
+maintained Vitest and Playwright ownership groups used by Quick and Feature checks.
 
 | Command                  | Scope                                                                                                 |
 | ------------------------ | ----------------------------------------------------------------------------------------------------- |
