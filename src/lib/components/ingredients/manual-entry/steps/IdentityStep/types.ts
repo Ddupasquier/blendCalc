@@ -1,4 +1,5 @@
 import type { FoodCategoryPickerOption } from "$lib/utils/food/categories/categoryPicker";
+import type { FoodSafetyAlert } from "$lib/utils/food/types";
 import type {
 	FoodCategoryPickerStatus,
 	ManualEntryBarcodeSuggestion,
@@ -13,6 +14,7 @@ export type IdentityStepProps = {
 	categoryWarningMessage: string;
 	categorySourceValues: string[];
 	barcodeMessage: string;
+	barcodeSafetyAlerts: FoodSafetyAlert[];
 	barcodeValidationMessage: string;
 	checkingBarcodeReference: boolean;
 	barcodeSuggestion: ManualEntryBarcodeSuggestion;

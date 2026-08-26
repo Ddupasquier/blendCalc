@@ -64,12 +64,18 @@ profile for an older record that predates saved disclosure context; names and ca
 cannot. Explicit declarations remain available for personalized checks; a missing
 declaration never means allergen-free.
 
-Catalog-backed scan results also carry current exact or moderator-confirmed official
-recall notices. Exact GTIN evidence may display immediately. A brand/product/package
+Every valid barcode lookup checks current exact official recall identifiers independently
+from product discovery. A recalled barcode therefore remains visible as a safety notice
+even when blendCalc, USDA, Open Food Facts, and alcohol-label sources have no product
+record for it. That outcome stays `product not found`: the user enters package details
+manually, and the app never invents nutrition or creates a catalog product from recall
+metadata. Exact GTIN evidence may display immediately. A brand/product/package
 similarity without an exact identifier is held for review, and title-only similarity is
 ignored. When the official notice identifies only certain packages, lots, or dates, the
 result asks the user to check that package information rather than claiming a definite
-match or safety.
+match or safety. Saved private foods with an exact barcode receive the same current
+database-backed notice when their lists reload; a stale browser snapshot is not treated
+as recall authority.
 
 Open Food Facts ABV is accepted only when the provider supplies an explicit percentage
 unit. COLA Cloud is a bounded server-only exact-barcode fallback after blendCalc, USDA,

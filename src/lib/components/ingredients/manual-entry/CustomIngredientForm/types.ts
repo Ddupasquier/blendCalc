@@ -27,6 +27,7 @@ export type ManualEntryDraftData = Omit<
 	| "frontPhoto"
 	| "nutritionPhoto"
 	| "barcodePhoto"
+	| "barcodeSafetyAlerts"
 	| "checkingBarcodeReference"
 	| "validatingBarcodeShare"
 >;

@@ -72,6 +72,31 @@ describe("lookupBarcodeProduct", () => {
 		});
 	});
 
+	it("preserves official safety notices on a product-level not-found result", async () => {
+		const fetcher = vi.fn().mockResolvedValue(
+			new Response(
+				JSON.stringify({
+					status: "not-found",
+					barcode: "00860014523120",
+					safetyCheck: {
+						status: "checked",
+						alerts: [{ id: "recall-1", matchType: "exact_gtin" }],
+					},
+				}),
+				{ status: 200, headers: { "content-type": "application/json" } },
+			),
+		);
+		vi.stubGlobal("fetch", fetcher);
+
+		await expect(lookupBarcodeProduct("860014523120")).resolves.toMatchObject({
+			status: "not-found",
+			safetyCheck: {
+				status: "checked",
+				alerts: [{ id: "recall-1", matchType: "exact_gtin" }],
+			},
+		});
+	});
+
 	it("rejects invalid barcode input without a network request", async () => {
 		const fetcher = vi.fn();
 		vi.stubGlobal("fetch", fetcher);

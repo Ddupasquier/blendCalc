@@ -4,8 +4,12 @@ import {
 	toFoodFieldProvenance,
 	type CatalogFieldSource,
 } from "$lib/server/products/catalogFieldProvenance.server";
-import { readActiveProductSafetyAlertsByProduct } from "$lib/server/products/productSafetyAlerts.server";
+import {
+	readActiveProductSafetyAlertsByBarcodes,
+	readActiveProductSafetyAlertsByProduct,
+} from "$lib/server/products/productSafetyAlerts.server";
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
+import { normalizeBarcode } from "$lib/utils/barcode/barcode";
 import { hydrateFoodWithNormalizedNutrients } from "$lib/utils/food/nutrients/normalizedNutrients";
 import type { FoodCompatibilitySummary } from "$lib/utils/food/quality/compatibility";
 import { hydrateFoodWithNormalizedServings } from "$lib/utils/food/servings/normalizedServings";
@@ -61,7 +65,7 @@ const hydrateFoodWithSharedProductMetadata = (
 	fieldProvenance: Record<string, CatalogFieldSource>,
 	safetyAlerts: FoodItem["safetyAlerts"],
 ) => {
-	if (!row) return food;
+	if (!row) return { ...food, safetyAlerts };
 	const canonicalFood = row.food as unknown as FoodItem;
 	const canonicalSummary =
 		row.compatibility_summary as unknown as FoodCompatibilitySummary;
@@ -77,8 +81,7 @@ const hydrateFoodWithSharedProductMetadata = (
 		brandedFoodCategory:
 			canonicalFood.brandedFoodCategory ?? food.brandedFoodCategory,
 		categories: canonicalFood.categories ?? food.categories,
-		categoryOptionId:
-			canonicalFood.categoryOptionId ?? food.categoryOptionId,
+		categoryOptionId: canonicalFood.categoryOptionId ?? food.categoryOptionId,
 		scientificName: canonicalFood.scientificName,
 		alternateDescription: canonicalFood.alternateDescription,
 		preparation: canonicalFood.preparation,
@@ -110,12 +113,10 @@ const hydrateFoodWithSharedProductMetadata = (
 		sourceAttributions:
 			canonicalFood.sourceAttributions ?? food.sourceAttributions,
 		publishedDate: canonicalFood.publishedDate ?? food.publishedDate,
-		publicationDate:
-			canonicalFood.publicationDate ?? food.publicationDate,
+		publicationDate: canonicalFood.publicationDate ?? food.publicationDate,
 		modifiedDate: canonicalFood.modifiedDate ?? food.modifiedDate,
 		availableDate: canonicalFood.availableDate ?? food.availableDate,
-		discontinuedDate:
-			canonicalFood.discontinuedDate ?? food.discontinuedDate,
+		discontinuedDate: canonicalFood.discontinuedDate ?? food.discontinuedDate,
 		fieldProvenance: toFoodFieldProvenance(fieldProvenance),
 		compatibilitySummary: canonicalSummary,
 		safetyAlerts,
@@ -130,9 +131,6 @@ export const hydrateCloudFoodListRows = async (
 	const sharedProductIds = [
 		...new Set(rows.map((row) => row.shared_product_id).filter(Boolean)),
 	] as string[];
-	const catalogReadClient = sharedProductIds.length > 0
-		? catalogSupabase ?? getSupabaseAdminClient()
-		: null;
 	const baseFoods = rows.map((row) =>
 		hydrateFoodWithCatalogState(
 			normalizeFoodProductName({
@@ -144,6 +142,17 @@ export const hydrateCloudFoodListRows = async (
 			row,
 		),
 	);
+	const canonicalBarcodes = [
+		...new Set(
+			baseFoods
+				.map((food) => normalizeBarcode(food.barcode ?? food.gtinUpc ?? ""))
+				.filter(Boolean),
+		),
+	] as string[];
+	const catalogReadClient =
+		sharedProductIds.length > 0 || canonicalBarcodes.length > 0
+			? (catalogSupabase ?? getSupabaseAdminClient())
+			: null;
 	const [
 		normalizedRows,
 		servingRows,
@@ -151,6 +160,7 @@ export const hydrateCloudFoodListRows = async (
 		sharedProductCompatibilityRows,
 		sharedProductFieldProvenanceRows,
 		safetyAlertsByProduct,
+		safetyAlertsByBarcodeResult,
 	] = await Promise.all([
 		readNormalizedNutrientsByParent(
 			supabase,
@@ -165,29 +175,52 @@ export const hydrateCloudFoodListRows = async (
 		hydrateFoodsWithCachedImages(supabase, baseFoods),
 		readSharedProductCompatibilityRows(supabase, rows),
 		catalogReadClient
-			? readSelectedCatalogFieldProvenance(
-				catalogReadClient,
-				sharedProductIds,
-			)
+			? readSelectedCatalogFieldProvenance(catalogReadClient, sharedProductIds)
 			: Promise.resolve(new Map<string, Record<string, CatalogFieldSource>>()),
 		catalogReadClient
-			? readActiveProductSafetyAlertsByProduct(sharedProductIds, catalogReadClient)
+			? readActiveProductSafetyAlertsByProduct(
+					sharedProductIds,
+					catalogReadClient,
+				)
 			: Promise.resolve(new Map()),
+		catalogReadClient
+			? readActiveProductSafetyAlertsByBarcodes(
+					canonicalBarcodes,
+					catalogReadClient,
+				)
+			: Promise.resolve({
+					status: "checked" as const,
+					alertsByBarcode: new Map(),
+				}),
 	]);
 
 	return foodsWithImages.map((food, index) => {
 		const row = rows[index];
+		const canonicalBarcode = normalizeBarcode(
+			food.barcode ?? food.gtinUpc ?? "",
+		);
+		const safetyAlerts = [
+			...(row.shared_product_id
+				? (safetyAlertsByProduct.get(row.shared_product_id) ?? [])
+				: []),
+			...(canonicalBarcode
+				? (safetyAlertsByBarcodeResult.alertsByBarcode.get(canonicalBarcode) ??
+					[])
+				: []),
+		].filter(
+			(alert, alertIndex, alerts) =>
+				alerts.findIndex((candidate) => candidate.id === alert.id) ===
+				alertIndex,
+		);
 		const foodWithMetadata = hydrateFoodWithSharedProductMetadata(
 			food,
 			row.shared_product_id
 				? sharedProductCompatibilityRows.get(row.shared_product_id)
 				: undefined,
 			row.shared_product_id
-				? sharedProductFieldProvenanceRows.get(row.shared_product_id) ?? {}
+				? (sharedProductFieldProvenanceRows.get(row.shared_product_id) ?? {})
 				: {},
-			row.shared_product_id
-				? safetyAlertsByProduct.get(row.shared_product_id) ?? []
-				: [],
+			safetyAlerts,
 		);
 		const foodWithNutrients = hydrateFoodWithNormalizedNutrients(
 			foodWithMetadata,

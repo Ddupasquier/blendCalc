@@ -1,5 +1,5 @@
 import type { ImagePlacementValue } from "$lib/utils/food/images/types";
-import type { FoodImageAsset } from "$lib/utils/food/types";
+import type { FoodImageAsset, FoodSafetyAlert } from "$lib/utils/food/types";
 import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
 import type { ProductRegulatoryDisclosureProfile } from "$lib/utils/food/quality/nutritionCompletenessCatalog";
 import type {
@@ -16,6 +16,7 @@ export type ShareStepProps = {
 	optionalNutrientCount: number;
 	validationItems: ManualEntryValidationItem[];
 	barcodeMessage: string;
+	barcodeSafetyAlerts: FoodSafetyAlert[];
 	canShareWithCatalog: boolean;
 	shareUnavailableMessage: string;
 	shareHelpMessage: string;

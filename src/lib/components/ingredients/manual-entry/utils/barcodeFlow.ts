@@ -26,6 +26,7 @@ import type {
 	FoodServing,
 	FoodAlcoholByVolume,
 	FoodRegulatoryDisclosure,
+	FoodSafetyAlert,
 } from "$lib/utils/food/types";
 import { toFiniteNonnegativeNumber } from "$lib/utils/numbers/finiteNumbers";
 import { getStoredImagePlacement } from "$lib/utils/food/images/imagePlacement";
@@ -93,11 +94,13 @@ export type ManualBarcodeReferenceResult =
 			referenceKey: string;
 			draft: BarcodeProductDraft;
 			message: string;
+			safetyAlerts: FoodSafetyAlert[];
 	  }
 	| {
 			status: "not-found" | "error";
 			referenceKey: string;
 			message: string;
+			safetyAlerts: FoodSafetyAlert[];
 	  };
 
 export const getBarcodeReferenceKey = (
@@ -122,7 +125,10 @@ export const getManualBarcodeReferencePlan = ({
 	const normalizedBarcode = normalizeBarcode(trimmedBarcode);
 	if (!normalizedBarcode) return { action: "invalid" };
 
-	const referenceKey = getBarcodeReferenceKey(normalizedBarcode, normalizedName);
+	const referenceKey = getBarcodeReferenceKey(
+		normalizedBarcode,
+		normalizedName,
+	);
 	if (checkedBarcodeReferenceKey === referenceKey || checkingBarcodeReference) {
 		return { action: "skip" };
 	}
@@ -167,6 +173,7 @@ export const getManualBarcodeReferenceResult = ({
 			referenceKey,
 			draft: lookup.draft,
 			message: getBarcodeFoundMessage(normalizedName, lookup.draft),
+			safetyAlerts: lookup.safetyCheck?.alerts ?? [],
 		};
 	}
 
@@ -177,6 +184,7 @@ export const getManualBarcodeReferenceResult = ({
 			lookup.status,
 			lookup.status === "error" ? lookup.message : undefined,
 		),
+		safetyAlerts: lookup.safetyCheck?.alerts ?? [],
 	};
 };
 
@@ -237,10 +245,7 @@ export const getBarcodeDraftState = (
 		serving: usesInternal100GramBasis ? undefined : draft.serving,
 		importedNutrients: validNutrients,
 		manualNutrientValues: Object.fromEntries(
-			validNutrients.map((nutrient) => [
-				nutrient.nutrientId,
-				nutrient.value,
-			]),
+			validNutrients.map((nutrient) => [nutrient.nutrientId, nutrient.value]),
 		),
 		useVolumeEquivalent: Boolean(draft.volumeEquivalent),
 		volumeQuantity: draft.volumeEquivalent?.quantity ?? null,
@@ -249,7 +254,8 @@ export const getBarcodeDraftState = (
 			getDefaultServingMeasureUnit("volume") ??
 			"",
 		barcode: draft.barcode,
-		barcodeSource: draft.source === "shared-catalog" ? "community" : draft.source,
+		barcodeSource:
+			draft.source === "shared-catalog" ? "community" : draft.source,
 		reportedNutrientIds: [...draft.reportedNutrientIds],
 		foodIdentityType: draft.foodIdentityType ?? "packaged",
 		ingredients: draft.ingredients ?? "",
@@ -276,17 +282,21 @@ export const getBarcodeDraftState = (
 			? { ...draft.sourceMetadata }
 			: undefined,
 		categories: [
-			...new Set([
-				draft.resolvedCategory,
-				...(draft.categories ?? []),
-			].filter(isStringValue)),
+			...new Set(
+				[draft.resolvedCategory, ...(draft.categories ?? [])].filter(
+					isStringValue,
+				),
+			),
 		],
 		image: draft.image,
 		imagePlacement: getStoredImagePlacement(draft.image),
 		fieldProvenance: draft.fieldProvenance
 			? { ...draft.fieldProvenance }
 			: undefined,
-		checkedBarcodeReferenceKey: getBarcodeReferenceKey(draft.barcode, draft.name),
+		checkedBarcodeReferenceKey: getBarcodeReferenceKey(
+			draft.barcode,
+			draft.name,
+		),
 	};
 };
 
@@ -322,14 +332,15 @@ export const getBarcodeImportMessage = (
 	mode: "autofill" | "scan",
 ) => {
 	const reportedNutrientCount = new Set(draft.reportedNutrientIds).size;
-	const nutrientSummary = reportedNutrientCount === 0
-		? " This source did not report nutrition values, so missing values remain unknown."
-		: ` ${reportedNutrientCount} nutrition ${reportedNutrientCount === 1 ? "value was" : "values were"} reported${optionalNutrientCount > 0 ? `, including ${optionalNutrientCount} additional vitamin or mineral ${optionalNutrientCount === 1 ? "value" : "values"}` : ""}. Missing values remain unknown.`;
+	const nutrientSummary =
+		reportedNutrientCount === 0
+			? " This source did not report nutrition values, so missing values remain unknown."
+			: ` ${reportedNutrientCount} nutrition ${reportedNutrientCount === 1 ? "value was" : "values were"} reported${optionalNutrientCount > 0 ? `, including ${optionalNutrientCount} additional vitamin or mineral ${optionalNutrientCount === 1 ? "value" : "values"}` : ""}. Missing values remain unknown.`;
 	const volumeSummary = draft.volumeEquivalent
 		? " The package's volume-to-weight serving was also included."
 		: draft.hasSourceServing === false
 			? " No package serving weight was reported."
-		: "";
+			: "";
 	const prefix =
 		mode === "autofill"
 			? `Autofilled from ${getBarcodeProductSourceDisplayLabel(draft)}.`

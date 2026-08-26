@@ -3,6 +3,7 @@ import {
 	lookupBarcodeProduct,
 	type BarcodeProductDraft,
 } from "$lib/utils/barcode/productLookup";
+import type { FoodSafetyAlert } from "$lib/utils/food/types";
 import { getBarcodeImportMessage } from "$lib/components/ingredients/manual-entry/utils/barcodeFlow";
 
 export type ManualEntryBarcodeScanOutcome =
@@ -11,11 +12,13 @@ export type ManualEntryBarcodeScanOutcome =
 			draft: BarcodeProductDraft;
 			message: string;
 			focusTarget: "destination";
+			safetyAlerts: FoodSafetyAlert[];
 	  }
 	| {
 			status: "not-found" | "error";
 			message: string;
 			focusTarget: "name";
+			safetyAlerts: FoodSafetyAlert[];
 	  };
 
 export const resolveManualEntryBarcodeScan = async ({
@@ -37,6 +40,7 @@ export const resolveManualEntryBarcodeScan = async ({
 				"scan",
 			),
 			focusTarget: "destination",
+			safetyAlerts: lookup.safetyCheck?.alerts ?? [],
 		};
 	}
 
@@ -47,5 +51,6 @@ export const resolveManualEntryBarcodeScan = async ({
 				? "No matching product was found. The barcode is filled in so you can enter the label manually."
 				: lookup.message,
 		focusTarget: "name",
+		safetyAlerts: lookup.safetyCheck?.alerts ?? [],
 	};
 };

@@ -1,6 +1,13 @@
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
 import type { Database } from "$lib/types/database.types";
-import type { FoodSafetyAlert } from "$lib/utils/food/types";
+import {
+	getBarcodeLookupCandidates,
+	normalizeBarcode,
+} from "$lib/utils/barcode/barcode";
+import type {
+	FoodSafetyAlert,
+	FoodSafetyAlertCheck,
+} from "$lib/utils/food/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 type SafetyAlertMatchRow = {
@@ -32,6 +39,23 @@ type SafetyAlertSourceRow = {
 	attribution_text: string | null;
 };
 
+type SafetyAlertIdentifierRow = {
+	alert_id: string;
+	created_at: string;
+	normalized_value: string;
+};
+
+type SafetyAlertDetailRow = SafetyAlertRow & {
+	code_information: string | null;
+	package_description: string | null;
+	last_seen_at: string;
+};
+
+export type FoodSafetyAlertsByBarcodeResult = {
+	status: FoodSafetyAlertCheck["status"];
+	alertsByBarcode: Map<string, FoodSafetyAlert[]>;
+};
+
 const SAFETY_ALERT_SEARCH_LIMIT = 100;
 
 const getClassificationPriority = (classification?: string) => {
@@ -47,6 +71,7 @@ export const isCatalogSafetyMonitoringSchemaUnavailable = (
 	const message = error?.message?.toLowerCase() ?? "";
 	const namesSafetyMonitoringTable =
 		message.includes("official_food_safety_alert_matches") ||
+		message.includes("official_food_safety_alert_identifiers") ||
 		message.includes("official_food_safety_alerts");
 
 	return (
@@ -58,12 +83,183 @@ export const isCatalogSafetyMonitoringSchemaUnavailable = (
 	);
 };
 
+const sortFoodSafetyAlerts = (alerts: FoodSafetyAlert[]) =>
+	alerts.sort(
+		(left, right) =>
+			getClassificationPriority(left.classification) -
+				getClassificationPriority(right.classification) ||
+			right.detectedAt.localeCompare(left.detectedAt),
+	);
+
+const readSafetyAlertSources = async (
+	alerts: SafetyAlertRow[],
+	supabase: SupabaseClient<Database>,
+) => {
+	const sourceKeys = [...new Set(alerts.map((alert) => alert.provider_key))];
+	if (sourceKeys.length === 0) return new Map<string, SafetyAlertSourceRow>();
+
+	const { data, error } = await supabase
+		.from("product_data_sources")
+		.select("key, display_name, attribution_text")
+		.in("key", sourceKeys);
+	if (error) throw error;
+
+	return new Map(
+		((data ?? []) as SafetyAlertSourceRow[]).map((source) => [
+			source.key,
+			source,
+		]),
+	);
+};
+
+const toFoodSafetyAlert = ({
+	alert,
+	source,
+	matchType,
+	requiresPackageCheck,
+	detectedAt,
+}: {
+	alert: SafetyAlertRow;
+	source?: SafetyAlertSourceRow;
+	matchType: FoodSafetyAlert["matchType"];
+	requiresPackageCheck: boolean;
+	detectedAt: string;
+}): FoodSafetyAlert => ({
+	id: alert.id,
+	providerKey: alert.provider_key,
+	sourceName: source?.display_name ?? alert.provider_key,
+	sourceAttribution:
+		source?.attribution_text ?? source?.display_name ?? alert.provider_key,
+	alertType: alert.alert_type,
+	classification: alert.classification ?? undefined,
+	status: alert.status,
+	productDescription: alert.product_description,
+	reason: alert.reason ?? undefined,
+	recallingOrganization: alert.recalling_organization ?? undefined,
+	sourceUrl: alert.source_url,
+	reportDate: alert.report_date ?? undefined,
+	recallInitiatedAt: alert.recall_initiated_at ?? undefined,
+	matchType,
+	requiresPackageCheck,
+	detectedAt,
+});
+
+export const readActiveProductSafetyAlertsByBarcodes = async (
+	barcodes: string[],
+	supabase: SupabaseClient<Database> = getSupabaseAdminClient(),
+): Promise<FoodSafetyAlertsByBarcodeResult> => {
+	const canonicalBarcodes = [
+		...new Set(
+			barcodes.map((barcode) => normalizeBarcode(barcode)).filter(Boolean),
+		),
+	] as string[];
+	const alertsByBarcode = new Map<string, FoodSafetyAlert[]>();
+	if (canonicalBarcodes.length === 0) {
+		return { status: "checked", alertsByBarcode };
+	}
+
+	const canonicalBarcodesByCandidate = new Map<string, Set<string>>();
+	for (const canonicalBarcode of canonicalBarcodes) {
+		for (const candidate of getBarcodeLookupCandidates(canonicalBarcode)) {
+			const matchingBarcodes =
+				canonicalBarcodesByCandidate.get(candidate) ?? new Set<string>();
+			matchingBarcodes.add(canonicalBarcode);
+			canonicalBarcodesByCandidate.set(candidate, matchingBarcodes);
+		}
+	}
+
+	const { data: identifierData, error: identifierError } = await supabase
+		.from("official_food_safety_alert_identifiers")
+		.select("alert_id, created_at, normalized_value")
+		.in("identifier_type", ["gtin", "upc"])
+		.in("normalized_value", [...canonicalBarcodesByCandidate.keys()]);
+	if (isCatalogSafetyMonitoringSchemaUnavailable(identifierError)) {
+		return { status: "unavailable", alertsByBarcode };
+	}
+	if (identifierError) throw identifierError;
+
+	const identifiers = (identifierData ?? []) as SafetyAlertIdentifierRow[];
+	if (identifiers.length === 0) {
+		return { status: "checked", alertsByBarcode };
+	}
+
+	const alertIds = [
+		...new Set(identifiers.map((identifier) => identifier.alert_id)),
+	];
+	const { data: alertData, error: alertError } = await supabase
+		.from("official_food_safety_alerts")
+		.select(
+			"id, provider_key, alert_type, classification, status, product_description, reason, recalling_organization, source_url, report_date, recall_initiated_at, code_information, package_description, last_seen_at",
+		)
+		.in("id", alertIds)
+		.eq("is_active", true);
+	if (isCatalogSafetyMonitoringSchemaUnavailable(alertError)) {
+		return { status: "unavailable", alertsByBarcode };
+	}
+	if (alertError) throw alertError;
+
+	const alerts = (alertData ?? []) as SafetyAlertDetailRow[];
+	const alertsById = new Map(alerts.map((alert) => [alert.id, alert]));
+	const sourcesByKey = await readSafetyAlertSources(alerts, supabase);
+	for (const identifier of identifiers) {
+		const alert = alertsById.get(identifier.alert_id);
+		if (!alert) continue;
+		const matchingBarcodes = canonicalBarcodesByCandidate.get(
+			identifier.normalized_value,
+		);
+		if (!matchingBarcodes) continue;
+
+		for (const canonicalBarcode of matchingBarcodes) {
+			const productAlerts = alertsByBarcode.get(canonicalBarcode) ?? [];
+			if (productAlerts.some((productAlert) => productAlert.id === alert.id)) {
+				continue;
+			}
+			productAlerts.push(
+				toFoodSafetyAlert({
+					alert,
+					source: sourcesByKey.get(alert.provider_key),
+					matchType: "exact_gtin",
+					requiresPackageCheck: Boolean(
+						alert.code_information || alert.package_description,
+					),
+					detectedAt: identifier.created_at || alert.last_seen_at,
+				}),
+			);
+			alertsByBarcode.set(canonicalBarcode, productAlerts);
+		}
+	}
+	for (const productAlerts of alertsByBarcode.values()) {
+		sortFoodSafetyAlerts(productAlerts);
+	}
+
+	return { status: "checked", alertsByBarcode };
+};
+
+export const readActiveProductSafetyAlertsByBarcode = async (
+	barcode: string,
+	supabase: SupabaseClient<Database> = getSupabaseAdminClient(),
+): Promise<FoodSafetyAlertCheck> => {
+	const canonicalBarcode = normalizeBarcode(barcode);
+	if (!canonicalBarcode) return { status: "checked", alerts: [] };
+
+	const result = await readActiveProductSafetyAlertsByBarcodes(
+		[canonicalBarcode],
+		supabase,
+	);
+	return {
+		status: result.status,
+		alerts: result.alertsByBarcode.get(canonicalBarcode) ?? [],
+	};
+};
+
 export const readActiveProductIdsMatchingSafetyAlertMetadata = async (
 	searchTerms: string[],
 	supabase: SupabaseClient<Database> = getSupabaseAdminClient(),
 	matchMode: "all" | "any" = "all",
 ) => {
-	const terms = [...new Set(searchTerms.map((term) => term.trim()).filter(Boolean))];
+	const terms = [
+		...new Set(searchTerms.map((term) => term.trim()).filter(Boolean)),
+	];
 	if (terms.length === 0) return [];
 
 	let alertRequest = supabase
@@ -72,17 +268,19 @@ export const readActiveProductIdsMatchingSafetyAlertMetadata = async (
 		.eq("is_active", true)
 		.limit(SAFETY_ALERT_SEARCH_LIMIT);
 	const searchExpressions = terms.flatMap((term) => [
-			`recalling_organization.ilike.%${term}%`,
-			`product_description.ilike.%${term}%`,
-			`reason.ilike.%${term}%`,
+		`recalling_organization.ilike.%${term}%`,
+		`product_description.ilike.%${term}%`,
+		`reason.ilike.%${term}%`,
 	]);
 	if (matchMode === "all") {
 		for (const term of terms) {
-			alertRequest = alertRequest.or([
-				`recalling_organization.ilike.%${term}%`,
-				`product_description.ilike.%${term}%`,
-				`reason.ilike.%${term}%`,
-			].join(","));
+			alertRequest = alertRequest.or(
+				[
+					`recalling_organization.ilike.%${term}%`,
+					`product_description.ilike.%${term}%`,
+					`reason.ilike.%${term}%`,
+				].join(","),
+			);
 		}
 	} else {
 		alertRequest = alertRequest.or(searchExpressions.join(","));
@@ -117,7 +315,9 @@ export const readActiveProductSafetyAlertsByProduct = async (
 
 	const { data: matchData, error: matchError } = await supabase
 		.from("official_food_safety_alert_matches")
-		.select("id, alert_id, shared_product_id, match_type, requires_package_check, detected_at")
+		.select(
+			"id, alert_id, shared_product_id, match_type, requires_package_check, detected_at",
+		)
 		.in("shared_product_id", uniqueProductIds)
 		.in("status", ["active", "confirmed"]);
 	if (isCatalogSafetyMonitoringSchemaUnavailable(matchError)) {
@@ -130,54 +330,34 @@ export const readActiveProductSafetyAlertsByProduct = async (
 	const alertIds = [...new Set(matches.map((match) => match.alert_id))];
 	const { data: alertData, error: alertError } = await supabase
 		.from("official_food_safety_alerts")
-		.select("id, provider_key, alert_type, classification, status, product_description, reason, recalling_organization, source_url, report_date, recall_initiated_at")
+		.select(
+			"id, provider_key, alert_type, classification, status, product_description, reason, recalling_organization, source_url, report_date, recall_initiated_at",
+		)
 		.in("id", alertIds)
 		.eq("is_active", true);
 	if (alertError) throw alertError;
 	const alerts = (alertData ?? []) as SafetyAlertRow[];
-	const sourceKeys = [...new Set(alerts.map((alert) => alert.provider_key))];
-	const { data: sourceData, error: sourceError } = await supabase
-		.from("product_data_sources")
-		.select("key, display_name, attribution_text")
-		.in("key", sourceKeys);
-	if (sourceError) throw sourceError;
-
 	const alertsById = new Map(alerts.map((alert) => [alert.id, alert]));
-	const sourcesByKey = new Map(
-		((sourceData ?? []) as SafetyAlertSourceRow[]).map((source) => [source.key, source]),
-	);
+	const sourcesByKey = await readSafetyAlertSources(alerts, supabase);
 	const alertsByProduct = new Map<string, FoodSafetyAlert[]>();
 	for (const match of matches) {
 		const alert = alertsById.get(match.alert_id);
 		if (!alert) continue;
 		const source = sourcesByKey.get(alert.provider_key);
 		const productAlerts = alertsByProduct.get(match.shared_product_id) ?? [];
-		productAlerts.push({
-			id: alert.id,
-			providerKey: alert.provider_key,
-			sourceName: source?.display_name ?? alert.provider_key,
-			sourceAttribution: source?.attribution_text ?? source?.display_name ?? alert.provider_key,
-			alertType: alert.alert_type,
-			classification: alert.classification ?? undefined,
-			status: alert.status,
-			productDescription: alert.product_description,
-			reason: alert.reason ?? undefined,
-			recallingOrganization: alert.recalling_organization ?? undefined,
-			sourceUrl: alert.source_url,
-			reportDate: alert.report_date ?? undefined,
-			recallInitiatedAt: alert.recall_initiated_at ?? undefined,
-			matchType: match.match_type,
-			requiresPackageCheck: match.requires_package_check,
-			detectedAt: match.detected_at,
-		});
+		productAlerts.push(
+			toFoodSafetyAlert({
+				alert,
+				source,
+				matchType: match.match_type,
+				requiresPackageCheck: match.requires_package_check,
+				detectedAt: match.detected_at,
+			}),
+		);
 		alertsByProduct.set(match.shared_product_id, productAlerts);
 	}
 	for (const productAlerts of alertsByProduct.values()) {
-		productAlerts.sort((left, right) =>
-			getClassificationPriority(left.classification) -
-				getClassificationPriority(right.classification) ||
-			right.detectedAt.localeCompare(left.detectedAt)
-		);
+		sortFoodSafetyAlerts(productAlerts);
 	}
 	return alertsByProduct;
 };

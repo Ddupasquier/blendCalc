@@ -1,5 +1,6 @@
 import { lookupBarcodeProductDraft } from "$lib/server/products/barcodeProduct.server";
 import { persistFoodImageAsset } from "$lib/server/products/foodImages.server";
+import { readActiveProductSafetyAlertsByBarcode } from "$lib/server/products/productSafetyAlerts.server";
 import {
 	requireAppValue,
 	throwAppError,
@@ -20,12 +21,21 @@ export const GET: RequestHandler = async ({ locals, params }) => {
 		"INVALID_BARCODE",
 	);
 
-	const draft = await lookupBarcodeProductDraft(
-		getSupabaseAdminClient(),
-		barcode,
-	);
+	const adminClient = getSupabaseAdminClient();
+	const [draft, safetyCheck] = await Promise.all([
+		lookupBarcodeProductDraft(adminClient, barcode),
+		readActiveProductSafetyAlertsByBarcode(barcode, adminClient).catch(
+			(error) => {
+				console.warn(
+					"Official food safety notices could not be checked during barcode lookup.",
+					error instanceof Error ? error.message : error,
+				);
+				return { status: "unavailable" as const, alerts: [] };
+			},
+		),
+	]);
 	if (!draft) {
-		return json({ status: "not-found", barcode });
+		return json({ status: "not-found", barcode, safetyCheck });
 	}
 	await completeServerBackgroundTask(
 		persistFoodImageAsset({
@@ -45,5 +55,6 @@ export const GET: RequestHandler = async ({ locals, params }) => {
 	return json({
 		status: "found",
 		draft,
+		safetyCheck,
 	});
 };

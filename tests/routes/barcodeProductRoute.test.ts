@@ -4,6 +4,7 @@ const mocks = vi.hoisted(() => ({
 	adminClient: { source: "trusted-server" },
 	getSupabaseAdminClient: vi.fn(),
 	lookupBarcodeProductDraft: vi.fn(),
+	readActiveProductSafetyAlertsByBarcode: vi.fn(),
 	persistFoodImageAsset: vi.fn(),
 	completeServerBackgroundTask: vi.fn(),
 }));
@@ -14,6 +15,11 @@ vi.mock("$lib/supabase/admin.server", () => ({
 
 vi.mock("$lib/server/products/barcodeProduct.server", () => ({
 	lookupBarcodeProductDraft: mocks.lookupBarcodeProductDraft,
+}));
+
+vi.mock("$lib/server/products/productSafetyAlerts.server", () => ({
+	readActiveProductSafetyAlertsByBarcode:
+		mocks.readActiveProductSafetyAlertsByBarcode,
 }));
 
 vi.mock("$lib/server/products/foodImages.server", () => ({
@@ -34,6 +40,10 @@ describe("barcode product route", () => {
 			async (task: Promise<unknown>) => await task,
 		);
 		mocks.persistFoodImageAsset.mockResolvedValue(undefined);
+		mocks.readActiveProductSafetyAlertsByBarcode.mockResolvedValue({
+			status: "checked",
+			alerts: [],
+		});
 	});
 
 	it("reads protected catalog data through the trusted server boundary", async () => {
@@ -58,6 +68,10 @@ describe("barcode product route", () => {
 		expect(mocks.lookupBarcodeProductDraft).toHaveBeenCalledWith(
 			mocks.adminClient,
 			"00021130493609",
+		);
+		expect(mocks.readActiveProductSafetyAlertsByBarcode).toHaveBeenCalledWith(
+			"00021130493609",
+			mocks.adminClient,
 		);
 		expect(mocks.lookupBarcodeProductDraft).not.toHaveBeenCalledWith(
 			locals.supabase,
@@ -126,6 +140,7 @@ describe("barcode product route", () => {
 			await expect(response.json()).resolves.toEqual({
 				status: "not-found",
 				barcode: canonicalBarcode,
+				safetyCheck: { status: "checked", alerts: [] },
 			});
 			expect(mocks.lookupBarcodeProductDraft).toHaveBeenCalledWith(
 				mocks.adminClient,
@@ -134,4 +149,50 @@ describe("barcode product route", () => {
 			expect(mocks.persistFoodImageAsset).not.toHaveBeenCalled();
 		},
 	);
+
+	it("returns an exact official recall even when no product source has the barcode", async () => {
+		mocks.lookupBarcodeProductDraft.mockResolvedValue(null);
+		mocks.readActiveProductSafetyAlertsByBarcode.mockResolvedValue({
+			status: "checked",
+			alerts: [
+				{
+					id: "recall-1",
+					providerKey: "fda-recalls",
+					sourceName: "FDA Recalls",
+					sourceAttribution: "U.S. Food and Drug Administration",
+					alertType: "recall",
+					status: "ongoing",
+					productDescription: "Everything Sprouts Alfalfa Sprouts",
+					reason: "Potential Salmonella and E. coli contamination.",
+					sourceUrl: "https://www.fda.gov/example-recall",
+					matchType: "exact_gtin",
+					requiresPackageCheck: true,
+					detectedAt: "2026-08-25T00:00:00.000Z",
+				},
+			],
+		});
+
+		const response = await GET({
+			locals: {
+				getVerifiedUser: vi.fn().mockResolvedValue({ id: "user-id" }),
+			},
+			params: { barcode: "860014523120" },
+		} as never);
+
+		expect(response.status).toBe(200);
+		await expect(response.json()).resolves.toMatchObject({
+			status: "not-found",
+			barcode: "00860014523120",
+			safetyCheck: {
+				status: "checked",
+				alerts: [
+					{
+						productDescription: "Everything Sprouts Alfalfa Sprouts",
+						matchType: "exact_gtin",
+					},
+				],
+			},
+		});
+		expect(mocks.persistFoodImageAsset).not.toHaveBeenCalled();
+	});
 });
