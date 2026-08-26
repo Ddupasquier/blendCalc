@@ -21,6 +21,7 @@ const MAX_OPEN_FDA_SKIP = 25_000;
 const FDA_ANNOUNCEMENT_INITIAL_LOOKBACK_DAYS = 90;
 const FDA_ANNOUNCEMENT_REFRESH_LOOKBACK_DAYS = 14;
 const FDA_ANNOUNCEMENT_BATCH_SIZE = 10;
+const FDA_ANNOUNCEMENT_PARSER_VERSION = 2;
 const FSIS_INITIAL_LOOKBACK_DAYS = 90;
 const FSIS_REFRESH_LOOKBACK_DAYS = 14;
 
@@ -126,6 +127,118 @@ const normalizeGtin = (value: string) => {
 	return isValidGtin(digits) ? digits.padStart(14, "0") : null;
 };
 
+type FdaTableIdentifierColumn = "upc" | "gtin" | "lot_code" | "use_by_date";
+
+const normalizeTableHeader = (value: string) =>
+	value
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, " ")
+		.replace(/\s+/g, " ")
+		.trim();
+
+const getFdaTableIdentifierColumn = (
+	header: string,
+): FdaTableIdentifierColumn | null => {
+	const normalizedHeader = normalizeTableHeader(header);
+	if (/\bupc\b|\bbar ?code\b/.test(normalizedHeader)) return "upc";
+	if (/\bgtin\b|\bean\b/.test(normalizedHeader)) return "gtin";
+	if (/\blot(?: code| number| no)?\b/.test(normalizedHeader)) {
+		return "lot_code";
+	}
+	if (
+		/\b(?:best(?: if)?(?: used)? by|use by|expiration|expiry)(?: date)?\b/.test(
+			normalizedHeader,
+		)
+	) {
+		return "use_by_date";
+	}
+	return null;
+};
+
+const splitStructuredTableCellValues = (cellHtml: string) => {
+	const text = htmlToText(
+		cellHtml
+			.replace(/<br\b[^>]*>/gi, "; ")
+			.replace(/<\/p>\s*<p\b[^>]*>/gi, "; "),
+	);
+	return uniqueStrings(
+		(text ?? "").split(/\s*;\s*/).map((value) => value.trim()),
+	);
+};
+
+const collectFdaTableIdentifiers = (detailHtml: string) => {
+	const identifiers: OfficialSafetyAlertIdentifier[] = [];
+	for (const tableMatch of detailHtml.matchAll(
+		/<table\b[^>]*>([\s\S]*?)<\/table>/gi,
+	)) {
+		let identifierColumns: Array<FdaTableIdentifierColumn | null> | null = null;
+		for (const rowMatch of tableMatch[1].matchAll(
+			/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi,
+		)) {
+			const cells = [
+				...rowMatch[1].matchAll(/<(th|td)\b[^>]*>([\s\S]*?)<\/\1>/gi),
+			].map((cellMatch) => ({
+				isHeader: cellMatch[1].toLowerCase() === "th",
+				html: cellMatch[2],
+				text: htmlToText(cellMatch[2]) ?? "",
+			}));
+			if (cells.length === 0) continue;
+
+			const possibleColumns = cells.map(({ text }) =>
+				getFdaTableIdentifierColumn(text),
+			);
+			if (
+				cells.some(({ isHeader }) => isHeader) &&
+				possibleColumns.some((column) => column !== null)
+			) {
+				identifierColumns = possibleColumns;
+				continue;
+			}
+			if (!identifierColumns) continue;
+
+			for (const [columnIndex, identifierType] of identifierColumns.entries()) {
+				if (!identifierType || !cells[columnIndex]) continue;
+				const values = splitStructuredTableCellValues(cells[columnIndex].html);
+				if (identifierType === "upc" || identifierType === "gtin") {
+					for (const value of values) {
+						for (const candidate of value.matchAll(/\d{8,14}/g)) {
+							const normalizedValue = normalizeGtin(candidate[0]);
+							if (!normalizedValue) continue;
+							identifiers.push({
+								type: identifierType,
+								normalizedValue,
+								sourceText: candidate[0],
+							});
+						}
+					}
+					continue;
+				}
+
+				for (const value of values) {
+					const normalizedValue = value.toUpperCase();
+					if (!normalizedValue) continue;
+					identifiers.push({
+						type: identifierType,
+						normalizedValue,
+						sourceText: value,
+					});
+				}
+			}
+		}
+	}
+	return identifiers;
+};
+
+const collectFdaAnnouncementIdentifiers = (detailHtml: string) =>
+	deduplicateIdentifiers([
+		...collectFdaTableIdentifiers(detailHtml),
+		...collectLabeledIdentifiers(
+			htmlToText(
+				detailHtml.replace(/<table\b[^>]*>[\s\S]*?<\/table>/gi, " "),
+			) ?? "",
+		),
+	]);
+
 const collectLabeledIdentifiers = (text: string) => {
 	const identifiers: OfficialSafetyAlertIdentifier[] = [];
 	const genericIdentifierLabels = new Set([
@@ -225,9 +338,7 @@ export const normalizeFdaRecallAnnouncement = (
 	const brandText = htmlToText(record.field_brand_name);
 	const recallingOrganization = htmlToText(record.field_company_name);
 	const terminatedText = htmlToText(record.field_terminated_recall);
-	const identifiers = deduplicateIdentifiers(
-		collectLabeledIdentifiers(htmlToText(detailHtml) ?? ""),
-	);
+	const identifiers = collectFdaAnnouncementIdentifiers(detailHtml);
 	const packageIdentifiers = identifiers.filter(
 		(identifier) => identifier.type !== "gtin" && identifier.type !== "upc",
 	);
@@ -688,8 +799,14 @@ const fetchFdaRecallAnnouncementPage = async (
 	pageSize: number,
 	proxy: OfficialFoodSafetySourceProxyConfiguration,
 ): Promise<SafetyAlertPage> => {
-	const offset = Math.max(0, Number(cursor.fdaAnnouncementOffset) || 0);
-	const previousSweepComplete = cursor.fdaAnnouncementSweepComplete === true;
+	const parserReplayRequired =
+		Number(cursor.fdaAnnouncementParserVersion) !==
+		FDA_ANNOUNCEMENT_PARSER_VERSION;
+	const offset = parserReplayRequired
+		? 0
+		: Math.max(0, Number(cursor.fdaAnnouncementOffset) || 0);
+	const previousSweepComplete =
+		!parserReplayRequired && cursor.fdaAnnouncementSweepComplete === true;
 	const hasAnnouncementCursor =
 		previousSweepComplete ||
 		asString(cursor.fdaAnnouncementCutoffDate) !== null ||
@@ -726,6 +843,7 @@ const fetchFdaRecallAnnouncementPage = async (
 			nextCursor: {
 				fdaAnnouncementOffset: 0,
 				fdaAnnouncementCutoffDate: cutoffDate,
+				fdaAnnouncementParserVersion: FDA_ANNOUNCEMENT_PARSER_VERSION,
 				fdaAnnouncementEtag: dataset.etag,
 				fdaAnnouncementLastModified: dataset.lastModified,
 				fdaAnnouncementSweepComplete: true,
@@ -797,6 +915,7 @@ const fetchFdaRecallAnnouncementPage = async (
 							FDA_ANNOUNCEMENT_REFRESH_LOOKBACK_DAYS,
 						),
 					),
+			fdaAnnouncementParserVersion: FDA_ANNOUNCEMENT_PARSER_VERSION,
 			fdaAnnouncementEtag: dataset.etag,
 			fdaAnnouncementLastModified: dataset.lastModified,
 			fdaAnnouncementSweepComplete: !hasMore,
@@ -877,6 +996,7 @@ export const fetchOpenFdaAlertPage = async (
 			...(announcementPage?.nextCursor ?? {
 				fdaAnnouncementOffset: cursor.fdaAnnouncementOffset,
 				fdaAnnouncementCutoffDate: cursor.fdaAnnouncementCutoffDate,
+				fdaAnnouncementParserVersion: cursor.fdaAnnouncementParserVersion,
 				fdaAnnouncementEtag: cursor.fdaAnnouncementEtag,
 				fdaAnnouncementLastModified: cursor.fdaAnnouncementLastModified,
 				fdaAnnouncementSweepComplete: cursor.fdaAnnouncementSweepComplete,

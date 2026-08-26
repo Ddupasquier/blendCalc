@@ -1,6 +1,6 @@
 begin;
 
-select plan(35);
+select plan(36);
 
 select has_table('public', 'catalog_monitor_settings', 'catalog monitor settings exist');
 select has_table('public', 'catalog_monitor_runs', 'catalog monitor run history exists');
@@ -32,6 +32,23 @@ select ok(
 		where key = 'usda-fsis-recalls' and enabled
 	),
 	'official US food safety sources are registered'
+);
+select is(
+	(
+		select count(*)
+		from public.official_food_safety_alert_identifiers identifier
+		join public.official_food_safety_alerts alert on alert.id = identifier.alert_id
+		where identifier.identifier_type in ('upc', 'gtin')
+			and identifier.normalized_value in (
+				'00681131276351',
+				'00000000818377',
+				'00816929000089',
+				'00194346474004'
+			)
+			and alert.is_active
+	),
+	4::bigint,
+	'current FDA table-based recall fixtures retain every exact active barcode'
 );
 select ok(
 	not exists (

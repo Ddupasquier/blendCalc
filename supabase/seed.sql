@@ -1798,6 +1798,130 @@ perform public.record_official_food_safety_alert(
 	'2026-08-18T00:00:00Z'
 );
 
+perform public.record_official_food_safety_alert(
+	'open-fda-food-enforcement',
+	jsonb_build_object(
+		'externalAlertId', 'announcement:taylor-fresh-foods-recalls-products-made-jalapeno-peppers-because-possible-health-risk',
+		'recallNumber', null,
+		'eventId', null,
+		'alertType', 'recall',
+		'classification', null,
+		'status', 'active',
+		'productDescription', 'Products made with jalapeño peppers',
+		'reason', 'Potential contamination',
+		'recallingOrganization', 'Taylor Fresh Foods',
+		'distributionPattern', 'Multiple United States markets',
+		'packageDescription', 'Affected prepared foods listed in the official FDA notice',
+		'codeInformation', 'Package-specific best-if-used-by dates are listed in the official FDA notice',
+		'sourceUrl', 'https://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/taylor-fresh-foods-recalls-products-made-jalapeno-peppers-because-possible-health-risk',
+		'reportDate', '2026-08-13',
+		'recallInitiatedAt', '2026-08-13',
+		'terminatedAt', null,
+		'sourceUpdatedAt', '2026-08-13T00:00:00.000Z',
+		'isActive', true,
+		'brandNames', jsonb_build_array('Freshness Guaranteed', 'Trader Joe''s', 'Taylor Fresh Foods'),
+		'identifiers', jsonb_build_array()
+	),
+	jsonb_build_object(
+		'fixture', 'QA-088',
+		'officialNotice', 'Taylor Fresh Foods prepared-food recall'
+	),
+	jsonb_build_object(
+		'fixture', 'QA-088',
+		'identityEvidence', 'Exact UPC and affected date ranges published in the current FDA announcement table'
+	),
+	repeat('f', 64),
+	jsonb_build_array(
+		jsonb_build_object('type', 'upc', 'normalizedValue', '00681131276351', 'sourceText', 'UPC 681131276351'),
+		jsonb_build_object('type', 'upc', 'normalizedValue', '00000000818377', 'sourceText', 'UPC 000000818377')
+	),
+	jsonb_build_array(),
+	'2026-08-13T00:00:00Z'
+);
+
+perform public.record_official_food_safety_alert(
+	'open-fda-food-enforcement',
+	jsonb_build_object(
+		'externalAlertId', 'announcement:frankies-organic-issues-allergy-alert-undeclared-milk-frankies-organic-plant-based-vegan-cheddar',
+		'recallNumber', null,
+		'eventId', null,
+		'alertType', 'recall',
+		'classification', null,
+		'status', 'active',
+		'productDescription', 'Frankie''s Organic Plant Based Vegan Cheddar Puffs',
+		'reason', 'Undeclared milk',
+		'recallingOrganization', 'Frankie''s Organic',
+		'distributionPattern', 'Washington, Florida, and South Carolina',
+		'packageDescription', '4 oz bag',
+		'codeInformation', 'Lot 05 16 2027; best if used by May 16, 2027',
+		'sourceUrl', 'https://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/frankies-organic-issues-allergy-alert-undeclared-milk-frankies-organic-plant-based-vegan-cheddar',
+		'reportDate', '2026-08-14',
+		'recallInitiatedAt', '2026-08-14',
+		'terminatedAt', null,
+		'sourceUpdatedAt', '2026-08-14T00:00:00.000Z',
+		'isActive', true,
+		'brandNames', jsonb_build_array('Frankie''s Organic'),
+		'identifiers', jsonb_build_array()
+	),
+	jsonb_build_object(
+		'fixture', 'QA-088',
+		'officialNotice', 'Frankie''s Organic undeclared-milk recall'
+	),
+	jsonb_build_object(
+		'fixture', 'QA-088',
+		'identityEvidence', 'Exact UPC, lot code, and best-if-used-by date published in the current FDA announcement table'
+	),
+	repeat('1', 64),
+	jsonb_build_array(
+		jsonb_build_object('type', 'upc', 'normalizedValue', '00816929000089', 'sourceText', 'UPC 816929000089'),
+		jsonb_build_object('type', 'lot_code', 'normalizedValue', '05 16 2027', 'sourceText', '05 16 2027'),
+		jsonb_build_object('type', 'use_by_date', 'normalizedValue', 'MAY 16, 2027', 'sourceText', 'May 16, 2027')
+	),
+	jsonb_build_array(),
+	'2026-08-14T00:00:00Z'
+);
+
+perform public.record_official_food_safety_alert(
+	'open-fda-food-enforcement',
+	jsonb_build_object(
+		'externalAlertId', 'announcement:kettle-cuisine-recalls-marketside-tomato-bisque-soup-kit-sold-exclusively-walmart-stores-because',
+		'recallNumber', null,
+		'eventId', null,
+		'alertType', 'recall',
+		'classification', null,
+		'status', 'active',
+		'productDescription', 'Marketside Tomato Bisque Soup Kit',
+		'reason', 'Possible contamination',
+		'recallingOrganization', 'Kettle Cuisine',
+		'distributionPattern', 'Walmart stores',
+		'packageDescription', '14 oz package',
+		'codeInformation', 'Best-by / use-by date 8/22/26',
+		'sourceUrl', 'https://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/kettle-cuisine-recalls-marketside-tomato-bisque-soup-kit-sold-exclusively-walmart-stores-because',
+		'reportDate', '2026-08-14',
+		'recallInitiatedAt', '2026-08-14',
+		'terminatedAt', null,
+		'sourceUpdatedAt', '2026-08-14T00:00:00.000Z',
+		'isActive', true,
+		'brandNames', jsonb_build_array('Marketside', 'Kettle Cuisine'),
+		'identifiers', jsonb_build_array()
+	),
+	jsonb_build_object(
+		'fixture', 'QA-088',
+		'officialNotice', 'Marketside Tomato Bisque Soup Kit recall'
+	),
+	jsonb_build_object(
+		'fixture', 'QA-088',
+		'identityEvidence', 'Exact UPC and use-by date published in the current FDA announcement table'
+	),
+	repeat('2', 64),
+	jsonb_build_array(
+		jsonb_build_object('type', 'upc', 'normalizedValue', '00194346474004', 'sourceText', 'UPC 194346474004'),
+		jsonb_build_object('type', 'use_by_date', 'normalizedValue', '8/22/26', 'sourceText', '8/22/26')
+	),
+	jsonb_build_array(),
+	'2026-08-14T00:00:00Z'
+);
+
 insert into public.shared_product_revisions (
 	id,
 	shared_product_id,
