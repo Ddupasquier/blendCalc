@@ -5,6 +5,8 @@ const readRepositoryFile = (path: string) => readFileSync(path, "utf8");
 
 const namespaceMigrationPath =
 	"supabase/migrations/20260825200000_canonical_blendcalc_api_namespace.sql";
+const namespaceCleanupMigrationPath =
+	"supabase/migrations/20260825210000_remove_legacy_blendcalc_api_namespace_aliases.sql";
 
 describe("canonical blendCalcAPI namespace", () => {
 	it("owns application contracts and services under blendCalcAPI folders", () => {
@@ -35,7 +37,7 @@ describe("canonical blendCalcAPI namespace", () => {
 		}
 	});
 
-	it("makes canonical PostgreSQL objects the owners and retains bounded rollout aliases", () => {
+	it("makes canonical PostgreSQL objects the owners during the rollout", () => {
 		const migration = readRepositoryFile(namespaceMigrationPath);
 
 		expect(migration).toContain("rename to blendcalc_api_publication_concerns");
@@ -56,6 +58,27 @@ describe("canonical blendCalcAPI namespace", () => {
 		expect(migration).toContain("Temporary rollout compatibility wrapper");
 	});
 
+	it("removes every bounded legacy alias after the application switch", () => {
+		const cleanupMigration = readRepositoryFile(namespaceCleanupMigrationPath);
+
+		for (const legacyObject of [
+			"public.api_publication_concerns",
+			"public.api_publication_holds",
+			"public.get_blendcalc_product_v1(text)",
+			"public.search_blendcalc_products_v1(",
+			"public.get_blendcalc_product_revision_history_v1(",
+			"public.get_catalog_product_readiness_passport(uuid)",
+		]) {
+			expect(cleanupMigration).toContain(legacyObject);
+		}
+
+		expect(cleanupMigration).toContain(
+			"'blendcalc-api-v1-packaged-product-v1'",
+		);
+		expect(cleanupMigration).toContain("'api-v1-packaged-product-v1'");
+		expect(cleanupMigration).toContain("'api-v1-packaged-core-v1'");
+	});
+
 	it("keeps generated database contracts synchronized with canonical names", () => {
 		const databaseTypes = readRepositoryFile("src/lib/types/database.types.ts");
 
@@ -68,6 +91,17 @@ describe("canonical blendCalcAPI namespace", () => {
 			"get_blendcalc_api_catalog_product_readiness_passport",
 		]) {
 			expect(databaseTypes).toContain(objectName);
+		}
+
+		for (const legacyObjectName of [
+			"api_publication_concerns",
+			"api_publication_holds",
+			"get_blendcalc_product_v1",
+			"search_blendcalc_products_v1",
+			"get_blendcalc_product_revision_history_v1",
+			"get_catalog_product_readiness_passport",
+		]) {
+			expect(databaseTypes).not.toContain(`\n      ${legacyObjectName}: {`);
 		}
 	});
 });

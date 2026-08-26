@@ -656,17 +656,18 @@ providers, brands, rights holders, or other reporters. Each row targets exactly 
 bounded HTTPS evidence references, urgency, status, and reviewed resolution. A partial
 unique fingerprint makes repeated unresolved submissions idempotent.
 
-`blendcalc_api_publication_holds` stores reversible blendCalcAPI holds for one exact product,
-image, dataset release, or source. Partial unique indexes permit only one active hold
-per subject. Each row records a reason code, safe public message, private note,
-optional concern, placing actor/time, and release actor/time/note. Releasing updates
-rather than deletes the row.
+`blendcalc_api_publication_holds` stores reversible blendCalcAPI holds for one exact
+product, image, dataset release, or source. Partial unique indexes permit only one
+active hold per subject. Each row records a reason code, safe public message, private
+note, optional concern, placing actor/time, and release actor/time/note. Releasing
+updates rather than deletes the row.
 
 Product holds are mirrored into a high-severity `shared_product_conflicts` row by
-`sync_blendcalc_api_product_publication_hold_conflict`, so the established readiness gate withholds
-the product. `blendcalc_api_v1_source_has_active_hold` makes source/dataset attribution
-fail closed. The trusted API image reader filters active image holds independently.
-Both tables force RLS and grant table access only to `service_role`.
+`sync_blendcalc_api_product_publication_hold_conflict`, so the established readiness
+gate withholds the product. `blendcalc_api_v1_source_has_active_hold` makes
+source/dataset attribution fail closed. The trusted blendCalcAPI image reader filters
+active image holds independently. Both tables force RLS and grant table access only to
+`service_role`.
 
 `blendcalc_api_catalog_product_readiness` is the canonical service-role-only projection
 of shared-catalog readiness for blendCalcAPI consumers. It exposes explicitly named
@@ -674,10 +675,10 @@ of shared-catalog readiness for blendCalcAPI consumers. It exposes explicitly na
 service-only `get_blendcalc_api_catalog_product_readiness_passport` RPC returns the same
 canonical status naming for privileged application reads.
 
-The previous publication table and product-reader names remain temporarily available as
-service-role-only rollout aliases so the deployed application stays functional during
-the expand-and-switch release. They are not canonical owners and must be removed in the
-contract migration after all deployed callers use the `blendcalc_api_...` namespace.
+The expand migration temporarily retained the previous publication table and
+product-reader names as service-role-only rollout aliases. The contract migration
+removes those aliases after all application callers switch to the canonical
+`blendcalc_api_...` namespace.
 
 | Table                                 | Primary Key             | Owner Scope                     | Purpose                                                                                                                    | Key Relationships                                                                     |
 | ------------------------------------- | ----------------------- | ------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
@@ -1893,7 +1894,6 @@ category, or serving fields.
 | `get_catalog_data_operations_health`                   | Returns bounded admin/developer catalog, source, dataset, policy, mapping, revision, and publication-readiness summaries after exact AAL2 data-operations authorization                                |
 | `get_catalog_data_operations_monitor_summary`          | Returns bounded admin/developer monitor configuration, queue counts, and recent run state after exact AAL2 data-operations authorization                                                               |
 | `get_catalog_review_work_summary`                      | Returns bounded material conflicts, provider changes, and possible recall matches after exact AAL2 catalog-review authorization                                                                        |
-| `get_catalog_product_readiness_passport`               | Temporary rollout wrapper for the canonical blendCalcAPI readiness passport; removed by the later contract migration                                                                                   |
 | `get_moderator_data_health`                            | Temporary compatibility wrapper for the previous combined data-health interface                                                                                                                        |
 | `get_pending_profile_image_review_count`               | Service-role-only count of distinct exact profile images with one or more pending reports                                                                                                              |
 | `claim_catalog_revalidation_jobs`                      | Service-only bounded claim of due product/provider jobs using expiring claim tokens                                                                                                                    |
