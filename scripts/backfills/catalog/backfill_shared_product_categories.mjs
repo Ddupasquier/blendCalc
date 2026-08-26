@@ -4,8 +4,8 @@
  * update matching products, submissions, and revisions. Name-only provider matches are
  * deliberately ignored because they cannot establish product identity. The live command
  * also removes invalid category links, so review the read-only preview first.
- * Preview: `npm run backfill:shared-product-categories -- --dry-run`
- * Execute: `npm run backfill:shared-product-categories`
+ * Preview: `node scripts/backfills/catalog/backfill_shared_product_categories.mjs --dry-run`
+ * Execute: `node scripts/backfills/catalog/backfill_shared_product_categories.mjs`
  */
 
 import { config } from "dotenv";

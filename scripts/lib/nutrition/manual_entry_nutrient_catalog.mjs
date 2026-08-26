@@ -2,7 +2,7 @@
  * Purpose: Resolve observed nutrient IDs against the DB-owned manual-entry group and
  * field catalog while routing unknown nutrients into the review queue. This is a shared
  * module and never writes data by itself.
- * Do not run directly; use `npm run seed:manual-entry-nutrients`.
+ * Do not run directly; use `node scripts/seeds/nutrition/seed_manual_entry_nutrients.mjs`.
  */
 
 const toNutrientId = (value) => {
@@ -16,7 +16,9 @@ export const createManualEntryNutrientCatalog = ({ groups, fields }) => {
 		(group) => group.group_role === "unclassified",
 	);
 	if (!unclassifiedGroup) {
-		throw new Error("The DB manual-entry catalog has no unclassified nutrient group.");
+		throw new Error(
+			"The DB manual-entry catalog has no unclassified nutrient group.",
+		);
 	}
 
 	const fieldsByNutrientId = new Map(

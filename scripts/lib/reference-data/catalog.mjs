@@ -2,7 +2,7 @@
  * Purpose: Define the maintained source requests, seed queries, serving units, aliases,
  * and standards codes consumed by product-reference discovery. This module contains seed
  * inputs only and does not contact APIs or write the database by itself.
- * Do not run directly; use `npm run seed:product-reference-data`.
+ * Do not run directly; use `node scripts/seeds/catalog/seed_product_reference_data.mjs`.
  */
 
 export const PRODUCT_REFERENCE_QUERIES = [
@@ -49,7 +49,8 @@ export const PRODUCT_DATA_SOURCE_REQUESTS = [
 		homepageUrl: "https://ucum.org/",
 		apiBaseUrl: null,
 		termsUrl: "https://ucum.org/license",
-		attributionText: "Copyright 1999-2024 Regenstrief Institute, Inc. All rights reserved. Licensed under the UCUM License, Version 1.1. Provided AS IS without warranties or conditions of any kind. https://ucum.org/license",
+		attributionText:
+			"Copyright 1999-2024 Regenstrief Institute, Inc. All rights reserved. Licensed under the UCUM License, Version 1.1. Provided AS IS without warranties or conditions of any kind. https://ucum.org/license",
 		observeHomepageTitle: false,
 	},
 	{
@@ -134,7 +135,14 @@ export const SERVING_MEASURE_REQUESTS = [
 		conversionToBase: 1,
 		displayOrder: 60,
 		isDefault: true,
-		aliases: ["ml", "mlt", "milliliter", "milliliters", "millilitre", "millilitres"],
+		aliases: [
+			"ml",
+			"mlt",
+			"milliliter",
+			"milliliters",
+			"millilitre",
+			"millilitres",
+		],
 	},
 	{
 		key: "tsp",
@@ -182,7 +190,16 @@ export const SERVING_MEASURE_REQUESTS = [
 		conversionToBase: 29.57353,
 		displayOrder: 100,
 		isDefault: false,
-		aliases: ["floz", "flounce", "flounces", "fluidounce", "fluidounces", "fl oz", "fluid ounce", "fluid ounces"],
+		aliases: [
+			"floz",
+			"flounce",
+			"flounces",
+			"fluidounce",
+			"fluidounces",
+			"fl oz",
+			"fluid ounce",
+			"fluid ounces",
+		],
 	},
 ];
 

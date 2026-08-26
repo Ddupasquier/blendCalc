@@ -3,7 +3,7 @@
  * with reviewed UCUM reference data to upsert source identities, nutrient mappings,
  * unit conversions, serving units, and observed aliases. Writes are idempotent and
  * provenance-backed; there is no dry-run mode.
- * Run: `npm run seed:product-reference-data -- --sample-size=200`
+ * Run: `node scripts/seeds/catalog/seed_product_reference_data.mjs --sample-size=200`
  */
 
 import { config } from "dotenv";

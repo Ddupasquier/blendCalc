@@ -506,7 +506,7 @@ Notes:
   running in the same server process; this prevents concurrent requests from creating
   duplicate outbound traffic.
 - Run `npm run report:source-quality` for runtime activity, or run
-  `npm run benchmark:source-quality -- --limit=10` followed by
+  `node scripts/audits/food-sources/benchmark_product_sources.mjs --limit=10` followed by
   `npm run report:source-quality -- --origin=benchmark` for a direct comparison.
 - Add `--reset-today` to the benchmark command when comparing request-count code
   changes; it deletes only the current UTC day's synthetic benchmark rows and never
@@ -597,7 +597,7 @@ Notes:
   enabled state, and conversion factors are database-owned.
 - Authenticated users can read all five reference tables. Only service-role scripts can
   write them.
-- Run `npm run seed:product-reference-data -- --sample-size=200` to sample USDA FoodData
+- Run `node scripts/seeds/catalog/seed_product_reference_data.mjs --sample-size=200` to sample USDA FoodData
   Central and Open Food Facts, then refresh mappings and serving observations against
   the reviewed local UCUM reference catalog. The workflow makes no NLM UCUM request.
 
@@ -1087,7 +1087,8 @@ Notes:
 
 - Open Food Facts package images are stored here with source, license, and attribution
   before UI cards render them.
-- Existing barcode-backed foods can be backfilled with `npm run backfill:food-images`,
+- Existing barcode-backed foods can be backfilled with
+  `node scripts/backfills/images/backfill_food_images.mjs`,
   which stores image metadata instead of repeatedly calling external APIs from the UI.
 - Users can read active rows, but only service-role/server code can write rows.
 - Indexed lookup paths cover active barcode images, shared-product images, generic
@@ -1546,15 +1547,16 @@ Notes:
 - Barcode/manual-entry autofill should use this table to pick the visible app category.
 - Raw API category values remain stored in `custom_food_category_observations` and on
   product payloads for proof and moderation.
-- Seeded by `scripts/seeds/catalog/seed_custom_food_categories.mjs`; use
-  `npm run seed:food-categories:deep` for a broader API sample.
-- Use `npm run seed:food-categories:rebuild` when observations already exist and only
-  mappings need to be refreshed.
+- Seeded by `scripts/seeds/catalog/seed_custom_food_categories.mjs`; add `--deep` for a
+  broader API sample.
+- Add `--rebuild-mappings-only` when observations already exist and only mappings need
+  to be refreshed.
 - Do not map category autofill by taking the first raw API category value.
 - `resolve_custom_food_category_option(text[])` performs reusable DB-side category
   resolution using enabled options and observed mappings.
-- `npm run backfill:shared-product-categories` checks USDA FoodData Central and Open
-  Food Facts, records category provenance, and repairs legacy catalog rows.
+- `node scripts/backfills/catalog/backfill_shared_product_categories.mjs` checks USDA
+  FoodData Central and Open Food Facts, records category provenance, and repairs legacy
+  catalog rows.
 
 ## Catalog Monitoring And Food Safety
 

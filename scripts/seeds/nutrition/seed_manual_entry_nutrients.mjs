@@ -3,8 +3,8 @@
  * nutrient definitions and DB-owned manual-entry policy, store idempotent observations,
  * and rebuild evidence summaries once after all batches. Optional source failures are
  * reported without discarding successful work.
- * Preview: `npm run seed:manual-entry-nutrients -- --dry-run --pages=1 --page-size=25`
- * Execute: `npm run seed:manual-entry-nutrients -- --pages=2 --page-size=50 --concurrency=3`
+ * Preview: `node scripts/seeds/nutrition/seed_manual_entry_nutrients.mjs --dry-run --pages=1 --page-size=25`
+ * Execute: `node scripts/seeds/nutrition/seed_manual_entry_nutrients.mjs --pages=2 --page-size=50 --concurrency=3`
  * Targeted queries may be appended as quoted positional arguments.
  */
 

@@ -2,9 +2,9 @@
  * Purpose: Discover category evidence from USDA and Open Food Facts, persist observations,
  * and rebuild canonical category options/mappings in Supabase. Live runs are repeatable;
  * `--rebuild-mappings-only` replaces mappings using already stored observations.
- * Preview: `npm run seed:food-categories -- --dry-run`
- * Execute/deep/rebuild: `npm run seed:food-categories`, `npm run seed:food-categories:deep`,
- * or `npm run seed:food-categories:rebuild`; append quoted terms for targeted queries.
+ * Preview: `node scripts/seeds/catalog/seed_custom_food_categories.mjs --dry-run`
+ * Execute: `node scripts/seeds/catalog/seed_custom_food_categories.mjs`; add `--deep`
+ * for broader discovery or `--rebuild-mappings-only` to reuse stored observations.
  */
 
 import { config } from "dotenv";
