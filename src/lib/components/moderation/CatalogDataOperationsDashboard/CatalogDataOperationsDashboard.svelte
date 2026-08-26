@@ -28,7 +28,7 @@
 			tone: "success" as const,
 		},
 		{
-			label: "API publication gaps",
+			label: "blendCalcAPI publication gaps",
 			value: dashboard.issues.publication.length,
 			tone: "neutral" as const,
 		},
@@ -350,7 +350,7 @@
 		</CollapsibleSection>
 
 		<CollapsibleSection
-			title="API publication gaps"
+			title="blendCalcAPI publication gaps"
 			badge={`${dashboard.issues.publication.length}`}
 			surface="panel"
 		>

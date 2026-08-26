@@ -1,25 +1,28 @@
-import { apiV1Error, apiV1Success } from "$lib/server/api/v1/http.server";
-import { hasApiV1CatalogReadAccess } from "$lib/server/api/v1/apiV1AccessPolicy.server";
-import { readApiV1ProductByBarcode } from "$lib/server/api/v1/catalogApi.server";
+import {
+	blendCalcAPIV1Error,
+	blendCalcAPIV1Success,
+} from "$lib/server/blendCalcAPI/v1/blendCalcAPIHttp.server";
+import { hasBlendCalcAPIV1CatalogReadAccess } from "$lib/server/blendCalcAPI/v1/blendCalcAPIAccessPolicy.server";
+import { readBlendCalcAPIV1ProductByBarcode } from "$lib/server/blendCalcAPI/v1/blendCalcAPICatalog.server";
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
 import { normalizeBarcode } from "$lib/utils/barcode/barcode";
 import type { RequestHandler } from "./$types";
 
 export const GET: RequestHandler = async ({ locals, params }) => {
-	if (!(await hasApiV1CatalogReadAccess(locals))) {
-		return apiV1Error("authentication_required");
+	if (!(await hasBlendCalcAPIV1CatalogReadAccess(locals))) {
+		return blendCalcAPIV1Error("authentication_required");
 	}
 	const barcode = normalizeBarcode(params.barcode);
-	if (!barcode) return apiV1Error("invalid_barcode");
+	if (!barcode) return blendCalcAPIV1Error("invalid_barcode");
 	try {
-		const product = await readApiV1ProductByBarcode(
+		const product = await readBlendCalcAPIV1ProductByBarcode(
 			getSupabaseAdminClient(),
 			barcode,
 		);
-		if (!product) return apiV1Error("product_not_found");
-		return apiV1Success(product);
+		if (!product) return blendCalcAPIV1Error("product_not_found");
+		return blendCalcAPIV1Success(product);
 	} catch (error) {
 		console.error("blendCalcAPI v1 product read failed.", error);
-		return apiV1Error("catalog_unavailable");
+		return blendCalcAPIV1Error("catalog_unavailable");
 	}
 };

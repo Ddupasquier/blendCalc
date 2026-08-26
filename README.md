@@ -181,8 +181,8 @@ the exact migration source already exists on remote `main`.
 | `npm run import:nutrition:cofid -- --dry-run`              | Validate the UK CoFID import without writing.                                                          |
 | `npm run audit:usda-branded-allergens`                     | Inspect USDA branded-food allergen field coverage.                                                     |
 | `npm run audit:off-allergens`                              | Inspect Open Food Facts allergen field coverage.                                                       |
-| `npm run audit:api-catalog`                                | Audit catalog publication readiness and field lineage.                                                 |
-| `npm run audit:api-catalog -- --json`                      | Reassess active products and print machine-repair, review, and unresolved readiness ownership as JSON. |
+| `npm run audit:blendCalcAPI-catalog`                       | Audit blendCalcAPI publication readiness and field lineage.                                            |
+| `npm run audit:blendCalcAPI-catalog -- --json`             | Reassess active products and print machine-repair, review, and unresolved readiness ownership as JSON. |
 | `npm run report:source-quality`                            | Report stored provider coverage, reliability, and request cost.                                        |
 | `npm run benchmark:source-quality -- --limit=10`           | Compare supported product sources over one controlled sample.                                          |
 | `npm run seed:food-preferences -- --dry-run`               | Preview food-safety evidence discovery.                                                                |
@@ -195,7 +195,7 @@ the exact migration source already exists on remote `main`.
 | `npm run backfill:food-images -- --dry-run --limit=25`     | Preview reusable licensed product-image discovery.                                                     |
 | `npm run generate:api-structures`                          | Regenerate documentation-only provider payload references.                                             |
 | `npm run moderate -- ...`                                  | Run privileged role or account operations.                                                             |
-| `npm run api:publication -- ...`                           | Review concerns and manage reversible API publication holds.                                           |
+| `npm run blendCalcAPI:publication -- ...`                  | Review concerns and manage reversible blendCalcAPI publication holds.                                  |
 | `npm run version:check`                                    | Verify Node, app, build, API, OpenAPI, test, and documentation versions.                               |
 | `npm run version:bump -- patch\|minor\|major`              | Update application version files without committing or tagging.                                        |
 
@@ -227,12 +227,12 @@ Start with the [Documentation Map](docs/README.md). It identifies the one mainta
 owner for each subject so rules, contracts, schema details, and QA instructions do not
 drift into duplicate copies.
 
-| Before changing...           | Read                                                                                 |
-| ---------------------------- | ------------------------------------------------------------------------------------ |
-| Anything                     | [Development Rules](docs/dev-rules/dev-rules.md)                                     |
-| A specific feature or system | The task-specific owner in the [Documentation Map](docs/README.md)                   |
-| API v1                       | [API Structures](docs/api-structures/README.md) and [Versioning](docs/versioning.md) |
+| Before changing...           | Read                                                                             |
+| ---------------------------- | -------------------------------------------------------------------------------- |
+| Anything                     | [Development Rules](docs/dev-rules/dev-rules.md)                                 |
+| A specific feature or system | The task-specific owner in the [Documentation Map](docs/README.md)               |
+| blendCalcAPI v1              | [blendCalcAPI](docs/blendCalcAPI/README.md) and [Versioning](docs/versioning.md) |
 
 The internal API overview and OpenAPI entry point are in
-[API Structures](docs/api-structures/README.md). Application and API releases are
+[blendCalcAPI](docs/blendCalcAPI/README.md). Application and API releases are
 versioned independently as documented in [Versioning](docs/versioning.md).

@@ -38,12 +38,14 @@ const appVersion = packageMetadata.version;
 const lockRootVersion = packageLock.packages?.[""]?.version;
 const svelteConfig = readText("svelte.config.js");
 const runtimeVersionSource = readText("src/lib/config/version.ts");
-const apiTypesSource = readText("src/lib/api/v1/types.ts");
-const apiHttpSource = readText("src/lib/server/api/v1/http.server.ts");
+const apiTypesSource = readText("src/lib/blendCalcAPI/v1/blendCalcAPITypes.ts");
+const apiHttpSource = readText(
+	"src/lib/server/blendCalcAPI/v1/blendCalcAPIHttp.server.ts",
+);
 const appVersionTest = readText("tests/config/appVersioning.test.ts");
-const apiRouteTest = readText("tests/routes/catalogApiV1Routes.test.ts");
+const apiRouteTest = readText("tests/routes/blendCalcAPIV1Routes.test.ts");
 const versioningDocumentation = readText("docs/versioning.md");
-const openApi = readJson("static/api/v1/openapi.json");
+const openAPI = readJson("static/api/v1/openapi.json");
 
 requireCondition(
 	Number.isInteger(configuredNodeMajor) && configuredNodeMajor > 0,
@@ -96,33 +98,33 @@ requireCondition(
 );
 
 const [apiMajor = "", apiMinor = ""] = apiVersion.split(".");
-const openApiVersion = openApi.info?.version ?? "";
-const openApiVersionMatch = String(openApiVersion).match(
+const openAPIVersion = openAPI.info?.version ?? "";
+const openAPIVersionMatch = String(openAPIVersion).match(
 	semanticVersionPattern,
 );
 requireCondition(
-	Boolean(openApiVersionMatch),
-	`OpenAPI info.version must be semantic versioning; received ${JSON.stringify(openApiVersion)}.`,
+	Boolean(openAPIVersionMatch),
+	`OpenAPI info.version must be semantic versioning; received ${JSON.stringify(openAPIVersion)}.`,
 );
 requireCondition(
-	openApiVersionMatch?.[1] === apiMajor &&
-		openApiVersionMatch?.[2] === apiMinor,
-	`OpenAPI ${openApiVersion} must share major.minor with API response ${apiVersion}.`,
+	openAPIVersionMatch?.[1] === apiMajor &&
+		openAPIVersionMatch?.[2] === apiMinor,
+	`OpenAPI ${openAPIVersion} must share major.minor with API response ${apiVersion}.`,
 );
 requireCondition(
-	openApi.info?.["x-blendcalc-status"] === "internal",
+	openAPI.info?.["x-blendcalc-status"] === "internal",
 	'OpenAPI preview status must be stored separately as info["x-blendcalc-status"] = "internal".',
 );
 
 const expectedApiPathPrefix = `/api/v${apiMajor}/`;
-const openApiPaths = Object.keys(openApi.paths ?? {});
+const openAPIPaths = Object.keys(openAPI.paths ?? {});
 requireCondition(
 	existsSync(resolve(repositoryRoot, `src/routes/api/v${apiMajor}`)),
 	`API route directory src/routes/api/v${apiMajor} must match response version ${apiVersion}.`,
 );
 requireCondition(
-	openApiPaths.length > 0 &&
-		openApiPaths.every((path) => path.startsWith(expectedApiPathPrefix)),
+	openAPIPaths.length > 0 &&
+		openAPIPaths.every((path) => path.startsWith(expectedApiPathPrefix)),
 	`Every OpenAPI path must use the API major prefix ${expectedApiPathPrefix}.`,
 );
 requireCondition(
@@ -150,7 +152,7 @@ const collectResponseVersionConstants = (value) => {
 		collectResponseVersionConstants(child);
 	}
 };
-collectResponseVersionConstants(openApi);
+collectResponseVersionConstants(openAPI);
 requireCondition(
 	responseVersionConstants.length > 0 &&
 		responseVersionConstants.every((value) => value === apiVersion),
@@ -187,7 +189,7 @@ requireCondition(
 );
 requireCondition(
 	versioningDocumentation.includes(
-		`URL \`/api/v${apiMajor}\`, response \`${apiVersion}\`, OpenAPI \`${openApiVersion}\``,
+		`URL \`/api/v${apiMajor}\`, response \`${apiVersion}\`, OpenAPI \`${openAPIVersion}\``,
 	),
 	"docs/versioning.md must list the current API path, response, and OpenAPI versions.",
 );
@@ -199,5 +201,5 @@ if (failures.length > 0) {
 }
 
 console.log(
-	`Version consistency passed: Node ${configuredNodeMajor}, app ${appVersion}, build ${appVersion}+<deployment>, API v${apiMajor} response ${apiVersion}, OpenAPI ${openApiVersion} (${openApi.info["x-blendcalc-status"]}).`,
+	`Version consistency passed: Node ${configuredNodeMajor}, app ${appVersion}, build ${appVersion}+<deployment>, API v${apiMajor} response ${apiVersion}, OpenAPI ${openAPIVersion} (${openAPI.info["x-blendcalc-status"]}).`,
 );

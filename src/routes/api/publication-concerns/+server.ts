@@ -1,9 +1,9 @@
 import {
-	API_PUBLICATION_CONCERN_TYPES,
-	API_PUBLICATION_REPORTER_TYPES,
-	API_PUBLICATION_SUBJECT_TYPES,
-	createApiPublicationConcern,
-} from "$lib/server/api/publicationConcerns.server";
+	BLENDCALC_API_PUBLICATION_CONCERN_TYPES,
+	BLENDCALC_API_PUBLICATION_REPORTER_TYPES,
+	BLENDCALC_API_PUBLICATION_SUBJECT_TYPES,
+	createBlendCalcAPIPublicationConcern,
+} from "$lib/server/blendCalcAPI/blendCalcAPIPublicationConcerns.server";
 import {
 	requireAppValue,
 	throwAppError,
@@ -17,7 +17,8 @@ const MAXIMUM_REQUEST_BYTES = 32 * 1024;
 const isMember = <Value extends string>(
 	values: readonly Value[],
 	value: unknown,
-): value is Value => typeof value === "string" && values.includes(value as Value);
+): value is Value =>
+	typeof value === "string" && values.includes(value as Value);
 
 export const POST: RequestHandler = async ({ locals, request }) => {
 	const payload = await readLimitedJson(request, MAXIMUM_REQUEST_BYTES);
@@ -29,9 +30,9 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 	const concernType = body.concernType;
 	const subjectType = body.subjectType;
 	if (
-		!isMember(API_PUBLICATION_REPORTER_TYPES, reporterType) ||
-		!isMember(API_PUBLICATION_CONCERN_TYPES, concernType) ||
-		!isMember(API_PUBLICATION_SUBJECT_TYPES, subjectType) ||
+		!isMember(BLENDCALC_API_PUBLICATION_REPORTER_TYPES, reporterType) ||
+		!isMember(BLENDCALC_API_PUBLICATION_CONCERN_TYPES, concernType) ||
+		!isMember(BLENDCALC_API_PUBLICATION_SUBJECT_TYPES, subjectType) ||
 		typeof body.contactEmail !== "string" ||
 		typeof body.subjectReference !== "string" ||
 		typeof body.details !== "string" ||
@@ -46,14 +47,17 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 	const subjectReference = body.subjectReference as string;
 	const details = body.details as string;
 	const evidenceUrls = body.evidenceUrls as string[];
-	const validatedReporterType = reporterType as (typeof API_PUBLICATION_REPORTER_TYPES)[number];
-	const validatedConcernType = concernType as (typeof API_PUBLICATION_CONCERN_TYPES)[number];
-	const validatedSubjectType = subjectType as (typeof API_PUBLICATION_SUBJECT_TYPES)[number];
+	const validatedReporterType =
+		reporterType as (typeof BLENDCALC_API_PUBLICATION_REPORTER_TYPES)[number];
+	const validatedConcernType =
+		concernType as (typeof BLENDCALC_API_PUBLICATION_CONCERN_TYPES)[number];
+	const validatedSubjectType =
+		subjectType as (typeof BLENDCALC_API_PUBLICATION_SUBJECT_TYPES)[number];
 
 	let concern;
 	try {
 		const user = await locals.getVerifiedUser();
-		concern = await createApiPublicationConcern({
+		concern = await createBlendCalcAPIPublicationConcern({
 			reporterType: validatedReporterType,
 			contactName,
 			contactEmail,
@@ -73,11 +77,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 
 	return json(
 		{
-			data: requireAppValue(
-				concern,
-				400,
-				"PUBLICATION_CONCERN_INVALID",
-			),
+			data: requireAppValue(concern, 400, "PUBLICATION_CONCERN_INVALID"),
 		},
 		{
 			status: 202,

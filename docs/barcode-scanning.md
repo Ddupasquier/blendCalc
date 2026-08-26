@@ -85,7 +85,7 @@ profile proves alcohol context and alcohol-specific fields remain missing. Spars
 nutrition alone never triggers a COLA request. The lookup selects one newest approved
 U.S. TTB label and accepts only explicit identity, ABV, package volume, and approval
 evidence. Its response is not cached in blendCalc, promoted to the canonical catalog,
-or exposed through API v1 under the current source policy.
+or exposed through blendCalcAPI v1 under the current source policy.
 
 ## Future Native App
 

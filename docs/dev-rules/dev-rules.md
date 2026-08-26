@@ -746,6 +746,15 @@ the application. Perform semantic renames atomically within one ownership bounda
 update tests and consumers in the same change, and do not preserve misleading aliases
 unless a documented external compatibility contract requires them.
 
+The app-owned food-data API uses `blendCalcAPI` in product copy, documentation,
+TypeScript values, file names, and folder names; `BlendCalcAPI` for TypeScript types and
+components; and `blendcalc_api_` for PostgreSQL tables, views, functions, triggers,
+indexes, constraints, and policy keys. Keep the stable HTTP contract under `/api/v1`.
+Do not apply this namespace to external providers, source-neutral caches, unrelated
+SvelteKit endpoints, or generic API concepts. A temporary legacy alias is permitted only
+for a documented expand-migrate-switch-contract rollout and must be removed after every
+supported deployed caller uses the canonical owner.
+
 <a id="rule-manual-entry-modularization"></a>
 
 #### Rule 16a — Manual Entry Modularization

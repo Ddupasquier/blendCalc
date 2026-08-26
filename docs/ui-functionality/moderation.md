@@ -115,7 +115,7 @@ evidence to a path-backed product view.
 
 `/profile/privileged-tools/data-operations` starts with a compact operational summary.
 Keep automated monitoring, source activity, dataset/licence state, food-warning policy
-coverage, API publication gaps, nutrient mapping gaps, and revision gaps in closed
+coverage, blendCalcAPI publication gaps, nutrient mapping gaps, and revision gaps in closed
 shared disclosures. Do not render product submissions, warning reports, provider-change
 decisions, recall decisions, or catalog-conflict decisions in this workspace.
 

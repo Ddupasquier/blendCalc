@@ -45,7 +45,8 @@ const CATALOG_ISSUE_REASON_LABELS: Record<string, string> = {
 		"Selected product information is missing source evidence",
 	missing_normalized_nutrients: "Normalized nutrition is missing",
 	missing_nutrient_provenance: "Selected nutrition is missing source evidence",
-	missing_publication_profile: "The API publication profile is missing",
+	missing_publication_profile:
+		"The blendCalcAPI publication profile is missing",
 	missing_required_field: "Required product information is missing",
 	missing_required_nutrient: "A required nutrient is missing",
 	missing_serving_provenance: "The selected serving is missing source evidence",
@@ -80,7 +81,8 @@ const CATALOG_FIELD_LABELS: Record<string, string> = {
 };
 
 const CATALOG_ISSUE_CODE_LABELS: Record<string, string> = {
-	API_PUBLICATION_PROFILE_MISSING: "API publication rules are unavailable",
+	BLENDCALC_API_PUBLICATION_PROFILE_MISSING:
+		"blendCalcAPI publication rules are unavailable",
 	API_REDISTRIBUTION_REVIEW_REQUIRED: "Redistribution approval is required",
 	CATALOG_ALLERGEN_EVIDENCE_INCOMPLETE: "Allergen evidence is incomplete",
 	CATALOG_FIELD_PROVENANCE_MISSING:
@@ -128,7 +130,7 @@ const CATALOG_RESOLUTION_ACTION_LABELS: Record<string, string> = {
 	review_nutrient_value: "Review the normalized nutrient value",
 	review_product_evidence: "Review current product evidence",
 	review_product_identity: "Review product identity",
-	review_publication_profile: "Review the API publication profile",
+	review_publication_profile: "Review the blendCalcAPI publication profile",
 	review_revision_history: "Review revision history",
 	review_source_policy: "Review source policy",
 	review_source_redistribution: "Review source redistribution rights",

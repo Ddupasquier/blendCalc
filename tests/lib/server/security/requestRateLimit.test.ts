@@ -33,7 +33,7 @@ describe("request rate-limit policies", () => {
 		expect(
 			getRequestRateLimitPolicy("POST", "/api/publication-concerns"),
 		).toEqual({
-			scope: "api:publication-concern",
+			scope: "blendCalcAPI:publication-concern",
 			limit: 10,
 			windowSeconds: 3600,
 		});

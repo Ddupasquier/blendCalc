@@ -76,7 +76,7 @@
 		</article>
 		<article>
 			<span>Public blendCalcAPI v1</span>
-			<strong>{passport.product.apiV1Status}</strong>
+			<strong>{passport.product.blendCalcAPIV1Status}</strong>
 		</article>
 	</section>
 
@@ -205,7 +205,7 @@
 		{/if}
 	</CollapsibleSection>
 
-	<CollapsibleSection title="API publication checks" surface="panel">
+	<CollapsibleSection title="blendCalcAPI publication checks" surface="panel">
 		<p class="catalog-product-passport__supporting-copy">
 			The API status is evaluated separately from whether this product remains
 			useful inside blendCalc.
@@ -213,7 +213,7 @@
 		<dl class="catalog-product-passport__details">
 			<div>
 				<dt>blendCalcAPI v1 status</dt>
-				<dd>{passport.product.apiV1Status}</dd>
+				<dd>{passport.product.blendCalcAPIV1Status}</dd>
 			</div>
 			<div>
 				<dt>Catalog status</dt>

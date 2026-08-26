@@ -61,7 +61,7 @@ export const getRequestRateLimitPolicy = (
 	}
 	if (pathname === "/api/publication-concerns" && requestMethod === "POST") {
 		return {
-			scope: "api:publication-concern",
+			scope: "blendCalcAPI:publication-concern",
 			limit: 10,
 			windowSeconds: 60 * 60,
 		};

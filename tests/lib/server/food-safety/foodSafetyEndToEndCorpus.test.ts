@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
-	mapApprovedCatalogRecordToApiV1Product,
-	type ApiV1SourceAttributionCatalog,
-} from "$lib/server/api/v1/catalogApi.server";
+	mapApprovedCatalogRecordToBlendCalcAPIV1Product,
+	type BlendCalcAPIV1SourceAttributionCatalog,
+} from "$lib/server/blendCalcAPI/v1/blendCalcAPICatalog.server";
 import { annotateFoodWithFoodSafety } from "$lib/server/food-safety/foodSafetyEvaluation.server";
 import { createCatalogFoodFromDraft } from "$lib/server/products/catalogFood.server";
 import type { ApprovedCatalogRecord } from "$lib/server/products/catalogRead.server";
@@ -21,28 +21,29 @@ import { productReferenceCatalogFixture } from "../../../fixtures/referenceCatal
 const normalizePreference = (value: string) =>
 	value.toLocaleLowerCase().trim().replace(/\s+/g, "-");
 
-const openFoodFactsAttributionCatalog: ApiV1SourceAttributionCatalog = {
-	sources: {
-		"open-food-facts": {
-			source: "open-food-facts",
-			displayName: "Open Food Facts",
-			sourceUrl: "https://world.openfoodfacts.org",
-			licenseName: "Open Database Licence 1.0",
-			licenseUrl: "https://opendatacommons.org/licenses/odbl/1-0/",
-			attribution: "Open Food Facts contributors",
-			redistributionPolicyReviewedAt: "2026-07-26T00:00:00.000Z",
-			dataset: null,
+const openFoodFactsAttributionCatalog: BlendCalcAPIV1SourceAttributionCatalog =
+	{
+		sources: {
+			"open-food-facts": {
+				source: "open-food-facts",
+				displayName: "Open Food Facts",
+				sourceUrl: "https://world.openfoodfacts.org",
+				licenseName: "Open Database Licence 1.0",
+				licenseUrl: "https://opendatacommons.org/licenses/odbl/1-0/",
+				attribution: "Open Food Facts contributors",
+				redistributionPolicyReviewedAt: "2026-07-26T00:00:00.000Z",
+				dataset: null,
+			},
 		},
-	},
-	datasetsBySource: {},
-	datasetSourceKeys: new Set(),
-	assetSources: {
-		"open-food-facts": {
-			displayName: "Open Food Facts",
-			sourceUrl: "https://world.openfoodfacts.org",
+		datasetsBySource: {},
+		datasetSourceKeys: new Set(),
+		assetSources: {
+			"open-food-facts": {
+				displayName: "Open Food Facts",
+				sourceUrl: "https://world.openfoodfacts.org",
+			},
 		},
-	},
-};
+	};
 
 const createProfile = (
 	allergens: string[] = [],
@@ -137,78 +138,84 @@ const buildCorpusFood = (
 		corpusCase.barcode,
 		productReferenceCatalogFixture,
 	);
-	if (!draft) throw new Error(`Unable to normalize corpus case ${corpusCase.id}.`);
+	if (!draft)
+		throw new Error(`Unable to normalize corpus case ${corpusCase.id}.`);
 	return createCatalogFoodFromDraft(draft);
 };
 
 describe("synthetic end-to-end food-safety corpus", () => {
-	it.each(FOOD_SAFETY_END_TO_END_CORPUS)(
-		"$id: $name",
-		(corpusCase) => {
-			const normalizedFood = buildCorpusFood(corpusCase);
-			const evaluatedFood = annotateFoodWithFoodSafety(normalizedFood, {
-				profile: createProfile(
-					corpusCase.preferences.allergens,
-					corpusCase.preferences.dietaryRestrictions,
-				),
-				policy: FOOD_SAFETY_END_TO_END_POLICY,
-			});
-			const warningLabels = (evaluatedFood.preferenceWarnings ?? [])
-				.map((warning) => warning.label)
-				.sort();
+	it.each(FOOD_SAFETY_END_TO_END_CORPUS)("$id: $name", (corpusCase) => {
+		const normalizedFood = buildCorpusFood(corpusCase);
+		const evaluatedFood = annotateFoodWithFoodSafety(normalizedFood, {
+			profile: createProfile(
+				corpusCase.preferences.allergens,
+				corpusCase.preferences.dietaryRestrictions,
+			),
+			policy: FOOD_SAFETY_END_TO_END_POLICY,
+		});
+		const warningLabels = (evaluatedFood.preferenceWarnings ?? [])
+			.map((warning) => warning.label)
+			.sort();
 
-			expect(warningLabels).toEqual(
-				[...corpusCase.expected.warningLabels].sort(),
-			);
-			expect(evaluatedFood.compatibilityEvaluation?.status)
-				.toBe(corpusCase.expected.status);
-			expect(evaluatedFood.allergenDisclosure?.contains ?? [])
-				.toEqual(expect.arrayContaining(corpusCase.expected.contains ?? []));
-			expect(evaluatedFood.allergenDisclosure?.mayContain ?? [])
-				.toEqual(expect.arrayContaining(corpusCase.expected.mayContain ?? []));
-			expect((normalizedFood.precautionaryStatements ?? []).map(
+		expect(warningLabels).toEqual(
+			[...corpusCase.expected.warningLabels].sort(),
+		);
+		expect(evaluatedFood.compatibilityEvaluation?.status).toBe(
+			corpusCase.expected.status,
+		);
+		expect(evaluatedFood.allergenDisclosure?.contains ?? []).toEqual(
+			expect.arrayContaining(corpusCase.expected.contains ?? []),
+		);
+		expect(evaluatedFood.allergenDisclosure?.mayContain ?? []).toEqual(
+			expect.arrayContaining(corpusCase.expected.mayContain ?? []),
+		);
+		expect(
+			(normalizedFood.precautionaryStatements ?? []).map(
 				(statement) => statement.type,
-			)).toEqual(expect.arrayContaining(
-				corpusCase.expected.precautionaryTypes ?? [],
-			));
+			),
+		).toEqual(
+			expect.arrayContaining(corpusCase.expected.precautionaryTypes ?? []),
+		);
 
-			const userMessage = getFoodCompatibilityEvaluationMessage(
-				evaluatedFood.compatibilityEvaluation!,
+		const userMessage = getFoodCompatibilityEvaluationMessage(
+			evaluatedFood.compatibilityEvaluation!,
+		);
+		expect(userMessage.title).not.toMatch(/failed|error|exception/i);
+		expect(userMessage.message).toContain("package label");
+
+		if (corpusCase.kind === "open-food-facts") {
+			const apiProduct = mapApprovedCatalogRecordToBlendCalcAPIV1Product(
+				createApprovedRecord(corpusCase.id, corpusCase.barcode, evaluatedFood),
+				openFoodFactsAttributionCatalog,
 			);
-			expect(userMessage.title).not.toMatch(/failed|error|exception/i);
-			expect(userMessage.message).toContain("package label");
-
-			if (corpusCase.kind === "open-food-facts") {
-				const apiProduct = mapApprovedCatalogRecordToApiV1Product(
-					createApprovedRecord(
-						corpusCase.id,
-						corpusCase.barcode,
-						evaluatedFood,
+			expect(apiProduct.ingredients.text).toBe(
+				normalizedFood.ingredients ?? null,
+			);
+			expect(apiProduct.warnings.map((warning) => warning.code)).toEqual(
+				expect.arrayContaining(
+					(evaluatedFood.compatibilitySummary?.allFacts ?? []).map(
+						(fact) => fact.slug,
 					),
-					openFoodFactsAttributionCatalog,
-				);
-				expect(apiProduct.ingredients.text)
-					.toBe(normalizedFood.ingredients ?? null);
-				expect(apiProduct.warnings.map((warning) => warning.code))
-					.toEqual(expect.arrayContaining(
-						(evaluatedFood.compatibilitySummary?.allFacts ?? [])
-							.map((fact) => fact.slug),
-					));
-				expect(apiProduct.ingredients.precautionaryStatements.map(
+				),
+			);
+			expect(
+				apiProduct.ingredients.precautionaryStatements.map(
 					(statement) => statement.type,
-				)).toEqual(expect.arrayContaining(
-					corpusCase.expected.precautionaryTypes ?? [],
-				));
-			}
-		},
-	);
+				),
+			).toEqual(
+				expect.arrayContaining(corpusCase.expected.precautionaryTypes ?? []),
+			);
+		}
+	});
 
 	it("reports separate extraction, evaluation, serialization, and message coverage", () => {
 		const coveredStages = new Set(
 			FOOD_SAFETY_END_TO_END_CORPUS.flatMap((corpusCase) => corpusCase.stages),
 		);
 		const coveredFeatures = new Set(
-			FOOD_SAFETY_END_TO_END_CORPUS.flatMap((corpusCase) => corpusCase.features),
+			FOOD_SAFETY_END_TO_END_CORPUS.flatMap(
+				(corpusCase) => corpusCase.features,
+			),
 		);
 
 		expect(FOOD_SAFETY_END_TO_END_CORPUS.length).toBeGreaterThanOrEqual(17);
@@ -227,8 +234,8 @@ describe("synthetic end-to-end food-safety corpus", () => {
 			),
 		).toEqual([]);
 		expect(
-			FOOD_SAFETY_END_TO_END_CORPUS.filter(
-				(corpusCase) => corpusCase.features.includes("negative-control"),
+			FOOD_SAFETY_END_TO_END_CORPUS.filter((corpusCase) =>
+				corpusCase.features.includes("negative-control"),
 			).length,
 		).toBeGreaterThanOrEqual(3);
 	});

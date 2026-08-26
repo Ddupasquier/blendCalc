@@ -29,6 +29,7 @@ const executableDomainsByOperation = {
 	operations: [
 		"api",
 		"auth",
+		"blendCalcAPI",
 		"database",
 		"quality",
 		"recovery",

@@ -136,9 +136,9 @@ and changed write semantics require a later contract migration.
 
 | Command                                                                        | What it checks                                                                                                                                     |
 | ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `npm run audit:api-catalog`                                                    | Every active catalog row's publication status, gate failures, provenance, nutrition, servings, images, and rights metadata                         |
-| `npm run audit:api-catalog -- --strict`                                        | The same audit, failing unless every active row is publication-ready                                                                               |
-| `npm run audit:api-catalog -- --json`                                          | The same fresh readiness reassessment with DB-owned automated-repair, review-owner, and unresolved-contract classifications as structured output   |
+| `npm run audit:blendCalcAPI-catalog`                                           | Every active catalog row's publication status, gate failures, provenance, nutrition, servings, images, and rights metadata                         |
+| `npm run audit:blendCalcAPI-catalog -- --strict`                               | The same audit, failing unless every active row is publication-ready                                                                               |
+| `npm run audit:blendCalcAPI-catalog -- --json`                                 | The same fresh readiness reassessment with DB-owned automated-repair, review-owner, and unresolved-contract classifications as structured output   |
 | `node scripts/audits/catalog/audit_catalog_transparency.mjs`                   | Verification dates, revisions, observations, source quality, ingredients, uncertainty, compatibility, API exposure, and app reads                  |
 | `node scripts/audits/catalog/audit_catalog_transparency.mjs --json`            | The same read-only transparency report as structured output                                                                                        |
 | `node scripts/audits/catalog/audit_barcode_nutrition_accuracy.mjs --limit=300` | At least 300 exact GTINs plus every active catalog product across provider evidence, units, servings, normalized values, provenance, and conflicts |
@@ -231,10 +231,10 @@ for retention, restore drills, and incident procedures.
 | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
 | `npm run moderate -- role <email> <moderator\|admin\|developer\|none> --user-id=<uuid>` | Grant or revoke an application role after email and Auth ID agree         |
 | `npm run moderate -- ban <email> <reason>`                                              | Ban an account and record moderation history                              |
-| `npm run api:publication -- list`                                                       | Read publication concerns and active holds                                |
-| `npm run api:publication -- hold ...`                                                   | Immediately withhold one exact product, image, dataset release, or source |
-| `npm run api:publication -- release ...`                                                | Release a reviewed hold while preserving its history                      |
-| `npm run api:publication -- resolve ...`                                                | Record the reviewed outcome of one concern                                |
+| `npm run blendCalcAPI:publication -- list`                                              | Read publication concerns and active holds                                |
+| `npm run blendCalcAPI:publication -- hold ...`                                          | Immediately withhold one exact product, image, dataset release, or source |
+| `npm run blendCalcAPI:publication -- release ...`                                       | Release a reviewed hold while preserving its history                      |
+| `npm run blendCalcAPI:publication -- resolve ...`                                       | Record the reviewed outcome of one concern                                |
 
 These commands require service-role credentials and an authorized actor where
 documented. They never authorize unrelated Git commits, migration pushes, or application
@@ -251,7 +251,7 @@ deployments.
 
 The API generator may call providers and read stored query terms but never mutates
 Supabase. Generated references are not runtime types. See
-[API And Provider References](../docs/api-structures/README.md) for their ownership.
+[External API Structure References](../docs/api-structures/README.md) for their ownership.
 
 ## Maintaining This Directory
 

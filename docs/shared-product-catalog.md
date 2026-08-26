@@ -63,7 +63,7 @@ save private custom foods, use their fridge, and build mixes.
 
 Whether a provider may populate the future public blendCalc dataset is stored in
 `product_data_sources` through `canonical_storage_allowed`, license, review date, and
-policy notes. `api_redistribution_allowed` separately controls API publication.
+policy notes. `api_redistribution_allowed` separately controls blendCalcAPI publication.
 Application code must not infer redistribution permission from a provider name.
 
 Provider capabilities are maintained in the
@@ -248,9 +248,9 @@ remain explicitly incomplete instead of receiving a similar-food substitution.
 This structure allows another source to be added later without losing which source
 supplied each value or silently replacing a trusted value.
 
-Catalog intake and API publication are intentionally separate tiers. Private user saves
+Catalog intake and blendCalcAPI publication are intentionally separate tiers. Private user saves
 never publish automatically. Shareable observations and review candidates may improve
-future evidence. Accepted field-by-field facts form the canonical catalog, while API v1
+future evidence. Accepted field-by-field facts form the canonical catalog, while blendCalcAPI v1
 returns only canonical revisions that pass the enabled DB-backed publication profile.
 An incomplete row remains available for enrichment and moderation without polluting the
 public read contract.
@@ -263,7 +263,7 @@ no unresolved medium/high conflict. Reported zero is valid evidence, not a missi
 fallback. Missing, trace, unquantified, invalid, and unmapped values stay nonnumeric.
 Failed products are withheld rather than deleted, and the existing moderator data-health
 view shows the exact block reasons. See
-[`api-structures/catalog-field-lineage.md`](api-structures/catalog-field-lineage.md)
+[`blendCalcAPI/catalog-field-lineage.md`](blendCalcAPI/catalog-field-lineage.md)
 for the response-field map and row audit.
 
 ## Existing Barcodes And Label Changes
@@ -329,12 +329,12 @@ silently changes canonical fields.
 
 Run `node scripts/audits/catalog/audit_catalog_transparency.mjs` to measure current
 population
-across canonical products, selected source observations, normalized rows, API v1
+across canonical products, selected source observations, normalized rows, blendCalcAPI v1
 publication, and the app read model. Add `--json` for machine-readable output. The
 report classifies each field as populated, sparse, or empty and prints representative
 non-private values.
 
-Run `npm run audit:api-catalog -- --json` for a fresh product-by-product publication
+Run `npm run audit:blendCalcAPI-catalog -- --json` for a fresh product-by-product publication
 reassessment. It reads the live readiness gate and DB-owned issue contracts, separates
 safe automated repairs from catalog, data-operations, food-policy, external, and system
 work, and reports any blocker whose operational contract is not yet deployed. The audit
@@ -356,7 +356,7 @@ result.
 | Precautionary statement evidence | `product_precautionary_statements`                                                                         | Exact package statement, normalized statement type/allergens, language, source, observation, and revision                 | Keep legacy normalized traces as evidence only; never invent exact package wording                        |
 | Compatibility evaluation         | Server read model                                                                                          | `conflict`, `checked`, `incomplete`, or `not_checked`, with explicit evidence coverage and applied policy version         | `not_checked` without a user profile; missing evidence never becomes `checked`                            |
 
-API v1 exposes current revision metadata, selected field sources with observation IDs,
+blendCalcAPI v1 exposes current revision metadata, selected field sources with observation IDs,
 observation dates, bounded evidence methods, and honest review states, source-record
 metadata, structured ingredient analysis, serving sources, compatibility warnings, and
 the shared compatibility-evaluation contract. Because public API reads have no signed-in
@@ -383,14 +383,14 @@ Canonical nutrient lineage cannot come from provider-name similarity alone. Exac
 provider identifiers and explicitly reviewed source keys own nutrient identity, exact
 normalized units own lookup, and any unit change requires a reviewed nutrient-specific
 conversion. Semantic taxonomy candidates remain pending moderation evidence and are
-excluded from catalog/API publication until reviewed.
+excluded from catalog/blendCalcAPI publication until reviewed.
 
 Authenticated app reads may additionally resolve an account's optional regulatory
 region against the regional profile in that same immutable policy version. The result
 records the authority and policy reference plus which selected allergen settings use
 regulated terminology in that profile. Region is explanation and coverage context only:
 it never changes product facts or suppresses personal conflict warnings. Unsupported
-regions remain explicitly unchecked. Public API v1 reads have no account preference
+regions remain explicitly unchecked. Public blendCalcAPI v1 reads have no account preference
 context and therefore do not serialize this personalized regional evaluation.
 
 ## Serving Data
@@ -509,22 +509,22 @@ revision; the monitor never overwrites `shared_products` directly.
 
 ### Readiness And Operational Issues
 
-Canonical availability and public API publication are separate states. Every product
+Canonical availability and public blendCalcAPI publication are separate states. Every product
 has one service-only `catalog_product_readiness` record with:
 
 - shared-catalog state: `Active`, `Waiting for review`, or `Blocked`;
-- API v1 state: `Ready` or `Withheld`;
+- blendCalcAPI v1 state: `Ready` or `Withheld`;
 - explicit blendCalc search and use availability; and
 - current revision, correction, conflict, verification, and API-withholding context.
 
-`Withheld` means that API v1 cannot legally or accurately publish the record yet. It
+`Withheld` means that blendCalcAPI v1 cannot legally or accurately publish the record yet. It
 does not hide an otherwise active product from blendCalc. Current operational gaps are
 projected through `catalog_health_issue_occurrences`. Stable issue metadata owns
 urgency, responsible work group, supported resolution action, and whether a reviewed
 evidence-only repair can be offered. Friendly UI wording remains application-owned.
 
 The product-readiness passport is the bounded operational read for this state. It joins
-the current canonical revision, independent blendCalc/API availability, evidence
+the current canonical revision, independent blendCalc and blendCalcAPI availability, evidence
 coverage counts, and normalized open issues without exposing raw observations or user
 evidence. Catalog review and data operations share the contract while retaining
 separate route and database permissions.
