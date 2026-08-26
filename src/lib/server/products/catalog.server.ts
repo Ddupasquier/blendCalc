@@ -406,6 +406,8 @@ export const submitProductForCatalog = async (
 				image: matchedDraft.image,
 				barcode: validation.barcode,
 				sharedProductId,
+				productName: matchedDraft.name,
+				brandName: matchedDraft.brandOwner,
 			});
 		} catch (publishError) {
 			await admin
