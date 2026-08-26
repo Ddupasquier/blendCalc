@@ -536,7 +536,9 @@ alerts are ingested with immutable revisions and exact identifiers. The announce
 channel closes the gap where FDA has published a current notice that has not yet reached
 openFDA enforcement data. Current FDA announcement and FSIS dataset reads may pass
 through blendCalc's fixed-origin protected relay when an official source blocks the
-Edge runtime. The FSIS adapter reads the source's current `field_*` contract, keeps
+Edge runtime. The worker authenticates to that relay with a dedicated internal header
+that remains independent from deployment-protection authorization. The FSIS adapter
+reads the source's current `field_*` contract, keeps
 active and recently changed notices, and uses conditional validators to avoid
 reprocessing an unchanged dataset. FDA announcement details are read as structured
 tables when the notice publishes package identifiers in UPC, GTIN, lot-code, or

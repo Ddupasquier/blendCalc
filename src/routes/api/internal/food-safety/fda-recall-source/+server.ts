@@ -3,13 +3,15 @@ import { error, isHttpError } from "@sveltejs/kit";
 import {
 	fetchOfficialFoodSafetySource,
 	isAuthorizedOfficialFoodSafetySourceRequest,
+	OFFICIAL_FOOD_SAFETY_RELAY_SECRET_HEADER,
 	type OfficialFoodSafetySource,
 } from "$lib/server/food-safety/officialFoodSafetySourceProxy.server";
 import type { RequestHandler } from "./$types";
 
 export const GET: RequestHandler = async ({ request, url }) => {
-	const providedSecret =
-		request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? null;
+	const providedSecret = request.headers.get(
+		OFFICIAL_FOOD_SAFETY_RELAY_SECRET_HEADER,
+	);
 	if (
 		!isAuthorizedOfficialFoodSafetySourceRequest(
 			providedSecret,

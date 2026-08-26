@@ -224,7 +224,10 @@ describe("official food safety alert normalization and matching", () => {
 				const url = new URL(String(input));
 				expect(url.searchParams.get("source")).toBe("fsis");
 				const headers = new Headers(init?.headers);
-				expect(headers.get("authorization")).toBe("Bearer proxy-secret");
+				expect(headers.get("x-blendcalc-food-safety-relay-secret")).toBe(
+					"proxy-secret",
+				);
+				expect(headers.get("authorization")).toBeNull();
 				expect(headers.get("if-none-match")).toBe('"fsis-previous"');
 				return new Response(null, {
 					status: 304,
@@ -708,9 +711,11 @@ describe("official food safety alert normalization and matching", () => {
 				if (url.hostname === "api.fda.gov") {
 					return new Response("", { status: 404 });
 				}
-				expect(new Headers(init?.headers).get("authorization")).toBe(
-					"Bearer proxy-secret",
+				const headers = new Headers(init?.headers);
+				expect(headers.get("x-blendcalc-food-safety-relay-secret")).toBe(
+					"proxy-secret",
 				);
+				expect(headers.get("authorization")).toBeNull();
 				if (!url.searchParams.has("sourcePath")) {
 					return new Response(
 						JSON.stringify([

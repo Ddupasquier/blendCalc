@@ -645,12 +645,15 @@ type OfficialFoodSafetySourceProxyConfiguration = {
 	protectionBypassSecret?: string;
 };
 
+const OFFICIAL_FOOD_SAFETY_RELAY_SECRET_HEADER =
+	"x-blendcalc-food-safety-relay-secret";
+
 const addOfficialFoodSafetyProxyHeaders = (
 	headers: Headers,
 	proxy: OfficialFoodSafetySourceProxyConfiguration,
 ) => {
 	if (!proxy.url || !proxy.secret) return;
-	headers.set("authorization", `Bearer ${proxy.secret}`);
+	headers.set(OFFICIAL_FOOD_SAFETY_RELAY_SECRET_HEADER, proxy.secret);
 	if (proxy.protectionBypassSecret) {
 		headers.set("x-vercel-protection-bypass", proxy.protectionBypassSecret);
 	}
@@ -874,7 +877,7 @@ const fetchFdaRecallAnnouncementPage = async (
 			const sourceUrl = new URL(alert.sourceUrl);
 			const detailHeaders: Record<string, string> = {};
 			if (proxy.url && proxy.secret) {
-				detailHeaders.authorization = `Bearer ${proxy.secret}`;
+				detailHeaders[OFFICIAL_FOOD_SAFETY_RELAY_SECRET_HEADER] = proxy.secret;
 				if (proxy.protectionBypassSecret) {
 					detailHeaders["x-vercel-protection-bypass"] =
 						proxy.protectionBypassSecret;
