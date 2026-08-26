@@ -1,5 +1,8 @@
 import { emptyManualEntryNutrientGroups } from "$lib/components/ingredients/manual-entry/formTypes";
-import { loadManualEntryReferenceData } from "$lib/utils/food/nutrients/manualEntryReferenceData";
+import {
+	getManualEntryReferenceDataAvailabilityMessages,
+	loadManualEntryReferenceData,
+} from "$lib/utils/food/nutrients/manualEntryReferenceData";
 import type { NutrientRelationshipRule } from "$lib/utils/food/nutrients/nutrientRelationshipRules";
 import type { NutritionLabelOcrMapping } from "$lib/utils/food/ocr/nutritionLabelOcr";
 import type { ProductRegulatoryDisclosureProfile } from "$lib/utils/food/quality/nutritionCompletenessCatalog";
@@ -26,26 +29,47 @@ export const createManualEntryReferenceDataController = () => {
 		state.nutrientError = "";
 		state.nutrientRelationshipRuleError = "";
 
-		const referenceData = await loadManualEntryReferenceData();
-		if (generation !== loadGeneration) return;
+		try {
+			const referenceData = await loadManualEntryReferenceData();
+			if (generation !== loadGeneration) return;
+			const messages =
+				getManualEntryReferenceDataAvailabilityMessages(referenceData);
 
-		state.nutrientGroups =
-			referenceData.nutrientGroups ?? emptyManualEntryNutrientGroups;
-		state.nutrientError = referenceData.nutrientGroupError;
-		state.nutrientRelationshipRules =
-			referenceData.nutrientRelationshipRules;
-		state.nutrientRelationshipRuleError =
-			referenceData.nutrientRelationshipRuleError;
-		state.nutritionLabelOcrMappings =
-			referenceData.nutritionLabelOcrMappings;
-		state.nutritionLabelOcrMappingError =
-			referenceData.nutritionLabelOcrMappingError;
-		state.regulatoryDisclosureProfiles =
-			referenceData.regulatoryDisclosureProfiles;
-		state.regulatoryDisclosureProfileError =
-			referenceData.regulatoryDisclosureProfileError;
-		state.loadingNutrients = false;
-		state.loadingNutrientRelationshipRules = false;
+			state.nutrientGroups = referenceData.nutrientGroups;
+			state.nutrientError = messages.nutrientGroupError;
+			state.nutrientRelationshipRules = referenceData.nutrientRelationshipRules;
+			state.nutrientRelationshipRuleError =
+				messages.nutrientRelationshipRuleError;
+			state.nutritionLabelOcrMappings = referenceData.nutritionLabelOcrMappings;
+			state.nutritionLabelOcrMappingError =
+				messages.nutritionLabelOcrMappingError;
+			state.regulatoryDisclosureProfiles =
+				referenceData.regulatoryDisclosureProfiles;
+			state.regulatoryDisclosureProfileError =
+				messages.regulatoryDisclosureProfileError;
+		} catch (error) {
+			if (generation !== loadGeneration) return;
+			if (import.meta.env.DEV) {
+				console.error("Unable to load manual entry reference data", error);
+			}
+			const messages = getManualEntryReferenceDataAvailabilityMessages(null);
+			state.nutrientGroups = emptyManualEntryNutrientGroups;
+			state.nutrientError = messages.nutrientGroupError;
+			state.nutrientRelationshipRules = [];
+			state.nutrientRelationshipRuleError =
+				messages.nutrientRelationshipRuleError;
+			state.nutritionLabelOcrMappings = [];
+			state.nutritionLabelOcrMappingError =
+				messages.nutritionLabelOcrMappingError;
+			state.regulatoryDisclosureProfiles = [];
+			state.regulatoryDisclosureProfileError =
+				messages.regulatoryDisclosureProfileError;
+		} finally {
+			if (generation === loadGeneration) {
+				state.loadingNutrients = false;
+				state.loadingNutrientRelationshipRules = false;
+			}
+		}
 	};
 
 	const destroy = () => {

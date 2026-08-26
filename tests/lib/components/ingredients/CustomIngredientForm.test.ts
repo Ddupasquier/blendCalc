@@ -263,7 +263,7 @@ vi.mock(
 	},
 );
 
-vi.mock("$lib/utils/food/ocr/nutritionLabelOcrMappings", () => ({
+const nutritionLabelOcrMappingMocks = vi.hoisted(() => ({
 	readNutritionLabelOcrMappings: vi.fn().mockResolvedValue([
 		{
 			alias: "calories",
@@ -276,6 +276,11 @@ vi.mock("$lib/utils/food/ocr/nutritionLabelOcrMappings", () => ({
 		},
 	]),
 }));
+
+vi.mock(
+	"$lib/utils/food/ocr/nutritionLabelOcrMappings",
+	() => nutritionLabelOcrMappingMocks,
+);
 
 const regulatoryDisclosureMocks = vi.hoisted(() => ({
 	readProductRegulatoryDisclosureProfiles: vi.fn().mockResolvedValue([
@@ -317,6 +322,25 @@ const regulatoryDisclosureMocks = vi.hoisted(() => ({
 vi.mock(
 	"$lib/utils/food/quality/productRegulatoryDisclosureProfiles",
 	() => regulatoryDisclosureMocks,
+);
+
+const manualEntryReferenceDataMocks = vi.hoisted(() => ({
+	loadManualEntryReferenceData: vi.fn(),
+}));
+
+vi.mock(
+	"$lib/utils/food/nutrients/manualEntryReferenceData",
+	async (importOriginal) => {
+		const actual =
+			await importOriginal<
+				typeof import("$lib/utils/food/nutrients/manualEntryReferenceData")
+			>();
+		return {
+			...actual,
+			loadManualEntryReferenceData:
+				manualEntryReferenceDataMocks.loadManualEntryReferenceData,
+		};
+	},
 );
 
 const categoryPickerMocks = vi.hoisted(() => ({
@@ -609,6 +633,17 @@ describe("CustomIngredientForm", () => {
 				tolerance: 0,
 			},
 		]);
+		manualEntryReferenceDataMocks.loadManualEntryReferenceData.mockImplementation(
+			async () => ({
+				nutrientGroups: await foodMetadataMocks.readManualEntryNutrientGroups(),
+				nutrientRelationshipRules:
+					await nutrientRelationshipMocks.readNutrientRelationshipRules(),
+				nutritionLabelOcrMappings:
+					await nutritionLabelOcrMappingMocks.readNutritionLabelOcrMappings(),
+				regulatoryDisclosureProfiles:
+					await regulatoryDisclosureMocks.readProductRegulatoryDisclosureProfiles(),
+			}),
+		);
 	});
 
 	it("requires an ingredient name before saving", async () => {
