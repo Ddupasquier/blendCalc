@@ -27,6 +27,7 @@
 		comfortable = false,
 		className = "",
 		panelClass = "",
+		returnFocusTarget: explicitReturnFocusTarget,
 		children,
 		onClose = () => {},
 	}: SheetBaseProps = $props();
@@ -85,7 +86,10 @@
 
 	$effect(() => {
 		if (!open || !sheetElement) return;
-		return manageDialogFocus(sheetElement, returnFocusTarget);
+		return manageDialogFocus(
+			sheetElement,
+			explicitReturnFocusTarget ?? returnFocusTarget,
+		);
 	});
 
 	const transitionOptions = $derived(
