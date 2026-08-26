@@ -479,7 +479,7 @@ Notes:
   rights review and representative benchmark.
 - Source rows are maintained by the reference-data seed script, with API-observed
   provenance.
-- `api_redistribution_allowed` is the separate API-publication decision. API v1 never
+- `api_redistribution_allowed` is the separate API-publication decision. blendCalcAPI v1 never
   infers it from the provider name or from canonical storage alone.
 - `blendcalc_api_v1_source_attribution_is_complete` additionally requires every
   represented field, nutrient, and serving source to retain complete reviewed source
@@ -649,24 +649,35 @@ Notes:
 
 ### API Publication Concerns And Holds
 
-`api_publication_concerns` stores private evidence-backed reports from users,
+`blendcalc_api_publication_concerns` stores private evidence-backed reports from users,
 providers, brands, rights holders, or other reporters. Each row targets exactly one
 `shared_products`, `food_image_assets`, `generic_food_datasets`, or
 `product_data_sources` row and retains normalized reporter contact, concern type,
 bounded HTTPS evidence references, urgency, status, and reviewed resolution. A partial
 unique fingerprint makes repeated unresolved submissions idempotent.
 
-`api_publication_holds` stores reversible public-API holds for one exact product,
+`blendcalc_api_publication_holds` stores reversible blendCalcAPI holds for one exact product,
 image, dataset release, or source. Partial unique indexes permit only one active hold
 per subject. Each row records a reason code, safe public message, private note,
 optional concern, placing actor/time, and release actor/time/note. Releasing updates
 rather than deletes the row.
 
 Product holds are mirrored into a high-severity `shared_product_conflicts` row by
-`sync_product_publication_hold_conflict`, so the established readiness gate withholds
+`sync_blendcalc_api_product_publication_hold_conflict`, so the established readiness gate withholds
 the product. `blendcalc_api_v1_source_has_active_hold` makes source/dataset attribution
 fail closed. The trusted API image reader filters active image holds independently.
 Both tables force RLS and grant table access only to `service_role`.
+
+`blendcalc_api_catalog_product_readiness` is the canonical service-role-only projection
+of shared-catalog readiness for blendCalcAPI consumers. It exposes explicitly named
+`blendcalc_api_v1_status` and `blendcalc_api_v1_withholding_reasons` fields. The
+service-only `get_blendcalc_api_catalog_product_readiness_passport` RPC returns the same
+canonical status naming for privileged application reads.
+
+The previous publication table and product-reader names remain temporarily available as
+service-role-only rollout aliases so the deployed application stays functional during
+the expand-and-switch release. They are not canonical owners and must be removed in the
+contract migration after all deployed callers use the `blendcalc_api_...` namespace.
 
 | Table                                 | Primary Key             | Owner Scope                   | Purpose                                                                                                                    | Key Relationships                                                                     |
 | ------------------------------------- | ----------------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
@@ -681,8 +692,8 @@ Both tables force RLS and grant table access only to `service_role`.
 | `product_precautionary_statements`    | `id`                    | Shared evidence projection    | Exact package precautionary wording plus normalized statement type and allergens                                           | Exactly one owner; optional observation and revision links                            |
 | `shared_product_conflicts`            | `id`                    | Shared moderation/provenance  | Open/resolved conflicts between observed values                                                                            | `shared_product_id → shared_products.id`                                              |
 | `catalog_correction_origins`          | `id`                    | Private correction workflow   | Evidence-backed provider changes, field conflicts, and warning reports waiting on or linked to one real catalog correction | Product, base revision, exactly one origin, optional submission and resolved revision |
-| `api_publication_concerns`            | `id`                    | Private API review            | Evidence-backed correction, rights, attribution, privacy, and source concerns                                              | Exactly one product, image, dataset release, or source target                         |
-| `api_publication_holds`               | `id`                    | Private API operations        | Reversible public-output holds with placing and release audit history                                                      | Exactly one product, image, dataset release, or source target                         |
+| `blendcalc_api_publication_concerns`  | `id`                    | Private blendCalcAPI review   | Evidence-backed correction, rights, attribution, privacy, and source concerns                                              | Exactly one product, image, dataset release, or source target                         |
+| `blendcalc_api_publication_holds`     | `id`                    | Private blendCalcAPI operations | Reversible public-output holds with placing and release audit history                                                    | Exactly one product, image, dataset release, or source target                         |
 | `food_image_assets`                   | `id`                    | Shared image reference        | Source-backed product/ingredient image metadata rendered by ingredient UI                                                  | Optional `shared_product_id → shared_products.id`, optional barcode                   |
 | `product_api_cache`                   | `(provider, cache_key)` | Server cache                  | External API response cache for searches, barcode lookup, and food detail                                                  | No user ownership                                                                     |
 | `user_catalog_submission_enforcement` | `user_id`               | One current row per auth user | Cumulative moderator rejection count and current public-sharing suspension                                                 | `user_id → auth.users.id`, optional latest submission/reviewer                        |
@@ -822,8 +833,8 @@ Notes:
   remain separately preserved in `food.categories`.
 - `shared_product_revisions.category_option_id` copies the published product category so
   historical revisions retain the category used at publication.
-- Trusted API v1 server code reads this table through `get_blendcalc_product_v1` and
-  `search_blendcalc_products_v1`. These raw RPCs are executable only by `service_role`;
+- Trusted blendCalcAPI v1 server code reads this table through `get_blendcalc_api_product_v1` and
+  `search_blendcalc_api_products_v1`. These raw RPCs are executable only by `service_role`;
   browser `anon` and `authenticated` roles must use the versioned HTTP routes and cannot
   bypass their public-safe serializer. Both RPCs require an empty result from
   `blendcalc_api_v1_product_readiness_reasons`; therefore an active catalog row is not
@@ -836,7 +847,7 @@ Notes:
   consumers.
 - `catalog_product_readiness` is the service-only reusable status record for canonical
   products. It reports `Active`, `Waiting for review`, or `Blocked` for the shared
-  catalog; `Ready` or `Withheld` for API v1; and explicit
+  catalog; `Ready` or `Withheld` for blendCalcAPI v1; and explicit
   `searchable_in_blendcalc`/`usable_in_blendcalc` booleans. An API-withheld product can
   remain available inside blendCalc because catalog usefulness and public
   redistribution are separate decisions.
@@ -863,8 +874,8 @@ Notes:
   change summary. Missing, conflicting, non-redistributable, or ambiguous evidence
   remains unresolved rather than becoming invented history.
 - `blendcalc_api_publication_profiles` stores versioned fail-closed hard gates separately
-  from the broader canonical catalog. The default API v1 packaged-product profile links
-  to `api-v1-packaged-core-v1`, requires evidence-backed core identity and serving
+  from the broader canonical catalog. The default blendCalcAPI v1 packaged-product profile links
+  to `blendcalc-api-v1-packaged-core-v1`, requires evidence-backed core identity and serving
   fields, accepts only reported/reported-zero/exactly derived nutrient states, blocks
   unreviewed nutrient mappings and medium/high open conflicts, and expires stale
   verification. A failed row remains canonical but is omitted from API reads.
@@ -916,7 +927,7 @@ the migration does not invent historical field differences.
 at least one uniquely named, typed change with both previous and submitted values.
 The revision trigger rejects malformed update summaries and writes the complete
 structured set in the same publication transaction. Trusted server code calls
-`get_blendcalc_product_revision_history_v1`, which is a bounded service-role-only raw
+`get_blendcalc_api_product_revision_history_v1`, which is a bounded service-role-only raw
 reader over publication-ready products. The versioned HTTP serializer further allowlists
 field paths, replaces stored labels with API-owned wording, and reduces values to bounded
 public shapes. Browser roles cannot execute the RPC directly. Revision snapshots,
@@ -950,7 +961,7 @@ granting browsers direct access to the evidence tables.
 
 `shared_product_field_provenance` stores the canonical field path, selected observation,
 source and normalized values, confidence, evidence method, and selected state. Evidence
-methods in storage are `exact-barcode`, `label-review`, and `cross-source`; API v1 maps
+methods in storage are `exact-barcode`, `label-review`, and `cross-source`; blendCalcAPI v1 maps
 them to the bounded public vocabulary `exact-barcode`, `package-label`, and
 `corroborated-sources`, while explicit moderator-reviewed confidence maps to
 `moderator-reviewed`. Exact barcode identifies the provider product record but does not
@@ -1115,7 +1126,7 @@ Notes:
 - Community images stay private until a moderator approves them. Approval writes a
   `community-reviewed` image row with `moderator-reviewed` confidence and approval
   metadata.
-- API v1 emits an image only when its active row retains a licence name and URL,
+- blendCalcAPI v1 emits an image only when its active row retains a licence name and URL,
   attribution text, and retrieval date and its source registry row supplies the public
   source name and URL. It emits only the selected canonical front image; alternate
   candidates and barcode-only fallbacks remain internal. Missing asset attribution
@@ -1680,11 +1691,16 @@ Notes:
   explicit data-operations permission.
 - `get_catalog_review_work_summary(p_limit)` returns only material conflicts, provider
   changes, and possible recall matches to an AAL2 catalog reviewer.
-- `get_catalog_product_readiness_passport(p_shared_product_id)` returns one bounded
+- `get_blendcalc_api_catalog_product_readiness_passport(p_shared_product_id)` returns one bounded
   product contract to an AAL2 catalog reviewer or data-operations reader. It separates
-  shared-catalog and API v1 status, includes the current revision and source-evidence
+  shared-catalog and blendCalcAPI v1 status, includes the current revision and source-evidence
   counts, and maps open normalized issues to ownership and supported action metadata.
   It excludes raw provider payloads, private evidence paths, and contributor identity.
+- `private.build_catalog_product_readiness_passport(p_shared_product_id)` owns the
+  bounded shared-catalog and blendCalcAPI readiness assembly. Direct execution is
+  revoked; the canonical authenticated wrapper independently preserves the AAL2
+  permission check. The former public function name remains only as a temporary rollout
+  wrapper until the contract migration removes it.
 - `private.build_moderator_data_health_summary(p_days, p_issue_limit)` and
   `private.build_catalog_monitor_summary(p_limit)` assemble bounded payloads without
   granting access. Direct execution is revoked from client and service roles. Every
@@ -1772,7 +1788,7 @@ without calling the source again.
 | ------------------------------------------ | --------------------------------------------------- | ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `nutrition_completeness_profiles`          | `key`                                               | Defines what complete nutrition means for a food scope/region          | `food_scope` (`generic`, `manual`, or `packaged`), `region_code`, DB-owned labels, source reference, one enabled default per scope/region                                         |
 | `nutrition_completeness_profile_nutrients` | `profile_key, nutrient_id`                          | Orders required and recommended nutrients for one profile              | `requirement_level`, `display_order`, `reason`; nutrient FK prevents invented definitions                                                                                         |
-| `blendcalc_api_publication_profiles`       | `key`                                               | Versions the hard gates for one API major and resource scope           | Linked nutrition profile, required/recommended fields, accepted nutrient states, conflict severities, verification age, reviewed policy source, and one enabled default per scope |
+| `blendcalc_api_publication_profiles`       | `key`                                               | Versions the hard gates for one blendCalcAPI major and resource scope  | Linked nutrition profile, required/recommended fields, accepted nutrient states, conflict severities, verification age, reviewed policy source, and one enabled default per scope |
 | `product_regulatory_disclosure_profiles`   | `key`                                               | Defines reviewed package-label contexts without product-name inference | Disclosure kind, nutrition evaluation mode, optional completeness profile, region, authority, ABV requirement, review gate, source reference, and enabled/default state           |
 | `generic_food_datasets`                    | `key`                                               | Records each national release and its legal/import state               | Source/license URLs, attribution, file SHA-256, review status, import/active gates, imported row counts                                                                           |
 | `generic_food_records`                     | `dataset_key, source_food_key`                      | Stores one source-owned generic food/preparation                       | Raw description, group, preparation, searchable text, source reference and dates                                                                                                  |
@@ -1869,14 +1885,15 @@ category, or serving fields.
 | `blendcalc_api_v1_source_is_eligible`                  | Tests a stored source against the DB-owned API redistribution, licence, attribution, and policy-review gate                                                                                            |
 | `blendcalc_api_v1_source_attribution_is_complete`      | Tests a represented source/reference pair for complete provider attribution and, when applicable, an exact active imported dataset release; service role only                                          |
 | `blendcalc_api_v1_source_has_active_hold`              | Tests whether an exact provider or imported dataset release has an unreleased public-API hold; service role only                                                                                       |
-| `blendcalc_api_v1_product_readiness_reasons`           | Applies the enabled DB-backed profile and returns the service-only reasons an active shared product is withheld from API v1                                                                            |
-| `get_blendcalc_product_v1`                             | Service-role-only raw reader for one active, publication-ready shared product and its latest revision by GTIN-14                                                                                       |
-| `get_blendcalc_product_revision_history_v1`            | Service-role-only raw reader for bounded immutable revision metadata and evidence-backed field changes for one publication-ready GTIN-14                                                               |
-| `search_blendcalc_products_v1`                         | Service-role-only partial metadata search for active, publication-ready shared products with bounded pagination and name → brand → category → supporting-metadata relevance                            |
+| `blendcalc_api_v1_product_readiness_reasons`           | Applies the enabled DB-backed profile and returns the service-only reasons an active shared product is withheld from blendCalcAPI v1                                                                            |
+| `get_blendcalc_api_product_v1`                         | Service-role-only raw reader for one active, publication-ready shared product and its latest revision by GTIN-14                                                                                       |
+| `get_blendcalc_api_product_revision_history_v1`        | Service-role-only raw reader for bounded immutable revision metadata and evidence-backed field changes for one publication-ready GTIN-14                                                               |
+| `search_blendcalc_api_products_v1`                     | Service-role-only partial metadata search for active, publication-ready shared products with bounded pagination and name → brand → category → supporting-metadata relevance                            |
+| `get_blendcalc_api_catalog_product_readiness_passport` | Authenticated AAL2 catalog-review or data-operations passport with canonical blendCalcAPI status naming                                                                                               |
 | `get_catalog_data_operations_health`                   | Returns bounded admin/developer catalog, source, dataset, policy, mapping, revision, and publication-readiness summaries after exact AAL2 data-operations authorization                                |
 | `get_catalog_data_operations_monitor_summary`          | Returns bounded admin/developer monitor configuration, queue counts, and recent run state after exact AAL2 data-operations authorization                                                               |
 | `get_catalog_review_work_summary`                      | Returns bounded material conflicts, provider changes, and possible recall matches after exact AAL2 catalog-review authorization                                                                        |
-| `get_catalog_product_readiness_passport`               | Returns one bounded catalog/API status, revision, evidence-coverage, and normalized-issue passport after exact AAL2 catalog-review or data-operations authorization                                    |
+| `get_catalog_product_readiness_passport`               | Temporary rollout wrapper for the canonical blendCalcAPI readiness passport; removed by the later contract migration                                                                                  |
 | `get_moderator_data_health`                            | Temporary compatibility wrapper for the previous combined data-health interface                                                                                                                        |
 | `get_pending_profile_image_review_count`               | Service-role-only count of distinct exact profile images with one or more pending reports                                                                                                              |
 | `claim_catalog_revalidation_jobs`                      | Service-only bounded claim of due product/provider jobs using expiring claim tokens                                                                                                                    |

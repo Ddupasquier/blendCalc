@@ -15,9 +15,9 @@ select has_function(
 );
 select has_function(
 	'public',
-	'get_blendcalc_product_revision_history_v1',
+	'get_blendcalc_api_product_revision_history_v1',
 	array['text', 'integer', 'integer'],
-	'API v1 revision history has a bounded database read'
+	'blendCalcAPI v1 revision history has a bounded database read'
 );
 select ok(
 	public.catalog_change_summary_is_valid(
@@ -43,10 +43,10 @@ select ok(
 select ok(
 		not has_function_privilege(
 			'authenticated',
-			'public.get_blendcalc_product_revision_history_v1(text,integer,integer)',
+			'public.get_blendcalc_api_product_revision_history_v1(text,integer,integer)',
 			'EXECUTE'
 		),
-	'authenticated clients cannot bypass the API revision sanitizer'
+	'authenticated clients cannot bypass the blendCalcAPI revision sanitizer'
 );
 select ok(
 	not has_function_privilege(

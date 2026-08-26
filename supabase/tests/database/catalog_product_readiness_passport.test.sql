@@ -5,7 +5,7 @@ select plan(10);
 select ok(
 	has_function_privilege(
 		'authenticated',
-		'public.get_catalog_product_readiness_passport(uuid)',
+		'public.get_blendcalc_api_catalog_product_readiness_passport(uuid)',
 		'execute'
 	),
 	'authenticated sessions can reach the guarded product passport'
@@ -14,7 +14,7 @@ select ok(
 select ok(
 	not has_function_privilege(
 		'anon',
-		'public.get_catalog_product_readiness_passport(uuid)',
+		'public.get_blendcalc_api_catalog_product_readiness_passport(uuid)',
 		'execute'
 	),
 	'anonymous clients cannot read product passports'
@@ -39,7 +39,7 @@ select set_config(
 );
 
 select throws_ok(
-	$$select public.get_catalog_product_readiness_passport((select id from public.shared_products order by id limit 1))$$,
+	$$select public.get_blendcalc_api_catalog_product_readiness_passport((select id from public.shared_products order by id limit 1))$$,
 	'42501',
 	'MFA-verified catalog access is required.',
 	'normal users cannot read product passports'
@@ -52,7 +52,7 @@ select set_config(
 );
 
 select throws_ok(
-	$$select public.get_catalog_product_readiness_passport((select id from public.shared_products order by id limit 1))$$,
+	$$select public.get_blendcalc_api_catalog_product_readiness_passport((select id from public.shared_products order by id limit 1))$$,
 	'42501',
 	'MFA-verified catalog access is required.',
 	'catalog reviewers must verify MFA'
@@ -65,23 +65,23 @@ select set_config(
 );
 
 select lives_ok(
-	$$select public.get_catalog_product_readiness_passport((select id from public.shared_products order by id limit 1))$$,
+	$$select public.get_blendcalc_api_catalog_product_readiness_passport((select id from public.shared_products order by id limit 1))$$,
 	'MFA-verified catalog reviewers can read product passports'
 );
 
 select ok(
-	public.get_catalog_product_readiness_passport(
+	public.get_blendcalc_api_catalog_product_readiness_passport(
 		(select id from public.shared_products order by id limit 1)
 	) ?& array['product', 'revision', 'qualityDimensions', 'evidence', 'issues'],
 	'product passport has every top-level contract section'
 );
 
 select ok(
-	public.get_catalog_product_readiness_passport(
+	public.get_blendcalc_api_catalog_product_readiness_passport(
 		(select id from public.shared_products order by id limit 1)
 	) -> 'product' ?& array[
 		'sharedCatalogStatus',
-		'apiV1Status',
+		'blendCalcAPIV1Status',
 		'searchableInBlendcalc',
 		'usableInBlendcalc'
 	],
@@ -89,7 +89,7 @@ select ok(
 );
 
 select ok(
-	public.get_catalog_product_readiness_passport(
+	public.get_blendcalc_api_catalog_product_readiness_passport(
 		(select id from public.shared_products order by id limit 1)
 	) -> 'evidence' ?& array[
 		'selectedFieldCount',
@@ -110,12 +110,12 @@ select set_config(
 );
 
 select lives_ok(
-	$$select public.get_catalog_product_readiness_passport((select id from public.shared_products order by id limit 1))$$,
+	$$select public.get_blendcalc_api_catalog_product_readiness_passport((select id from public.shared_products order by id limit 1))$$,
 	'MFA-verified data operators can read product passports'
 );
 
 select throws_ok(
-	$$select public.get_catalog_product_readiness_passport('00000000-0000-4000-8000-000000000000')$$,
+	$$select public.get_blendcalc_api_catalog_product_readiness_passport('00000000-0000-4000-8000-000000000000')$$,
 	'P0002',
 	'Catalog product was not found.',
 	'unknown product ids fail explicitly'

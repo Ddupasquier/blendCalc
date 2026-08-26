@@ -25,9 +25,9 @@ select is(
 	(
 		select profile.nutrition_profile_key
 		from public.blendcalc_api_publication_profiles profile
-		where profile.key = 'api-v1-packaged-product-v1'
+		where profile.key = 'blendcalc-api-v1-packaged-product-v1'
 	),
-	'api-v1-packaged-core-v1',
+	'blendcalc-api-v1-packaged-core-v1',
 	'the API publication profile references its nutrition profile'
 );
 
@@ -35,7 +35,7 @@ select is(
 	(
 		select count(*)::integer
 		from public.nutrition_completeness_profile_nutrients requirement
-		where requirement.profile_key = 'api-v1-packaged-core-v1'
+		where requirement.profile_key = 'blendcalc-api-v1-packaged-core-v1'
 			and requirement.requirement_level = 'required'
 	),
 	8,
@@ -46,7 +46,7 @@ select ok(
 	(
 		select 'reported-zero' = any(profile.accepted_nutrient_value_statuses)
 		from public.blendcalc_api_publication_profiles profile
-		where profile.key = 'api-v1-packaged-product-v1'
+		where profile.key = 'blendcalc-api-v1-packaged-product-v1'
 	),
 	'a source-reported zero is an accepted explicit value state'
 );
@@ -55,7 +55,7 @@ select ok(
 	(
 		select not ('missing' = any(profile.accepted_nutrient_value_statuses))
 		from public.blendcalc_api_publication_profiles profile
-		where profile.key = 'api-v1-packaged-product-v1'
+		where profile.key = 'blendcalc-api-v1-packaged-product-v1'
 	),
 	'missing is never accepted as a numeric nutrient value'
 );
@@ -64,7 +64,7 @@ select ok(
 	(
 		select profile.require_canonical_nutrient_mapping
 		from public.blendcalc_api_publication_profiles profile
-		where profile.key = 'api-v1-packaged-product-v1'
+		where profile.key = 'blendcalc-api-v1-packaged-product-v1'
 	),
 	'canonical nutrient mapping evidence is required'
 );
@@ -74,7 +74,7 @@ select ok(
 		select 'medium' = any(profile.blocked_conflict_severities)
 			and 'high' = any(profile.blocked_conflict_severities)
 		from public.blendcalc_api_publication_profiles profile
-		where profile.key = 'api-v1-packaged-product-v1'
+		where profile.key = 'blendcalc-api-v1-packaged-product-v1'
 	),
 	'medium and high unresolved conflicts block publication'
 );
