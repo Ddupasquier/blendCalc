@@ -6,7 +6,7 @@ const readSource = (path: string) => readFileSync(path, "utf8");
 describe("Playwright browser-testing architecture", () => {
 	it("keeps browser tests isolated from Vitest", () => {
 		const viteConfig = readSource("vite.config.ts");
-		expect(viteConfig).toContain("exclude: ['tests/e2e/**']");
+		expect(viteConfig).toMatch(/exclude:\s*\[\s*["']tests\/e2e\/\*\*["']\s*\]/);
 	});
 
 	it("runs authenticated desktop and mobile projects with isolated parallel workers", () => {
