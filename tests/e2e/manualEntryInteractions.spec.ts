@@ -5,6 +5,7 @@ import {
 	readApprovedManualEntryNutrientCatalog,
 	type ExpectedManualEntryNutrientGroup,
 } from "./support/localManualEntryNutrientCatalog";
+import { MANUAL_ENTRY_REFERENCE_DATA_UNAVAILABLE_MESSAGE } from "$lib/utils/food/nutrients/manualEntryReferenceData";
 
 const canonicalCategoryDisplayTestName = "Canonical Category Display Test";
 const canonicalCategoryDisplayTestNameKey =
@@ -178,6 +179,62 @@ test("manual-entry progress tabs perform the same forward validation", async ({
 	await expect(
 		dialog.getByText("Name must be at least 3 characters"),
 	).toBeVisible();
+});
+
+test("manual entry shows one message when its reference catalog response is unavailable", async ({
+	page,
+}) => {
+	const directReferenceTableRequests: string[] = [];
+	page.on("request", (request) => {
+		if (
+			/nutrient_(?:relationship_rules|source_mappings)/u.test(request.url())
+		) {
+			directReferenceTableRequests.push(request.url());
+		}
+	});
+	await page.route("**/api/manual-entry/reference-data", async (route) => {
+		await route.fulfill({
+			status: 200,
+			contentType: "application/json",
+			body: JSON.stringify({}),
+		});
+	});
+
+	await page.goto("/ingredients/fridge/manual-entry");
+	await waitForAppReady(page);
+
+	const dialog = page.getByRole("dialog", { name: "Enter Manually" });
+	await dialog.getByLabel("Food name").fill("Reference data regression food");
+	await dialog.getByRole("button", { name: "Category" }).click();
+	const categorySearch = dialog.getByRole("searchbox", {
+		name: "Search categories",
+	});
+	await categorySearch.fill("protein bar");
+	await expect(
+		dialog.getByRole("status", { name: "Searching categories" }),
+	).toBeHidden({ timeout: 20_000 });
+	await dialog
+		.getByRole("button", { name: "Protein Bars", exact: true })
+		.first()
+		.click();
+	await dialog.getByRole("button", { name: "Continue" }).click();
+	await dialog.getByLabel("Weight (g)").fill("100");
+	await dialog.getByRole("button", { name: "Continue" }).click();
+
+	await expect(
+		dialog.getByText(MANUAL_ENTRY_REFERENCE_DATA_UNAVAILABLE_MESSAGE),
+	).toHaveCount(1);
+	await expect(
+		dialog.getByText("Nutrition label scanning is unavailable.", {
+			exact: false,
+		}),
+	).toHaveCount(0);
+	await expect(
+		dialog.getByText("Nutrition validation rules could not be loaded.", {
+			exact: false,
+		}),
+	).toHaveCount(0);
+	expect(directReferenceTableRequests).toEqual([]);
 });
 
 test("manual barcode entry shows input-bound progress until lookup finishes", async ({
