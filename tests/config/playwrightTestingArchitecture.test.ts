@@ -7,6 +7,12 @@ describe("Playwright browser-testing architecture", () => {
 	it("keeps browser tests isolated from Vitest", () => {
 		const viteConfig = readSource("vite.config.ts");
 		expect(viteConfig).toMatch(/exclude:\s*\[\s*["']tests\/e2e\/\*\*["']\s*\]/);
+		expect(viteConfig).toContain('name: "node"');
+		expect(viteConfig).toContain('environment: "node"');
+		expect(viteConfig).toContain('name: "dom"');
+		expect(viteConfig).toContain('environment: "jsdom"');
+		expect(viteConfig).toContain('name: "dom-svelte-runtime"');
+		expect(viteConfig).toContain('pool: "vmThreads"');
 	});
 
 	it("runs authenticated desktop and mobile projects with isolated parallel workers", () => {
@@ -25,9 +31,15 @@ describe("Playwright browser-testing architecture", () => {
 		}
 		expect(playwrightConfig).toContain('command: "npm run test:e2e:server"');
 		expect(playwrightConfig).toContain('"http://localhost:5174"');
-		expect(playwrightConfig).toContain("reuseExistingServer: false");
+		expect(playwrightConfig).toContain("reuseExistingServer: !process.env.CI");
 		expect(playwrightConfig).toContain('process.env.PLAYWRIGHT_WORKERS ?? "2"');
 		expect(playwrightConfig).toContain("workers: localPlaywrightWorkerCount");
+		expect(playwrightConfig).toContain("fullyParallel: true");
+		expect(playwrightConfig).toContain("retries: process.env.CI ? 1 : 0");
+		expect(playwrightConfig).toContain("PLAYWRIGHT_EXHAUSTIVE_MATRIX");
+		expect(playwrightConfig).toContain("compatibilityTestPattern");
+		expect(playwrightConfig).toContain("mobileTestPattern");
+		expect(playwrightConfig).toContain("slowTestReporter.ts");
 		expect(browserTestSupport).toContain('scope: "worker"');
 		expect(browserTestSupport).toContain("workerInfo.parallelIndex");
 		expect(browserTestSupport).toContain("playwrightRequest.newContext");
@@ -59,8 +71,12 @@ describe("Playwright browser-testing architecture", () => {
 
 		for (const command of [
 			'test:e2e"',
+			'test:e2e:affected"',
 			'test:e2e:chromium"',
+			'test:e2e:compatibility"',
 			'test:e2e:headed"',
+			'test:e2e:nightly"',
+			'test:e2e:session:start"',
 			'test:e2e:ui"',
 			'test:e2e:update"',
 		]) {
@@ -112,6 +128,9 @@ describe("Playwright browser-testing architecture", () => {
 
 	it("runs remote browser projects and database verification in isolated jobs", () => {
 		const verificationWorkflow = readSource(".github/workflows/verify.yml");
+		const nightlyWorkflow = readSource(
+			".github/workflows/nightly-browser-matrix.yml",
+		);
 		const databaseWorkflow = readSource(
 			".github/workflows/database-verification.yml",
 		);
@@ -141,8 +160,14 @@ describe("Playwright browser-testing architecture", () => {
 		expect(verificationWorkflow).toContain("npm test");
 		expect(verificationWorkflow).toContain("npm run build");
 		expect(verificationWorkflow).toContain("name: Browser Matrix");
+		expect(verificationWorkflow).toContain(
+			"PLAYWRIGHT_ENFORCE_DURATION_BUDGETS: true",
+		);
+		expect(nightlyWorkflow).toContain("PLAYWRIGHT_EXHAUSTIVE_MATRIX: true");
+		expect(nightlyWorkflow).toContain('cron: "0 10 * * *"');
 		for (const workflow of [
 			verificationWorkflow,
+			nightlyWorkflow,
 			databaseWorkflow,
 			hostedAuthWorkflow,
 		]) {

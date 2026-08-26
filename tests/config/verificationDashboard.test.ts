@@ -32,32 +32,52 @@ const profiles = JSON.parse(
 ) as Record<string, { stages: Array<{ id: string }> }>;
 
 describe("visible verification dashboard", () => {
-	it("keeps quick, feature, and release confidence cumulative", () => {
-		expect(Object.keys(profiles)).toEqual(["quick", "feature", "release"]);
+	it("keeps quick, feature, release, and nightly confidence intentional", () => {
+		expect(Object.keys(profiles)).toEqual([
+			"quick",
+			"feature",
+			"release",
+			"nightly",
+		]);
 		const quickStageIds = profiles.quick.stages.map(({ id }) => id);
 		const featureStageIds = profiles.feature.stages.map(({ id }) => id);
 		const releaseStageIds = profiles.release.stages.map(({ id }) => id);
+		const nightlyStageIds = profiles.nightly.stages.map(({ id }) => id);
 
+		expect(quickStageIds).toContain("vitest-affected");
 		expect(featureStageIds).toEqual(
 			expect.arrayContaining([
-				...quickStageIds,
-				"build",
-				"playwright-chromium",
+				"vitest-node",
+				"vitest-dom",
+				"playwright-affected",
 			]),
 		);
+		expect(featureStageIds).not.toContain("vitest-affected");
+		expect(featureStageIds).not.toContain("build");
 		expect(releaseStageIds).toEqual(
 			expect.arrayContaining([
-				...quickStageIds,
+				"vitest-node",
+				"vitest-dom",
 				"dependencies",
 				"build",
 				"database",
 				"playwright-matrix",
 			]),
 		);
+		expect(nightlyStageIds).toEqual(
+			expect.arrayContaining([
+				"vitest-node",
+				"vitest-dom",
+				"dependencies",
+				"build",
+				"database",
+				"playwright-exhaustive",
+			]),
+		);
 	});
 
 	it("exposes every profile through npm and a dedicated visible terminal task", () => {
-		for (const profile of ["quick", "feature", "release"]) {
+		for (const profile of ["quick", "feature", "release", "nightly"]) {
 			expect(packageMetadata.scripts[`verify:${profile}`]).toBe(
 				`node scripts/operations/quality/run_verification_dashboard.mjs ${profile}`,
 			);
@@ -77,5 +97,15 @@ describe("visible verification dashboard", () => {
 	it("keeps forced-color terminal output free of conflicting NO_COLOR warnings", () => {
 		expect(dashboardSource).toContain("getChildProcessEnvironment");
 		expect(dashboardSource).toContain("NO_COLOR: _ignoredNoColor");
+	});
+
+	it("provides compile-only public configuration in clean feature worktrees", () => {
+		expect(packageMetadata.scripts.check).toContain(
+			"PUBLIC_SUPABASE_URL=http://127.0.0.1:54321",
+		);
+		expect(packageMetadata.scripts.check).toContain(
+			"PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_local_compile_only",
+		);
+		expect(dashboardSource).toContain("compileOnlyPublicEnvironment");
 	});
 });

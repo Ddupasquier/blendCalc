@@ -334,21 +334,23 @@ const selectGoalRule = async (
 		.click();
 };
 
-test("compact Mix header follows main-page scroll direction", async ({
-	page,
-}, testInfo) => {
-	test.skip(
-		!testInfo.project.name.startsWith("mobile-"),
-		"Compact header behavior is a phone-layout contract.",
-	);
+test(
+	"compact Mix header follows main-page scroll direction",
+	{ tag: "@mobile" },
+	async ({ page }, testInfo) => {
+		test.skip(
+			!testInfo.project.name.startsWith("mobile-"),
+			"Compact header behavior is a phone-layout contract.",
+		);
 
-	await page.goto("/mix");
-	await waitForAppReady(page);
-	await expectCompactHeaderHidesAndRevealsWithScroll(
-		page.locator(".view-top").first(),
-		page.locator(".mix-page"),
-	);
-});
+		await page.goto("/mix");
+		await waitForAppReady(page);
+		await expectCompactHeaderHidesAndRevealsWithScroll(
+			page.locator(".view-top").first(),
+			page.locator(".mix-page"),
+		);
+	},
+);
 
 test("Mix disclosures expose animated open and closed state", async ({
 	page,
@@ -1215,42 +1217,44 @@ test("Mix ingredient chooser preserves selection across search, sorting, paginat
 	);
 });
 
-test("compact Mix chooser cards keep long names clear of the selection control", async ({
-	page,
-}, testInfo) => {
-	test.skip(
-		!testInfo.project.name.startsWith("mobile-"),
-		"Compact geometry is owned by phone-layout projects.",
-	);
+test(
+	"compact Mix chooser cards keep long names clear of the selection control",
+	{ tag: "@mobile" },
+	async ({ page }, testInfo) => {
+		test.skip(
+			!testInfo.project.name.startsWith("mobile-"),
+			"Compact geometry is owned by phone-layout projects.",
+		);
 
-	await page.goto("/mix");
-	await waitForAppReady(page);
-	const chooser = page.locator(".ingredient-chooser");
-	const details = chooser.locator(":scope > details");
-	if ((await details.getAttribute("open")) === null) {
-		await details.locator(":scope > summary").click();
-	}
-	await chooser
-		.getByRole("searchbox", { name: "Find ingredients" })
-		.fill("strawberry");
-	const card = chooser
-		.getByRole("button", {
-			name: /^(?:Add|Remove) Strawberry Jelly, Strawberry (?:to|from) this mix/,
-		})
-		.locator("..");
-	await expect(card).toHaveCount(1);
-	const [copyBounds, indicatorBounds] = await Promise.all([
-		card.locator(".mix-ingredient-option__copy").boundingBox(),
-		card.locator(".mix-ingredient-option__select-status").boundingBox(),
-	]);
-	expect(copyBounds).not.toBeNull();
-	expect(indicatorBounds).not.toBeNull();
-	expect(copyBounds!.x + copyBounds!.width).toBeLessThanOrEqual(
-		indicatorBounds!.x,
-	);
-	await expect(card.getByText("Custom", { exact: true })).toHaveCount(0);
-	await expect(card.locator(".ingredient-category-badge")).toHaveCount(0);
-});
+		await page.goto("/mix");
+		await waitForAppReady(page);
+		const chooser = page.locator(".ingredient-chooser");
+		const details = chooser.locator(":scope > details");
+		if ((await details.getAttribute("open")) === null) {
+			await details.locator(":scope > summary").click();
+		}
+		await chooser
+			.getByRole("searchbox", { name: "Find ingredients" })
+			.fill("strawberry");
+		const card = chooser
+			.getByRole("button", {
+				name: /^(?:Add|Remove) Strawberry Jelly, Strawberry (?:to|from) this mix/,
+			})
+			.locator("..");
+		await expect(card).toHaveCount(1);
+		const [copyBounds, indicatorBounds] = await Promise.all([
+			card.locator(".mix-ingredient-option__copy").boundingBox(),
+			card.locator(".mix-ingredient-option__select-status").boundingBox(),
+		]);
+		expect(copyBounds).not.toBeNull();
+		expect(indicatorBounds).not.toBeNull();
+		expect(copyBounds!.x + copyBounds!.width).toBeLessThanOrEqual(
+			indicatorBounds!.x,
+		);
+		await expect(card.getByText("Custom", { exact: true })).toHaveCount(0);
+		await expect(card.locator(".ingredient-category-badge")).toHaveCount(0);
+	},
+);
 
 test("selected ingredient amount controls change once and restore the original value", async ({
 	page,

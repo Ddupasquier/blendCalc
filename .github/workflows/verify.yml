@@ -67,6 +67,7 @@ jobs:
           - project: mobile-webkit
             browser: webkit
     env:
+      PLAYWRIGHT_ENFORCE_DURATION_BUDGETS: true
       PLAYWRIGHT_WORKERS: 2
     steps:
       - name: Check out repository

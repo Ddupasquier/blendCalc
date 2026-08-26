@@ -31,58 +31,65 @@ const guestAccessSnapshots = [
 ] as const;
 
 for (const view of stableViewSnapshots) {
-	test(`${view.route} keeps its approved desktop and phone composition`, async ({
-		page,
-	}, testInfo) => {
-		test.skip(
-			Boolean(process.env.CI),
-			"Reviewed macOS image baselines run locally; CI owns structural layout checks.",
-		);
-		test.skip(
-			!["desktop-chromium", "mobile-chromium"].includes(testInfo.project.name),
-			"Visual baselines are intentionally limited to deterministic Chromium projects.",
-		);
+	test(
+		`${view.route} keeps its approved desktop and phone composition`,
+		{ tag: "@mobile" },
+		async ({ page }, testInfo) => {
+			test.skip(
+				Boolean(process.env.CI),
+				"Reviewed macOS image baselines run locally; CI owns structural layout checks.",
+			);
+			test.skip(
+				!["desktop-chromium", "mobile-chromium"].includes(
+					testInfo.project.name,
+				),
+				"Visual baselines are intentionally limited to deterministic Chromium projects.",
+			);
 
-		await page.goto(view.route);
-		await waitForVisualStability(page);
+			await page.goto(view.route);
+			await waitForVisualStability(page);
 
-		await expect(page.locator(view.rootSelector)).toHaveScreenshot(
-			view.snapshotName,
-			{
-				mask: [page.locator("img")],
-				maskColor: "#eaf7ef",
-			},
-		);
-	});
+			await expect(page.locator(view.rootSelector)).toHaveScreenshot(
+				view.snapshotName,
+				{
+					mask: [page.locator("img")],
+					maskColor: "#eaf7ef",
+				},
+			);
+		},
+	);
 }
 
 for (const view of guestAccessSnapshots) {
-	test(`${view.route} keeps the shared ${view.theme} guest access composition`, async ({
-		context,
-		page,
-	}, testInfo) => {
-		test.skip(
-			Boolean(process.env.CI),
-			"Reviewed macOS image baselines run locally; CI owns structural layout checks.",
-		);
-		test.skip(
-			!["desktop-chromium", "mobile-chromium"].includes(testInfo.project.name),
-			"Visual baselines are intentionally limited to deterministic Chromium projects.",
-		);
+	test(
+		`${view.route} keeps the shared ${view.theme} guest access composition`,
+		{ tag: "@mobile" },
+		async ({ context, page }, testInfo) => {
+			test.skip(
+				Boolean(process.env.CI),
+				"Reviewed macOS image baselines run locally; CI owns structural layout checks.",
+			);
+			test.skip(
+				!["desktop-chromium", "mobile-chromium"].includes(
+					testInfo.project.name,
+				),
+				"Visual baselines are intentionally limited to deterministic Chromium projects.",
+			);
 
-		await context.clearCookies();
-		await context.addCookies([
-			{
-				name: "blendcalc-theme",
-				value: view.theme,
-				url: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:5174",
-			},
-		]);
-		await page.goto(view.route);
-		await waitForVisualStability(page);
+			await context.clearCookies();
+			await context.addCookies([
+				{
+					name: "blendcalc-theme",
+					value: view.theme,
+					url: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:5174",
+				},
+			]);
+			await page.goto(view.route);
+			await waitForVisualStability(page);
 
-		await expect(
-			page.locator(".guest-access-page-shell__card"),
-		).toHaveScreenshot(view.snapshotName);
-	});
+			await expect(
+				page.locator(".guest-access-page-shell__card"),
+			).toHaveScreenshot(view.snapshotName);
+		},
+	);
 }

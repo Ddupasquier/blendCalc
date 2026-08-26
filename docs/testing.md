@@ -91,7 +91,7 @@ assertion in the same change.
 Run the smallest relevant test while editing:
 
 ```bash
-npm test -- tests/path/to/affected.test.ts
+npm run test:focused -- tests/path/to/affected.test.ts
 npm run test:watch -- tests/path/to/affected.test.ts
 ```
 
@@ -99,9 +99,16 @@ For browser work, prepare the disposable database once, then run the affected sp
 the primary browser:
 
 ```bash
-npm run db:test:start
+npm run test:e2e:session:start
+# In another terminal while the prepared server remains open:
+npm run test:e2e:affected:run
 npx playwright test tests/e2e/affectedInteractions.spec.ts --project=desktop-chromium
 ```
+
+`npm run test:affected` selects related Vitest files from the current diff.
+`npm run test:e2e:affected` prepares the browser environment and selects routed specs
+from the same ownership map. Use the `:run` variant during an existing browser-test
+session so Supabase and the production build are not prepared again.
 
 Rerun only browser failures with:
 
@@ -112,13 +119,14 @@ npx playwright test --last-failed
 Use the visible terminal dashboard when a complete progress view is more useful than
 compact output:
 
-| Profile       | Command                  | Ownership                                                                                            |
-| ------------- | ------------------------ | ---------------------------------------------------------------------------------------------------- |
-| Quick Check   | `npm run verify:quick`   | Formatting, lint, Svelte/TypeScript, and Vitest                                                      |
-| Feature Check | `npm run verify:feature` | Quick Check, production build, and desktop/compact Chromium                                          |
-| Release Check | `npm run verify:release` | Dependency audit, source gates, disposable database, build, and the complete local Playwright matrix |
+| Profile       | Command                  | Target       | Ownership                                                                                          |
+| ------------- | ------------------------ | ------------ | -------------------------------------------------------------------------------------------------- |
+| Quick Check   | `npm run verify:quick`   | Under 4 min  | Formatting, lint, Svelte/TypeScript, and Vitest selected from changed ownership                    |
+| Feature Check | `npm run verify:feature` | Under 8 min  | Source gates, every Vitest project, and browser specs selected from changed ownership              |
+| Release Check | `npm run verify:release` | Under 15 min | Dependency audit, source gates, disposable database, build, and the bounded blocking browser tiers |
+| Nightly Check | `npm run verify:nightly` | Nonblocking  | Release confidence plus every scenario in every maintained browser and device-emulation project    |
 
-VS Code exposes the same three profiles through **Terminal → Run Task**. Each task opens
+VS Code exposes the same four profiles through **Terminal → Run Task**. Each task opens
 one dedicated terminal and shows stage progress, elapsed time, an estimate based on
 ignored local duration history, the current test when the runner reports it, and the
 failure-log path when a stage fails. This is a presentation layer over the maintained
@@ -127,15 +135,18 @@ manual physical-device verification.
 
 ### Feature Confidence
 
-Before handing off browser-facing work, run the focused desktop and phone Chromium pass:
+Use changed-file ownership for normal feature work:
 
 ```bash
-npm run test:e2e:chromium
+npm run test:affected
+npm run test:e2e:affected
 ```
 
-Also run the affected Vitest domain, `npm run check`, and any database test required by
-the change. Do not rerun the complete browser matrix after documentation, comments, or
-unrelated source-only edits.
+The selector maps Mix, Ingredients, Profile, Saved, and Auth ownership to their routed
+browser specs. Shared unit-test configuration expands Quick Check to every Vitest
+project. Shared shell, style, browser support, or Playwright configuration changes
+expand browser verification to the bounded blocking matrix. Do not rerun browser tests
+after documentation, comments, or unrelated source-only edits.
 
 ### Release Confidence
 
@@ -157,17 +168,39 @@ only the focused architecture and documentation checks that govern the changed t
 
 ## Parallelism
 
-On the current 8-core, 16 GiB development machine, full-suite samples completed in
-113.73 seconds with four Vitest workers, 97.12 seconds with six, and 98.62 seconds with
-eight. The maintained local maximum is therefore six; CI uses two workers to match the
-smaller hosted runner. Rebenchmark after major dependency, hardware, or suite changes
-instead of treating six as a universal optimum.
+Vitest separates work by runtime instead of paying for jsdom in every file:
 
-Playwright defaults to two local workers. Three equivalent browser-worker personas are
-seeded in the disposable database, and every worker creates its own authenticated
-storage state. Set `PLAYWRIGHT_WORKERS=3` for an intentional local comparison. A hosted
-test run must provide one comma-separated `PLAYWRIGHT_QA_EMAILS` value per worker; one
-shared account is not parallel-safe.
+- 389 source, server, architecture, and pure-utility files run in Node threads;
+- 121 rendered component and browser-utility files run in isolated VM threads;
+- one OCR component test uses a standard isolated thread because Svelte runes cannot be
+  evaluated safely in the VM pool.
+
+On the current development machine, the complete 2,191-assertion Vitest pass completed
+in 3 minutes 11 seconds: about 50 seconds for Node and 1 minute 53 seconds for rendered
+DOM ownership, including process startup. Six local workers remain the measured default;
+CI uses two workers for its smaller hosted runner. Rebenchmark after major dependency,
+hardware, or suite changes instead of treating either pool or worker count as universal.
+
+Playwright defaults to two workers. A clean bounded-matrix benchmark completed in 3.7
+minutes with two workers and 4.2 minutes with three, so the extra worker increased local
+contention instead of improving throughput. The maintained QA database still seeds three
+equivalent browser-worker personas for future remeasurement. Override
+`PLAYWRIGHT_WORKERS` only while benchmarking; raising it beyond the available personas
+is invalid. A hosted test run must provide one comma-separated
+`PLAYWRIGHT_QA_EMAILS` value per worker; one shared account is not parallel-safe.
+
+The current optimized Quick Check completes in 3 minutes 13 seconds. A cold Feature
+Check completes in 11 minutes 1 second because it still prepares the browser database
+and creates a production test build before the 3.7-minute Playwright pass. Replacing the
+production preview with a Vite development server was measured and rejected because it
+increased the same run to 12 minutes 20 seconds. Further cold-start optimization remains
+tracked work; do not shorten the run by weakening database isolation, browser ownership,
+production-build confidence, or failure diagnostics.
+
+`fullyParallel` lets Playwright schedule independent tests from large responsibility
+specs across those isolated workers. Splitting a spec is still appropriate when its
+feature ownership becomes unclear, but splitting files solely to manufacture parallelism
+is unnecessary and creates churn without reducing execution time.
 
 Remote browser verification uses one job per Playwright project. Every job creates its
 own local Supabase stack, so Chromium, Firefox, WebKit, and compact projects cannot race
@@ -198,10 +231,15 @@ only when a failure needs investigation.
 The checked-in workflows use Node.js 24 and a clean dependency install:
 
 - `.github/workflows/verify.yml` runs version consistency, dependency auditing, Svelte
-  checks, Vitest, the production build, and one isolated job per browser project. Its
+  checks, Vitest, the production build, and one isolated bounded job per browser
+  project. Desktop Chromium owns every routed interaction, mobile Chromium owns
+  compact/touch contracts, and Firefox/WebKit own tagged compatibility smoke coverage. Its
   source job supplies compile-only local public Supabase placeholders so Svelte can
   generate `$env/static/public` types without production credentials or database
   access;
+- `.github/workflows/nightly-browser-matrix.yml` runs every Playwright scenario in all
+  five projects on a schedule and on manual request. It reports exhaustive regressions
+  without making that redundant matrix part of every blocking push;
 - `.github/workflows/database-verification.yml` rebuilds the local Supabase stack and
   runs pgTAP whenever migrations or database-test ownership files change. Its stable
   `Database Verification` conclusion still reports success when those files are
@@ -220,16 +258,18 @@ work and `main` only for an explicitly approved release.
 
 ## Browser Matrix
 
-The complete Playwright suite includes desktop Chromium, Firefox, WebKit, mobile
-Chromium, and mobile WebKit. Not every scenario must run in every project:
+The blocking Playwright suite uses explicit tiers:
 
-- run deep state-changing workflows once when shared controls already have
-  cross-engine coverage;
-- run route health, browser errors, shared controls, and engine-sensitive behavior in
-  every applicable engine;
-- run compact layout, touch, overflow, and responsive-header behavior in mobile
-  projects;
-- give every intentional project skip a clear reason.
+- desktop Chromium runs every routed interaction;
+- mobile Chromium adds tests tagged `@mobile` and `@compatibility`;
+- desktop Firefox, desktop WebKit, and mobile WebKit run tests tagged
+  `@compatibility`;
+- `PLAYWRIGHT_EXHAUSTIVE_MATRIX=true` removes those filters for the nightly and
+  pre-release exhaustive matrix.
+
+This keeps deep business flows in one primary engine while preserving targeted engine,
+touch, responsive, route, focus, and hydration confidence. Give every project-specific
+skip a clear reason.
 
 See [Browser Testing](browser-testing.md) for Playwright setup, authenticated state,
 artifacts, snapshots, and authoring rules.

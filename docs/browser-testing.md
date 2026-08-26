@@ -53,9 +53,10 @@ available on `http://localhost:5173`; Playwright never reuses or stops that serv
 Three populated `qa-browser-*` personas isolate local browser workers. Each project and
 worker validates and reuses its browser state beneath ignored `test-results/`, signing
 in only when that state is missing or no longer authentic. This prevents worker restarts
-and immediate matrix reruns from wasting Auth capacity. Two workers run by default; set
-`PLAYWRIGHT_WORKERS=3` for an intentional local comparison. Override the local accounts
-only when a deliberate hosted test run requires it:
+and immediate matrix reruns from wasting Auth capacity. Two workers run by default: the
+bounded matrix completed in 3.7 minutes with two workers and 4.2 minutes with three on
+the current development machine. CI also uses two workers per isolated job. Override
+the local accounts only when a deliberate hosted test run requires it:
 
 ```bash
 PLAYWRIGHT_QA_EMAILS="first@example.test,second@example.test" \
@@ -79,13 +80,25 @@ local Supabase stack. See [Testing Strategy: Parallelism](testing.md#parallelism
 ```bash
 npm run test:e2e:install
 npm run test:e2e
+npm run test:e2e:affected
+npm run test:e2e:compatibility
+npm run test:e2e:nightly
+npm run test:e2e:session:start
 npm run test:e2e:chromium
 npm run test:e2e:headed
 npm run test:e2e:ui
 npm run test:e2e:update
 ```
 
-- `test:e2e` runs desktop Chromium, Firefox, WebKit, mobile Chromium, and mobile WebKit.
+- `test:e2e` runs the bounded blocking tiers: every interaction in desktop Chromium,
+  mobile-tagged coverage in mobile Chromium, and compatibility-tagged smoke coverage in
+  Firefox, WebKit, and mobile WebKit.
+- `test:e2e:affected` selects specs from changed application ownership and prepares the
+  environment; `test:e2e:affected:run` reuses an existing prepared session.
+- `test:e2e:compatibility` runs only the tagged cross-engine compatibility contract.
+- `test:e2e:nightly` runs every scenario in all five projects.
+- `test:e2e:session:start` prepares Supabase and one production test build, then keeps
+  the app available on port `5174` for repeated direct Playwright commands.
 - `test:e2e:chromium` is the focused local pass for desktop and 360×740 phone layouts.
 - `test:e2e:headed` shows the desktop Chromium run.
 - `test:e2e:ui` opens Playwright's test explorer.
@@ -100,10 +113,12 @@ current Mix and Saved Recipes compositions at desktop Chromium and the shared 36
 phone viewport. Profile and Moderation remain outside snapshot approval until their
 planned visual rebuilds are complete.
 
-After `npm run db:test:start` prepares the database, use direct commands for focused
-iteration without repeating database setup:
+After `npm run test:e2e:session:start` prepares the database, build, and preview server,
+use another terminal for focused iteration without repeating setup:
 
 ```bash
+PLAYWRIGHT_SKIP_WEB_SERVER=1 npm run test:e2e:affected:run
+PLAYWRIGHT_SKIP_WEB_SERVER=1 npx playwright test --project=desktop-chromium
 npx playwright test tests/e2e/affectedInteractions.spec.ts --project=desktop-chromium
 npx playwright test --last-failed
 ```
@@ -112,6 +127,10 @@ Install browser binaries after a fresh dependency install or Playwright upgrade.
 Generated reports, traces, videos, authentication state, and failure screenshots remain
 under ignored `playwright-report/` and `test-results/`. Approved snapshot baselines live
 beside their test files and are tracked.
+
+Every run writes `test-results/playwright-slow-tests.json`. Blocking release and CI
+checks fail when a passing test exceeds the maintained duration budget, preventing slow
+polling or accidental sleeps from quietly rebuilding a long suite.
 
 ## Writing Tests
 
@@ -135,6 +154,9 @@ beside their test files and are tracked.
 - Update snapshots only after reviewing the rendered diff.
 - Use compact output for unattended successful runs. Open the retained HTML report,
   trace, screenshot, or video only when a failure needs investigation.
+- Tag engine-sensitive route, focus, hydration, and shared-control smoke tests with
+  `@compatibility`. Tag compact/touch-only contracts with `@mobile`. Do not tag ordinary
+  desktop Chromium ownership merely to multiply it across projects.
 
 ## QA Evidence
 

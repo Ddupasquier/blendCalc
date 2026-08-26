@@ -1,13 +1,6 @@
 import "@testing-library/jest-dom";
 import "@testing-library/svelte/vitest";
-import {
-	appReferenceCatalogFixture,
-	nutritionCompletenessCatalogFixture,
-	servingMeasureCatalogFixture,
-} from "./fixtures/referenceCatalogs";
-import { configureServingMeasureCatalog } from "$lib/utils/serving/servingMeasureCatalog";
-import { configureNutritionCompletenessCatalog } from "$lib/utils/food/quality/nutritionCompletenessCatalog";
-import { configureAppReferenceCatalog } from "$lib/utils/food/reference/appReferenceCatalog";
+import "./test-reference-catalog-setup";
 
 if (
 	typeof HTMLElement !== "undefined" &&
@@ -39,7 +32,3 @@ if (
 		},
 	});
 }
-
-configureServingMeasureCatalog(servingMeasureCatalogFixture);
-configureNutritionCompletenessCatalog(nutritionCompletenessCatalogFixture);
-configureAppReferenceCatalog(appReferenceCatalogFixture);

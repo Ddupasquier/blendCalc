@@ -4,10 +4,21 @@ delete process.env.NO_COLOR;
 
 const applicationBaseUrl =
 	process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:5174";
+const runExhaustiveBrowserMatrix =
+	process.env.PLAYWRIGHT_EXHAUSTIVE_MATRIX === "true";
 const localPlaywrightWorkerCount = Number.parseInt(
 	process.env.PLAYWRIGHT_WORKERS ?? "2",
 	10,
 );
+const compatibilityTestPattern = /@compatibility/;
+const mobileTestPattern = /@(?:compatibility|mobile)/;
+const getFocusedProjectPattern = (project: "compatibility" | "mobile") =>
+	runExhaustiveBrowserMatrix
+		? undefined
+		: project === "mobile"
+			? mobileTestPattern
+			: compatibilityTestPattern;
+const terminalReporter = process.env.PLAYWRIGHT_PROGRESS_REPORTER ?? "dot";
 
 if (
 	!Number.isInteger(localPlaywrightWorkerCount) ||
@@ -19,13 +30,22 @@ if (
 export default defineConfig({
 	testDir: "./tests/e2e",
 	outputDir: "test-results/playwright",
-	fullyParallel: false,
+	fullyParallel: true,
 	forbidOnly: Boolean(process.env.CI),
-	retries: process.env.CI ? 2 : 0,
+	retries: process.env.CI ? 1 : 0,
 	workers: localPlaywrightWorkerCount,
 	reporter: process.env.CI
-		? [["github"], ["dot"], ["html", { open: "never" }]]
-		: [["dot"], ["html", { open: "never" }]],
+		? [
+				["github"],
+				["dot"],
+				["./tests/e2e/support/slowTestReporter.ts"],
+				["html", { open: "never" }],
+			]
+		: [
+				[terminalReporter],
+				["./tests/e2e/support/slowTestReporter.ts"],
+				["html", { open: "never" }],
+			],
 	timeout: 60_000,
 	expect: {
 		timeout: 20_000,
@@ -45,7 +65,7 @@ export default defineConfig({
 		: {
 				command: "npm run test:e2e:server",
 				url: applicationBaseUrl,
-				reuseExistingServer: false,
+				reuseExistingServer: !process.env.CI,
 				timeout: 180_000,
 			},
 	projects: [
@@ -58,6 +78,7 @@ export default defineConfig({
 		},
 		{
 			name: "desktop-firefox",
+			grep: getFocusedProjectPattern("compatibility"),
 			use: {
 				...devices["Desktop Firefox"],
 				viewport: { width: 1280, height: 900 },
@@ -65,6 +86,7 @@ export default defineConfig({
 		},
 		{
 			name: "desktop-webkit",
+			grep: getFocusedProjectPattern("compatibility"),
 			use: {
 				...devices["Desktop Safari"],
 				viewport: { width: 1280, height: 900 },
@@ -72,6 +94,7 @@ export default defineConfig({
 		},
 		{
 			name: "mobile-chromium",
+			grep: getFocusedProjectPattern("mobile"),
 			use: {
 				...devices["Pixel 7"],
 				viewport: { width: 360, height: 740 },
@@ -79,6 +102,7 @@ export default defineConfig({
 		},
 		{
 			name: "mobile-webkit",
+			grep: getFocusedProjectPattern("compatibility"),
 			use: {
 				...devices["iPhone 13"],
 			},
