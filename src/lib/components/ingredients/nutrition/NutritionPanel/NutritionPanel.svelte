@@ -10,9 +10,7 @@
 	import ProductInformationPanel from "$lib/components/ingredients/nutrition/ProductInformationPanel/ProductInformationPanel.svelte";
 	import ProductIngredientsPanel from "$lib/components/ingredients/nutrition/ProductIngredientsPanel/ProductIngredientsPanel.svelte";
 	import ProductSafetyAlerts from "$lib/components/ingredients/nutrition/ProductSafetyAlerts/ProductSafetyAlerts.svelte";
-	import {
-		DEFAULT_NUTRITION_VIEWING_GRAMS,
-	} from "$lib/utils/food/nutrients/nutritionDisplay";
+	import { DEFAULT_NUTRITION_VIEWING_GRAMS } from "$lib/utils/food/nutrients/nutritionDisplay";
 	import type { NutritionPanelProps } from "./types";
 
 	let {
@@ -31,18 +29,25 @@
 <section class="nutrition-panel">
 	<ProductImagePanel {food} mode="summary" />
 	{#if food}
-		<ProductSafetyAlerts {food} mode="summary" />
+		<ProductSafetyAlerts {food} />
 	{/if}
 	<NutritionPreferenceConflict {food} mode="summary" />
-	<NutritionFactsLabel {food} {viewingGrams} {viewingServing} {provenanceOptions} />
+	<NutritionFactsLabel
+		{food}
+		{viewingGrams}
+		{viewingServing}
+		{provenanceOptions}
+	/>
 	{#if food}
 		<ProductIngredientsPanel {food} mode="summary" />
 		<ProductCompatibilityPanel {food} mode="summary" />
 	{/if}
 	<NutritionListActions {food} {showListActions} {listMembership} />
 	{#if food}
-		<div class="nutrition-panel__disclosures" aria-label="Additional food information">
-			<ProductSafetyAlerts {food} mode="details" />
+		<div
+			class="nutrition-panel__disclosures"
+			aria-label="Additional food information"
+		>
 			<NutritionPreferenceConflict {food} mode="details" />
 			<ProductIngredientsPanel {food} mode="details" />
 			<ProductCompatibilityPanel {food} mode="details" />

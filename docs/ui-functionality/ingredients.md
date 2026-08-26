@@ -218,19 +218,27 @@ Official safety-notice behavior:
   package-check instruction. Keep lot, package, and date wording exact when available.
 - Never describe an absent match as safe, expose a probable match before moderation,
   or present the notice as medical advice.
-- Put the compact danger summary in the primary reading path and the complete official
-  notice in the bottom disclosure area.
+- Put the compact danger summary in the primary reading path. Its explicit details
+  action opens an app-standard information modal containing the complete official
+  notice. Every notice in that modal owns its direct issuing-agency link; multiple
+  recalls never share one ambiguous destination.
+- Recall-information modals use list-preserving paths such as
+  `/ingredients/fridge/manual-entry/recall-notice` and
+  `/ingredients/fridge/nutrition/123/recall-notice`. Dismissal and browser Back return
+  to the underlying Manual Entry or Nutrition Details state without resetting it.
+- Compact cards retain the danger edge and accessible warning text without adding a
+  source-link control. Activating the card opens Nutrition details, where the same
+  warning-to-summary-to-official-source path is available.
 
 Supporting disclosures appear together at the bottom, in this order when present:
 
-1. official safety-notice details;
-2. `Review these warnings`;
-3. `Ingredient details`;
-4. food-check details;
-5. `Food passport`, containing the current record status, available catalog history,
+1. `Review these warnings`;
+2. `Ingredient details`;
+3. food-check details;
+4. `Food passport`, containing the current record status, available catalog history,
    information-coverage summary, `Product details`, Data quality, correction, and
    missing-warning tools;
-6. moderator image placement.
+5. moderator image placement.
 
 All supporting disclosures start closed. The closed Food passport shows only its title
 and a bounded status such as `Verified`, `Shared record`, `Personal`, or `Unverified`.

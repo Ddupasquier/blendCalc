@@ -8,23 +8,25 @@ const peanutButter: FoodItem = {
 	description: "Peanut butter, smooth style, with salt",
 	foodCategory: "Legumes and Legume Products",
 	allergens: ["peanut"],
-	preferenceWarnings: [{
-		id: "allergen-peanut-peanut-contains",
-		level: "warning",
-		category: "allergen",
-		label: "peanut",
-		code: "FOOD_ALLERGEN_CONTAINS",
-		params: { factLabel: "peanut" },
-		evidence: {
-			factType: "contains",
-			sourceType: "label_allergen_field",
-			sourceText: "Peanut",
-			confidence: "confirmed",
-			policyVersion: 2,
-			ingredientPath: [],
-			percentageLabel: null,
+	preferenceWarnings: [
+		{
+			id: "allergen-peanut-peanut-contains",
+			level: "warning",
+			category: "allergen",
+			label: "peanut",
+			code: "FOOD_ALLERGEN_CONTAINS",
+			params: { factLabel: "peanut" },
+			evidence: {
+				factType: "contains",
+				sourceType: "label_allergen_field",
+				sourceText: "Peanut",
+				confidence: "confirmed",
+				policyVersion: 2,
+				ingredientPath: [],
+				percentageLabel: null,
+			},
 		},
-	}],
+	],
 	foodNutrients: [],
 };
 
@@ -49,24 +51,25 @@ describe("NutritionPanel", () => {
 		expect(statusMessage).toHaveAttribute("data-tone", "danger");
 		expect(statusMessage).toHaveAttribute("data-icon-placement", "top-end");
 		expect(statusMessage).toContainElement(
-			screen.getByText(
-				/the label lists peanut as an allergen\./i,
-			),
+			screen.getByText(/the label lists peanut as an allergen\./i),
 		);
 		expect(statusMessage).toContainElement(
 			screen.getByText(/current package label is the final authority/i),
 		);
 		const reviewTitle = screen.getByText("Review these warnings");
 		const reviewDetails = reviewTitle.closest("details");
-		const disclosureGroup = reviewTitle.closest(".nutrition-panel__disclosures");
+		const disclosureGroup = reviewTitle.closest(
+			".nutrition-panel__disclosures",
+		);
 		expect(reviewDetails).not.toHaveAttribute("open");
 		expect(statusMessage).not.toContainElement(reviewTitle);
 		expect(disclosureGroup).toContainElement(reviewTitle);
-		expect(statusMessage?.querySelector(".status-icon-badge"))
-			.toBeInTheDocument();
 		expect(
-			statusMessage?.compareDocumentPosition(nutritionFacts) ?? 0,
-		).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+			statusMessage?.querySelector(".status-icon-badge"),
+		).toBeInTheDocument();
+		expect(statusMessage?.compareDocumentPosition(nutritionFacts) ?? 0).toBe(
+			Node.DOCUMENT_POSITION_FOLLOWING,
+		);
 
 		await fireEvent.click(reviewTitle.closest("summary") as HTMLElement);
 		expect(reviewDetails).toHaveAttribute("open");
@@ -76,9 +79,11 @@ describe("NutritionPanel", () => {
 		expect(reviewDetails).toContainElement(
 			screen.getByText(/current food-check rules: version 2/i),
 		);
-		expect(screen.getByRole("button", {
-			name: "Report an incorrect warning about peanut",
-		})).toBeInTheDocument();
+		expect(
+			screen.getByRole("button", {
+				name: "Report an incorrect warning about peanut",
+			}),
+		).toBeInTheDocument();
 	});
 
 	it("lets a signed-in user send a warning for moderation review", async () => {
@@ -102,7 +107,9 @@ describe("NutritionPanel", () => {
 		});
 
 		await fireEvent.click(
-			screen.getByText("Review these warnings").closest("summary") as HTMLElement,
+			screen
+				.getByText("Review these warnings")
+				.closest("summary") as HTMLElement,
 		);
 		await fireEvent.click(
 			screen.getByRole("button", {
@@ -158,13 +165,15 @@ describe("NutritionPanel", () => {
 						},
 						preferenceResolution: {
 							resolvedCount: 1,
-							resolvedPreferences: [{
-								tagId: "6cd4fcf5-9221-4b5b-ae90-b0d20f26af1b",
-								tagSlug: "milk",
-								label: "Milk",
-								rawValue: "Dairy",
-								type: "allergen",
-							}],
+							resolvedPreferences: [
+								{
+									tagId: "6cd4fcf5-9221-4b5b-ae90-b0d20f26af1b",
+									tagSlug: "milk",
+									label: "Milk",
+									rawValue: "Dairy",
+									type: "allergen",
+								},
+							],
 							unresolvedPreferences: [],
 						},
 					},
@@ -175,24 +184,30 @@ describe("NutritionPanel", () => {
 		});
 
 		await fireEvent.click(
-			screen.getByText("Missing a food warning?").closest("summary") as HTMLElement,
+			screen
+				.getByText("Missing a food warning?")
+				.closest("summary") as HTMLElement,
 		);
-		await fireEvent.input(
-			screen.getByLabelText("What should we check?"),
-			{ target: { value: "The current ingredients list includes milk." } },
+		await fireEvent.input(screen.getByLabelText("What should we check?"), {
+			target: { value: "The current ingredients list includes milk." },
+		});
+		await fireEvent.click(
+			screen.getByRole("button", { name: "Send for review" }),
 		);
-		await fireEvent.click(screen.getByRole("button", { name: "Send for review" }));
 
 		expect(fetchMock).toHaveBeenCalledWith(
 			"/api/food-compatibility/missing-warning",
 			expect.objectContaining({ method: "POST" }),
 		);
 		const requestBody = fetchMock.mock.calls[0]?.[1]?.body as FormData;
-		expect(requestBody.get("preferenceTagId"))
-			.toBe("6cd4fcf5-9221-4b5b-ae90-b0d20f26af1b");
-		expect(await screen.findByText(
-			"Thanks. We’ll compare this with the current package and product record.",
-		)).toBeInTheDocument();
+		expect(requestBody.get("preferenceTagId")).toBe(
+			"6cd4fcf5-9221-4b5b-ae90-b0d20f26af1b",
+		);
+		expect(
+			await screen.findByText(
+				"Thanks. We’ll compare this with the current package and product record.",
+			),
+		).toBeInTheDocument();
 	});
 
 	it("shows stored product ingredients after nutrition facts", () => {
@@ -206,11 +221,13 @@ describe("NutritionPanel", () => {
 		});
 
 		const nutritionFacts = screen.getByText("Nutrition Facts");
-		const ingredientsHeading = screen.getByRole("heading", { name: "Ingredients" });
+		const ingredientsHeading = screen.getByRole("heading", {
+			name: "Ingredients",
+		});
 		expect(screen.getByText(ingredients)).toBeInTheDocument();
-		expect(
-			nutritionFacts.compareDocumentPosition(ingredientsHeading),
-		).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+		expect(nutritionFacts.compareDocumentPosition(ingredientsHeading)).toBe(
+			Node.DOCUMENT_POSITION_FOLLOWING,
+		);
 	});
 
 	it("shows source-provided allergen details below ingredients", () => {
@@ -218,71 +235,80 @@ describe("NutritionPanel", () => {
 			props: {
 				food: {
 					...peanutButter,
-						ingredients: "Peanuts, sea salt",
-						allergens: ["peanuts"],
-						traces: ["tree nuts"],
-						allergenDisclosure: {
-							contains: ["Peanuts"],
-							mayContain: ["Tree nuts"],
-						},
+					ingredients: "Peanuts, sea salt",
+					allergens: ["peanuts"],
+					traces: ["tree nuts"],
+					allergenDisclosure: {
+						contains: ["Peanuts"],
+						mayContain: ["Tree nuts"],
 					},
-				viewingGrams: 100,
-				showListActions: false,
-			},
-		});
-
-		const ingredientsHeading = screen.getByRole("heading", { name: "Ingredients" });
-		const containsHeading = screen.getByRole("heading", { name: "Contains" });
-		const mayContainHeading = screen.getByRole("heading", { name: "May contain" });
-
-		expect(ingredientsHeading.compareDocumentPosition(containsHeading))
-			.toBe(Node.DOCUMENT_POSITION_FOLLOWING);
-		expect(containsHeading.compareDocumentPosition(mayContainHeading))
-			.toBe(Node.DOCUMENT_POSITION_FOLLOWING);
-		expect(screen.getByText("Peanuts")).toBeInTheDocument();
-		expect(screen.getByText("Tree nuts")).toBeInTheDocument();
-	});
-
-	it("shows active official recalls before nutrition details and keeps evidence collapsed", async () => {
-		render(NutritionPanel, {
-			props: {
-				food: {
-					...peanutButter,
-					safetyAlerts: [{
-						id: "4db4c85d-91d1-48c3-bd2f-fc777fc98d76",
-						providerKey: "open-fda-food-enforcement",
-						sourceName: "openFDA Food Enforcement",
-						sourceAttribution: "U.S. Food and Drug Administration",
-						alertType: "recall",
-						classification: "Class I",
-						status: "Ongoing",
-						productDescription: "Peanut butter in 16 oz jars",
-						reason: "Possible undeclared milk",
-						sourceUrl: "https://api.fda.gov/food/enforcement.json",
-						reportDate: "2026-08-14",
-						matchType: "exact_gtin",
-						requiresPackageCheck: true,
-						detectedAt: "2026-08-14T12:00:00.000Z",
-					}],
 				},
 				viewingGrams: 100,
 				showListActions: false,
 			},
 		});
 
-		const warning = screen.getByText("Check your package").closest(".status-message");
+		const ingredientsHeading = screen.getByRole("heading", {
+			name: "Ingredients",
+		});
+		const containsHeading = screen.getByRole("heading", { name: "Contains" });
+		const mayContainHeading = screen.getByRole("heading", {
+			name: "May contain",
+		});
+
+		expect(ingredientsHeading.compareDocumentPosition(containsHeading)).toBe(
+			Node.DOCUMENT_POSITION_FOLLOWING,
+		);
+		expect(containsHeading.compareDocumentPosition(mayContainHeading)).toBe(
+			Node.DOCUMENT_POSITION_FOLLOWING,
+		);
+		expect(screen.getByText("Peanuts")).toBeInTheDocument();
+		expect(screen.getByText("Tree nuts")).toBeInTheDocument();
+	});
+
+	it("shows active official recalls before nutrition details with an explicit details action", () => {
+		render(NutritionPanel, {
+			props: {
+				food: {
+					...peanutButter,
+					safetyAlerts: [
+						{
+							id: "4db4c85d-91d1-48c3-bd2f-fc777fc98d76",
+							providerKey: "open-fda-food-enforcement",
+							sourceName: "openFDA Food Enforcement",
+							sourceAttribution: "U.S. Food and Drug Administration",
+							alertType: "recall",
+							classification: "Class I",
+							status: "Ongoing",
+							productDescription: "Peanut butter in 16 oz jars",
+							reason: "Possible undeclared milk",
+							sourceUrl: "https://api.fda.gov/food/enforcement.json",
+							reportDate: "2026-08-14",
+							matchType: "exact_gtin",
+							requiresPackageCheck: true,
+							detectedAt: "2026-08-14T12:00:00.000Z",
+						},
+					],
+				},
+				viewingGrams: 100,
+				showListActions: false,
+			},
+		});
+
+		const warning = screen
+			.getByText("Check your package")
+			.closest(".status-message");
 		const nutritionFacts = screen.getByText("Nutrition Facts");
 		expect(warning).toHaveAttribute("data-tone", "danger");
-		expect(warning?.compareDocumentPosition(nutritionFacts))
-			.toBe(Node.DOCUMENT_POSITION_FOLLOWING);
-		const disclosureTitle = screen.getByText("Official food safety notices");
-		const disclosure = disclosureTitle.closest("details");
-		expect(disclosure).not.toHaveAttribute("open");
-
-		await fireEvent.click(disclosureTitle.closest("summary") as HTMLElement);
-		expect(screen.getByText("Possible undeclared milk")).toBeInTheDocument();
-		expect(screen.getByRole("link", { name: "Read the official notice" }))
-			.toHaveAttribute("href", "https://api.fda.gov/food/enforcement.json");
+		expect(warning?.compareDocumentPosition(nutritionFacts)).toBe(
+			Node.DOCUMENT_POSITION_FOLLOWING,
+		);
+		expect(
+			screen.getByRole("button", { name: "View recall details" }),
+		).toBeInTheDocument();
+		expect(
+			screen.queryByText("Possible undeclared milk"),
+		).not.toBeInTheDocument();
 	});
 
 	it("groups every disclosure at the bottom and keeps moderator actions last", () => {
@@ -293,13 +319,15 @@ describe("NutritionPanel", () => {
 					ingredients: "Peanuts, sea salt",
 					ingredientPresentation: {
 						ingredientText: "Peanuts, sea salt",
-						rows: [{
-							text: "Peanuts",
-							depth: 0,
-							path: ["Peanuts"],
-							percentageLabel: "About 98%",
-							classifications: [],
-						}],
+						rows: [
+							{
+								text: "Peanuts",
+								depth: 0,
+								path: ["Peanuts"],
+								percentageLabel: "About 98%",
+								classifications: [],
+							},
+						],
 						additives: [],
 						metrics: [],
 						tagGroups: [],
@@ -356,7 +384,9 @@ describe("NutritionPanel", () => {
 			".nutrition-panel__disclosures",
 		);
 		const disclosures = Array.from(container.querySelectorAll("details"));
-		const ingredientsHeading = screen.getByRole("heading", { name: "Ingredients" });
+		const ingredientsHeading = screen.getByRole("heading", {
+			name: "Ingredients",
+		});
 		const containsHeading = screen.getByRole("heading", { name: "Contains" });
 		const listAction = screen.getByRole("button", { name: "Add to Fridge" });
 		const summaries = Array.from(
@@ -369,12 +399,15 @@ describe("NutritionPanel", () => {
 			expect(disclosureGroup).toContainElement(disclosure);
 			expect(disclosure).not.toHaveAttribute("open");
 		}
-		expect(ingredientsHeading.compareDocumentPosition(disclosureGroup as Node))
-			.toBe(Node.DOCUMENT_POSITION_FOLLOWING);
-		expect(containsHeading.compareDocumentPosition(disclosureGroup as Node))
-			.toBe(Node.DOCUMENT_POSITION_FOLLOWING);
-		expect(listAction.compareDocumentPosition(disclosureGroup as Node))
-			.toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+		expect(
+			ingredientsHeading.compareDocumentPosition(disclosureGroup as Node),
+		).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+		expect(
+			containsHeading.compareDocumentPosition(disclosureGroup as Node),
+		).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+		expect(listAction.compareDocumentPosition(disclosureGroup as Node)).toBe(
+			Node.DOCUMENT_POSITION_FOLLOWING,
+		);
 		expect(summaries.at(-1)).toHaveTextContent("Adjust card image placement");
 	});
 
@@ -413,28 +446,34 @@ describe("NutritionPanel", () => {
 					},
 					labels: ["en:organic"],
 					dietaryTags: ["en:gluten-free"],
-					foodNutrients: [{
-						nutrientId: 1090,
-						nutrientName: "Magnesium",
-						nutrientNumber: "304",
-						unitName: "MG",
-						value: 168,
-						valueOrigin: "reported",
-					}],
+					foodNutrients: [
+						{
+							nutrientId: 1090,
+							nutrientName: "Magnesium",
+							nutrientNumber: "304",
+							unitName: "MG",
+							value: 168,
+							valueOrigin: "reported",
+						},
+					],
 					ingredients: "Peanuts, sea salt",
-					structuredIngredients: [{
-						text: "Peanuts",
-						percentEstimate: 98,
-					}],
+					structuredIngredients: [
+						{
+							text: "Peanuts",
+							percentEstimate: 98,
+						},
+					],
 					ingredientPresentation: {
 						ingredientText: "Peanuts, sea salt",
-						rows: [{
-							text: "Peanuts",
-							depth: 0,
-							path: ["Peanuts"],
-							percentageLabel: "About 98%",
-							classifications: [],
-						}],
+						rows: [
+							{
+								text: "Peanuts",
+								depth: 0,
+								path: ["Peanuts"],
+								percentageLabel: "About 98%",
+								classifications: [],
+							},
+						],
 						additives: ["Sea salt"],
 						metrics: [],
 						tagGroups: [],
@@ -526,15 +565,19 @@ describe("NutritionPanel", () => {
 		const passportTitle = screen.getByText("Food passport");
 		const passportDetails = passportTitle.closest("details");
 		expect(passportDetails).not.toHaveAttribute("open");
-		expect(passportDetails?.querySelector("summary")).toHaveTextContent("Verified");
+		expect(passportDetails?.querySelector("summary")).toHaveTextContent(
+			"Verified",
+		);
 		await fireEvent.click(passportTitle.closest("summary") as HTMLElement);
 		expect(passportDetails).toHaveAttribute("open");
 		expect(screen.getByText("Revision 3")).toBeInTheDocument();
 		expect(screen.getByText("Aug 11, 2026")).toBeInTheDocument();
-		expect(screen.getByRole("heading", { name: "Information available" }))
-			.toBeInTheDocument();
-		expect(screen.getByText(/does not mean zero, none, or allergen-free/i))
-			.toBeInTheDocument();
+		expect(
+			screen.getByRole("heading", { name: "Information available" }),
+		).toBeInTheDocument();
+		expect(
+			screen.getByText(/does not mean zero, none, or allergen-free/i),
+		).toBeInTheDocument();
 
 		const productDetailsTitle = screen.getByText("Product details");
 		const productDetailsSummary = productDetailsTitle.closest("summary");
@@ -547,45 +590,54 @@ describe("NutritionPanel", () => {
 		expect(screen.getByText("00012345678905")).toBeInTheDocument();
 		expect(screen.getByText("EAN_13")).toBeInTheDocument();
 		expect(
-			screen.getByText(
-				"Legumes and Legume Products, Nut butters, Spreads",
-			),
+			screen.getByText("Legumes and Legume Products, Nut butters, Spreads"),
 		).toBeInTheDocument();
 		expect(screen.getByText("18 oz jar")).toBeInTheDocument();
 		expect(screen.getByText("Arachis hypogaea")).toBeInTheDocument();
 		expect(screen.getByText("Organic, Gluten free")).toBeInTheDocument();
-			expect(screen.getByText("Magnesium")).toBeInTheDocument();
-			expect(screen.getByText("168")).toBeInTheDocument();
-			await fireEvent.click(
-				screen.getByText("Ingredient details").closest("summary") as HTMLElement,
-			);
-			expect(screen.getByText("About 98%")).toBeInTheDocument();
+		expect(screen.getByText("Magnesium")).toBeInTheDocument();
+		expect(screen.getByText("168")).toBeInTheDocument();
+		await fireEvent.click(
+			screen.getByText("Ingredient details").closest("summary") as HTMLElement,
+		);
+		expect(screen.getByText("About 98%")).toBeInTheDocument();
 		expect(screen.getByText("Sea salt")).toBeInTheDocument();
-		expect(screen.getByRole("heading", { name: "Serving details" }))
-			.toBeInTheDocument();
+		expect(
+			screen.getByRole("heading", { name: "Serving details" }),
+		).toBeInTheDocument();
 		expect(screen.getByText("2 tbsp · 32g")).toBeInTheDocument();
 		expect(screen.getByText("Package label")).toBeInTheDocument();
-		expect(screen.getByText("Weight reported directly by the source · Package reports 2 tbsp as 32g"))
-			.toBeInTheDocument();
-		expect(screen.getByText("Package serving · serving_size"))
-			.toBeInTheDocument();
+		expect(
+			screen.getByText(
+				"Weight reported directly by the source · Package reports 2 tbsp as 32g",
+			),
+		).toBeInTheDocument();
+		expect(
+			screen.getByText("Package serving · serving_size"),
+		).toBeInTheDocument();
 		expect(screen.getByText("1 tbsp · 16g")).toBeInTheDocument();
 		expect(screen.getByText("1.05 g/mL · Known")).toBeInTheDocument();
-		expect(screen.getByRole("heading", { name: "Data sources" }))
-			.toBeInTheDocument();
+		expect(
+			screen.getByRole("heading", { name: "Data sources" }),
+		).toBeInTheDocument();
 		expect(screen.getByText("USDA · 123456")).toBeInTheDocument();
 		expect(
 			screen.getByText("Open Food Facts · 00012345678905"),
 		).toBeInTheDocument();
-		expect(screen.getByRole("heading", { name: "Source details" }))
-			.toBeInTheDocument();
+		expect(
+			screen.getByRole("heading", { name: "Source details" }),
+		).toBeInTheDocument();
 		expect(screen.getByText("Example Food Dataset")).toBeInTheDocument();
 		expect(screen.getByText("Manufacturer Record ID")).toBeInTheDocument();
 		expect(screen.getByText("record-42")).toBeInTheDocument();
 		expect(screen.getByText("Jan 5, 2026")).toBeInTheDocument();
 		expect(screen.getByText("Feb 6, 2026")).toBeInTheDocument();
-		expect(screen.getByText("Example food data attribution.")).toBeInTheDocument();
-		expect(screen.getByText("Second food data attribution.")).toBeInTheDocument();
+		expect(
+			screen.getByText("Example food data attribution."),
+		).toBeInTheDocument();
+		expect(
+			screen.getByText("Second food data attribution."),
+		).toBeInTheDocument();
 		expect(
 			screen.getByRole("link", {
 				name: /view source for example food dataset/i,
@@ -596,10 +648,12 @@ describe("NutritionPanel", () => {
 				name: /view source for second food dataset/i,
 			}),
 		).toHaveAttribute("href", "https://example.com/second-data");
-		expect(screen.getByRole("link", { name: /example open license/i }))
-			.toHaveAttribute("href", "https://example.com/license");
-		expect(screen.getByRole("link", { name: /second open license/i }))
-			.toHaveAttribute("href", "https://example.com/second-license");
+		expect(
+			screen.getByRole("link", { name: /example open license/i }),
+		).toHaveAttribute("href", "https://example.com/license");
+		expect(
+			screen.getByRole("link", { name: /second open license/i }),
+		).toHaveAttribute("href", "https://example.com/second-license");
 	});
 
 	it("shows zero instead of a partial-data warning for missing ingredient nutrients", () => {

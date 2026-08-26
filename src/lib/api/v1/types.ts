@@ -155,10 +155,7 @@ export type ApiV1ProductRevision = {
 };
 
 export type ApiV1ProductRevisionValue =
-	| string
-	| number
-	| null
-	| { value: number; unit: string };
+	string | number | null | { value: number; unit: string };
 
 export type ApiV1ProductRevisionChange = {
 	field: string;
@@ -213,6 +210,8 @@ export type ApiV1SafetyAlert = {
 	productDescription: string;
 	reason: string | null;
 	recallingOrganization: string | null;
+	packageDescription: string | null;
+	codeInformation: string | null;
 	requiresPackageCheck: boolean;
 	reportDate: string | null;
 	recallInitiatedAt: string | null;
@@ -283,19 +282,21 @@ export type ApiV1Product = {
 		qualityWarningTags: string[];
 		obsolete: boolean | null;
 		obsoleteSince: string | null;
-		tagSources: Partial<Record<
-			| "additives"
-			| "allergens"
-			| "categories"
-			| "countries"
-			| "ingredients"
-			| "labels"
-			| "languages"
-			| "nutrients"
-			| "packaging"
-			| "traces",
-			string[]
-		>>;
+		tagSources: Partial<
+			Record<
+				| "additives"
+				| "allergens"
+				| "categories"
+				| "countries"
+				| "ingredients"
+				| "labels"
+				| "languages"
+				| "nutrients"
+				| "packaging"
+				| "traces",
+				string[]
+			>
+		>;
 	} | null;
 	nutrients: ApiV1Nutrient[];
 	servings: ApiV1Serving[];

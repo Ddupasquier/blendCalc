@@ -1,0 +1,128 @@
+@use "../../../../../styles/variables" as *;
+
+.product-safety-alert-information,
+.product-safety-alert-information__notice,
+.product-safety-alert-information__notice section,
+.product-safety-alert-information__package-details,
+.product-safety-alert-information__metadata {
+	display: grid;
+	min-width: 0;
+}
+
+.product-safety-alert-information {
+	gap: $app-gap-md;
+}
+
+.product-safety-alert-information__introduction,
+.product-safety-alert-information__notice p,
+.product-safety-alert-information__metadata,
+.product-safety-alert-information__disclaimer {
+	margin: 0;
+}
+
+.product-safety-alert-information__introduction,
+.product-safety-alert-information__notice p,
+.product-safety-alert-information__package-details,
+.product-safety-alert-information__metadata dd,
+.product-safety-alert-information__disclaimer {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-medium;
+	line-height: $app-line-height-body;
+}
+
+.product-safety-alert-information__notice {
+	gap: $app-gap-md;
+	padding: $app-gap-md;
+	background: $app-shell-surface-soft;
+	border: 1px solid $app-status-error-icon;
+	border-radius: $app-shell-radius-card;
+}
+
+.product-safety-alert-information__notice
+	+ .product-safety-alert-information__notice {
+	margin-top: $app-gap-xs;
+}
+
+.product-safety-alert-information__heading {
+	display: flex;
+	flex-wrap: wrap;
+	gap: $app-gap-xs;
+	align-items: baseline;
+}
+
+.product-safety-alert-information__heading h3,
+.product-safety-alert-information__notice h4 {
+	margin: 0;
+	color: $app-shell-text-primary;
+}
+
+.product-safety-alert-information__heading h3 {
+	font-size: $app-font-size-lg;
+}
+
+.product-safety-alert-information__heading span {
+	color: $app-status-error-icon;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-bold;
+}
+
+.product-safety-alert-information__notice section {
+	gap: $app-gap-xs;
+}
+
+.product-safety-alert-information__notice h4,
+.product-safety-alert-information__metadata dt {
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-bold;
+}
+
+.product-safety-alert-information__package-details,
+.product-safety-alert-information__metadata {
+	gap: $app-gap-xs;
+}
+
+.product-safety-alert-information__package-details div,
+.product-safety-alert-information__metadata div {
+	display: grid;
+	grid-template-columns: minmax(5.5rem, auto) minmax(0, 1fr);
+	gap: $app-gap-sm;
+}
+
+.product-safety-alert-information__package-details dt,
+.product-safety-alert-information__metadata dt {
+	color: $app-shell-text-primary;
+	font-weight: $app-font-weight-bold;
+}
+
+.product-safety-alert-information__package-details dd,
+.product-safety-alert-information__metadata dd {
+	margin: 0;
+	min-width: 0;
+}
+
+.product-safety-alert-information__disclaimer {
+	font-size: $app-font-size-xs;
+}
+
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
+	.product-safety-alert-information,
+	.product-safety-alert-information__notice {
+		gap: $app-gap-sm;
+	}
+
+	.product-safety-alert-information__notice {
+		padding: $app-gap-sm;
+	}
+
+	.product-safety-alert-information__heading h3 {
+		font-size: $app-font-size-md;
+	}
+
+	.product-safety-alert-information__package-details div,
+	.product-safety-alert-information__metadata div {
+		grid-template-columns: 1fr;
+		gap: $app-gap-2xs;
+	}
+}

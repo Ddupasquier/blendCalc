@@ -680,9 +680,10 @@ placement previews remain identical.
   context, and per-warning report controls in one closed `Review these warnings`
   disclosure inside the warning surface.
 - A current exact or moderator-confirmed official recall uses the shared danger surface
-  before personalized warnings. Keep one concise summary in the primary reading path
-  and one closed detail disclosure with classification, reason, package-check wording,
-  source attribution, and the official link. Do not expose probable matches, raw source
+  before personalized warnings. Keep one concise summary in the primary reading path;
+  its explicit details action opens an app-standard information modal with
+  classification, reason, package-check wording, source attribution, and the official
+  link for each individual notice. Do not expose probable matches, raw source
   payloads, internal matching evidence, or language that claims an unmatched product is
   safe. Official-notice presentation never replaces medical advice or checking the
   current package.

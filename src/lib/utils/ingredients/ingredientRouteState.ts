@@ -30,6 +30,7 @@ export const INGREDIENT_ROUTE_SHEETS = {
 export const INGREDIENT_ROUTE_MODALS = {
 	barcodeScanner: "barcode-scanner",
 	moveIngredient: "move-ingredient",
+	recallNotice: "recall-notice",
 } as const;
 
 export type IngredientRouteView =
@@ -75,9 +76,7 @@ const getDecodedPathSegments = (pathname: string) =>
 
 const getIngredientRoutePathSegments = (pathname: string) => {
 	const segments = getDecodedPathSegments(pathname);
-	return segments[0] === LIST_ROUTE_SLUGS.ingredients
-		? segments.slice(1)
-		: [];
+	return segments[0] === LIST_ROUTE_SLUGS.ingredients ? segments.slice(1) : [];
 };
 
 const getIngredientPathContext = (pathname: string) => {
@@ -170,12 +169,17 @@ const getPathRouteState = (url: URL): IngredientRouteState | null => {
 	if (
 		routeSlug === INGREDIENT_ROUTE_VIEWS.nutrition &&
 		parseIngredientApplicationFoodId(secondSegment) !== null &&
-		remainingSegments.length === 0
+		(remainingSegments.length === 0 ||
+			(remainingSegments.length === 1 &&
+				remainingSegments[0] === INGREDIENT_ROUTE_MODALS.recallNotice))
 	) {
 		return {
 			view: INGREDIENT_ROUTE_VIEWS.nutrition,
 			sheet: null,
-			modal: null,
+			modal:
+				remainingSegments[0] === INGREDIENT_ROUTE_MODALS.recallNotice
+					? INGREDIENT_ROUTE_MODALS.recallNotice
+					: null,
 			foodId: parseIngredientApplicationFoodId(secondSegment),
 			listKey: pathContext.listKey,
 			showListActions: url.searchParams.get(ACTIONS_PARAM) !== "hide",
@@ -202,6 +206,8 @@ const getPathRouteState = (url: URL): IngredientRouteState | null => {
 		routeSlug === INGREDIENT_ROUTE_SHEETS.manualEntry &&
 		(secondSegment === undefined ||
 			(secondSegment === INGREDIENT_ROUTE_MODALS.moveIngredient &&
+				remainingSegments.length === 0) ||
+			(secondSegment === INGREDIENT_ROUTE_MODALS.recallNotice &&
 				remainingSegments.length === 0))
 	) {
 		return {
@@ -210,7 +216,9 @@ const getPathRouteState = (url: URL): IngredientRouteState | null => {
 			modal:
 				secondSegment === INGREDIENT_ROUTE_MODALS.moveIngredient
 					? INGREDIENT_ROUTE_MODALS.moveIngredient
-					: null,
+					: secondSegment === INGREDIENT_ROUTE_MODALS.recallNotice
+						? INGREDIENT_ROUTE_MODALS.recallNotice
+						: null,
 			foodId: null,
 			listKey: null,
 			showListActions: true,
@@ -294,14 +302,16 @@ const getPathRouteState = (url: URL): IngredientRouteState | null => {
 };
 
 export const getIngredientRouteState = (url: URL): IngredientRouteState => {
-	return getPathRouteState(url) ?? {
+	return (
+		getPathRouteState(url) ?? {
 			view: null,
 			sheet: null,
 			modal: null,
 			foodId: null,
 			listKey: null,
 			showListActions: true,
-	};
+		}
+	);
 };
 
 export const buildIngredientRouteHref = (
@@ -313,7 +323,8 @@ export const buildIngredientRouteHref = (
 	const current = getIngredientRouteState(url);
 	const nextView = patch.view !== undefined ? patch.view : current.view;
 	const nextSheet = patch.sheet !== undefined ? patch.sheet : current.sheet;
-	const routeModeChanged = patch.view !== undefined || patch.sheet !== undefined;
+	const routeModeChanged =
+		patch.view !== undefined || patch.sheet !== undefined;
 	const nextModal =
 		patch.modal !== undefined
 			? patch.modal
@@ -321,7 +332,8 @@ export const buildIngredientRouteHref = (
 				? null
 				: current.modal;
 	const nextFoodId = patch.foodId !== undefined ? patch.foodId : current.foodId;
-	const nextListKey = patch.listKey !== undefined ? patch.listKey : current.listKey;
+	const nextListKey =
+		patch.listKey !== undefined ? patch.listKey : current.listKey;
 	const routeListKey = nextListKey ?? getIngredientListTab(url);
 	const listBasePath = getIngredientListBasePath(routeListKey);
 	const nextShowListActions =
@@ -334,20 +346,28 @@ export const buildIngredientRouteHref = (
 	if (nextView) {
 		nextUrl.pathname =
 			nextView === INGREDIENT_ROUTE_VIEWS.nutrition &&
-			nextSheet === INGREDIENT_ROUTE_SHEETS.catalogCorrection
-				? `${listBasePath}/${INGREDIENT_ROUTE_VIEWS.nutrition}/${nextFoodId ?? ""}/${INGREDIENT_ROUTE_SHEETS.catalogCorrection}`
-				: nextView === INGREDIENT_ROUTE_VIEWS.search
-					? nextModal === INGREDIENT_ROUTE_MODALS.barcodeScanner
-						? `${listBasePath}/${INGREDIENT_ROUTE_VIEWS.search}/${INGREDIENT_ROUTE_MODALS.barcodeScanner}`
-						: nextSheet === INGREDIENT_ROUTE_SHEETS.filters
-							? `${listBasePath}/${INGREDIENT_ROUTE_VIEWS.search}/${INGREDIENT_ROUTE_SHEETS.filters}`
-							: `${listBasePath}/${INGREDIENT_ROUTE_VIEWS.search}`
-					: `${listBasePath}/${INGREDIENT_ROUTE_VIEWS.nutrition}/${nextFoodId ?? ""}`;
+			nextModal === INGREDIENT_ROUTE_MODALS.recallNotice
+				? `${listBasePath}/${INGREDIENT_ROUTE_VIEWS.nutrition}/${nextFoodId ?? ""}/${INGREDIENT_ROUTE_MODALS.recallNotice}`
+				: nextView === INGREDIENT_ROUTE_VIEWS.nutrition &&
+					  nextSheet === INGREDIENT_ROUTE_SHEETS.catalogCorrection
+					? `${listBasePath}/${INGREDIENT_ROUTE_VIEWS.nutrition}/${nextFoodId ?? ""}/${INGREDIENT_ROUTE_SHEETS.catalogCorrection}`
+					: nextView === INGREDIENT_ROUTE_VIEWS.search
+						? nextModal === INGREDIENT_ROUTE_MODALS.barcodeScanner
+							? `${listBasePath}/${INGREDIENT_ROUTE_VIEWS.search}/${INGREDIENT_ROUTE_MODALS.barcodeScanner}`
+							: nextSheet === INGREDIENT_ROUTE_SHEETS.filters
+								? `${listBasePath}/${INGREDIENT_ROUTE_VIEWS.search}/${INGREDIENT_ROUTE_SHEETS.filters}`
+								: `${listBasePath}/${INGREDIENT_ROUTE_VIEWS.search}`
+						: `${listBasePath}/${INGREDIENT_ROUTE_VIEWS.nutrition}/${nextFoodId ?? ""}`;
 		if (nextView === INGREDIENT_ROUTE_VIEWS.nutrition) {
 			if (!nextShowListActions) params.set(ACTIONS_PARAM, "hide");
 		}
 	} else if (nextSheet) {
-		if (nextModal === INGREDIENT_ROUTE_MODALS.barcodeScanner) {
+		if (
+			nextSheet === INGREDIENT_ROUTE_SHEETS.manualEntry &&
+			nextModal === INGREDIENT_ROUTE_MODALS.recallNotice
+		) {
+			nextUrl.pathname = `${listBasePath}/${INGREDIENT_ROUTE_SHEETS.manualEntry}/${INGREDIENT_ROUTE_MODALS.recallNotice}`;
+		} else if (nextModal === INGREDIENT_ROUTE_MODALS.barcodeScanner) {
 			nextUrl.pathname = `${listBasePath}/${INGREDIENT_ROUTE_MODALS.barcodeScanner}`;
 		} else if (nextModal === INGREDIENT_ROUTE_MODALS.moveIngredient) {
 			nextUrl.pathname = `${listBasePath}/${INGREDIENT_ROUTE_SHEETS.manualEntry}/${INGREDIENT_ROUTE_MODALS.moveIngredient}`;
@@ -433,10 +453,7 @@ export const getBarcodeScannerCloseRoutePatch = (
 	};
 };
 
-export const getIngredientRouteTitle = (
-	url: URL,
-	foodName?: string | null,
-) => {
+export const getIngredientRouteTitle = (url: URL, foodName?: string | null) => {
 	const state = getIngredientRouteState(url);
 	const namedFood = foodName?.trim();
 
@@ -446,14 +463,17 @@ export const getIngredientRouteTitle = (
 	if (state.modal === INGREDIENT_ROUTE_MODALS.moveIngredient) {
 		return "Move Ingredient";
 	}
+	if (state.modal === INGREDIENT_ROUTE_MODALS.recallNotice) {
+		return namedFood
+			? `Recall Notice for ${namedFood}`
+			: "Official Recall Notice";
+	}
 	if (state.view === INGREDIENT_ROUTE_VIEWS.search) {
 		return "Search Ingredients";
 	}
 	if (state.view === INGREDIENT_ROUTE_VIEWS.nutrition) {
 		if (state.sheet === INGREDIENT_ROUTE_SHEETS.catalogCorrection) {
-			return namedFood
-				? `Correct ${namedFood}`
-				: "Correct Product Information";
+			return namedFood ? `Correct ${namedFood}` : "Correct Product Information";
 		}
 		return namedFood ? `${namedFood} Nutrition` : "Ingredient Nutrition";
 	}
@@ -470,9 +490,7 @@ export const getIngredientRouteTitle = (
 		return namedFood ? `Rename ${namedFood}` : "Rename Ingredient";
 	}
 	if (state.sheet === INGREDIENT_ROUTE_SHEETS.imagePlacement) {
-		return namedFood
-			? `Adjust ${namedFood} Image`
-			: "Adjust Ingredient Image";
+		return namedFood ? `Adjust ${namedFood} Image` : "Adjust Ingredient Image";
 	}
 	return getIngredientListTab(url) === MIX_STORAGE_KEYS.shoppingList
 		? "Shopping List"
@@ -487,7 +505,8 @@ export const findIngredientRouteFood = (
 	customItems: FoodItem[] = [],
 ) => {
 	if (foodId === null) return null;
-	const lists = listKey === MIX_STORAGE_KEYS.fridge
+	const lists =
+		listKey === MIX_STORAGE_KEYS.fridge
 			? [fridgeItems, customItems]
 			: listKey === MIX_STORAGE_KEYS.shoppingList
 				? [shoppingListItems, customItems]

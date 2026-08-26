@@ -1,8 +1,7 @@
 @use "../../../../../styles/variables" as *;
 
 .product-safety-alerts,
-.product-safety-alerts__details,
-.product-safety-alerts__notice {
+.product-safety-alerts__summary {
 	display: grid;
 	min-width: 0;
 }
@@ -11,63 +10,17 @@
 	gap: $app-gap-sm;
 }
 
-.product-safety-alerts__summary,
-.product-safety-alerts__notice p {
+.product-safety-alerts__summary {
+	gap: $app-gap-sm;
+}
+
+.product-safety-alerts__summary p {
 	margin: 0;
 }
 
-.product-safety-alerts__details {
-	gap: $app-gap-md;
-}
-
-.product-safety-alerts__notice {
-	gap: $app-gap-xs;
-	color: $app-shell-text-muted;
-	font-size: $app-font-size-sm;
-	font-weight: $app-font-weight-medium;
-	line-height: $app-line-height-ui;
-}
-
-.product-safety-alerts__notice + .product-safety-alerts__notice {
-	padding-top: $app-gap-md;
-	border-top: 1px solid $app-shell-border-subtle;
-}
-
-.product-safety-alerts__heading {
-	display: flex;
-	flex-wrap: wrap;
-	gap: $app-gap-xs;
-	align-items: baseline;
-	color: $app-shell-text-primary;
-}
-
-.product-safety-alerts__heading span,
-.product-safety-alerts__source,
-.product-safety-alerts__disclaimer {
-	font-size: $app-font-size-xs;
-}
-
-.product-safety-alerts__notice a {
-	justify-self: start;
-	color: $app-shell-accent-primary;
-	font-weight: $app-font-weight-bold;
-}
-
-.product-safety-alerts__notice a:focus-visible {
-	outline: $app-focus-outline;
-	outline-offset: $app-focus-outline-offset;
-}
-
-.product-safety-alerts__disclaimer {
-	color: $app-shell-text-muted;
-}
-
-@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
-	.product-safety-alerts__details {
-		gap: $app-gap-sm;
-	}
-
-	.product-safety-alerts__notice + .product-safety-alerts__notice {
-		padding-top: $app-gap-sm;
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
+	.product-safety-alerts__summary {
+		gap: $app-gap-xs;
 	}
 }

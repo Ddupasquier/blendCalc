@@ -125,6 +125,8 @@ describe("product safety-alert schema rollout", () => {
 			alerts: [
 				{
 					productDescription: "Everything Sprouts Alfalfa Sprouts",
+					packageDescription: "6/5 oz tray",
+					codeInformation: "Selected lots",
 					matchType: "exact_gtin",
 					requiresPackageCheck: true,
 				},

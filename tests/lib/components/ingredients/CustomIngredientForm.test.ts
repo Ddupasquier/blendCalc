@@ -1116,7 +1116,7 @@ describe("CustomIngredientForm", () => {
 		expect(barcodeLookupMocks.lookupBarcodeProduct).not.toHaveBeenCalled();
 	});
 
-	it("shows an exact official recall when product details are unavailable", async () => {
+	it("shows an exact official recall summary when product details are unavailable", async () => {
 		barcodeLookupMocks.lookupBarcodeProduct.mockResolvedValue({
 			status: "not-found",
 			barcode: "00860014523120",
@@ -1151,14 +1151,16 @@ describe("CustomIngredientForm", () => {
 		await fireEvent.blur(barcodeInput);
 
 		expect(
-			await screen.findByText("Everything Sprouts Alfalfa Sprouts"),
+			await screen.findByText(/this product may be part of an active recall/i),
 		).toBeInTheDocument();
 		expect(
-			screen.getByText(/potential salmonella and e\. coli/i),
+			screen.getByRole("button", { name: /view recall details/i }),
 		).toBeInTheDocument();
+		expect(screen.queryByText("Everything Sprouts Alfalfa Sprouts")).toBeNull();
+		expect(screen.queryByText(/potential salmonella and e\. coli/i)).toBeNull();
 		expect(
-			screen.getByRole("link", { name: /read the official notice/i }),
-		).toHaveAttribute("href", "https://www.fda.gov/example-recall");
+			screen.queryByRole("link", { name: /read the official notice/i }),
+		).toBeNull();
 	});
 
 	it("checks a manually entered barcode without overwriting the typed label", async () => {

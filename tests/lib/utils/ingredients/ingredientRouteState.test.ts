@@ -103,9 +103,7 @@ describe("ingredient route state", () => {
 			listKey: MIX_STORAGE_KEYS.fridge,
 		});
 		expect(
-			getIngredientRouteState(
-				url("/ingredients/shopping/image-placement/42"),
-			),
+			getIngredientRouteState(url("/ingredients/shopping/image-placement/42")),
 		).toMatchObject({
 			sheet: INGREDIENT_ROUTE_SHEETS.imagePlacement,
 			foodId: 42,
@@ -136,9 +134,7 @@ describe("ingredient route state", () => {
 			modal: INGREDIENT_ROUTE_MODALS.barcodeScanner,
 		});
 		expect(
-			getIngredientRouteState(
-				url("/ingredients/shopping/search/filters"),
-			),
+			getIngredientRouteState(url("/ingredients/shopping/search/filters")),
 		).toMatchObject({
 			view: INGREDIENT_ROUTE_VIEWS.search,
 			sheet: INGREDIENT_ROUTE_SHEETS.filters,
@@ -151,6 +147,26 @@ describe("ingredient route state", () => {
 		).toMatchObject({
 			sheet: INGREDIENT_ROUTE_SHEETS.manualEntry,
 			modal: INGREDIENT_ROUTE_MODALS.moveIngredient,
+		});
+		expect(
+			getIngredientRouteState(
+				url("/ingredients/fridge/manual-entry/recall-notice"),
+			),
+		).toMatchObject({
+			sheet: INGREDIENT_ROUTE_SHEETS.manualEntry,
+			modal: INGREDIENT_ROUTE_MODALS.recallNotice,
+			listKey: null,
+		});
+		expect(
+			getIngredientRouteState(
+				url("/ingredients/shopping/nutrition/99/recall-notice"),
+			),
+		).toMatchObject({
+			view: INGREDIENT_ROUTE_VIEWS.nutrition,
+			sheet: null,
+			modal: INGREDIENT_ROUTE_MODALS.recallNotice,
+			foodId: 99,
+			listKey: MIX_STORAGE_KEYS.shoppingList,
 		});
 		expect(
 			getIngredientRouteState(
@@ -208,9 +224,7 @@ describe("ingredient route state", () => {
 		).toBe("/ingredients/fridge/barcode-scanner");
 		expect(
 			buildIngredientRouteHref(url("/ingredients/fridge/search"), {
-				...getBarcodeScannerOpenRoutePatch(
-					url("/ingredients/fridge/search"),
-				),
+				...getBarcodeScannerOpenRoutePatch(url("/ingredients/fridge/search")),
 			}),
 		).toBe("/ingredients/fridge/search/barcode-scanner");
 		expect(
@@ -222,32 +236,41 @@ describe("ingredient route state", () => {
 			),
 		).toBe("/ingredients/fridge/search");
 		expect(
-			buildIngredientRouteHref(
-				url("/ingredients/fridge/barcode-scanner"),
-				{
-					view: null,
-					sheet: INGREDIENT_ROUTE_SHEETS.manualEntry,
-					modal: null,
-				},
-			),
+			buildIngredientRouteHref(url("/ingredients/fridge/barcode-scanner"), {
+				view: null,
+				sheet: INGREDIENT_ROUTE_SHEETS.manualEntry,
+				modal: null,
+			}),
 		).toBe("/ingredients/fridge/manual-entry");
 		expect(
-			buildIngredientRouteHref(
-				url("/ingredients/shopping/nutrition/101"),
-				{
-					view: INGREDIENT_ROUTE_VIEWS.nutrition,
-					sheet: INGREDIENT_ROUTE_SHEETS.catalogCorrection,
-					foodId: 101,
-					listKey: MIX_STORAGE_KEYS.shoppingList,
-				},
-			),
+			buildIngredientRouteHref(url("/ingredients/shopping/nutrition/101"), {
+				view: INGREDIENT_ROUTE_VIEWS.nutrition,
+				sheet: INGREDIENT_ROUTE_SHEETS.catalogCorrection,
+				foodId: 101,
+				listKey: MIX_STORAGE_KEYS.shoppingList,
+			}),
 		).toBe("/ingredients/shopping/nutrition/101/correct-information");
+		expect(
+			buildIngredientRouteHref(url("/ingredients/fridge/manual-entry"), {
+				modal: INGREDIENT_ROUTE_MODALS.recallNotice,
+			}),
+		).toBe("/ingredients/fridge/manual-entry/recall-notice");
+		expect(
+			buildIngredientRouteHref(
+				url("/ingredients/shopping/nutrition/101?actions=hide"),
+				{ modal: INGREDIENT_ROUTE_MODALS.recallNotice },
+			),
+		).toBe("/ingredients/shopping/nutrition/101/recall-notice?actions=hide");
+		expect(
+			buildIngredientRouteHref(
+				url("/ingredients/shopping/nutrition/101/recall-notice"),
+				{ modal: null },
+			),
+		).toBe("/ingredients/shopping/nutrition/101");
 	});
 
 	it("provides descriptive titles for list and overlay routes", () => {
-		expect(getIngredientRouteTitle(url("/ingredients/fridge"))).toBe(
-			"Fridge",
-		);
+		expect(getIngredientRouteTitle(url("/ingredients/fridge"))).toBe("Fridge");
 		expect(getIngredientRouteTitle(url("/ingredients/shopping"))).toBe(
 			"Shopping List",
 		);
@@ -266,6 +289,12 @@ describe("ingredient route state", () => {
 				"Tomato Soup",
 			),
 		).toBe("Correct Tomato Soup");
+		expect(
+			getIngredientRouteTitle(
+				url("/ingredients/shopping/nutrition/42/recall-notice"),
+				"Tomato Soup",
+			),
+		).toBe("Recall Notice for Tomato Soup");
 	});
 
 	it("resolves route food from the requested list first", () => {
