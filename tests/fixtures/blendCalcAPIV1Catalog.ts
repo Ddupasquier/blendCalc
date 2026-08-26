@@ -1,0 +1,133 @@
+import type {
+	BlendCalcAPIV1Category,
+	BlendCalcAPIV1Pagination,
+	BlendCalcAPIV1Product,
+	BlendCalcAPIV1ProductRevisionHistoryItem,
+} from "$lib/blendCalcAPI/v1/blendCalcAPITypes";
+
+export const blendCalcAPIV1CategoryFixture: BlendCalcAPIV1Category = {
+	id: "sauces",
+	name: "Sauces",
+	slug: "sauces",
+	updatedAt: "2026-08-11T12:00:00.000Z",
+};
+
+export const blendCalcAPIV1PaginationFixture: BlendCalcAPIV1Pagination = {
+	limit: 15,
+	offset: 0,
+	total: 1,
+	hasMore: false,
+	nextOffset: null,
+};
+
+export const blendCalcAPIV1ProductFixture: BlendCalcAPIV1Product = {
+	id: "8dd47c75-17f7-4458-bb24-63cff946a716",
+	barcode: "00021130493609",
+	name: "Roasted Onion & Garlic Pasta Sauce",
+	brand: "Safeway",
+	category: blendCalcAPIV1CategoryFixture,
+	ingredients: {
+		text: "Tomatoes, onion",
+		items: ["Tomatoes", "Onion"],
+		structured: [],
+		analysis: null,
+		additives: [],
+		allergens: [],
+		traces: [],
+		precautionaryStatements: [],
+		dietaryTags: [],
+		labels: [],
+	},
+	packageQuantity: null,
+	alcoholByVolume: null,
+	regulatoryDisclosure: null,
+	sourceRecord: null,
+	nutrients: [],
+	servings: [],
+	images: [],
+	safetyAlerts: [],
+	warnings: [],
+	compatibilityEvaluation: {
+		version: 1,
+		status: "incomplete",
+		policyVersion: null,
+		profileApplied: false,
+		conflictCount: 0,
+		coverage: {
+			basis: "packaged-label",
+			identity: "available",
+			ingredients: "available",
+			allergens: "missing",
+			traces: "missing",
+			policy: "missing",
+		},
+	},
+	sourceAttributions: [
+		{
+			source: "usda",
+			displayName: "USDA FoodData Central",
+			sourceUrl: "https://fdc.nal.usda.gov",
+			licenseName: "CC0-1.0",
+			licenseUrl: "https://creativecommons.org/publicdomain/zero/1.0/",
+			attribution:
+				"U.S. Department of Agriculture, Agricultural Research Service. FoodData Central.",
+			redistributionPolicyReviewedAt: "2026-07-26T00:00:00.000Z",
+			dataset: null,
+		},
+	],
+	catalog: {
+		authority: "blendcalc-shared-catalog",
+		status: "active",
+		verification: "moderator-reviewed",
+		redistributionPolicy: "approved",
+		sourceCount: 1,
+	},
+	fieldSources: {
+		name: null,
+		brand: null,
+		category: null,
+		ingredients: null,
+		structuredIngredients: null,
+		ingredientAnalysis: null,
+		additives: null,
+		allergens: null,
+		traces: null,
+		precautionaryStatements: null,
+		dietaryTags: null,
+		labels: null,
+		package: null,
+		alcoholByVolume: null,
+		regulatoryDisclosure: null,
+		sourceMetadata: null,
+	},
+	revision: {
+		id: "a89fc15f-ffcd-4d03-92e9-2b511bb300ca",
+		number: 2,
+		currentSince: "2026-08-11T12:00:00.000Z",
+		currentSinceBasis: "blendcalc-observed",
+		labelObservedAt: "2026-08-11T12:00:00.000Z",
+		updatedAt: "2026-08-11T12:00:00.000Z",
+		lastVerifiedAt: "2026-08-11T12:00:00.000Z",
+	},
+	links: {
+		self: "/api/v1/products/00021130493609",
+	},
+};
+
+export const blendCalcAPIV1ProductRevisionFixture: BlendCalcAPIV1ProductRevisionHistoryItem =
+	{
+		id: "a89fc15f-ffcd-4d03-92e9-2b511bb300ca",
+		number: 2,
+		publishedAt: "2026-08-11T12:00:00.000Z",
+		labelObservedAt: "2026-08-11T12:00:00.000Z",
+		changes: [
+			{
+				field: "ingredients",
+				label: "Ingredients",
+				changeType: "changed",
+				previousValue: "Tomatoes",
+				newValue: "Tomatoes, onion",
+				severity: "medium",
+			},
+		],
+	};

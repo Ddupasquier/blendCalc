@@ -1,7 +1,7 @@
 import {
-	readApiPublicationReviewQueue,
-	resolveApiPublicationConcern,
-} from "$lib/server/api/publicationConcerns.server";
+	readBlendCalcAPIPublicationReviewQueue,
+	resolveBlendCalcAPIPublicationConcern,
+} from "$lib/server/blendCalcAPI/blendCalcAPIPublicationConcerns.server";
 import { throwAppError } from "$lib/server/errors/appError.server";
 import { requireModeratorApiAccess } from "$lib/server/moderation/moderationAccess.server";
 import { readLimitedJson } from "$lib/server/security/requestBody.server";
@@ -21,13 +21,14 @@ const RESOLUTION_ACTIONS = [
 const isMember = <Value extends string>(
 	values: readonly Value[],
 	value: unknown,
-): value is Value => typeof value === "string" && values.includes(value as Value);
+): value is Value =>
+	typeof value === "string" && values.includes(value as Value);
 
 export const GET: RequestHandler = async ({ locals }) => {
 	await requireModeratorApiAccess(locals);
 	try {
 		return json(
-			{ data: await readApiPublicationReviewQueue() },
+			{ data: await readBlendCalcAPIPublicationReviewQueue() },
 			{ headers: { "cache-control": "private, no-store" } },
 		);
 	} catch (error) {
@@ -56,10 +57,11 @@ export const PATCH: RequestHandler = async ({ locals, request }) => {
 	}
 	const concernId = body.concernId as string;
 	const status = body.status as (typeof RESOLUTION_STATUSES)[number];
-	const resolutionAction = body.resolutionAction as (typeof RESOLUTION_ACTIONS)[number];
+	const resolutionAction =
+		body.resolutionAction as (typeof RESOLUTION_ACTIONS)[number];
 	const resolutionNote = body.resolutionNote as string;
 	try {
-		const resolved = await resolveApiPublicationConcern({
+		const resolved = await resolveBlendCalcAPIPublicationConcern({
 			concernId,
 			status,
 			resolutionAction,

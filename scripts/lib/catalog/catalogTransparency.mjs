@@ -31,8 +31,7 @@ export const CATALOG_TRANSPARENCY_SEMANTICS = [
 	{
 		key: "revisionHistory",
 		label: "Revision history",
-		owner:
-			"shared_product_revisions and shared_product_revision_changes",
+		owner: "shared_product_revisions and shared_product_revision_changes",
 		meaning:
 			"Immutable accepted catalog snapshots plus evidence-backed field changes.",
 		missing:
@@ -95,7 +94,7 @@ export const CATALOG_TRANSPARENCY_SEMANTICS = [
 			"Source-reported statistical uncertainty and mapping state for generic-food nutrient measurements.",
 		missing:
 			"Unknown uncertainty. Never alter displayed nutrient math or infer certainty from absence.",
-		api: "Not exposed by API v1.",
+		api: "Not exposed by blendCalcAPI v1.",
 		app: "Not consumed by user-facing nutrient calculations.",
 	},
 	{
@@ -106,7 +105,7 @@ export const CATALOG_TRANSPARENCY_SEMANTICS = [
 			"Immutable match/conflict rule snapshots and reviewed source references for a numbered policy version.",
 		missing:
 			"No reproducible policy version. Compatibility results must not claim a version without snapshots.",
-		api: "Not exposed by API v1.",
+		api: "Not exposed by blendCalcAPI v1.",
 		app: "Loaded by the server-side food-safety evaluator.",
 	},
 	{
@@ -194,7 +193,7 @@ export const hasStructuredIngredientAnalysis = (food) =>
 	Boolean(
 		(Array.isArray(food?.structuredIngredients) &&
 			food.structuredIngredients.length > 0) ||
-			food?.ingredientAnalysis,
+		food?.ingredientAnalysis,
 	);
 
 /** @param {TransparencyFood | null | undefined} food */
@@ -202,31 +201,28 @@ export const hasSourceQualityMetadata = (food) => {
 	const metadata = food?.sourceMetadata;
 	if (!metadata || typeof metadata !== "object") return false;
 	return Boolean(
-		(metadata.completeness !== null &&
-			metadata.completeness !== undefined) ||
-			(metadata.schemaVersion !== null &&
-				metadata.schemaVersion !== undefined) ||
-			(metadata.revision !== null && metadata.revision !== undefined) ||
-			metadata.createdAt ||
-			metadata.publishedAt ||
-			metadata.availableAt ||
-			metadata.modifiedAt ||
-			metadata.updatedAt ||
-			metadata.discontinuedAt ||
-			metadata.language ||
-			(Array.isArray(metadata.languages) && metadata.languages.length > 0) ||
-			(Array.isArray(metadata.marketCountries) &&
-				metadata.marketCountries.length > 0) ||
-			(Array.isArray(metadata.qualityTags) &&
-				metadata.qualityTags.length > 0) ||
-			(Array.isArray(metadata.qualityErrorTags) &&
-				metadata.qualityErrorTags.length > 0) ||
-			(Array.isArray(metadata.qualityWarningTags) &&
-				metadata.qualityWarningTags.length > 0) ||
-			(metadata.obsolete !== null && metadata.obsolete !== undefined) ||
-			metadata.obsoleteSince ||
-			(metadata.tagSources &&
-				typeof metadata.tagSources === "object" &&
-				Object.keys(metadata.tagSources).length > 0),
+		(metadata.completeness !== null && metadata.completeness !== undefined) ||
+		(metadata.schemaVersion !== null && metadata.schemaVersion !== undefined) ||
+		(metadata.revision !== null && metadata.revision !== undefined) ||
+		metadata.createdAt ||
+		metadata.publishedAt ||
+		metadata.availableAt ||
+		metadata.modifiedAt ||
+		metadata.updatedAt ||
+		metadata.discontinuedAt ||
+		metadata.language ||
+		(Array.isArray(metadata.languages) && metadata.languages.length > 0) ||
+		(Array.isArray(metadata.marketCountries) &&
+			metadata.marketCountries.length > 0) ||
+		(Array.isArray(metadata.qualityTags) && metadata.qualityTags.length > 0) ||
+		(Array.isArray(metadata.qualityErrorTags) &&
+			metadata.qualityErrorTags.length > 0) ||
+		(Array.isArray(metadata.qualityWarningTags) &&
+			metadata.qualityWarningTags.length > 0) ||
+		(metadata.obsolete !== null && metadata.obsolete !== undefined) ||
+		metadata.obsoleteSince ||
+		(metadata.tagSources &&
+			typeof metadata.tagSources === "object" &&
+			Object.keys(metadata.tagSources).length > 0),
 	);
 };

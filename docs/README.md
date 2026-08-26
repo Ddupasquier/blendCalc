@@ -17,7 +17,7 @@ execution guidance.
 | Changing UI or behavior                  | [Style Guide](style-guide.md), [UI Functionality](ui-functionality.md), and the matching view contract                                                                                  |
 | Changing durable data                    | [Data Architecture](data-architecture.md), [Supabase Schema](supabase-schema.md), and [Database Testing](database-testing.md)                                                           |
 | Changing food, catalog, or provider data | [Shared Product Catalog](shared-product-catalog.md), [Source Data Inventory](api-structures/source-data-inventory.md), and [Data Source Licensing](data-source-licensing.md)            |
-| Changing API v1                          | [API Structures](api-structures/README.md), [Catalog Field Lineage](api-structures/catalog-field-lineage.md), OpenAPI, and versioned TypeScript contracts                               |
+| Changing blendCalcAPI v1                 | [blendCalcAPI](blendCalcAPI/README.md), [Catalog Field Lineage](blendCalcAPI/catalog-field-lineage.md), OpenAPI, and versioned TypeScript contracts                                     |
 | Adding or changing tests                 | [Testing Strategy](testing.md) plus the browser or database guide when applicable                                                                                                       |
 | Adding or running automated QA           | [Testing Strategy](testing.md), plus the browser or database guide when applicable                                                                                                      |
 
@@ -64,9 +64,9 @@ intended contract, then update the owning source and its maintained explanation 
 | [Barcode Scanning](barcode-scanning.md)                          | Supported codes, scanner behavior, scan privacy, and native-scanner direction                                      |
 | [Data Source Licensing](data-source-licensing.md)                | Source-specific licence, attribution, storage, rendering, and redistribution requirements                          |
 | [Source Data Inventory](api-structures/source-data-inventory.md) | Provider capabilities, preserved fields, and intake ownership                                                      |
-| [Catalog Field Lineage](api-structures/catalog-field-lineage.md) | API v1 field population, publication readiness, and public lineage                                                 |
-| [API Structures](api-structures/README.md)                       | API v1 status and endpoints plus generated provider-reference guidance                                             |
-| [Public API Release](public-api-release.md)                      | Terms-review packet, approval evidence, release requirements, and public-access procedure                          |
+| [Catalog Field Lineage](blendCalcAPI/catalog-field-lineage.md)   | blendCalcAPI v1 field population, publication readiness, and public lineage                                        |
+| [blendCalcAPI](blendCalcAPI/README.md)                           | blendCalcAPI v1 status and endpoints plus generated provider-reference guidance                                    |
+| [Public blendCalcAPI Release](blendCalcAPI/public-release.md)    | Terms-review packet, approval evidence, release requirements, and public-access procedure                          |
 
 ## Accounts, Security, And Operations
 

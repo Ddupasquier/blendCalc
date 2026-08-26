@@ -26,7 +26,7 @@ const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const jsonOutput = process.argv.includes("--json");
 const sampleLimitArgument = process.argv.find((argument) =>
-	argument.startsWith("--samples=")
+	argument.startsWith("--samples="),
 );
 const sampleLimit = Math.max(
 	1,
@@ -82,28 +82,21 @@ const readRuntimeLayers = async (productsToRead) => {
 	});
 	try {
 		const [
-			{ readApiV1ProductByBarcode },
+			{ readBlendCalcAPIV1ProductByBarcode },
 			{ getApprovedCatalogRecordByBarcode },
 			{ getProductInformation },
 		] = await Promise.all([
 			vite.ssrLoadModule(
-				"/src/lib/server/api/v1/catalogApi.server.ts",
+				"/src/lib/server/blendCalcAPI/v1/blendCalcAPICatalog.server.ts",
 			),
-			vite.ssrLoadModule(
-				"/src/lib/server/products/catalogRead.server.ts",
-			),
-			vite.ssrLoadModule(
-				"/src/lib/utils/food/records/productInformation.ts",
-			),
+			vite.ssrLoadModule("/src/lib/server/products/catalogRead.server.ts"),
+			vite.ssrLoadModule("/src/lib/utils/food/records/productInformation.ts"),
 		]);
 		return Promise.all(
 			productsToRead.map(async (product) => {
 				const [apiProduct, appRecord] = await Promise.all([
-					readApiV1ProductByBarcode(supabase, product.barcode),
-					getApprovedCatalogRecordByBarcode(
-						supabase,
-						product.barcode,
-					),
+					readBlendCalcAPIV1ProductByBarcode(supabase, product.barcode),
+					getApprovedCatalogRecordByBarcode(supabase, product.barcode),
 				]);
 				return {
 					product,
@@ -151,9 +144,7 @@ const [
 		"Active shared products",
 		supabase
 			.from("shared_products")
-			.select(
-				"id, barcode, product_name, food, last_verified_at, updated_at",
-			)
+			.select("id, barcode, product_name, food, last_verified_at, updated_at")
 			.eq("status", "active")
 			.order("product_name"),
 	),
@@ -212,7 +203,7 @@ const [
 			.not("shared_product_id", "is", null),
 	),
 	readRows(
-		"API v1 readiness",
+		"blendCalcAPI v1 readiness",
 		supabase
 			.from("blendcalc_api_v1_product_readiness")
 			.select("shared_product_id, publishable, reasons"),
@@ -368,16 +359,16 @@ const uniqueSelectedObservations = [
 	).values(),
 ];
 const verificationProducts = products.filter((product) =>
-	Boolean(product.last_verified_at)
+	Boolean(product.last_verified_at),
 );
 const sourceQualityProducts = products.filter((product) =>
-	hasSourceQualityMetadata(product.food)
+	hasSourceQualityMetadata(product.food),
 );
-const sourceQualityObservations = uniqueSelectedObservations.filter((observation) =>
-	hasSourceQualityMetadata(observation.normalized_food)
+const sourceQualityObservations = uniqueSelectedObservations.filter(
+	(observation) => hasSourceQualityMetadata(observation.normalized_food),
 );
 const ingredientAnalysisProducts = products.filter((product) =>
-	hasStructuredIngredientAnalysis(product.food)
+	hasStructuredIngredientAnalysis(product.food),
 );
 const ingredientAnalysisObservations = uniqueSelectedObservations.filter(
 	(observation) => hasStructuredIngredientAnalysis(observation.normalized_food),
@@ -390,7 +381,7 @@ const productUpdatesWithStructuredChanges = productUpdateSubmissions.filter(
 		submission.change_summary.changes.length > 0,
 ).length;
 const observedRevisionCount = revisions.filter((revision) =>
-	Boolean(revision.label_observed_at)
+	Boolean(revision.label_observed_at),
 ).length;
 const provenanceProductCount = uniqueCount(provenance, "shared_product_id");
 const servingProductCount = uniqueCount(servings, "shared_product_id");
@@ -405,8 +396,8 @@ const servingRowsWithEvidence = servings.filter(
 		Boolean(row.confidence?.trim()) &&
 		Boolean(
 			row.source_reference?.trim() ||
-				row.shared_product_observation_id ||
-				row.shared_product_revision_id,
+			row.shared_product_observation_id ||
+			row.shared_product_revision_id,
 		),
 ).length;
 const nutrientRowsWithEvidence = nutrients.filter(
@@ -416,8 +407,8 @@ const nutrientRowsWithEvidence = nutrients.filter(
 		Boolean(row.value_origin?.trim()) &&
 		Boolean(
 			row.source_reference?.trim() ||
-				row.shared_product_observation_id ||
-				row.shared_product_revision_id,
+			row.shared_product_observation_id ||
+			row.shared_product_revision_id,
 		),
 ).length;
 const policiesWithSnapshots = policyVersions.filter(
@@ -433,7 +424,9 @@ const policiesWithSnapshots = policyVersions.filter(
 		row.regional_profile_snapshot.length > 0 &&
 		/^[a-f0-9]{64}$/.test(row.bundle_content_hash ?? ""),
 );
-const activePolicyVersion = policyVersions.find((row) => row.status === "active");
+const activePolicyVersion = policyVersions.find(
+	(row) => row.status === "active",
+);
 const versionBoundPolicyRows = [
 	...policyConflictRules,
 	...policyMatchRules,
@@ -445,13 +438,13 @@ const factsUsingActivePolicy = compatibilityFacts.filter(
 	(fact) => fact.policy_version_id === activePolicyVersion?.id,
 ).length;
 const evidenceLinkedFacts = compatibilityFacts.filter((fact) =>
-	Boolean(fact.shared_product_observation_id || fact.source_text?.trim())
+	Boolean(fact.shared_product_observation_id || fact.source_text?.trim()),
 ).length;
-const ingredientStatementsWithObservation = ingredientStatements.filter((statement) =>
-	Boolean(statement.source_observation_id)
+const ingredientStatementsWithObservation = ingredientStatements.filter(
+	(statement) => Boolean(statement.source_observation_id),
 ).length;
 const nestedIngredientComponents = ingredientComponents.filter((component) =>
-	Boolean(component.parent_component_id)
+	Boolean(component.parent_component_id),
 ).length;
 const ingredientComponentsWithReportedPercentage = ingredientComponents.filter(
 	(component) =>
@@ -460,24 +453,24 @@ const ingredientComponentsWithReportedPercentage = ingredientComponents.filter(
 		component.percent_min !== null ||
 		component.percent_max !== null,
 ).length;
-const ingredientComponentsWithCanonicalTerm = ingredientComponents.filter((component) =>
-	Boolean(component.ingredient_term_id)
+const ingredientComponentsWithCanonicalTerm = ingredientComponents.filter(
+	(component) => Boolean(component.ingredient_term_id),
 ).length;
-const ingredientLinkedFacts = compatibilityFacts.filter(
-	(fact) => Boolean(fact.ingredient_component_id && fact.match_rule_id),
+const ingredientLinkedFacts = compatibilityFacts.filter((fact) =>
+	Boolean(fact.ingredient_component_id && fact.match_rule_id),
 ).length;
-const precautionaryLinkedFacts = compatibilityFacts.filter(
-	(fact) => Boolean(fact.precautionary_statement_id && fact.match_rule_id),
+const precautionaryLinkedFacts = compatibilityFacts.filter((fact) =>
+	Boolean(fact.precautionary_statement_id && fact.match_rule_id),
 ).length;
 const precautionaryFacts = compatibilityFacts.filter((fact) =>
-	Boolean(fact.precautionary_statement_id)
+	Boolean(fact.precautionary_statement_id),
 );
 const precautionaryStatementsWithLineage = precautionaryStatements.filter(
 	(statement) =>
 		Boolean(
 			statement.source_observation_id ||
-				statement.shared_product_revision_id ||
-				statement.shared_product_observation_id,
+			statement.shared_product_revision_id ||
+			statement.shared_product_observation_id,
 		),
 ).length;
 const hasValues = (value) =>
@@ -492,11 +485,11 @@ const hasObject = (value) =>
 const hasSourceDate = (metadata) =>
 	Boolean(
 		metadata?.createdAt ||
-			metadata?.publishedAt ||
-			metadata?.availableAt ||
-			metadata?.modifiedAt ||
-			metadata?.updatedAt ||
-			metadata?.discontinuedAt,
+		metadata?.publishedAt ||
+		metadata?.availableAt ||
+		metadata?.modifiedAt ||
+		metadata?.updatedAt ||
+		metadata?.discontinuedAt,
 	);
 const hasIngredientEvidence = (food) =>
 	Boolean(String(food?.ingredients ?? "").trim()) ||
@@ -505,7 +498,7 @@ const hasIngredientEvidence = (food) =>
 const eligibleRelationalIngredientOwners =
 	products.filter((product) => hasIngredientEvidence(product.food)).length +
 	uniqueSelectedObservations.filter((observation) =>
-		hasIngredientEvidence(observation.normalized_food)
+		hasIngredientEvidence(observation.normalized_food),
 	).length;
 const selectedObservationIds = new Set(
 	provenance.map((row) => row.observation_id).filter(Boolean),
@@ -544,7 +537,7 @@ const catalogEvidenceCoverage = [
 		hasValue: (food) =>
 			Array.isArray(food?.precautionaryStatements) &&
 			food.precautionaryStatements.some((statement) =>
-				Boolean(String(statement?.text ?? "").trim())
+				Boolean(String(statement?.text ?? "").trim()),
 			),
 	},
 	{
@@ -598,7 +591,7 @@ const catalogEvidenceCoverage = [
 	},
 ].map((definition) => {
 	const matchingProducts = products.filter((product) =>
-		definition.hasValue(product.food)
+		definition.hasValue(product.food),
 	);
 	return createCoverageRow({
 		key: definition.key,
@@ -621,7 +614,7 @@ const coverage = [
 		unit: "active products",
 		representatives: sample(
 			verificationProducts.map((product) =>
-				describeProduct(product, product.last_verified_at)
+				describeProduct(product, product.last_verified_at),
 			),
 		),
 	}),
@@ -739,7 +732,7 @@ const coverage = [
 				describeProduct(
 					product,
 					`${product.food?.structuredIngredients?.length ?? 0} structured ingredients`,
-				)
+				),
 			),
 		),
 	}),
@@ -768,9 +761,8 @@ const coverage = [
 		label: "Precautionary statements retaining exact wording and type",
 		populated: precautionaryStatements.filter((statement) =>
 			Boolean(
-				statement.statement_text?.trim() &&
-					statement.statement_type?.trim(),
-			)
+				statement.statement_text?.trim() && statement.statement_type?.trim(),
+			),
 		).length,
 		total: precautionaryStatements.length,
 		unit: "precautionary statements",
@@ -783,7 +775,8 @@ const coverage = [
 	}),
 	createCoverageRow({
 		key: "precautionaryStatementLineage",
-		label: "Precautionary statements linked to observation or revision evidence",
+		label:
+			"Precautionary statements linked to observation or revision evidence",
 		populated: precautionaryStatementsWithLineage,
 		total: precautionaryStatements.length,
 		unit: "precautionary statements",
@@ -939,7 +932,7 @@ const coverage = [
 		key: "policyVersionBinding",
 		label: "Compatibility policy rows bound to an explicit version",
 		populated: versionBoundPolicyRows.filter((row) =>
-			Boolean(row.policy_version_id)
+			Boolean(row.policy_version_id),
 		).length,
 		total: versionBoundPolicyRows.length,
 		unit: "policy rows",
@@ -980,9 +973,8 @@ const coverage = [
 		key: "ingredientCompatibilityLinks",
 		label: "Ingredient compatibility facts linked to exact component and rule",
 		populated: ingredientLinkedFacts,
-		total: compatibilityFacts.filter(
-			(fact) => Boolean(fact.match_rule_id),
-		).length,
+		total: compatibilityFacts.filter((fact) => Boolean(fact.match_rule_id))
+			.length,
 		unit: "ingredient-derived compatibility facts",
 	}),
 	createCoverageRow({
@@ -994,7 +986,7 @@ const coverage = [
 	}),
 	createCoverageRow({
 		key: "apiReadiness",
-		label: "Products publishable through API v1",
+		label: "Products publishable through blendCalcAPI v1",
 		populated: apiReadyProductIds.size,
 		total: products.length,
 		unit: "active products",
@@ -1014,7 +1006,7 @@ const coverage = [
 	}),
 	createCoverageRow({
 		key: "apiRuntime",
-		label: "Publishable products returned by API v1 serialization",
+		label: "Publishable products returned by blendCalcAPI v1 serialization",
 		populated: apiProducts.length,
 		total: apiReadyProductIds.size,
 		unit: "API-ready products",
@@ -1041,10 +1033,8 @@ const coverage = [
 ];
 
 const coverageByKey = new Map(coverage.map((row) => [row.key, row]));
-const apiProductsWith = (predicate) =>
-	apiProducts.filter(predicate).length;
-const appRecordsWith = (predicate) =>
-	appRecords.filter(predicate).length;
+const apiProductsWith = (predicate) => apiProducts.filter(predicate).length;
+const appRecordsWith = (predicate) => appRecords.filter(predicate).length;
 const appInformationWith = (predicate) =>
 	appInformation.filter(predicate).length;
 const semanticCoverage = {
@@ -1072,19 +1062,15 @@ const semanticCoverage = {
 };
 const runtimeComparison = {
 	lastVerified: {
-		api: apiProductsWith((product) =>
-			Boolean(product.revision.lastVerifiedAt)
-		),
+		api: apiProductsWith((product) => Boolean(product.revision.lastVerifiedAt)),
 		app: appRecordsWith((record) => Boolean(record.lastVerifiedAt)),
 		presented: 0,
 	},
 	currentLabelSince: {
 		api: apiProductsWith((product) =>
-			Boolean(product.revision.labelObservedAt)
+			Boolean(product.revision.labelObservedAt),
 		),
-		app: appRecordsWith((record) =>
-			Boolean(record.revision.labelObservedAt)
-		),
+		app: appRecordsWith((record) => Boolean(record.revision.labelObservedAt)),
 		presented: 0,
 	},
 	revisionHistory: {
@@ -1094,7 +1080,7 @@ const runtimeComparison = {
 	},
 	fieldProvenance: {
 		api: apiProductsWith((product) =>
-			Object.values(product.fieldSources).some(Boolean)
+			Object.values(product.fieldSources).some(Boolean),
 		),
 		app: appInformationWith(
 			(information) => information.fieldSourceRows.length > 0,
@@ -1105,9 +1091,7 @@ const runtimeComparison = {
 	},
 	sourceQuality: {
 		api: apiProductsWith((product) => Boolean(product.sourceRecord)),
-		app: appRecordsWith((record) =>
-			hasSourceQualityMetadata(record.food)
-		),
+		app: appRecordsWith((record) => hasSourceQualityMetadata(record.food)),
 		presented: 0,
 	},
 	ingredientAnalysis: {
@@ -1117,18 +1101,18 @@ const runtimeComparison = {
 				Boolean(product.ingredients.analysis),
 		),
 		app: appRecordsWith((record) =>
-			hasStructuredIngredientAnalysis(record.food)
+			hasStructuredIngredientAnalysis(record.food),
 		),
 		presented: 0,
 	},
 	servingProvenance: {
 		api: apiProductsWith((product) =>
-			product.servings.some((serving) => Boolean(serving.source))
+			product.servings.some((serving) => Boolean(serving.source)),
 		),
 		app: appRecordsWith((record) =>
 			(record.food.foodServings ?? []).some((serving) =>
-				Boolean(serving.source)
-			)
+				Boolean(serving.source),
+			),
 		),
 		presented: 0,
 	},
@@ -1143,12 +1127,10 @@ const runtimeComparison = {
 	compatibilityEvidence: {
 		api: apiProductsWith((product) => product.warnings.length > 0),
 		app: appRecordsWith(
-			(record) =>
-				(record.food.compatibilitySummary?.allFacts?.length ?? 0) > 0,
+			(record) => (record.food.compatibilitySummary?.allFacts?.length ?? 0) > 0,
 		),
 		presented: appRecordsWith(
-			(record) =>
-				(record.food.compatibilitySummary?.allFacts?.length ?? 0) > 0,
+			(record) => (record.food.compatibilitySummary?.allFacts?.length ?? 0) > 0,
 		),
 	},
 };
@@ -1156,9 +1138,8 @@ const layerComparison = CATALOG_TRANSPARENCY_SEMANTICS.map((semantic) => ({
 	value: semantic.label,
 	semanticOwner: semantic.owner,
 	databaseCoverage:
-		semanticCoverage[semantic.key] ??
-		"measured in a related coverage row",
-	apiV1:
+		semanticCoverage[semantic.key] ?? "measured in a related coverage row",
+	blendCalcAPIV1:
 		`${runtimeComparison[semantic.key].api}/${apiProducts.length} runtime products; ` +
 		semantic.api,
 	actualAppRead:
@@ -1189,8 +1170,8 @@ const report = {
 		revisionChanges: revisionChanges.length,
 		productUpdateSubmissions: productUpdateSubmissions.length,
 		productUpdatesWithStructuredChanges,
-		apiV1PublishableProducts: apiReadyProductIds.size,
-		apiV1RuntimeProducts: apiProducts.length,
+		blendCalcAPIV1PublishableProducts: apiReadyProductIds.size,
+		blendCalcAPIV1RuntimeProducts: apiProducts.length,
 		appRuntimeProducts: appRecords.length,
 	},
 	coverage,
@@ -1215,7 +1196,7 @@ if (jsonOutput) {
 		})),
 	);
 	for (const row of coverage.filter(
-		(entry) => entry.representatives.length > 0
+		(entry) => entry.representatives.length > 0,
 	)) {
 		console.log(`\n${row.label} examples:`);
 		for (const representative of row.representatives) {

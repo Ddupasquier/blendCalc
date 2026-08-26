@@ -23,7 +23,7 @@ policy.
 4. Map each accepted field to canonical data with its own source, reference, timestamp,
    confidence, and conversion or mapping method.
 5. Publish only the active approved catalog record. Private evidence and raw cache rows
-   never appear in API v1 responses.
+   never appear in blendCalcAPI v1 responses.
 
 `src/lib/server/products/externalProduct.server.ts` coordinates exact-barcode lookup.
 Provider-specific behavior lives under `src/lib/server/products/sources/`, and outbound
@@ -131,7 +131,7 @@ interpretation or publication workflow:
   attribution, storage, rendering, and redistribution decision for each source.
 - [`../shared-product-catalog.md`](../shared-product-catalog.md) owns canonical promotion,
   field selection, revisions, and moderation.
-- [`catalog-field-lineage.md`](catalog-field-lineage.md) owns the API v1 publication gate
+- [`../blendCalcAPI/catalog-field-lineage.md`](../blendCalcAPI/catalog-field-lineage.md) owns the blendCalcAPI v1 publication gate
   and response-field source mapping.
 - [`../supabase-schema.md`](../supabase-schema.md) maps `product_data_sources`,
   `generic_food_datasets`, `food_image_assets`, and provider observation storage.

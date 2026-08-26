@@ -6,7 +6,7 @@ import {
 	APP_VERSION,
 	APP_VERSION_LABEL,
 } from "$lib/config/version";
-import { BLENDCALC_API_V1 } from "$lib/api/v1/types";
+import { BLENDCALC_API_V1 } from "$lib/blendCalcAPI/v1/blendCalcAPITypes";
 
 const packageMetadata = JSON.parse(readFileSync("package.json", "utf8")) as {
 	version: string;
@@ -26,7 +26,7 @@ const portableNodeMajor = Number.parseInt(
 	readFileSync(".node-version", "utf8").trim(),
 	10,
 );
-const openApi = JSON.parse(
+const openAPI = JSON.parse(
 	readFileSync("static/api/v1/openapi.json", "utf8"),
 ) as {
 	info: {
@@ -87,16 +87,14 @@ describe("blendCalc versioning", () => {
 	it("keeps the API contract version independent", () => {
 		expect(BLENDCALC_API_V1).toMatch(/^1\.\d+$/);
 		expect(BLENDCALC_API_V1).not.toBe(APP_VERSION);
-		expect(openApi.info.version.startsWith(`${BLENDCALC_API_V1}.`)).toBe(true);
-		expect(openApi.info["x-blendcalc-status"]).toBe("internal");
-		expect(openApi.info["x-blendcalc-access"]).toBe("internal-authenticated");
-		expect(openApi.info["x-blendcalc-public-release"]).toBe(
+		expect(openAPI.info.version.startsWith(`${BLENDCALC_API_V1}.`)).toBe(true);
+		expect(openAPI.info["x-blendcalc-status"]).toBe("internal");
+		expect(openAPI.info["x-blendcalc-access"]).toBe("internal-authenticated");
+		expect(openAPI.info["x-blendcalc-public-release"]).toBe(
 			"blocked-pending-professional-terms-review",
 		);
 		expect(
-			Object.keys(openApi.paths).every((path) =>
-				path.startsWith("/api/v1/"),
-			),
+			Object.keys(openAPI.paths).every((path) => path.startsWith("/api/v1/")),
 		).toBe(true);
 	});
 

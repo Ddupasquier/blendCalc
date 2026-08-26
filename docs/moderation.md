@@ -8,12 +8,12 @@ workflows. Profile upload behavior belongs in
 
 ## Guide Navigation
 
-| Area | Sections |
-| --- | --- |
-| Access and setup | [Security model](#security-model) and [apply and configure](#apply-and-configure) |
-| Account actions | [Notification emails](#block-notification-emails), [blocking and restoring](#blocking-and-restoring-accounts), and [future-signup blocking](#enable-future-signup-blocking) |
-| Data review | [Food warnings](#food-warning-reports), [preference mappings](#custom-food-preference-mapping-requests), [nutrient mappings](#nutrient-mapping-and-uncertainty-review), [product corrections](#product-correction-reports), and [catalog review and operations](#catalog-review-and-data-operations) |
-| Media and privacy | [Profile image moderation](#profile-image-moderation) and [IP addresses](#ip-addresses) |
+| Area              | Sections                                                                                                                                                                                                                                                                                             |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Access and setup  | [Security model](#security-model) and [apply and configure](#apply-and-configure)                                                                                                                                                                                                                    |
+| Account actions   | [Notification emails](#block-notification-emails), [blocking and restoring](#blocking-and-restoring-accounts), and [future-signup blocking](#enable-future-signup-blocking)                                                                                                                          |
+| Data review       | [Food warnings](#food-warning-reports), [preference mappings](#custom-food-preference-mapping-requests), [nutrient mappings](#nutrient-mapping-and-uncertainty-review), [product corrections](#product-correction-reports), and [catalog review and operations](#catalog-review-and-data-operations) |
+| Media and privacy | [Profile image moderation](#profile-image-moderation) and [IP addresses](#ip-addresses)                                                                                                                                                                                                              |
 
 ## Security Model
 
@@ -62,17 +62,17 @@ both an allowed signed `app_role` and the JWT `aal2` claim. Sensitive server act
 continue to re-read `app_role_assignments` so revocations apply without waiting for JWT
 expiry.
 
-| Capability | User | Moderator | Admin | Developer |
-| --- | --- | --- | --- | --- |
-| Access moderation | No | Yes | Yes | Yes |
-| Manage eligible accounts | No | Yes | Yes | Yes |
-| Review catalog submissions | No | Yes | Yes | Yes |
-| Review food warnings | No | Yes | Yes | Yes |
-| Resolve catalog review work | No | Yes | Yes | Yes |
-| Read catalog data operations | No | No | Yes | Yes |
-| Run audited exact-evidence repairs | No | No | Yes | Yes |
-| Review ambiguous nutrient mappings | No | No | Yes | Yes |
-| Grant or revoke application roles | No | No | Yes | Yes |
+| Capability                         | User | Moderator | Admin | Developer |
+| ---------------------------------- | ---- | --------- | ----- | --------- |
+| Access moderation                  | No   | Yes       | Yes   | Yes       |
+| Manage eligible accounts           | No   | Yes       | Yes   | Yes       |
+| Review catalog submissions         | No   | Yes       | Yes   | Yes       |
+| Review food warnings               | No   | Yes       | Yes   | Yes       |
+| Resolve catalog review work        | No   | Yes       | Yes   | Yes       |
+| Read catalog data operations       | No   | No        | Yes   | Yes       |
+| Run audited exact-evidence repairs | No   | No        | Yes   | Yes       |
+| Review ambiguous nutrient mappings | No   | No        | Yes   | Yes       |
+| Grant or revoke application roles  | No   | No        | Yes   | Yes       |
 
 The table describes authorization policy, not UI availability or target eligibility.
 Role changes currently use the trusted operator CLI; any future web control must require
@@ -318,7 +318,7 @@ A hold must include safe public wording and a private internal reason. Product h
 block the existing publication-readiness gate, source/dataset holds block attributed
 fields, and image holds remove only the held asset from API output. Releasing a hold
 records who released it and why; neither action deletes canonical rows, observations,
-revisions, assets, or evidence. Use `npm run api:publication -- ...` when a rapid
+revisions, assets, or evidence. Use `npm run blendCalcAPI:publication -- ...` when a rapid
 operator action is needed before a dedicated moderation surface is available.
 
 ## Repeated Catalog Rejections
@@ -349,7 +349,7 @@ open material conflicts, provider changes, and possible official recall matches.
 permission and AAL2, and it returns only those bounded review queues.
 
 `/profile/privileged-tools/data-operations` is the operational workspace for
-administrators and developers. It contains blendCalc/API readiness counts, automated
+administrators and developers. It contains blendCalc and blendCalcAPI readiness counts, automated
 monitor state and runs, source activity, dataset import/licence state, warning-policy
 coverage, publication gaps, nutrient-mapping gaps, and revision-history gaps.
 `get_catalog_data_operations_health` and
@@ -370,12 +370,12 @@ one workspace never relies on the other's permission.
 
 Product links in both workspaces open the same bounded readiness passport through
 different permission-checked routes. The passport separates shared-catalog availability
-from API v1 publication, identifies the current revision, summarizes source-backed
+from blendCalcAPI v1 publication, identifies the current revision, summarizes source-backed
 nutrition and serving coverage, and routes every open issue to its responsible work
 group and supported next step. Reviewers use
 `/profile/privileged-tools/catalog-review-work/products/[productId]`; administrators and
 developers use `/profile/privileged-tools/data-operations/products/[productId]`.
-`get_catalog_product_readiness_passport` enforces either exact AAL2 permission before
+`get_blendcalc_api_catalog_product_readiness_passport` enforces either exact AAL2 permission before
 returning normalized counts and statuses. It never returns raw provider payloads,
 private evidence paths, or contributor identity.
 

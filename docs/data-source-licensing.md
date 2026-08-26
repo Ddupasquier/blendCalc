@@ -9,10 +9,10 @@ implementation still needs work.
 
 This is an engineering compliance record, not legal advice. A repository review does
 not replace professional legal review before a public API or commercial data product is
-launched. When source terms, integrations, storage, attribution, or API publication
+launched. When source terms, integrations, storage, attribution, or blendCalcAPI publication
 behavior change, update this document and the database policy in the same change.
 The cross-source terms packet and public-access approval procedure are maintained in
-[`public-api-release.md`](public-api-release.md); this ledger remains the authority for
+[`blendCalcAPI/public-release.md`](blendCalcAPI/public-release.md); this ledger remains the authority for
 each individual source and asset licence.
 
 ## Ledger Navigation
@@ -41,7 +41,7 @@ blendCalc separates source evidence from canonical published data:
 5. `food_image_assets` records per-image source, source reference, licence, licence URL,
    attribution, retrieval date, approval, and public/private storage state.
 6. Raw provider cache rows and private moderation evidence are not public catalog rows.
-7. API v1 reads the blendCalc database only. It does not call external providers during
+7. blendCalcAPI v1 reads the blendCalc database only. It does not call external providers during
    a public read. Product responses preserve represented provider policy dates and any
    exact imported dataset release in `sourceAttributions`; image responses preserve
    their independent source, licence, credit, and retrieval date.
@@ -59,7 +59,7 @@ future public API.
 | Source                                         | Current use                                                  | Governing terms                                                                                                                 | Current engineering status                                                                                                                                                              |
 | ---------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | USDA FoodData Central                          | Runtime barcode/product data and nutrition                   | CC0 1.0/public domain                                                                                                           | Canonical and API reuse allowed                                                                                                                                                         |
-| Open Food Facts                                | Runtime barcode lookup, licensed cache, package images       | ODbL/Database Contents Licence; images under CC BY-SA                                                                           | Product fields are excluded from API v1; individually licensed images remain eligible                                                                                                   |
+| Open Food Facts                                | Runtime barcode lookup, licensed cache, package images       | ODbL/Database Contents Licence; images under CC BY-SA                                                                           | Product fields are excluded from blendCalcAPI v1; individually licensed images remain eligible                                                                                          |
 | COLA Cloud                                     | Optional exact-barcode U.S. alcohol-label lookup             | Proprietary API terms over public TTB records and provider enrichments                                                          | Server-only trial; canonical storage, label-image use, and API redistribution blocked                                                                                                   |
 | FDA Food Safety Notices                        | Scheduled FDA recall announcements plus enforcement evidence | openFDA terms and FDA website policy; generally U.S. government information, with stated third-party exceptions and disclaimers | Normalized index/enforcement facts and attribution may be retained; company-authored announcement prose is not copied, raw evidence stays private, and matches are never medical advice |
 | USDA FSIS Recalls and Public Health Alerts     | Scheduled official meat, poultry, and egg safety evidence    | U.S. government source with USDA website policy and source attribution                                                          | Normalized current notices may be retained; provider failures retry independently and conservative matching is required                                                                 |
@@ -99,7 +99,7 @@ Official reference: [FoodData Central API Guide](https://fdc.nal.usda.gov/api-gu
 - Permitted exact-barcode backfills may retain reported package weight, market country,
   and source publication/availability/update/discontinued dates alongside their USDA
   observation; absent values remain absent.
-- API v1 returns USDA in `sourceAttributions` when an accepted field uses it.
+- blendCalcAPI v1 returns USDA in `sourceAttributions` when an accepted field uses it.
 - Canonical gap-filling is allowed because the registry explicitly permits it; the
   provider name alone does not grant permission.
 
@@ -140,9 +140,9 @@ Official references:
 - Open Food Facts images are stored separately in `food_image_assets` with their source,
   reference, licence, licence URL, and attribution. Full image views use the shared
   asset-attribution component.
-- API v1 excludes products or populated fields that depend on Open Food Facts database
+- blendCalcAPI v1 excludes products or populated fields that depend on Open Food Facts database
   content because its source row is not approved for canonical/API redistribution.
-- Open Food Facts images remain a separate asset class. API v1 may return an image only
+- Open Food Facts images remain a separate asset class. blendCalcAPI v1 may return an image only
   when the asset row contains its CC BY-SA licence, licence URL, attribution, and
   retrieval date and the source registry supplies its public name and URL; image
   provenance does not make Open Food Facts a source of the product-data row.
@@ -395,7 +395,7 @@ Current status: correctly blocked.
 - `product_data_sources.ucum-nlm` remains disabled as historical provenance for the
   service that originally supplied the reviewed values; it is never deleted or called.
 - Canonical storage is approved for the bounded reference subset. Direct public API
-  redistribution remains disabled until API v1 has a dedicated unit-standard
+  redistribution remains disabled until blendCalcAPI v1 has a dedicated unit-standard
   attribution contract carrying the stored UCUM origin, licence, and warranty
   disclaimer. UCUM codes retain their published meaning.
 
@@ -501,11 +501,11 @@ Only deliberately selected, per-file-reviewed assets may be stored and rendered.
 
 1. **Open Food Facts canonical intake:** exact matches can still enter the internal
    shared catalog even though the source registry blocks canonical/API redistribution.
-   The API publication gate now withholds those rows. Resolve the downstream ODbL model
+   The blendCalcAPI publication gate now withholds those rows. Resolve the downstream ODbL model
    or block that intake path before those fields can be published.
 2. **In-app data attribution:** detailed nutrition currently shows a neutral source
    label, while full licence URLs and attribution are consistently available for images
-   and API v1. Add a centralized, discoverable data-attribution view before public
+   and blendCalcAPI v1. Add a centralized, discoverable data-attribution view before public
    launch so required source credits and licence links are available without cluttering
    compact cards.
 3. **Community submission grant:** write and review user-facing submission terms that
@@ -557,8 +557,8 @@ Do not include a source in a public blendCalcAPI response unless:
 - required credits are returned in the API and available in the app's attribution view;
 - private users, evidence, storage paths, and rejected submissions are excluded;
 - corrections, removal requests, source retirement, and revision history have an
-  operational process through private `api_publication_concerns`, reversible
-  `api_publication_holds`, and immutable product revisions; and
+  operational process through private `blendcalc_api_publication_concerns`, reversible
+  `blendcalc_api_publication_holds`, and immutable product revisions; and
 - the current implementation matches the written policy.
 
 If metadata or rights are uncertain, exclude the affected source or field from public
@@ -575,23 +575,23 @@ Use the ordinary catalog-correction workflow when reviewed label data should rep
 specific canonical fields. Use a publication hold when a rights, attribution, privacy,
 accuracy, or source-retirement concern requires immediate public withholding while the
 evidence is reviewed. Holds are reversible and do not erase source or revision history.
-Use `npm run api:publication -- list` for the bounded operator queue and the documented
+Use `npm run blendCalcAPI:publication -- list` for the bounded operator queue and the documented
 `hold`, `release`, and `resolve` subcommands for emergency action.
 
 ## Authoritative Repository Locations
 
-| Responsibility                            | Location                                               |
-| ----------------------------------------- | ------------------------------------------------------ |
-| Human-readable licensing ledger           | `docs/data-source-licensing.md`                        |
-| Source capabilities and intake boundaries | `docs/api-structures/source-data-inventory.md`         |
-| Source identity and canonical policy      | `product_data_sources`                                 |
-| Imported dataset release policy           | `generic_food_datasets`                                |
-| Per-image licence and attribution         | `food_image_assets`                                    |
-| Provider cache                            | `product_api_cache`                                    |
-| API v1 source attribution mapping         | `src/lib/server/api/v1/catalogApi.server.ts`           |
-| API v1 row publication gate               | `blendcalc_api_v1_product_readiness`                   |
-| API v1 field lineage                      | `docs/api-structures/catalog-field-lineage.md`         |
-| Runtime provider requests                 | `src/lib/server/products/sources/`                     |
-| Request caching/rate controls             | `src/lib/server/products/productApiRequests.server.ts` |
-| Shared catalog policy                     | `docs/shared-product-catalog.md`                       |
-| Database table map                        | `docs/supabase-schema.md`                              |
+| Responsibility                             | Location                                                       |
+| ------------------------------------------ | -------------------------------------------------------------- |
+| Human-readable licensing ledger            | `docs/data-source-licensing.md`                                |
+| Source capabilities and intake boundaries  | `docs/api-structures/source-data-inventory.md`                 |
+| Source identity and canonical policy       | `product_data_sources`                                         |
+| Imported dataset release policy            | `generic_food_datasets`                                        |
+| Per-image licence and attribution          | `food_image_assets`                                            |
+| Provider cache                             | `product_api_cache`                                            |
+| blendCalcAPI v1 source attribution mapping | `src/lib/server/blendCalcAPI/v1/blendCalcAPICatalog.server.ts` |
+| blendCalcAPI v1 row publication gate       | `blendcalc_api_v1_product_readiness`                           |
+| blendCalcAPI v1 field lineage              | `docs/blendCalcAPI/catalog-field-lineage.md`                   |
+| Runtime provider requests                  | `src/lib/server/products/sources/`                             |
+| Request caching/rate controls              | `src/lib/server/products/productApiRequests.server.ts`         |
+| Shared catalog policy                      | `docs/shared-product-catalog.md`                               |
+| Database table map                         | `docs/supabase-schema.md`                                      |

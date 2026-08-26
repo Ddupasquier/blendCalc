@@ -222,7 +222,7 @@ const readActiveFoodImages = async (
 		imageRows.size > 0
 	) {
 		const { data: activeHolds, error: holdError } = await supabase
-			.from("api_publication_holds")
+			.from("blendcalc_api_publication_holds")
 			.select("food_image_asset_id")
 			.is("released_at", null)
 			.in("food_image_asset_id", [...imageRows.keys()]);
@@ -432,7 +432,7 @@ export const getApprovedCatalogRecordByBarcode = async (
 ) => {
 	const barcode = normalizeBarcode(barcodeValue);
 	if (!barcode) return null;
-	const { data, error } = await supabase.rpc("get_blendcalc_product_v1", {
+	const { data, error } = await supabase.rpc("get_blendcalc_api_product_v1", {
 		p_barcode: barcode,
 	});
 	if (error) throw error;
@@ -491,12 +491,15 @@ export const searchApprovedCatalogRecordsPage = async (
 ): Promise<ApprovedCatalogPage> => {
 	const terms = tokenizeIngredientSearchText(query).slice(0, 6);
 	if (terms.length === 0) return { records: [], total: 0 };
-	const { data, error } = await supabase.rpc("search_blendcalc_products_v1", {
-		p_query: query,
-		p_terms: terms,
-		p_limit: options.limit,
-		p_offset: options.offset,
-	});
+	const { data, error } = await supabase.rpc(
+		"search_blendcalc_api_products_v1",
+		{
+			p_query: query,
+			p_terms: terms,
+			p_limit: options.limit,
+			p_offset: options.offset,
+		},
+	);
 	if (error) throw error;
 	const rows = (data ?? []) as CatalogProductRow[];
 	return {

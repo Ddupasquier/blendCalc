@@ -11,7 +11,7 @@ export const readCatalogProductReadinessPassport = async (
 	sharedProductId: string,
 ): Promise<CatalogProductReadinessPassport> => {
 	const { data, error } = await supabase.rpc(
-		"get_catalog_product_readiness_passport",
+		"get_blendcalc_api_catalog_product_readiness_passport",
 		{ p_shared_product_id: sharedProductId },
 	);
 

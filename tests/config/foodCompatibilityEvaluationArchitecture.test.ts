@@ -28,15 +28,19 @@ describe("food compatibility evaluation architecture", () => {
 		expect(listRoute).toContain("annotateFoodsWithFoodSafety");
 	});
 
-	it("shares the bounded contract with API v1 and nutrition presentation", () => {
-		const api = readSource("src/lib/server/api/v1/catalogApi.server.ts");
+	it("shares the bounded contract with blendCalcAPI v1 and nutrition presentation", () => {
+		const api = readSource(
+			"src/lib/server/blendCalcAPI/v1/blendCalcAPICatalog.server.ts",
+		);
 		const panel = readSource(
 			"src/lib/components/ingredients/nutrition/ProductCompatibilityPanel/ProductCompatibilityPanel.svelte",
 		);
 
-		expect(api).toContain("const appCompatibilityEvaluation = getFoodCompatibilityEvaluation");
 		expect(api).toContain(
-			"const compatibilityEvaluation: ApiV1CompatibilityEvaluation",
+			"const appCompatibilityEvaluation = getFoodCompatibilityEvaluation",
+		);
+		expect(api).toContain(
+			"const compatibilityEvaluation: BlendCalcAPIV1CompatibilityEvaluation",
 		);
 		expect(api).toContain("hasActivePreferences: false");
 		expect(panel).toContain("food.compatibilityEvaluation");

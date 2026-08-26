@@ -21,7 +21,7 @@ export type CatalogProductReadinessPassport = {
 		productName: string;
 		brandOwner: string | null;
 		sharedCatalogStatus: string;
-		apiV1Status: string;
+		blendCalcAPIV1Status: string;
 		searchableInBlendcalc: boolean;
 		usableInBlendcalc: boolean;
 		openMaterialConflictCount: number;
@@ -106,8 +106,14 @@ const parseIssue = (
 			issue.operationalSeverity,
 			`${path}.operationalSeverity`,
 		),
-		responsibleGroup: readString(issue.responsibleGroup, `${path}.responsibleGroup`),
-		resolutionAction: readString(issue.resolutionAction, `${path}.resolutionAction`),
+		responsibleGroup: readString(
+			issue.responsibleGroup,
+			`${path}.responsibleGroup`,
+		),
+		resolutionAction: readString(
+			issue.resolutionAction,
+			`${path}.resolutionAction`,
+		),
 		automatedRepairAllowed: readBoolean(
 			issue.automatedRepairAllowed,
 			`${path}.automatedRepairAllowed`,
@@ -125,7 +131,8 @@ export const parseCatalogProductReadinessPassport = (
 	const root = readRecord(value, "root");
 	const product = readRecord(root.product, "product");
 	const evidence = readRecord(root.evidence, "evidence");
-	const revision = root.revision === null ? null : readRecord(root.revision, "revision");
+	const revision =
+		root.revision === null ? null : readRecord(root.revision, "revision");
 
 	return {
 		product: {
@@ -137,7 +144,10 @@ export const parseCatalogProductReadinessPassport = (
 				product.sharedCatalogStatus,
 				"product.sharedCatalogStatus",
 			),
-			apiV1Status: readString(product.apiV1Status, "product.apiV1Status"),
+			blendCalcAPIV1Status: readString(
+				product.blendCalcAPIV1Status,
+				"product.blendCalcAPIV1Status",
+			),
 			searchableInBlendcalc: readBoolean(
 				product.searchableInBlendcalc,
 				"product.searchableInBlendcalc",
@@ -162,20 +172,23 @@ export const parseCatalogProductReadinessPassport = (
 		},
 		revision: revision
 			? {
-				id: readString(revision.id, "revision.id"),
-				number: readNumber(revision.number, "revision.number"),
-				labelObservedAt: readString(
-					revision.labelObservedAt,
-					"revision.labelObservedAt",
-				),
-				createdAt: readString(revision.createdAt, "revision.createdAt"),
-				source: readString(revision.source, "revision.source"),
-				sourceReference: readNullableString(
-					revision.sourceReference,
-					"revision.sourceReference",
-				),
-				changeSummary: readRecord(revision.changeSummary, "revision.changeSummary"),
-			}
+					id: readString(revision.id, "revision.id"),
+					number: readNumber(revision.number, "revision.number"),
+					labelObservedAt: readString(
+						revision.labelObservedAt,
+						"revision.labelObservedAt",
+					),
+					createdAt: readString(revision.createdAt, "revision.createdAt"),
+					source: readString(revision.source, "revision.source"),
+					sourceReference: readNullableString(
+						revision.sourceReference,
+						"revision.sourceReference",
+					),
+					changeSummary: readRecord(
+						revision.changeSummary,
+						"revision.changeSummary",
+					),
+				}
 			: null,
 		qualityDimensions: readRecord(root.qualityDimensions, "qualityDimensions"),
 		evidence: {
@@ -200,8 +213,8 @@ export const parseCatalogProductReadinessPassport = (
 				evidence.observationCount,
 				"evidence.observationCount",
 			),
-			sources: readArray(evidence.sources, "evidence.sources").map((source, index) =>
-				readString(source, `evidence.sources[${index}]`),
+			sources: readArray(evidence.sources, "evidence.sources").map(
+				(source, index) => readString(source, `evidence.sources[${index}]`),
 			),
 		},
 		issues: readArray(root.issues, "issues").map(parseIssue),

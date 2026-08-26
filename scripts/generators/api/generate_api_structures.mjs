@@ -410,7 +410,7 @@ const writeReferenceFile = async (fileName, content) => {
 const writeReadme = async () => {
 	await writeReferenceFile(
 		"README.md",
-		`# API Structures
+		`# External API Structure References
 
 This folder contains generated reference files that describe the external food API payloads observed by blendCalc scripts.
 

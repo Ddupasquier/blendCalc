@@ -9,20 +9,36 @@ describe("catalog product readiness passport repository", () => {
 			error: null,
 		});
 
-		await expect(readCatalogProductReadinessPassport({ rpc } as never, "product-id"))
-			.resolves.toEqual(catalogProductReadinessPassportFixture);
-		expect(rpc).toHaveBeenCalledWith("get_catalog_product_readiness_passport", {
-			p_shared_product_id: "product-id",
-		});
+		await expect(
+			readCatalogProductReadinessPassport({ rpc } as never, "product-id"),
+		).resolves.toEqual(catalogProductReadinessPassportFixture);
+		expect(rpc).toHaveBeenCalledWith(
+			"get_blendcalc_api_catalog_product_readiness_passport",
+			{
+				p_shared_product_id: "product-id",
+			},
+		);
 	});
 
 	it("keeps missing products distinct from contract or database failures", async () => {
-		await expect(readCatalogProductReadinessPassport({
-			rpc: vi.fn().mockResolvedValue({ data: null, error: { code: "P0002" } }),
-		} as never, "missing-product")).rejects.toMatchObject({ status: 404 });
+		await expect(
+			readCatalogProductReadinessPassport(
+				{
+					rpc: vi
+						.fn()
+						.mockResolvedValue({ data: null, error: { code: "P0002" } }),
+				} as never,
+				"missing-product",
+			),
+		).rejects.toMatchObject({ status: 404 });
 
-		await expect(readCatalogProductReadinessPassport({
-			rpc: vi.fn().mockResolvedValue({ data: {}, error: null }),
-		} as never, "product-id")).rejects.toMatchObject({ status: 502 });
+		await expect(
+			readCatalogProductReadinessPassport(
+				{
+					rpc: vi.fn().mockResolvedValue({ data: {}, error: null }),
+				} as never,
+				"product-id",
+			),
+		).rejects.toMatchObject({ status: 502 });
 	});
 });

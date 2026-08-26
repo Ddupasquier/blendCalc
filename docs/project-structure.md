@@ -52,7 +52,7 @@ src/
 ├── app.scss                 Global base styles only
 ├── hooks.server.ts          App-wide server hooks
 ├── lib/
-│   ├── api/                 Versioned API contracts and client-safe request helpers
+│   ├── blendCalcAPI/        Versioned blendCalcAPI contracts and client-safe request helpers
 │   ├── assets/icons/        Reusable icon components in namesake folders
 │   ├── components/          Reusable and feature UI
 │   ├── config/              Small, stable app configuration shared across domains
@@ -156,6 +156,12 @@ public API fields, route contracts, and framework-reserved exports retain their
 contracted names until their owning contract is deliberately versioned or migrated.
 Translate them at focused boundaries instead of spreading legacy vocabulary through
 the application.
+
+The app-owned food-data API uses one explicit namespace: `blendCalcAPI` in product copy,
+documentation, TypeScript values, files, and folders; `BlendCalcAPI` for TypeScript
+types and components; and `blendcalc_api_` for PostgreSQL objects. Stable HTTP routes
+remain under `/api/v1`, and external providers retain their own names or source-neutral
+adapter ownership instead of being relabeled as blendCalcAPI.
 
 ## Tests
 

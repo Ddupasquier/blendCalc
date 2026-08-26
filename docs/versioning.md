@@ -9,20 +9,20 @@ force every other part of the system to change versions.
 | ----------------------- | --------------------------------------------- |
 | Inspect active versions | [Current Versions](#current-versions)         |
 | Release the application | [Application Releases](#application-releases) |
-| Evolve API v1           | [API Releases](#api-releases)                 |
+| Evolve blendCalcAPI v1  | [API Releases](#api-releases)                 |
 | Preserve compatibility  | [Compatibility Rules](#compatibility-rules)   |
 
 ## Current Versions
 
-| Area                    | Current version                                | Source of truth                       | Purpose                                |
-| ----------------------- | ---------------------------------------------- | ------------------------------------- | -------------------------------------- |
-| Application release     | `1.0.0`                                        | `package.json`                        | Web/mobile product release             |
-| Application build       | `1.0.0+<deployment>`                           | SvelteKit build configuration         | Exact deployed build identification    |
-| blendCalcAPI            | URL `/api/v1`, response `1.0`, OpenAPI `1.0.0` | `src/lib/api/v1/types.ts` and OpenAPI | Stable consumer contract               |
-| Database schema         | Timestamped migrations                         | `supabase/migrations`                 | Ordered, forward-only database changes |
-| Catalog product         | Per-product revision number                    | `shared_product_revisions`            | Product-label and evidence history     |
-| Image placement         | Placement version                              | `food_image_assets.placement_version` | Crop and positioning behavior          |
-| Transient browser state | Feature-specific schema versions               | Each owning utility                   | Safe draft/session migrations          |
+| Area                    | Current version                                | Source of truth                                            | Purpose                                |
+| ----------------------- | ---------------------------------------------- | ---------------------------------------------------------- | -------------------------------------- |
+| Application release     | `1.0.0`                                        | `package.json`                                             | Web/mobile product release             |
+| Application build       | `1.0.0+<deployment>`                           | SvelteKit build configuration                              | Exact deployed build identification    |
+| blendCalcAPI            | URL `/api/v1`, response `1.0`, OpenAPI `1.0.0` | `src/lib/blendCalcAPI/v1/blendCalcAPITypes.ts` and OpenAPI | Stable consumer contract               |
+| Database schema         | Timestamped migrations                         | `supabase/migrations`                                      | Ordered, forward-only database changes |
+| Catalog product         | Per-product revision number                    | `shared_product_revisions`                                 | Product-label and evidence history     |
+| Image placement         | Placement version                              | `food_image_assets.placement_version`                      | Crop and positioning behavior          |
+| Transient browser state | Feature-specific schema versions               | Each owning utility                                        | Safe draft/session migrations          |
 
 ## Application Releases
 
@@ -87,9 +87,10 @@ version. Preview status is stored separately in `info.x-blendcalc-status` instea
 being appended to the version.
 
 Access status is independent from contract versioning. The source-controlled policy in
-`src/lib/api/v1/accessPolicy.ts` and matching OpenAPI metadata keep API v1 limited to
+`src/lib/blendCalcAPI/v1/blendCalcAPIAccessPolicy.ts` and matching OpenAPI metadata keep
+blendCalcAPI v1 limited to
 signed-in app sessions while public terms remain unapproved. Public release requires
-the reviewed procedure in [`public-api-release.md`](public-api-release.md); changing an
+the reviewed procedure in [`blendCalcAPI/public-release.md`](blendCalcAPI/public-release.md); changing an
 environment variable or version number cannot enable it.
 
 API changes remain deliberate:

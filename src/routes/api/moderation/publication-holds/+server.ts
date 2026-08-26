@@ -1,7 +1,7 @@
 import {
-	placeApiPublicationHold,
-	releaseApiPublicationHold,
-} from "$lib/server/api/publicationConcerns.server";
+	placeBlendCalcAPIPublicationHold,
+	releaseBlendCalcAPIPublicationHold,
+} from "$lib/server/blendCalcAPI/blendCalcAPIPublicationConcerns.server";
 import {
 	requireAppValue,
 	throwAppError,
@@ -25,7 +25,8 @@ const REASON_CODES = [
 const isMember = <Value extends string>(
 	values: readonly Value[],
 	value: unknown,
-): value is Value => typeof value === "string" && values.includes(value as Value);
+): value is Value =>
+	typeof value === "string" && values.includes(value as Value);
 
 export const POST: RequestHandler = async ({ locals, request }) => {
 	const { user } = await requireModeratorApiAccess(locals);
@@ -54,7 +55,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 	const validatedReasonCode = reasonCode as (typeof REASON_CODES)[number];
 	try {
 		const hold = requireAppValue(
-			await placeApiPublicationHold({
+			await placeBlendCalcAPIPublicationHold({
 				subject: {
 					subjectType: validatedSubjectType,
 					subjectReference,
@@ -68,10 +69,13 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 			400,
 			"INVALID_REQUEST",
 		);
-		return json({ data: hold }, {
-			status: 201,
-			headers: { "cache-control": "private, no-store" },
-		});
+		return json(
+			{ data: hold },
+			{
+				status: 201,
+				headers: { "cache-control": "private, no-store" },
+			},
+		);
 	} catch (error) {
 		if (typeof error === "object" && error && "status" in error) throw error;
 		console.error("[api publication hold] Unable to place hold", {
@@ -94,15 +98,18 @@ export const DELETE: RequestHandler = async ({ locals, request }) => {
 	const holdId = body.holdId as string;
 	const releaseNote = body.releaseNote as string;
 	try {
-		const released = await releaseApiPublicationHold({
+		const released = await releaseBlendCalcAPIPublicationHold({
 			holdId,
 			actorUserId: user.id,
 			releaseNote,
 		});
 		if (!released) throwAppError(404, "RESOURCE_NOT_FOUND");
-		return json({ data: { released: true } }, {
-			headers: { "cache-control": "private, no-store" },
-		});
+		return json(
+			{ data: { released: true } },
+			{
+				headers: { "cache-control": "private, no-store" },
+			},
+		);
 	} catch (error) {
 		if (typeof error === "object" && error && "status" in error) throw error;
 		console.error("[api publication hold] Unable to release hold", {
