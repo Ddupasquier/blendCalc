@@ -649,71 +649,77 @@ test("selection mode exposes the complete card surface, stable geometry, keyboar
 	await page.getByRole("button", { name: "Cancel" }).click();
 });
 
-test("a deliberate touch hold selects its card while a scroll gesture does not", async ({
-	page,
-}) => {
-	await page.goto("/ingredients/fridge");
-	await waitForAppReady(page);
-	const cards = page.locator(".saved-ingredient-card");
-	const firstCard = cards.first();
-	const firstCardSelectionButton = firstCard.locator(
-		".saved-ingredient-card__select",
-	);
-	await firstCardSelectionButton.dispatchEvent("pointerdown", {
-		pointerId: 1,
-		pointerType: "touch",
-		button: 0,
-		isPrimary: true,
-	});
-	await page.waitForTimeout(550);
-	await firstCardSelectionButton.dispatchEvent("pointerup", {
-		pointerId: 1,
-		pointerType: "touch",
-		button: 0,
-		isPrimary: true,
-	});
-	await expect(firstCardSelectionButton).toHaveAttribute(
-		"aria-pressed",
-		"true",
-	);
-	await expect(firstCard).toHaveClass(/saved-ingredient-card--checked/);
-	await expect(cards.nth(1)).not.toHaveClass(/saved-ingredient-card--checked/);
-	await page.getByRole("button", { name: "Cancel" }).click();
+test(
+	"a deliberate touch hold selects its card while a scroll gesture does not",
+	{ tag: "@mobile" },
+	async ({ page }) => {
+		await page.goto("/ingredients/fridge");
+		await waitForAppReady(page);
+		const cards = page.locator(".saved-ingredient-card");
+		const firstCard = cards.first();
+		const firstCardSelectionButton = firstCard.locator(
+			".saved-ingredient-card__select",
+		);
+		await firstCardSelectionButton.dispatchEvent("pointerdown", {
+			pointerId: 1,
+			pointerType: "touch",
+			button: 0,
+			isPrimary: true,
+		});
+		await page.waitForTimeout(550);
+		await firstCardSelectionButton.dispatchEvent("pointerup", {
+			pointerId: 1,
+			pointerType: "touch",
+			button: 0,
+			isPrimary: true,
+		});
+		await expect(firstCardSelectionButton).toHaveAttribute(
+			"aria-pressed",
+			"true",
+		);
+		await expect(firstCard).toHaveClass(/saved-ingredient-card--checked/);
+		await expect(cards.nth(1)).not.toHaveClass(
+			/saved-ingredient-card--checked/,
+		);
+		await page.getByRole("button", { name: "Cancel" }).click();
 
-	const secondCardSelectionButton = cards
-		.nth(1)
-		.locator(".saved-ingredient-card__select");
-	await secondCardSelectionButton.dispatchEvent("pointerdown", {
-		pointerId: 2,
-		pointerType: "touch",
-		button: 0,
-		clientX: 20,
-		clientY: 20,
-		isPrimary: true,
-	});
-	await secondCardSelectionButton.dispatchEvent("pointermove", {
-		pointerId: 2,
-		pointerType: "touch",
-		button: 0,
-		clientX: 20,
-		clientY: 50,
-		isPrimary: true,
-	});
-	await page.waitForTimeout(550);
-	await secondCardSelectionButton.dispatchEvent("pointerup", {
-		pointerId: 2,
-		pointerType: "touch",
-		button: 0,
-		clientX: 20,
-		clientY: 50,
-		isPrimary: true,
-	});
-	await expect(
-		page.getByRole("button", { name: "Select items" }),
-	).toBeVisible();
-	await expect(secondCardSelectionButton).not.toHaveAttribute("aria-pressed");
-	await expect(cards.nth(1)).not.toHaveClass(/saved-ingredient-card--checked/);
-});
+		const secondCardSelectionButton = cards
+			.nth(1)
+			.locator(".saved-ingredient-card__select");
+		await secondCardSelectionButton.dispatchEvent("pointerdown", {
+			pointerId: 2,
+			pointerType: "touch",
+			button: 0,
+			clientX: 20,
+			clientY: 20,
+			isPrimary: true,
+		});
+		await secondCardSelectionButton.dispatchEvent("pointermove", {
+			pointerId: 2,
+			pointerType: "touch",
+			button: 0,
+			clientX: 20,
+			clientY: 50,
+			isPrimary: true,
+		});
+		await page.waitForTimeout(550);
+		await secondCardSelectionButton.dispatchEvent("pointerup", {
+			pointerId: 2,
+			pointerType: "touch",
+			button: 0,
+			clientX: 20,
+			clientY: 50,
+			isPrimary: true,
+		});
+		await expect(
+			page.getByRole("button", { name: "Select items" }),
+		).toBeVisible();
+		await expect(secondCardSelectionButton).not.toHaveAttribute("aria-pressed");
+		await expect(cards.nth(1)).not.toHaveClass(
+			/saved-ingredient-card--checked/,
+		);
+	},
+);
 
 test("normal card actions retain priority over preview and selection", async ({
 	page,
@@ -1244,44 +1250,48 @@ test("search-card presentation reflows through the complete responsive matrix", 
 	});
 });
 
-test("compact Ingredients chrome leaves the viewport and returns with scroll direction", async ({
-	page,
-}, testInfo) => {
-	test.skip(
-		!testInfo.project.name.startsWith("mobile-"),
-		"Compact chrome behavior is a phone-layout contract.",
-	);
+test(
+	"compact Ingredients chrome leaves the viewport and returns with scroll direction",
+	{ tag: "@mobile" },
+	async ({ page }, testInfo) => {
+		test.skip(
+			!testInfo.project.name.startsWith("mobile-"),
+			"Compact chrome behavior is a phone-layout contract.",
+		);
 
-	await page.goto("/ingredients/fridge");
-	await waitForAppReady(page);
-	const viewTop = page.locator(".view-top");
-	const ingredientList = page.getByRole("list", {
-		name: "Fridge ingredients",
-	});
+		await page.goto("/ingredients/fridge");
+		await waitForAppReady(page);
+		const viewTop = page.locator(".view-top");
+		const ingredientList = page.getByRole("list", {
+			name: "Fridge ingredients",
+		});
 
-	await expectCompactHeaderHidesAndRevealsWithScroll(viewTop, ingredientList);
-});
+		await expectCompactHeaderHidesAndRevealsWithScroll(viewTop, ingredientList);
+	},
+);
 
-test("narrow layouts do not create page-level horizontal overflow", async ({
-	page,
-}, testInfo) => {
-	test.skip(
-		!testInfo.project.name.startsWith("mobile-"),
-		"Horizontal phone overflow is covered by mobile projects.",
-	);
+test(
+	"narrow layouts do not create page-level horizontal overflow",
+	{ tag: "@mobile" },
+	async ({ page }, testInfo) => {
+		test.skip(
+			!testInfo.project.name.startsWith("mobile-"),
+			"Horizontal phone overflow is covered by mobile projects.",
+		);
 
-	await page.goto("/ingredients/fridge");
-	await waitForAppReady(page);
-	const viewportWidth = await page.evaluate(() => window.innerWidth);
-	const documentWidth = await page.evaluate(
-		() => document.documentElement.scrollWidth,
-	);
-	expect(documentWidth).toBeLessThanOrEqual(viewportWidth);
+		await page.goto("/ingredients/fridge");
+		await waitForAppReady(page);
+		const viewportWidth = await page.evaluate(() => window.innerWidth);
+		const documentWidth = await page.evaluate(
+			() => document.documentElement.scrollWidth,
+		);
+		expect(documentWidth).toBeLessThanOrEqual(viewportWidth);
 
-	await expect(page.getByLabel("Open ingredient search")).toBeVisible();
-	await expect(
-		page.getByRole("button", {
-			name: "Enter a custom ingredient manually",
-		}),
-	).toBeVisible();
-});
+		await expect(page.getByLabel("Open ingredient search")).toBeVisible();
+		await expect(
+			page.getByRole("button", {
+				name: "Enter a custom ingredient manually",
+			}),
+		).toBeVisible();
+	},
+);

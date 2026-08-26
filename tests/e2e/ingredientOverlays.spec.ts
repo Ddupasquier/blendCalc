@@ -836,177 +836,181 @@ test("partial ingredient words combine every eligible source and remain selectab
 	);
 });
 
-test("phone search pagination loads only on request and preserves ordered results", async ({
-	page,
-}, testInfo) => {
-	test.skip(
-		!testInfo.project.name.startsWith("mobile-"),
-		"Search pagination is verified in the phone-sized browser projects.",
-	);
+test(
+	"phone search pagination loads only on request and preserves ordered results",
+	{ tag: "@mobile" },
+	async ({ page }, testInfo) => {
+		test.skip(
+			!testInfo.project.name.startsWith("mobile-"),
+			"Search pagination is verified in the phone-sized browser projects.",
+		);
 
-	const searchRequests: Array<{
-		limit: number;
-		offset: number;
-		query: string;
-	}> = [];
-	page.on("request", (request) => {
-		const url = new URL(request.url());
-		if (url.pathname !== "/api/foods/search") return;
-		searchRequests.push({
-			limit: Number(url.searchParams.get("limit")),
-			offset: Number(url.searchParams.get("offset")),
-			query: url.searchParams.get("q") ?? "",
+		const searchRequests: Array<{
+			limit: number;
+			offset: number;
+			query: string;
+		}> = [];
+		page.on("request", (request) => {
+			const url = new URL(request.url());
+			if (url.pathname !== "/api/foods/search") return;
+			searchRequests.push({
+				limit: Number(url.searchParams.get("limit")),
+				offset: Number(url.searchParams.get("offset")),
+				query: url.searchParams.get("q") ?? "",
+			});
 		});
-	});
 
-	await page.goto("/ingredients/fridge/search");
-	await waitForAppReady(page);
+		await page.goto("/ingredients/fridge/search");
+		await waitForAppReady(page);
 
-	const searchDialog = page.getByRole("dialog", { name: "Ingredients" });
-	const searchInput = searchDialog.getByRole("combobox", {
-		name: "Search ingredients",
-	});
-	const searchResults = searchDialog.getByRole("grid", {
-		name: "Search results",
-	});
-	const resultsPanel = searchDialog.locator(".results-panel");
-	const waitForSearchPage = (query: string, offset: number) =>
-		page.waitForResponse((response) => {
-			const url = new URL(response.url());
-			return (
-				url.pathname === "/api/foods/search" &&
-				url.searchParams.get("q") === query &&
-				Number(url.searchParams.get("offset")) === offset
-			);
+		const searchDialog = page.getByRole("dialog", { name: "Ingredients" });
+		const searchInput = searchDialog.getByRole("combobox", {
+			name: "Search ingredients",
 		});
-	const readRenderedFoodIds = () =>
-		searchResults
-			.locator(".ingredient-search-card")
-			.evaluateAll((cards) =>
-				cards.map((card) => card.id.replace("ingredient-search-result-", "")),
-			);
+		const searchResults = searchDialog.getByRole("grid", {
+			name: "Search results",
+		});
+		const resultsPanel = searchDialog.locator(".results-panel");
+		const waitForSearchPage = (query: string, offset: number) =>
+			page.waitForResponse((response) => {
+				const url = new URL(response.url());
+				return (
+					url.pathname === "/api/foods/search" &&
+					url.searchParams.get("q") === query &&
+					Number(url.searchParams.get("offset")) === offset
+				);
+			});
+		const readRenderedFoodIds = () =>
+			searchResults
+				.locator(".ingredient-search-card")
+				.evaluateAll((cards) =>
+					cards.map((card) => card.id.replace("ingredient-search-result-", "")),
+				);
 
-	const firstPageResponsePromise = waitForSearchPage("food", 0);
-	await searchInput.fill("food");
-	const firstPageResponse = await firstPageResponsePromise;
-	expect(firstPageResponse.status()).toBe(200);
-	const firstPage = (await firstPageResponse.json()) as {
-		foods: Array<{ fdcId: number }>;
-		hasMore: boolean;
-		nextOffset: number | null;
-		total: number;
-	};
-	expect(firstPage).toMatchObject({ hasMore: true, nextOffset: 15 });
-	expect(firstPage.total).toBeGreaterThan(30);
-	expect(firstPage.foods).toHaveLength(15);
-	await expect(searchResults.getByRole("row")).toHaveCount(15);
-	const firstPageIds = await readRenderedFoodIds();
-	expect(firstPageIds).toEqual(
-		firstPage.foods.map((food) => String(food.fdcId)),
-	);
+		const firstPageResponsePromise = waitForSearchPage("food", 0);
+		await searchInput.fill("food");
+		const firstPageResponse = await firstPageResponsePromise;
+		expect(firstPageResponse.status()).toBe(200);
+		const firstPage = (await firstPageResponse.json()) as {
+			foods: Array<{ fdcId: number }>;
+			hasMore: boolean;
+			nextOffset: number | null;
+			total: number;
+		};
+		expect(firstPage).toMatchObject({ hasMore: true, nextOffset: 15 });
+		expect(firstPage.total).toBeGreaterThan(30);
+		expect(firstPage.foods).toHaveLength(15);
+		await expect(searchResults.getByRole("row")).toHaveCount(15);
+		const firstPageIds = await readRenderedFoodIds();
+		expect(firstPageIds).toEqual(
+			firstPage.foods.map((food) => String(food.fdcId)),
+		);
 
-	await resultsPanel.evaluate((element) => {
-		element.scrollTop = element.scrollHeight;
-		element.dispatchEvent(new Event("scroll"));
-	});
-	await page.waitForTimeout(3_000);
-	expect(searchRequests.filter(({ query }) => query === "food")).toEqual([
-		{ limit: 15, offset: 0, query: "food" },
-	]);
+		await resultsPanel.evaluate((element) => {
+			element.scrollTop = element.scrollHeight;
+			element.dispatchEvent(new Event("scroll"));
+		});
+		await page.waitForTimeout(3_000);
+		expect(searchRequests.filter(({ query }) => query === "food")).toEqual([
+			{ limit: 15, offset: 0, query: "food" },
+		]);
 
-	let loadMoreButton = searchDialog.getByRole("button", { name: "Load more" });
-	await expect(loadMoreButton).toBeVisible();
-	await expect(
-		searchDialog.getByRole("button", { name: "Return to top" }),
-	).toBeVisible();
-	const scrollTopBeforeAppend = await resultsPanel.evaluate(
-		(element) => element.scrollTop,
-	);
-	const secondPageResponsePromise = waitForSearchPage("food", 15);
-	await loadMoreButton.evaluate((button) => {
-		(button as HTMLButtonElement).click();
-		(button as HTMLButtonElement).click();
-	});
-	const secondPageResponse = await secondPageResponsePromise;
-	expect(secondPageResponse.status()).toBe(200);
-	const secondPage = (await secondPageResponse.json()) as {
-		foods: Array<{ fdcId: number }>;
-		hasMore: boolean;
-		nextOffset: number | null;
-		total: number;
-	};
-	expect(secondPage).toMatchObject({
-		hasMore: true,
-		nextOffset: 30,
-		total: firstPage.total,
-	});
-	expect(secondPage.foods).toHaveLength(15);
-	await expect(searchResults.getByRole("row")).toHaveCount(30);
-	const firstTwoPageIds = await readRenderedFoodIds();
-	expect(firstTwoPageIds.slice(0, 15)).toEqual(firstPageIds);
-	expect(new Set(firstTwoPageIds).size).toBe(firstTwoPageIds.length);
-	expect(
-		searchRequests.filter(
-			({ query, offset }) => query === "food" && offset === 15,
-		),
-	).toHaveLength(1);
-	expect(
-		await resultsPanel.evaluate((element) => element.scrollTop),
-	).toBeGreaterThanOrEqual(scrollTopBeforeAppend - 2);
+		let loadMoreButton = searchDialog.getByRole("button", {
+			name: "Load more",
+		});
+		await expect(loadMoreButton).toBeVisible();
+		await expect(
+			searchDialog.getByRole("button", { name: "Return to top" }),
+		).toBeVisible();
+		const scrollTopBeforeAppend = await resultsPanel.evaluate(
+			(element) => element.scrollTop,
+		);
+		const secondPageResponsePromise = waitForSearchPage("food", 15);
+		await loadMoreButton.evaluate((button) => {
+			(button as HTMLButtonElement).click();
+			(button as HTMLButtonElement).click();
+		});
+		const secondPageResponse = await secondPageResponsePromise;
+		expect(secondPageResponse.status()).toBe(200);
+		const secondPage = (await secondPageResponse.json()) as {
+			foods: Array<{ fdcId: number }>;
+			hasMore: boolean;
+			nextOffset: number | null;
+			total: number;
+		};
+		expect(secondPage).toMatchObject({
+			hasMore: true,
+			nextOffset: 30,
+			total: firstPage.total,
+		});
+		expect(secondPage.foods).toHaveLength(15);
+		await expect(searchResults.getByRole("row")).toHaveCount(30);
+		const firstTwoPageIds = await readRenderedFoodIds();
+		expect(firstTwoPageIds.slice(0, 15)).toEqual(firstPageIds);
+		expect(new Set(firstTwoPageIds).size).toBe(firstTwoPageIds.length);
+		expect(
+			searchRequests.filter(
+				({ query, offset }) => query === "food" && offset === 15,
+			),
+		).toHaveLength(1);
+		expect(
+			await resultsPanel.evaluate((element) => element.scrollTop),
+		).toBeGreaterThanOrEqual(scrollTopBeforeAppend - 2);
 
-	loadMoreButton = searchDialog.getByRole("button", { name: "Load more" });
-	await loadMoreButton.scrollIntoViewIfNeeded();
-	const finalPageResponsePromise = waitForSearchPage("food", 30);
-	await loadMoreButton.click();
-	const finalPageResponse = await finalPageResponsePromise;
-	expect(finalPageResponse.status()).toBe(200);
-	const finalPage = (await finalPageResponse.json()) as {
-		foods: Array<{ fdcId: number }>;
-		hasMore: boolean;
-		nextOffset: number | null;
-		total: number;
-	};
-	expect(finalPage).toMatchObject({
-		hasMore: false,
-		nextOffset: null,
-		total: firstPage.total,
-	});
-	await expect(searchResults.getByRole("row")).toHaveCount(firstPage.total);
-	const allFoodIds = await readRenderedFoodIds();
-	expect(allFoodIds.slice(0, 30)).toEqual(firstTwoPageIds);
-	expect(new Set(allFoodIds).size).toBe(allFoodIds.length);
-	await expect(loadMoreButton).toHaveCount(0);
+		loadMoreButton = searchDialog.getByRole("button", { name: "Load more" });
+		await loadMoreButton.scrollIntoViewIfNeeded();
+		const finalPageResponsePromise = waitForSearchPage("food", 30);
+		await loadMoreButton.click();
+		const finalPageResponse = await finalPageResponsePromise;
+		expect(finalPageResponse.status()).toBe(200);
+		const finalPage = (await finalPageResponse.json()) as {
+			foods: Array<{ fdcId: number }>;
+			hasMore: boolean;
+			nextOffset: number | null;
+			total: number;
+		};
+		expect(finalPage).toMatchObject({
+			hasMore: false,
+			nextOffset: null,
+			total: firstPage.total,
+		});
+		await expect(searchResults.getByRole("row")).toHaveCount(firstPage.total);
+		const allFoodIds = await readRenderedFoodIds();
+		expect(allFoodIds.slice(0, 30)).toEqual(firstTwoPageIds);
+		expect(new Set(allFoodIds).size).toBe(allFoodIds.length);
+		await expect(loadMoreButton).toHaveCount(0);
 
-	const returnToTopButton = searchDialog.getByRole("button", {
-		name: "Return to top",
-	});
-	await expect(returnToTopButton).toBeVisible();
-	await returnToTopButton.click();
-	await expect
-		.poll(() => resultsPanel.evaluate((element) => element.scrollTop))
-		.toBeLessThanOrEqual(1);
+		const returnToTopButton = searchDialog.getByRole("button", {
+			name: "Return to top",
+		});
+		await expect(returnToTopButton).toBeVisible();
+		await returnToTopButton.click();
+		await expect
+			.poll(() => resultsPanel.evaluate((element) => element.scrollTop))
+			.toBeLessThanOrEqual(1);
 
-	const resetQueryResponsePromise = waitForSearchPage("tomato", 0);
-	await searchInput.fill("tomato");
-	const resetQueryResponse = await resetQueryResponsePromise;
-	expect(resetQueryResponse.status()).toBe(200);
-	const resetQueryPage = (await resetQueryResponse.json()) as {
-		foods: Array<{ fdcId: number }>;
-		hasMore: boolean;
-		total: number;
-	};
-	await expect(searchResults.getByRole("row")).toHaveCount(
-		resetQueryPage.foods.length,
-	);
-	expect(await readRenderedFoodIds()).toEqual(
-		resetQueryPage.foods.map((food) => String(food.fdcId)),
-	);
-	expect(resetQueryPage.total).toBeLessThan(15);
-	expect(resetQueryPage.hasMore).toBe(false);
-	await expect(
-		searchDialog.getByRole("button", { name: "Load more" }),
-	).toHaveCount(0);
-});
+		const resetQueryResponsePromise = waitForSearchPage("tomato", 0);
+		await searchInput.fill("tomato");
+		const resetQueryResponse = await resetQueryResponsePromise;
+		expect(resetQueryResponse.status()).toBe(200);
+		const resetQueryPage = (await resetQueryResponse.json()) as {
+			foods: Array<{ fdcId: number }>;
+			hasMore: boolean;
+			total: number;
+		};
+		await expect(searchResults.getByRole("row")).toHaveCount(
+			resetQueryPage.foods.length,
+		);
+		expect(await readRenderedFoodIds()).toEqual(
+			resetQueryPage.foods.map((food) => String(food.fdcId)),
+		);
+		expect(resetQueryPage.total).toBeLessThan(15);
+		expect(resetQueryPage.hasMore).toBe(false);
+		await expect(
+			searchDialog.getByRole("button", { name: "Load more" }),
+		).toHaveCount(0);
+	},
+);
 
 test("shared ingredient bottom sheets enter from below and preserve app chrome boundaries", async ({
 	page,

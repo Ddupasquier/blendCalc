@@ -383,54 +383,56 @@ test("food preferences use database choices and preserve exact custom wording", 
 	await expect(page).toHaveURL(/\/profile$/);
 });
 
-test("compact Profile header leaves and returns with main-page scroll direction", async ({
-	page,
-}, testInfo) => {
-	test.skip(
-		!testInfo.project.name.startsWith("mobile-"),
-		"Compact header behavior is a phone-layout contract.",
-	);
+test(
+	"compact Profile header leaves and returns with main-page scroll direction",
+	{ tag: "@mobile" },
+	async ({ page }, testInfo) => {
+		test.skip(
+			!testInfo.project.name.startsWith("mobile-"),
+			"Compact header behavior is a phone-layout contract.",
+		);
 
-	await page.goto("/profile");
-	await waitForAppReady(page);
-	const viewTop = page.locator(".profile-page__top");
-	const profileScrollContainer = page.locator(".profile-page");
+		await page.goto("/profile");
+		await waitForAppReady(page);
+		const viewTop = page.locator(".profile-page__top");
+		const profileScrollContainer = page.locator(".profile-page");
 
-	await expectCompactHeaderHidesAndRevealsWithScroll(
-		viewTop,
-		profileScrollContainer,
-	);
+		await expectCompactHeaderHidesAndRevealsWithScroll(
+			viewTop,
+			profileScrollContainer,
+		);
 
-	await page.getByRole("button", { name: /Food preferences/ }).click();
-	const headerWasHiddenBeforeSheetScroll = await viewTop.evaluate((element) =>
-		element.classList.contains("view-top--compact-hidden"),
-	);
-	const foodPreferencesBody = page.locator(
-		".profile-food-preference-view__body",
-	);
-	for (const sectionTitle of [
-		"Allergens",
-		"Dietary restrictions",
-		"Nutrient priorities",
-	]) {
-		await openFoodPreferenceDisclosure(foodPreferencesBody, sectionTitle);
-	}
-	const sheetMaximumScrollTop = await foodPreferencesBody.evaluate(
-		(element) => {
-			const nextScrollTop = element.scrollHeight - element.clientHeight;
-			element.scrollTo({ top: nextScrollTop });
-			return nextScrollTop;
-		},
-	);
-	expect(sheetMaximumScrollTop).toBeGreaterThan(0);
-	await expect
-		.poll(() =>
-			viewTop.evaluate((element) =>
-				element.classList.contains("view-top--compact-hidden"),
-			),
-		)
-		.toBe(headerWasHiddenBeforeSheetScroll);
-});
+		await page.getByRole("button", { name: /Food preferences/ }).click();
+		const headerWasHiddenBeforeSheetScroll = await viewTop.evaluate((element) =>
+			element.classList.contains("view-top--compact-hidden"),
+		);
+		const foodPreferencesBody = page.locator(
+			".profile-food-preference-view__body",
+		);
+		for (const sectionTitle of [
+			"Allergens",
+			"Dietary restrictions",
+			"Nutrient priorities",
+		]) {
+			await openFoodPreferenceDisclosure(foodPreferencesBody, sectionTitle);
+		}
+		const sheetMaximumScrollTop = await foodPreferencesBody.evaluate(
+			(element) => {
+				const nextScrollTop = element.scrollHeight - element.clientHeight;
+				element.scrollTo({ top: nextScrollTop });
+				return nextScrollTop;
+			},
+		);
+		expect(sheetMaximumScrollTop).toBeGreaterThan(0);
+		await expect
+			.poll(() =>
+				viewTop.evaluate((element) =>
+					element.classList.contains("view-top--compact-hidden"),
+				),
+			)
+			.toBe(headerWasHiddenBeforeSheetScroll);
+	},
+);
 
 test("Profile settings use routed sheets and restore launcher focus", async ({
 	page,

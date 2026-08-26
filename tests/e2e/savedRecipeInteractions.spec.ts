@@ -5,27 +5,29 @@ import {
 	waitForAppReady,
 } from "./support/browserTest";
 
-test("compact Saved Recipes header follows main-list scroll direction", async ({
-	page,
-}, testInfo) => {
-	test.skip(
-		!testInfo.project.name.startsWith("mobile-"),
-		"Compact header behavior is a phone-layout contract.",
-	);
+test(
+	"compact Saved Recipes header follows main-list scroll direction",
+	{ tag: "@mobile" },
+	async ({ page }, testInfo) => {
+		test.skip(
+			!testInfo.project.name.startsWith("mobile-"),
+			"Compact header behavior is a phone-layout contract.",
+		);
 
-	await page.goto("/saved");
-	await waitForAppReady(page);
-	const recipeSummaries = page.locator(
-		".saved-recipe-card > details > summary",
-	);
-	for (let index = 0; index < (await recipeSummaries.count()); index += 1) {
-		await recipeSummaries.nth(index).click();
-	}
-	await expectCompactHeaderHidesAndRevealsWithScroll(
-		page.locator(".saved-page__top"),
-		page.locator(".saved-page__scroll"),
-	);
-});
+		await page.goto("/saved");
+		await waitForAppReady(page);
+		const recipeSummaries = page.locator(
+			".saved-recipe-card > details > summary",
+		);
+		for (let index = 0; index < (await recipeSummaries.count()); index += 1) {
+			await recipeSummaries.nth(index).click();
+		}
+		await expectCompactHeaderHidesAndRevealsWithScroll(
+			page.locator(".saved-page__top"),
+			page.locator(".saved-page__scroll"),
+		);
+	},
+);
 
 test("saved recipes default closed and expose their complete details on demand", async ({
 	page,

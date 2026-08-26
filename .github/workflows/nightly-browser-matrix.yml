@@ -1,0 +1,64 @@
+name: Exhaustive Browser Matrix
+
+on:
+  schedule:
+    - cron: "0 10 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: exhaustive-browser-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  browser:
+    name: Exhaustive / ${{ matrix.project }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - project: desktop-chromium
+            browser: chromium
+          - project: desktop-firefox
+            browser: firefox
+          - project: desktop-webkit
+            browser: webkit
+          - project: mobile-chromium
+            browser: chromium
+          - project: mobile-webkit
+            browser: webkit
+    env:
+      PLAYWRIGHT_ENFORCE_DURATION_BUDGETS: true
+      PLAYWRIGHT_EXHAUSTIVE_MATRIX: true
+      PLAYWRIGHT_WORKERS: 2
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+      - name: Use Node.js 24
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install browser
+        run: npx playwright install --with-deps ${{ matrix.browser }}
+      - name: Prepare isolated test database
+        run: npm run test:e2e:prepare
+      - name: Run exhaustive browser project
+        run: npx playwright test --project=${{ matrix.project }}
+      - name: Upload failure and timing evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: exhaustive-playwright-${{ matrix.project }}-${{ github.run_attempt }}
+          path: |
+            playwright-report/
+            test-results/playwright/
+            test-results/playwright-slow-tests.json
+          if-no-files-found: ignore
+          retention-days: 7

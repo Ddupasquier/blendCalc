@@ -29,49 +29,49 @@ const shallowRouteOverlayCases = [
 ] as const;
 
 for (const routeCase of shallowRouteOverlayCases) {
-	test(`${routeCase.overlayRoute} opens immediately and follows browser history`, async ({
-		page,
-	}) => {
-		await page.goto(routeCase.baseRoute);
-		await waitForAppReady(page);
+	test(
+		`${routeCase.overlayRoute} opens immediately and follows browser history`,
+		{ tag: "@compatibility" },
+		async ({ page }) => {
+			await page.goto(routeCase.baseRoute);
+			await waitForAppReady(page);
 
-		await page
-			.getByRole("button", { name: routeCase.launcherName })
-			.click();
-		await expect(page).toHaveURL(new RegExp(`${routeCase.overlayRoute}$`));
-		await expect(
-			page.getByRole("dialog", { name: routeCase.dialogName }),
-		).toBeVisible();
-		if ("documentTitle" in routeCase) {
-			await expect(page).toHaveTitle(routeCase.documentTitle);
+			await page.getByRole("button", { name: routeCase.launcherName }).click();
+			await expect(page).toHaveURL(new RegExp(`${routeCase.overlayRoute}$`));
 			await expect(
-				page.getByRole("heading", { name: "Sort", exact: true }),
-			).toHaveCount(1);
-		}
+				page.getByRole("dialog", { name: routeCase.dialogName }),
+			).toBeVisible();
+			if ("documentTitle" in routeCase) {
+				await expect(page).toHaveTitle(routeCase.documentTitle);
+				await expect(
+					page.getByRole("heading", { name: "Sort", exact: true }),
+				).toHaveCount(1);
+			}
 
-		await page.goBack();
-		await expect(page).toHaveURL(new RegExp(`${routeCase.baseRoute}$`));
-		await expect(
-			page.getByRole("dialog", { name: routeCase.dialogName }),
-		).toBeHidden();
+			await page.goBack();
+			await expect(page).toHaveURL(new RegExp(`${routeCase.baseRoute}$`));
+			await expect(
+				page.getByRole("dialog", { name: routeCase.dialogName }),
+			).toBeHidden();
 
-		await page.goForward();
-		await expect(page).toHaveURL(new RegExp(`${routeCase.overlayRoute}$`));
-		await expect(
-			page.getByRole("dialog", { name: routeCase.dialogName }),
-		).toBeVisible();
+			await page.goForward();
+			await expect(page).toHaveURL(new RegExp(`${routeCase.overlayRoute}$`));
+			await expect(
+				page.getByRole("dialog", { name: routeCase.dialogName }),
+			).toBeVisible();
 
-		await page.reload();
-		await waitForAppReady(page);
-		await expect(page).toHaveURL(new RegExp(`${routeCase.overlayRoute}$`));
-		await expect(
-			page.getByRole("dialog", { name: routeCase.dialogName }),
-		).toBeVisible();
+			await page.reload();
+			await waitForAppReady(page);
+			await expect(page).toHaveURL(new RegExp(`${routeCase.overlayRoute}$`));
+			await expect(
+				page.getByRole("dialog", { name: routeCase.dialogName }),
+			).toBeVisible();
 
-		await page.keyboard.press("Escape");
-		await expect(page).toHaveURL(new RegExp(`${routeCase.baseRoute}$`));
-		await expect(
-			page.getByRole("dialog", { name: routeCase.dialogName }),
-		).toBeHidden();
-	});
+			await page.keyboard.press("Escape");
+			await expect(page).toHaveURL(new RegExp(`${routeCase.baseRoute}$`));
+			await expect(
+				page.getByRole("dialog", { name: routeCase.dialogName }),
+			).toBeHidden();
+		},
+	);
 }
