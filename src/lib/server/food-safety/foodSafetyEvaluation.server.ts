@@ -112,6 +112,7 @@ const getAliasDerivedFacts = (
 			"label_allergen_field" | "label_trace_field" | "label_ingredient_field",
 		requireExact: boolean,
 		sourceText = value,
+		preserveSourceLabel = false,
 	) => {
 		const normalizedValue = normalizeValue(value);
 		if (!normalizedValue) return [];
@@ -137,7 +138,7 @@ const getAliasDerivedFacts = (
 			)
 			.map(({ alias }) => ({
 				slug: alias.tagSlug,
-				label: alias.tagLabel,
+				label: preserveSourceLabel ? value.trim() : alias.tagLabel,
 				category: alias.tagCategory,
 				factType,
 				sourceType,
@@ -186,6 +187,7 @@ const getAliasDerivedFacts = (
 					"label_ingredient_field",
 					true,
 					statement.text,
+					true,
 				),
 			),
 		),
@@ -688,12 +690,25 @@ const formatAllergenLabel = (value: string) => {
 };
 
 const getUniqueAllergenDisclosureEntries = (facts: FoodCompatibilityFact[]) => {
+	const directSourceKeys = new Set(
+		facts.flatMap((fact) => {
+			const sourceKey = normalizeKey(
+				fact.sourceText || fact.label || fact.slug,
+			);
+			return normalizeKey(fact.slug) === sourceKey
+				? [`${fact.factType}:${sourceKey}`]
+				: [];
+		}),
+	);
 	const canonicalKeyBySource = new Map<string, string>();
 	for (const fact of facts) {
 		const sourceKey = normalizeKey(fact.sourceText || fact.label || fact.slug);
-		const sourceSlug = normalizeKey(fact.sourceText || fact.label || fact.slug);
 		const factSlug = normalizeKey(fact.slug);
-		if (factSlug && factSlug !== sourceSlug) {
+		if (
+			factSlug &&
+			factSlug !== sourceKey &&
+			directSourceKeys.has(`${fact.factType}:${sourceKey}`)
+		) {
 			canonicalKeyBySource.set(sourceKey, factSlug);
 		}
 	}
