@@ -14,6 +14,7 @@
 	import type { ProductSafetyAlertsProps } from "./types";
 
 	let { food, alerts: providedAlerts }: ProductSafetyAlertsProps = $props();
+	let alertSummaryElement = $state<HTMLElement | null>(null);
 	const alerts = $derived(providedAlerts ?? food?.safetyAlerts ?? []);
 	const requiresPackageCheck = $derived(
 		alerts.some((alert) => alert.requiresPackageCheck),
@@ -53,6 +54,7 @@
 
 {#if alerts.length > 0}
 	<section
+		bind:this={alertSummaryElement}
 		class="product-safety-alerts"
 		aria-label="Official food safety alerts"
 	>
@@ -84,6 +86,8 @@
 	<ProductSafetyAlertInformationSheet
 		open={informationSheetOpen}
 		{alerts}
+		returnFocusTarget={() =>
+			alertSummaryElement?.querySelector<HTMLElement>("button") ?? null}
 		onClose={() => setInformationSheetOpen(false)}
 	/>
 {/if}

@@ -11,6 +11,7 @@
 		aboveNav = true,
 		fill = false,
 		comfortable = false,
+		returnFocusTarget,
 		titleAccessory,
 		children,
 		onClose,
@@ -26,11 +27,17 @@
 	{aboveNav}
 	{fill}
 	{comfortable}
+	{returnFocusTarget}
 	{onClose}
 >
 	<div class="bottom-sheet">
 		<div class="bottom-sheet__chrome">
-			<button class="bottom-sheet__handle" type="button" aria-label="Close sheet" onclick={onClose}>
+			<button
+				class="bottom-sheet__handle"
+				type="button"
+				aria-label="Close sheet"
+				onclick={onClose}
+			>
 				<span aria-hidden="true"></span>
 			</button>
 			<div class="bottom-sheet__header">

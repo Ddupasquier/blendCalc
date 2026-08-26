@@ -7,6 +7,9 @@ export const DIALOG_FOCUSABLE_SELECTOR = [
 	"[tabindex]:not([tabindex='-1'])",
 ].join(",");
 
+export type DialogReturnFocusTarget =
+	HTMLElement | null | (() => HTMLElement | null);
+
 const getFocusableElements = (container: HTMLElement) =>
 	Array.from(
 		container.querySelectorAll<HTMLElement>(DIALOG_FOCUSABLE_SELECTOR),
@@ -18,15 +21,18 @@ const getFocusableElements = (container: HTMLElement) =>
 
 export const manageDialogFocus = (
 	dialog: HTMLElement,
-	returnTargetOverride?: HTMLElement | null,
+	returnTargetOverride?: DialogReturnFocusTarget,
 ) => {
 	const hasExplicitReturnTarget = returnTargetOverride !== undefined;
-	const returnTarget =
-		!hasExplicitReturnTarget
-			? document.activeElement instanceof HTMLElement
-				? document.activeElement
-				: null
-			: returnTargetOverride;
+	const capturedReturnTarget = !hasExplicitReturnTarget
+		? document.activeElement instanceof HTMLElement
+			? document.activeElement
+			: null
+		: returnTargetOverride;
+	const resolveReturnTarget = () =>
+		typeof capturedReturnTarget === "function"
+			? capturedReturnTarget()
+			: capturedReturnTarget;
 	let cancelled = false;
 
 	queueMicrotask(() => {
@@ -37,10 +43,10 @@ export const manageDialogFocus = (
 
 	return () => {
 		cancelled = true;
-		if (!returnTarget?.isConnected) return;
 
 		const restoreFocus = () => {
-			if (!returnTarget.isConnected) return;
+			const returnTarget = resolveReturnTarget();
+			if (!returnTarget?.isConnected) return;
 			if (dialog.isConnected) return;
 			const activeElement = document.activeElement;
 			if (
@@ -86,10 +92,7 @@ export const manageDialogFocus = (
 	};
 };
 
-export const trapDialogFocus = (
-	event: KeyboardEvent,
-	dialog: HTMLElement,
-) => {
+export const trapDialogFocus = (event: KeyboardEvent, dialog: HTMLElement) => {
 	if (event.key !== "Tab" || event.defaultPrevented) return;
 
 	const focusableElements = getFocusableElements(dialog);
@@ -100,18 +103,25 @@ export const trapDialogFocus = (
 	}
 
 	const firstFocusableElement = focusableElements[0];
-	const lastFocusableElement = focusableElements.at(-1) ?? firstFocusableElement;
+	const lastFocusableElement =
+		focusableElements.at(-1) ?? firstFocusableElement;
 	const activeElement = document.activeElement;
 	const focusIsInsideDialog =
 		activeElement instanceof Node && dialog.contains(activeElement);
 
-	if (event.shiftKey && (!focusIsInsideDialog || activeElement === firstFocusableElement)) {
+	if (
+		event.shiftKey &&
+		(!focusIsInsideDialog || activeElement === firstFocusableElement)
+	) {
 		event.preventDefault();
 		lastFocusableElement.focus({ preventScroll: true });
 		return;
 	}
 
-	if (!event.shiftKey && (!focusIsInsideDialog || activeElement === lastFocusableElement)) {
+	if (
+		!event.shiftKey &&
+		(!focusIsInsideDialog || activeElement === lastFocusableElement)
+	) {
 		event.preventDefault();
 		firstFocusableElement.focus({ preventScroll: true });
 	}
