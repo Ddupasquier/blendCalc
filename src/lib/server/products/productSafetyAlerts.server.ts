@@ -28,6 +28,8 @@ type SafetyAlertRow = {
 	product_description: string;
 	reason: string | null;
 	recalling_organization: string | null;
+	package_description: string | null;
+	code_information: string | null;
 	source_url: string;
 	report_date: string | null;
 	recall_initiated_at: string | null;
@@ -45,9 +47,7 @@ type SafetyAlertIdentifierRow = {
 	normalized_value: string;
 };
 
-type SafetyAlertDetailRow = SafetyAlertRow & {
-	code_information: string | null;
-	package_description: string | null;
+type SafetyAlertBarcodeLookupRow = SafetyAlertRow & {
 	last_seen_at: string;
 };
 
@@ -136,6 +136,8 @@ const toFoodSafetyAlert = ({
 	productDescription: alert.product_description,
 	reason: alert.reason ?? undefined,
 	recallingOrganization: alert.recalling_organization ?? undefined,
+	packageDescription: alert.package_description ?? undefined,
+	codeInformation: alert.code_information ?? undefined,
 	sourceUrl: alert.source_url,
 	reportDate: alert.report_date ?? undefined,
 	recallInitiatedAt: alert.recall_initiated_at ?? undefined,
@@ -198,7 +200,7 @@ export const readActiveProductSafetyAlertsByBarcodes = async (
 	}
 	if (alertError) throw alertError;
 
-	const alerts = (alertData ?? []) as SafetyAlertDetailRow[];
+	const alerts = (alertData ?? []) as SafetyAlertBarcodeLookupRow[];
 	const alertsById = new Map(alerts.map((alert) => [alert.id, alert]));
 	const sourcesByKey = await readSafetyAlertSources(alerts, supabase);
 	for (const identifier of identifiers) {
@@ -331,7 +333,7 @@ export const readActiveProductSafetyAlertsByProduct = async (
 	const { data: alertData, error: alertError } = await supabase
 		.from("official_food_safety_alerts")
 		.select(
-			"id, provider_key, alert_type, classification, status, product_description, reason, recalling_organization, source_url, report_date, recall_initiated_at",
+			"id, provider_key, alert_type, classification, status, product_description, reason, recalling_organization, package_description, code_information, source_url, report_date, recall_initiated_at",
 		)
 		.in("id", alertIds)
 		.eq("is_active", true);

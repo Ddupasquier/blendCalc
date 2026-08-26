@@ -270,6 +270,8 @@ export type FoodSafetyAlert = {
 	productDescription: string;
 	reason?: string;
 	recallingOrganization?: string;
+	packageDescription?: string;
+	codeInformation?: string;
 	sourceUrl: string;
 	reportDate?: string;
 	recallInitiatedAt?: string;

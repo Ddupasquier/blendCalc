@@ -67,10 +67,7 @@ export type ApiV1SourceAttributionCatalog = {
 	assetSources: Record<string, ApiV1AssetSourceIdentity>;
 };
 
-const readRequiredAttributionText = (
-	value: string | null,
-	field: string,
-) => {
+const readRequiredAttributionText = (value: string | null, field: string) => {
 	const normalized = value?.trim();
 	if (!normalized) {
 		throw new Error(`Required API source ${field} is unavailable.`);
@@ -78,9 +75,8 @@ const readRequiredAttributionText = (
 	return normalized;
 };
 
-const hasRequiredAttributionText = (
-	value: string | null,
-): value is string => Boolean(value?.trim());
+const hasRequiredAttributionText = (value: string | null): value is string =>
+	Boolean(value?.trim());
 
 const hasCompleteSourceAttribution = (source: SourceAttributionRow) =>
 	hasRequiredAttributionText(source.display_name) &&
@@ -187,14 +183,14 @@ const toPublicSourceReference = (
 const toPublicSourceTagReferences = (references: unknown) =>
 	Array.isArray(references)
 		? uniqueStrings(
-			references.filter(
-				(reference): reference is string =>
-					typeof reference === "string" &&
-					reference.length <= 120 &&
-					!/[\\/?#]/.test(reference) &&
-					!/\b(?:token|secret|password|authorization)\b/i.test(reference),
-			),
-		)
+				references.filter(
+					(reference): reference is string =>
+						typeof reference === "string" &&
+						reference.length <= 120 &&
+						!/[\\/?#]/.test(reference) &&
+						!/\b(?:token|secret|password|authorization)\b/i.test(reference),
+				),
+			)
 		: [];
 
 export const mapApiV1SourceAttributionCatalog = (
@@ -214,7 +210,8 @@ export const mapApiV1SourceAttributionCatalog = (
 			sources[source.key] = mapSourceAttributionRow(source);
 		}
 	}
-	const datasetsBySource: ApiV1SourceAttributionCatalog["datasetsBySource"] = {};
+	const datasetsBySource: ApiV1SourceAttributionCatalog["datasetsBySource"] =
+		{};
 	const datasetSourceKeys = new Set<string>();
 	for (const dataset of datasetRows) {
 		datasetSourceKeys.add(dataset.source_key);
@@ -300,7 +297,8 @@ const collectRepresentedSources = (record: ApprovedCatalogRecord) => {
 			source: sourceKey,
 			references: new Set<string>(),
 		};
-		if (source.reference?.trim()) represented.references.add(source.reference.trim());
+		if (source.reference?.trim())
+			represented.references.add(source.reference.trim());
 		representedSources.set(sourceKey, represented);
 	}
 	return [...representedSources.values()];
@@ -412,7 +410,9 @@ const toWarning = (fact: FoodCompatibilityFact): ApiV1Warning => ({
 	sourceText: fact.sourceText,
 });
 
-const hasCompleteImageRights = (image: FoodImageAsset): image is PublicApiImage =>
+const hasCompleteImageRights = (
+	image: FoodImageAsset,
+): image is PublicApiImage =>
 	Boolean(
 		image.licenseName.trim() &&
 		image.licenseUrl?.trim() &&
@@ -575,8 +575,7 @@ export const mapApprovedCatalogRecordToApiV1Product = (
 			record.food.regulatoryDisclosure && regulatoryDisclosureSource
 				? {
 						profileKey: record.food.regulatoryDisclosure.profileKey,
-						evidenceStatus:
-							record.food.regulatoryDisclosure.evidenceStatus,
+						evidenceStatus: record.food.regulatoryDisclosure.evidenceStatus,
 					}
 				: null,
 		sourceRecord: record.food.sourceMetadata
@@ -702,6 +701,8 @@ export const mapApprovedCatalogRecordToApiV1Product = (
 			productDescription: alert.productDescription,
 			reason: alert.reason ?? null,
 			recallingOrganization: alert.recallingOrganization ?? null,
+			packageDescription: alert.packageDescription ?? null,
+			codeInformation: alert.codeInformation ?? null,
 			requiresPackageCheck: alert.requiresPackageCheck,
 			reportDate: alert.reportDate ?? null,
 			recallInitiatedAt: alert.recallInitiatedAt ?? null,
@@ -808,9 +809,8 @@ const toRevisionChange = (
 				return undefined;
 			}
 			const nutrient = candidate as Record<string, unknown>;
-			const unit = typeof nutrient.unit === "string"
-				? nutrient.unit.trim()
-				: "";
+			const unit =
+				typeof nutrient.unit === "string" ? nutrient.unit.trim() : "";
 			return typeof nutrient.value === "number" &&
 				Number.isFinite(nutrient.value) &&
 				nutrient.value >= 0 &&
