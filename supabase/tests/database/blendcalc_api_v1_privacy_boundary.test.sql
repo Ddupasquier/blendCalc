@@ -73,7 +73,7 @@ values (
 select ok(
 	not has_function_privilege(
 		'authenticated',
-		'public.get_blendcalc_product_v1(text)',
+		'public.get_blendcalc_api_product_v1(text)',
 		'EXECUTE'
 	),
 	'authenticated clients cannot read raw canonical product documents'
@@ -81,7 +81,7 @@ select ok(
 select ok(
 	not has_function_privilege(
 		'authenticated',
-		'public.search_blendcalc_products_v1(text,text[],integer,integer)',
+		'public.search_blendcalc_api_products_v1(text,text[],integer,integer)',
 		'EXECUTE'
 	),
 	'authenticated clients cannot search raw canonical product documents'
@@ -89,7 +89,7 @@ select ok(
 select ok(
 	not has_function_privilege(
 		'authenticated',
-		'public.get_blendcalc_product_revision_history_v1(text,integer,integer)',
+		'public.get_blendcalc_api_product_revision_history_v1(text,integer,integer)',
 		'EXECUTE'
 	),
 	'authenticated clients cannot bypass revision-history sanitization'
@@ -97,7 +97,7 @@ select ok(
 select ok(
 	not has_function_privilege(
 		'anon',
-		'public.get_blendcalc_product_v1(text)',
+		'public.get_blendcalc_api_product_v1(text)',
 		'EXECUTE'
 	),
 	'anonymous clients cannot read raw canonical product documents'
@@ -105,7 +105,7 @@ select ok(
 select ok(
 	not has_function_privilege(
 		'anon',
-		'public.search_blendcalc_products_v1(text,text[],integer,integer)',
+		'public.search_blendcalc_api_products_v1(text,text[],integer,integer)',
 		'EXECUTE'
 	),
 	'anonymous clients cannot search raw canonical product documents'
@@ -113,7 +113,7 @@ select ok(
 select ok(
 	not has_function_privilege(
 		'anon',
-		'public.get_blendcalc_product_revision_history_v1(text,integer,integer)',
+		'public.get_blendcalc_api_product_revision_history_v1(text,integer,integer)',
 		'EXECUTE'
 	),
 	'anonymous clients cannot read raw revision-history rows'
@@ -121,7 +121,7 @@ select ok(
 select ok(
 	has_function_privilege(
 		'service_role',
-		'public.get_blendcalc_product_v1(text)',
+		'public.get_blendcalc_api_product_v1(text)',
 		'EXECUTE'
 	),
 	'the trusted server can read a publication-ready product'
@@ -129,7 +129,7 @@ select ok(
 select ok(
 	has_function_privilege(
 		'service_role',
-		'public.search_blendcalc_products_v1(text,text[],integer,integer)',
+		'public.search_blendcalc_api_products_v1(text,text[],integer,integer)',
 		'EXECUTE'
 	),
 	'the trusted server can search publication-ready products'
@@ -137,7 +137,7 @@ select ok(
 select ok(
 	has_function_privilege(
 		'service_role',
-		'public.get_blendcalc_product_revision_history_v1(text,integer,integer)',
+		'public.get_blendcalc_api_product_revision_history_v1(text,integer,integer)',
 		'EXECUTE'
 	),
 	'the trusted server can read publication-ready revision history'
@@ -145,7 +145,7 @@ select ok(
 select is(
 	(
 		select count(*)::integer
-		from public.get_blendcalc_product_v1('00021130493609')
+		from public.get_blendcalc_api_product_v1('00021130493609')
 	),
 	1,
 	'the known publication-ready fixture remains available to the trusted reader'
@@ -153,7 +153,7 @@ select is(
 select is(
 	(
 		select count(*)::integer
-		from public.get_blendcalc_product_v1('00011110904416')
+		from public.get_blendcalc_api_product_v1('00011110904416')
 	),
 	0,
 	'an incomplete active catalog product is withheld'
@@ -161,7 +161,7 @@ select is(
 select is(
 	(
 		select count(*)::integer
-		from public.get_blendcalc_product_v1('09999999999994')
+		from public.get_blendcalc_api_product_v1('09999999999994')
 	),
 	0,
 	'the explicit pending product submission is withheld'
@@ -169,7 +169,7 @@ select is(
 select is(
 	(
 		select count(*)::integer
-		from public.get_blendcalc_product_v1('09999999999987')
+		from public.get_blendcalc_api_product_v1('09999999999987')
 	),
 	0,
 	'the explicit private custom food is withheld'
@@ -177,7 +177,7 @@ select is(
 select is(
 	(
 		select count(*)::integer
-		from public.search_blendcalc_products_v1(
+		from public.search_blendcalc_api_products_v1(
 			'no serving',
 			array['no', 'serving'],
 			50,
@@ -190,7 +190,7 @@ select is(
 select is(
 	(
 		select count(*)::integer
-		from public.search_blendcalc_products_v1(
+		from public.search_blendcalc_api_products_v1(
 			'api pending privacy sentinel',
 			array['api', 'pending', 'privacy', 'sentinel'],
 			50,

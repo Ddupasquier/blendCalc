@@ -7,11 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.5"
-  }
   graphql_public: {
     Tables: {
       [_ in never]: never
@@ -68,237 +63,6 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
-      }
-      api_publication_concerns: {
-        Row: {
-          concern_fingerprint: string
-          concern_type: string
-          contact_email: string
-          contact_name: string | null
-          created_at: string
-          dataset_key: string | null
-          details: string
-          evidence_urls: string[]
-          food_image_asset_id: string | null
-          id: string
-          reporter_type: string
-          reporter_user_id: string | null
-          resolution_action: string | null
-          resolution_note: string | null
-          reviewed_at: string | null
-          reviewed_by: string | null
-          shared_product_id: string | null
-          source_key: string | null
-          status: string
-          subject_reference: string
-          subject_type: string
-          updated_at: string
-          urgency: string
-        }
-        Insert: {
-          concern_fingerprint: string
-          concern_type: string
-          contact_email: string
-          contact_name?: string | null
-          created_at?: string
-          dataset_key?: string | null
-          details: string
-          evidence_urls?: string[]
-          food_image_asset_id?: string | null
-          id?: string
-          reporter_type: string
-          reporter_user_id?: string | null
-          resolution_action?: string | null
-          resolution_note?: string | null
-          reviewed_at?: string | null
-          reviewed_by?: string | null
-          shared_product_id?: string | null
-          source_key?: string | null
-          status?: string
-          subject_reference: string
-          subject_type: string
-          updated_at?: string
-          urgency?: string
-        }
-        Update: {
-          concern_fingerprint?: string
-          concern_type?: string
-          contact_email?: string
-          contact_name?: string | null
-          created_at?: string
-          dataset_key?: string | null
-          details?: string
-          evidence_urls?: string[]
-          food_image_asset_id?: string | null
-          id?: string
-          reporter_type?: string
-          reporter_user_id?: string | null
-          resolution_action?: string | null
-          resolution_note?: string | null
-          reviewed_at?: string | null
-          reviewed_by?: string | null
-          shared_product_id?: string | null
-          source_key?: string | null
-          status?: string
-          subject_reference?: string
-          subject_type?: string
-          updated_at?: string
-          urgency?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "api_publication_concerns_dataset_key_fkey"
-            columns: ["dataset_key"]
-            isOneToOne: false
-            referencedRelation: "generic_food_datasets"
-            referencedColumns: ["key"]
-          },
-          {
-            foreignKeyName: "api_publication_concerns_food_image_asset_id_fkey"
-            columns: ["food_image_asset_id"]
-            isOneToOne: false
-            referencedRelation: "food_image_assets"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "api_publication_concerns_shared_product_id_fkey"
-            columns: ["shared_product_id"]
-            isOneToOne: false
-            referencedRelation: "blendcalc_api_v1_product_readiness"
-            referencedColumns: ["shared_product_id"]
-          },
-          {
-            foreignKeyName: "api_publication_concerns_shared_product_id_fkey"
-            columns: ["shared_product_id"]
-            isOneToOne: false
-            referencedRelation: "catalog_product_readiness"
-            referencedColumns: ["shared_product_id"]
-          },
-          {
-            foreignKeyName: "api_publication_concerns_shared_product_id_fkey"
-            columns: ["shared_product_id"]
-            isOneToOne: false
-            referencedRelation: "shared_products"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "api_publication_concerns_source_key_fkey"
-            columns: ["source_key"]
-            isOneToOne: false
-            referencedRelation: "product_data_sources"
-            referencedColumns: ["key"]
-          },
-        ]
-      }
-      api_publication_holds: {
-        Row: {
-          concern_id: string | null
-          created_at: string
-          dataset_key: string | null
-          food_image_asset_id: string | null
-          id: string
-          internal_note: string
-          placed_at: string
-          placed_by: string | null
-          public_message: string
-          reason_code: string
-          release_note: string | null
-          released_at: string | null
-          released_by: string | null
-          shared_product_id: string | null
-          source_key: string | null
-          subject_type: string
-          updated_at: string
-        }
-        Insert: {
-          concern_id?: string | null
-          created_at?: string
-          dataset_key?: string | null
-          food_image_asset_id?: string | null
-          id?: string
-          internal_note: string
-          placed_at?: string
-          placed_by?: string | null
-          public_message: string
-          reason_code: string
-          release_note?: string | null
-          released_at?: string | null
-          released_by?: string | null
-          shared_product_id?: string | null
-          source_key?: string | null
-          subject_type: string
-          updated_at?: string
-        }
-        Update: {
-          concern_id?: string | null
-          created_at?: string
-          dataset_key?: string | null
-          food_image_asset_id?: string | null
-          id?: string
-          internal_note?: string
-          placed_at?: string
-          placed_by?: string | null
-          public_message?: string
-          reason_code?: string
-          release_note?: string | null
-          released_at?: string | null
-          released_by?: string | null
-          shared_product_id?: string | null
-          source_key?: string | null
-          subject_type?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "api_publication_holds_concern_id_fkey"
-            columns: ["concern_id"]
-            isOneToOne: false
-            referencedRelation: "api_publication_concerns"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "api_publication_holds_dataset_key_fkey"
-            columns: ["dataset_key"]
-            isOneToOne: false
-            referencedRelation: "generic_food_datasets"
-            referencedColumns: ["key"]
-          },
-          {
-            foreignKeyName: "api_publication_holds_food_image_asset_id_fkey"
-            columns: ["food_image_asset_id"]
-            isOneToOne: false
-            referencedRelation: "food_image_assets"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "api_publication_holds_shared_product_id_fkey"
-            columns: ["shared_product_id"]
-            isOneToOne: false
-            referencedRelation: "blendcalc_api_v1_product_readiness"
-            referencedColumns: ["shared_product_id"]
-          },
-          {
-            foreignKeyName: "api_publication_holds_shared_product_id_fkey"
-            columns: ["shared_product_id"]
-            isOneToOne: false
-            referencedRelation: "catalog_product_readiness"
-            referencedColumns: ["shared_product_id"]
-          },
-          {
-            foreignKeyName: "api_publication_holds_shared_product_id_fkey"
-            columns: ["shared_product_id"]
-            isOneToOne: false
-            referencedRelation: "shared_products"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "api_publication_holds_source_key_fkey"
-            columns: ["source_key"]
-            isOneToOne: false
-            referencedRelation: "product_data_sources"
-            referencedColumns: ["key"]
-          },
-        ]
       }
       app_delight_messages: {
         Row: {
@@ -470,6 +234,258 @@ export type Database = {
           role?: Database["public"]["Enums"]["app_role"]
         }
         Relationships: []
+      }
+      blendcalc_api_publication_concerns: {
+        Row: {
+          concern_fingerprint: string
+          concern_type: string
+          contact_email: string
+          contact_name: string | null
+          created_at: string
+          dataset_key: string | null
+          details: string
+          evidence_urls: string[]
+          food_image_asset_id: string | null
+          id: string
+          reporter_type: string
+          reporter_user_id: string | null
+          resolution_action: string | null
+          resolution_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          shared_product_id: string | null
+          source_key: string | null
+          status: string
+          subject_reference: string
+          subject_type: string
+          updated_at: string
+          urgency: string
+        }
+        Insert: {
+          concern_fingerprint: string
+          concern_type: string
+          contact_email: string
+          contact_name?: string | null
+          created_at?: string
+          dataset_key?: string | null
+          details: string
+          evidence_urls?: string[]
+          food_image_asset_id?: string | null
+          id?: string
+          reporter_type: string
+          reporter_user_id?: string | null
+          resolution_action?: string | null
+          resolution_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          shared_product_id?: string | null
+          source_key?: string | null
+          status?: string
+          subject_reference: string
+          subject_type: string
+          updated_at?: string
+          urgency?: string
+        }
+        Update: {
+          concern_fingerprint?: string
+          concern_type?: string
+          contact_email?: string
+          contact_name?: string | null
+          created_at?: string
+          dataset_key?: string | null
+          details?: string
+          evidence_urls?: string[]
+          food_image_asset_id?: string | null
+          id?: string
+          reporter_type?: string
+          reporter_user_id?: string | null
+          resolution_action?: string | null
+          resolution_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          shared_product_id?: string | null
+          source_key?: string | null
+          status?: string
+          subject_reference?: string
+          subject_type?: string
+          updated_at?: string
+          urgency?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blendcalc_api_publication_concerns_dataset_key_fkey"
+            columns: ["dataset_key"]
+            isOneToOne: false
+            referencedRelation: "generic_food_datasets"
+            referencedColumns: ["key"]
+          },
+          {
+            foreignKeyName: "blendcalc_api_publication_concerns_food_image_asset_id_fkey"
+            columns: ["food_image_asset_id"]
+            isOneToOne: false
+            referencedRelation: "food_image_assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blendcalc_api_publication_concerns_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "blendcalc_api_catalog_product_readiness"
+            referencedColumns: ["shared_product_id"]
+          },
+          {
+            foreignKeyName: "blendcalc_api_publication_concerns_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "blendcalc_api_v1_product_readiness"
+            referencedColumns: ["shared_product_id"]
+          },
+          {
+            foreignKeyName: "blendcalc_api_publication_concerns_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_product_readiness"
+            referencedColumns: ["shared_product_id"]
+          },
+          {
+            foreignKeyName: "blendcalc_api_publication_concerns_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "shared_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blendcalc_api_publication_concerns_source_key_fkey"
+            columns: ["source_key"]
+            isOneToOne: false
+            referencedRelation: "product_data_sources"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      blendcalc_api_publication_holds: {
+        Row: {
+          concern_id: string | null
+          created_at: string
+          dataset_key: string | null
+          food_image_asset_id: string | null
+          id: string
+          internal_note: string
+          placed_at: string
+          placed_by: string | null
+          public_message: string
+          reason_code: string
+          release_note: string | null
+          released_at: string | null
+          released_by: string | null
+          shared_product_id: string | null
+          source_key: string | null
+          subject_type: string
+          updated_at: string
+        }
+        Insert: {
+          concern_id?: string | null
+          created_at?: string
+          dataset_key?: string | null
+          food_image_asset_id?: string | null
+          id?: string
+          internal_note: string
+          placed_at?: string
+          placed_by?: string | null
+          public_message: string
+          reason_code: string
+          release_note?: string | null
+          released_at?: string | null
+          released_by?: string | null
+          shared_product_id?: string | null
+          source_key?: string | null
+          subject_type: string
+          updated_at?: string
+        }
+        Update: {
+          concern_id?: string | null
+          created_at?: string
+          dataset_key?: string | null
+          food_image_asset_id?: string | null
+          id?: string
+          internal_note?: string
+          placed_at?: string
+          placed_by?: string | null
+          public_message?: string
+          reason_code?: string
+          release_note?: string | null
+          released_at?: string | null
+          released_by?: string | null
+          shared_product_id?: string | null
+          source_key?: string | null
+          subject_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blendcalc_api_publication_holds_concern_id_fkey"
+            columns: ["concern_id"]
+            isOneToOne: false
+            referencedRelation: "api_publication_concerns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blendcalc_api_publication_holds_concern_id_fkey"
+            columns: ["concern_id"]
+            isOneToOne: false
+            referencedRelation: "blendcalc_api_publication_concerns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blendcalc_api_publication_holds_dataset_key_fkey"
+            columns: ["dataset_key"]
+            isOneToOne: false
+            referencedRelation: "generic_food_datasets"
+            referencedColumns: ["key"]
+          },
+          {
+            foreignKeyName: "blendcalc_api_publication_holds_food_image_asset_id_fkey"
+            columns: ["food_image_asset_id"]
+            isOneToOne: false
+            referencedRelation: "food_image_assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blendcalc_api_publication_holds_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "blendcalc_api_catalog_product_readiness"
+            referencedColumns: ["shared_product_id"]
+          },
+          {
+            foreignKeyName: "blendcalc_api_publication_holds_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "blendcalc_api_v1_product_readiness"
+            referencedColumns: ["shared_product_id"]
+          },
+          {
+            foreignKeyName: "blendcalc_api_publication_holds_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_product_readiness"
+            referencedColumns: ["shared_product_id"]
+          },
+          {
+            foreignKeyName: "blendcalc_api_publication_holds_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "shared_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blendcalc_api_publication_holds_source_key_fkey"
+            columns: ["source_key"]
+            isOneToOne: false
+            referencedRelation: "product_data_sources"
+            referencedColumns: ["key"]
+          },
+        ]
       }
       blendcalc_api_publication_profiles: {
         Row: {
@@ -651,6 +667,13 @@ export type Database = {
             foreignKeyName: "catalog_correction_origins_base_revision_id_fkey"
             columns: ["base_revision_id"]
             isOneToOne: false
+            referencedRelation: "blendcalc_api_catalog_product_readiness"
+            referencedColumns: ["current_revision_id"]
+          },
+          {
+            foreignKeyName: "catalog_correction_origins_base_revision_id_fkey"
+            columns: ["base_revision_id"]
+            isOneToOne: false
             referencedRelation: "catalog_product_readiness"
             referencedColumns: ["current_revision_id"]
           },
@@ -679,6 +702,13 @@ export type Database = {
             foreignKeyName: "catalog_correction_origins_resolved_revision_id_fkey"
             columns: ["resolved_revision_id"]
             isOneToOne: false
+            referencedRelation: "blendcalc_api_catalog_product_readiness"
+            referencedColumns: ["current_revision_id"]
+          },
+          {
+            foreignKeyName: "catalog_correction_origins_resolved_revision_id_fkey"
+            columns: ["resolved_revision_id"]
+            isOneToOne: false
             referencedRelation: "catalog_product_readiness"
             referencedColumns: ["current_revision_id"]
           },
@@ -695,6 +725,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "shared_product_conflicts"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catalog_correction_origins_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "blendcalc_api_catalog_product_readiness"
+            referencedColumns: ["shared_product_id"]
           },
           {
             foreignKeyName: "catalog_correction_origins_shared_product_id_fkey"
@@ -980,6 +1017,13 @@ export type Database = {
             foreignKeyName: "catalog_provider_change_reviews_accepted_revision_id_fkey"
             columns: ["accepted_revision_id"]
             isOneToOne: false
+            referencedRelation: "blendcalc_api_catalog_product_readiness"
+            referencedColumns: ["current_revision_id"]
+          },
+          {
+            foreignKeyName: "catalog_provider_change_reviews_accepted_revision_id_fkey"
+            columns: ["accepted_revision_id"]
+            isOneToOne: false
             referencedRelation: "catalog_product_readiness"
             referencedColumns: ["current_revision_id"]
           },
@@ -996,6 +1040,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "product_data_sources"
             referencedColumns: ["key"]
+          },
+          {
+            foreignKeyName: "catalog_provider_change_reviews_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "blendcalc_api_catalog_product_readiness"
+            referencedColumns: ["shared_product_id"]
           },
           {
             foreignKeyName: "catalog_provider_change_reviews_shared_product_id_fkey"
@@ -1081,6 +1132,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "product_data_sources"
             referencedColumns: ["key"]
+          },
+          {
+            foreignKeyName: "catalog_provider_product_snapshots_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "blendcalc_api_catalog_product_readiness"
+            referencedColumns: ["shared_product_id"]
           },
           {
             foreignKeyName: "catalog_provider_product_snapshots_shared_product_id_fkey"
@@ -1183,6 +1241,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "product_data_sources"
             referencedColumns: ["key"]
+          },
+          {
+            foreignKeyName: "catalog_revalidation_queue_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "blendcalc_api_catalog_product_readiness"
+            referencedColumns: ["shared_product_id"]
           },
           {
             foreignKeyName: "catalog_revalidation_queue_shared_product_id_fkey"
@@ -1757,6 +1822,13 @@ export type Database = {
             foreignKeyName: "food_compatibility_feedback_shared_product_id_fkey"
             columns: ["shared_product_id"]
             isOneToOne: false
+            referencedRelation: "blendcalc_api_catalog_product_readiness"
+            referencedColumns: ["shared_product_id"]
+          },
+          {
+            foreignKeyName: "food_compatibility_feedback_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
             referencedRelation: "blendcalc_api_v1_product_readiness"
             referencedColumns: ["shared_product_id"]
           },
@@ -1773,6 +1845,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "shared_products"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_compatibility_feedback_shared_product_revision_id_fkey"
+            columns: ["shared_product_revision_id"]
+            isOneToOne: false
+            referencedRelation: "blendcalc_api_catalog_product_readiness"
+            referencedColumns: ["current_revision_id"]
           },
           {
             foreignKeyName: "food_compatibility_feedback_shared_product_revision_id_fkey"
@@ -2430,6 +2509,13 @@ export type Database = {
             foreignKeyName: "food_image_assets_shared_product_id_fkey"
             columns: ["shared_product_id"]
             isOneToOne: false
+            referencedRelation: "blendcalc_api_catalog_product_readiness"
+            referencedColumns: ["shared_product_id"]
+          },
+          {
+            foreignKeyName: "food_image_assets_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
             referencedRelation: "blendcalc_api_v1_product_readiness"
             referencedColumns: ["shared_product_id"]
           },
@@ -2556,6 +2642,13 @@ export type Database = {
             foreignKeyName: "food_nutrients_shared_product_id_fkey"
             columns: ["shared_product_id"]
             isOneToOne: false
+            referencedRelation: "blendcalc_api_catalog_product_readiness"
+            referencedColumns: ["shared_product_id"]
+          },
+          {
+            foreignKeyName: "food_nutrients_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
             referencedRelation: "blendcalc_api_v1_product_readiness"
             referencedColumns: ["shared_product_id"]
           },
@@ -2579,6 +2672,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "shared_product_observations"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_nutrients_shared_product_revision_id_fkey"
+            columns: ["shared_product_revision_id"]
+            isOneToOne: false
+            referencedRelation: "blendcalc_api_catalog_product_readiness"
+            referencedColumns: ["current_revision_id"]
           },
           {
             foreignKeyName: "food_nutrients_shared_product_revision_id_fkey"
@@ -2918,6 +3018,13 @@ export type Database = {
             foreignKeyName: "food_servings_shared_product_id_fkey"
             columns: ["shared_product_id"]
             isOneToOne: false
+            referencedRelation: "blendcalc_api_catalog_product_readiness"
+            referencedColumns: ["shared_product_id"]
+          },
+          {
+            foreignKeyName: "food_servings_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
             referencedRelation: "blendcalc_api_v1_product_readiness"
             referencedColumns: ["shared_product_id"]
           },
@@ -2941,6 +3048,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "shared_product_observations"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_servings_shared_product_revision_id_fkey"
+            columns: ["shared_product_revision_id"]
+            isOneToOne: false
+            referencedRelation: "blendcalc_api_catalog_product_readiness"
+            referencedColumns: ["current_revision_id"]
           },
           {
             foreignKeyName: "food_servings_shared_product_revision_id_fkey"
@@ -3126,6 +3240,13 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "food_compatibility_feedback"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_warning_policy_review_cases_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "blendcalc_api_catalog_product_readiness"
+            referencedColumns: ["shared_product_id"]
           },
           {
             foreignKeyName: "food_warning_policy_review_cases_shared_product_id_fkey"
@@ -4210,7 +4331,7 @@ export type Database = {
           {
             foreignKeyName: "nutrient_manual_entry_fields_nutrient_id_fkey"
             columns: ["nutrient_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "nutrient_definitions"
             referencedColumns: ["nutrient_id"]
           },
@@ -4948,6 +5069,13 @@ export type Database = {
             foreignKeyName: "official_food_safety_alert_matches_shared_product_id_fkey"
             columns: ["shared_product_id"]
             isOneToOne: false
+            referencedRelation: "blendcalc_api_catalog_product_readiness"
+            referencedColumns: ["shared_product_id"]
+          },
+          {
+            foreignKeyName: "official_food_safety_alert_matches_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
             referencedRelation: "blendcalc_api_v1_product_readiness"
             referencedColumns: ["shared_product_id"]
           },
@@ -5222,6 +5350,13 @@ export type Database = {
             foreignKeyName: "product_compatibility_facts_shared_product_id_fkey"
             columns: ["shared_product_id"]
             isOneToOne: false
+            referencedRelation: "blendcalc_api_catalog_product_readiness"
+            referencedColumns: ["shared_product_id"]
+          },
+          {
+            foreignKeyName: "product_compatibility_facts_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
             referencedRelation: "blendcalc_api_v1_product_readiness"
             referencedColumns: ["shared_product_id"]
           },
@@ -5483,6 +5618,13 @@ export type Database = {
             foreignKeyName: "product_ingredient_statements_shared_product_id_fkey"
             columns: ["shared_product_id"]
             isOneToOne: false
+            referencedRelation: "blendcalc_api_catalog_product_readiness"
+            referencedColumns: ["shared_product_id"]
+          },
+          {
+            foreignKeyName: "product_ingredient_statements_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
             referencedRelation: "blendcalc_api_v1_product_readiness"
             referencedColumns: ["shared_product_id"]
           },
@@ -5603,6 +5745,13 @@ export type Database = {
             foreignKeyName: "product_precautionary_statement_shared_product_revision_id_fkey"
             columns: ["shared_product_revision_id"]
             isOneToOne: false
+            referencedRelation: "blendcalc_api_catalog_product_readiness"
+            referencedColumns: ["current_revision_id"]
+          },
+          {
+            foreignKeyName: "product_precautionary_statement_shared_product_revision_id_fkey"
+            columns: ["shared_product_revision_id"]
+            isOneToOne: false
             referencedRelation: "catalog_product_readiness"
             referencedColumns: ["current_revision_id"]
           },
@@ -5612,6 +5761,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "shared_product_revisions"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_precautionary_statements_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "blendcalc_api_catalog_product_readiness"
+            referencedColumns: ["shared_product_id"]
           },
           {
             foreignKeyName: "product_precautionary_statements_shared_product_id_fkey"
@@ -6591,6 +6747,13 @@ export type Database = {
             foreignKeyName: "shared_product_conflicts_shared_product_id_fkey"
             columns: ["shared_product_id"]
             isOneToOne: false
+            referencedRelation: "blendcalc_api_catalog_product_readiness"
+            referencedColumns: ["shared_product_id"]
+          },
+          {
+            foreignKeyName: "shared_product_conflicts_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
             referencedRelation: "blendcalc_api_v1_product_readiness"
             referencedColumns: ["shared_product_id"]
           },
@@ -6654,6 +6817,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "shared_product_observations"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shared_product_field_provenance_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "blendcalc_api_catalog_product_readiness"
+            referencedColumns: ["shared_product_id"]
           },
           {
             foreignKeyName: "shared_product_field_provenance_shared_product_id_fkey"
@@ -6773,6 +6943,13 @@ export type Database = {
             foreignKeyName: "shared_product_revision_changes_revision_id_fkey"
             columns: ["revision_id"]
             isOneToOne: false
+            referencedRelation: "blendcalc_api_catalog_product_readiness"
+            referencedColumns: ["current_revision_id"]
+          },
+          {
+            foreignKeyName: "shared_product_revision_changes_revision_id_fkey"
+            columns: ["revision_id"]
+            isOneToOne: false
             referencedRelation: "catalog_product_readiness"
             referencedColumns: ["current_revision_id"]
           },
@@ -6843,6 +7020,13 @@ export type Database = {
             foreignKeyName: "shared_product_revisions_shared_product_id_fkey"
             columns: ["shared_product_id"]
             isOneToOne: false
+            referencedRelation: "blendcalc_api_catalog_product_readiness"
+            referencedColumns: ["shared_product_id"]
+          },
+          {
+            foreignKeyName: "shared_product_revisions_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
             referencedRelation: "blendcalc_api_v1_product_readiness"
             referencedColumns: ["shared_product_id"]
           },
@@ -6866,6 +7050,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "shared_product_submissions"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shared_product_revisions_supersedes_revision_id_fkey"
+            columns: ["supersedes_revision_id"]
+            isOneToOne: false
+            referencedRelation: "blendcalc_api_catalog_product_readiness"
+            referencedColumns: ["current_revision_id"]
           },
           {
             foreignKeyName: "shared_product_revisions_supersedes_revision_id_fkey"
@@ -6973,6 +7164,13 @@ export type Database = {
             foreignKeyName: "shared_product_submissions_base_revision_id_fkey"
             columns: ["base_revision_id"]
             isOneToOne: false
+            referencedRelation: "blendcalc_api_catalog_product_readiness"
+            referencedColumns: ["current_revision_id"]
+          },
+          {
+            foreignKeyName: "shared_product_submissions_base_revision_id_fkey"
+            columns: ["base_revision_id"]
+            isOneToOne: false
             referencedRelation: "catalog_product_readiness"
             referencedColumns: ["current_revision_id"]
           },
@@ -6989,6 +7187,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "custom_food_category_options"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shared_product_submissions_target_shared_product_id_fkey"
+            columns: ["target_shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "blendcalc_api_catalog_product_readiness"
+            referencedColumns: ["shared_product_id"]
           },
           {
             foreignKeyName: "shared_product_submissions_target_shared_product_id_fkey"
@@ -7297,6 +7502,13 @@ export type Database = {
             foreignKeyName: "user_food_list_items_shared_product_id_fkey"
             columns: ["shared_product_id"]
             isOneToOne: false
+            referencedRelation: "blendcalc_api_catalog_product_readiness"
+            referencedColumns: ["shared_product_id"]
+          },
+          {
+            foreignKeyName: "user_food_list_items_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
             referencedRelation: "blendcalc_api_v1_product_readiness"
             referencedColumns: ["shared_product_id"]
           },
@@ -7556,6 +7768,279 @@ export type Database = {
       }
     }
     Views: {
+      api_publication_concerns: {
+        Row: {
+          concern_fingerprint: string | null
+          concern_type: string | null
+          contact_email: string | null
+          contact_name: string | null
+          created_at: string | null
+          dataset_key: string | null
+          details: string | null
+          evidence_urls: string[] | null
+          food_image_asset_id: string | null
+          id: string | null
+          reporter_type: string | null
+          reporter_user_id: string | null
+          resolution_action: string | null
+          resolution_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          shared_product_id: string | null
+          source_key: string | null
+          status: string | null
+          subject_reference: string | null
+          subject_type: string | null
+          updated_at: string | null
+          urgency: string | null
+        }
+        Insert: {
+          concern_fingerprint?: string | null
+          concern_type?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          created_at?: string | null
+          dataset_key?: string | null
+          details?: string | null
+          evidence_urls?: string[] | null
+          food_image_asset_id?: string | null
+          id?: string | null
+          reporter_type?: string | null
+          reporter_user_id?: string | null
+          resolution_action?: string | null
+          resolution_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          shared_product_id?: string | null
+          source_key?: string | null
+          status?: string | null
+          subject_reference?: string | null
+          subject_type?: string | null
+          updated_at?: string | null
+          urgency?: string | null
+        }
+        Update: {
+          concern_fingerprint?: string | null
+          concern_type?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          created_at?: string | null
+          dataset_key?: string | null
+          details?: string | null
+          evidence_urls?: string[] | null
+          food_image_asset_id?: string | null
+          id?: string | null
+          reporter_type?: string | null
+          reporter_user_id?: string | null
+          resolution_action?: string | null
+          resolution_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          shared_product_id?: string | null
+          source_key?: string | null
+          status?: string | null
+          subject_reference?: string | null
+          subject_type?: string | null
+          updated_at?: string | null
+          urgency?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blendcalc_api_publication_concerns_dataset_key_fkey"
+            columns: ["dataset_key"]
+            isOneToOne: false
+            referencedRelation: "generic_food_datasets"
+            referencedColumns: ["key"]
+          },
+          {
+            foreignKeyName: "blendcalc_api_publication_concerns_food_image_asset_id_fkey"
+            columns: ["food_image_asset_id"]
+            isOneToOne: false
+            referencedRelation: "food_image_assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blendcalc_api_publication_concerns_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "blendcalc_api_catalog_product_readiness"
+            referencedColumns: ["shared_product_id"]
+          },
+          {
+            foreignKeyName: "blendcalc_api_publication_concerns_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "blendcalc_api_v1_product_readiness"
+            referencedColumns: ["shared_product_id"]
+          },
+          {
+            foreignKeyName: "blendcalc_api_publication_concerns_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_product_readiness"
+            referencedColumns: ["shared_product_id"]
+          },
+          {
+            foreignKeyName: "blendcalc_api_publication_concerns_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "shared_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blendcalc_api_publication_concerns_source_key_fkey"
+            columns: ["source_key"]
+            isOneToOne: false
+            referencedRelation: "product_data_sources"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      api_publication_holds: {
+        Row: {
+          concern_id: string | null
+          created_at: string | null
+          dataset_key: string | null
+          food_image_asset_id: string | null
+          id: string | null
+          internal_note: string | null
+          placed_at: string | null
+          placed_by: string | null
+          public_message: string | null
+          reason_code: string | null
+          release_note: string | null
+          released_at: string | null
+          released_by: string | null
+          shared_product_id: string | null
+          source_key: string | null
+          subject_type: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          concern_id?: string | null
+          created_at?: string | null
+          dataset_key?: string | null
+          food_image_asset_id?: string | null
+          id?: string | null
+          internal_note?: string | null
+          placed_at?: string | null
+          placed_by?: string | null
+          public_message?: string | null
+          reason_code?: string | null
+          release_note?: string | null
+          released_at?: string | null
+          released_by?: string | null
+          shared_product_id?: string | null
+          source_key?: string | null
+          subject_type?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          concern_id?: string | null
+          created_at?: string | null
+          dataset_key?: string | null
+          food_image_asset_id?: string | null
+          id?: string | null
+          internal_note?: string | null
+          placed_at?: string | null
+          placed_by?: string | null
+          public_message?: string | null
+          reason_code?: string | null
+          release_note?: string | null
+          released_at?: string | null
+          released_by?: string | null
+          shared_product_id?: string | null
+          source_key?: string | null
+          subject_type?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blendcalc_api_publication_holds_concern_id_fkey"
+            columns: ["concern_id"]
+            isOneToOne: false
+            referencedRelation: "api_publication_concerns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blendcalc_api_publication_holds_concern_id_fkey"
+            columns: ["concern_id"]
+            isOneToOne: false
+            referencedRelation: "blendcalc_api_publication_concerns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blendcalc_api_publication_holds_dataset_key_fkey"
+            columns: ["dataset_key"]
+            isOneToOne: false
+            referencedRelation: "generic_food_datasets"
+            referencedColumns: ["key"]
+          },
+          {
+            foreignKeyName: "blendcalc_api_publication_holds_food_image_asset_id_fkey"
+            columns: ["food_image_asset_id"]
+            isOneToOne: false
+            referencedRelation: "food_image_assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blendcalc_api_publication_holds_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "blendcalc_api_catalog_product_readiness"
+            referencedColumns: ["shared_product_id"]
+          },
+          {
+            foreignKeyName: "blendcalc_api_publication_holds_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "blendcalc_api_v1_product_readiness"
+            referencedColumns: ["shared_product_id"]
+          },
+          {
+            foreignKeyName: "blendcalc_api_publication_holds_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_product_readiness"
+            referencedColumns: ["shared_product_id"]
+          },
+          {
+            foreignKeyName: "blendcalc_api_publication_holds_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "shared_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blendcalc_api_publication_holds_source_key_fkey"
+            columns: ["source_key"]
+            isOneToOne: false
+            referencedRelation: "product_data_sources"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      blendcalc_api_catalog_product_readiness: {
+        Row: {
+          barcode: string | null
+          blendcalc_api_v1_status: string | null
+          blendcalc_api_v1_withholding_reasons: string[] | null
+          brand_owner: string | null
+          current_label_observed_at: string | null
+          current_revision_id: string | null
+          current_revision_number: number | null
+          last_verified_at: string | null
+          open_material_conflict_count: number | null
+          pending_correction_count: number | null
+          product_name: string | null
+          searchable_in_blendcalc: boolean | null
+          shared_catalog_status: string | null
+          shared_product_id: string | null
+          updated_at: string | null
+          usable_in_blendcalc: boolean | null
+        }
+        Relationships: []
+      }
       blendcalc_api_v1_product_readiness: {
         Row: {
           barcode: string | null
@@ -8049,14 +8534,14 @@ export type Database = {
         Args: { p_keep_extra_goals?: boolean; p_template_id: string }
         Returns: Json
       }
-      are_api_concern_evidence_urls_valid: {
-        Args: { p_evidence_urls: string[] }
-        Returns: boolean
-      }
       authorize_app_permission: {
         Args: {
           requested_permission: Database["public"]["Enums"]["app_permission"]
         }
+        Returns: boolean
+      }
+      blendcalc_api_publication_concern_evidence_urls_are_valid: {
+        Args: { p_evidence_urls: string[] }
         Returns: boolean
       }
       blendcalc_api_v1_product_readiness_reasons: {
@@ -8220,6 +8705,44 @@ export type Database = {
       food_normalized_barcode: { Args: { p_food: Json }; Returns: string }
       food_source_key: { Args: { p_food: Json }; Returns: string }
       food_trust_status: { Args: { p_food: Json }; Returns: string }
+      get_blendcalc_api_catalog_product_readiness_passport: {
+        Args: { p_shared_product_id: string }
+        Returns: Json
+      }
+      get_blendcalc_api_product_revision_history_v1: {
+        Args: { p_barcode: string; p_limit?: number; p_offset?: number }
+        Returns: {
+          changes: Json
+          id: string
+          label_observed_at: string
+          published_at: string
+          revision_number: number
+          total_count: number
+        }[]
+      }
+      get_blendcalc_api_product_v1: {
+        Args: { p_barcode: string }
+        Returns: {
+          barcode: string
+          brand_owner: string
+          canonical_provenance: Json
+          category_option_id: string
+          compatibility_summary: Json
+          confidence: string
+          created_at: string
+          current_revision_id: string
+          current_revision_number: number
+          food: Json
+          id: string
+          label_observed_at: string
+          last_verified_at: string
+          product_name: string
+          revision_created_at: string
+          source: string
+          source_reference: string
+          updated_at: string
+        }[]
+      }
       get_blendcalc_product_revision_history_v1: {
         Args: { p_barcode: string; p_limit?: number; p_offset?: number }
         Returns: {
@@ -8571,6 +9094,35 @@ export type Database = {
           p_template_id?: string
         }
         Returns: string
+      }
+      search_blendcalc_api_products_v1: {
+        Args: {
+          p_limit?: number
+          p_offset?: number
+          p_query: string
+          p_terms: string[]
+        }
+        Returns: {
+          barcode: string
+          brand_owner: string
+          canonical_provenance: Json
+          category_option_id: string
+          compatibility_summary: Json
+          confidence: string
+          created_at: string
+          current_revision_id: string
+          current_revision_number: number
+          food: Json
+          id: string
+          label_observed_at: string
+          last_verified_at: string
+          product_name: string
+          revision_created_at: string
+          source: string
+          source_reference: string
+          total_count: number
+          updated_at: string
+        }[]
       }
       search_blendcalc_products_v1: {
         Args: {
