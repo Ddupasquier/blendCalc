@@ -12,15 +12,19 @@ export const loadMixPageData = async (
 	cloudDataContext: CloudDataContext,
 ): Promise<MixPageInitialData> => {
 	try {
-		const [fridge, shoppingList, preferences, foodSafetyContext] = await Promise.all([
-			readCloudIngredientList(MIX_STORAGE_KEYS.fridge, cloudDataContext),
-			readCloudIngredientList(MIX_STORAGE_KEYS.shoppingList, cloudDataContext),
-			readCloudMixPreferences(cloudDataContext),
-			getUserFoodSafetyContext(
-				cloudDataContext.supabase,
-				cloudDataContext.userId,
-			),
-		]);
+		const [fridge, shoppingList, preferences, foodSafetyContext] =
+			await Promise.all([
+				readCloudIngredientList(MIX_STORAGE_KEYS.fridge, cloudDataContext),
+				readCloudIngredientList(
+					MIX_STORAGE_KEYS.shoppingList,
+					cloudDataContext,
+				),
+				readCloudMixPreferences(cloudDataContext),
+				getUserFoodSafetyContext(
+					cloudDataContext.supabase,
+					cloudDataContext.userId,
+				),
+			]);
 		if (!fridge || !shoppingList || !preferences) {
 			throw new Error("Authenticated ingredient lists were unavailable.");
 		}

@@ -20,11 +20,15 @@
 	let pendingOccurrenceKey = $state<string | null>(null);
 
 	const repairableIssues = $derived(
-		issues.filter((issue) => issue.automatedRepairAllowed && issue.automatedRepairKey),
+		issues.filter(
+			(issue) => issue.automatedRepairAllowed && issue.automatedRepairKey,
+		),
 	);
 	const formatRepairItemLabel = (itemKey: string) => {
 		const genericLabel = getCatalogHealthRepairItemLabel(itemKey);
-		return genericLabel === itemKey ? getCatalogFieldLabel(itemKey) : genericLabel;
+		return genericLabel === itemKey
+			? getCatalogFieldLabel(itemKey)
+			: genericLabel;
 	};
 	const resultForIssue = (occurrenceKey: string) =>
 		form?.catalogRepairOccurrenceKey === occurrenceKey
@@ -73,7 +77,10 @@
 					<p>{getCatalogIssueReasonLabel(issue.sourceReason)}</p>
 
 					{#if errorForIssue(issue.occurrenceKey)}
-						<StatusMessage tone="danger" message={errorForIssue(issue.occurrenceKey)} />
+						<StatusMessage
+							tone="danger"
+							message={errorForIssue(issue.occurrenceKey)}
+						/>
 					{/if}
 
 					{#if repairResult?.mode === "dry_run"}
@@ -88,32 +95,60 @@
 						/>
 
 						{#if repairResult.items.length > 0}
-							<ul class="catalog-product-repairs__results" aria-label="Safe repair check results">
+							<ul
+								class="catalog-product-repairs__results"
+								aria-label="Safe repair check results"
+							>
 								{#each repairResult.items as item (`${item.itemKey}:${item.reasonCode}`)}
 									<li>
 										<strong>{formatRepairItemLabel(item.itemKey)}</strong>
-										<span>{getCatalogHealthRepairReasonLabel(item.reasonCode)}</span>
+										<span
+											>{getCatalogHealthRepairReasonLabel(
+												item.reasonCode,
+											)}</span
+										>
 									</li>
 								{/each}
 							</ul>
 						{/if}
 
 						{#if repairResult.candidateCount > 0}
-							<form method="POST" action="?/runCatalogRepair" use:enhance={enhanceRepair}>
-								<input type="hidden" name="occurrenceKey" value={issue.occurrenceKey} />
+							<form
+								method="POST"
+								action="?/runCatalogRepair"
+								use:enhance={enhanceRepair}
+							>
+								<input
+									type="hidden"
+									name="occurrenceKey"
+									value={issue.occurrenceKey}
+								/>
 								<input type="hidden" name="mode" value="apply" />
-								<input type="hidden" name="dryRunId" value={repairResult.runId} />
+								<input
+									type="hidden"
+									name="dryRunId"
+									value={repairResult.runId}
+								/>
 								<ActionButton
 									type="submit"
 									variant="success"
 									fullWidth
 									busy={pendingOccurrenceKey === issue.occurrenceKey}
 									disabled={pendingOccurrenceKey !== null}
-								>Apply safe repair</ActionButton>
+									>Apply safe repair</ActionButton
+								>
 							</form>
 						{:else}
-							<form method="POST" action="?/runCatalogRepair" use:enhance={enhanceRepair}>
-								<input type="hidden" name="occurrenceKey" value={issue.occurrenceKey} />
+							<form
+								method="POST"
+								action="?/runCatalogRepair"
+								use:enhance={enhanceRepair}
+							>
+								<input
+									type="hidden"
+									name="occurrenceKey"
+									value={issue.occurrenceKey}
+								/>
 								<input type="hidden" name="mode" value="dry_run" />
 								<ActionButton
 									type="submit"
@@ -121,12 +156,21 @@
 									fullWidth
 									busy={pendingOccurrenceKey === issue.occurrenceKey}
 									disabled={pendingOccurrenceKey !== null}
-								>Check again</ActionButton>
+									>Check again</ActionButton
+								>
 							</form>
 						{/if}
 					{:else}
-						<form method="POST" action="?/runCatalogRepair" use:enhance={enhanceRepair}>
-							<input type="hidden" name="occurrenceKey" value={issue.occurrenceKey} />
+						<form
+							method="POST"
+							action="?/runCatalogRepair"
+							use:enhance={enhanceRepair}
+						>
+							<input
+								type="hidden"
+								name="occurrenceKey"
+								value={issue.occurrenceKey}
+							/>
 							<input type="hidden" name="mode" value="dry_run" />
 							<ActionButton
 								type="submit"
@@ -134,7 +178,8 @@
 								fullWidth
 								busy={pendingOccurrenceKey === issue.occurrenceKey}
 								disabled={pendingOccurrenceKey !== null}
-							>Check repair</ActionButton>
+								>Check repair</ActionButton
+							>
 						</form>
 					{/if}
 				</article>

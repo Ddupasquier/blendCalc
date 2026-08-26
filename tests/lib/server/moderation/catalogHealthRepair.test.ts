@@ -9,11 +9,13 @@ describe("catalog health repair repository", () => {
 			error: null,
 		});
 
-		await expect(runCatalogHealthRepair({ rpc } as never, {
-			occurrenceKey: "product:issue:nutrients",
-			apply: false,
-			dryRunId: null,
-		})).resolves.toEqual(catalogHealthRepairDryRunFixture);
+		await expect(
+			runCatalogHealthRepair({ rpc } as never, {
+				occurrenceKey: "product:issue:nutrients",
+				apply: false,
+				dryRunId: null,
+			}),
+		).resolves.toEqual(catalogHealthRepairDryRunFixture);
 		expect(rpc).toHaveBeenCalledWith("run_catalog_health_repair", {
 			p_occurrence_key: "product:issue:nutrients",
 			p_apply: false,
@@ -22,33 +24,50 @@ describe("catalog health repair repository", () => {
 	});
 
 	it("classifies stale issues and apply attempts without leaking database errors", async () => {
-		await expect(runCatalogHealthRepair({
-			rpc: vi.fn().mockResolvedValue({ data: null, error: { code: "P0002" } }),
-		} as never, {
-			occurrenceKey: "closed-issue",
-			apply: false,
-			dryRunId: null,
-		})).rejects.toMatchObject({ reason: "issue_unavailable" });
+		await expect(
+			runCatalogHealthRepair(
+				{
+					rpc: vi
+						.fn()
+						.mockResolvedValue({ data: null, error: { code: "P0002" } }),
+				} as never,
+				{
+					occurrenceKey: "closed-issue",
+					apply: false,
+					dryRunId: null,
+				},
+			),
+		).rejects.toMatchObject({ reason: "issue_unavailable" });
 
-		await expect(runCatalogHealthRepair({
-			rpc: vi.fn().mockResolvedValue({
-				data: null,
-				error: { message: "A current successful dry run is required" },
-			}),
-		} as never, {
-			occurrenceKey: "issue",
-			apply: true,
-			dryRunId: "b1000000-0000-4000-8000-000000000001",
-		})).rejects.toMatchObject({ reason: "dry_run_required" });
+		await expect(
+			runCatalogHealthRepair(
+				{
+					rpc: vi.fn().mockResolvedValue({
+						data: null,
+						error: { message: "A current successful dry run is required" },
+					}),
+				} as never,
+				{
+					occurrenceKey: "issue",
+					apply: true,
+					dryRunId: "b1000000-0000-4000-8000-000000000001",
+				},
+			),
+		).rejects.toMatchObject({ reason: "dry_run_required" });
 	});
 
 	it("rejects malformed database responses", async () => {
-		await expect(runCatalogHealthRepair({
-			rpc: vi.fn().mockResolvedValue({ data: {}, error: null }),
-		} as never, {
-			occurrenceKey: "issue",
-			apply: false,
-			dryRunId: null,
-		})).rejects.toMatchObject({ reason: "service_unavailable" });
+		await expect(
+			runCatalogHealthRepair(
+				{
+					rpc: vi.fn().mockResolvedValue({ data: {}, error: null }),
+				} as never,
+				{
+					occurrenceKey: "issue",
+					apply: false,
+					dryRunId: null,
+				},
+			),
+		).rejects.toMatchObject({ reason: "service_unavailable" });
 	});
 });

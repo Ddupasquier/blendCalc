@@ -9,13 +9,15 @@ import type { FoodItem } from "$lib/utils/food/types";
 const food = (overrides: Partial<FoodItem> = {}): FoodItem => ({
 	fdcId: 1,
 	description: "Test Food",
-	foodNutrients: [{
-		nutrientId: 1008,
-		nutrientName: "Energy",
-		nutrientNumber: "208",
-		unitName: "kcal",
-		value: 100,
-	}],
+	foodNutrients: [
+		{
+			nutrientId: 1008,
+			nutrientName: "Energy",
+			nutrientNumber: "208",
+			unitName: "kcal",
+			value: 100,
+		},
+	],
 	...overrides,
 });
 
@@ -25,19 +27,22 @@ describe("ingredient search result merging", () => {
 		const conflictingFood = food({
 			fdcId: 2,
 			description: "Apple",
-			preferenceWarnings: [{
-				id: "restriction-conflict",
-				level: "warning",
-				category: "restriction",
-				label: "Vegan",
-				code: "FOOD_RESTRICTION_CONFLICT",
-				params: { preference: "Vegan", fact: "Meat" },
-			}],
+			preferenceWarnings: [
+				{
+					id: "restriction-conflict",
+					level: "warning",
+					category: "restriction",
+					label: "Vegan",
+					code: "FOOD_RESTRICTION_CONFLICT",
+					params: { preference: "Vegan", fact: "Meat" },
+				},
+			],
 		});
 
 		expect(
-			sortIngredientSearchResults([conflictingFood, safeFood], "apple")
-				.map((result) => result.fdcId),
+			sortIngredientSearchResults([conflictingFood, safeFood], "apple").map(
+				(result) => result.fdcId,
+			),
 		).toEqual([1, 2]);
 	});
 
@@ -85,12 +90,14 @@ describe("ingredient search result merging", () => {
 					value: 100,
 				},
 			],
-			foodServings: [{
-				label: "15 ml",
-				gramWeight: 13.784,
-				isPrimary: true,
-				source: "health-canada-cnf",
-			}],
+			foodServings: [
+				{
+					label: "15 ml",
+					gramWeight: 13.784,
+					isPrimary: true,
+					source: "health-canada-cnf",
+				},
+			],
 			preparation: "Unheated",
 			fieldProvenance: {
 				productName: {
@@ -135,8 +142,7 @@ describe("ingredient search result merging", () => {
 			},
 		});
 		expect(merged?.foodNutrients.map(({ nutrientId }) => nutrientId)).toEqual([
-			1004,
-			1008,
+			1004, 1008,
 		]);
 	});
 
@@ -156,8 +162,9 @@ describe("ingredient search result merging", () => {
 		});
 		const other = food({ fdcId: 2, description: "Other Food" });
 
-		expect(mergeIngredientSearchResults([first, other], [richerDuplicate]))
-			.toEqual([first, other]);
+		expect(
+			mergeIngredientSearchResults([first, other], [richerDuplicate]),
+		).toEqual([first, other]);
 	});
 
 	it("does not discard an existing nutrient when another exact source adds one", () => {
@@ -169,14 +176,16 @@ describe("ingredient search result merging", () => {
 		const supplement = food({
 			fdcId: 31,
 			sourceIdentifiers: { usdaNdbNumber: "30000" },
-			foodNutrients: [{
-				nutrientId: 1003,
-				nutrientName: "Protein",
-				nutrientNumber: "203",
-				unitName: "g",
-				value: 8,
-				valueOrigin: "reported",
-			}],
+			foodNutrients: [
+				{
+					nutrientId: 1003,
+					nutrientName: "Protein",
+					nutrientNumber: "203",
+					unitName: "g",
+					value: 8,
+					valueOrigin: "reported",
+				},
+			],
 			reportedNutrientIds: [1003],
 			fieldProvenance: {
 				nutrition: {
@@ -189,8 +198,7 @@ describe("ingredient search result merging", () => {
 
 		const [merged] = mergeIngredientSearchResults([existing], [supplement]);
 		expect(merged?.foodNutrients.map(({ nutrientId }) => nutrientId)).toEqual([
-			1003,
-			1008,
+			1003, 1008,
 		]);
 		expect(merged?.reportedNutrientIds).toEqual([1003, 1008]);
 	});
@@ -199,12 +207,14 @@ describe("ingredient search result merging", () => {
 		const reviewed = food({
 			fdcId: 32,
 			sourceIdentifiers: { usdaNdbNumber: "30001" },
-			foodNutrients: [{
-				...food().foodNutrients[0],
-				value: 120,
-				source: "usda",
-				valueOrigin: "reported",
-			}],
+			foodNutrients: [
+				{
+					...food().foodNutrients[0],
+					value: 120,
+					source: "usda",
+					valueOrigin: "reported",
+				},
+			],
 			fieldProvenance: {
 				nutrition: {
 					source: "usda",
@@ -216,13 +226,15 @@ describe("ingredient search result merging", () => {
 		const imported = food({
 			fdcId: 33,
 			sourceIdentifiers: { usdaNdbNumber: "30001" },
-			foodNutrients: [{
-				...food().foodNutrients[0],
-				value: 100,
-				source: "health-canada-cnf",
-				confidence: "imported",
-				valueOrigin: "reported",
-			}],
+			foodNutrients: [
+				{
+					...food().foodNutrients[0],
+					value: 100,
+					source: "health-canada-cnf",
+					confidence: "imported",
+					valueOrigin: "reported",
+				},
+			],
 		});
 
 		const [merged] = mergeIngredientSearchResults([reviewed], [imported]);
@@ -260,8 +272,9 @@ describe("ingredient search result merging", () => {
 		});
 
 		expect(mergeIngredientSearchResults([upc], [gtin])).toHaveLength(1);
-		expect(mergeIngredientSearchResults([upc], [gtin])[0]?.foodCategory)
-			.toBe("Sauces");
+		expect(mergeIngredientSearchResults([upc], [gtin])[0]?.foodCategory).toBe(
+			"Sauces",
+		);
 	});
 
 	it("normalizes exact USDA identifiers before merging", () => {
@@ -288,7 +301,9 @@ describe("ingredient search result merging", () => {
 			},
 		});
 
-		expect(mergeIngredientSearchResults([fdcFood], [linkedFood])).toHaveLength(1);
+		expect(mergeIngredientSearchResults([fdcFood], [linkedFood])).toHaveLength(
+			1,
+		);
 	});
 
 	it("retains every dataset attribution represented by merged fields", () => {
@@ -321,8 +336,9 @@ describe("ingredient search result merging", () => {
 			},
 		});
 
-		expect(mergeIngredientSearchResults([usda], [cnf])[0]?.sourceAttributions)
-			.toHaveLength(2);
+		expect(
+			mergeIngredientSearchResults([usda], [cnf])[0]?.sourceAttributions,
+		).toHaveLength(2);
 	});
 
 	it("does not merge similarly named foods without an exact identity link", () => {
@@ -361,10 +377,9 @@ describe("ingredient search result merging", () => {
 			sourceKey: "usda",
 		});
 
-		expect(mergeIngredientSearchResults([privateFood], [providerFood])).toEqual([
-			privateFood,
-			providerFood,
-		]);
+		expect(mergeIngredientSearchResults([privateFood], [providerFood])).toEqual(
+			[privateFood, providerFood],
+		);
 	});
 
 	it("keeps preparation independent from broader source-record metadata", () => {
@@ -460,10 +475,12 @@ describe("ingredient search result merging", () => {
 			],
 		});
 
-		expect(mergeIngredientSearchResults([catalogFood], [providerFood]))
-			.toEqual([catalogFood]);
-		expect(mergeIngredientSearchResults([providerFood], [catalogFood]))
-			.toEqual([catalogFood]);
+		expect(mergeIngredientSearchResults([catalogFood], [providerFood])).toEqual(
+			[catalogFood],
+		);
+		expect(mergeIngredientSearchResults([providerFood], [catalogFood])).toEqual(
+			[catalogFood],
+		);
 	});
 
 	it("maps linked provider identifiers to the untouched canonical result", () => {
@@ -483,11 +500,13 @@ describe("ingredient search result merging", () => {
 			sourceIdentifiers: { usdaNdbNumber: "54321" },
 		});
 
-		expect(mergeIngredientSearchResults(
-			[catalogFood],
-			[barcodeProvider],
-			[linkedDatasetFood],
-		)).toEqual([catalogFood]);
+		expect(
+			mergeIngredientSearchResults(
+				[catalogFood],
+				[barcodeProvider],
+				[linkedDatasetFood],
+			),
+		).toEqual([catalogFood]);
 	});
 
 	it("coalesces an exact-identity cluster joined by a later bridge record", () => {
@@ -533,22 +552,30 @@ describe("ingredient search result merging", () => {
 describe("usable ingredient search results", () => {
 	it("keeps nutrient-bearing foods and safety-alert records without invented nutrition", () => {
 		expect(isUsableIngredientSearchResult(food())).toBe(true);
-		expect(isUsableIngredientSearchResult(food({ foodNutrients: [] }))).toBe(false);
-		expect(isUsableIngredientSearchResult(food({
-			foodNutrients: [],
-			safetyAlerts: [{
-				id: "alert-1",
-				providerKey: "fda-food-enforcement",
-				sourceName: "FDA",
-				sourceAttribution: "FDA",
-				alertType: "recall",
-				status: "ongoing",
-				productDescription: "Recalled lettuce",
-				sourceUrl: "https://www.fda.gov/example",
-				matchType: "exact_gtin",
-				requiresPackageCheck: true,
-				detectedAt: "2026-08-14T12:00:00.000Z",
-			}],
-		}))).toBe(true);
+		expect(isUsableIngredientSearchResult(food({ foodNutrients: [] }))).toBe(
+			false,
+		);
+		expect(
+			isUsableIngredientSearchResult(
+				food({
+					foodNutrients: [],
+					safetyAlerts: [
+						{
+							id: "alert-1",
+							providerKey: "fda-food-enforcement",
+							sourceName: "FDA",
+							sourceAttribution: "FDA",
+							alertType: "recall",
+							status: "ongoing",
+							productDescription: "Recalled lettuce",
+							sourceUrl: "https://www.fda.gov/example",
+							matchType: "exact_gtin",
+							requiresPackageCheck: true,
+							detectedAt: "2026-08-14T12:00:00.000Z",
+						},
+					],
+				}),
+			),
+		).toBe(true);
 	});
 });

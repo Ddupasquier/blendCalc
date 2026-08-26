@@ -48,13 +48,13 @@ const normalizePlacement = (
 		crop_source: value.cropSource ?? "auto",
 		placement_method: placement.placementMethod ?? "manual",
 		placement_suggestion_version: usesSmartSuggestion
-			? placement.suggestionVersion ?? null
+			? (placement.suggestionVersion ?? null)
 			: null,
 		placement_suggestion_confidence: usesSmartSuggestion
-			? placement.suggestionConfidence ?? null
+			? (placement.suggestionConfidence ?? null)
 			: null,
 		placement_suggestion_accepted_at: usesSmartSuggestion
-			? suggestionAcceptedAt ?? value.suggestionAcceptedAt ?? null
+			? (suggestionAcceptedAt ?? value.suggestionAcceptedAt ?? null)
 			: null,
 	};
 };
@@ -202,11 +202,9 @@ export const persistFoodImageAsset = async ({
 		fetched_at: image.fetchedAt ?? new Date().toISOString(),
 	};
 
-	const { error } = await admin
-		.from("food_image_assets")
-		.upsert(payload, {
-			onConflict: "source,source_reference,image_role",
-		});
+	const { error } = await admin.from("food_image_assets").upsert(payload, {
+		onConflict: "source,source_reference,image_role",
+	});
 
 	if (error) throw error;
 
@@ -241,7 +239,9 @@ export const publishModeratedFoodImageAsset = async ({
 		.from(PRODUCT_EVIDENCE_BUCKET)
 		.download(evidencePath);
 	if (downloadError || !evidence) {
-		throw downloadError ?? new Error("Product image evidence could not be loaded.");
+		throw (
+			downloadError ?? new Error("Product image evidence could not be loaded.")
+		);
 	}
 
 	if (!isProfileAvatarType(evidence.type)) {
@@ -258,8 +258,7 @@ export const publishModeratedFoodImageAsset = async ({
 		maximumHeight: PUBLIC_FOOD_IMAGE_MAX_DIMENSION,
 	});
 	const safeBarcode = barcode ?? "shared-product";
-	const storagePath =
-		`${safeBarcode}/${sharedProductId ?? randomUUID()}/front.${normalizedImage.extension}`;
+	const storagePath = `${safeBarcode}/${sharedProductId ?? randomUUID()}/front.${normalizedImage.extension}`;
 	const { error: uploadError } = await admin.storage
 		.from(PUBLIC_FOOD_IMAGE_BUCKET)
 		.upload(storagePath, normalizedImage.bytes, {
@@ -325,12 +324,9 @@ export const publishModeratedFoodImageAsset = async ({
 		placementVersion: payload.placement_version,
 		cropSource: payload.crop_source,
 		placementMethod: payload.placement_method,
-		suggestionVersion:
-			payload.placement_suggestion_version ?? undefined,
-		suggestionConfidence:
-			payload.placement_suggestion_confidence ?? undefined,
-		suggestionAcceptedAt:
-			payload.placement_suggestion_accepted_at ?? undefined,
+		suggestionVersion: payload.placement_suggestion_version ?? undefined,
+		suggestionConfidence: payload.placement_suggestion_confidence ?? undefined,
+		suggestionAcceptedAt: payload.placement_suggestion_accepted_at ?? undefined,
 		approvedBy: moderatorId,
 		approvedAt: now,
 		fetchedAt: now,
@@ -389,8 +385,9 @@ export const updateFoodImageAssetPlacement = async ({
 		licenseUrl: data.license_url ?? undefined,
 		attributionText: data.attribution_text ?? undefined,
 		confidence: data.confidence as FoodImageAsset["confidence"],
-		canonicalStatus:
-			data.canonical_status as NonNullable<FoodImageAsset["canonicalStatus"]>,
+		canonicalStatus: data.canonical_status as NonNullable<
+			FoodImageAsset["canonicalStatus"]
+		>,
 		canonicalSelectionMethod:
 			(data.canonical_selection_method as FoodImageAsset["canonicalSelectionMethod"]) ??
 			undefined,
@@ -402,16 +399,13 @@ export const updateFoodImageAssetPlacement = async ({
 		fitMode: data.fit_mode as FoodImageAsset["fitMode"],
 		placementVersion: data.placement_version,
 		cropSource: data.crop_source as FoodImageAsset["cropSource"],
-		placementMethod:
-			data.placement_method as FoodImageAsset["placementMethod"],
-		suggestionVersion:
-			data.placement_suggestion_version ?? undefined,
+		placementMethod: data.placement_method as FoodImageAsset["placementMethod"],
+		suggestionVersion: data.placement_suggestion_version ?? undefined,
 		suggestionConfidence:
 			data.placement_suggestion_confidence === null
 				? undefined
 				: Number(data.placement_suggestion_confidence),
-		suggestionAcceptedAt:
-			data.placement_suggestion_accepted_at ?? undefined,
+		suggestionAcceptedAt: data.placement_suggestion_accepted_at ?? undefined,
 		approvedBy: data.approved_by ?? undefined,
 		approvedAt: data.approved_at ?? undefined,
 		fetchedAt: data.fetched_at,

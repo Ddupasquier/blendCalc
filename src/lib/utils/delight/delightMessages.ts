@@ -88,24 +88,23 @@ export const resolveFoodAddedDelightMessage = (
 	food: FoodItem,
 	allowPlayfulMessages = true,
 ) =>
-	resolveDelightMessage([
-		{
-			contextKey: "ingredients",
-			triggerKey: "food-added",
-			matchKeys: [resolveFoodSymbolKey(food)],
-		},
-	], { allowPlayfulMessages });
+	resolveDelightMessage(
+		[
+			{
+				contextKey: "ingredients",
+				triggerKey: "food-added",
+				matchKeys: [resolveFoodSymbolKey(food)],
+			},
+		],
+		{ allowPlayfulMessages },
+	);
 
 const isFoodNamedOnly = (foods: FoodItem[], expectedName: string) =>
 	foods.length > 0 &&
-	foods.every(
-		(food) => food.description.trim().toLowerCase() === expectedName,
-	);
+	foods.every((food) => food.description.trim().toLowerCase() === expectedName);
 
-const findGoalDifference = (
-	differences: SaveGoalDiff[],
-	nutrientId: number,
-) => differences.find((difference) => difference.nutrientId === nutrientId);
+const findGoalDifference = (differences: SaveGoalDiff[], nutrientId: number) =>
+	differences.find((difference) => difference.nutrientId === nutrientId);
 
 const getGoalProgressMatchKeys = (differences: SaveGoalDiff[]) => {
 	if (differences.length === 0) return [];
@@ -114,7 +113,8 @@ const getGoalProgressMatchKeys = (differences: SaveGoalDiff[]) => {
 		(difference) => difference.status === "met",
 	).length;
 	if (metGoalCount === differences.length) matchKeys.push("all-met");
-	else if (metGoalCount / differences.length >= 0.75) matchKeys.push("balanced");
+	else if (metGoalCount / differences.length >= 0.75)
+		matchKeys.push("balanced");
 
 	const protein = findGoalDifference(differences, NUTRIENT_IDS.PROTEIN);
 	if (
@@ -169,21 +169,24 @@ export const resolveMixDelightMessage = ({
 		return total + (Number.isFinite(grams) && grams > 0 ? grams : 0);
 	}, 0);
 
-	return resolveDelightMessage([
-		{
-			contextKey: "mix",
-			triggerKey: "recipe-composition",
-			matchKeys: recipeCompositionMatchKeys,
-		},
-		{
-			contextKey: "mix",
-			triggerKey: "goal-progress",
-			matchKeys: getGoalProgressMatchKeys(goalDifferences),
-		},
-		{
-			contextKey: "mix",
-			triggerKey: "total-serving-grams",
-			numericValue: totalServingGrams,
-		},
-	], { allowPlayfulMessages });
+	return resolveDelightMessage(
+		[
+			{
+				contextKey: "mix",
+				triggerKey: "recipe-composition",
+				matchKeys: recipeCompositionMatchKeys,
+			},
+			{
+				contextKey: "mix",
+				triggerKey: "goal-progress",
+				matchKeys: getGoalProgressMatchKeys(goalDifferences),
+			},
+			{
+				contextKey: "mix",
+				triggerKey: "total-serving-grams",
+				numericValue: totalServingGrams,
+			},
+		],
+		{ allowPlayfulMessages },
+	);
 };

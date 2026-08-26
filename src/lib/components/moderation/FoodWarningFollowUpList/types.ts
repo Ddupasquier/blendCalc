@@ -3,4 +3,3 @@ import type { FoodCompatibilityFollowUps } from "$lib/server/food-safety/foodCom
 export type FoodWarningFollowUpListProps = {
 	followUps: FoodCompatibilityFollowUps;
 };
-

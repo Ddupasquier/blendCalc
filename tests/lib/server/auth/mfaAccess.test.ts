@@ -47,23 +47,27 @@ describe("privileged MFA access", () => {
 	it("maps verified TOTP factors without exposing their secrets", async () => {
 		const supabase = createSupabase({
 			currentLevel: "aal1",
-			verifiedFactors: [{
-				id: "factor-1",
-				friendly_name: "Primary authenticator",
-				created_at: "2026-08-11T00:00:00.000Z",
-				updated_at: "2026-08-11T00:01:00.000Z",
-			}],
+			verifiedFactors: [
+				{
+					id: "factor-1",
+					friendly_name: "Primary authenticator",
+					created_at: "2026-08-11T00:00:00.000Z",
+					updated_at: "2026-08-11T00:01:00.000Z",
+				},
+			],
 		});
 
 		await expect(readMfaSecurityStatus(supabase as never)).resolves.toEqual({
 			currentLevel: "aal1",
 			nextLevel: "aal2",
-			verifiedTotpFactors: [{
-				id: "factor-1",
-				friendlyName: "Primary authenticator",
-				createdAt: "2026-08-11T00:00:00.000Z",
-				updatedAt: "2026-08-11T00:01:00.000Z",
-			}],
+			verifiedTotpFactors: [
+				{
+					id: "factor-1",
+					friendlyName: "Primary authenticator",
+					createdAt: "2026-08-11T00:00:00.000Z",
+					updatedAt: "2026-08-11T00:01:00.000Z",
+				},
+			],
 		});
 		expect(supabase.auth.getUser).toHaveBeenCalledOnce();
 		expect(supabase.auth.getClaims).toHaveBeenCalledOnce();
@@ -110,22 +114,34 @@ describe("privileged MFA access", () => {
 	});
 
 	it("routes unenrolled users through setup and enrolled users through a challenge", () => {
-		expect(getMfaVerificationRoute({
-			currentLevel: "aal1",
-			nextLevel: "aal2",
-			verifiedTotpFactors: [],
-		}, "/moderation")).toBe("/auth/mfa/enroll?next=%2Fmoderation");
+		expect(
+			getMfaVerificationRoute(
+				{
+					currentLevel: "aal1",
+					nextLevel: "aal2",
+					verifiedTotpFactors: [],
+				},
+				"/moderation",
+			),
+		).toBe("/auth/mfa/enroll?next=%2Fmoderation");
 
-		expect(getMfaVerificationRoute({
-			currentLevel: "aal1",
-			nextLevel: "aal2",
-			verifiedTotpFactors: [{
-				id: "factor-1",
-				friendlyName: null,
-				createdAt: "2026-08-11T00:00:00.000Z",
-				updatedAt: "2026-08-11T00:00:00.000Z",
-			}],
-		}, "//outside.example")).toBe("/auth/mfa/challenge?next=%2F");
+		expect(
+			getMfaVerificationRoute(
+				{
+					currentLevel: "aal1",
+					nextLevel: "aal2",
+					verifiedTotpFactors: [
+						{
+							id: "factor-1",
+							friendlyName: null,
+							createdAt: "2026-08-11T00:00:00.000Z",
+							updatedAt: "2026-08-11T00:00:00.000Z",
+						},
+					],
+				},
+				"//outside.example",
+			),
+		).toBe("/auth/mfa/challenge?next=%2F");
 	});
 
 	it("redirects an AAL1 page session to MFA", async () => {

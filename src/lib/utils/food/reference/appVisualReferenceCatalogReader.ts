@@ -45,7 +45,9 @@ const readFoodSymbols = async (supabase: SupabaseClient<Database>) => {
 			familyKey: symbol.family_key,
 		}));
 	}
-	if (!isMissingAppVisualReferenceExpansion(currentResult.error, ["family_key"])) {
+	if (
+		!isMissingAppVisualReferenceExpansion(currentResult.error, ["family_key"])
+	) {
 		throw currentResult.error;
 	}
 
@@ -79,7 +81,9 @@ const readFoodSymbolResolutionRules = async (
 			matchScopes: rule.match_scopes as FoodSymbolRuleScope[],
 		}));
 	}
-	if (!isMissingAppVisualReferenceExpansion(currentResult.error, ["match_scopes"])) {
+	if (
+		!isMissingAppVisualReferenceExpansion(currentResult.error, ["match_scopes"])
+	) {
 		throw currentResult.error;
 	}
 
@@ -113,17 +117,20 @@ const readDelightMessages = async (supabase: SupabaseClient<Database>) => {
 			priority: number;
 			tone?: string;
 		}>,
-	): AppDelightMessage[] => rows.map((row) => ({
-		key: row.key,
-		contextKey: row.context_key as AppDelightMessage["contextKey"],
-		triggerKey: row.trigger_key,
-		matchKey: row.match_key,
-		message: row.message,
-		minimumValue: row.minimum_value === null ? null : Number(row.minimum_value),
-		maximumValue: row.maximum_value === null ? null : Number(row.maximum_value),
-		priority: row.priority,
-		tone: row.tone === "cheeky" ? "cheeky" : "standard",
-	}));
+	): AppDelightMessage[] =>
+		rows.map((row) => ({
+			key: row.key,
+			contextKey: row.context_key as AppDelightMessage["contextKey"],
+			triggerKey: row.trigger_key,
+			matchKey: row.match_key,
+			message: row.message,
+			minimumValue:
+				row.minimum_value === null ? null : Number(row.minimum_value),
+			maximumValue:
+				row.maximum_value === null ? null : Number(row.maximum_value),
+			priority: row.priority,
+			tone: row.tone === "cheeky" ? "cheeky" : "standard",
+		}));
 	const currentResult = await supabase
 		.from("app_delight_messages")
 		.select(
@@ -135,10 +142,12 @@ const readDelightMessages = async (supabase: SupabaseClient<Database>) => {
 	if (!currentResult.error) {
 		return mapDelightMessages(currentResult.data ?? []);
 	}
-	if (isMissingAppVisualReferenceExpansion(currentResult.error, [
-		"app_delight_messages",
-		"tone",
-	])) {
+	if (
+		isMissingAppVisualReferenceExpansion(currentResult.error, [
+			"app_delight_messages",
+			"tone",
+		])
+	) {
 		if (currentResult.error.message?.toLowerCase().includes("tone")) {
 			const legacyResult = await supabase
 				.from("app_delight_messages")
@@ -151,7 +160,11 @@ const readDelightMessages = async (supabase: SupabaseClient<Database>) => {
 			if (legacyResult.error) throw legacyResult.error;
 			return mapDelightMessages(legacyResult.data ?? []);
 		}
-		if (currentResult.error.message?.toLowerCase().includes("app_delight_messages")) {
+		if (
+			currentResult.error.message
+				?.toLowerCase()
+				.includes("app_delight_messages")
+		) {
 			return [];
 		}
 	}
@@ -160,10 +173,12 @@ const readDelightMessages = async (supabase: SupabaseClient<Database>) => {
 
 export const readAppVisualReferenceCatalog = async (
 	supabase: SupabaseClient<Database>,
-): Promise<Pick<
-	AppReferenceCatalog,
-	"foodSymbols" | "foodSymbolResolutionRules" | "delightMessages"
->> => {
+): Promise<
+	Pick<
+		AppReferenceCatalog,
+		"foodSymbols" | "foodSymbolResolutionRules" | "delightMessages"
+	>
+> => {
 	const [foodSymbols, foodSymbolResolutionRules, delightMessages] =
 		await Promise.all([
 			readFoodSymbols(supabase),

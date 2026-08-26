@@ -135,8 +135,8 @@
 				<div>
 					<strong>Find ingredients first</strong>
 					<p>
-						Add food to your Fridge or Shopping List, then return here to
-						build your Mix.
+						Add food to your Fridge or Shopping List, then return here to build
+						your Mix.
 					</p>
 				</div>
 				<RoundedActionLink href="/ingredients/fridge" variant="neutral">

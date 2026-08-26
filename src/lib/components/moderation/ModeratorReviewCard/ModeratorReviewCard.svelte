@@ -1,12 +1,8 @@
 <script lang="ts">
 	import type { ModeratorReviewCardProps } from "./types";
 
-	let {
-		title,
-		subtitle,
-		status,
-		children,
-	}: ModeratorReviewCardProps = $props();
+	let { title, subtitle, status, children }: ModeratorReviewCardProps =
+		$props();
 </script>
 
 <article class="moderator-review-card">

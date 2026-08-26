@@ -4,11 +4,7 @@
 	import { privilegedToolInformationByTool } from "./privilegedToolInformation";
 	import type { PrivilegedToolInformationSheetProps } from "./types";
 
-	let {
-		open,
-		action,
-		onClose,
-	}: PrivilegedToolInformationSheetProps = $props();
+	let { open, action, onClose }: PrivilegedToolInformationSheetProps = $props();
 
 	const information = $derived(privilegedToolInformationByTool[action]);
 </script>
@@ -18,7 +14,7 @@
 	{open}
 	title={information.title}
 	titleId={`privileged-tool-information-${action}-title`}
-	onClose={onClose}
+	{onClose}
 >
 	<div class="privileged-tool-information">
 		<p>{information.purpose}</p>
@@ -31,14 +27,21 @@
 			</ol>
 		</section>
 		<section aria-labelledby={`privileged-tool-information-${action}-result`}>
-			<h3 id={`privileged-tool-information-${action}-result`}>What your decision changes</h3>
+			<h3 id={`privileged-tool-information-${action}-result`}>
+				What your decision changes
+			</h3>
 			<p>{information.decisionEffect}</p>
 		</section>
-		<section aria-labelledby={`privileged-tool-information-${action}-guardrail`}>
-			<h3 id={`privileged-tool-information-${action}-guardrail`}>Important safeguard</h3>
+		<section
+			aria-labelledby={`privileged-tool-information-${action}-guardrail`}
+		>
+			<h3 id={`privileged-tool-information-${action}-guardrail`}>
+				Important safeguard
+			</h3>
 			<p>{information.guardrail}</p>
 		</section>
-		<ActionButton type="button" fullWidth onclick={onClose}>Got it</ActionButton>
+		<ActionButton type="button" fullWidth onclick={onClose}>Got it</ActionButton
+		>
 	</div>
 </BottomSheet>
 

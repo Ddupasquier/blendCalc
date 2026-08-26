@@ -27,7 +27,7 @@ const suggestion: NutrientAdjustmentSuggestion = {
 		nextTotal: 4.3,
 		goal: 6,
 		distanceImprovement: 0.17,
-    weightedDistanceImprovement: 0.17,
+		weightedDistanceImprovement: 0.17,
 	},
 	impacts: [
 		{
@@ -39,7 +39,7 @@ const suggestion: NutrientAdjustmentSuggestion = {
 			nextTotal: 4.3,
 			goal: 6,
 			distanceImprovement: 0.17,
-      weightedDistanceImprovement: 0.17,
+			weightedDistanceImprovement: 0.17,
 		},
 	],
 	goalDistanceImprovement: 0.17,
@@ -70,9 +70,9 @@ describe("NutrientAdjustmentSuggestions", () => {
 		});
 
 		await fireEvent.click(
-      screen
-        .getByText("Suggested adjustments")
-        .closest("summary") as HTMLElement,
+			screen
+				.getByText("Suggested adjustments")
+				.closest("summary") as HTMLElement,
 		);
 		await fireEvent.click(screen.getByRole("button", { name: "Apply" }));
 
@@ -91,7 +91,9 @@ describe("NutrientAdjustmentSuggestions", () => {
 			},
 		});
 
-		expect(screen.getByText(`${milk.description} updated.`)).toBeInTheDocument();
+		expect(
+			screen.getByText(`${milk.description} updated.`),
+		).toBeInTheDocument();
 		await fireEvent.click(screen.getByRole("button", { name: "Undo" }));
 		expect(onUndo).toHaveBeenCalledOnce();
 	});

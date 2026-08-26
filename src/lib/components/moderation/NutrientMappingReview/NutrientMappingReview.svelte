@@ -22,7 +22,9 @@
 		selectedNutrientId = String(workspace.mapping.currentNutrient.nutrientId);
 	});
 
-	const resolved = $derived(workspace.mapping.reviewStatus !== "pending_review");
+	const resolved = $derived(
+		workspace.mapping.reviewStatus !== "pending_review",
+	);
 	const confidencePercent = $derived(
 		`${Math.round(workspace.mapping.confidence * 100)}%`,
 	);
@@ -30,23 +32,34 @@
 		const query = nutrientSearch.trim().toLocaleLowerCase();
 		const matches = query
 			? workspace.compatibleNutrients.filter((nutrient) =>
-				[nutrient.nutrientName, nutrient.nutrientNumber, nutrient.nutrientId]
-					.some((value) => String(value ?? "").toLocaleLowerCase().includes(query)))
+					[
+						nutrient.nutrientName,
+						nutrient.nutrientNumber,
+						nutrient.nutrientId,
+					].some((value) =>
+						String(value ?? "")
+							.toLocaleLowerCase()
+							.includes(query),
+					),
+				)
 			: workspace.compatibleNutrients;
 		const boundedMatches = matches.slice(0, 80);
 		const selected = workspace.compatibleNutrients.find(
 			(nutrient) => String(nutrient.nutrientId) === selectedNutrientId,
 		);
-		return selected && !boundedMatches.some(
-			(nutrient) => nutrient.nutrientId === selected.nutrientId,
-		)
+		return selected &&
+			!boundedMatches.some(
+				(nutrient) => nutrient.nutrientId === selected.nutrientId,
+			)
 			? [selected, ...boundedMatches]
 			: boundedMatches;
 	});
-	const nutrientOptions = $derived(filteredNutrients.map((nutrient) => ({
-		value: String(nutrient.nutrientId),
-		label: `${nutrient.nutrientName} · ${nutrient.defaultUnitName}`,
-	})));
+	const nutrientOptions = $derived(
+		filteredNutrients.map((nutrient) => ({
+			value: String(nutrient.nutrientId),
+			label: `${nutrient.nutrientName} · ${nutrient.defaultUnitName}`,
+		})),
+	);
 
 	const enhanceDecision: SubmitFunction = ({ cancel }) => {
 		if (pending) {
@@ -74,7 +87,10 @@
 	<article class="nutrient-mapping-review__summary">
 		<header>
 			<div>
-				<strong>{workspace.mapping.sourceNutrientName ?? workspace.mapping.sourceNutrientKey}</strong>
+				<strong
+					>{workspace.mapping.sourceNutrientName ??
+						workspace.mapping.sourceNutrientKey}</strong
+				>
 				<span>{workspace.mapping.sourceDisplayName}</span>
 			</div>
 			<TextBadge
@@ -83,26 +99,42 @@
 			/>
 		</header>
 		<dl class="nutrient-mapping-review__facts">
-			<div><dt>Provider key</dt><dd>{workspace.mapping.sourceNutrientKey}</dd></div>
-			<div><dt>Provider unit</dt><dd>{workspace.mapping.sourceUnitName}</dd></div>
-			<div><dt>Suggested nutrient</dt><dd>{workspace.mapping.currentNutrient.nutrientName}</dd></div>
-			<div><dt>Suggestion confidence</dt><dd>{confidencePercent}</dd></div>
-			<div><dt>Observations</dt><dd>{workspace.mapping.observationCount}</dd></div>
+			<div>
+				<dt>Provider key</dt>
+				<dd>{workspace.mapping.sourceNutrientKey}</dd>
+			</div>
+			<div>
+				<dt>Provider unit</dt>
+				<dd>{workspace.mapping.sourceUnitName}</dd>
+			</div>
+			<div>
+				<dt>Suggested nutrient</dt>
+				<dd>{workspace.mapping.currentNutrient.nutrientName}</dd>
+			</div>
+			<div>
+				<dt>Suggestion confidence</dt>
+				<dd>{confidencePercent}</dd>
+			</div>
+			<div>
+				<dt>Observations</dt>
+				<dd>{workspace.mapping.observationCount}</dd>
+			</div>
 		</dl>
 	</article>
 
 	<CollapsibleSection title="Why this needs review" surface="panel">
 		<div class="nutrient-mapping-review__explanation">
 			<p>
-				blendCalc found a possible match, but the provider key is not an exact reviewed identity.
-				It stays disabled until evidence confirms what it represents.
+				blendCalc found a possible match, but the provider key is not an exact
+				reviewed identity. It stays disabled until evidence confirms what it
+				represents.
 			</p>
 			{#if workspace.mapping.candidateReason}
 				<p>{workspace.mapping.candidateReason}</p>
 			{/if}
 			<p>
-				Approving this mapping affects future imports and reprocessing. It does not silently rewrite
-				older nutrient records.
+				Approving this mapping affects future imports and reprocessing. It does
+				not silently rewrite older nutrient records.
 			</p>
 		</div>
 	</CollapsibleSection>
@@ -118,10 +150,19 @@
 		{#if workspace.latestDecision}
 			<CollapsibleSection title="Recorded decision" surface="panel">
 				<dl class="nutrient-mapping-review__facts">
-					<div><dt>Outcome</dt><dd>{workspace.latestDecision.outcome}</dd></div>
-					<div><dt>Review note</dt><dd>{workspace.latestDecision.reviewNote}</dd></div>
+					<div>
+						<dt>Outcome</dt>
+						<dd>{workspace.latestDecision.outcome}</dd>
+					</div>
+					<div>
+						<dt>Review note</dt>
+						<dd>{workspace.latestDecision.reviewNote}</dd>
+					</div>
 					{#if workspace.latestDecision.evidenceReference}
-						<div><dt>Evidence</dt><dd>{workspace.latestDecision.evidenceReference}</dd></div>
+						<div>
+							<dt>Evidence</dt>
+							<dd>{workspace.latestDecision.evidenceReference}</dd>
+						</div>
 					{/if}
 				</dl>
 			</CollapsibleSection>
@@ -139,7 +180,7 @@
 				name="outcome"
 				label="Decision"
 				value={outcome}
-				onValueChange={(value) => outcome = value as "approved" | "excluded"}
+				onValueChange={(value) => (outcome = value as "approved" | "excluded")}
 				options={[
 					{ value: "approved", label: "Approve an exact nutrient identity" },
 					{ value: "excluded", label: "Exclude this candidate" },
@@ -157,14 +198,14 @@
 					placeholder="Search nutrient name, number, or ID"
 					helper="Only nutrients with the same unit or a reviewed conversion are available."
 					disabled={pending}
-					oninput={(event) => nutrientSearch = event.currentTarget.value}
+					oninput={(event) => (nutrientSearch = event.currentTarget.value)}
 				/>
 				<SelectField
 					id="nutrient-mapping-selected-nutrient"
 					name="selectedNutrientId"
 					label="Confirmed nutrient"
 					value={selectedNutrientId}
-					onValueChange={(value) => selectedNutrientId = value}
+					onValueChange={(value) => (selectedNutrientId = value)}
 					options={nutrientOptions}
 					disabled={pending || nutrientOptions.length === 0}
 					required
@@ -201,9 +242,12 @@
 				variant={outcome === "approved" ? "success" : "danger"}
 				fullWidth
 				busy={pending}
-				disabled={pending || (outcome === "approved" && nutrientOptions.length === 0)}
+				disabled={pending ||
+					(outcome === "approved" && nutrientOptions.length === 0)}
 			>
-				{outcome === "approved" ? "Approve nutrient mapping" : "Exclude candidate"}
+				{outcome === "approved"
+					? "Approve nutrient mapping"
+					: "Exclude candidate"}
 			</ActionButton>
 		</form>
 	{/if}

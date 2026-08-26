@@ -41,7 +41,29 @@ export const getProfilePrivilegedToolTitle = (role: AppRole) => {
 export const getAvailableProfilePrivilegedToolCount = (
 	permissions: readonly AppPermission[],
 ) =>
-	Number(hasAppPermission(permissions, PROFILE_PRIVILEGED_TOOL_PERMISSIONS.catalogReview)) * 2 +
-	Number(hasAppPermission(permissions, PROFILE_PRIVILEGED_TOOL_PERMISSIONS.warningReview)) +
-	Number(hasAppPermission(permissions, PROFILE_PRIVILEGED_TOOL_PERMISSIONS.accountManagement)) * 2 +
-	Number(hasAppPermission(permissions, PROFILE_PRIVILEGED_TOOL_PERMISSIONS.dataOperationsRead));
+	Number(
+		hasAppPermission(
+			permissions,
+			PROFILE_PRIVILEGED_TOOL_PERMISSIONS.catalogReview,
+		),
+	) *
+		2 +
+	Number(
+		hasAppPermission(
+			permissions,
+			PROFILE_PRIVILEGED_TOOL_PERMISSIONS.warningReview,
+		),
+	) +
+	Number(
+		hasAppPermission(
+			permissions,
+			PROFILE_PRIVILEGED_TOOL_PERMISSIONS.accountManagement,
+		),
+	) *
+		2 +
+	Number(
+		hasAppPermission(
+			permissions,
+			PROFILE_PRIVILEGED_TOOL_PERMISSIONS.dataOperationsRead,
+		),
+	);

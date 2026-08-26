@@ -15,10 +15,12 @@ describe("nutrient mapping review repository", () => {
 			error: null,
 		});
 
-		await expect(readNutrientMappingReviewWorkspace(
-			{ rpc } as never,
-			nutrientMappingReviewWorkspaceFixture.mapping.id,
-		)).resolves.toEqual(nutrientMappingReviewWorkspaceFixture);
+		await expect(
+			readNutrientMappingReviewWorkspace(
+				{ rpc } as never,
+				nutrientMappingReviewWorkspaceFixture.mapping.id,
+			),
+		).resolves.toEqual(nutrientMappingReviewWorkspaceFixture);
 		expect(rpc).toHaveBeenCalledWith("get_nutrient_mapping_review_workspace", {
 			p_mapping_id: nutrientMappingReviewWorkspaceFixture.mapping.id,
 		});
@@ -29,13 +31,15 @@ describe("nutrient mapping review repository", () => {
 			data: nutrientMappingReviewDecisionFixture,
 			error: null,
 		});
-		await expect(decideNutrientMappingReview({ rpc } as never, {
-			mappingId: nutrientMappingReviewWorkspaceFixture.mapping.id,
-			outcome: "approved",
-			selectedNutrientId: 1003,
-			reviewNote: "Exact provider documentation confirms protein.",
-			evidenceReference: "https://example.test/provider-reference",
-		})).resolves.toEqual(nutrientMappingReviewDecisionFixture);
+		await expect(
+			decideNutrientMappingReview({ rpc } as never, {
+				mappingId: nutrientMappingReviewWorkspaceFixture.mapping.id,
+				outcome: "approved",
+				selectedNutrientId: 1003,
+				reviewNote: "Exact provider documentation confirms protein.",
+				evidenceReference: "https://example.test/provider-reference",
+			}),
+		).resolves.toEqual(nutrientMappingReviewDecisionFixture);
 		expect(rpc).toHaveBeenCalledWith("review_nutrient_source_mapping", {
 			p_mapping_id: nutrientMappingReviewWorkspaceFixture.mapping.id,
 			p_outcome: "approved",
@@ -46,30 +50,45 @@ describe("nutrient mapping review repository", () => {
 	});
 
 	it("classifies stale decisions and invalid unit paths without leaking database wording", async () => {
-		await expect(decideNutrientMappingReview({
-			rpc: vi.fn().mockResolvedValue({
-				data: null,
-				error: { message: "This nutrient mapping is no longer waiting for review." },
-			}),
-		} as never, {
-			mappingId: nutrientMappingReviewWorkspaceFixture.mapping.id,
-			outcome: "excluded",
-			selectedNutrientId: null,
-			reviewNote: "No canonical nutrient identity exists.",
-			evidenceReference: null,
-		})).rejects.toMatchObject({ reason: "mapping_resolved" });
+		await expect(
+			decideNutrientMappingReview(
+				{
+					rpc: vi.fn().mockResolvedValue({
+						data: null,
+						error: {
+							message: "This nutrient mapping is no longer waiting for review.",
+						},
+					}),
+				} as never,
+				{
+					mappingId: nutrientMappingReviewWorkspaceFixture.mapping.id,
+					outcome: "excluded",
+					selectedNutrientId: null,
+					reviewNote: "No canonical nutrient identity exists.",
+					evidenceReference: null,
+				},
+			),
+		).rejects.toMatchObject({ reason: "mapping_resolved" });
 
-		await expect(decideNutrientMappingReview({
-			rpc: vi.fn().mockResolvedValue({
-				data: null,
-				error: { message: "The source unit has no reviewed conversion for that nutrient." },
-			}),
-		} as never, {
-			mappingId: nutrientMappingReviewWorkspaceFixture.mapping.id,
-			outcome: "approved",
-			selectedNutrientId: 1008,
-			reviewNote: "Incorrect unit test.",
-			evidenceReference: "reference",
-		})).rejects.toMatchObject({ reason: "invalid_unit_path" });
+		await expect(
+			decideNutrientMappingReview(
+				{
+					rpc: vi.fn().mockResolvedValue({
+						data: null,
+						error: {
+							message:
+								"The source unit has no reviewed conversion for that nutrient.",
+						},
+					}),
+				} as never,
+				{
+					mappingId: nutrientMappingReviewWorkspaceFixture.mapping.id,
+					outcome: "approved",
+					selectedNutrientId: 1008,
+					reviewNote: "Incorrect unit test.",
+					evidenceReference: "reference",
+				},
+			),
+		).rejects.toMatchObject({ reason: "invalid_unit_path" });
 	});
 });

@@ -28,11 +28,13 @@
 		options={[
 			{ value: "", label: "Personal settings only" },
 			...(hasUnsupportedRegion
-				? [{
-					value: regulatoryRegionCode,
-					label: `Previously saved region unavailable (${regulatoryRegionCode})`,
-					disabled: true,
-				}]
+				? [
+						{
+							value: regulatoryRegionCode,
+							label: `Previously saved region unavailable (${regulatoryRegionCode})`,
+							disabled: true,
+						},
+					]
 				: []),
 			...regulatoryRegionOptions.map((option) => ({
 				value: option.regionCode,
@@ -64,7 +66,11 @@
 		</RoundedActionButton>
 	{/if}
 </div>
-<input type="hidden" name="regulatoryRegionSource" value={regulatoryRegionSource ?? ""} />
+<input
+	type="hidden"
+	name="regulatoryRegionSource"
+	value={regulatoryRegionSource ?? ""}
+/>
 
 <style lang="scss">
 	@use "./ProfileRegulatoryRegionSettings.scss";

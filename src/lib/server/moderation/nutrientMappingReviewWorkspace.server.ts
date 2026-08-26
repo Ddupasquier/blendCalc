@@ -13,7 +13,8 @@ const NUTRIENT_MAPPING_REVIEW_ROUTE =
 	"/profile/privileged-tools/data-operations/nutrient-mappings";
 const NUTRIENT_MAPPING_REVIEW_FORM_MAX_BYTES = 20 * 1024;
 const REVIEW_TEXT_MAX_LENGTH = 2000;
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
+const UUID_PATTERN =
+	/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
 
 type NutrientMappingReviewLoadEvent = Pick<RequestEvent, "locals" | "params">;
 type NutrientMappingReviewActionEvent = Pick<
@@ -40,9 +41,10 @@ const getNutrientMappingReviewErrorMessage = (error: unknown) => {
 	return "This nutrient mapping could not be reviewed right now.";
 };
 
-export const loadNutrientMappingReviewWorkspace = async (
-	{ locals, params }: NutrientMappingReviewLoadEvent,
-) => {
+export const loadNutrientMappingReviewWorkspace = async ({
+	locals,
+	params,
+}: NutrientMappingReviewLoadEvent) => {
 	const mappingId = params.mappingId ?? "";
 	if (!UUID_PATTERN.test(mappingId)) {
 		throwAppError(404, "RESOURCE_NOT_FOUND");
@@ -61,9 +63,13 @@ export const loadNutrientMappingReviewWorkspace = async (
 	};
 };
 
-export const reviewNutrientMappingAction = async (
-	{ locals, params, request }: NutrientMappingReviewActionEvent,
-): Promise<NutrientMappingReviewActionData | ReturnType<typeof fail>> => {
+export const reviewNutrientMappingAction = async ({
+	locals,
+	params,
+	request,
+}: NutrientMappingReviewActionEvent): Promise<
+	NutrientMappingReviewActionData | ReturnType<typeof fail>
+> => {
 	const mappingId = params.mappingId ?? "";
 	if (!UUID_PATTERN.test(mappingId)) {
 		return fail(404, {
@@ -92,15 +98,13 @@ export const reviewNutrientMappingAction = async (
 		: null;
 
 	if (
-		(outcome !== "approved" && outcome !== "excluded")
-		|| !reviewNote
-		|| reviewNote.length > REVIEW_TEXT_MAX_LENGTH
-		|| evidenceReference.length > REVIEW_TEXT_MAX_LENGTH
-		|| (outcome === "approved" && (
-			!Number.isSafeInteger(selectedNutrientId)
-			|| !evidenceReference
-		))
-		|| (outcome === "excluded" && selectedNutrientId !== null)
+		(outcome !== "approved" && outcome !== "excluded") ||
+		!reviewNote ||
+		reviewNote.length > REVIEW_TEXT_MAX_LENGTH ||
+		evidenceReference.length > REVIEW_TEXT_MAX_LENGTH ||
+		(outcome === "approved" &&
+			(!Number.isSafeInteger(selectedNutrientId) || !evidenceReference)) ||
+		(outcome === "excluded" && selectedNutrientId !== null)
 	) {
 		return fail(400, {
 			nutrientMappingReviewError:
@@ -118,14 +122,16 @@ export const reviewNutrientMappingAction = async (
 		});
 		return {
 			nutrientMappingReviewResult: result,
-			nutrientMappingReviewSuccess: outcome === "approved"
-				? "The nutrient mapping is approved and available for future normalized data."
-				: "The candidate was excluded and removed from the review queue.",
+			nutrientMappingReviewSuccess:
+				outcome === "approved"
+					? "The nutrient mapping is approved and available for future normalized data."
+					: "The candidate was excluded and removed from the review queue.",
 		};
 	} catch (error) {
 		return fail(
-			error instanceof NutrientMappingReviewError
-				&& (error.reason === "mapping_resolved" || error.reason === "mapping_unavailable")
+			error instanceof NutrientMappingReviewError &&
+				(error.reason === "mapping_resolved" ||
+					error.reason === "mapping_unavailable")
 				? 409
 				: 500,
 			{

@@ -38,7 +38,8 @@ form {
 	line-height: $app-line-height-body;
 }
 
-.profile-food-preference-settings__privacy .profile-food-preference-settings__description {
+.profile-food-preference-settings__privacy
+	.profile-food-preference-settings__description {
 	margin: 0;
 }
 
@@ -46,7 +47,8 @@ form {
 	width: 100%;
 }
 
-@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
 	.profile-food-preference-settings,
 	form {
 		gap: $app-gap-sm;

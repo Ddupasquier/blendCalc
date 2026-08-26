@@ -122,7 +122,7 @@
 					</CircleIconButton>
 					<CircleIconButton
 						class="ingredient-card-action-button"
-						label={label}
+						{label}
 						variant={armed ? "danger" : "soft"}
 						size="small"
 						busy={removing}

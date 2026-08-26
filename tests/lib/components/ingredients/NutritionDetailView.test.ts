@@ -36,7 +36,9 @@ describe("NutritionDetailView", () => {
 			},
 		});
 
-		expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(longName);
+		expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+			longName,
+		);
 	});
 
 	it("shows the canonical food name instead of a personal list name", () => {
@@ -53,8 +55,9 @@ describe("NutritionDetailView", () => {
 			},
 		});
 
-		expect(screen.getByRole("heading", { level: 1 }))
-			.toHaveTextContent("Spinach, Raw");
+		expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+			"Spinach, Raw",
+		);
 		expect(screen.queryByText("My Greens")).not.toBeInTheDocument();
 	});
 
@@ -77,8 +80,9 @@ describe("NutritionDetailView", () => {
 			},
 		});
 
-		expect(screen.getByRole("img", { name: /spinach, raw package image/i }))
-			.toHaveAttribute("src", "https://example.com/spinach-front.jpg");
+		expect(
+			screen.getByRole("img", { name: /spinach, raw package image/i }),
+		).toHaveAttribute("src", "https://example.com/spinach-front.jpg");
 	});
 
 	it("accelerates a held amount control, rescales nutrition, and stops on release", async () => {
@@ -124,15 +128,17 @@ describe("NutritionDetailView", () => {
 				food: {
 					...spinach,
 					hasSourceServing: true,
-					foodServings: [{
-						label: "2 tbsp",
-						gramWeight: 30,
-						amount: 2,
-						unitKey: "tbsp",
-						isPrimary: true,
-						source: "usda",
-						confidence: "source-verified",
-					}],
+					foodServings: [
+						{
+							label: "2 tbsp",
+							gramWeight: 30,
+							amount: 2,
+							unitKey: "tbsp",
+							isPrimary: true,
+							source: "usda",
+							confidence: "source-verified",
+						},
+					],
 				},
 				onClose: vi.fn(),
 				showListActions: false,
@@ -167,17 +173,19 @@ describe("NutritionDetailView", () => {
 				food: {
 					...spinach,
 					hasSourceServing: true,
-					foodServings: [{
-						label: "2 tbsp",
-						gramWeight: 32,
-						amount: 2,
-						unitKey: "tbsp",
-						isPrimary: true,
-						origin: "user-entered",
-						gramWeightMethod: "user-reported",
-						source: "user-label",
-						confidence: "user-reported",
-					}],
+					foodServings: [
+						{
+							label: "2 tbsp",
+							gramWeight: 32,
+							amount: 2,
+							unitKey: "tbsp",
+							isPrimary: true,
+							origin: "user-entered",
+							gramWeightMethod: "user-reported",
+							source: "user-label",
+							confidence: "user-reported",
+						},
+					],
 				},
 				onClose: vi.fn(),
 				showListActions: false,
@@ -225,15 +233,17 @@ describe("NutritionDetailView", () => {
 						},
 					],
 					hasSourceServing: true,
-					foodServings: [{
-						label: "1/2 cup",
-						gramWeight: 125,
-						amount: 0.5,
-						unitKey: "cup",
-						isPrimary: true,
-						source: "usda",
-						confidence: "source-verified",
-					}],
+					foodServings: [
+						{
+							label: "1/2 cup",
+							gramWeight: 125,
+							amount: 0.5,
+							unitKey: "cup",
+							isPrimary: true,
+							source: "usda",
+							confidence: "source-verified",
+						},
+					],
 					image: {
 						source: "open-food-facts",
 						sourceReference: "021130493609",
@@ -277,13 +287,18 @@ describe("NutritionDetailView", () => {
 		expect(screen.getByText("Amount per serving")).toBeInTheDocument();
 		expect(screen.getByText("75")).toBeInTheDocument();
 		expect(screen.getByText("2")).toBeInTheDocument();
-		expect(screen.getByText("Source: USDA FoodData Central")).toBeInTheDocument();
+		expect(
+			screen.getByText("Source: USDA FoodData Central"),
+		).toBeInTheDocument();
 		expect(screen.getByText("Branded")).toBeInTheDocument();
-		expect(screen.getByRole("img", {
-			name: "Roasted Onion & Garlic Pasta Sauce package image",
-		})).toBeInTheDocument();
-		expect(screen.getByText("Image: Open Food Facts contributors"))
-			.toBeInTheDocument();
+		expect(
+			screen.getByRole("img", {
+				name: "Roasted Onion & Garlic Pasta Sauce package image",
+			}),
+		).toBeInTheDocument();
+		expect(
+			screen.getByText("Image: Open Food Facts contributors"),
+		).toBeInTheDocument();
 		const imageLicense = screen.getByRole("link", {
 			name: "CC BY-SA 3.0 (opens in a new tab)",
 		});
@@ -293,22 +308,43 @@ describe("NutritionDetailView", () => {
 		);
 		expect(imageLicense).toHaveAttribute("target", "_blank");
 		expect(imageLicense).toHaveAttribute("rel", "noopener noreferrer");
-		expect(screen.getByText("Total Fat").closest("li")).toHaveTextContent("0 g");
-		expect(screen.queryByText(/partial nutrition data/i)).not.toBeInTheDocument();
+		expect(screen.getByText("Total Fat").closest("li")).toHaveTextContent(
+			"0 g",
+		);
+		expect(
+			screen.queryByText(/partial nutrition data/i),
+		).not.toBeInTheDocument();
 
 		await fireEvent.click(screen.getByText("Food passport"));
-		const productDetails = screen.getByText("Product details").closest("details");
+		const productDetails = screen
+			.getByText("Product details")
+			.closest("details");
 		await fireEvent.click(screen.getByText("Product details"));
-		expect(within(productDetails as HTMLElement).getByRole("heading", { name: "Data sources" }))
-			.toBeInTheDocument();
-		expect(within(productDetails as HTMLElement).getByText("Nutrition data").closest("div"))
-			.toHaveTextContent("USDA · 2032704");
-		expect(within(productDetails as HTMLElement).getByText("Categories").closest("div"))
-			.toHaveTextContent("USDA · 2032704");
-		expect(within(productDetails as HTMLElement).getByText("Serving data").closest("div"))
-			.toHaveTextContent("USDA · 2032704");
-		expect(within(productDetails as HTMLElement).getByText("Product image").closest("div"))
-			.toHaveTextContent("Open Food Facts · 021130493609");
+		expect(
+			within(productDetails as HTMLElement).getByRole("heading", {
+				name: "Data sources",
+			}),
+		).toBeInTheDocument();
+		expect(
+			within(productDetails as HTMLElement)
+				.getByText("Nutrition data")
+				.closest("div"),
+		).toHaveTextContent("USDA · 2032704");
+		expect(
+			within(productDetails as HTMLElement)
+				.getByText("Categories")
+				.closest("div"),
+		).toHaveTextContent("USDA · 2032704");
+		expect(
+			within(productDetails as HTMLElement)
+				.getByText("Serving data")
+				.closest("div"),
+		).toHaveTextContent("USDA · 2032704");
+		expect(
+			within(productDetails as HTMLElement)
+				.getByText("Product image")
+				.closest("div"),
+		).toHaveTextContent("Open Food Facts · 021130493609");
 
 		await fireEvent.click(screen.getByRole("combobox", { name: "Serving" }));
 		await fireEvent.click(
@@ -330,10 +366,9 @@ describe("NutritionDetailView", () => {
 			},
 		});
 
-		expect(screen.getByRole("button", { name: "Back to ingredients" })).toHaveAttribute(
-			"data-size",
-			"small",
-		);
+		expect(
+			screen.getByRole("button", { name: "Back to ingredients" }),
+		).toHaveAttribute("data-size", "small");
 	});
 
 	it("marks its scroll surface for stable disclosure expansion", () => {
@@ -345,8 +380,9 @@ describe("NutritionDetailView", () => {
 			},
 		});
 
-		expect(document.querySelector(".nutrition-detail-view__body"))
-			.toHaveClass("view-body--scroll");
+		expect(document.querySelector(".nutrition-detail-view__body")).toHaveClass(
+			"view-body--scroll",
+		);
 	});
 
 	it("hides redundant list status when opened from a saved list", () => {
@@ -360,27 +396,30 @@ describe("NutritionDetailView", () => {
 		});
 
 		expect(screen.queryByText("Already in Fridge")).not.toBeInTheDocument();
-		expect(screen.queryByRole("button", { name: "Add to Fridge" }))
-			.not.toBeInTheDocument();
+		expect(
+			screen.queryByRole("button", { name: "Add to Fridge" }),
+		).not.toBeInTheDocument();
 	});
 
 	it.each(["Foundation", "SR Legacy"])(
 		"shows stored source identity and USDA %s subtype",
 		(sourceDataType) => {
-		render(NutritionDetailView, {
-			props: {
-				food: {
-					...spinach,
-					sourceLabel: "USDA FoodData Central",
-					sourceDataType,
+			render(NutritionDetailView, {
+				props: {
+					food: {
+						...spinach,
+						sourceLabel: "USDA FoodData Central",
+						sourceDataType,
+					},
+					onClose: vi.fn(),
+					showListActions: false,
 				},
-				onClose: vi.fn(),
-				showListActions: false,
-			},
-		});
+			});
 
-		expect(screen.getByText("Source: USDA FoodData Central")).toBeInTheDocument();
-		expect(screen.getByText(sourceDataType)).toBeInTheDocument();
+			expect(
+				screen.getByText("Source: USDA FoodData Central"),
+			).toBeInTheDocument();
+			expect(screen.getByText(sourceDataType)).toBeInTheDocument();
 		},
 	);
 
@@ -402,13 +441,17 @@ describe("NutritionDetailView", () => {
 		});
 
 		expect(screen.queryByLabelText("Source: USDA")).not.toBeInTheDocument();
-		expect(screen.getByLabelText("Verification status: Verified"))
-			.toBeInTheDocument();
+		expect(
+			screen.getByLabelText("Verification status: Verified"),
+		).toBeInTheDocument();
 		expect(screen.queryByLabelText("Source: Custom")).not.toBeInTheDocument();
-		expect(screen.getByText("Source: USDA FoodData Central")).toBeInTheDocument();
+		expect(
+			screen.getByText("Source: USDA FoodData Central"),
+		).toBeInTheDocument();
 		expect(screen.getByText("Branded")).toBeInTheDocument();
 		expect(
-			screen.getByLabelText("Verification status: Verified")
+			screen
+				.getByLabelText("Verification status: Verified")
 				.closest(".nf-heading-badges"),
 		).toBeInTheDocument();
 	});

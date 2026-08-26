@@ -47,7 +47,8 @@ form {
 	width: 100%;
 }
 
-@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
 	.profile-playful-message-settings > p {
 		font-size: $app-font-size-xs;
 	}

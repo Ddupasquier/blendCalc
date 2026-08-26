@@ -67,7 +67,8 @@
 	border-top: $app-border;
 }
 
-@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
 	.profile-image-report-review,
 	.profile-image-report-review__heading,
 	.profile-image-report-review__reasons,

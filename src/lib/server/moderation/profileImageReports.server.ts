@@ -22,8 +22,8 @@ type DatabaseError = {
 const isMissingProfileImageReportsTable = (error: DatabaseError | null) =>
 	Boolean(
 		error &&
-			(error.code === "42P01" || error.code === "PGRST205") &&
-			error.message?.includes("profile_image_reports"),
+		(error.code === "42P01" || error.code === "PGRST205") &&
+		error.message?.includes("profile_image_reports"),
 	);
 
 export const listPendingProfileImageReports = async () => {
@@ -80,22 +80,24 @@ export const listPendingProfileImageReports = async () => {
 		const profile = profileByUserId.get(firstReport.reported_profile_user_id);
 		if (!profile || profile.avatar_path !== firstReport.avatar_path) return [];
 
-		return [{
-			id: firstReport.id,
-			reportedProfileUserId: firstReport.reported_profile_user_id,
-			displayName:
-				profile.display_name ||
-				getDefaultDisplayName(firstReport.reported_profile_user_id),
-			avatarUrl: signedAvatarByPath.get(firstReport.avatar_path) ?? null,
-			avatarAltText: profile.avatar_alt_text,
-			createdAt: firstReport.created_at,
-			reports: imageReports.map((report) => ({
-				id: report.id,
-				reasonCode: report.reason_code as ProfileImageReportReasonCode,
-				details: report.details,
-				createdAt: report.created_at,
-			})),
-		}];
+		return [
+			{
+				id: firstReport.id,
+				reportedProfileUserId: firstReport.reported_profile_user_id,
+				displayName:
+					profile.display_name ||
+					getDefaultDisplayName(firstReport.reported_profile_user_id),
+				avatarUrl: signedAvatarByPath.get(firstReport.avatar_path) ?? null,
+				avatarAltText: profile.avatar_alt_text,
+				createdAt: firstReport.created_at,
+				reports: imageReports.map((report) => ({
+					id: report.id,
+					reasonCode: report.reason_code as ProfileImageReportReasonCode,
+					details: report.details,
+					createdAt: report.created_at,
+				})),
+			},
+		];
 	});
 };
 
@@ -117,9 +119,11 @@ export const reviewProfileImageReport = async ({
 		.eq("id", reportId)
 		.maybeSingle();
 
-	if (isMissingProfileImageReportsTable(error)) return "reports-unavailable" as const;
+	if (isMissingProfileImageReportsTable(error))
+		return "reports-unavailable" as const;
 	if (error) throw error;
-	if (!report || report.status !== "pending") return "already-reviewed" as const;
+	if (!report || report.status !== "pending")
+		return "already-reviewed" as const;
 
 	if (decision === "removed") {
 		const { data: removedProfile, error: removeError } = await admin

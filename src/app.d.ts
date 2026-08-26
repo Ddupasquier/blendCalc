@@ -6,10 +6,7 @@ import type { RequestContext } from "@sveltejs/adapter-vercel";
 import type { IngredientPageInitialData } from "$lib/types/pageData/ingredientPageData";
 import type { MixPageInitialData } from "$lib/types/pageData/mixPageData";
 import type { SavedRecipesPageInitialData } from "$lib/types/pageData/savedRecipesPageData";
-import type {
-	AppIssueCode,
-	AppIssueParams,
-} from "$lib/utils/errors/appIssues";
+import type { AppIssueCode, AppIssueParams } from "$lib/utils/errors/appIssues";
 import type { ThemePreference } from "$lib/utils/theme/themePreference";
 
 type AuthUser = {

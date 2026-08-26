@@ -22,7 +22,10 @@
 	let searching = $state(false);
 
 	const blockReasonOptions = [
-		{ value: "profile_image_policy_violation", label: "Profile image violation" },
+		{
+			value: "profile_image_policy_violation",
+			label: "Profile image violation",
+		},
 		{ value: "harassment_or_abuse", label: "Harassment or abuse" },
 		{ value: "fraud_or_spam", label: "Fraud or spam" },
 		{ value: "terms_violation", label: "Other terms violation" },
@@ -93,15 +96,26 @@
 	};
 </script>
 
-<section class="account-access" aria-labelledby={showHeading ? "account-access-title" : undefined} aria-label={showHeading ? undefined : "Account access"}>
+<section
+	class="account-access"
+	aria-labelledby={showHeading ? "account-access-title" : undefined}
+	aria-label={showHeading ? undefined : "Account access"}
+>
 	{#if showHeading}
 		<header class="account-access__heading">
 			<h2 id="account-access-title">Account access</h2>
-			<p>Find an account, then open only the details or access controls you need.</p>
+			<p>
+				Find an account, then open only the details or access controls you need.
+			</p>
 		</header>
 	{/if}
 
-	<form class="account-access__search" method="GET" role="search" onsubmit={submitAccountSearch}>
+	<form
+		class="account-access__search"
+		method="GET"
+		role="search"
+		onsubmit={submitAccountSearch}
+	>
 		<TextField
 			id="moderation-account-search"
 			name="q"
@@ -114,15 +128,17 @@
 			disabled={searching}
 		/>
 		<div class="account-access__search-actions">
-			<ActionButton type="submit" size="small" busy={searching}>Search</ActionButton>
+			<ActionButton type="submit" size="small" busy={searching}
+				>Search</ActionButton
+			>
 			{#if query}
 				<ActionButton
 					type="button"
 					variant="ghost"
 					size="small"
 					disabled={searching}
-					onclick={clearAccountSearch}
-				>Clear</ActionButton>
+					onclick={clearAccountSearch}>Clear</ActionButton
+				>
 			{/if}
 		</div>
 		<p class="account-access__result-count" aria-live="polite">
@@ -148,33 +164,62 @@
 							/>
 						{/if}
 						<dl class="account-access__facts">
-							<div><dt>Email</dt><dd>{user.email}</dd></div>
-							<div><dt>Role</dt><dd>{user.role ? formatReadableLabel(user.role) : "Member"}</dd></div>
-							<div><dt>Profile image</dt><dd>{formatProfileImageStatus(user.avatarModerationStatus)}</dd></div>
-							<div><dt>Rejected public submissions</dt><dd>{user.moderatorRejectedSubmissionCount}</dd></div>
+							<div>
+								<dt>Email</dt>
+								<dd>{user.email}</dd>
+							</div>
+							<div>
+								<dt>Role</dt>
+								<dd>{user.role ? formatReadableLabel(user.role) : "Member"}</dd>
+							</div>
+							<div>
+								<dt>Profile image</dt>
+								<dd>{formatProfileImageStatus(user.avatarModerationStatus)}</dd>
+							</div>
+							<div>
+								<dt>Rejected public submissions</dt>
+								<dd>{user.moderatorRejectedSubmissionCount}</dd>
+							</div>
 						</dl>
 
 						{#if user.catalogSharingSuspendedUntil}
 							<p class="account-access__suspension">
 								Public product sharing is paused until
-								{formatCatalogSharingSuspensionDate(user.catalogSharingSuspendedUntil)}.
+								{formatCatalogSharingSuspensionDate(
+									user.catalogSharingSuspendedUntil,
+								)}.
 							</p>
 						{/if}
 						{#if user.publicReason}
-							<p class="account-access__public-reason">Reason shown to the user: {user.publicReason}</p>
+							<p class="account-access__public-reason">
+								Reason shown to the user: {user.publicReason}
+							</p>
 						{/if}
 
 						{#if user.id === viewerUserId}
-							<p class="account-access__restriction">This is your account, so its access cannot be changed here.</p>
+							<p class="account-access__restriction">
+								This is your account, so its access cannot be changed here.
+							</p>
 						{:else if user.role === "admin" || user.role === "developer"}
-							<p class="account-access__restriction">{user.role === "admin" ? "Admin" : "Developer"} accounts cannot be blocked here.</p>
+							<p class="account-access__restriction">
+								{user.role === "admin" ? "Admin" : "Developer"} accounts cannot be
+								blocked here.
+							</p>
 						{:else if !canModerateTargetRole(viewerRole, user.role)}
-							<p class="account-access__restriction">Only an admin or developer can change access for another privileged account.</p>
+							<p class="account-access__restriction">
+								Only an admin or developer can change access for another
+								privileged account.
+							</p>
 						{/if}
 
 						{#if user.id !== viewerUserId && canModerateTargetRole(viewerRole, user.role)}
 							{#if user.status === "banned"}
-								<form method="POST" action="?/unban" use:enhance={enhanceAccountAction} aria-busy={pendingAccountUserId === user.id}>
+								<form
+									method="POST"
+									action="?/unban"
+									use:enhance={enhanceAccountAction}
+									aria-busy={pendingAccountUserId === user.id}
+								>
 									<input type="hidden" name="targetUserId" value={user.id} />
 									<ActionButton
 										type="submit"
@@ -182,11 +227,18 @@
 										fullWidth
 										busy={pendingAccountUserId === user.id}
 										disabled={pendingAccountUserId !== null}
-									>Restore access</ActionButton>
+										>Restore access</ActionButton
+									>
 								</form>
 							{:else}
 								<CollapsibleSection title="Access controls" surface="panel">
-									<form class="account-access__block-form" method="POST" action="?/ban" use:enhance={enhanceAccountAction} aria-busy={pendingAccountUserId === user.id}>
+									<form
+										class="account-access__block-form"
+										method="POST"
+										action="?/ban"
+										use:enhance={enhanceAccountAction}
+										aria-busy={pendingAccountUserId === user.id}
+									>
 										<input type="hidden" name="targetUserId" value={user.id} />
 										<SelectField
 											id={`account-ban-reason-${user.id}`}
@@ -204,7 +256,8 @@
 											fullWidth
 											busy={pendingAccountUserId === user.id}
 											disabled={pendingAccountUserId !== null}
-										>Block account</ActionButton>
+											>Block account</ActionButton
+										>
 									</form>
 								</CollapsibleSection>
 							{/if}

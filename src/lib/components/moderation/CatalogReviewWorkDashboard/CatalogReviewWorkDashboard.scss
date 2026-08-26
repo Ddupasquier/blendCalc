@@ -85,7 +85,8 @@
 	text-align: center;
 }
 
-@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
 	.catalog-review-work,
 	.catalog-review-work__stack,
 	.catalog-review-work__record,

@@ -27,18 +27,14 @@ describe("page metadata", () => {
 		);
 		expect(
 			getAppDocumentTitle(url("/ingredients/fridge/barcode-scanner")),
-		).toBe(
-			"Scan a Barcode · blendCalc",
-		);
+		).toBe("Scan a Barcode · blendCalc");
 		expect(
 			getAppDocumentTitle(
 				url("/ingredients/fridge/nutrition/42"),
 				"Roasted Tomato Soup",
 			),
 		).toBe("Roasted Tomato Soup Nutrition · blendCalc");
-		expect(getAppDocumentTitle(url("/mix/save"))).toBe(
-			"Save Mix · blendCalc",
-		);
+		expect(getAppDocumentTitle(url("/mix/save"))).toBe("Save Mix · blendCalc");
 		expect(getAppDocumentTitle(url("/mix/options"))).toBe(
 			"Mix Options · blendCalc",
 		);

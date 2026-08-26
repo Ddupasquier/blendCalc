@@ -305,5 +305,5 @@ export const getNutrientAdjustmentSuggestions = ({
 					Number(left.incrementSource === "source-serving") ||
 				left.food.description.localeCompare(right.food.description),
 		)
-			.slice(0, Math.max(0, maxSuggestions));
+		.slice(0, Math.max(0, maxSuggestions));
 };

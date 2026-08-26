@@ -73,7 +73,10 @@ const parseProviderChange = (value: unknown, index: number) => {
 	const summary = readRecord(change.changeSummary, `${path}.changeSummary`);
 	return {
 		id: readString(change.id, `${path}.id`),
-		sharedProductId: readString(change.sharedProductId, `${path}.sharedProductId`),
+		sharedProductId: readString(
+			change.sharedProductId,
+			`${path}.sharedProductId`,
+		),
 		barcode: readString(change.barcode, `${path}.barcode`),
 		productName: readString(change.productName, `${path}.productName`),
 		sourceName: readString(change.sourceName, `${path}.sourceName`),
@@ -106,7 +109,10 @@ const parseSafetyMatch = (value: unknown, index: number) => {
 	const match = readRecord(value, path);
 	return {
 		id: readString(match.id, `${path}.id`),
-		sharedProductId: readString(match.sharedProductId, `${path}.sharedProductId`),
+		sharedProductId: readString(
+			match.sharedProductId,
+			`${path}.sharedProductId`,
+		),
 		barcode: readString(match.barcode, `${path}.barcode`),
 		productName: readString(match.productName, `${path}.productName`),
 		brandOwner: readNullableString(match.brandOwner, `${path}.brandOwner`),
@@ -114,13 +120,19 @@ const parseSafetyMatch = (value: unknown, index: number) => {
 			match.alertProductDescription,
 			`${path}.alertProductDescription`,
 		),
-		classification: readNullableString(match.classification, `${path}.classification`),
+		classification: readNullableString(
+			match.classification,
+			`${path}.classification`,
+		),
 		reason: readNullableString(match.reason, `${path}.reason`),
 		packageDescription: readNullableString(
 			match.packageDescription,
 			`${path}.packageDescription`,
 		),
-		codeInformation: readNullableString(match.codeInformation, `${path}.codeInformation`),
+		codeInformation: readNullableString(
+			match.codeInformation,
+			`${path}.codeInformation`,
+		),
 		sourceUrl: readString(match.sourceUrl, `${path}.sourceUrl`),
 		sourceName: readString(match.sourceName, `${path}.sourceName`),
 		matchEvidence: readRecord(match.matchEvidence, `${path}.matchEvidence`),
@@ -142,10 +154,15 @@ export const parseCatalogReviewWorkSummary = (
 		providerChanges: readArray(root.providerChanges, "providerChanges").map(
 			parseProviderChange,
 		),
-		safetyMatches: readArray(root.safetyMatches, "safetyMatches").map(parseSafetyMatch),
+		safetyMatches: readArray(root.safetyMatches, "safetyMatches").map(
+			parseSafetyMatch,
+		),
 		counts: {
 			conflicts: readNumber(counts.conflicts, "counts.conflicts"),
-			providerChanges: readNumber(counts.providerChanges, "counts.providerChanges"),
+			providerChanges: readNumber(
+				counts.providerChanges,
+				"counts.providerChanges",
+			),
 			safetyMatches: readNumber(counts.safetyMatches, "counts.safetyMatches"),
 		},
 		issueLimit: readNumber(root.issueLimit, "issueLimit"),

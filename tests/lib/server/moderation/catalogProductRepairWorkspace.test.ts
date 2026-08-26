@@ -12,17 +12,27 @@ vi.mock("$lib/server/moderation/moderationAccess.server", () => ({
 	requireModeratorPermission: mocks.requireModeratorPermission,
 }));
 
-vi.mock("$lib/server/moderation/catalogProductReadinessPassport.server", () => ({
-	readCatalogProductReadinessPassport: mocks.readCatalogProductReadinessPassport,
-}));
+vi.mock(
+	"$lib/server/moderation/catalogProductReadinessPassport.server",
+	() => ({
+		readCatalogProductReadinessPassport:
+			mocks.readCatalogProductReadinessPassport,
+	}),
+);
 
-vi.mock("$lib/server/moderation/catalogHealthRepair.server", async (importOriginal) => {
-	const original = await importOriginal<typeof import("$lib/server/moderation/catalogHealthRepair.server")>();
-	return {
-		...original,
-		runCatalogHealthRepair: mocks.runCatalogHealthRepair,
-	};
-});
+vi.mock(
+	"$lib/server/moderation/catalogHealthRepair.server",
+	async (importOriginal) => {
+		const original =
+			await importOriginal<
+				typeof import("$lib/server/moderation/catalogHealthRepair.server")
+			>();
+		return {
+			...original,
+			runCatalogHealthRepair: mocks.runCatalogHealthRepair,
+		};
+	},
+);
 
 import {
 	loadCatalogProductRepairWorkspace,
@@ -32,10 +42,13 @@ import {
 const createFormRequest = (values: Record<string, string>) => {
 	const formData = new FormData();
 	for (const [key, value] of Object.entries(values)) formData.set(key, value);
-	return new Request("http://localhost/profile/privileged-tools/data-operations/product", {
-		method: "POST",
-		body: formData,
-	});
+	return new Request(
+		"http://localhost/profile/privileged-tools/data-operations/product",
+		{
+			method: "POST",
+			body: formData,
+		},
+	);
 };
 
 describe("catalog product repair workspace", () => {
@@ -55,10 +68,12 @@ describe("catalog product repair workspace", () => {
 
 	it("loads the product passport and exposes repair capability from exact permissions", async () => {
 		const supabase = {};
-		await expect(loadCatalogProductRepairWorkspace({
-			locals: { supabase },
-			params: { productId: "product-id" },
-		} as never)).resolves.toEqual({
+		await expect(
+			loadCatalogProductRepairWorkspace({
+				locals: { supabase },
+				params: { productId: "product-id" },
+			} as never),
+		).resolves.toEqual({
 			viewerRole: "developer",
 			canRunRepairs: true,
 			passport: catalogProductReadinessPassportFixture,
@@ -75,17 +90,22 @@ describe("catalog product repair workspace", () => {
 	});
 
 	it("runs a dry run only after checking the repair permission", async () => {
-		mocks.runCatalogHealthRepair.mockResolvedValue(catalogHealthRepairDryRunFixture);
+		mocks.runCatalogHealthRepair.mockResolvedValue(
+			catalogHealthRepairDryRunFixture,
+		);
 		const supabase = {};
-		const occurrenceKey = catalogProductReadinessPassportFixture.issues[0].occurrenceKey;
-		await expect(runCatalogProductRepairAction({
-			locals: { supabase },
-			params: { productId: "product-id" },
-			request: createFormRequest({
-				occurrenceKey,
-				mode: "dry_run",
-			}),
-		} as never)).resolves.toEqual({
+		const occurrenceKey =
+			catalogProductReadinessPassportFixture.issues[0].occurrenceKey;
+		await expect(
+			runCatalogProductRepairAction({
+				locals: { supabase },
+				params: { productId: "product-id" },
+				request: createFormRequest({
+					occurrenceKey,
+					mode: "dry_run",
+				}),
+			} as never),
+		).resolves.toEqual({
 			catalogRepairOccurrenceKey: occurrenceKey,
 			catalogRepairResult: catalogHealthRepairDryRunFixture,
 		});
@@ -130,7 +150,9 @@ describe("catalog product repair workspace", () => {
 
 		expect(result).toMatchObject({
 			status: 409,
-			data: { catalogRepairError: expect.stringContaining("options have changed") },
+			data: {
+				catalogRepairError: expect.stringContaining("options have changed"),
+			},
 		});
 		expect(mocks.runCatalogHealthRepair).not.toHaveBeenCalled();
 	});

@@ -17,7 +17,9 @@ describe("CheckboxField", () => {
 		});
 
 		expect(
-			screen.getByRole("checkbox", { name: "Use these settings for warnings." }),
+			screen.getByRole("checkbox", {
+				name: "Use these settings for warnings.",
+			}),
 		).toBeChecked();
 	});
 

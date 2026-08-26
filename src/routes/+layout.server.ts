@@ -58,22 +58,22 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 		};
 	}
 
-	const profileWithAvatarPromise = getUserProfile(locals.supabase, user.id)
-		.then(async (profile) => ({
-			profile,
-			avatarUrl: await getSignedAvatarUrl(
-				locals.supabase,
-				profile?.avatar_path,
-			),
-		}));
+	const profileWithAvatarPromise = getUserProfile(
+		locals.supabase,
+		user.id,
+	).then(async (profile) => ({
+		profile,
+		avatarUrl: await getSignedAvatarUrl(locals.supabase, profile?.avatar_path),
+	}));
 	const claimedElevatedRole = getElevatedAppRole(user.appRoleClaim);
-	const rolePromise = user.appRoleClaim === "user"
-		? Promise.resolve(null)
-		: getUserAppRole(locals.supabase, user.id).then((databaseRole) =>
-			databaseRole === claimedElevatedRole || user.appRoleClaim === null
-				? databaseRole
-				: null,
-		);
+	const rolePromise =
+		user.appRoleClaim === "user"
+			? Promise.resolve(null)
+			: getUserAppRole(locals.supabase, user.id).then((databaseRole) =>
+					databaseRole === claimedElevatedRole || user.appRoleClaim === null
+						? databaseRole
+						: null,
+				);
 	const [
 		{ profile, avatarUrl },
 		role,
@@ -96,11 +96,11 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 	const userAppReferenceCatalog = playfulMessagesEnabled
 		? appReferenceCatalog
 		: {
-			...appReferenceCatalog,
-			delightMessages: appReferenceCatalog.delightMessages.filter(
-				(message) => message.tone === "standard",
-			),
-		};
+				...appReferenceCatalog,
+				delightMessages: appReferenceCatalog.delightMessages.filter(
+					(message) => message.tone === "standard",
+				),
+			};
 	const themePreference = normalizeThemePreference(profile?.appearance_theme);
 	if (cookies.get(THEME_PREFERENCE_COOKIE) !== themePreference) {
 		cookies.set(

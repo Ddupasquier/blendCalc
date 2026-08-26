@@ -36,7 +36,9 @@
 					pendingFoodPreferenceCount
 						? `${pendingFoodPreferenceCount} pending`
 						: null,
-				].filter(Boolean).join(" · ")
+				]
+					.filter(Boolean)
+					.join(" · ")
 			: priorityNutrientCount
 				? `${priorityNutrientCount} nutrient priorities`
 				: "Optional warnings and Mix guidance",

@@ -6,9 +6,7 @@ import {
 	type PrivilegedReviewSummary,
 } from "$lib/utils/moderation/profilePrivilegedTools";
 
-const readCount = (
-	result: { count: number | null; error: unknown },
-) => {
+const readCount = (result: { count: number | null; error: unknown }) => {
 	if (result.error) throw result.error;
 	return result.count ?? 0;
 };
@@ -51,14 +49,18 @@ export const readPrivilegedToolReviewSummary = async (
 	);
 	const [productSubmissions, foodWarningReports, profileImageReviews] =
 		await Promise.all([
-			canReviewProducts ? admin
-				.from("shared_product_submissions")
-				.select("id", { count: "exact", head: true })
-				.eq("status", "pending") : Promise.resolve({ count: 0, error: null }),
-			canReviewWarnings ? admin
-				.from("food_compatibility_feedback")
-				.select("id", { count: "exact", head: true })
-				.eq("status", "pending") : Promise.resolve({ count: 0, error: null }),
+			canReviewProducts
+				? admin
+						.from("shared_product_submissions")
+						.select("id", { count: "exact", head: true })
+						.eq("status", "pending")
+				: Promise.resolve({ count: 0, error: null }),
+			canReviewWarnings
+				? admin
+						.from("food_compatibility_feedback")
+						.select("id", { count: "exact", head: true })
+						.eq("status", "pending")
+				: Promise.resolve({ count: 0, error: null }),
 			canManageAccounts
 				? admin.rpc("get_pending_profile_image_review_count")
 				: Promise.resolve({ data: 0, error: null }),
@@ -82,14 +84,15 @@ export const readPrivilegedToolReviewSummary = async (
 	};
 };
 
-export const getUnavailablePrivilegedToolReviewSummary = (): PrivilegedReviewSummary => ({
-	pendingProductSubmissions: null,
-	pendingFoodWarningReports: null,
-	pendingProfileImageReviews: null,
-	totalPendingReviews: null,
-	unavailable: true,
-	identityVerificationRequired: false,
-});
+export const getUnavailablePrivilegedToolReviewSummary =
+	(): PrivilegedReviewSummary => ({
+		pendingProductSubmissions: null,
+		pendingFoodWarningReports: null,
+		pendingProfileImageReviews: null,
+		totalPendingReviews: null,
+		unavailable: true,
+		identityVerificationRequired: false,
+	});
 
 export const getIdentityVerificationRequiredPrivilegedToolReviewSummary =
 	(): PrivilegedReviewSummary => ({

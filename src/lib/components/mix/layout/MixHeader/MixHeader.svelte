@@ -31,8 +31,7 @@
 			</p>
 		{:else}
 			<p>
-				Build something delicious and watch your nutrition goals take
-				shape.
+				Build something delicious and watch your nutrition goals take shape.
 			</p>
 		{/if}
 		<SecondaryDelightMessage message={delightMessage} />

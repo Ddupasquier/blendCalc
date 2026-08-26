@@ -25,9 +25,7 @@ export type MfaAuthenticatedUserContext = {
 	status: MfaSecurityStatus;
 };
 
-const normalizeAuthenticatorLevel = (
-	value: unknown,
-): MfaAuthenticatorLevel =>
+const normalizeAuthenticatorLevel = (value: unknown): MfaAuthenticatorLevel =>
 	value === "aal1" || value === "aal2" ? value : null;
 
 export const readMfaSecurityStatus = async (
@@ -46,8 +44,9 @@ export const readMfaSecurityStatus = async (
 		claimsResult.data?.claims.aal,
 	);
 	const verifiedTotpFactors = (verifiedUserResult.data.user.factors ?? [])
-		.filter((factor) =>
-			factor.factor_type === "totp" && factor.status === "verified")
+		.filter(
+			(factor) => factor.factor_type === "totp" && factor.status === "verified",
+		)
 		.map((factor) => ({
 			id: factor.id,
 			friendlyName: factor.friendly_name ?? null,
@@ -66,9 +65,10 @@ export const getMfaVerificationRoute = (
 	status: MfaSecurityStatus,
 	next: string,
 ) => {
-	const route = status.verifiedTotpFactors.length > 0
-		? "/auth/mfa/challenge"
-		: "/auth/mfa/enroll";
+	const route =
+		status.verifiedTotpFactors.length > 0
+			? "/auth/mfa/challenge"
+			: "/auth/mfa/enroll";
 	return `${route}?next=${encodeURIComponent(getSafeAuthNextPath(next))}`;
 };
 

@@ -43,11 +43,7 @@ describe("Mix section reorganization architecture", () => {
 		expect(optionsSheet).toContain('label="Reorganize"');
 		expect(mixPage).toContain("reorganizeMode");
 		expect(mixPage).toContain("<MixSectionOrganizer");
-		expect(mixPage).toContain(
-			"{#each displayedSectionOrder as sectionId",
-		);
-		expect(mixPage).toContain(
-			"getMixSectionOrderForIngredientAvailability",
-		);
+		expect(mixPage).toContain("{#each displayedSectionOrder as sectionId");
+		expect(mixPage).toContain("getMixSectionOrderForIngredientAvailability");
 	});
 });

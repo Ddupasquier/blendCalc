@@ -46,9 +46,7 @@ describe("Profile settings routes", () => {
 			),
 		).toBe("Catalog Review Work");
 		expect(
-			getProfileSettingsRouteTitle(
-				"/profile/privileged-tools/data-operations",
-			),
+			getProfileSettingsRouteTitle("/profile/privileged-tools/data-operations"),
 		).toBe("Data Operations");
 		expect(getProfileSettingsRouteTitle("/profile")).toBe("Profile");
 	});

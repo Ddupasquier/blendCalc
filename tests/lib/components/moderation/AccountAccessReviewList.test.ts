@@ -16,17 +16,18 @@ const accountUser = {
 	catalogSharingSuspendedUntil: null,
 };
 
-const renderAccountAccess = () => render(AccountAccessReviewList, {
-	props: {
-		users: [accountUser],
-		query: "",
-		totalCount: 1,
-		viewerUserId: "moderator-1",
-		viewerRole: "moderator",
-		searchPath: "/profile/privileged-tools/account-access",
-		showHeading: false,
-	},
-});
+const renderAccountAccess = () =>
+	render(AccountAccessReviewList, {
+		props: {
+			users: [accountUser],
+			query: "",
+			totalCount: 1,
+			viewerUserId: "moderator-1",
+			viewerRole: "moderator",
+			searchPath: "/profile/privileged-tools/account-access",
+			showHeading: false,
+		},
+	});
 
 describe("AccountAccessReviewList", () => {
 	it("keeps account evidence and destructive controls closed until requested", async () => {

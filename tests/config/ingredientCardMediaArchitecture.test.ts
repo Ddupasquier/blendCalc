@@ -101,19 +101,13 @@ describe("ingredient card media architecture", () => {
 		expect(cardLayoutStyles).toContain(
 			"-#{$card-title-shift} + #{$card-supporting-copy-indent}",
 		);
-		expect(cardLayoutStyles).toContain(
-			"--ingredient-card-copy-start-offset",
-		);
+		expect(cardLayoutStyles).toContain("--ingredient-card-copy-start-offset");
 		expect(cardLayoutStyles).toMatch(
 			/--ingredient-card-copy-start-offset:[\s\S]*var\(--ingredient-card-content-inset\)[\s\S]*-\s*#\{\$card-title-shift\}/,
 		);
 		expect(cardLayoutStyles).toContain("container-type: inline-size");
-		expect(savedCardStyles).toContain(
-			"@include ingredient-card-layout.frame",
-		);
-		expect(searchCardStyles).toContain(
-			"@include ingredient-card-layout.frame",
-		);
+		expect(savedCardStyles).toContain("@include ingredient-card-layout.frame");
+		expect(searchCardStyles).toContain("@include ingredient-card-layout.frame");
 		expect(placementPreviewStyles).toContain(
 			"@include ingredient-card-layout.frame",
 		);
@@ -137,12 +131,8 @@ describe("ingredient card media architecture", () => {
 		expect(cardLayoutStyles).toContain("@mixin title-row");
 		expect(cardLayoutStyles).toContain("@mixin action-layer");
 		expect(cardLayoutStyles).toContain("@mixin action-row");
-		expect(savedCardStyles).toContain(
-			"@include ingredient-card-layout.copy",
-		);
-		expect(searchCardStyles).toContain(
-			"@include ingredient-card-layout.copy",
-		);
+		expect(savedCardStyles).toContain("@include ingredient-card-layout.copy");
+		expect(searchCardStyles).toContain("@include ingredient-card-layout.copy");
 		expect(savedCardStyles).toContain(
 			"@include ingredient-card-layout.primary-action-target",
 		);
@@ -232,20 +222,12 @@ describe("ingredient card media architecture", () => {
 			)?.[1],
 		);
 		const verticalRadius = Number(
-			mediaLaneStyles.match(
-				/\$media-lane-mask-vertical-radius:\s*(\d+)%/,
-			)?.[1],
+			mediaLaneStyles.match(/\$media-lane-mask-vertical-radius:\s*(\d+)%/)?.[1],
 		);
 
-		expect(mediaLaneStyles).toMatch(
-			/\$media-lane-fade-solid:\s*\d+%/,
-		);
-		expect(mediaLaneStyles).toMatch(
-			/\$media-lane-fade-soft:\s*\d+%/,
-		);
-		expect(mediaLaneStyles).toMatch(
-			/\$media-lane-fade-end:\s*\d+%/,
-		);
+		expect(mediaLaneStyles).toMatch(/\$media-lane-fade-solid:\s*\d+%/);
+		expect(mediaLaneStyles).toMatch(/\$media-lane-fade-soft:\s*\d+%/);
+		expect(mediaLaneStyles).toMatch(/\$media-lane-fade-end:\s*\d+%/);
 		expect(mediaLaneStyles).toContain("$media-lane-mask: radial-gradient");
 		expect(mediaLaneStyles).toContain(
 			"ellipse $media-lane-mask-horizontal-radius $media-lane-mask-vertical-radius at left center",
@@ -256,8 +238,6 @@ describe("ingredient card media architecture", () => {
 			/rgb\(0 0 0 \/ \d+%\)\s+\$media-lane-fade-soft/,
 		);
 		expect(mediaLaneStyles).toContain("mask-image: $media-lane-mask");
-		expect(mediaLaneStyles).toContain(
-			"-webkit-mask-image: $media-lane-mask",
-		);
+		expect(mediaLaneStyles).toContain("-webkit-mask-image: $media-lane-mask");
 	});
 });

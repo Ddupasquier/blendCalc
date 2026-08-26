@@ -35,9 +35,9 @@ describe("profile validation", () => {
 	});
 
 	it("allows blank preferred names because the app assigns a default", () => {
-		expect(
-			getProfileValidationError({ displayName: null, bio: null }),
-		).toBe("");
+		expect(getProfileValidationError({ displayName: null, bio: null })).toBe(
+			"",
+		);
 	});
 
 	it("accepts a 25-character display name and rejects anything longer", () => {
@@ -73,8 +73,15 @@ describe("profile validation", () => {
 	});
 
 	it("checks image signatures instead of trusting MIME alone", () => {
-		expect(matchesAvatarFileSignature(new Uint8Array([0xff, 0xd8, 0xff]), "image/jpeg")).toBe(true);
-		expect(matchesAvatarFileSignature(new Uint8Array([1, 2, 3]), "image/jpeg")).toBe(false);
+		expect(
+			matchesAvatarFileSignature(
+				new Uint8Array([0xff, 0xd8, 0xff]),
+				"image/jpeg",
+			),
+		).toBe(true);
+		expect(
+			matchesAvatarFileSignature(new Uint8Array([1, 2, 3]), "image/jpeg"),
+		).toBe(false);
 		expect(getAvatarExtension("image/webp")).toBe("webp");
 	});
 });

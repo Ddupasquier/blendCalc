@@ -42,7 +42,8 @@
 	gap: $app-gap-xs;
 }
 
-@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
 	.moderator-review-card,
 	.moderator-review-card__identity,
 	.moderator-review-card__body {

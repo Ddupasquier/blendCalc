@@ -13,7 +13,9 @@ export const PROFILE_AVATAR_TYPES = [
 
 export type ProfileAvatarType = (typeof PROFILE_AVATAR_TYPES)[number];
 
-export const normalizeOptionalProfileText = (value: FormDataEntryValue | null) => {
+export const normalizeOptionalProfileText = (
+	value: FormDataEntryValue | null,
+) => {
 	const normalized = String(value ?? "").trim();
 	return normalized || null;
 };
@@ -67,7 +69,10 @@ export const matchesAvatarFileSignature = (
 ) => {
 	if (type === "image/jpeg") return startsWithBytes(bytes, [0xff, 0xd8, 0xff]);
 	if (type === "image/png") {
-		return startsWithBytes(bytes, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+		return startsWithBytes(
+			bytes,
+			[0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a],
+		);
 	}
 	return (
 		startsWithBytes(bytes, [0x52, 0x49, 0x46, 0x46]) &&
@@ -84,6 +89,8 @@ export const getAvatarExtension = (type: ProfileAvatarType) => {
 	return "webp";
 };
 
-export const isProfileAvatarType = (type: string): type is ProfileAvatarType => {
+export const isProfileAvatarType = (
+	type: string,
+): type is ProfileAvatarType => {
 	return PROFILE_AVATAR_TYPES.includes(type as ProfileAvatarType);
 };

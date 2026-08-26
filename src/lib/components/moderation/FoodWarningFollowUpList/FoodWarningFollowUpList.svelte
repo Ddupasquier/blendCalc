@@ -33,7 +33,9 @@
 							<span>{correction.barcode}</span>
 						</div>
 						<TextBadge
-							label={correction.status === "linked" ? "Correction submitted" : "Correction needed"}
+							label={correction.status === "linked"
+								? "Correction submitted"
+								: "Correction needed"}
 							tone="warning"
 						/>
 					</header>
@@ -41,7 +43,9 @@
 						A confirmed warning report needs evidence-backed updates to
 						{formatFieldList(correction.affectedFieldPaths)}.
 					</p>
-					<a href={`/profile/privileged-tools/catalog-review-work/products/${encodeURIComponent(correction.sharedProductId)}`}>
+					<a
+						href={`/profile/privileged-tools/catalog-review-work/products/${encodeURIComponent(correction.sharedProductId)}`}
+					>
 						Review product and correction status
 					</a>
 				</article>
@@ -52,7 +56,11 @@
 					<header>
 						<div>
 							<strong>{reviewCase.productName}</strong>
-							<span>{reviewCase.barcode ?? reviewCase.sourceKey ?? "Source unavailable"}</span>
+							<span
+								>{reviewCase.barcode ??
+									reviewCase.sourceKey ??
+									"Source unavailable"}</span
+							>
 						</div>
 						<TextBadge
 							label={getCatalogHealthStatusLabel(reviewCase.status)}
@@ -65,7 +73,9 @@
 							: "The source mapping needs an evidence-backed correction."}
 					</p>
 					<p class="food-warning-follow-up-list__owner">
-						Owner: {getCatalogResponsibleGroupLabel(reviewCase.responsibleGroup)}
+						Owner: {getCatalogResponsibleGroupLabel(
+							reviewCase.responsibleGroup,
+						)}
 					</p>
 				</article>
 			{/each}
@@ -76,4 +86,3 @@
 <style lang="scss">
 	@use "./FoodWarningFollowUpList.scss";
 </style>
-

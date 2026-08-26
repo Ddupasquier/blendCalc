@@ -16,7 +16,9 @@ describe("TextField", () => {
 
 		const input = screen.getByRole("textbox", { name: "Preferred name" });
 		expect(input).toHaveValue("Dylan");
-		expect(input).toHaveAccessibleDescription("This stays separate from your email.");
+		expect(input).toHaveAccessibleDescription(
+			"This stays separate from your email.",
+		);
 	});
 
 	it("renders multiline values and forwards keyboard interaction", async () => {

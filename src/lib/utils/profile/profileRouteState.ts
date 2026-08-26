@@ -11,7 +11,8 @@ export const PROFILE_SETTINGS_ROUTES = {
 	privilegedAccountAccess: "privileged-tools/account-access",
 	privilegedCatalogReviewWork: "privileged-tools/catalog-review-work",
 	privilegedDataOperations: "privileged-tools/data-operations",
-	privilegedCatalogDataHealthCompatibility: "privileged-tools/catalog-data-health",
+	privilegedCatalogDataHealthCompatibility:
+		"privileged-tools/catalog-data-health",
 } as const;
 
 export type ProfileSettingsRoute =
@@ -27,12 +28,14 @@ const PROFILE_SETTINGS_ROUTE_TITLES: Record<ProfileSettingsRoute, string> = {
 	[PROFILE_SETTINGS_ROUTES.foodPreferences]: "Food Preferences",
 	[PROFILE_SETTINGS_ROUTES.privilegedTools]: "Privileged Tools",
 	[PROFILE_SETTINGS_ROUTES.privilegedProductSubmissions]: "Product Submissions",
-	[PROFILE_SETTINGS_ROUTES.privilegedFoodWarningReports]: "Food Warning Reports",
+	[PROFILE_SETTINGS_ROUTES.privilegedFoodWarningReports]:
+		"Food Warning Reports",
 	[PROFILE_SETTINGS_ROUTES.privilegedProfileImages]: "Profile Image Reviews",
 	[PROFILE_SETTINGS_ROUTES.privilegedAccountAccess]: "Account Access",
 	[PROFILE_SETTINGS_ROUTES.privilegedCatalogReviewWork]: "Catalog Review Work",
 	[PROFILE_SETTINGS_ROUTES.privilegedDataOperations]: "Data Operations",
-	[PROFILE_SETTINGS_ROUTES.privilegedCatalogDataHealthCompatibility]: "Data Operations",
+	[PROFILE_SETTINGS_ROUTES.privilegedCatalogDataHealthCompatibility]:
+		"Data Operations",
 };
 
 export const getProfileSettingsRoute = (
@@ -50,9 +53,7 @@ export const getProfileSettingsRouteHref = (
 	settingsRoute: ProfileSettingsRoute,
 ) => `${PROFILE_BASE_PATH}/${settingsRoute}`;
 
-export const getProfileSettingsRouteTitle = (
-	pathname: string,
-) => {
+export const getProfileSettingsRouteTitle = (pathname: string) => {
 	const settingsRoute = getProfileSettingsRoute(pathname);
 	return settingsRoute
 		? PROFILE_SETTINGS_ROUTE_TITLES[settingsRoute]

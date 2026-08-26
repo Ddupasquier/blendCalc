@@ -42,7 +42,9 @@ describe("ingredient warning card architecture", () => {
 		expect(provenanceBadges).not.toContain("WarningTriangle");
 		expect(provenanceBadges).not.toContain("warning = null");
 		expect(savedCard).not.toMatch(/<IngredientProvenanceBadges[^>]*\bwarning=/);
-		expect(searchCards).not.toMatch(/<IngredientProvenanceBadges[^>]*\bwarning=/);
+		expect(searchCards).not.toMatch(
+			/<IngredientProvenanceBadges[^>]*\bwarning=/,
+		);
 	});
 
 	it("shares full-height image and fallback media without circular card wrappers", () => {

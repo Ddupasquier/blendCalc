@@ -68,7 +68,8 @@ const ALLOWED_REASONS = new Set<ModerationReason>([
 	"fraud_or_spam",
 	"terms_violation",
 ]);
-const isPresent = <Value>(value: Value | null): value is Value => value !== null;
+const isPresent = <Value>(value: Value | null): value is Value =>
+	value !== null;
 
 type ModerationLoadEvent = Pick<RequestEvent, "locals" | "url">;
 type ModerationAction = (
@@ -86,7 +87,10 @@ const MODERATION_SCOPE_PERMISSIONS = {
 	"food-warning-reports": "moderation.warnings.review",
 	"product-submissions": "moderation.catalog.review",
 	"profile-images": "moderation.accounts.manage",
-} as const satisfies Record<Exclude<ModerationWorkspaceDataScope, "all">, AppPermission>;
+} as const satisfies Record<
+	Exclude<ModerationWorkspaceDataScope, "all">,
+	AppPermission
+>;
 
 const getReason = (formData: FormData) => {
 	const reason = String(formData.get("reason") ?? "") as ModerationReason;
@@ -138,7 +142,9 @@ const matchesSearch = (
 		user.avatarModerationStatus,
 	];
 
-	return searchableValues.some((value) => value.toLocaleLowerCase().includes(query));
+	return searchableValues.some((value) =>
+		value.toLocaleLowerCase().includes(query),
+	);
 };
 
 const getTargetContext = async (
@@ -155,20 +161,19 @@ const getTargetContext = async (
 		{ data: targetAuth, error: targetAuthError },
 		{ data: roleRecord },
 		{ data: profile },
-	] =
-		await Promise.all([
-			admin.auth.admin.getUserById(targetUserId),
-			admin
-				.from("app_role_assignments")
-				.select("role")
-				.eq("user_id", targetUserId)
-				.maybeSingle(),
-			admin
-				.from("profiles")
-				.select("display_name")
-				.eq("user_id", targetUserId)
-				.maybeSingle(),
-		]);
+	] = await Promise.all([
+		admin.auth.admin.getUserById(targetUserId),
+		admin
+			.from("app_role_assignments")
+			.select("role")
+			.eq("user_id", targetUserId)
+			.maybeSingle(),
+		admin
+			.from("profiles")
+			.select("display_name")
+			.eq("user_id", targetUserId)
+			.maybeSingle(),
+	]);
 
 	if (targetAuthError) {
 		throwAppError(404, "MODERATION_TARGET_NOT_FOUND");
@@ -196,9 +201,15 @@ export const loadModerationWorkspaceData = async (
 	returnPath = "/moderation",
 	scope: ModerationWorkspaceDataScope = "all",
 ) => {
-	const { user: viewer, role } = await requireModeratorAccess(locals, returnPath);
+	const { user: viewer, role } = await requireModeratorAccess(
+		locals,
+		returnPath,
+	);
 	const permissions = await readAppRolePermissions(role);
-	if (scope !== "all" && !hasAppPermission(permissions, MODERATION_SCOPE_PERMISSIONS[scope])) {
+	if (
+		scope !== "all" &&
+		!hasAppPermission(permissions, MODERATION_SCOPE_PERMISSIONS[scope])
+	) {
 		throwAppError(403, "ACCESS_DENIED");
 	}
 	const query = url.searchParams.get("q")?.trim().toLocaleLowerCase() ?? "";
@@ -220,24 +231,23 @@ export const loadModerationWorkspaceData = async (
 		pendingCompatibilityFeedback,
 		compatibilityFollowUps,
 		pendingProfileImageReports,
-	] =
-		await Promise.all([
-			includesAccounts
-				? listAuthUsers()
-				: Promise.resolve({ admin: getSupabaseAdminClient(), users: [] }),
-			includesProductSubmissions
-				? listPendingProductSubmissions()
-				: Promise.resolve([]),
-			includesFoodWarningReports
-				? listPendingFoodCompatibilityFeedback()
-				: Promise.resolve([]),
-			includesFoodWarningReports
-				? listOpenFoodCompatibilityFollowUps()
-				: Promise.resolve({ productCorrections: [], policyReviews: [] }),
-			includesProfileImageReports
-				? listPendingProfileImageReports()
-				: Promise.resolve([]),
-		]);
+	] = await Promise.all([
+		includesAccounts
+			? listAuthUsers()
+			: Promise.resolve({ admin: getSupabaseAdminClient(), users: [] }),
+		includesProductSubmissions
+			? listPendingProductSubmissions()
+			: Promise.resolve([]),
+		includesFoodWarningReports
+			? listPendingFoodCompatibilityFeedback()
+			: Promise.resolve([]),
+		includesFoodWarningReports
+			? listOpenFoodCompatibilityFollowUps()
+			: Promise.resolve({ productCorrections: [], policyReviews: [] }),
+		includesProfileImageReports
+			? listPendingProfileImageReports()
+			: Promise.resolve([]),
+	]);
 	const userIds = authUsers.map((user) => user.id);
 	const userIdBatches = Array.from(
 		{ length: Math.ceil(userIds.length / MODERATION_PAGE_SIZE) },
@@ -259,7 +269,9 @@ export const loadModerationWorkspaceData = async (
 			] = await Promise.all([
 				admin
 					.from("profiles")
-					.select("user_id, display_name, avatar_path, avatar_moderation_status")
+					.select(
+						"user_id, display_name, avatar_path, avatar_moderation_status",
+					)
 					.in("user_id", batch),
 				admin
 					.from("account_moderation")
@@ -288,7 +300,9 @@ export const loadModerationWorkspaceData = async (
 				profiles: (profileResult.data ?? []).filter(isPresent),
 				moderation: (moderationResult.data ?? []).filter(isPresent),
 				roles: (roleResult.data ?? []).filter(isPresent),
-				catalogEnforcement: (catalogEnforcementResult.data ?? []).filter(isPresent),
+				catalogEnforcement: (catalogEnforcementResult.data ?? []).filter(
+					isPresent,
+				),
 			};
 		},
 	);
@@ -299,11 +313,15 @@ export const loadModerationWorkspaceData = async (
 		(batch) => batch.catalogEnforcement,
 	);
 
-	const profileByUserId = new Map((profiles ?? []).map((profile) => [profile.user_id, profile]));
+	const profileByUserId = new Map(
+		(profiles ?? []).map((profile) => [profile.user_id, profile]),
+	);
 	const moderationByUserId = new Map(
 		(moderation ?? []).map((record) => [record.user_id, record]),
 	);
-	const roleByUserId = new Map((roles ?? []).map((record) => [record.user_id, record.role]));
+	const roleByUserId = new Map(
+		(roles ?? []).map((record) => [record.user_id, record.role]),
+	);
 	const catalogEnforcementByUserId = new Map(
 		catalogEnforcement.map((record) => [record.user_id, record]),
 	);
@@ -330,7 +348,8 @@ export const loadModerationWorkspaceData = async (
 		const catalogEnforcementRecord = catalogEnforcementByUserId.get(user.id);
 		const catalogSharingSuspendedUntil =
 			catalogEnforcementRecord?.sharing_suspended_until &&
-			new Date(catalogEnforcementRecord.sharing_suspended_until).getTime() > Date.now()
+			new Date(catalogEnforcementRecord.sharing_suspended_until).getTime() >
+				Date.now()
 				? catalogEnforcementRecord.sharing_suspended_until
 				: null;
 
@@ -344,7 +363,7 @@ export const loadModerationWorkspaceData = async (
 			publicReason: moderationRecord?.public_reason ?? null,
 			avatarModerationStatus: profile?.avatar_moderation_status ?? "none",
 			avatarUrl: profile?.avatar_path
-				? signedAvatarByPath.get(profile.avatar_path) ?? null
+				? (signedAvatarByPath.get(profile.avatar_path) ?? null)
 				: null,
 			moderatorRejectedSubmissionCount:
 				catalogEnforcementRecord?.moderator_rejection_count ?? 0,
@@ -352,87 +371,97 @@ export const loadModerationWorkspaceData = async (
 		};
 	});
 
-	const productSubmissions = pendingProductSubmissions.map(
-		(submission) => {
-			const food = submission.food as unknown as FoodItem;
-			const validationReport = submission.validation_report as {
-				valid?: boolean;
-				issues?: unknown;
-				evidenceComplete?: boolean;
-				conflictCount?: number;
-				externalLookupFailed?: boolean;
-				qaSeed?: boolean;
-				imageCrop?: {
-					cropX?: number;
-					cropY?: number;
-					cropZoom?: number;
-					rotationDegrees?: ImagePlacementValue["rotationDegrees"];
-					fitMode?: ImageFitMode;
-					placementVersion?: number;
-					placementMethod?: ImagePlacementValue["placementMethod"];
-					suggestionVersion?: string;
-					suggestionConfidence?: number;
-				} | null;
-			};
-			const validationIssues = Array.isArray(validationReport.issues)
-				? validationReport.issues.filter(
-						(issue): issue is string => typeof issue === "string" && Boolean(issue.trim()),
-					)
-				: [];
-			const updateSummary = readCatalogUpdateSummary(submission.change_summary);
-			return {
-				id: submission.id,
-				barcode: submission.barcode,
-				productName: submission.product_name,
-				brandOwner: submission.brand_owner,
-				matchedSource: submission.matched_source,
-				matchedReference: submission.matched_reference,
-				createdAt: submission.created_at,
-				evidenceComplete: submission.evidence_complete,
-				evidence: [
-					{ key: "front", label: "Front of package", url: submission.evidenceUrls.front },
-					{ key: "nutrition", label: "Nutrition facts", url: submission.evidenceUrls.nutrition },
-					{ key: "barcode", label: "Barcode", url: submission.evidenceUrls.barcode },
-				].filter((item) => Boolean(item.url)),
-				frontEvidenceUrl: submission.evidenceUrls.front ?? null,
-				imageCrop: getStoredImagePlacement({
-					cropX: validationReport.imageCrop?.cropX ?? 50,
-					cropY: validationReport.imageCrop?.cropY ?? 50,
-					cropZoom: validationReport.imageCrop?.cropZoom ?? 1,
-					rotationDegrees:
-						validationReport.imageCrop?.rotationDegrees,
-					fitMode: validationReport.imageCrop?.fitMode,
-					placementVersion: validationReport.imageCrop?.placementVersion,
-					placementMethod:
-						validationReport.imageCrop?.placementMethod,
-					suggestionVersion:
-						validationReport.imageCrop?.suggestionVersion,
-					suggestionConfidence:
-						validationReport.imageCrop?.suggestionConfidence,
-				}),
-				conflictCount: validationReport.conflictCount ?? 0,
-				externalLookupFailed: validationReport.externalLookupFailed ?? false,
-				validationIssues,
-				isQaFixture: validationReport.qaSeed === true,
-				submissionKind: submission.submission_kind,
-				submissionIntent: submission.submission_intent,
-				labelObservedAt: submission.label_observed_at,
-				labelObservedDate: submission.label_observed_at.slice(0, 10),
-				updateReview: updateSummary
-					? {
-							baseRevisionNumber: updateSummary.baseRevisionNumber,
-							changes: updateSummary.changes.map((change) => ({
-								field: change.field,
-								label: change.label,
-								changeType: change.changeType,
-								previousValue: formatCatalogChangeValue(change.previousValue),
-								submittedValue: formatCatalogChangeValue(change.submittedValue),
-							})),
-							sourceChecks: updateSummary.sourceChecks.map((sourceCheck) => ({
-								source: sourceCheck.source === "usda"
+	const productSubmissions = pendingProductSubmissions.map((submission) => {
+		const food = submission.food as unknown as FoodItem;
+		const validationReport = submission.validation_report as {
+			valid?: boolean;
+			issues?: unknown;
+			evidenceComplete?: boolean;
+			conflictCount?: number;
+			externalLookupFailed?: boolean;
+			qaSeed?: boolean;
+			imageCrop?: {
+				cropX?: number;
+				cropY?: number;
+				cropZoom?: number;
+				rotationDegrees?: ImagePlacementValue["rotationDegrees"];
+				fitMode?: ImageFitMode;
+				placementVersion?: number;
+				placementMethod?: ImagePlacementValue["placementMethod"];
+				suggestionVersion?: string;
+				suggestionConfidence?: number;
+			} | null;
+		};
+		const validationIssues = Array.isArray(validationReport.issues)
+			? validationReport.issues.filter(
+					(issue): issue is string =>
+						typeof issue === "string" && Boolean(issue.trim()),
+				)
+			: [];
+		const updateSummary = readCatalogUpdateSummary(submission.change_summary);
+		return {
+			id: submission.id,
+			barcode: submission.barcode,
+			productName: submission.product_name,
+			brandOwner: submission.brand_owner,
+			matchedSource: submission.matched_source,
+			matchedReference: submission.matched_reference,
+			createdAt: submission.created_at,
+			evidenceComplete: submission.evidence_complete,
+			evidence: [
+				{
+					key: "front",
+					label: "Front of package",
+					url: submission.evidenceUrls.front,
+				},
+				{
+					key: "nutrition",
+					label: "Nutrition facts",
+					url: submission.evidenceUrls.nutrition,
+				},
+				{
+					key: "barcode",
+					label: "Barcode",
+					url: submission.evidenceUrls.barcode,
+				},
+			].filter((item) => Boolean(item.url)),
+			frontEvidenceUrl: submission.evidenceUrls.front ?? null,
+			imageCrop: getStoredImagePlacement({
+				cropX: validationReport.imageCrop?.cropX ?? 50,
+				cropY: validationReport.imageCrop?.cropY ?? 50,
+				cropZoom: validationReport.imageCrop?.cropZoom ?? 1,
+				rotationDegrees: validationReport.imageCrop?.rotationDegrees,
+				fitMode: validationReport.imageCrop?.fitMode,
+				placementVersion: validationReport.imageCrop?.placementVersion,
+				placementMethod: validationReport.imageCrop?.placementMethod,
+				suggestionVersion: validationReport.imageCrop?.suggestionVersion,
+				suggestionConfidence: validationReport.imageCrop?.suggestionConfidence,
+			}),
+			conflictCount: validationReport.conflictCount ?? 0,
+			externalLookupFailed: validationReport.externalLookupFailed ?? false,
+			validationIssues,
+			isQaFixture: validationReport.qaSeed === true,
+			submissionKind: submission.submission_kind,
+			submissionIntent: submission.submission_intent,
+			labelObservedAt: submission.label_observed_at,
+			labelObservedDate: submission.label_observed_at.slice(0, 10),
+			updateReview: updateSummary
+				? {
+						baseRevisionNumber: updateSummary.baseRevisionNumber,
+						changes: updateSummary.changes.map((change) => ({
+							field: change.field,
+							label: change.label,
+							changeType: change.changeType,
+							previousValue: formatCatalogChangeValue(change.previousValue),
+							submittedValue: formatCatalogChangeValue(change.submittedValue),
+						})),
+						sourceChecks: updateSummary.sourceChecks.map((sourceCheck) => ({
+							source:
+								sourceCheck.source === "usda"
 									? "USDA FoodData Central"
 									: "Open Food Facts",
-								status: sourceCheck.status === "error"
+							status:
+								sourceCheck.status === "error"
 									? "Check failed"
 									: sourceCheck.status === "not-found"
 										? "No exact barcode match"
@@ -441,18 +470,17 @@ export const loadModerationWorkspaceData = async (
 											: sourceCheck.supportsCurrentValues
 												? "Matches current catalog"
 												: "Exact barcode found; values differ",
-								sourceReference: sourceCheck.sourceReference,
-							})),
-						}
-					: null,
-				nutrients: (food.foodNutrients ?? []).map((nutrient) => ({
-					name: nutrient.nutrientName,
-					value: nutrient.value,
-					unit: nutrient.unitName,
-				})),
-			};
-		},
-	);
+							sourceReference: sourceCheck.sourceReference,
+						})),
+					}
+				: null,
+			nutrients: (food.foodNutrients ?? []).map((nutrient) => ({
+				name: nutrient.nutrientName,
+				value: nutrient.value,
+				unit: nutrient.unitName,
+			})),
+		};
+	});
 
 	return {
 		viewerRole: role,
@@ -464,9 +492,9 @@ export const loadModerationWorkspaceData = async (
 		productSubmissions,
 		profileImageReports: pendingProfileImageReports,
 		compatibilityFeedback: pendingCompatibilityFeedback.map((feedback) => {
-			const policyVersion = feedback.policy_version as unknown as
-				| { version_number: number }
-				| null;
+			const policyVersion = feedback.policy_version as unknown as {
+				version_number: number;
+			} | null;
 			return {
 				id: feedback.id,
 				feedbackType: feedback.feedback_type,
@@ -557,8 +585,7 @@ export const moderationWorkspaceActions = {
 			};
 		} catch {
 			return fail(500, {
-				profileImageReviewError:
-					"We couldn’t save that profile image review.",
+				profileImageReviewError: "We couldn’t save that profile image review.",
 			});
 		}
 	},
@@ -574,9 +601,7 @@ export const moderationWorkspaceActions = {
 		);
 		const feedbackId = String(formData.get("feedbackId") ?? "");
 		const status = String(formData.get("status") ?? "");
-		const resolutionAction = String(
-			formData.get("resolutionAction") ?? "none",
-		);
+		const resolutionAction = String(formData.get("resolutionAction") ?? "none");
 		const reviewNote = String(formData.get("reviewNote") ?? "").trim();
 
 		if (
@@ -611,19 +636,18 @@ export const moderationWorkspaceActions = {
 			});
 			return reviewed.reviewed
 				? {
-					compatibilityReviewSuccess:
-						reviewed.followUpStatus === "open"
-							? "Report reviewed and its follow-up work is now tracked."
-							: "Compatibility report reviewed.",
-				}
+						compatibilityReviewSuccess:
+							reviewed.followUpStatus === "open"
+								? "Report reviewed and its follow-up work is now tracked."
+								: "Compatibility report reviewed.",
+					}
 				: fail(409, {
-					compatibilityReviewError:
-						"That report was already reviewed. Refresh the page.",
-				});
+						compatibilityReviewError:
+							"That report was already reviewed. Refresh the page.",
+					});
 		} catch {
 			return fail(500, {
-				compatibilityReviewError:
-					"We couldn’t save that compatibility review.",
+				compatibilityReviewError: "We couldn’t save that compatibility review.",
 			});
 		}
 	},
@@ -643,10 +667,14 @@ export const moderationWorkspaceActions = {
 			formData.get("imagePlacementMethod") ?? "manual",
 		);
 		if (!isImageFitMode(fitModeValue)) {
-			return fail(400, { productReviewError: "Choose a valid image placement." });
+			return fail(400, {
+				productReviewError: "Choose a valid image placement.",
+			});
 		}
 		if (!isImagePlacementMethod(placementMethodValue)) {
-			return fail(400, { productReviewError: "Choose a valid image placement method." });
+			return fail(400, {
+				productReviewError: "Choose a valid image placement method.",
+			});
 		}
 		const usesSmartSuggestion =
 			placementMethodValue === "automatic-ocr" ||
@@ -658,9 +686,7 @@ export const moderationWorkspaceActions = {
 		const suggestionConfidence = Number(
 			formData.get("imageSuggestionConfidence"),
 		);
-		const rotationDegrees = Number(
-			formData.get("imageRotationDegrees") ?? 0,
-		);
+		const rotationDegrees = Number(formData.get("imageRotationDegrees") ?? 0);
 		if (!isImageRotationDegrees(rotationDegrees)) {
 			return fail(400, {
 				productReviewError: "Choose a supported image rotation.",
@@ -684,9 +710,9 @@ export const moderationWorkspaceActions = {
 			placementMethod: placementMethodValue,
 			...(usesSmartSuggestion
 				? {
-					suggestionVersion,
-					suggestionConfidence,
-				}
+						suggestionVersion,
+						suggestionConfidence,
+					}
 				: {}),
 		});
 		if (!submissionId) {
@@ -742,20 +768,24 @@ export const moderationWorkspaceActions = {
 		const targetUserId = String(formData.get("targetUserId") ?? "");
 		const reason = getReason(formData);
 
-		if (!reason) return fail(400, { moderationError: "Choose a valid block reason." });
+		if (!reason)
+			return fail(400, { moderationError: "Choose a valid block reason." });
 
 		const { admin, targetUser, displayName } = await getTargetContext(
 			actor.id,
 			actorRole,
 			targetUserId,
 		);
-		const { data: currentModeration, error: moderationLookupError } = await admin
-			.from("account_moderation")
-			.select("status")
-			.eq("user_id", targetUserId)
-			.maybeSingle();
+		const { data: currentModeration, error: moderationLookupError } =
+			await admin
+				.from("account_moderation")
+				.select("status")
+				.eq("user_id", targetUserId)
+				.maybeSingle();
 		if (moderationLookupError) {
-			return fail(500, { moderationError: "The account status could not be checked." });
+			return fail(500, {
+				moderationError: "The account status could not be checked.",
+			});
 		}
 		if (currentModeration?.status === "banned") {
 			return { moderationWarning: "That account is already blocked." };
@@ -774,37 +804,48 @@ export const moderationWorkspaceActions = {
 			});
 		}
 
-		const { error: authBanError } = await admin.auth.admin.updateUserById(targetUserId, {
-			ban_duration: PERMANENT_BAN_DURATION,
-		});
+		const { error: authBanError } = await admin.auth.admin.updateUserById(
+			targetUserId,
+			{
+				ban_duration: PERMANENT_BAN_DURATION,
+			},
+		);
 
 		if (authBanError) {
-			return fail(502, { moderationError: "Supabase Auth did not block that account." });
+			return fail(502, {
+				moderationError: "Supabase Auth did not block that account.",
+			});
 		}
 
-		const publicReason = "This account was blocked for violating the community rules.";
-		const { error: moderationError } = await admin.from("account_moderation").upsert({
-			user_id: targetUserId,
-			status: "banned",
-			public_reason: publicReason,
-			expires_at: null,
-			moderated_by: actor.id,
-		});
+		const publicReason =
+			"This account was blocked for violating the community rules.";
+		const { error: moderationError } = await admin
+			.from("account_moderation")
+			.upsert({
+				user_id: targetUserId,
+				status: "banned",
+				public_reason: publicReason,
+				expires_at: null,
+				moderated_by: actor.id,
+			});
 
 		if (moderationError) {
 			return fail(500, {
-				moderationError: "The login was blocked, but the moderation record could not be saved.",
+				moderationError:
+					"The login was blocked, but the moderation record could not be saved.",
 			});
 		}
 
 		if (targetUser.email) {
-			const { error: blocklistError } = await admin.from("blocked_signup_emails").upsert({
-				email_hash: hashEmail(targetUser.email),
-				source_user_id: targetUserId,
-				blocked_by: actor.id,
-				reason,
-				expires_at: null,
-			});
+			const { error: blocklistError } = await admin
+				.from("blocked_signup_emails")
+				.upsert({
+					email_hash: hashEmail(targetUser.email),
+					source_user_id: targetUserId,
+					blocked_by: actor.id,
+					reason,
+					expires_at: null,
+				});
 
 			if (blocklistError) {
 				return fail(500, {
@@ -903,7 +944,8 @@ export const moderationWorkspaceActions = {
 		}
 
 		return {
-			moderationSuccess: "Account blocked and notification email accepted for delivery.",
+			moderationSuccess:
+				"Account blocked and notification email accepted for delivery.",
 		};
 	},
 	unban: async ({ locals, request }) => {
@@ -918,41 +960,55 @@ export const moderationWorkspaceActions = {
 		);
 		const targetUserId = String(formData.get("targetUserId") ?? "");
 		const { admin } = await getTargetContext(actor.id, actorRole, targetUserId);
-		const { data: currentModeration, error: moderationLookupError } = await admin
-			.from("account_moderation")
-			.select("status")
-			.eq("user_id", targetUserId)
-			.maybeSingle();
+		const { data: currentModeration, error: moderationLookupError } =
+			await admin
+				.from("account_moderation")
+				.select("status")
+				.eq("user_id", targetUserId)
+				.maybeSingle();
 		if (moderationLookupError) {
-			return fail(500, { moderationError: "The account status could not be checked." });
+			return fail(500, {
+				moderationError: "The account status could not be checked.",
+			});
 		}
 		if (!currentModeration || currentModeration.status !== "banned") {
 			return { moderationWarning: "That account already has access." };
 		}
-		const { error: authError } = await admin.auth.admin.updateUserById(targetUserId, {
-			ban_duration: "none",
-		});
+		const { error: authError } = await admin.auth.admin.updateUserById(
+			targetUserId,
+			{
+				ban_duration: "none",
+			},
+		);
 
 		if (authError) {
-			return fail(502, { moderationError: "Supabase Auth did not restore that account." });
+			return fail(502, {
+				moderationError: "Supabase Auth did not restore that account.",
+			});
 		}
 
-		const { error: moderationError } = await admin.from("account_moderation").upsert({
-			user_id: targetUserId,
-			status: "active",
-			public_reason: null,
-			expires_at: null,
-			moderated_by: actor.id,
-		});
+		const { error: moderationError } = await admin
+			.from("account_moderation")
+			.upsert({
+				user_id: targetUserId,
+				status: "active",
+				public_reason: null,
+				expires_at: null,
+				moderated_by: actor.id,
+			});
 
 		if (moderationError) {
 			return fail(500, {
-				moderationError: "The login was restored, but the moderation record could not be saved.",
+				moderationError:
+					"The login was restored, but the moderation record could not be saved.",
 			});
 		}
 
 		await Promise.all([
-			admin.from("blocked_signup_emails").delete().eq("source_user_id", targetUserId),
+			admin
+				.from("blocked_signup_emails")
+				.delete()
+				.eq("source_user_id", targetUserId),
 			admin.from("moderation_actions").insert({
 				target_user_id: targetUserId,
 				actor_user_id: actor.id,

@@ -122,11 +122,14 @@ export const parseNutrientMappingReviewWorkspace = (
 	const mapping = readRecord(root.mapping, "mapping");
 	const compatibleNutrients = root.compatibleNutrients;
 	if (!Array.isArray(compatibleNutrients)) {
-		throw new TypeError("Invalid nutrient mapping review field: compatibleNutrients");
+		throw new TypeError(
+			"Invalid nutrient mapping review field: compatibleNutrients",
+		);
 	}
-	const latestDecision = root.latestDecision === null
-		? null
-		: readRecord(root.latestDecision, "latestDecision");
+	const latestDecision =
+		root.latestDecision === null
+			? null
+			: readRecord(root.latestDecision, "latestDecision");
 
 	return {
 		mapping: {
@@ -181,25 +184,25 @@ export const parseNutrientMappingReviewWorkspace = (
 		}),
 		latestDecision: latestDecision
 			? {
-				id: readString(latestDecision.id, "latestDecision.id"),
-				outcome: readString(latestDecision.outcome, "latestDecision.outcome"),
-				selectedNutrientId: readNullableInteger(
-					latestDecision.selectedNutrientId,
-					"latestDecision.selectedNutrientId",
-				),
-				reviewNote: readString(
-					latestDecision.reviewNote,
-					"latestDecision.reviewNote",
-				),
-				evidenceReference: readNullableString(
-					latestDecision.evidenceReference,
-					"latestDecision.evidenceReference",
-				),
-				reviewedAt: readString(
-					latestDecision.reviewedAt,
-					"latestDecision.reviewedAt",
-				),
-			}
+					id: readString(latestDecision.id, "latestDecision.id"),
+					outcome: readString(latestDecision.outcome, "latestDecision.outcome"),
+					selectedNutrientId: readNullableInteger(
+						latestDecision.selectedNutrientId,
+						"latestDecision.selectedNutrientId",
+					),
+					reviewNote: readString(
+						latestDecision.reviewNote,
+						"latestDecision.reviewNote",
+					),
+					evidenceReference: readNullableString(
+						latestDecision.evidenceReference,
+						"latestDecision.evidenceReference",
+					),
+					reviewedAt: readString(
+						latestDecision.reviewedAt,
+						"latestDecision.reviewedAt",
+					),
+				}
 			: null,
 	};
 };

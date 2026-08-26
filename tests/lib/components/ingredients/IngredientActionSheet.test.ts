@@ -37,15 +37,20 @@ describe("IngredientActionSheet delete confirmation", () => {
 		});
 
 		const group = screen.getByRole("region", { name: "Privileged tools" });
-		const action = screen.getByRole("button", { name: "Adjust image placement" });
+		const action = screen.getByRole("button", {
+			name: "Adjust image placement",
+		});
 		const removeAction = screen.getByRole("button", {
 			name: "Remove from Fridge",
 		});
 
 		expect(group.querySelectorAll(".privileged-action-badge")).toHaveLength(1);
-		expect(action.querySelector(".privileged-action-badge")).not.toBeInTheDocument();
-		expect(screen.getByRole("button", { name: "Rename" }))
-			.not.toContainElement(group.querySelector(".privileged-action-badge"));
+		expect(
+			action.querySelector(".privileged-action-badge"),
+		).not.toBeInTheDocument();
+		expect(screen.getByRole("button", { name: "Rename" })).not.toContainElement(
+			group.querySelector(".privileged-action-badge"),
+		);
 		expect(removeAction.compareDocumentPosition(group) & 4).toBeTruthy();
 	});
 

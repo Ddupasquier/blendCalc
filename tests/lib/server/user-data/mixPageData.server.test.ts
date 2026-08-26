@@ -31,8 +31,9 @@ const cloudDataContext = {
 describe("loadMixPageData", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		ingredientLists.readCloudIngredientList.mockImplementation(async (listKey: string) =>
-			listKey === MIX_STORAGE_KEYS.fridge ? [{ fdcId: 1 }] : [{ fdcId: 2 }],
+		ingredientLists.readCloudIngredientList.mockImplementation(
+			async (listKey: string) =>
+				listKey === MIX_STORAGE_KEYS.fridge ? [{ fdcId: 1 }] : [{ fdcId: 2 }],
 		);
 		cloudStorage.readCloudMixPreferences.mockResolvedValue({
 			nutrientGoals: {

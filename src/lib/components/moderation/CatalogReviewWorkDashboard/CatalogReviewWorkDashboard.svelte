@@ -20,14 +20,18 @@
 	});
 	const formatDate = (value: string) => {
 		const date = new Date(value);
-		return Number.isNaN(date.getTime()) ? "Date unavailable" : dateFormatter.format(date);
+		return Number.isNaN(date.getTime())
+			? "Date unavailable"
+			: dateFormatter.format(date);
 	};
 	const enhanceReview: SubmitFunction = ({ formData, cancel }) => {
 		if (pendingReviewId) {
 			cancel();
 			return;
 		}
-		pendingReviewId = String(formData.get("matchId") ?? formData.get("reviewId") ?? "");
+		pendingReviewId = String(
+			formData.get("matchId") ?? formData.get("reviewId") ?? "",
+		);
 		return async ({ update }) => {
 			try {
 				await update({ reset: false });
@@ -40,8 +44,9 @@
 
 <div class="catalog-review-work">
 	<p class="catalog-review-work__intro">
-		Resolve product conflicts, provider changes, and possible recall matches. The current
-		approved product stays available until a supported correction is accepted.
+		Resolve product conflicts, provider changes, and possible recall matches.
+		The current approved product stays available until a supported correction is
+		accepted.
 	</p>
 
 	<CollapsibleSection
@@ -55,18 +60,36 @@
 					<header>
 						<div>
 							<strong>{match.productName}</strong>
-							<span>{match.brandOwner ?? "Brand unavailable"} · {match.barcode}</span>
+							<span
+								>{match.brandOwner ?? "Brand unavailable"} · {match.barcode}</span
+							>
 						</div>
-						<TextBadge label={match.classification ?? "Official notice"} tone="info" />
+						<TextBadge
+							label={match.classification ?? "Official notice"}
+							tone="info"
+						/>
 					</header>
-					<p><strong>Official notice:</strong> {match.alertProductDescription}</p>
+					<p>
+						<strong>Official notice:</strong>
+						{match.alertProductDescription}
+					</p>
 					{#if match.reason}<p>{match.reason}</p>{/if}
-					{#if match.packageDescription}<p><strong>Package:</strong> {match.packageDescription}</p>{/if}
-					{#if match.codeInformation}<p><strong>Codes:</strong> {match.codeInformation}</p>{/if}
+					{#if match.packageDescription}<p>
+							<strong>Package:</strong>
+							{match.packageDescription}
+						</p>{/if}
+					{#if match.codeInformation}<p>
+							<strong>Codes:</strong>
+							{match.codeInformation}
+						</p>{/if}
 					<a href={match.sourceUrl} target="_blank" rel="noreferrer">
 						Read the official {match.sourceName} notice
 					</a>
-					<form method="POST" action="?/reviewSafetyMatch" use:enhance={enhanceReview}>
+					<form
+						method="POST"
+						action="?/reviewSafetyMatch"
+						use:enhance={enhanceReview}
+					>
 						<input type="hidden" name="matchId" value={match.id} />
 						<SelectField
 							id={`safety-match-outcome-${match.id}`}
@@ -94,12 +117,14 @@
 							variant="success"
 							size="small"
 							busy={pendingReviewId === match.id}
-							disabled={pendingReviewId !== null}
-						>Save decision</ActionButton>
+							disabled={pendingReviewId !== null}>Save decision</ActionButton
+						>
 					</form>
 				</article>
 			{:else}
-				<p class="catalog-review-work__empty">No possible recall matches need review.</p>
+				<p class="catalog-review-work__empty">
+					No possible recall matches need review.
+				</p>
 			{/each}
 		</div>
 	</CollapsibleSection>
@@ -115,23 +140,38 @@
 					<header>
 						<div>
 							<strong>{change.productName}</strong>
-							<span>{change.barcode} · observed {formatDate(change.observedAt)}</span>
+							<span
+								>{change.barcode} · observed {formatDate(
+									change.observedAt,
+								)}</span
+							>
 						</div>
 						<TextBadge label={change.sourceName} tone="info" />
 					</header>
 					<ul>
 						{#each change.changeSummary.changes as detail (detail.field)}
-							<li>{getCatalogFieldLabel(detail.field)} · {getCatalogHealthStatusLabel(detail.severity)}</li>
+							<li>
+								{getCatalogFieldLabel(detail.field)} · {getCatalogHealthStatusLabel(
+									detail.severity,
+								)}
+							</li>
 						{/each}
 					</ul>
-					<a href={`/profile/privileged-tools/catalog-review-work/products/${encodeURIComponent(change.sharedProductId)}`}>
+					<a
+						href={`/profile/privileged-tools/catalog-review-work/products/${encodeURIComponent(change.sharedProductId)}`}
+					>
 						Review product evidence
 					</a>
 					<p class="catalog-review-work__guidance">
-						Keep the current record only when its existing evidence is still stronger. Supported
-						changes belong in a correction so approval creates a new revision.
+						Keep the current record only when its existing evidence is still
+						stronger. Supported changes belong in a correction so approval
+						creates a new revision.
 					</p>
-					<form method="POST" action="?/dismissProviderChange" use:enhance={enhanceReview}>
+					<form
+						method="POST"
+						action="?/dismissProviderChange"
+						use:enhance={enhanceReview}
+					>
 						<input type="hidden" name="reviewId" value={change.id} />
 						<TextField
 							id={`provider-change-review-note-${change.id}`}
@@ -149,11 +189,14 @@
 							size="small"
 							busy={pendingReviewId === change.id}
 							disabled={pendingReviewId !== null}
-						>Keep current record</ActionButton>
+							>Keep current record</ActionButton
+						>
 					</form>
 				</article>
 			{:else}
-				<p class="catalog-review-work__empty">No provider changes need review.</p>
+				<p class="catalog-review-work__empty">
+					No provider changes need review.
+				</p>
 			{/each}
 		</div>
 	</CollapsibleSection>
@@ -171,12 +214,21 @@
 				>
 					<span>
 						<strong>{conflict.productName}</strong>
-						<small>{conflict.barcode} · {getCatalogFieldLabel(conflict.fieldPath)}</small>
+						<small
+							>{conflict.barcode} · {getCatalogFieldLabel(
+								conflict.fieldPath,
+							)}</small
+						>
 					</span>
-					<TextBadge label={getCatalogHealthStatusLabel(conflict.severity)} tone="warning" />
+					<TextBadge
+						label={getCatalogHealthStatusLabel(conflict.severity)}
+						tone="warning"
+					/>
 				</a>
 			{:else}
-				<p class="catalog-review-work__empty">No product conflicts need review.</p>
+				<p class="catalog-review-work__empty">
+					No product conflicts need review.
+				</p>
 			{/each}
 		</div>
 	</CollapsibleSection>

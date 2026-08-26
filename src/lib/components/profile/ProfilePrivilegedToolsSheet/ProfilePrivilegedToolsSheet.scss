@@ -21,7 +21,8 @@
 	text-transform: uppercase;
 }
 
-@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
 	.profile-privileged-tools-sheet {
 		gap: $app-gap-xs;
 	}

@@ -108,9 +108,7 @@
 			listElement?.querySelectorAll<HTMLElement>(
 				"li[data-food-id] > .saved-ingredient-card",
 			) ?? [],
-		).filter((card) =>
-			targetIds.has(card.parentElement?.dataset.foodId ?? ""),
-		);
+		).filter((card) => targetIds.has(card.parentElement?.dataset.foodId ?? ""));
 		const animationOptions = stagger
 			? {
 					anticipationPercent: BULK_EXIT_ANTICIPATION_PERCENT,
@@ -250,7 +248,6 @@
 			listElement?.scrollTo({ top: 0, behavior: "auto" });
 		});
 	});
-
 </script>
 
 <section
@@ -266,7 +263,7 @@
 			{moveTargetLabel}
 			moving={bulkMoveBusy}
 			onEnterSelection={() => enterSelectionMode()}
-			onSelectAll={onSelectAll}
+			{onSelectAll}
 			onCancel={onCancelSelection}
 			onMove={moveSelectedItems}
 		/>
@@ -293,7 +290,8 @@
 						data-bulk-selected={isChecked}
 						data-tutorial-target={index === 0 ? "ingredient-card" : undefined}
 						animate:flip={{ duration: getListReflowDuration() }}
-						class:saved-ingredient-list__card--moving={(bulkMoveBusy && isChecked) ||
+						class:saved-ingredient-list__card--moving={(bulkMoveBusy &&
+							isChecked) ||
 							singleAnimatingFoodId === food.fdcId}
 					>
 						<SavedIngredientCard

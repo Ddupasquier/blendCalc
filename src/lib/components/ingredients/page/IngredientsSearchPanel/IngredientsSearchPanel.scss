@@ -1,73 +1,73 @@
 @use "../../../../../styles/variables" as *;
 
 .ingredient-search-panel {
-  position: relative;
-  z-index: 2;
-  display: grid;
-  gap: $app-gap-md;
-  min-height: 0;
-  margin-bottom: 0;
-  background: transparent;
-  border: 0;
-  border-radius: $app-shell-radius-control;
+	position: relative;
+	z-index: 2;
+	display: grid;
+	gap: $app-gap-md;
+	min-height: 0;
+	margin-bottom: 0;
+	background: transparent;
+	border: 0;
+	border-radius: $app-shell-radius-control;
 }
 
 .search-toolbar {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) $app-shell-control-height;
-  grid-template-areas:
-    "search search barcode"
-    "manual manual filter";
-  align-items: center;
-  gap: $app-gap-md;
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) $app-shell-control-height;
+	grid-template-areas:
+		"search search barcode"
+		"manual manual filter";
+	align-items: center;
+	gap: $app-gap-md;
 }
 
 .search-toolbar__input {
-  grid-area: search;
-  min-width: 0;
+	grid-area: search;
+	min-width: 0;
 }
 
 .search-toolbar :global(.manual-entry-launcher) {
-  grid-area: manual;
+	grid-area: manual;
 }
 
 .search-toolbar :global(.barcode-scan-button--compact) {
-  grid-area: barcode;
-  width: $app-shell-control-height;
-  height: $app-shell-control-height;
-  min-height: $app-shell-control-height;
+	grid-area: barcode;
+	width: $app-shell-control-height;
+	height: $app-shell-control-height;
+	min-height: $app-shell-control-height;
 }
 
 .search-toolbar :global(.filter-button) {
-  grid-area: filter;
+	grid-area: filter;
 }
 
 :global(.filter-button__icon) {
-  width: $app-shell-control-icon-size;
-  height: $app-shell-control-icon-size;
+	width: $app-shell-control-icon-size;
+	height: $app-shell-control-icon-size;
 }
 
 @media (max-width: $app-breakpoint-xs),
-  (max-height: $app-breakpoint-height-compact) {
-  .ingredient-search-panel {
-    gap: 0;
-  }
+	(max-height: $app-breakpoint-height-compact) {
+	.ingredient-search-panel {
+		gap: 0;
+	}
 
-  .search-toolbar {
-    grid-template-columns:
-      minmax(0, 1fr)
-      $app-shell-control-height-narrow
-      $app-shell-control-height-narrow
-      $app-shell-control-height-narrow;
-    grid-template-areas: "search barcode manual filter";
-    gap: $app-gap-sm;
-  }
+	.search-toolbar {
+		grid-template-columns:
+			minmax(0, 1fr)
+			$app-shell-control-height-narrow
+			$app-shell-control-height-narrow
+			$app-shell-control-height-narrow;
+		grid-template-areas: "search barcode manual filter";
+		gap: $app-gap-sm;
+	}
 
-  .search-toolbar :global(.barcode-scan-button--compact),
-  .search-toolbar :global(.filter-button),
-  .search-toolbar :global(.manual-entry-launcher) {
-    width: $app-shell-control-height-narrow;
-    height: $app-shell-control-height-narrow;
-    min-height: $app-shell-control-height-narrow;
-  }
+	.search-toolbar :global(.barcode-scan-button--compact),
+	.search-toolbar :global(.filter-button),
+	.search-toolbar :global(.manual-entry-launcher) {
+		width: $app-shell-control-height-narrow;
+		height: $app-shell-control-height-narrow;
+		min-height: $app-shell-control-height-narrow;
+	}
 }

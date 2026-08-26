@@ -52,13 +52,15 @@ const makeFood = (fdcId: number, description: string): FoodItem => ({
 	fdcId,
 	description,
 	foodCategory: "Test foods",
-	foodNutrients: [{
-		nutrientId: 1008,
-		nutrientName: "Energy",
-		nutrientNumber: "208",
-		unitName: "kcal",
-		value: 100,
-	}],
+	foodNutrients: [
+		{
+			nutrientId: 1008,
+			nutrientName: "Energy",
+			nutrientNumber: "208",
+			unitName: "kcal",
+			value: 100,
+		},
+	],
 	dataType: "Shared Product",
 	sharedProductId: `shared-${fdcId}`,
 });
@@ -74,10 +76,11 @@ describe("ingredient search route", () => {
 		mocks.getUserFoodSafetyContext.mockResolvedValue({});
 		mocks.annotateFoodsWithFoodSafety.mockImplementation((foods) => foods);
 		mocks.hydrateFoodsWithCachedImages.mockImplementation(
-			async (_client, foods: FoodItem[]) => foods.map((food) => ({
-				...food,
-				image: { imageUrl: `https://example.com/${food.fdcId}.jpg` },
-			})),
+			async (_client, foods: FoodItem[]) =>
+				foods.map((food) => ({
+					...food,
+					image: { imageUrl: `https://example.com/${food.fdcId}.jpg` },
+				})),
 		);
 	});
 
@@ -104,9 +107,7 @@ describe("ingredient search route", () => {
 		expect(mocks.hydrateFoodsWithCachedImages.mock.calls[0][0]).toBe(
 			mocks.adminClient,
 		);
-		expect(
-			mocks.hydrateFoodsWithCachedImages.mock.calls[0][1],
-		).toHaveLength(2);
+		expect(mocks.hydrateFoodsWithCachedImages.mock.calls[0][1]).toHaveLength(2);
 		const body = await response.json();
 		expect(body.foods).toHaveLength(2);
 		expect(body.foods[0].image.imageUrl).toContain("example.com");

@@ -41,31 +41,43 @@ const getPassportIdentity = (food: FoodItem) => {
 	if (food.trustStatus === "pending-review") {
 		return {
 			statusLabel: "Review pending",
-			summary: "An update to this shared food is waiting for review. The current accepted record remains in use.",
+			summary:
+				"An update to this shared food is waiting for review. The current accepted record remains in use.",
 		};
 	}
-	if (food.sharedProductId && food.trustStatus && VERIFIED_TRUST_STATUSES.has(food.trustStatus)) {
+	if (
+		food.sharedProductId &&
+		food.trustStatus &&
+		VERIFIED_TRUST_STATUSES.has(food.trustStatus)
+	) {
 		return {
 			statusLabel: "Verified",
-			summary: "This shared food has accepted evidence and can keep evolving when its package or source information changes.",
+			summary:
+				"This shared food has accepted evidence and can keep evolving when its package or source information changes.",
 		};
 	}
 	if (food.sharedProductId) {
 		return {
 			statusLabel: "Shared record",
-			summary: "This food is part of the shared catalog. Some details may still need stronger or newer evidence.",
+			summary:
+				"This food is part of the shared catalog. Some details may still need stronger or newer evidence.",
 		};
 	}
-	if (food.foodIdentityType === "private-custom" || food.trustStatus === "user-private") {
+	if (
+		food.foodIdentityType === "private-custom" ||
+		food.trustStatus === "user-private"
+	) {
 		return {
 			statusLabel: "Personal",
-			summary: "This food belongs only to your account and is not part of the shared catalog.",
+			summary:
+				"This food belongs only to your account and is not part of the shared catalog.",
 		};
 	}
 	if (food.sourceKey || food.sourceLabel || food.sourceAttribution) {
 		return {
 			statusLabel: "Source record",
-			summary: "This food comes from a source record that may not include every package detail.",
+			summary:
+				"This food comes from a source record that may not include every package detail.",
 		};
 	}
 	return {
@@ -104,7 +116,9 @@ const getReportedNutrientCount = (food: FoodItem) => {
 	if (food.reportedNutrientIds?.length) {
 		return new Set(food.reportedNutrientIds).size;
 	}
-	return food.foodNutrients.filter((nutrient) => Number.isFinite(nutrient.value)).length;
+	return food.foodNutrients.filter((nutrient) =>
+		Number.isFinite(nutrient.value),
+	).length;
 };
 
 const getServingCount = (food: FoodItem) =>
@@ -126,7 +140,8 @@ const getPackageSafetyAvailability = (food: FoodItem) => {
 		food.traces?.length ||
 		food.precautionaryStatements?.length,
 	);
-	if (hasContains && hasPrecautionary) return "Contains and precautionary details available";
+	if (hasContains && hasPrecautionary)
+		return "Contains and precautionary details available";
 	if (hasContains) return "Contains details available";
 	if (hasPrecautionary) return "Precautionary details available";
 	return food.foodIdentityType === "generic"
@@ -143,26 +158,29 @@ const getAvailabilityRows = (food: FoodItem): FoodPassportAvailabilityRow[] => {
 	const hasIngredients = hasIngredientInformation(food);
 	const packageSafety = getPackageSafetyAvailability(food);
 	const hasPackageSafety = packageSafety !== "Not provided";
-	const fieldSourceCount = Object.values(food.fieldProvenance ?? {}).filter(Boolean).length;
+	const fieldSourceCount = Object.values(food.fieldProvenance ?? {}).filter(
+		Boolean,
+	).length;
 
 	return [
 		{
 			label: "Nutrition",
-			value: nutrientCount > 0
-				? nutrientCountLabel
-				: "Not provided",
+			value: nutrientCount > 0 ? nutrientCountLabel : "Not provided",
 			available: nutrientCount > 0,
 		},
 		{
 			label: "Servings",
-			value: servingCount > 0
-				? `${servingCount} serving option${servingCount === 1 ? "" : "s"}`
-				: "Not provided",
+			value:
+				servingCount > 0
+					? `${servingCount} serving option${servingCount === 1 ? "" : "s"}`
+					: "Not provided",
 			available: servingCount > 0,
 		},
 		{
 			label: "Ingredients",
-			value: hasIngredients ? "Ingredient information available" : "Not provided",
+			value: hasIngredients
+				? "Ingredient information available"
+				: "Not provided",
 			available: hasIngredients,
 		},
 		{
@@ -177,9 +195,10 @@ const getAvailabilityRows = (food: FoodItem): FoodPassportAvailabilityRow[] => {
 		},
 		{
 			label: "Field history",
-			value: fieldSourceCount > 0
-				? `${fieldSourceCount} field source${fieldSourceCount === 1 ? "" : "s"} recorded`
-				: "Not provided",
+			value:
+				fieldSourceCount > 0
+					? `${fieldSourceCount} field source${fieldSourceCount === 1 ? "" : "s"} recorded`
+					: "Not provided",
 			available: fieldSourceCount > 0,
 		},
 	];

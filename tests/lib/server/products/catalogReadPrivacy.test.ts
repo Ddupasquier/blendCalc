@@ -27,12 +27,8 @@ const createImage = (
 	attribution_text: "Open Food Facts contributors",
 	confidence: "source-verified",
 	canonical_status: sharedProductId ? "selected" : "candidate",
-	canonical_selection_method: sharedProductId
-		? "exact-licensed-source"
-		: null,
-	canonical_selected_at: sharedProductId
-		? "2026-08-11T12:00:00.000Z"
-		: null,
+	canonical_selection_method: sharedProductId ? "exact-licensed-source" : null,
+	canonical_selected_at: sharedProductId ? "2026-08-11T12:00:00.000Z" : null,
 	crop_x: 50,
 	crop_y: 50,
 	crop_zoom: 1,

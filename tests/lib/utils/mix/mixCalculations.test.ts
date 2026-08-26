@@ -505,7 +505,6 @@ describe("mix calculations", () => {
 		});
 	});
 
-
 	it("keeps ranking safe corrections after the display score reaches zero", () => {
 		const suggestions = getNutrientAdjustmentSuggestions({
 			nutrients: [{ id: NUTRIENT_IDS.PROTEIN, label: "Protein", unit: "g" }],
@@ -641,12 +640,7 @@ describe("mix calculations", () => {
 				"maximum",
 				4,
 			),
-			[NUTRIENT_IDS.FAT]: directionalGoal(
-				NUTRIENT_IDS.FAT,
-				10,
-				"maximum",
-				5,
-			),
+			[NUTRIENT_IDS.FAT]: directionalGoal(NUTRIENT_IDS.FAT, 10, "maximum", 5),
 		};
 		const servingGrams = { 40: 60, 41: 120, 42: 150, 43: 17 };
 		const request = (selectedFoods: FoodItem[]) =>

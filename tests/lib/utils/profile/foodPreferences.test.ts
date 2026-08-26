@@ -9,16 +9,14 @@ import {
 
 describe("food preference helpers", () => {
 	it("normalizes repeated preference values without splitting exact wording", () => {
-		expect(parseRepeatedFoodPreferenceValues([
-			" dairy ",
-			"peanut",
-			"Dairy",
-			"shellfish, molluscs",
-		])).toEqual([
-			"dairy",
-			"peanut",
-			"shellfish, molluscs",
-		]);
+		expect(
+			parseRepeatedFoodPreferenceValues([
+				" dairy ",
+				"peanut",
+				"Dairy",
+				"shellfish, molluscs",
+			]),
+		).toEqual(["dairy", "peanut", "shellfish, molluscs"]);
 	});
 
 	it("converts US serving sizes to normalized grams", () => {
@@ -50,46 +48,56 @@ describe("food preference helpers", () => {
 				regulatoryRegionCode: "",
 				regulatoryRegionSource: null,
 			}),
-		).toBe("Confirm that you want these optional preferences saved to your account.");
+		).toBe(
+			"Confirm that you want these optional preferences saved to your account.",
+		);
 	});
 
 	it("rejects an unsupported regional label profile", () => {
 		expect(
-			getFoodPreferencesValidationError({
-				unitSystem: null,
-				allergens: [],
-				dietaryRestrictions: [],
-				prioritizedNutrientIds: [],
-				defaultMixServingSize: "",
-				defaultMixServingUnit: "g",
-				sensitiveAcknowledged: true,
-				regulatoryRegionCode: "ZZ",
-				regulatoryRegionSource: "account",
-			}, {
-				regulatoryRegionOptions: [{
-					regionCode: "US",
-					displayName: "United States",
-					authority: "FDA",
-				}],
-			}),
+			getFoodPreferencesValidationError(
+				{
+					unitSystem: null,
+					allergens: [],
+					dietaryRestrictions: [],
+					prioritizedNutrientIds: [],
+					defaultMixServingSize: "",
+					defaultMixServingUnit: "g",
+					sensitiveAcknowledged: true,
+					regulatoryRegionCode: "ZZ",
+					regulatoryRegionSource: "account",
+				},
+				{
+					regulatoryRegionOptions: [
+						{
+							regionCode: "US",
+							displayName: "United States",
+							authority: "FDA",
+						},
+					],
+				},
+			),
 		).toBe("Choose a supported label region and try again.");
 	});
 
 	it("rejects priority nutrients outside the database-provided choices", () => {
 		expect(
-			getFoodPreferencesValidationError({
-				unitSystem: null,
-				allergens: [],
-				dietaryRestrictions: [],
-				prioritizedNutrientIds: [999999],
-				defaultMixServingSize: "",
-				defaultMixServingUnit: "g",
-				sensitiveAcknowledged: true,
-				regulatoryRegionCode: "",
-				regulatoryRegionSource: null,
-			}, {
-				allowedPriorityNutrientIds: [1003, 1008],
-			}),
+			getFoodPreferencesValidationError(
+				{
+					unitSystem: null,
+					allergens: [],
+					dietaryRestrictions: [],
+					prioritizedNutrientIds: [999999],
+					defaultMixServingSize: "",
+					defaultMixServingUnit: "g",
+					sensitiveAcknowledged: true,
+					regulatoryRegionCode: "",
+					regulatoryRegionSource: null,
+				},
+				{
+					allowedPriorityNutrientIds: [1003, 1008],
+				},
+			),
 		).toBe("Choose priority nutrients from the available list and try again.");
 	});
 

@@ -82,7 +82,8 @@ export const normalizeMixSectionDisclosureState = (
 };
 
 export const getMixSectionLabel = (sectionId: MixSectionId) =>
-	MIX_SECTION_DEFINITIONS.find(({ id }) => id === sectionId)?.label ?? sectionId;
+	MIX_SECTION_DEFINITIONS.find(({ id }) => id === sectionId)?.label ??
+	sectionId;
 
 export const moveMixSection = (
 	order: readonly MixSectionId[],
@@ -108,9 +109,5 @@ export const moveMixSectionRelative = (
 	const withoutSection = order.filter((id) => id !== sectionId);
 	const targetIndex = withoutSection.indexOf(targetId);
 	if (targetIndex < 0) return normalizeMixSectionOrder(order);
-	return moveMixSection(
-		order,
-		sectionId,
-		targetIndex + (placeAfter ? 1 : 0),
-	);
+	return moveMixSection(order, sectionId, targetIndex + (placeAfter ? 1 : 0));
 };

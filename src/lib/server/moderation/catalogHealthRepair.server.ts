@@ -18,9 +18,10 @@ export class CatalogHealthRepairError extends Error {
 	}
 }
 
-const classifyCatalogHealthRepairFailure = (
-	error: { code?: string; message?: string },
-): CatalogHealthRepairFailureReason => {
+const classifyCatalogHealthRepairFailure = (error: {
+	code?: string;
+	message?: string;
+}): CatalogHealthRepairFailureReason => {
 	if (error.code === "P0002") return "issue_unavailable";
 	const message = error.message?.toLowerCase() ?? "";
 	if (message.includes("dry run")) return "dry_run_required";
@@ -43,7 +44,9 @@ export const runCatalogHealthRepair = async (
 	});
 
 	if (error) {
-		throw new CatalogHealthRepairError(classifyCatalogHealthRepairFailure(error));
+		throw new CatalogHealthRepairError(
+			classifyCatalogHealthRepairFailure(error),
+		);
 	}
 
 	try {

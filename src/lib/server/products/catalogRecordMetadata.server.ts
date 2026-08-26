@@ -41,7 +41,8 @@ export const readCanonicalFoodCatalogMetadata = async (
 	if (!productResponse.data) return null;
 
 	const product = productResponse.data as SharedProductMetadataRow;
-	const revision = revisionResponse.data as SharedProductRevisionMetadataRow | null;
+	const revision =
+		revisionResponse.data as SharedProductRevisionMetadataRow | null;
 	return {
 		recordCreatedAt: product.created_at,
 		recordUpdatedAt: product.updated_at,

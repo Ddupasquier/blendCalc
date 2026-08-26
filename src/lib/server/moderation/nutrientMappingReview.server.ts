@@ -20,12 +20,14 @@ export class NutrientMappingReviewError extends Error {
 	}
 }
 
-const classifyNutrientMappingReviewFailure = (
-	error: { code?: string; message?: string },
-): NutrientMappingReviewFailureReason => {
+const classifyNutrientMappingReviewFailure = (error: {
+	code?: string;
+	message?: string;
+}): NutrientMappingReviewFailureReason => {
 	if (error.code === "P0002") return "mapping_unavailable";
 	const message = error.message?.toLocaleLowerCase() ?? "";
-	if (message.includes("no longer waiting for review")) return "mapping_resolved";
+	if (message.includes("no longer waiting for review"))
+		return "mapping_resolved";
 	if (message.includes("no reviewed conversion")) return "invalid_unit_path";
 	return "service_unavailable";
 };

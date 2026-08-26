@@ -7,11 +7,7 @@
 	import ProfileImageReportReviewList from "$lib/components/moderation/ProfileImageReportReviewList/ProfileImageReportReviewList.svelte";
 	import type { ModerationWorkspaceProps } from "./types";
 
-	let {
-		data,
-		form = null,
-		scope = "all",
-	}: ModerationWorkspaceProps = $props();
+	let { data, form = null, scope = "all" }: ModerationWorkspaceProps = $props();
 </script>
 
 <div class="moderation-workspace" data-scope={scope}>
@@ -19,7 +15,10 @@
 		<header class="moderation-workspace__header">
 			<p class="moderation-workspace__eyebrow">{data.viewerRole}</p>
 			<h1>Moderation</h1>
-			<p>Review shared products, food warnings, reported profile images, and account access.</p>
+			<p>
+				Review shared products, food warnings, reported profile images, and
+				account access.
+			</p>
 			<a href="/profile/privileged-tools">Open focused privileged tools</a>
 		</header>
 	{/if}
@@ -64,7 +63,9 @@
 			totalCount={data.totalCount}
 			viewerUserId={data.viewerUserId}
 			viewerRole={data.viewerRole}
-			searchPath={scope === "all" ? "/moderation" : "/profile/privileged-tools/account-access"}
+			searchPath={scope === "all"
+				? "/moderation"
+				: "/profile/privileged-tools/account-access"}
 			showHeading={scope === "all"}
 		/>
 	{/if}

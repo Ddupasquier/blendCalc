@@ -4,17 +4,22 @@ import { catalogProductReadinessPassportFixture } from "../../../fixtures/catalo
 
 describe("catalog product readiness passport parser", () => {
 	it("accepts the bounded product-readiness contract without changing evidence", () => {
-		expect(parseCatalogProductReadinessPassport(catalogProductReadinessPassportFixture))
-			.toEqual(catalogProductReadinessPassportFixture);
+		expect(
+			parseCatalogProductReadinessPassport(
+				catalogProductReadinessPassportFixture,
+			),
+		).toEqual(catalogProductReadinessPassportFixture);
 	});
 
 	it("rejects malformed evidence instead of inventing a fallback", () => {
-		expect(() => parseCatalogProductReadinessPassport({
-			...catalogProductReadinessPassportFixture,
-			evidence: {
-				...catalogProductReadinessPassportFixture.evidence,
-				normalizedNutrientCount: "14",
-			},
-		})).toThrow(/evidence\.normalizedNutrientCount/u);
+		expect(() =>
+			parseCatalogProductReadinessPassport({
+				...catalogProductReadinessPassportFixture,
+				evidence: {
+					...catalogProductReadinessPassportFixture.evidence,
+					normalizedNutrientCount: "14",
+				},
+			}),
+		).toThrow(/evidence\.normalizedNutrientCount/u);
 	});
 });

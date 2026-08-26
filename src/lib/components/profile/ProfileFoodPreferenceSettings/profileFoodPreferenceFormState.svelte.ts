@@ -139,15 +139,18 @@ export const createProfileFoodPreferenceFormState = (
 		}
 		if (errorMessage === previousErrorMessage) return;
 		previousErrorMessage = errorMessage;
-		for (const key of Object.keys(openSections) as FoodPreferenceDisclosureKey[]) {
+		for (const key of Object.keys(
+			openSections,
+		) as FoodPreferenceDisclosureKey[]) {
 			openSections[key] = true;
 		}
 	});
 
 	const selectedRegion = $derived(
-		options.getRegulatoryRegionOptions().find(
-			(option) => option.regionCode === form.regulatoryRegionCode,
-		) ?? null,
+		options
+			.getRegulatoryRegionOptions()
+			.find((option) => option.regionCode === form.regulatoryRegionCode) ??
+			null,
 	);
 	const hasUnsupportedRegion = $derived(
 		Boolean(form.regulatoryRegionCode && !selectedRegion),
@@ -155,32 +158,43 @@ export const createProfileFoodPreferenceFormState = (
 	const resolvedAllergenKeys = $derived(
 		new Set(
 			(options.getFoodPreferences()?.preferenceResolutions ?? [])
-				.filter((resolution) =>
-					resolution.ruleType === "allergen" && resolution.status === "resolved")
+				.filter(
+					(resolution) =>
+						resolution.ruleType === "allergen" &&
+						resolution.status === "resolved",
+				)
 				.map((resolution) => normalizePreferenceValue(resolution.rawValue)),
 		),
 	);
 	const resolvedDietaryRestrictionKeys = $derived(
 		new Set(
 			(options.getFoodPreferences()?.preferenceResolutions ?? [])
-				.filter((resolution) =>
-					resolution.ruleType === "dietary_restriction" &&
-					resolution.status === "resolved")
+				.filter(
+					(resolution) =>
+						resolution.ruleType === "dietary_restriction" &&
+						resolution.status === "resolved",
+				)
 				.map((resolution) => normalizePreferenceValue(resolution.rawValue)),
 		),
 	);
 	const reviewedAllergenKeys = $derived(
-		new Set(options.getFoodPreferenceOptions().allergens.flatMap((option) => [
-			option.normalizedValue,
-			normalizePreferenceValue(option.label),
-		])),
+		new Set(
+			options
+				.getFoodPreferenceOptions()
+				.allergens.flatMap((option) => [
+					option.normalizedValue,
+					normalizePreferenceValue(option.label),
+				]),
+		),
 	);
 	const reviewedDietaryRestrictionKeys = $derived(
 		new Set(
-			options.getFoodPreferenceOptions().dietaryRestrictions.flatMap((option) => [
-				option.normalizedValue,
-				normalizePreferenceValue(option.label),
-			]),
+			options
+				.getFoodPreferenceOptions()
+				.dietaryRestrictions.flatMap((option) => [
+					option.normalizedValue,
+					normalizePreferenceValue(option.label),
+				]),
 		),
 	);
 	const unresolvedAllergens = $derived(
@@ -192,8 +206,10 @@ export const createProfileFoodPreferenceFormState = (
 	const unresolvedDietaryRestrictions = $derived(
 		form.dietaryRestrictions.filter((value) => {
 			const key = normalizePreferenceValue(value);
-			return !reviewedDietaryRestrictionKeys.has(key) &&
-				!resolvedDietaryRestrictionKeys.has(key);
+			return (
+				!reviewedDietaryRestrictionKeys.has(key) &&
+				!resolvedDietaryRestrictionKeys.has(key)
+			);
 		}),
 	);
 	const measurementSummary = $derived(
@@ -206,12 +222,12 @@ export const createProfileFoodPreferenceFormState = (
 			form.defaultServingSize
 				? `${form.defaultServingSize} ${form.defaultServingUnit} Mix start`
 				: null,
-		].filter(Boolean).join(" · ") || "App defaults",
+		]
+			.filter(Boolean)
+			.join(" · ") || "App defaults",
 	);
 	const getGroupPendingValues = (group: FoodPreferenceGroupKey) =>
-		group === "allergens"
-			? unresolvedAllergens
-			: unresolvedDietaryRestrictions;
+		group === "allergens" ? unresolvedAllergens : unresolvedDietaryRestrictions;
 	const getGroupSummary = (group: FoodPreferenceGroupKey) => {
 		const selectedCount = readGroup(group).length;
 		const pendingCount = getGroupPendingValues(group).length;
@@ -220,7 +236,9 @@ export const createProfileFoodPreferenceFormState = (
 		return [
 			activeCount ? `${activeCount} active` : null,
 			pendingCount ? `${pendingCount} pending` : null,
-		].filter(Boolean).join(" · ");
+		]
+			.filter(Boolean)
+			.join(" · ");
 	};
 	const regionSummary = $derived(
 		selectedRegion
@@ -229,7 +247,9 @@ export const createProfileFoodPreferenceFormState = (
 					selectedRegion.policyVersion
 						? `policy v${selectedRegion.policyVersion}`
 						: null,
-				].filter(Boolean).join(" · ")
+				]
+					.filter(Boolean)
+					.join(" · ")
 			: "Personal settings only",
 	);
 
@@ -245,16 +265,21 @@ export const createProfileFoodPreferenceFormState = (
 		if (!cleanedValue) return;
 		if (
 			readGroup(group).some(
-				(item) => normalizePreferenceValue(item) === normalizePreferenceValue(cleanedValue),
+				(item) =>
+					normalizePreferenceValue(item) ===
+					normalizePreferenceValue(cleanedValue),
 			)
-		) return;
+		)
+			return;
 		writeGroup(group, [...readGroup(group), cleanedValue]);
 	};
 	const removePreference = (group: FoodPreferenceGroupKey, value: string) => {
 		const valueKey = normalizePreferenceValue(value);
 		writeGroup(
 			group,
-			readGroup(group).filter((item) => normalizePreferenceValue(item) !== valueKey),
+			readGroup(group).filter(
+				(item) => normalizePreferenceValue(item) !== valueKey,
+			),
 		);
 	};
 	const clearPreferenceGroup = (group: FoodPreferenceGroupKey) => {

@@ -170,71 +170,169 @@ const readBoolean = (value: unknown, field: string): boolean => {
 
 const readStringArray = (value: unknown, field: string): string[] =>
 	readArray(value, field).map((entry, index) =>
-		readString(entry, `${field}[${index}]`));
+		readString(entry, `${field}[${index}]`),
+	);
 
 const parseOverview = (value: unknown): CatalogDataOperationsOverview => {
 	const row = readRecord(value, "overview");
 	return {
 		activeProducts: readNumber(row.activeProducts, "overview.activeProducts"),
-		publicationReadyProducts: readNumber(row.publicationReadyProducts, "overview.publicationReadyProducts"),
-		unresolvedConflicts: readNumber(row.unresolvedConflicts, "overview.unresolvedConflicts"),
-		pendingProductSubmissions: readNumber(row.pendingProductSubmissions, "overview.pendingProductSubmissions"),
-		pendingCompatibilityReports: readNumber(row.pendingCompatibilityReports, "overview.pendingCompatibilityReports"),
-		pendingPreferenceMappings: readNumber(row.pendingPreferenceMappings, "overview.pendingPreferenceMappings"),
-		nutrientMappingReviewGaps: readNumber(row.nutrientMappingReviewGaps, "overview.nutrientMappingReviewGaps"),
-		revisionHistoryGaps: readNumber(row.revisionHistoryGaps, "overview.revisionHistoryGaps"),
-		datasetReviewGaps: readNumber(row.datasetReviewGaps, "overview.datasetReviewGaps"),
-		sourcePolicyGaps: readNumber(row.sourcePolicyGaps, "overview.sourcePolicyGaps"),
-		compatibilityCoverageGaps: readNumber(row.compatibilityCoverageGaps, "overview.compatibilityCoverageGaps"),
+		publicationReadyProducts: readNumber(
+			row.publicationReadyProducts,
+			"overview.publicationReadyProducts",
+		),
+		unresolvedConflicts: readNumber(
+			row.unresolvedConflicts,
+			"overview.unresolvedConflicts",
+		),
+		pendingProductSubmissions: readNumber(
+			row.pendingProductSubmissions,
+			"overview.pendingProductSubmissions",
+		),
+		pendingCompatibilityReports: readNumber(
+			row.pendingCompatibilityReports,
+			"overview.pendingCompatibilityReports",
+		),
+		pendingPreferenceMappings: readNumber(
+			row.pendingPreferenceMappings,
+			"overview.pendingPreferenceMappings",
+		),
+		nutrientMappingReviewGaps: readNumber(
+			row.nutrientMappingReviewGaps,
+			"overview.nutrientMappingReviewGaps",
+		),
+		revisionHistoryGaps: readNumber(
+			row.revisionHistoryGaps,
+			"overview.revisionHistoryGaps",
+		),
+		datasetReviewGaps: readNumber(
+			row.datasetReviewGaps,
+			"overview.datasetReviewGaps",
+		),
+		sourcePolicyGaps: readNumber(
+			row.sourcePolicyGaps,
+			"overview.sourcePolicyGaps",
+		),
+		compatibilityCoverageGaps: readNumber(
+			row.compatibilityCoverageGaps,
+			"overview.compatibilityCoverageGaps",
+		),
 	};
 };
 
-const parseSource = (value: unknown, index: number): CatalogSourceOperationalHealth => {
+const parseSource = (
+	value: unknown,
+	index: number,
+): CatalogSourceOperationalHealth => {
 	const path = `sources[${index}]`;
 	const row = readRecord(value, path);
 	const metrics = readRecord(row.metrics, `${path}.metrics`);
-	const evaluation = row.latestEvaluation === null
-		? null
-		: readRecord(row.latestEvaluation, `${path}.latestEvaluation`);
+	const evaluation =
+		row.latestEvaluation === null
+			? null
+			: readRecord(row.latestEvaluation, `${path}.latestEvaluation`);
 
 	return {
 		key: readString(row.key, `${path}.key`),
 		displayName: readString(row.displayName, `${path}.displayName`),
 		sourceType: readString(row.sourceType, `${path}.sourceType`),
 		enabled: readBoolean(row.enabled, `${path}.enabled`),
-		canonicalStorageAllowed: readBoolean(row.canonicalStorageAllowed, `${path}.canonicalStorageAllowed`),
-		apiRedistributionAllowed: readBoolean(row.apiRedistributionAllowed, `${path}.apiRedistributionAllowed`),
-		policyReviewedAt: readNullableString(row.policyReviewedAt, `${path}.policyReviewedAt`),
+		canonicalStorageAllowed: readBoolean(
+			row.canonicalStorageAllowed,
+			`${path}.canonicalStorageAllowed`,
+		),
+		apiRedistributionAllowed: readBoolean(
+			row.apiRedistributionAllowed,
+			`${path}.apiRedistributionAllowed`,
+		),
+		policyReviewedAt: readNullableString(
+			row.policyReviewedAt,
+			`${path}.policyReviewedAt`,
+		),
 		policyIssues: readStringArray(row.policyIssues, `${path}.policyIssues`),
 		metrics: {
 			windowDays: readNumber(metrics.windowDays, `${path}.metrics.windowDays`),
 			lookups: readNumber(metrics.lookups, `${path}.metrics.lookups`),
-			completedLookups: readNumber(metrics.completedLookups, `${path}.metrics.completedLookups`),
-			apiRequests: readNumber(metrics.apiRequests, `${path}.metrics.apiRequests`),
+			completedLookups: readNumber(
+				metrics.completedLookups,
+				`${path}.metrics.completedLookups`,
+			),
+			apiRequests: readNumber(
+				metrics.apiRequests,
+				`${path}.metrics.apiRequests`,
+			),
 			apiErrors: readNumber(metrics.apiErrors, `${path}.metrics.apiErrors`),
 			cacheHits: readNumber(metrics.cacheHits, `${path}.metrics.cacheHits`),
 			matches: readNumber(metrics.matches, `${path}.metrics.matches`),
-			exactBarcodeMatches: readNumber(metrics.exactBarcodeMatches, `${path}.metrics.exactBarcodeMatches`),
-			evaluatedProducts: readNumber(metrics.evaluatedProducts, `${path}.metrics.evaluatedProducts`),
-			reportedNutrients: readNumber(metrics.reportedNutrients, `${path}.metrics.reportedNutrients`),
-			brandCoverage: readNumber(metrics.brandCoverage, `${path}.metrics.brandCoverage`),
-			categoryCoverage: readNumber(metrics.categoryCoverage, `${path}.metrics.categoryCoverage`),
-			servingCoverage: readNumber(metrics.servingCoverage, `${path}.metrics.servingCoverage`),
-			ingredientCoverage: readNumber(metrics.ingredientCoverage, `${path}.metrics.ingredientCoverage`),
-			imageCoverage: readNumber(metrics.imageCoverage, `${path}.metrics.imageCoverage`),
-			averageResponseMilliseconds: readNullableNumber(metrics.averageResponseMilliseconds, `${path}.metrics.averageResponseMilliseconds`),
+			exactBarcodeMatches: readNumber(
+				metrics.exactBarcodeMatches,
+				`${path}.metrics.exactBarcodeMatches`,
+			),
+			evaluatedProducts: readNumber(
+				metrics.evaluatedProducts,
+				`${path}.metrics.evaluatedProducts`,
+			),
+			reportedNutrients: readNumber(
+				metrics.reportedNutrients,
+				`${path}.metrics.reportedNutrients`,
+			),
+			brandCoverage: readNumber(
+				metrics.brandCoverage,
+				`${path}.metrics.brandCoverage`,
+			),
+			categoryCoverage: readNumber(
+				metrics.categoryCoverage,
+				`${path}.metrics.categoryCoverage`,
+			),
+			servingCoverage: readNumber(
+				metrics.servingCoverage,
+				`${path}.metrics.servingCoverage`,
+			),
+			ingredientCoverage: readNumber(
+				metrics.ingredientCoverage,
+				`${path}.metrics.ingredientCoverage`,
+			),
+			imageCoverage: readNumber(
+				metrics.imageCoverage,
+				`${path}.metrics.imageCoverage`,
+			),
+			averageResponseMilliseconds: readNullableNumber(
+				metrics.averageResponseMilliseconds,
+				`${path}.metrics.averageResponseMilliseconds`,
+			),
 		},
 		latestEvaluation: evaluation
 			? {
-				kind: readString(evaluation.kind, `${path}.latestEvaluation.kind`),
-				decision: readString(evaluation.decision, `${path}.latestEvaluation.decision`),
-				summary: readString(evaluation.summary, `${path}.latestEvaluation.summary`),
-				evaluatedAt: readString(evaluation.evaluatedAt, `${path}.latestEvaluation.evaluatedAt`),
-				sampleSize: readNumber(evaluation.sampleSize, `${path}.latestEvaluation.sampleSize`),
-				matchedCount: readNumber(evaluation.matchedCount, `${path}.latestEvaluation.matchedCount`),
-				usableCount: readNumber(evaluation.usableCount, `${path}.latestEvaluation.usableCount`),
-				evidenceUrl: readNullableString(evaluation.evidenceUrl, `${path}.latestEvaluation.evidenceUrl`),
-			}
+					kind: readString(evaluation.kind, `${path}.latestEvaluation.kind`),
+					decision: readString(
+						evaluation.decision,
+						`${path}.latestEvaluation.decision`,
+					),
+					summary: readString(
+						evaluation.summary,
+						`${path}.latestEvaluation.summary`,
+					),
+					evaluatedAt: readString(
+						evaluation.evaluatedAt,
+						`${path}.latestEvaluation.evaluatedAt`,
+					),
+					sampleSize: readNumber(
+						evaluation.sampleSize,
+						`${path}.latestEvaluation.sampleSize`,
+					),
+					matchedCount: readNumber(
+						evaluation.matchedCount,
+						`${path}.latestEvaluation.matchedCount`,
+					),
+					usableCount: readNumber(
+						evaluation.usableCount,
+						`${path}.latestEvaluation.usableCount`,
+					),
+					evidenceUrl: readNullableString(
+						evaluation.evidenceUrl,
+						`${path}.latestEvaluation.evidenceUrl`,
+					),
+				}
 			: null,
 	};
 };
@@ -249,7 +347,10 @@ const compareModeratorSourcesByDescendingLookupUsage = (
 	}) ||
 	firstSource.key.localeCompare(secondSource.key, "en");
 
-const parseDataset = (value: unknown, index: number): CatalogDatasetOperationalHealth => {
+const parseDataset = (
+	value: unknown,
+	index: number,
+): CatalogDatasetOperationalHealth => {
 	const path = `datasets[${index}]`;
 	const row = readRecord(value, path);
 	return {
@@ -259,13 +360,22 @@ const parseDataset = (value: unknown, index: number): CatalogDatasetOperationalH
 		version: readString(row.version, `${path}.version`),
 		regionCode: readNullableString(row.regionCode, `${path}.regionCode`),
 		licenseName: readString(row.licenseName, `${path}.licenseName`),
-		licenseReviewStatus: readString(row.licenseReviewStatus, `${path}.licenseReviewStatus`),
+		licenseReviewStatus: readString(
+			row.licenseReviewStatus,
+			`${path}.licenseReviewStatus`,
+		),
 		importEnabled: readBoolean(row.importEnabled, `${path}.importEnabled`),
 		active: readBoolean(row.active, `${path}.active`),
 		importedAt: readNullableString(row.importedAt, `${path}.importedAt`),
-		checksumRecorded: readBoolean(row.checksumRecorded, `${path}.checksumRecorded`),
+		checksumRecorded: readBoolean(
+			row.checksumRecorded,
+			`${path}.checksumRecorded`,
+		),
 		foodCount: readNumber(row.foodCount, `${path}.foodCount`),
-		nutrientValueCount: readNumber(row.nutrientValueCount, `${path}.nutrientValueCount`),
+		nutrientValueCount: readNumber(
+			row.nutrientValueCount,
+			`${path}.nutrientValueCount`,
+		),
 		measureCount: readNumber(row.measureCount, `${path}.measureCount`),
 		issues: readStringArray(row.issues, `${path}.issues`),
 	};
@@ -278,63 +388,99 @@ const parsePolicy = (value: unknown): FoodWarningPolicyOperationalHealth => {
 		effectiveAt: readNullableString(row.effectiveAt, "policy.effectiveAt"),
 		reviewedAt: readNullableString(row.reviewedAt, "policy.reviewedAt"),
 		bundleHash: readNullableString(row.bundleHash, "policy.bundleHash"),
-		changeSummary: readNullableString(row.changeSummary, "policy.changeSummary"),
-		sourceReferenceCount: readNumber(row.sourceReferenceCount, "policy.sourceReferenceCount"),
-		selectablePreferenceCount: readNumber(row.selectablePreferenceCount, "policy.selectablePreferenceCount"),
-		coverageGapCount: readNumber(row.coverageGapCount, "policy.coverageGapCount"),
-		pendingPreferenceMappingCount: readNumber(row.pendingPreferenceMappingCount, "policy.pendingPreferenceMappingCount"),
+		changeSummary: readNullableString(
+			row.changeSummary,
+			"policy.changeSummary",
+		),
+		sourceReferenceCount: readNumber(
+			row.sourceReferenceCount,
+			"policy.sourceReferenceCount",
+		),
+		selectablePreferenceCount: readNumber(
+			row.selectablePreferenceCount,
+			"policy.selectablePreferenceCount",
+		),
+		coverageGapCount: readNumber(
+			row.coverageGapCount,
+			"policy.coverageGapCount",
+		),
+		pendingPreferenceMappingCount: readNumber(
+			row.pendingPreferenceMappingCount,
+			"policy.pendingPreferenceMappingCount",
+		),
 	};
 };
 
 const parseIssues = (value: unknown): CatalogDataOperationsIssues => {
 	const row = readRecord(value, "issues");
 	return {
-		conflicts: readArray(row.conflicts, "issues.conflicts").map((value, index) => {
-			const path = `issues.conflicts[${index}]`;
-			const issue = readRecord(value, path);
-			return {
-				id: readString(issue.id, `${path}.id`),
-				productId: readString(issue.productId, `${path}.productId`),
-				barcode: readString(issue.barcode, `${path}.barcode`),
-				productName: readString(issue.productName, `${path}.productName`),
-				fieldPath: readString(issue.fieldPath, `${path}.fieldPath`),
-				severity: readString(issue.severity, `${path}.severity`),
-				createdAt: readString(issue.createdAt, `${path}.createdAt`),
-			};
-		}),
-		publication: readArray(row.publication, "issues.publication").map((value, index) => {
-			const path = `issues.publication[${index}]`;
-			const issue = readRecord(value, path);
-			return {
-				productId: readString(issue.productId, `${path}.productId`),
-				barcode: readString(issue.barcode, `${path}.barcode`),
-				productName: readString(issue.productName, `${path}.productName`),
-				reasons: readStringArray(issue.reasons, `${path}.reasons`),
-			};
-		}),
-		nutrientMappings: readArray(row.nutrientMappings, "issues.nutrientMappings").map((value, index) => {
+		conflicts: readArray(row.conflicts, "issues.conflicts").map(
+			(value, index) => {
+				const path = `issues.conflicts[${index}]`;
+				const issue = readRecord(value, path);
+				return {
+					id: readString(issue.id, `${path}.id`),
+					productId: readString(issue.productId, `${path}.productId`),
+					barcode: readString(issue.barcode, `${path}.barcode`),
+					productName: readString(issue.productName, `${path}.productName`),
+					fieldPath: readString(issue.fieldPath, `${path}.fieldPath`),
+					severity: readString(issue.severity, `${path}.severity`),
+					createdAt: readString(issue.createdAt, `${path}.createdAt`),
+				};
+			},
+		),
+		publication: readArray(row.publication, "issues.publication").map(
+			(value, index) => {
+				const path = `issues.publication[${index}]`;
+				const issue = readRecord(value, path);
+				return {
+					productId: readString(issue.productId, `${path}.productId`),
+					barcode: readString(issue.barcode, `${path}.barcode`),
+					productName: readString(issue.productName, `${path}.productName`),
+					reasons: readStringArray(issue.reasons, `${path}.reasons`),
+				};
+			},
+		),
+		nutrientMappings: readArray(
+			row.nutrientMappings,
+			"issues.nutrientMappings",
+		).map((value, index) => {
 			const path = `issues.nutrientMappings[${index}]`;
 			const issue = readRecord(value, path);
 			return {
 				mappingId: readString(issue.mappingId, `${path}.mappingId`),
 				sourceKey: readString(issue.sourceKey, `${path}.sourceKey`),
-				sourceNutrientKey: readString(issue.sourceNutrientKey, `${path}.sourceNutrientKey`),
-				sourceNutrientName: readNullableString(issue.sourceNutrientName, `${path}.sourceNutrientName`),
-				sourceUnitName: readString(issue.sourceUnitName, `${path}.sourceUnitName`),
+				sourceNutrientKey: readString(
+					issue.sourceNutrientKey,
+					`${path}.sourceNutrientKey`,
+				),
+				sourceNutrientName: readNullableString(
+					issue.sourceNutrientName,
+					`${path}.sourceNutrientName`,
+				),
+				sourceUnitName: readString(
+					issue.sourceUnitName,
+					`${path}.sourceUnitName`,
+				),
 				reviewStatus: readString(issue.reviewStatus, `${path}.reviewStatus`),
-				reviewReference: readNullableString(issue.reviewReference, `${path}.reviewReference`),
+				reviewReference: readNullableString(
+					issue.reviewReference,
+					`${path}.reviewReference`,
+				),
 			};
 		}),
-		revisions: readArray(row.revisions, "issues.revisions").map((value, index) => {
-			const path = `issues.revisions[${index}]`;
-			const issue = readRecord(value, path);
-			return {
-				productId: readString(issue.productId, `${path}.productId`),
-				barcode: readString(issue.barcode, `${path}.barcode`),
-				productName: readString(issue.productName, `${path}.productName`),
-				issue: readString(issue.issue, `${path}.issue`),
-			};
-		}),
+		revisions: readArray(row.revisions, "issues.revisions").map(
+			(value, index) => {
+				const path = `issues.revisions[${index}]`;
+				const issue = readRecord(value, path);
+				return {
+					productId: readString(issue.productId, `${path}.productId`),
+					barcode: readString(issue.barcode, `${path}.barcode`),
+					productName: readString(issue.productName, `${path}.productName`),
+					issue: readString(issue.issue, `${path}.issue`),
+				};
+			},
+		),
 	};
 };
 

@@ -28,10 +28,7 @@ const defaultFridgeItems = [
 	}),
 ];
 
-const renderChooser = (
-	fridgeItems = defaultFridgeItems,
-	filtersOpen = false,
-) =>
+const renderChooser = (fridgeItems = defaultFridgeItems, filtersOpen = false) =>
 	render(IngredientChooser, {
 		props: {
 			fridgeItems,
@@ -59,22 +56,24 @@ describe("IngredientChooser custom filtering", () => {
 
 		expect(screen.getByText("Catalog Jelly")).toBeInTheDocument();
 		expect(screen.getByText("Purple Homebrew")).toBeInTheDocument();
-		expect(screen.queryByText("Pending Pantry Product")).not.toBeInTheDocument();
+		expect(
+			screen.queryByText("Pending Pantry Product"),
+		).not.toBeInTheDocument();
 
 		await fireEvent.click(screen.getByRole("tab", { name: /shopping list/i }));
 		expect(screen.getByText("Pending Pantry Product")).toBeInTheDocument();
 		await fireEvent.click(screen.getByRole("tab", { name: /fridge/i }));
 
-		await fireEvent.click(
-			screen.getByRole("button", { name: "Custom only" }),
-		);
+		await fireEvent.click(screen.getByRole("button", { name: "Custom only" }));
 		await fireEvent.click(screen.getByRole("button", { name: "Apply" }));
 
 		const fridge = screen.getByLabelText("Mix fridge ingredients");
 		expect(within(fridge).getByText("Purple Homebrew")).toBeInTheDocument();
 		expect(within(fridge).queryByText("Custom")).not.toBeInTheDocument();
 		expect(screen.queryByText("Catalog Jelly")).not.toBeInTheDocument();
-		expect(screen.queryByText("Pending Pantry Product")).not.toBeInTheDocument();
+		expect(
+			screen.queryByText("Pending Pantry Product"),
+		).not.toBeInTheDocument();
 		expect(screen.getByText("1 available · 0 selected")).toBeInTheDocument();
 	});
 
@@ -117,7 +116,9 @@ describe("IngredientChooser progressive loading", () => {
 		expect(screen.getByText("Ingredient 12")).toBeInTheDocument();
 		expect(screen.getByText("Ingredient 02")).toBeInTheDocument();
 		expect(screen.getByText("Ingredient 01")).toBeInTheDocument();
-		expect(screen.queryByRole("button", { name: /next page/i })).not.toBeInTheDocument();
+		expect(
+			screen.queryByRole("button", { name: /next page/i }),
+		).not.toBeInTheDocument();
 	});
 });
 

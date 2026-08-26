@@ -43,7 +43,8 @@
 	text-transform: uppercase;
 }
 
-@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
 	.moderation-workspace,
 	.moderation-workspace__header {
 		gap: $app-gap-sm;

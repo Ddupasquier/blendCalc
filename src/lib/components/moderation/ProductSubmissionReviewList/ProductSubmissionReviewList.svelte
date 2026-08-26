@@ -18,7 +18,9 @@
 		showHeading = false,
 	}: ProductSubmissionReviewListProps = $props();
 	let pendingSubmissionId = $state<string | null>(null);
-	let imagePlacementBySubmissionId = $state<Record<string, ImagePlacementValue>>({});
+	let imagePlacementBySubmissionId = $state<
+		Record<string, ImagePlacementValue>
+	>({});
 
 	const getImagePlacement = (
 		submission: ProductSubmissionReviewListProps["submissions"][number],
@@ -59,7 +61,10 @@
 	{#if showHeading}
 		<header class="product-submission-review__heading">
 			<h2 id="product-submission-review-title">Product submissions</h2>
-			<p>Compare submitted package evidence with the values proposed for the shared catalog.</p>
+			<p>
+				Compare submitted package evidence with the values proposed for the
+				shared catalog.
+			</p>
 		</header>
 	{/if}
 
@@ -83,10 +88,15 @@
 				subtitle={submission.brandOwner ?? "Brand not provided"}
 			>
 				{#snippet status()}
-					{#if submission.isQaFixture}<TextBadge label="QA fixture" tone="warning" />{/if}
+					{#if submission.isQaFixture}<TextBadge
+							label="QA fixture"
+							tone="warning"
+						/>{/if}
 					{#if submission.updateReview}
 						<TextBadge
-							label={submission.submissionIntent === "catalog_correction" ? "Correction" : "Update"}
+							label={submission.submissionIntent === "catalog_correction"
+								? "Correction"
+								: "Update"}
 							tone="info"
 						/>
 					{/if}
@@ -94,10 +104,22 @@
 				{/snippet}
 
 				<dl class="product-submission-review__facts">
-					<div><dt>Barcode</dt><dd>{submission.barcode}</dd></div>
-					<div><dt>Matched food</dt><dd>{submission.matchedSource ?? "No exact match"}</dd></div>
-					<div><dt>Package photos</dt><dd>{submission.evidenceComplete ? "Complete" : "Incomplete"}</dd></div>
-					<div><dt>Differences</dt><dd>{submission.conflictCount}</dd></div>
+					<div>
+						<dt>Barcode</dt>
+						<dd>{submission.barcode}</dd>
+					</div>
+					<div>
+						<dt>Matched food</dt>
+						<dd>{submission.matchedSource ?? "No exact match"}</dd>
+					</div>
+					<div>
+						<dt>Package photos</dt>
+						<dd>{submission.evidenceComplete ? "Complete" : "Incomplete"}</dd>
+					</div>
+					<div>
+						<dt>Differences</dt>
+						<dd>{submission.conflictCount}</dd>
+					</div>
 				</dl>
 
 				{#if submission.externalLookupFailed}
@@ -110,7 +132,9 @@
 					<div class="product-submission-review__flags">
 						<strong>Review before deciding</strong>
 						<ul>
-							{#each submission.validationIssues as issue}<li>{issue}</li>{/each}
+							{#each submission.validationIssues as issue}<li>
+									{issue}
+								</li>{/each}
 						</ul>
 					</div>
 				{/if}
@@ -129,13 +153,15 @@
 					>
 						<div class="product-submission-review__stack">
 							<p>
-								Compared with revision {submission.updateReview.baseRevisionNumber}. The package label was checked on {submission.labelObservedDate}.
+								Compared with revision {submission.updateReview
+									.baseRevisionNumber}. The package label was checked on {submission.labelObservedDate}.
 							</p>
 							<ul class="product-submission-review__changes">
 								{#each submission.updateReview.changes as change (change.field)}
 									<li>
 										<strong>{change.label}</strong>
-										<span>{change.previousValue} → {change.submittedValue}</span>
+										<span>{change.previousValue} → {change.submittedValue}</span
+										>
 									</li>
 								{/each}
 							</ul>
@@ -143,7 +169,11 @@
 								<strong>Outside checks</strong>
 								<ul class="product-submission-review__changes">
 									{#each submission.updateReview.sourceChecks as sourceCheck (sourceCheck.source)}
-										<li><span>{sourceCheck.source}</span><strong>{sourceCheck.status}</strong></li>
+										<li>
+											<span>{sourceCheck.source}</span><strong
+												>{sourceCheck.status}</strong
+											>
+										</li>
 									{/each}
 								</ul>
 							</div>
@@ -158,7 +188,10 @@
 					tone={submission.evidence.length > 0 ? "neutral" : "danger"}
 				>
 					{#if submission.evidence.length > 0}
-						<div class="product-submission-review__evidence" aria-label="Private product evidence">
+						<div
+							class="product-submission-review__evidence"
+							aria-label="Private product evidence"
+						>
 							{#each submission.evidence as evidence (evidence.key)}
 								<a href={evidence.url} target="_blank" rel="noreferrer">
 									<img src={evidence.url} alt={evidence.label} />
@@ -167,7 +200,10 @@
 							{/each}
 						</div>
 					{:else}
-						<StatusMessage tone="danger" message="This submission has no package evidence and cannot be approved." />
+						<StatusMessage
+							tone="danger"
+							message="This submission has no package evidence and cannot be approved."
+						/>
 					{/if}
 				</CollapsibleSection>
 
@@ -194,32 +230,86 @@
 				>
 					<ul class="product-submission-review__nutrition">
 						{#each submission.nutrients as nutrient}
-							<li><span>{nutrient.name}</span><strong>{nutrient.value} {nutrient.unit}</strong></li>
+							<li>
+								<span>{nutrient.name}</span><strong
+									>{nutrient.value} {nutrient.unit}</strong
+								>
+							</li>
 						{/each}
 					</ul>
 				</CollapsibleSection>
 
-				<div class="product-submission-review__decision" aria-label={`Decision for ${submission.productName}`}>
-					<form method="POST" action="?/approveProduct" use:enhance={enhanceProductDecision}>
+				<div
+					class="product-submission-review__decision"
+					aria-label={`Decision for ${submission.productName}`}
+				>
+					<form
+						method="POST"
+						action="?/approveProduct"
+						use:enhance={enhanceProductDecision}
+					>
 						<input type="hidden" name="submissionId" value={submission.id} />
-						<input type="hidden" name="imageCropX" value={getImagePlacement(submission).cropX} />
-						<input type="hidden" name="imageCropY" value={getImagePlacement(submission).cropY} />
-						<input type="hidden" name="imageCropZoom" value={getImagePlacement(submission).cropZoom} />
-						<input type="hidden" name="imageRotationDegrees" value={getImagePlacement(submission).rotationDegrees} />
-						<input type="hidden" name="imageFitMode" value={getImagePlacement(submission).fitMode} />
-						<input type="hidden" name="imagePlacementVersion" value={getImagePlacement(submission).placementVersion} />
-						<input type="hidden" name="imagePlacementMethod" value={getImagePlacement(submission).placementMethod ?? "manual"} />
-						<input type="hidden" name="imageSuggestionVersion" value={getImagePlacement(submission).suggestionVersion ?? ""} />
-						<input type="hidden" name="imageSuggestionConfidence" value={getImagePlacement(submission).suggestionConfidence ?? ""} />
+						<input
+							type="hidden"
+							name="imageCropX"
+							value={getImagePlacement(submission).cropX}
+						/>
+						<input
+							type="hidden"
+							name="imageCropY"
+							value={getImagePlacement(submission).cropY}
+						/>
+						<input
+							type="hidden"
+							name="imageCropZoom"
+							value={getImagePlacement(submission).cropZoom}
+						/>
+						<input
+							type="hidden"
+							name="imageRotationDegrees"
+							value={getImagePlacement(submission).rotationDegrees}
+						/>
+						<input
+							type="hidden"
+							name="imageFitMode"
+							value={getImagePlacement(submission).fitMode}
+						/>
+						<input
+							type="hidden"
+							name="imagePlacementVersion"
+							value={getImagePlacement(submission).placementVersion}
+						/>
+						<input
+							type="hidden"
+							name="imagePlacementMethod"
+							value={getImagePlacement(submission).placementMethod ?? "manual"}
+						/>
+						<input
+							type="hidden"
+							name="imageSuggestionVersion"
+							value={getImagePlacement(submission).suggestionVersion ?? ""}
+						/>
+						<input
+							type="hidden"
+							name="imageSuggestionConfidence"
+							value={getImagePlacement(submission).suggestionConfidence ?? ""}
+						/>
 						<ActionButton
 							type="submit"
 							variant="success"
 							fullWidth
 							busy={pendingSubmissionId === submission.id}
-							disabled={pendingSubmissionId !== null || !submission.evidenceComplete || submission.isQaFixture}
-						>Approve submission</ActionButton>
+							disabled={pendingSubmissionId !== null ||
+								!submission.evidenceComplete ||
+								submission.isQaFixture}>Approve submission</ActionButton
+						>
 					</form>
-					<form class="product-submission-review__reject" method="POST" action="?/rejectProduct" use:enhance={enhanceProductDecision}>
+					<form
+						class="product-submission-review__reject"
+						method="POST"
+						action="?/rejectProduct"
+						use:enhance={enhanceProductDecision}
+					>
 						<input type="hidden" name="submissionId" value={submission.id} />
 						<TextField
 							id={`product-rejection-note-${submission.id}`}
@@ -236,7 +326,8 @@
 							fullWidth
 							busy={pendingSubmissionId === submission.id}
 							disabled={pendingSubmissionId !== null}
-						>Reject submission</ActionButton>
+							>Reject submission</ActionButton
+						>
 					</form>
 				</div>
 			</ModeratorReviewCard>

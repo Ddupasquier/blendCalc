@@ -72,16 +72,20 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 		const searches: Promise<FoodItem[]>[] = [];
 		const catalogClient = getSupabaseAdminClient();
 		if (trustFilter === "any" || trustFilter === "user-private") {
-			searches.push(searchUserCustomFoods(locals.supabase, user.id, query, {
-				sourceFilter,
-				trustFilter,
-			}));
+			searches.push(
+				searchUserCustomFoods(locals.supabase, user.id, query, {
+					sourceFilter,
+					trustFilter,
+				}),
+			);
 		}
 		if (sourceFilter !== "custom" && trustFilter !== "user-private") {
-			searches.push(searchApprovedSharedProducts(catalogClient, query, {
-				sourceFilter,
-				trustFilter,
-			}));
+			searches.push(
+				searchApprovedSharedProducts(catalogClient, query, {
+					sourceFilter,
+					trustFilter,
+				}),
+			);
 		}
 		if (
 			areExternalProductLookupsEnabled() &&
@@ -97,15 +101,12 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 			searches.push(searchGenericFoods(locals.supabase, query));
 		}
 		const searchPromise = Promise.allSettled(searches);
-		const [
-			searchResults,
-			nutritionCompletenessCatalog,
-			foodSafetyContext,
-		] = await Promise.all([
-			searchPromise,
-			getNutritionCompletenessCatalog(),
-			getUserFoodSafetyContext(locals.supabase, user.id),
-		]);
+		const [searchResults, nutritionCompletenessCatalog, foodSafetyContext] =
+			await Promise.all([
+				searchPromise,
+				getNutritionCompletenessCatalog(),
+				getUserFoodSafetyContext(locals.supabase, user.id),
+			]);
 		if (
 			searchResults.length > 0 &&
 			searchResults.every((result) => result.status === "rejected")

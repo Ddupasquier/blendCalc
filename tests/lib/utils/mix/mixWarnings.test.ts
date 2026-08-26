@@ -8,17 +8,17 @@ import type { FoodItem } from "$lib/utils/food/types";
 import { withOverageDetails } from "$lib/utils/mix/ui/mixUi";
 
 const goal = (
-  nutrientId: number,
-  goalType: MixGoalType,
-  targetAmount: number,
+	nutrientId: number,
+	goalType: MixGoalType,
+	targetAmount: number,
 ): MixNutrientGoal => ({
-  nutrientId,
-  goalType,
-  targetAmount,
-  upperAmount: null,
-  toleranceRatio: 0,
-  importanceWeight: 1,
-  sortOrder: 1,
+	nutrientId,
+	goalType,
+	targetAmount,
+	upperAmount: null,
+	toleranceRatio: 0,
+	importanceWeight: 1,
+	sortOrder: 1,
 });
 
 describe("Mix warnings", () => {
@@ -29,7 +29,7 @@ describe("Mix warnings", () => {
 				label: "Sugar",
 				unit: "g",
 				total: 33,
-        goal: goal(2000, "maximum", 25),
+				goal: goal(2000, "maximum", 25),
 			},
 		]);
 
@@ -60,9 +60,7 @@ describe("Mix warnings", () => {
 				total: 33,
 				goal: 25,
 				overage: 8,
-				contributors: [
-					{ label: "Banana, Raw", amount: 12, grams: 120 },
-				],
+				contributors: [{ label: "Banana, Raw", amount: 12, grams: 120 }],
 			},
 		]);
 
@@ -81,7 +79,7 @@ describe("Mix warnings", () => {
 				label: "Protein",
 				unit: "g",
 				total: 13,
-        goal: goal(1003, "minimum", 25),
+				goal: goal(1003, "minimum", 25),
 			},
 		]);
 
@@ -108,7 +106,7 @@ describe("Mix warnings", () => {
 					label: "Protein",
 					unit: "g",
 					total: 0,
-          goal: goal(1003, "minimum", 25),
+					goal: goal(1003, "minimum", 25),
 				},
 			],
 			{ includeUnderTargets: false },

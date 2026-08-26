@@ -17,13 +17,17 @@ describe("ProfileMeasurementDefaults", () => {
 			},
 		});
 
-		expect(screen.getByRole("combobox", { name: "Display units" }))
-			.toBeInTheDocument();
-		expect(screen.getByRole("spinbutton", {
-			name: "Default Mix starting amount",
-		})).toBeInTheDocument();
-		expect(screen.getByText("28.3495 g = 1 oz · Exact unit conversion"))
-			.toBeInTheDocument();
+		expect(
+			screen.getByRole("combobox", { name: "Display units" }),
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole("spinbutton", {
+				name: "Default Mix starting amount",
+			}),
+		).toBeInTheDocument();
+		expect(
+			screen.getByText("28.3495 g = 1 oz · Exact unit conversion"),
+		).toBeInTheDocument();
 	});
 
 	it("offers a scoped restore action", async () => {

@@ -65,7 +65,10 @@
 	);
 </script>
 
-<div class="profile-food-preference-settings" data-tutorial-target="food-preferences">
+<div
+	class="profile-food-preference-settings"
+	data-tutorial-target="food-preferences"
+>
 	{#if errorMessage}
 		<StatusMessage tone="danger" message={errorMessage} />
 	{:else if successMessage}
@@ -95,11 +98,14 @@
 					preferenceFormState.setSectionOpen("region", open)}
 			>
 				<p class="profile-food-preference-settings__description">
-					Adds the selected authority's package-label context to Nutrition details and warning explanations. Personal warnings always remain active.
+					Adds the selected authority's package-label context to Nutrition
+					details and warning explanations. Personal warnings always remain
+					active.
 				</p>
 				<ProfileRegulatoryRegionSettings
 					regulatoryRegionCode={preferenceFormState.form.regulatoryRegionCode}
-					regulatoryRegionSource={preferenceFormState.form.regulatoryRegionSource}
+					regulatoryRegionSource={preferenceFormState.form
+						.regulatoryRegionSource}
 					{regulatoryRegionOptions}
 					hasUnsupportedRegion={preferenceFormState.hasUnsupportedRegion}
 					disabled={isDisabled}
@@ -117,7 +123,8 @@
 					preferenceFormState.setSectionOpen("measurements", open)}
 			>
 				<p class="profile-food-preference-settings__description">
-					Choose display units separately from the amount a newly selected Mix ingredient starts with when no exact serving exists.
+					Choose display units separately from the amount a newly selected Mix
+					ingredient starts with when no exact serving exists.
 				</p>
 				<ProfileMeasurementDefaults
 					unitSystem={preferenceFormState.form.unitSystem}
@@ -170,13 +177,17 @@
 							? "Clear allergens"
 							: "Clear restrictions"}
 						referenceDataUnavailable={foodPreferenceOptionsUnavailable}
-						emptyLabel={groupKey === "allergens" ? "No allergens saved." : "No restrictions saved."}
+						emptyLabel={groupKey === "allergens"
+							? "No allergens saved."
+							: "No restrictions saved."}
 						unresolvedValues={groupKey === "allergens"
 							? preferenceFormState.unresolvedAllergens
 							: preferenceFormState.unresolvedDietaryRestrictions}
-						onAdd={(value) => preferenceFormState.addPreference(groupKey, value)}
+						onAdd={(value) =>
+							preferenceFormState.addPreference(groupKey, value)}
 						onClear={() => preferenceFormState.clearPreferenceGroup(groupKey)}
-						onRemove={(value) => preferenceFormState.removePreference(groupKey, value)}
+						onRemove={(value) =>
+							preferenceFormState.removePreference(groupKey, value)}
 					/>
 				</CollapsibleSection>
 			{/each}
@@ -193,7 +204,8 @@
 					preferenceFormState.setSectionOpen("priorityNutrients", open)}
 			>
 				<p class="profile-food-preference-settings__description">
-					Sets the default display order for tracked Mix nutrients. It does not create or change nutrition goals.
+					Sets the default display order for tracked Mix nutrients. It does not
+					create or change nutrition goals.
 				</p>
 				<ProfileNutrientPrioritySettings
 					options={priorityNutrientOptions}
@@ -208,9 +220,12 @@
 				class="profile-food-preference-settings__privacy"
 				aria-labelledby="profile-food-preference-privacy-title"
 			>
-				<h2 id="profile-food-preference-privacy-title">Private account settings</h2>
+				<h2 id="profile-food-preference-privacy-title">
+					Private account settings
+				</h2>
 				<p class="profile-food-preference-settings__description">
-					These optional choices may include health-related information. The app uses them to personalize warnings and suggestions.
+					These optional choices may include health-related information. The app
+					uses them to personalize warnings and suggestions.
 				</p>
 				<CheckboxField
 					id="profile-sensitive-preferences"

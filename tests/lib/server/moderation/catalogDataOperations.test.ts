@@ -15,8 +15,9 @@ describe("catalog data-operations repository", () => {
 			error: null,
 		});
 
-		await expect(readCatalogDataOperationsHealth({ rpc } as never))
-			.resolves.toEqual(catalogDataOperationsHealthFixture);
+		await expect(
+			readCatalogDataOperationsHealth({ rpc } as never),
+		).resolves.toEqual(catalogDataOperationsHealthFixture);
 		expect(rpc).toHaveBeenCalledWith("get_catalog_data_operations_health", {
 			p_days: 30,
 			p_issue_limit: 20,
@@ -29,8 +30,9 @@ describe("catalog data-operations repository", () => {
 			error: null,
 		});
 
-		await expect(readCatalogMonitorModerationSummary({ rpc } as never))
-			.resolves.toEqual(catalogMonitorModerationFixture);
+		await expect(
+			readCatalogMonitorModerationSummary({ rpc } as never),
+		).resolves.toEqual(catalogMonitorModerationFixture);
 		expect(rpc).toHaveBeenCalledWith(
 			"get_catalog_data_operations_monitor_summary",
 			{ p_limit: 20 },
@@ -43,24 +45,35 @@ describe("catalog data-operations repository", () => {
 			message:
 				"Could not find the function public.get_catalog_data_operations_monitor_summary in the schema cache",
 		};
-		await expect(readCatalogMonitorModerationSummary({
-			rpc: vi.fn().mockResolvedValue({ data: null, error: missingFunctionError }),
-		} as never)).resolves.toEqual(
-			createUnavailableCatalogMonitorModerationSummary(),
-		);
-		expect(isCatalogMonitorSchemaUnavailable({
-			code: "42501",
-			message: "permission denied for function get_catalog_data_operations_monitor_summary",
-		})).toBe(false);
+		await expect(
+			readCatalogMonitorModerationSummary({
+				rpc: vi
+					.fn()
+					.mockResolvedValue({ data: null, error: missingFunctionError }),
+			} as never),
+		).resolves.toEqual(createUnavailableCatalogMonitorModerationSummary());
+		expect(
+			isCatalogMonitorSchemaUnavailable({
+				code: "42501",
+				message:
+					"permission denied for function get_catalog_data_operations_monitor_summary",
+			}),
+		).toBe(false);
 	});
 
 	it("returns the approved moderation error for database or contract failures", async () => {
-		await expect(readCatalogDataOperationsHealth({
-			rpc: vi.fn().mockResolvedValue({ data: null, error: { message: "failed" } }),
-		} as never)).rejects.toMatchObject({ status: 502 });
+		await expect(
+			readCatalogDataOperationsHealth({
+				rpc: vi
+					.fn()
+					.mockResolvedValue({ data: null, error: { message: "failed" } }),
+			} as never),
+		).rejects.toMatchObject({ status: 502 });
 
-		await expect(readCatalogDataOperationsHealth({
-			rpc: vi.fn().mockResolvedValue({ data: {}, error: null }),
-		} as never)).rejects.toMatchObject({ status: 502 });
+		await expect(
+			readCatalogDataOperationsHealth({
+				rpc: vi.fn().mockResolvedValue({ data: {}, error: null }),
+			} as never),
+		).rejects.toMatchObject({ status: 502 });
 	});
 });

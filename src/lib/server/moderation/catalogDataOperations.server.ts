@@ -27,10 +27,13 @@ export const isCatalogMonitorSchemaUnavailable = (
 export const readCatalogDataOperationsHealth = async (
 	supabase: SupabaseClient<Database>,
 ): Promise<CatalogDataOperationsHealth> => {
-	const { data, error } = await supabase.rpc("get_catalog_data_operations_health", {
-		p_days: DEFAULT_METRIC_WINDOW_DAYS,
-		p_issue_limit: DEFAULT_ISSUE_LIMIT,
-	});
+	const { data, error } = await supabase.rpc(
+		"get_catalog_data_operations_health",
+		{
+			p_days: DEFAULT_METRIC_WINDOW_DAYS,
+			p_issue_limit: DEFAULT_ISSUE_LIMIT,
+		},
+	);
 
 	if (error || data === null) {
 		throwAppError(502, "MODERATION_DATA_UNAVAILABLE");

@@ -53,17 +53,15 @@
 	const preferenceWarnings = $derived(food.preferenceWarnings ?? []);
 	const warningEdgeTone = $derived(getFoodWarningEdgeTone(food));
 	const detailsElementId = $derived(`mix-ingredient-${food.fdcId}-details`);
-	const servingUnitOptions = $derived(
-		[
-			...SERVING_MEASURE_OPTIONS
-				.filter((option) => canConvertServingUnit(option.value, food))
-				.map((option) => ({ value: option.value, label: option.shortLabel })),
-			...getSourceServingMeasureOptions(food).map((option) => ({
-				value: option.value,
-				label: option.label,
-			})),
-		],
-	);
+	const servingUnitOptions = $derived([
+		...SERVING_MEASURE_OPTIONS.filter((option) =>
+			canConvertServingUnit(option.value, food),
+		).map((option) => ({ value: option.value, label: option.shortLabel })),
+		...getSourceServingMeasureOptions(food).map((option) => ({
+			value: option.value,
+			label: option.label,
+		})),
+	]);
 	const updateQuantity = (nextQuantity: number) =>
 		onServingChange(food, String(Math.max(0, nextQuantity)), servingUnit);
 	const updateServingUnit = (nextUnit: ServingMeasureUnit) => {
@@ -88,12 +86,17 @@
 	class:mix-ingredient-amount-card--warning={warningEdgeTone !== null}
 >
 	{#if warningEdgeTone}<CardWarningEdge tone={warningEdgeTone} />{/if}
-	<span class="mix-ingredient-amount-card__symbol" aria-hidden="true"><FoodSymbol {food} /></span>
+	<span class="mix-ingredient-amount-card__symbol" aria-hidden="true"
+		><FoodSymbol {food} /></span
+	>
 	<div class="mix-ingredient-amount-card__copy">
 		<h3 title={food.description}>{food.description}</h3>
 		{#if convertedWeightLabel}<p>{convertedWeightLabel}</p>{/if}
 	</div>
-	<div class="mix-ingredient-amount-card__amount" aria-label={`Amount for ${food.description}`}>
+	<div
+		class="mix-ingredient-amount-card__amount"
+		aria-label={`Amount for ${food.description}`}
+	>
 		<AcceleratingStepButton
 			label={`Use less ${food.description}`}
 			variant="soft"
@@ -185,12 +188,19 @@
 				<StatusMessage
 					tone="warning"
 					title={FOOD_PREFERENCE_WARNING_TITLE}
-					message={preferenceWarnings.map(getFoodPreferenceWarningMessage).join(" ")}
+					message={preferenceWarnings
+						.map(getFoodPreferenceWarningMessage)
+						.join(" ")}
 				/>
 			{/if}
 			{#if nutrientContributionChips.length > 0}
-				<div class="mix-ingredient-amount-card__nutrient-chips" aria-label="Top nutrient contributions">
-					{#each nutrientContributionChips as chip}<span>{chip.label} {chip.value}</span>{/each}
+				<div
+					class="mix-ingredient-amount-card__nutrient-chips"
+					aria-label="Top nutrient contributions"
+				>
+					{#each nutrientContributionChips as chip}<span
+							>{chip.label} {chip.value}</span
+						>{/each}
 				</div>
 			{/if}
 		</div>

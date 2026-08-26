@@ -53,19 +53,23 @@ export const getDefaultMixState = (
 	const defaultNutrientIdSet = new Set(
 		defaultMixFields.map((nutrient) => nutrient.id),
 	);
-	const validPrioritizedNutrientIds = [...new Set(prioritizedNutrientIds)].filter(
-		(nutrientId) => defaultNutrientIdSet.has(nutrientId),
-	);
+	const validPrioritizedNutrientIds = [
+		...new Set(prioritizedNutrientIds),
+	].filter((nutrientId) => defaultNutrientIdSet.has(nutrientId));
 	const orderedNutrientIds = [
 		...validPrioritizedNutrientIds,
 		...defaultMixFields
 			.map((nutrient) => nutrient.id)
-			.filter((nutrientId) => !validPrioritizedNutrientIds.includes(nutrientId)),
+			.filter(
+				(nutrientId) => !validPrioritizedNutrientIds.includes(nutrientId),
+			),
 	];
 
 	return {
 		selected: orderedNutrientIds,
-		options: optionsFromSelectedNutrientIds(orderedNutrientIds, [defaultMixFields]),
+		options: optionsFromSelectedNutrientIds(orderedNutrientIds, [
+			defaultMixFields,
+		]),
 		selectedFoodIds: [],
 		servingGrams: {},
 		servingQuantities: {},
@@ -83,10 +87,10 @@ export const getServingQuantity = (
 	food: FoodItem,
 	servingQuantities: Record<number, number>,
 ) => {
-  return (
-    servingQuantities[food.fdcId] ??
-    getMixRuntimeConfiguration().defaultServingGrams
-  );
+	return (
+		servingQuantities[food.fdcId] ??
+		getMixRuntimeConfiguration().defaultServingGrams
+	);
 };
 
 export const getServingUnit = (
@@ -125,17 +129,19 @@ export const readStoredMixState = (
 		if (persistedMixState.version !== MIX_STATE_STORAGE_VERSION) {
 			return fallbackState;
 		}
-		const normalizedSavedOptions = normalizeNutrientOptions(persistedMixState.options);
+		const normalizedSavedOptions = normalizeNutrientOptions(
+			persistedMixState.options,
+		);
 		const selected = Array.isArray(persistedMixState.selected)
 			? persistedMixState.selected
 			: fallbackState.selected;
 		const options = mergeNutrientOptions(
 			getDefaultNutrientOptions(),
 			normalizedSavedOptions,
-      optionsFromSelectedNutrientIds(selected, [
-        defaultMixFields,
-        nutrientCatalog,
-      ]),
+			optionsFromSelectedNutrientIds(selected, [
+				defaultMixFields,
+				nutrientCatalog,
+			]),
 		);
 		const selectedFoodIds = Array.isArray(persistedMixState.selectedFoodIds)
 			? persistedMixState.selectedFoodIds.filter((id) => Number.isFinite(id))
@@ -143,14 +149,16 @@ export const readStoredMixState = (
 		const storedServingGrams = Object.fromEntries(
 			Object.entries(persistedMixState.servingGrams ?? {})
 				.map(([id, grams]) => [Number(id), Number(grams)])
-        .filter(([id, grams]) => Number.isFinite(id) && Number.isFinite(grams)),
+				.filter(([id, grams]) => Number.isFinite(id) && Number.isFinite(grams)),
 		);
 		const servingQuantities = Object.fromEntries(
 			selectedFoodIds.map((foodId) => {
 				const parsedInput = persistedMixState.servingInputs?.[foodId]
 					? parseServingAmount(persistedMixState.servingInputs[foodId])
 					: null;
-				const savedQuantity = Number(persistedMixState.servingQuantities?.[foodId]);
+				const savedQuantity = Number(
+					persistedMixState.servingQuantities?.[foodId],
+				);
 				return [
 					foodId,
 					Number.isFinite(savedQuantity)
@@ -168,10 +176,10 @@ export const readStoredMixState = (
 					? parseServingAmount(persistedMixState.servingInputs[foodId])
 					: null;
 				const requestedUnit =
-						normalizeServingUnit(
-							persistedMixState.servingUnits?.[foodId],
-							food,
-						) ??
+					normalizeServingUnit(
+						persistedMixState.servingUnits?.[foodId],
+						food,
+					) ??
 					parsedInput?.unit ??
 					"g";
 				return [
@@ -265,7 +273,10 @@ export const getStateWithToggledFood = (
 	}
 
 	const food = allIngredientItems.find((item) => item.fdcId === foodId);
-	const defaultServing = getDefaultServingAmount(food, defaultServingPreferences);
+	const defaultServing = getDefaultServingAmount(
+		food,
+		defaultServingPreferences,
+	);
 
 	return {
 		...state,
@@ -274,11 +285,11 @@ export const getStateWithToggledFood = (
 			...state.servingGrams,
 			[foodId]:
 				state.servingGrams[foodId] ??
-        convertServingToGrams(
-          defaultServing.quantity,
-          defaultServing.unit,
-          food,
-        ) ??
+				convertServingToGrams(
+					defaultServing.quantity,
+					defaultServing.unit,
+					food,
+				) ??
 				getMixRuntimeConfiguration().defaultServingGrams,
 		},
 		servingQuantities: {

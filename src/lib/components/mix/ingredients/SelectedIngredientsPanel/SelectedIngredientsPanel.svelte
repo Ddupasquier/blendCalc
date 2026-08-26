@@ -104,9 +104,12 @@
 						convertedWeightLabel={servingUnit === "g"
 							? null
 							: getServingGramsLabel(servingConversion)}
-						servingConversionBasis={getServingConversionBasis(servingConversion)}
+						servingConversionBasis={getServingConversionBasis(
+							servingConversion,
+						)}
 						servingConversionWarningMessage={getServingConversionWarning(food)}
-						isServingConversionDetailsOpen={conversionDetailsFoodId === food.fdcId}
+						isServingConversionDetailsOpen={conversionDetailsFoodId ===
+							food.fdcId}
 						{onOpenConversionDetails}
 						{onCloseConversionDetails}
 						nutrientContributionChips={getFoodNutrientChips(

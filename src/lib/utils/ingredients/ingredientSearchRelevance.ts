@@ -18,10 +18,7 @@ type SearchableFoodField = {
 };
 
 export const tokenizeIngredientSearchText = (value: string) =>
-	value
-		.normalize("NFKC")
-		.toLocaleLowerCase()
-		.match(SEARCH_WORD_PATTERN) ?? [];
+	value.normalize("NFKC").toLocaleLowerCase().match(SEARCH_WORD_PATTERN) ?? [];
 
 const getSearchRelevance = (
 	value: string,
@@ -48,17 +45,15 @@ const getSearchRelevance = (
 	const substringMatchCount = wordMatches.filter(
 		({ position, isSubstringOnly }) => position >= 0 && isSubstringOnly,
 	).length;
-	const everyWordMatchesByPrefix =
-		allWordsMatched && substringMatchCount === 0;
+	const everyWordMatchesByPrefix = allWordsMatched && substringMatchCount === 0;
 	const startsWithSearch =
-		everyWordMatchesByPrefix && searchWords.every(
-			(searchWord, index) =>
-				(fieldWords[index] ?? "").startsWith(searchWord),
+		everyWordMatchesByPrefix &&
+		searchWords.every((searchWord, index) =>
+			(fieldWords[index] ?? "").startsWith(searchWord),
 		);
 	const allMatchesAreEarly =
-		allWordsMatched && matchPositions.every(
-			(position) => position < EARLY_DESCRIPTION_WORD_LIMIT,
-		);
+		allWordsMatched &&
+		matchPositions.every((position) => position < EARLY_DESCRIPTION_WORD_LIMIT);
 	const hasEarlyMatch = matchedPositions.some(
 		(position) => position < EARLY_DESCRIPTION_WORD_LIMIT,
 	);
@@ -77,12 +72,14 @@ const getSearchRelevance = (
 	return {
 		tier,
 		substringMatchCount,
-		firstMatchPosition: matchedPositions.length > 0
-			? Math.min(...matchedPositions)
-			: Number.MAX_SAFE_INTEGER,
-		lastMatchPosition: matchedPositions.length > 0
-			? Math.max(...matchedPositions)
-			: Number.MAX_SAFE_INTEGER,
+		firstMatchPosition:
+			matchedPositions.length > 0
+				? Math.min(...matchedPositions)
+				: Number.MAX_SAFE_INTEGER,
+		lastMatchPosition:
+			matchedPositions.length > 0
+				? Math.max(...matchedPositions)
+				: Number.MAX_SAFE_INTEGER,
 		fieldWordCount: fieldWords.length,
 	};
 };
@@ -193,14 +190,16 @@ const getFoodSearchRelevance = (
 		.filter((match) => match.tier < 9)
 		.sort(compareSearchRelevance);
 
-	return fieldMatches[0] ?? {
-		fieldPriority: Number.MAX_SAFE_INTEGER,
-		tier: 9,
-		substringMatchCount: Number.MAX_SAFE_INTEGER,
-		firstMatchPosition: Number.MAX_SAFE_INTEGER,
-		lastMatchPosition: Number.MAX_SAFE_INTEGER,
-		fieldWordCount: Number.MAX_SAFE_INTEGER,
-	};
+	return (
+		fieldMatches[0] ?? {
+			fieldPriority: Number.MAX_SAFE_INTEGER,
+			tier: 9,
+			substringMatchCount: Number.MAX_SAFE_INTEGER,
+			firstMatchPosition: Number.MAX_SAFE_INTEGER,
+			lastMatchPosition: Number.MAX_SAFE_INTEGER,
+			fieldWordCount: Number.MAX_SAFE_INTEGER,
+		}
+	);
 };
 
 const compareSearchRelevance = (
@@ -238,11 +237,12 @@ export const rankIngredientSearchCandidates = (
 	const compareRelevance = createIngredientSearchRelevanceComparator(query);
 	return foods
 		.map((food, originalIndex) => ({ food, originalIndex }))
-		.sort((left, right) =>
-			compareRelevance(left.food, right.food) ||
-			left.food.description.localeCompare(right.food.description) ||
-			left.food.fdcId - right.food.fdcId ||
-			left.originalIndex - right.originalIndex,
+		.sort(
+			(left, right) =>
+				compareRelevance(left.food, right.food) ||
+				left.food.description.localeCompare(right.food.description) ||
+				left.food.fdcId - right.food.fdcId ||
+				left.originalIndex - right.originalIndex,
 		)
 		.map(({ food }) => food);
 };

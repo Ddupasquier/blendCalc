@@ -18,12 +18,12 @@
 		summary.identityVerificationRequired
 			? `Verify your identity to use ${availableToolCount} protected tools`
 			: summary.unavailable
-			? `${availableToolCount} tools available · review counts unavailable`
-			: summary.totalPendingReviews === 0
-				? `${availableToolCount} tools available · no reviews waiting`
-				: summary.totalPendingReviews === 1
-					? `${availableToolCount} tools available · 1 review waiting`
-					: `${availableToolCount} tools available · ${summary.totalPendingReviews} reviews waiting`,
+				? `${availableToolCount} tools available · review counts unavailable`
+				: summary.totalPendingReviews === 0
+					? `${availableToolCount} tools available · no reviews waiting`
+					: summary.totalPendingReviews === 1
+						? `${availableToolCount} tools available · 1 review waiting`
+						: `${availableToolCount} tools available · ${summary.totalPendingReviews} reviews waiting`,
 	);
 </script>
 

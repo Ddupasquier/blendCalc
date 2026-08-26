@@ -86,13 +86,15 @@ textarea:disabled {
 	font-variant-numeric: tabular-nums;
 }
 
-@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
 	input {
 		min-height: $app-shell-control-height-narrow;
 	}
 
 	input,
 	textarea {
-		padding: $app-shell-control-padding-y-compact $app-shell-control-padding-x-compact;
+		padding: $app-shell-control-padding-y-compact
+			$app-shell-control-padding-x-compact;
 	}
 }

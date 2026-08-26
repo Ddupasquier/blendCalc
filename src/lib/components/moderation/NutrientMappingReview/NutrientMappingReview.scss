@@ -73,7 +73,8 @@
 	border-radius: $app-shell-radius-card;
 }
 
-@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
 	.nutrient-mapping-review,
 	.nutrient-mapping-review__summary,
 	.nutrient-mapping-review__decision {

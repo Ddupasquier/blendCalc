@@ -56,11 +56,7 @@
 						<strong>{lastAppliedFoodDescription} updated.</strong>
 						You can undo that change now.
 					</p>
-					<ActionButton
-						size="small"
-						variant="secondary"
-						onclick={onUndo}
-					>
+					<ActionButton size="small" variant="secondary" onclick={onUndo}>
 						Undo
 					</ActionButton>
 				</div>

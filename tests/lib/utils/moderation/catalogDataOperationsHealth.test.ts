@@ -4,8 +4,9 @@ import { catalogDataOperationsHealthFixture } from "../../../fixtures/catalogDat
 
 describe("moderator data-health parser", () => {
 	it("accepts the bounded dashboard contract", () => {
-		expect(parseCatalogDataOperationsHealth(catalogDataOperationsHealthFixture))
-			.toEqual(catalogDataOperationsHealthFixture);
+		expect(
+			parseCatalogDataOperationsHealth(catalogDataOperationsHealthFixture),
+		).toEqual(catalogDataOperationsHealthFixture);
 	});
 
 	it("orders source activity by descending lookup usage with deterministic ties", () => {
@@ -35,12 +36,14 @@ describe("moderator data-health parser", () => {
 	});
 
 	it("rejects malformed aggregate values rather than inventing defaults", () => {
-		expect(() => parseCatalogDataOperationsHealth({
-			...catalogDataOperationsHealthFixture,
-			overview: {
-				...catalogDataOperationsHealthFixture.overview,
-				activeProducts: "16",
-			},
-		})).toThrow(/overview\.activeProducts/u);
+		expect(() =>
+			parseCatalogDataOperationsHealth({
+				...catalogDataOperationsHealthFixture,
+				overview: {
+					...catalogDataOperationsHealthFixture.overview,
+					activeProducts: "16",
+				},
+			}),
+		).toThrow(/overview\.activeProducts/u);
 	});
 });

@@ -37,16 +37,18 @@
 		new Set(unresolvedValues.map(normalizeValue)),
 	);
 	const filteredOptions = $derived(
-		options.filter((option) => {
-			if (selectedValueKeys.has(option.normalizedValue)) return false;
-			const search = normalizeValue(reviewedChoiceSearch);
-			if (!search) return true;
-			return [
-				option.label,
-				option.normalizedValue,
-				...option.sourceValues,
-			].some((value) => normalizeValue(value).includes(search));
-		}).slice(0, 6),
+		options
+			.filter((option) => {
+				if (selectedValueKeys.has(option.normalizedValue)) return false;
+				const search = normalizeValue(reviewedChoiceSearch);
+				if (!search) return true;
+				return [
+					option.label,
+					option.normalizedValue,
+					...option.sourceValues,
+				].some((value) => normalizeValue(value).includes(search));
+			})
+			.slice(0, 6),
 	);
 	const reviewedResultLabel = $derived(
 		reviewedChoiceSearch.trim()
@@ -74,7 +76,9 @@
 			aria-label={`Selected ${title.toLocaleLowerCase()}`}
 		>
 			{#each selectedValues as value (normalizeValue(value))}
-				{@const waitingForReview = unresolvedValueKeys.has(normalizeValue(value))}
+				{@const waitingForReview = unresolvedValueKeys.has(
+					normalizeValue(value),
+				)}
 				<SettingsSelectionRow
 					title={value}
 					description={waitingForReview
@@ -119,9 +123,10 @@
 				type="search"
 				value={reviewedChoiceSearch}
 				placeholder={`Search and add ${title.toLocaleLowerCase()}`}
-				disabled={disabled}
+				{disabled}
 				oninput={(event) =>
-					(reviewedChoiceSearch = (event.currentTarget as HTMLInputElement).value)}
+					(reviewedChoiceSearch = (event.currentTarget as HTMLInputElement)
+						.value)}
 			/>
 			{#if filteredOptions.length}
 				<div class="preference-reviewed-results">
@@ -143,7 +148,9 @@
 			{:else if reviewedChoiceSearch.trim()}
 				<p class="preference-empty">No reviewed choices match that search.</p>
 			{:else}
-				<p class="preference-empty">Every reviewed choice shown here is already active.</p>
+				<p class="preference-empty">
+					Every reviewed choice shown here is already active.
+				</p>
 			{/if}
 		</div>
 	{:else}

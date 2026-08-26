@@ -51,10 +51,14 @@ describe("MixIngredientAmountCard", () => {
 			screen.getByRole("combobox", { name: "Measure for Tomato, Roma" }),
 		);
 		expect(screen.getByRole("option", { name: "g" })).toBeInTheDocument();
-		expect(screen.queryByRole("option", { name: "grams" })).not.toBeInTheDocument();
+		expect(
+			screen.queryByRole("option", { name: "grams" }),
+		).not.toBeInTheDocument();
 		expect(
 			container.querySelector(".mix-ingredient-amount-card__actions"),
-		).toContainElement(screen.getByRole("button", { name: "Remove Tomato, Roma" }));
+		).toContainElement(
+			screen.getByRole("button", { name: "Remove Tomato, Roma" }),
+		);
 		expect(cardStyles).toContain('". amount amount"');
 
 		await fireEvent.click(
@@ -86,20 +90,24 @@ describe("MixIngredientAmountCard", () => {
 			},
 		});
 
-		expect(screen.getByRole("spinbutton", { name: "Quantity for Kale, Raw" })).toHaveValue(21);
+		expect(
+			screen.getByRole("spinbutton", { name: "Quantity for Kale, Raw" }),
+		).toHaveValue(21);
 		expect(screen.queryByText(/g equivalent/i)).not.toBeInTheDocument();
 	});
 
 	it("offers exact household servings and preserves grams when switching units", async () => {
 		configureServingMeasureCatalog({
-			options: [{
-				value: "g",
-				label: "grams",
-				shortLabel: "g",
-				dimension: "weight",
-				conversionToBase: 1,
-				isDefault: true,
-			}],
+			options: [
+				{
+					value: "g",
+					label: "grams",
+					shortLabel: "g",
+					dimension: "weight",
+					conversionToBase: 1,
+					isDefault: true,
+				},
+			],
 			aliases: { g: "g" },
 			aliasEntries: [{ alias: "g", unit: "g" }],
 		});
@@ -110,12 +118,14 @@ describe("MixIngredientAmountCard", () => {
 					fdcId: 5,
 					description: "Banana, Raw",
 					foodNutrients: [],
-					foodServings: [{
-						label: "1 medium banana (118 g)",
-						gramWeight: 118,
-						isPrimary: true,
-						gramWeightMethod: "source-reported",
-					}],
+					foodServings: [
+						{
+							label: "1 medium banana (118 g)",
+							gramWeight: 118,
+							isPrimary: true,
+							gramWeightMethod: "source-reported",
+						},
+					],
 				},
 				sourceListLabel: "Fridge",
 				servingQuantity: 118,
@@ -131,26 +141,32 @@ describe("MixIngredientAmountCard", () => {
 		await fireEvent.click(
 			screen.getByRole("combobox", { name: "Measure for Banana, Raw" }),
 		);
-		await fireEvent.click(screen.getByRole("option", { name: "medium banana" }));
+		await fireEvent.click(
+			screen.getByRole("option", { name: "medium banana" }),
+		);
 
 		expect(onServingChange).toHaveBeenCalledWith(
 			expect.objectContaining({ fdcId: 5 }),
 			"1",
 			expect.stringMatching(/^source-serving:/),
 		);
-		expect(screen.queryByRole("option", { name: "cup" })).not.toBeInTheDocument();
+		expect(
+			screen.queryByRole("option", { name: "cup" }),
+		).not.toBeInTheDocument();
 	});
 
 	it("does not label private foods with a compact custom badge", () => {
 		configureServingMeasureCatalog({
-			options: [{
-				value: "g",
-				label: "grams",
-				shortLabel: "g",
-				dimension: "weight",
-				conversionToBase: 1,
-				isDefault: true,
-			}],
+			options: [
+				{
+					value: "g",
+					label: "grams",
+					shortLabel: "g",
+					dimension: "weight",
+					conversionToBase: 1,
+					isDefault: true,
+				},
+			],
 			aliases: { g: "g" },
 			aliasEntries: [{ alias: "g", unit: "g" }],
 		});
@@ -184,18 +200,20 @@ describe("MixIngredientAmountCard", () => {
 					fdcId: 4,
 					description: "Pork Chorizo",
 					foodNutrients: [],
-					preferenceWarnings: [{
-						id: "pork-warning",
-						level: "warning",
-						category: "restriction",
-						label: "Pork",
-						code: "FOOD_RESTRICTION_CONFLICT",
-						params: {
-							factLabel: "Pork",
-							restrictionLabel: "Vegan",
-							evidenceType: "intrinsic",
+					preferenceWarnings: [
+						{
+							id: "pork-warning",
+							level: "warning",
+							category: "restriction",
+							label: "Pork",
+							code: "FOOD_RESTRICTION_CONFLICT",
+							params: {
+								factLabel: "Pork",
+								restrictionLabel: "Vegan",
+								evidenceType: "intrinsic",
+							},
 						},
-					}],
+					],
 				},
 				sourceListLabel: "Fridge",
 				servingQuantity: 100,
@@ -217,6 +235,9 @@ describe("MixIngredientAmountCard", () => {
 		await fireEvent.click(detailsButton);
 		expect(screen.getByText("Check this ingredient")).toBeInTheDocument();
 		expect(detailsButton).toHaveAttribute("aria-expanded", "true");
-		expect(detailsButton).toHaveAttribute("aria-controls", "mix-ingredient-4-details");
+		expect(detailsButton).toHaveAttribute(
+			"aria-controls",
+			"mix-ingredient-4-details",
+		);
 	});
 });

@@ -20,11 +20,15 @@ describe("PrivilegedToolInformationSheet", () => {
 		});
 
 		expect(screen.getByRole("heading", { name: title })).toBeInTheDocument();
-		expect(screen.getByRole("heading", { name: "Review flow" })).toBeInTheDocument();
-		expect(screen.getByRole("heading", { name: "What your decision changes" }))
-			.toBeInTheDocument();
-		expect(screen.getByRole("heading", { name: "Important safeguard" }))
-			.toBeInTheDocument();
+		expect(
+			screen.getByRole("heading", { name: "Review flow" }),
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole("heading", { name: "What your decision changes" }),
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole("heading", { name: "Important safeguard" }),
+		).toBeInTheDocument();
 	});
 
 	it("closes from the clear acknowledgement action", async () => {

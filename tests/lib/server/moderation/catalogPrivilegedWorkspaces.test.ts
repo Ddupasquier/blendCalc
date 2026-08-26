@@ -11,21 +11,26 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("$lib/server/moderation/moderationAccess.server", () => ({
-  requireModeratorPermission: mocks.requireModeratorPermission,
+	requireModeratorPermission: mocks.requireModeratorPermission,
 }));
 
 vi.mock("$lib/server/moderation/catalogDataOperations.server", () => ({
 	readCatalogDataOperationsHealth: mocks.readCatalogDataOperationsHealth,
-	readCatalogMonitorModerationSummary: mocks.readCatalogMonitorModerationSummary,
+	readCatalogMonitorModerationSummary:
+		mocks.readCatalogMonitorModerationSummary,
 }));
 
 vi.mock("$lib/server/moderation/catalogReviewWork.server", () => ({
 	readCatalogReviewWork: mocks.readCatalogReviewWork,
 }));
 
-vi.mock("$lib/server/moderation/catalogProductReadinessPassport.server", () => ({
-	readCatalogProductReadinessPassport: mocks.readCatalogProductReadinessPassport,
-}));
+vi.mock(
+	"$lib/server/moderation/catalogProductReadinessPassport.server",
+	() => ({
+		readCatalogProductReadinessPassport:
+			mocks.readCatalogProductReadinessPassport,
+	}),
+);
 
 import { loadCatalogDataOperationsWorkspace } from "$lib/server/moderation/catalogDataOperationsWorkspace.server";
 import { loadCatalogReviewWorkWorkspace } from "$lib/server/moderation/catalogReviewWorkWorkspace.server";
@@ -40,23 +45,32 @@ describe("catalog privileged workspaces", () => {
 			role: "developer",
 			permissions: ["data_operations.catalog_health.read"],
 		});
-		mocks.readCatalogDataOperationsHealth.mockResolvedValue(catalogDataOperationsHealthFixture);
-		mocks.readCatalogMonitorModerationSummary.mockResolvedValue(catalogMonitorModerationFixture);
+		mocks.readCatalogDataOperationsHealth.mockResolvedValue(
+			catalogDataOperationsHealthFixture,
+		);
+		mocks.readCatalogMonitorModerationSummary.mockResolvedValue(
+			catalogMonitorModerationFixture,
+		);
 		const supabase = {};
 
-		await expect(loadCatalogDataOperationsWorkspace({ locals: { supabase } } as never))
-			.resolves.toEqual({
-				viewerRole: "developer",
-				dashboard: catalogDataOperationsHealthFixture,
-				catalogMonitor: catalogMonitorModerationFixture,
-			});
+		await expect(
+			loadCatalogDataOperationsWorkspace({ locals: { supabase } } as never),
+		).resolves.toEqual({
+			viewerRole: "developer",
+			dashboard: catalogDataOperationsHealthFixture,
+			catalogMonitor: catalogMonitorModerationFixture,
+		});
 		expect(mocks.requireModeratorPermission).toHaveBeenCalledWith(
 			expect.anything(),
 			"data_operations.catalog_health.read",
 			"/profile/privileged-tools/data-operations",
 		);
-		expect(mocks.readCatalogDataOperationsHealth).toHaveBeenCalledWith(supabase);
-		expect(mocks.readCatalogMonitorModerationSummary).toHaveBeenCalledWith(supabase);
+		expect(mocks.readCatalogDataOperationsHealth).toHaveBeenCalledWith(
+			supabase,
+		);
+		expect(mocks.readCatalogMonitorModerationSummary).toHaveBeenCalledWith(
+			supabase,
+		);
 	});
 
 	it("requires catalog-review permission before loading human decisions", async () => {
@@ -75,8 +89,9 @@ describe("catalog privileged workspaces", () => {
 		mocks.readCatalogReviewWork.mockResolvedValue(reviewWork);
 		const supabase = {};
 
-		await expect(loadCatalogReviewWorkWorkspace({ locals: { supabase } } as never))
-			.resolves.toEqual({ viewerRole: "moderator", reviewWork });
+		await expect(
+			loadCatalogReviewWorkWorkspace({ locals: { supabase } } as never),
+		).resolves.toEqual({ viewerRole: "moderator", reviewWork });
 		expect(mocks.requireModeratorPermission).toHaveBeenCalledWith(
 			expect.anything(),
 			"moderation.catalog.review",
@@ -101,14 +116,18 @@ describe("catalog privileged workspaces", () => {
 
 	it("uses the caller's exact permission and return route for product passports", async () => {
 		mocks.requireModeratorPermission.mockResolvedValue({ role: "developer" });
-		mocks.readCatalogProductReadinessPassport.mockResolvedValue({ product: { id: "product-id" } });
+		mocks.readCatalogProductReadinessPassport.mockResolvedValue({
+			product: { id: "product-id" },
+		});
 		const supabase = {};
 
-		await expect(loadCatalogProductReadinessPassportWorkspace(
-			{ locals: { supabase }, params: { productId: "product-id" } } as never,
-			"data_operations.catalog_health.read",
-			"/profile/privileged-tools/data-operations",
-		)).resolves.toEqual({
+		await expect(
+			loadCatalogProductReadinessPassportWorkspace(
+				{ locals: { supabase }, params: { productId: "product-id" } } as never,
+				"data_operations.catalog_health.read",
+				"/profile/privileged-tools/data-operations",
+			),
+		).resolves.toEqual({
 			viewerRole: "developer",
 			passport: { product: { id: "product-id" } },
 		});

@@ -52,8 +52,8 @@
 		formatDocumentTitle(
 			activeSettingsRoute
 				? getProfileSettingsRouteTitle(
-					getProfileSettingsRouteHref(activeSettingsRoute),
-				)
+						getProfileSettingsRouteHref(activeSettingsRoute),
+					)
 				: "Profile",
 		),
 	);
@@ -62,12 +62,14 @@
 
 	const displayName = $derived(
 		form?.profileValues?.displayName ??
-		data.profile?.display_name ??
-		data.defaultDisplayName,
+			data.profile?.display_name ??
+			data.defaultDisplayName,
 	);
 	const bio = $derived(form?.profileValues?.bio ?? data.profile?.bio ?? "");
 	const appearanceTheme = $derived(
-		normalizeThemePreference(form?.appearanceTheme ?? data.profile?.appearance_theme),
+		normalizeThemePreference(
+			form?.appearanceTheme ?? data.profile?.appearance_theme,
+		),
 	);
 	const playfulMessagesEnabled = $derived(
 		form?.playfulMessagesEnabled ??
@@ -76,7 +78,7 @@
 	);
 	const savedFoodSafetyPreferenceCount = $derived(
 		(data.foodPreferences?.allergens.length ?? 0) +
-		(data.foodPreferences?.dietaryRestrictions.length ?? 0),
+			(data.foodPreferences?.dietaryRestrictions.length ?? 0),
 	);
 	const pendingFoodPreferenceCount = $derived(
 		(data.foodPreferences?.preferenceResolutions ?? []).filter(
@@ -254,14 +256,16 @@
 				hasProfileImage={Boolean(data.profile?.avatar_path)}
 				{activeFoodPreferenceCount}
 				{pendingFoodPreferenceCount}
-				priorityNutrientCount={data.foodPreferences?.prioritizedNutrientIds.length ?? 0}
+				priorityNutrientCount={data.foodPreferences?.prioritizedNutrientIds
+					.length ?? 0}
 				onOpen={openSettingsRoute}
 			/>
 
 			{#if data.privilegedToolAccess}
 				<ProfilePrivilegedToolsLauncher
 					access={data.privilegedToolAccess}
-					onOpen={() => openSettingsRoute(PROFILE_SETTINGS_ROUTES.privilegedTools)}
+					onOpen={() =>
+						openSettingsRoute(PROFILE_SETTINGS_ROUTES.privilegedTools)}
 				/>
 			{/if}
 

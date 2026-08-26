@@ -52,10 +52,14 @@ describe("ProfileNutrientPrioritySettings", () => {
 			},
 		});
 
-		await fireEvent.click(screen.getByRole("button", { name: "Move Protein down" }));
+		await fireEvent.click(
+			screen.getByRole("button", { name: "Move Protein down" }),
+		);
 		expect(onSelectionChange).toHaveBeenCalledWith([1079, 1003]);
 
-		await fireEvent.click(screen.getByRole("button", { name: "Remove Protein" }));
+		await fireEvent.click(
+			screen.getByRole("button", { name: "Remove Protein" }),
+		);
 		expect(onSelectionChange).toHaveBeenCalledWith([1079]);
 	});
 });

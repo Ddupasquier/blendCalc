@@ -32,9 +32,7 @@ const getFoodSearchIdentityKeys = (food: FoodItem) => {
 	if (usdaFdcId) keys.push(`usda-fdc:${normalizeUsdaFdcId(usdaFdcId)}`);
 	const legacyUsdaNdbNumber = food.sourceIdentifiers?.usdaNdbNumber;
 	if (legacyUsdaNdbNumber) {
-		keys.push(
-			`usda-ndb:${normalizeLegacyUsdaNdbNumber(legacyUsdaNdbNumber)}`,
-		);
+		keys.push(`usda-ndb:${normalizeLegacyUsdaNdbNumber(legacyUsdaNdbNumber)}`);
 	}
 	return keys;
 };
@@ -102,8 +100,7 @@ export const sortIngredientSearchResults = (
 		if (relevanceSort !== 0) return relevanceSort;
 
 		const preferencePenalty =
-			getFoodDownrankScore(left) -
-			getFoodDownrankScore(right);
+			getFoodDownrankScore(left) - getFoodDownrankScore(right);
 		if (preferencePenalty !== 0) return preferencePenalty;
 
 		const completenessSort = compareNutritionCompleteness(

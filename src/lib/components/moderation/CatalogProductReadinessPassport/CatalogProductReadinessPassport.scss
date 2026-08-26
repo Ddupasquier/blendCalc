@@ -122,7 +122,8 @@
 	font-weight: $app-font-weight-semibold;
 }
 
-@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
 	.catalog-product-passport__availability,
 	.catalog-product-passport__issue dl,
 	.catalog-product-passport__details {

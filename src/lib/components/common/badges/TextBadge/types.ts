@@ -1,9 +1,5 @@
 export type TextBadgeTone =
-	| "info"
-	| "success"
-	| "warning"
-	| "custom"
-	| "neutral";
+	"info" | "success" | "warning" | "custom" | "neutral";
 
 export type TextBadgeProps = {
 	label: string;

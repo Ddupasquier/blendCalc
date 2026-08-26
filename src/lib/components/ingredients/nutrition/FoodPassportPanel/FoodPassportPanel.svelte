@@ -20,7 +20,10 @@
 			<p class="food-passport-panel__summary">{passport.summary}</p>
 
 			{#if passport.historyRows.length > 0}
-				<section class="food-passport-panel__section" aria-labelledby={`${passportElementId}-history-title`}>
+				<section
+					class="food-passport-panel__section"
+					aria-labelledby={`${passportElementId}-history-title`}
+				>
 					<h2 id={`${passportElementId}-history-title`}>Record history</h2>
 					<dl class="food-passport-panel__rows">
 						{#each passport.historyRows as row}
@@ -33,18 +36,27 @@
 				</section>
 			{/if}
 
-			<section class="food-passport-panel__section" aria-labelledby={`${passportElementId}-coverage-title`}>
-				<h2 id={`${passportElementId}-coverage-title`}>Information available</h2>
+			<section
+				class="food-passport-panel__section"
+				aria-labelledby={`${passportElementId}-coverage-title`}
+			>
+				<h2 id={`${passportElementId}-coverage-title`}>
+					Information available
+				</h2>
 				<dl class="food-passport-panel__rows">
 					{#each passport.availabilityRows as row}
-						<div class="food-passport-panel__row" data-available={row.available}>
+						<div
+							class="food-passport-panel__row"
+							data-available={row.available}
+						>
 							<dt>{row.label}</dt>
 							<dd>{row.value}</dd>
 						</div>
 					{/each}
 				</dl>
 				<p class="food-passport-panel__note">
-					Not provided means the current record does not include that information. It does not mean zero, none, or allergen-free.
+					Not provided means the current record does not include that
+					information. It does not mean zero, none, or allergen-free.
 				</p>
 			</section>
 

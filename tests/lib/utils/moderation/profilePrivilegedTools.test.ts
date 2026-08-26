@@ -14,17 +14,21 @@ describe("Profile privileged tool presentation", () => {
 	});
 
 	it("counts only tool destinations granted by database permissions", () => {
-		expect(getAvailableProfilePrivilegedToolCount([
-			"moderation.access",
-			"moderation.accounts.manage",
-			"data_operations.catalog_health.read",
-		])).toBe(3);
-		expect(getAvailableProfilePrivilegedToolCount([
-			"moderation.access",
-			"moderation.catalog.review",
-		])).toBe(2);
-		expect(getAvailableProfilePrivilegedToolCount([
-			"moderation.access",
-		])).toBe(0);
+		expect(
+			getAvailableProfilePrivilegedToolCount([
+				"moderation.access",
+				"moderation.accounts.manage",
+				"data_operations.catalog_health.read",
+			]),
+		).toBe(3);
+		expect(
+			getAvailableProfilePrivilegedToolCount([
+				"moderation.access",
+				"moderation.catalog.review",
+			]),
+		).toBe(2);
+		expect(getAvailableProfilePrivilegedToolCount(["moderation.access"])).toBe(
+			0,
+		);
 	});
 });

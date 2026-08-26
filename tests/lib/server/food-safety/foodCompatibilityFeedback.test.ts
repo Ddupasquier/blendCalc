@@ -37,19 +37,23 @@ describe("parseFoodCompatibilityFeedbackRequest", () => {
 	});
 
 	it("rejects issue codes that are not compatibility warnings", () => {
-		expect(parseFoodCompatibilityFeedbackRequest({
-			...validRequest,
-			issueCode: "CATEGORY_REQUIRED",
-		})).toBeNull();
+		expect(
+			parseFoodCompatibilityFeedbackRequest({
+				...validRequest,
+				issueCode: "CATEGORY_REQUIRED",
+			}),
+		).toBeNull();
 	});
 
 	it("rejects nested issue parameters instead of persisting arbitrary JSON", () => {
-		expect(parseFoodCompatibilityFeedbackRequest({
-			...validRequest,
-			issueParams: {
-				allergen: { value: "Peanut" },
-			},
-		})).toBeNull();
+		expect(
+			parseFoodCompatibilityFeedbackRequest({
+				...validRequest,
+				issueParams: {
+					allergen: { value: "Peanut" },
+				},
+			}),
+		).toBeNull();
 	});
 
 	it("bounds evidence and user-authored details", () => {
@@ -85,12 +89,15 @@ describe("parseMissingFoodWarningFeedbackRequest", () => {
 	};
 
 	it("accepts a bounded missing-warning report", () => {
-		expect(parseMissingFoodWarningFeedbackRequest(createValidFormData()))
-			.toEqual(expect.objectContaining({
+		expect(
+			parseMissingFoodWarningFeedbackRequest(createValidFormData()),
+		).toEqual(
+			expect.objectContaining({
 				preferenceType: "allergen",
 				observedLabelDate: "2026-07-30",
 				evidenceFile: null,
-			}));
+			}),
+		);
 	});
 
 	it("rejects unreviewed preference identifiers and short explanations", () => {
@@ -121,12 +128,14 @@ describe("reviewFoodCompatibilityFeedback", () => {
 			error: null,
 		});
 
-		await expect(reviewFoodCompatibilityFeedback({ rpc } as never, {
-			id: "feedback-id",
-			status: "confirmed",
-			resolutionAction: "product_correction",
-			reviewNote: "Current package evidence supports a product correction.",
-		})).resolves.toEqual({
+		await expect(
+			reviewFoodCompatibilityFeedback({ rpc } as never, {
+				id: "feedback-id",
+				status: "confirmed",
+				resolutionAction: "product_correction",
+				reviewNote: "Current package evidence supports a product correction.",
+			}),
+		).resolves.toEqual({
 			reviewed: true,
 			followUpStatus: "open",
 			followUpType: "product_correction",
@@ -141,13 +150,18 @@ describe("reviewFoodCompatibilityFeedback", () => {
 	});
 
 	it("rejects malformed database responses instead of losing follow-up state", async () => {
-		await expect(reviewFoodCompatibilityFeedback({
-			rpc: vi.fn().mockResolvedValue({ data: [], error: null }),
-		} as never, {
-			id: "feedback-id",
-			status: "dismissed",
-			resolutionAction: "none",
-			reviewNote: "The current warning is supported.",
-		})).rejects.toThrow(/invalid response/u);
+		await expect(
+			reviewFoodCompatibilityFeedback(
+				{
+					rpc: vi.fn().mockResolvedValue({ data: [], error: null }),
+				} as never,
+				{
+					id: "feedback-id",
+					status: "dismissed",
+					resolutionAction: "none",
+					reviewNote: "The current warning is supported.",
+				},
+			),
+		).rejects.toThrow(/invalid response/u);
 	});
 });

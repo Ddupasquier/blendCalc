@@ -118,7 +118,8 @@
 	border-top: $app-border;
 }
 
-@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
 	.product-submission-review,
 	.product-submission-review__heading,
 	.product-submission-review__stack,

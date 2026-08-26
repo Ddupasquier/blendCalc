@@ -21,15 +21,17 @@ const foodWithReportedVolumeServing = {
 	fdcId: 4,
 	description: "Food with a reported cup weight",
 	foodNutrients: [],
-	foodServings: [{
-		label: "1 cup",
-		gramWeight: 245,
-		amount: 1,
-		unitKey: "cup",
-		isPrimary: true,
-		source: "usda",
-		confidence: "unknown",
-	}],
+	foodServings: [
+		{
+			label: "1 cup",
+			gramWeight: 245,
+			amount: 1,
+			unitKey: "cup",
+			isPrimary: true,
+			source: "usda",
+			confidence: "unknown",
+		},
+	],
 } satisfies FoodItem;
 
 const customFood = {
@@ -46,18 +48,20 @@ const foodWithReportedHouseholdServing = {
 	fdcId: 5,
 	description: "Banana, Raw",
 	foodNutrients: [],
-	foodServings: [{
-		label: "1 medium banana (118 g)",
-		gramWeight: 118,
-		isPrimary: true,
-		measureType: "household",
-		isHouseholdMeasure: true,
-		sourceMeasureKey: "banana-medium",
-		origin: "source-household-measure",
-		gramWeightMethod: "source-reported",
-		source: "usda",
-		confidence: "source-verified",
-	}],
+	foodServings: [
+		{
+			label: "1 medium banana (118 g)",
+			gramWeight: 118,
+			isPrimary: true,
+			measureType: "household",
+			isHouseholdMeasure: true,
+			sourceMeasureKey: "banana-medium",
+			origin: "source-household-measure",
+			gramWeightMethod: "source-reported",
+			source: "usda",
+			confidence: "source-verified",
+		},
+	],
 } satisfies FoodItem;
 
 describe("serving amount conversion", () => {
@@ -96,7 +100,9 @@ describe("serving amount conversion", () => {
 		expect(conversion.available).toBe(false);
 		expect(conversion.grams).toBeNull();
 		expect(conversion.density).toBeNull();
-		expect(conversion.warning).toContain("measured weight-to-volume conversion");
+		expect(conversion.warning).toContain(
+			"measured weight-to-volume conversion",
+		);
 	});
 
 	it("uses a user-provided exact density", () => {
@@ -148,7 +154,9 @@ describe("serving amount conversion", () => {
 	});
 
 	it("rejects a source-serving selector that does not belong to the food", () => {
-		const [option] = getSourceServingMeasureOptions(foodWithReportedHouseholdServing);
+		const [option] = getSourceServingMeasureOptions(
+			foodWithReportedHouseholdServing,
+		);
 
 		expect(convertServingAmount(1, option.value, unknownFood)).toMatchObject({
 			grams: null,
@@ -157,7 +165,9 @@ describe("serving amount conversion", () => {
 	});
 
 	it("preserves grams when switching between weight and a source serving", () => {
-		const [option] = getSourceServingMeasureOptions(foodWithReportedHouseholdServing);
+		const [option] = getSourceServingMeasureOptions(
+			foodWithReportedHouseholdServing,
+		);
 
 		expect(
 			convertServingQuantityToUnit(

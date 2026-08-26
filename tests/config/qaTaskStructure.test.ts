@@ -22,18 +22,23 @@ const taskPattern =
 
 const readTasks = (file: string) => {
 	const lines = readFileSync(file, "utf8").split("\n");
-	const tasks: Array<{ body: string; id: string; state: string; title: string }> = [];
+	const tasks: Array<{
+		body: string;
+		id: string;
+		state: string;
+		title: string;
+	}> = [];
 	for (let index = 0; index < lines.length; index += 1) {
 		const match = lines[index].match(taskPattern);
 		if (!match?.groups) continue;
 		let end = index + 1;
 		while (end < lines.length && !taskPattern.test(lines[end])) end += 1;
-			tasks.push({
-				body: lines.slice(index + 1, end).join("\n"),
-				id: match.groups.id,
-				state: match.groups.state,
-				title: match.groups.title?.trim() ?? "",
-			});
+		tasks.push({
+			body: lines.slice(index + 1, end).join("\n"),
+			id: match.groups.id,
+			state: match.groups.state,
+			title: match.groups.title?.trim() ?? "",
+		});
 		index = end - 1;
 	}
 	return tasks;
@@ -72,11 +77,22 @@ describe.runIf(localTrackersAvailable)("QA task structure", () => {
 		const seenTitles = new Set<string>();
 		for (const queue of activeQueues) {
 			for (const task of readTasks(queue.file)) {
-				expect(task.state, `${task.id} is checked inside an active queue`).toBe(" ");
-				expect(seen.has(task.id), `${task.id} is duplicated across active queues`).toBe(false);
+				expect(task.state, `${task.id} is checked inside an active queue`).toBe(
+					" ",
+				);
+				expect(
+					seen.has(task.id),
+					`${task.id} is duplicated across active queues`,
+				).toBe(false);
 				seen.add(task.id);
-				expect(task.title, `${task.id} is missing a descriptive title`).not.toBe("");
-				expect(task.title.length, `${task.id} has an overlong title`).toBeLessThanOrEqual(100);
+				expect(
+					task.title,
+					`${task.id} is missing a descriptive title`,
+				).not.toBe("");
+				expect(
+					task.title.length,
+					`${task.id} has an overlong title`,
+				).toBeLessThanOrEqual(100);
 				const normalizedTitle = task.title.toLocaleLowerCase();
 				expect(
 					seenTitles.has(normalizedTitle),
@@ -89,9 +105,10 @@ describe.runIf(localTrackersAvailable)("QA task structure", () => {
 				expect(task.body, `${task.id} is missing example input`).toContain(
 					"- Example input:",
 				);
-				expect(task.body, `${task.id} is missing an expected outcome`).toContain(
-					"- Expected:",
-				);
+				expect(
+					task.body,
+					`${task.id} is missing an expected outcome`,
+				).toContain("- Expected:");
 			}
 		}
 	});
@@ -115,12 +132,20 @@ describe.runIf(localTrackersAvailable)("QA task structure", () => {
 
 	it("keeps active and completed task IDs disjoint", () => {
 		const active = new Set(
-			activeQueues.flatMap((queue) => readTasks(queue.file).map((task) => task.id)),
+			activeQueues.flatMap((queue) =>
+				readTasks(queue.file).map((task) => task.id),
+			),
 		);
 		const completed = readTasks("docs/QA/completed-qa-tasks.md");
 		for (const task of completed) {
-			expect(task.state, `${task.id} is not checked in the completed archive`).toBe("x");
-			expect(active.has(task.id), `${task.id} is both active and completed`).toBe(false);
+			expect(
+				task.state,
+				`${task.id} is not checked in the completed archive`,
+			).toBe("x");
+			expect(
+				active.has(task.id),
+				`${task.id} is both active and completed`,
+			).toBe(false);
 		}
 	});
 
@@ -152,14 +177,20 @@ describe.runIf(localTrackersAvailable)("QA task structure", () => {
 		const index = readFileSync("docs/QA/qa-tasks.md", "utf8");
 		for (const queue of activeQueues) {
 			const total = readTasks(queue.file).length;
-			expect(index).toContain(`${queue.label}](./${queue.file.split("/").at(-1)}):`);
+			expect(index).toContain(
+				`${queue.label}](./${queue.file.split("/").at(-1)}):`,
+			);
 			expect(index).toMatch(
-				new RegExp(`${queue.label.replace("-", "\\-")}\\]\\([^)]*\\): \\d+ groups, ${total} active tasks\\.`),
+				new RegExp(
+					`${queue.label.replace("-", "\\-")}\\]\\([^)]*\\): \\d+ groups, ${total} active tasks\\.`,
+				),
 			);
 		}
 
 		const completedTotal = readTasks("docs/QA/completed-qa-tasks.md").length;
-		expect(index).toContain(`Completed QA tasks](./completed-qa-tasks.md): ${completedTotal} completed tasks.`);
+		expect(index).toContain(
+			`Completed QA tasks](./completed-qa-tasks.md): ${completedTotal} completed tasks.`,
+		);
 	});
 
 	it("keeps local QA documentation links valid", () => {
@@ -173,7 +204,9 @@ describe.runIf(localTrackersAvailable)("QA task structure", () => {
 				const target = match[1].split("#")[0];
 				if (!target || /^(?:https?:|mailto:)/.test(target)) continue;
 				const resolved = resolve(dirname(file), decodeURIComponent(target));
-				expect(existsSync(resolved), `${file} links to missing ${target}`).toBe(true);
+				expect(existsSync(resolved), `${file} links to missing ${target}`).toBe(
+					true,
+				);
 			}
 		}
 	});

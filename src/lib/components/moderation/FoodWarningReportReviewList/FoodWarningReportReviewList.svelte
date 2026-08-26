@@ -71,16 +71,39 @@
 				title={report.foodDescription}
 				subtitle={`${report.feedbackType === "missing_warning" ? "Missing warning" : "Incorrect warning"} · Policy ${report.policyVersion ? `v${report.policyVersion}` : "version unavailable"}`}
 			>
-				{#snippet status()}<TextBadge label="Needs review" tone="warning" />{/snippet}
+				{#snippet status()}<TextBadge
+						label="Needs review"
+						tone="warning"
+					/>{/snippet}
 
 				<dl class="food-warning-report-review__facts">
 					{#if report.feedbackType === "missing_warning"}
-						<div><dt>Affected setting</dt><dd>{report.preferenceValue ?? "Not recorded"}</dd></div>
-						<div><dt>Setting type</dt><dd>{report.preferenceType ? formatReadableLabel(report.preferenceType) : "Not recorded"}</dd></div>
+						<div>
+							<dt>Affected setting</dt>
+							<dd>{report.preferenceValue ?? "Not recorded"}</dd>
+						</div>
+						<div>
+							<dt>Setting type</dt>
+							<dd>
+								{report.preferenceType
+									? formatReadableLabel(report.preferenceType)
+									: "Not recorded"}
+							</dd>
+						</div>
 					{:else}
-						<div><dt>Reported warning</dt><dd>{report.issueCode ? formatReadableLabel(report.issueCode) : "Not recorded"}</dd></div>
+						<div>
+							<dt>Reported warning</dt>
+							<dd>
+								{report.issueCode
+									? formatReadableLabel(report.issueCode)
+									: "Not recorded"}
+							</dd>
+						</div>
 					{/if}
-					<div><dt>Report reason</dt><dd>{formatReadableLabel(report.reportReason)}</dd></div>
+					<div>
+						<dt>Report reason</dt>
+						<dd>{formatReadableLabel(report.reportReason)}</dd>
+					</div>
 				</dl>
 
 				{#if report.reportDetails}
@@ -93,19 +116,45 @@
 				<CollapsibleSection title="Report evidence" surface="panel">
 					<div class="food-warning-report-review__evidence">
 						<dl class="food-warning-report-review__facts">
-							<div><dt>Food source</dt><dd>{report.sourceKey ?? "Shared catalog"}</dd></div>
-							<div><dt>Source record</dt><dd>{report.sourceId}</dd></div>
-							{#if report.barcode}<div><dt>Barcode</dt><dd>{report.barcode}</dd></div>{/if}
-							{#if report.sharedProductRevisionId}<div><dt>Catalog revision</dt><dd>{report.sharedProductRevisionId}</dd></div>{/if}
-							{#if report.observedLabelDate}<div><dt>Package checked</dt><dd>{report.observedLabelDate}</dd></div>{/if}
+							<div>
+								<dt>Food source</dt>
+								<dd>{report.sourceKey ?? "Shared catalog"}</dd>
+							</div>
+							<div>
+								<dt>Source record</dt>
+								<dd>{report.sourceId}</dd>
+							</div>
+							{#if report.barcode}<div>
+									<dt>Barcode</dt>
+									<dd>{report.barcode}</dd>
+								</div>{/if}
+							{#if report.sharedProductRevisionId}<div>
+									<dt>Catalog revision</dt>
+									<dd>{report.sharedProductRevisionId}</dd>
+								</div>{/if}
+							{#if report.observedLabelDate}<div>
+									<dt>Package checked</dt>
+									<dd>{report.observedLabelDate}</dd>
+								</div>{/if}
 						</dl>
 						{#if report.evidenceUrl}
-							<a href={report.evidenceUrl} target="_blank" rel="noopener noreferrer">
+							<a
+								href={report.evidenceUrl}
+								target="_blank"
+								rel="noopener noreferrer"
+							>
 								Open private package-label evidence
 							</a>
 						{/if}
 						<CollapsibleSection title="Stored matching facts" surface="panel">
-							<pre>{JSON.stringify({ issueParams: report.issueParams, facts: report.factSnapshot }, null, 2)}</pre>
+							<pre>{JSON.stringify(
+									{
+										issueParams: report.issueParams,
+										facts: report.factSnapshot,
+									},
+									null,
+									2,
+								)}</pre>
 						</CollapsibleSection>
 					</div>
 				</CollapsibleSection>
@@ -126,15 +175,17 @@
 						options={[
 							{
 								value: "confirmed",
-								label: report.feedbackType === "missing_warning"
-									? "Warning is missing"
-									: "Warning appears incorrect",
+								label:
+									report.feedbackType === "missing_warning"
+										? "Warning is missing"
+										: "Warning appears incorrect",
 							},
 							{
 								value: "dismissed",
-								label: report.feedbackType === "missing_warning"
-									? "Current warning coverage is supported"
-									: "Current warning is supported",
+								label:
+									report.feedbackType === "missing_warning"
+										? "Current warning coverage is supported"
+										: "Current warning is supported",
 							},
 						]}
 						disabled={pendingReportId !== null}
@@ -147,8 +198,14 @@
 						value="rule_review"
 						options={[
 							{ value: "rule_review", label: "Review the warning rule" },
-							{ value: "source_correction", label: "Correct the source mapping" },
-							{ value: "product_correction", label: "Correct the product data" },
+							{
+								value: "source_correction",
+								label: "Correct the source mapping",
+							},
+							{
+								value: "product_correction",
+								label: "Correct the product data",
+							},
 							{ value: "duplicate", label: "Close as a duplicate" },
 							{ value: "none", label: "No follow-up needed" },
 						]}
@@ -171,8 +228,8 @@
 						type="submit"
 						fullWidth
 						busy={pendingReportId === report.id}
-						disabled={pendingReportId !== null}
-					>Save review</ActionButton>
+						disabled={pendingReportId !== null}>Save review</ActionButton
+					>
 				</form>
 			</ModeratorReviewCard>
 		{/each}

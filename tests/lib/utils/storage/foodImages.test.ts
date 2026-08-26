@@ -6,9 +6,7 @@ import {
 } from "$lib/utils/storage/supabase/foodImages";
 import type { FoodItem, FoodImageAsset } from "$lib/utils/food/types";
 
-const makeImage = (
-	overrides: Partial<FoodImageAsset>,
-): FoodImageAsset => ({
+const makeImage = (overrides: Partial<FoodImageAsset>): FoodImageAsset => ({
 	source: "open-food-facts",
 	sourceReference: "00021130493609",
 	role: "front",
@@ -26,10 +24,7 @@ const makeImageRow = (
 		sharedProductId?: string | null;
 	} = {},
 ) => ({
-	barcode:
-		identity.barcode === undefined
-			? "00021130493609"
-			: identity.barcode,
+	barcode: identity.barcode === undefined ? "00021130493609" : identity.barcode,
 	shared_product_id: identity.sharedProductId ?? null,
 	source: image.source,
 	source_reference: image.sourceReference ?? null,
@@ -65,10 +60,7 @@ const makeImageQueryClient = (rows: ReturnType<typeof makeImageRow>[]) => ({
 		select: () => ({
 			eq: () => ({
 				eq: () => ({
-					in: (
-						column: "barcode" | "shared_product_id",
-						values: string[],
-					) => ({
+					in: (column: "barcode" | "shared_product_id", values: string[]) => ({
 						order: async () => ({
 							data: rows.filter((row) => {
 								const value = row[column];
@@ -98,9 +90,9 @@ describe("food image selection", () => {
 			fetchedAt: "2026-07-18T12:00:00.000Z",
 		});
 
-		expect(
-			selectPreferredFoodImageAsset([newerCandidate, canonical]),
-		).toBe(canonical);
+		expect(selectPreferredFoodImageAsset([newerCandidate, canonical])).toBe(
+			canonical,
+		);
 	});
 
 	it("prefers moderator-reviewed images over newer imported images", () => {

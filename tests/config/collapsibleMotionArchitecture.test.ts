@@ -49,7 +49,9 @@ describe("collapsible motion architecture", () => {
 	it("prevents disclosure height changes from re-anchoring scroll surfaces", () => {
 		const source = readFileSync(collapsibleStylesPath, "utf8");
 
-		expect(source).toMatch(/\.collapsible-section\s*\{[^}]*overflow-anchor:\s*none;/s);
+		expect(source).toMatch(
+			/\.collapsible-section\s*\{[^}]*overflow-anchor:\s*none;/s,
+		);
 	});
 
 	it("rotates the shared chevron from right when closed to down when open", () => {
@@ -59,7 +61,9 @@ describe("collapsible motion architecture", () => {
 
 		expect(component).toContain("<DisclosureChevron");
 		expect(chevron).toContain('<Chevron direction="right"');
-		expect(styles).toContain('@use "../../../../utils/animation/motion" as motion;');
+		expect(styles).toContain(
+			'@use "../../../../utils/animation/motion" as motion;',
+		);
 		expect(styles).toMatch(
 			/\.disclosure-chevron\s*\{[^}]*transition:\s*transform\s+motion\.\$duration-feedback\s+motion\.\$easing-standard;/s,
 		);

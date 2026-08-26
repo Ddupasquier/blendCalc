@@ -63,7 +63,9 @@
 
 <section
 	class="profile-image-report-review"
-	aria-labelledby={showHeading ? "profile-image-report-review-title" : undefined}
+	aria-labelledby={showHeading
+		? "profile-image-report-review-title"
+		: undefined}
 	aria-label={showHeading ? undefined : "Reported profile images"}
 >
 	{#if showHeading}
@@ -101,7 +103,10 @@
 
 				<div class="profile-image-report-review__preview">
 					{#if report.avatarUrl}
-						<img src={report.avatarUrl} alt={report.avatarAltText || "Profile image reported for review"} />
+						<img
+							src={report.avatarUrl}
+							alt={report.avatarAltText || "Profile image reported for review"}
+						/>
 					{:else}
 						<span>Preview unavailable</span>
 					{/if}
@@ -112,7 +117,10 @@
 					badge={`${report.reports.length}`}
 					surface="panel"
 				>
-					<ul class="profile-image-report-review__reasons" aria-label="Report reasons">
+					<ul
+						class="profile-image-report-review__reasons"
+						aria-label="Report reasons"
+					>
 						{#each report.reports as item (item.id)}
 							<li>
 								<strong>{reasonLabels[item.reasonCode]}</strong>
@@ -163,11 +171,13 @@
 					/>
 					<ActionButton
 						type="submit"
-						variant={getDecision(report.id) === "removed" ? "danger" : "primary"}
+						variant={getDecision(report.id) === "removed"
+							? "danger"
+							: "primary"}
 						fullWidth
 						busy={pendingReportId === report.id}
-						disabled={pendingReportId !== null}
-					>Save decision</ActionButton>
+						disabled={pendingReportId !== null}>Save decision</ActionButton
+					>
 				</form>
 			</ModeratorReviewCard>
 		{/each}

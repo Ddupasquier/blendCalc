@@ -4,7 +4,8 @@ import { requireModeratorPermission } from "$lib/server/moderation/moderationAcc
 import { readLimitedFormData } from "$lib/server/security/requestBody.server";
 
 const CATALOG_REVIEW_FORM_MAX_BYTES = 32 * 1024;
-const CATALOG_REVIEW_WORK_ROUTE = "/profile/privileged-tools/catalog-review-work";
+const CATALOG_REVIEW_WORK_ROUTE =
+	"/profile/privileged-tools/catalog-review-work";
 
 type CatalogReviewWorkLoadEvent = Pick<RequestEvent, "locals">;
 type CatalogReviewWorkAction = (
@@ -34,13 +35,21 @@ export const catalogReviewWorkWorkspaceActions = {
 			"moderation.catalog.review",
 			CATALOG_REVIEW_WORK_ROUTE,
 		);
-		const formData = await readLimitedFormData(request, CATALOG_REVIEW_FORM_MAX_BYTES);
+		const formData = await readLimitedFormData(
+			request,
+			CATALOG_REVIEW_FORM_MAX_BYTES,
+		);
 		const matchId = String(formData.get("matchId") ?? "");
 		const outcome = String(formData.get("outcome") ?? "");
 		const reviewNote = String(formData.get("reviewNote") ?? "").trim();
-		if (!matchId || !["confirmed", "dismissed"].includes(outcome) || !reviewNote) {
+		if (
+			!matchId ||
+			!["confirmed", "dismissed"].includes(outcome) ||
+			!reviewNote
+		) {
 			return fail(400, {
-				catalogReviewError: "Choose an outcome and explain the evidence behind it.",
+				catalogReviewError:
+					"Choose an outcome and explain the evidence behind it.",
 			});
 		}
 		const { error } = await locals.supabase.rpc(
@@ -53,13 +62,15 @@ export const catalogReviewWorkWorkspaceActions = {
 		);
 		if (error) {
 			return fail(500, {
-				catalogReviewError: "That recall match could not be reviewed right now.",
+				catalogReviewError:
+					"That recall match could not be reviewed right now.",
 			});
 		}
 		return {
-			catalogReviewSuccess: outcome === "confirmed"
-				? "The recall match is confirmed."
-				: "The recall match was dismissed.",
+			catalogReviewSuccess:
+				outcome === "confirmed"
+					? "The recall match is confirmed."
+					: "The recall match was dismissed.",
 		};
 	},
 	dismissProviderChange: async ({ locals, request }) => {
@@ -68,25 +79,35 @@ export const catalogReviewWorkWorkspaceActions = {
 			"moderation.catalog.review",
 			CATALOG_REVIEW_WORK_ROUTE,
 		);
-		const formData = await readLimitedFormData(request, CATALOG_REVIEW_FORM_MAX_BYTES);
+		const formData = await readLimitedFormData(
+			request,
+			CATALOG_REVIEW_FORM_MAX_BYTES,
+		);
 		const reviewId = String(formData.get("reviewId") ?? "");
 		const reviewNote = String(formData.get("reviewNote") ?? "").trim();
 		if (!reviewId || !reviewNote) {
 			return fail(400, {
-				catalogReviewError: "Explain why the current catalog record should stay unchanged.",
+				catalogReviewError:
+					"Explain why the current catalog record should stay unchanged.",
 			});
 		}
-		const { error } = await locals.supabase.rpc("review_catalog_provider_change", {
-			p_review_id: reviewId,
-			p_outcome: "rejected",
-			p_review_note: reviewNote,
-		});
+		const { error } = await locals.supabase.rpc(
+			"review_catalog_provider_change",
+			{
+				p_review_id: reviewId,
+				p_outcome: "rejected",
+				p_review_note: reviewNote,
+			},
+		);
 		if (error) {
 			return fail(500, {
-				catalogReviewError: "That provider change could not be reviewed right now.",
+				catalogReviewError:
+					"That provider change could not be reviewed right now.",
 			});
 		}
-		return { catalogReviewSuccess: "The current catalog revision remains active." };
+		return {
+			catalogReviewSuccess: "The current catalog revision remains active.",
+		};
 	},
 } satisfies Record<string, CatalogReviewWorkAction>;
 

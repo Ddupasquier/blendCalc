@@ -48,7 +48,9 @@ describe("SavedIngredientCard warning treatment", () => {
 			props: baseProps,
 		});
 
-		expect(container.querySelector(".card-warning-edge")).not.toBeInTheDocument();
+		expect(
+			container.querySelector(".card-warning-edge"),
+		).not.toBeInTheDocument();
 		expect(
 			screen.getByRole("button", { name: "Preview Ground Beef" }),
 		).toBeInTheDocument();
@@ -60,19 +62,22 @@ describe("SavedIngredientCard warning treatment", () => {
 				...baseProps,
 				food: {
 					...baseProps.food,
-					safetyAlerts: [{
-						id: "ea81b720-5e12-46a9-89cc-f6795aa68d08",
-						providerKey: "open-fda-food-enforcement",
-						sourceName: "FDA Food Safety Notices",
-						sourceAttribution: "U.S. Food and Drug Administration",
-						alertType: "recall" as const,
-						status: "active",
-						productDescription: "Recalled product",
-						sourceUrl: "https://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts",
-						matchType: "exact_gtin" as const,
-						requiresPackageCheck: false,
-						detectedAt: "2026-08-14T12:00:00.000Z",
-					}],
+					safetyAlerts: [
+						{
+							id: "ea81b720-5e12-46a9-89cc-f6795aa68d08",
+							providerKey: "open-fda-food-enforcement",
+							sourceName: "FDA Food Safety Notices",
+							sourceAttribution: "U.S. Food and Drug Administration",
+							alertType: "recall" as const,
+							status: "active",
+							productDescription: "Recalled product",
+							sourceUrl:
+								"https://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts",
+							matchType: "exact_gtin" as const,
+							requiresPackageCheck: false,
+							detectedAt: "2026-08-14T12:00:00.000Z",
+						},
+					],
 				},
 				warning: "This product appears in an active official recall.",
 			},
@@ -148,15 +153,15 @@ describe("SavedIngredientCard selection mode", () => {
 
 		expect(selectionButton).toHaveAttribute("aria-pressed", "true");
 		expect(
-			container.querySelector(
-				".card-selection-indicator--selected svg",
-			),
+			container.querySelector(".card-selection-indicator--selected svg"),
 		).toBeInTheDocument();
-		expect(container.querySelector(".saved-ingredient-card--checked"))
-			.toBeInTheDocument();
+		expect(
+			container.querySelector(".saved-ingredient-card--checked"),
+		).toBeInTheDocument();
 		expect(screen.getAllByRole("button")).toHaveLength(1);
-		expect(container.querySelector(".ingredient-bulk-toggle"))
-			.not.toBeInTheDocument();
+		expect(
+			container.querySelector(".ingredient-bulk-toggle"),
+		).not.toBeInTheDocument();
 	});
 });
 
@@ -173,8 +178,9 @@ describe("SavedIngredientCard verification metadata", () => {
 			},
 		});
 
-		expect(screen.queryByLabelText("Verification status: Verified"))
-			.not.toBeInTheDocument();
+		expect(
+			screen.queryByLabelText("Verification status: Verified"),
+		).not.toBeInTheDocument();
 	});
 
 	it("styles only detached private foods as custom", () => {
@@ -190,8 +196,9 @@ describe("SavedIngredientCard verification metadata", () => {
 			},
 		});
 
-		expect(container.querySelector(".saved-ingredient-card--custom"))
-			.toBeInTheDocument();
+		expect(
+			container.querySelector(".saved-ingredient-card--custom"),
+		).toBeInTheDocument();
 
 		rerender({
 			...baseProps,
@@ -205,10 +212,12 @@ describe("SavedIngredientCard verification metadata", () => {
 			provenanceOptions: ingredientProvenanceOptionsFixture,
 		});
 
-		expect(container.querySelector(".saved-ingredient-card--custom"))
-			.not.toBeInTheDocument();
-		expect(screen.queryByLabelText("Verification status: Verified"))
-			.not.toBeInTheDocument();
+		expect(
+			container.querySelector(".saved-ingredient-card--custom"),
+		).not.toBeInTheDocument();
+		expect(
+			screen.queryByLabelText("Verification status: Verified"),
+		).not.toBeInTheDocument();
 	});
 
 	it("shows pending review without restoring a stale custom treatment", () => {
@@ -226,10 +235,12 @@ describe("SavedIngredientCard verification metadata", () => {
 			},
 		});
 
-		expect(container.querySelector(".saved-ingredient-card--custom"))
-			.not.toBeInTheDocument();
-		expect(screen.getByLabelText("Verification status: Pending"))
-			.toBeInTheDocument();
+		expect(
+			container.querySelector(".saved-ingredient-card--custom"),
+		).not.toBeInTheDocument();
+		expect(
+			screen.getByLabelText("Verification status: Pending"),
+		).toBeInTheDocument();
 	});
 
 	it("removes pending metadata after rejection without adding a hierarchy badge", () => {
@@ -246,11 +257,14 @@ describe("SavedIngredientCard verification metadata", () => {
 			},
 		});
 
-		expect(container.querySelector(".saved-ingredient-card--custom"))
-			.not.toBeInTheDocument();
-		expect(screen.queryByLabelText("Verification status: Pending"))
-			.not.toBeInTheDocument();
-		expect(screen.queryByLabelText("Verification status: Verified"))
-			.not.toBeInTheDocument();
+		expect(
+			container.querySelector(".saved-ingredient-card--custom"),
+		).not.toBeInTheDocument();
+		expect(
+			screen.queryByLabelText("Verification status: Pending"),
+		).not.toBeInTheDocument();
+		expect(
+			screen.queryByLabelText("Verification status: Verified"),
+		).not.toBeInTheDocument();
 	});
 });

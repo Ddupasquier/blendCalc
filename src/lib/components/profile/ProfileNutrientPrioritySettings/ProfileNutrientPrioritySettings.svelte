@@ -15,7 +15,9 @@
 	}: ProfileNutrientPrioritySettingsProps = $props();
 
 	let nutrientToAdd = $state("");
-	const optionById = $derived(new Map(options.map((option) => [option.id, option])));
+	const optionById = $derived(
+		new Map(options.map((option) => [option.id, option])),
+	);
 	const selectedOptions = $derived(
 		selectedNutrientIds.flatMap((nutrientId) => {
 			const option = optionById.get(nutrientId);
@@ -40,7 +42,10 @@
 
 	const addNutrient = () => {
 		const nutrientId = Number(nutrientToAdd);
-		if (!Number.isInteger(nutrientId) || knownSelectedNutrientIds.includes(nutrientId)) {
+		if (
+			!Number.isInteger(nutrientId) ||
+			knownSelectedNutrientIds.includes(nutrientId)
+		) {
 			return;
 		}
 		onSelectionChange([...knownSelectedNutrientIds, nutrientId]);
@@ -50,7 +55,11 @@
 	const moveNutrient = (nutrientId: number, direction: -1 | 1) => {
 		const currentIndex = knownSelectedNutrientIds.indexOf(nutrientId);
 		const nextIndex = currentIndex + direction;
-		if (currentIndex < 0 || nextIndex < 0 || nextIndex >= knownSelectedNutrientIds.length) {
+		if (
+			currentIndex < 0 ||
+			nextIndex < 0 ||
+			nextIndex >= knownSelectedNutrientIds.length
+		) {
 			return;
 		}
 		const nextSelection = [...knownSelectedNutrientIds];
@@ -62,7 +71,9 @@
 	};
 
 	const removeNutrient = (nutrientId: number) => {
-		onSelectionChange(knownSelectedNutrientIds.filter((id) => id !== nutrientId));
+		onSelectionChange(
+			knownSelectedNutrientIds.filter((id) => id !== nutrientId),
+		);
 	};
 </script>
 

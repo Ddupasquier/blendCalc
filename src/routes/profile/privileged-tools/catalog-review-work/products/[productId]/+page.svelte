@@ -7,7 +7,9 @@
 
 	let { data }: CatalogReviewProductPageProps = $props();
 	const closeAction = () => {
-		void goto("/profile/privileged-tools/catalog-review-work", { replaceState: true });
+		void goto("/profile/privileged-tools/catalog-review-work", {
+			replaceState: true,
+		});
 	};
 </script>
 

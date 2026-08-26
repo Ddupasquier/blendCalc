@@ -1,8 +1,5 @@
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
-import type {
-	AppPermission,
-	AppRole,
-} from "$lib/utils/moderation/moderation";
+import type { AppPermission, AppRole } from "$lib/utils/moderation/moderation";
 
 export const readAppRolePermissions = async (
 	role: AppRole,

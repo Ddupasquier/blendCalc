@@ -4,14 +4,16 @@ import FoodPreferencePicker from "$lib/components/profile/FoodPreferencePicker/F
 
 const baseProps = {
 	id: "allergen-preference",
-	options: [{
-		label: "Milk",
-		normalizedValue: "milk",
-		category: "allergen" as const,
-		usageCount: 1,
-		sourceValues: ["milk"],
-		tagId: "milk-tag",
-	}],
+	options: [
+		{
+			label: "Milk",
+			normalizedValue: "milk",
+			category: "allergen" as const,
+			usageCount: 1,
+			sourceValues: ["milk"],
+			tagId: "milk-tag",
+		},
+	],
 	emptyLabel: "No allergens saved.",
 	onAdd: vi.fn(),
 	onClear: vi.fn(),
@@ -33,8 +35,9 @@ describe("FoodPreferencePicker", () => {
 		});
 
 		expect(screen.getByText("Waiting for review")).toBeInTheDocument();
-		expect(screen.getByText(/Saved, but not used for automatic checks yet/i))
-			.toBeInTheDocument();
+		expect(
+			screen.getByText(/Saved, but not used for automatic checks yet/i),
+		).toBeInTheDocument();
 	});
 
 	it("renders database options as accessible add actions", async () => {
@@ -43,7 +46,9 @@ describe("FoodPreferencePicker", () => {
 
 		const milkButton = screen.getByRole("button", { name: /Milk/ });
 		expect(milkButton).toBeInTheDocument();
-		expect(screen.getByLabelText("Add a specific allergen")).toBeInTheDocument();
+		expect(
+			screen.getByLabelText("Add a specific allergen"),
+		).toBeInTheDocument();
 		await fireEvent.click(milkButton);
 		expect(onAdd).toHaveBeenCalledWith("Milk");
 	});
@@ -65,7 +70,9 @@ describe("FoodPreferencePicker", () => {
 			props: { ...baseProps, onClear },
 		});
 
-		await fireEvent.click(screen.getByRole("button", { name: "Clear allergens" }));
+		await fireEvent.click(
+			screen.getByRole("button", { name: "Clear allergens" }),
+		);
 		expect(onClear).toHaveBeenCalledOnce();
 	});
 
@@ -83,13 +90,13 @@ describe("FoodPreferencePicker", () => {
 			props: { ...baseProps, options },
 		});
 
-		await fireEvent.input(
-			screen.getByLabelText("Find reviewed allergens"),
-			{ target: { value: "sesame" } },
-		);
+		await fireEvent.input(screen.getByLabelText("Find reviewed allergens"), {
+			target: { value: "sesame" },
+		});
 
 		expect(screen.getByRole("button", { name: /Sesame/ })).toBeInTheDocument();
-		expect(screen.queryByRole("button", { name: /Allergen 1/ }))
-			.not.toBeInTheDocument();
+		expect(
+			screen.queryByRole("button", { name: /Allergen 1/ }),
+		).not.toBeInTheDocument();
 	});
 });

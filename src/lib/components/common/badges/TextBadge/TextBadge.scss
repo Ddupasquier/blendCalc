@@ -18,7 +18,11 @@
 	text-transform: uppercase;
 	vertical-align: middle;
 	white-space: nowrap;
-	background: color-mix(in srgb, $app-shell-accent-info 18%, $app-shell-surface-panel);
+	background: color-mix(
+		in srgb,
+		$app-shell-accent-info 18%,
+		$app-shell-surface-panel
+	);
 	border-radius: $app-radius-pill;
 }
 
@@ -50,7 +54,8 @@
 	background: $app-shell-surface-control;
 }
 
-@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
 	:global(.text-badge) {
 		min-height: 1.05rem;
 		padding: $app-gap-2xs $app-gap-xs;

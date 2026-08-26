@@ -27,9 +27,13 @@ describe("ProfilePlayfulMessageSettings", () => {
 			props: { initiallyEnabled: true },
 		});
 
-		expect(screen.getByText(/never appears in warnings, recalls/i)).toBeVisible();
-		expect(screen.getByRole("switch", {
-			name: "Allow playful messages",
-		})).toBeChecked();
+		expect(
+			screen.getByText(/never appears in warnings, recalls/i),
+		).toBeVisible();
+		expect(
+			screen.getByRole("switch", {
+				name: "Allow playful messages",
+			}),
+		).toBeChecked();
 	});
 });

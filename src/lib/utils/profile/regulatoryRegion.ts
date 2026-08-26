@@ -16,7 +16,10 @@ export type RegulatoryRegionOption = {
 
 export const normalizeRegulatoryRegionCode = (
 	value: FormDataEntryValue | null,
-) => String(value ?? "").trim().toLocaleUpperCase();
+) =>
+	String(value ?? "")
+		.trim()
+		.toLocaleUpperCase();
 
 export const normalizeRegulatoryRegionSource = (
 	value: FormDataEntryValue | null,
@@ -25,7 +28,7 @@ export const normalizeRegulatoryRegionSource = (
 	return REGULATORY_REGION_SELECTION_SOURCES.includes(
 		normalized as RegulatoryRegionSelectionSource,
 	)
-		? normalized as RegulatoryRegionSelectionSource
+		? (normalized as RegulatoryRegionSelectionSource)
 		: null;
 };
 
@@ -50,9 +53,10 @@ export const getDeviceRegulatoryRegionSuggestion = (
 		const localeRegion = readLocaleRegion(locale);
 		if (!localeRegion) continue;
 
-		const match = options.find((option) =>
-			option.regionCode === localeRegion ||
-			option.regionCode.split("-").includes(localeRegion),
+		const match = options.find(
+			(option) =>
+				option.regionCode === localeRegion ||
+				option.regionCode.split("-").includes(localeRegion),
 		);
 		if (match) return match.regionCode;
 	}

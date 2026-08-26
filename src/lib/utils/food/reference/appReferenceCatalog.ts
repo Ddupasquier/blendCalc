@@ -48,10 +48,7 @@ export type FoodSymbolDefinition = {
 };
 
 export type FoodSymbolRuleScope =
-	| "prepared_override"
-	| "category"
-	| "name_refinement"
-	| "uncategorized_name";
+	"prepared_override" | "category" | "name_refinement" | "uncategorized_name";
 
 export type FoodSymbolResolutionRule = {
 	symbolKey: string;
@@ -127,9 +124,9 @@ export const getNutrientDisplayProfile = (
 	purpose: NutrientDisplayProfile["purpose"],
 	catalog: AppReferenceCatalog = configuredCatalog,
 ) =>
-  catalog.nutrientDisplayProfiles.find(
-    (profile) => profile.purpose === purpose,
-  ) ?? null;
+	catalog.nutrientDisplayProfiles.find(
+		(profile) => profile.purpose === purpose,
+	) ?? null;
 
 export const getNutritionFactsFields = (
 	catalog: AppReferenceCatalog = configuredCatalog,
@@ -148,7 +145,7 @@ export const getDefaultMixGoals = (
 ) => ({ ...(getDefaultMixGoalTemplate(catalog)?.goals ?? {}) }) as MixGoalMap;
 
 export const getDefaultMixGoalTemplate = (
-  catalog: AppReferenceCatalog = configuredCatalog,
+	catalog: AppReferenceCatalog = configuredCatalog,
 ) => catalog.mixGoalTemplates.find((template) => template.isDefault) ?? null;
 
 export const getMixRuntimeConfiguration = (

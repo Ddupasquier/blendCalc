@@ -24,7 +24,7 @@
 	const titleId = $derived(`${id}-title`);
 </script>
 
-<RightSheet {id} open labelledby={titleId} onClose={onClose}>
+<RightSheet {id} open labelledby={titleId} {onClose}>
 	<ViewFrame className="privileged-tool-right-sheet">
 		<ViewTop>
 			<div class="privileged-tool-right-sheet__header">
@@ -35,13 +35,13 @@
 					onclick={onClose}
 				/>
 				<div class="privileged-tool-right-sheet__heading">
-					<ViewHeader {title} {subtitle} titleId={titleId} />
+					<ViewHeader {title} {subtitle} {titleId} />
 					<div class="privileged-tool-right-sheet__header-actions">
 						<CircleIconButton
 							label={`About ${title}`}
 							variant="ghost"
 							size="small"
-							onclick={() => informationOpen = true}
+							onclick={() => (informationOpen = true)}
 						>
 							<Info />
 						</CircleIconButton>
@@ -59,7 +59,7 @@
 <PrivilegedToolInformationSheet
 	open={informationOpen}
 	action={informationKey}
-	onClose={() => informationOpen = false}
+	onClose={() => (informationOpen = false)}
 />
 
 <style lang="scss">

@@ -1,9 +1,7 @@
 import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 import { NUTRIENT_IDS, type FoodItem } from "$lib/utils/food/types";
 import { getFoodNutrientValue } from "$lib/utils/food/nutrients/foodNutrients";
-import {
-	getFoodPreferenceWarningMessage,
-} from "$lib/utils/profile/foodPreferenceWarnings";
+import { getFoodPreferenceWarningMessage } from "$lib/utils/profile/foodPreferenceWarnings";
 import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
 
 export type IngredientActionItem = {
@@ -16,8 +14,10 @@ export type IngredientListMembership = {
 	inShoppingList: boolean;
 };
 
-export const getIngredientActionKey = (key: IngredientListKey, foodId: number) =>
-	`${key}:${foodId}`;
+export const getIngredientActionKey = (
+	key: IngredientListKey,
+	foodId: number,
+) => `${key}:${foodId}`;
 
 export const getOppositeIngredientListKey = (key: IngredientListKey) =>
 	key === MIX_STORAGE_KEYS.fridge
@@ -42,7 +42,8 @@ export const getIngredientMoveLabel = (key: IngredientListKey) =>
 	key === MIX_STORAGE_KEYS.fridge ? "Move to Shopping List" : "Move to Fridge";
 
 export const areFoodIdsEqual = (left: number[], right: number[]) =>
-	left.length === right.length && left.every((id, index) => id === right[index]);
+	left.length === right.length &&
+	left.every((id, index) => id === right[index]);
 
 export const getFoodCalories = (food: FoodItem) => {
 	const calories = getFoodNutrientValue(food, NUTRIENT_IDS.CALORIES);
@@ -57,8 +58,9 @@ export const getFoodDisplayCategory = (food: FoodItem) => {
 	}
 	const canonicalCategory = food.categories
 		?.map((category) => category.trim())
-		.find((category) =>
-			Boolean(category) && category.toLowerCase() !== "custom ingredient"
+		.find(
+			(category) =>
+				Boolean(category) && category.toLowerCase() !== "custom ingredient",
 		);
 	if (canonicalCategory) return canonicalCategory;
 	return "Category unavailable";
@@ -73,7 +75,8 @@ export const getPrimaryFoodWarning = (food: FoodItem) => {
 	}
 	const warnings = food.preferenceWarnings ?? [];
 	if (warnings.length === 0) return null;
-	const warning = warnings.find((item) => item.level === "warning") ?? warnings[0];
+	const warning =
+		warnings.find((item) => item.level === "warning") ?? warnings[0];
 	return getFoodPreferenceWarningMessage(warning);
 };
 

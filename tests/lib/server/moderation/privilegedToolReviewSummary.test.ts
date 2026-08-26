@@ -43,7 +43,9 @@ describe("Profile privileged tool review summary", () => {
 		const rpc = vi.fn().mockResolvedValue({ data: 1, error: null });
 		mocks.getSupabaseAdminClient.mockReturnValue({ from, rpc });
 
-		await expect(readPrivilegedToolReviewSummary(reviewPermissions)).resolves.toEqual({
+		await expect(
+			readPrivilegedToolReviewSummary(reviewPermissions),
+		).resolves.toEqual({
 			pendingProductSubmissions: 3,
 			pendingFoodWarningReports: 2,
 			pendingProfileImageReviews: 1,
@@ -53,10 +55,10 @@ describe("Profile privileged tool review summary", () => {
 		});
 		expect(from).toHaveBeenCalledTimes(2);
 		for (const query of Object.values(queries)) {
-			expect(query.select).toHaveBeenCalledWith(
-				expect.any(String),
-				{ count: "exact", head: true },
-			);
+			expect(query.select).toHaveBeenCalledWith(expect.any(String), {
+				count: "exact",
+				head: true,
+			});
 		}
 		expect(rpc).toHaveBeenCalledWith("get_pending_profile_image_review_count");
 	});
@@ -71,7 +73,9 @@ describe("Profile privileged tool review summary", () => {
 			rpc: vi.fn().mockResolvedValue({ data: 0, error: null }),
 		});
 
-		await expect(readPrivilegedToolReviewSummary(reviewPermissions)).rejects.toEqual({ code: "42501" });
+		await expect(
+			readPrivilegedToolReviewSummary(reviewPermissions),
+		).rejects.toEqual({ code: "42501" });
 	});
 
 	it("keeps Profile usable while the additive report table is rolling out", async () => {
@@ -84,14 +88,16 @@ describe("Profile privileged tool review summary", () => {
 			rpc: vi.fn().mockResolvedValue({
 				data: null,
 				error: {
-				code: "PGRST202",
-				message:
-					"Could not find public.get_pending_profile_image_review_count in the schema cache",
+					code: "PGRST202",
+					message:
+						"Could not find public.get_pending_profile_image_review_count in the schema cache",
 				},
 			}),
 		});
 
-		await expect(readPrivilegedToolReviewSummary(reviewPermissions)).resolves.toMatchObject({
+		await expect(
+			readPrivilegedToolReviewSummary(reviewPermissions),
+		).resolves.toMatchObject({
 			pendingProfileImageReviews: 0,
 			totalPendingReviews: 2,
 			unavailable: false,
@@ -125,7 +131,9 @@ describe("Profile privileged tool review summary", () => {
 	});
 
 	it("withholds privileged review counts until identity verification", () => {
-		expect(getIdentityVerificationRequiredPrivilegedToolReviewSummary()).toEqual({
+		expect(
+			getIdentityVerificationRequiredPrivilegedToolReviewSummary(),
+		).toEqual({
 			pendingProductSubmissions: null,
 			pendingFoodWarningReports: null,
 			pendingProfileImageReviews: null,

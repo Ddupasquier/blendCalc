@@ -43,7 +43,8 @@
 	justify-content: flex-start;
 }
 
-@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
 	.preference-custom-entry__controls {
 		grid-template-columns: 1fr;
 	}

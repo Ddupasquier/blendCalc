@@ -7,7 +7,9 @@
 
 	let { data, form }: NutrientMappingReviewPageProps = $props();
 	const closeAction = () => {
-		void goto("/profile/privileged-tools/data-operations", { replaceState: true });
+		void goto("/profile/privileged-tools/data-operations", {
+			replaceState: true,
+		});
 	};
 </script>
 

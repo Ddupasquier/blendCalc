@@ -78,7 +78,8 @@
 	border-top: $app-border;
 }
 
-@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
 	.food-warning-report-review,
 	.food-warning-report-review__heading,
 	.food-warning-report-review__report-note,

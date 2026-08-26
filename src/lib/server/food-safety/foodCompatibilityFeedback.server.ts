@@ -58,10 +58,7 @@ export type FoodCompatibilityFeedbackReviewResult = {
 	reviewed: boolean;
 	followUpStatus: "not_required" | "open";
 	followUpType:
-		| "rule_review"
-		| "source_correction"
-		| "product_correction"
-		| null;
+		"rule_review" | "source_correction" | "product_correction" | null;
 	followUpId: string | null;
 };
 
@@ -96,11 +93,11 @@ export type FoodCompatibilityFollowUps = {
 const readJoinedRecord = (value: unknown): Record<string, unknown> => {
 	if (Array.isArray(value)) {
 		return value[0] && typeof value[0] === "object"
-			? value[0] as Record<string, unknown>
+			? (value[0] as Record<string, unknown>)
 			: {};
 	}
 	return value && typeof value === "object"
-		? value as Record<string, unknown>
+		? (value as Record<string, unknown>)
 		: {};
 };
 
@@ -127,22 +124,21 @@ type ResolvedFeedbackProduct = {
 	factSnapshot: Json;
 };
 
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
+const UUID_PATTERN =
+	/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
 const BARCODE_PATTERN = /^\d{8,14}$/u;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/u;
 
-const readOptionalString = (
-	value: unknown,
-	maximumLength: number,
-) => {
+const readOptionalString = (value: unknown, maximumLength: number) => {
 	if (typeof value !== "string") return null;
 	const normalized = value.trim();
-	return normalized
-		? normalized.slice(0, maximumLength)
-		: null;
+	return normalized ? normalized.slice(0, maximumLength) : null;
 };
 
-const readRequiredString = (value: FormDataEntryValue | null, maximumLength: number) => {
+const readRequiredString = (
+	value: FormDataEntryValue | null,
+	maximumLength: number,
+) => {
 	const normalized = readOptionalString(value, maximumLength);
 	return normalized ?? "";
 };
@@ -165,16 +161,25 @@ const readObservedLabelDate = (value: FormDataEntryValue | null) => {
 export const parseMissingFoodWarningFeedbackRequest = (
 	formData: FormData,
 ): MissingFoodWarningFeedbackRequest | null => {
-	const preferenceTagId = readRequiredString(formData.get("preferenceTagId"), 80);
+	const preferenceTagId = readRequiredString(
+		formData.get("preferenceTagId"),
+		80,
+	);
 	const preferenceType = readRequiredString(formData.get("preferenceType"), 40);
 	const sourceId = readRequiredString(formData.get("sourceId"), 200);
-	const foodDescription = readRequiredString(formData.get("foodDescription"), 300);
+	const foodDescription = readRequiredString(
+		formData.get("foodDescription"),
+		300,
+	);
 	const reportDetails = readRequiredString(formData.get("reportDetails"), 1000);
-	const observedLabelDate = readObservedLabelDate(formData.get("observedLabelDate"));
+	const observedLabelDate = readObservedLabelDate(
+		formData.get("observedLabelDate"),
+	);
 	const evidenceEntry = formData.get("evidence");
-	const evidenceFile = evidenceEntry instanceof File && evidenceEntry.size > 0
-		? evidenceEntry
-		: null;
+	const evidenceFile =
+		evidenceEntry instanceof File && evidenceEntry.size > 0
+			? evidenceEntry
+			: null;
 
 	if (
 		!UUID_PATTERN.test(preferenceTagId) ||
@@ -189,7 +194,10 @@ export const parseMissingFoodWarningFeedbackRequest = (
 		return null;
 	}
 
-	const sharedProductId = readOptionalString(formData.get("sharedProductId"), 80);
+	const sharedProductId = readOptionalString(
+		formData.get("sharedProductId"),
+		80,
+	);
 	if (sharedProductId && !UUID_PATTERN.test(sharedProductId)) return null;
 	const barcode = readOptionalString(formData.get("barcode"), 14);
 	if (barcode && !BARCODE_PATTERN.test(barcode)) return null;
@@ -212,13 +220,11 @@ const readParams = (value: unknown): AppIssueParams | null => {
 	if (!value || typeof value !== "object" || Array.isArray(value)) return null;
 	const sourceEntries = Object.entries(value);
 	const entries = sourceEntries.flatMap(([key, item]) =>
-		(
-			typeof item === "string" ||
-			typeof item === "number" ||
-			typeof item === "boolean"
-		)
+		typeof item === "string" ||
+		typeof item === "number" ||
+		typeof item === "boolean"
 			? [[key.slice(0, 80), item] as const]
-			: []
+			: [],
 	);
 	if (entries.length !== sourceEntries.length) return null;
 	const params = Object.fromEntries(entries);
@@ -266,7 +272,9 @@ export const parseFoodCompatibilityFeedbackRequest = (
 		warningId,
 		issueCode: issueCode as AppIssueCode,
 		issueParams,
-		factSnapshot: readFactSnapshot(input.factSnapshot) as FoodCompatibilityFeedbackRequest["factSnapshot"],
+		factSnapshot: readFactSnapshot(
+			input.factSnapshot,
+		) as FoodCompatibilityFeedbackRequest["factSnapshot"],
 		reportReason: reportReason as FoodCompatibilityFeedbackReason,
 		reportDetails: readOptionalString(input.reportDetails, 1000),
 	};
@@ -293,33 +301,33 @@ export const submitFoodCompatibilityFeedback = async (
 	const admin = getSupabaseAdminClient();
 	const policyVersion = await getActivePolicyVersion();
 	const reportFingerprint = createHash("sha256")
-		.update(JSON.stringify({
-			policyVersion: policyVersion.version_number,
-			sharedProductId: input.sharedProductId,
-			sourceKey: input.sourceKey,
-			sourceId: input.sourceId,
-			barcode: input.barcode,
-			warningId: input.warningId,
-		}))
+		.update(
+			JSON.stringify({
+				policyVersion: policyVersion.version_number,
+				sharedProductId: input.sharedProductId,
+				sourceKey: input.sourceKey,
+				sourceId: input.sourceId,
+				barcode: input.barcode,
+				warningId: input.warningId,
+			}),
+		)
 		.digest("hex");
-	const { error } = await admin
-		.from("food_compatibility_feedback")
-		.insert({
-			reported_by: userId,
-			policy_version_id: policyVersion.id,
-			shared_product_id: input.sharedProductId,
-			source_key: input.sourceKey,
-			source_id: input.sourceId,
-			barcode: input.barcode,
-			food_description: input.foodDescription,
-			warning_id: input.warningId,
-			issue_code: input.issueCode,
-			issue_params: input.issueParams,
-			fact_snapshot: { facts: input.factSnapshot },
-			report_reason: input.reportReason,
-			report_details: input.reportDetails,
-			report_fingerprint: reportFingerprint,
-		});
+	const { error } = await admin.from("food_compatibility_feedback").insert({
+		reported_by: userId,
+		policy_version_id: policyVersion.id,
+		shared_product_id: input.sharedProductId,
+		source_key: input.sourceKey,
+		source_id: input.sourceId,
+		barcode: input.barcode,
+		food_description: input.foodDescription,
+		warning_id: input.warningId,
+		issue_code: input.issueCode,
+		issue_params: input.issueParams,
+		fact_snapshot: { facts: input.factSnapshot },
+		report_reason: input.reportReason,
+		report_details: input.reportDetails,
+		report_fingerprint: reportFingerprint,
+	});
 
 	if (!error) return "submitted" as const;
 	if (error.code === "23505") return "already_pending" as const;
@@ -365,10 +373,10 @@ const getCurrentSharedProduct = async (
 			compatibilitySummary: data.compatibility_summary,
 			catalogRevision: revision
 				? {
-					id: revision.id,
-					number: revision.revision_number,
-					labelObservedAt: revision.label_observed_at,
-				}
+						id: revision.id,
+						number: revision.revision_number,
+						labelObservedAt: revision.label_observed_at,
+					}
 				: null,
 		},
 	} satisfies ResolvedFeedbackProduct;
@@ -457,23 +465,26 @@ export const submitMissingFoodWarningFeedback = async (
 		getUserFoodPreferenceResolutions(admin, userId),
 		resolveFeedbackProduct(input),
 	]);
-	const preference = preferenceResolutions.find((resolution) =>
-		resolution.status === "resolved" &&
-		resolution.ruleType === input.preferenceType &&
-		resolution.tag?.id === input.preferenceTagId
+	const preference = preferenceResolutions.find(
+		(resolution) =>
+			resolution.status === "resolved" &&
+			resolution.ruleType === input.preferenceType &&
+			resolution.tag?.id === input.preferenceTagId,
 	);
 	if (!preference?.tag || !product) return "invalid" as const;
 
 	const reportFingerprint = createHash("sha256")
-		.update(JSON.stringify({
-			feedbackType: "missing_warning",
-			policyVersion: policyVersion.version_number,
-			sharedProductId: product.sharedProductId,
-			sourceKey: product.sourceKey,
-			sourceId: product.sourceId,
-			barcode: product.barcode,
-			preferenceTagId: preference.tag.id,
-		}))
+		.update(
+			JSON.stringify({
+				feedbackType: "missing_warning",
+				policyVersion: policyVersion.version_number,
+				sharedProductId: product.sharedProductId,
+				sourceKey: product.sourceKey,
+				sourceId: product.sourceId,
+				barcode: product.barcode,
+				preferenceTagId: preference.tag.id,
+			}),
+		)
 		.digest("hex");
 	const { data: pending, error: pendingError } = await admin
 		.from("food_compatibility_feedback")
@@ -493,32 +504,30 @@ export const submitMissingFoodWarningFeedback = async (
 				input.evidenceFile,
 			);
 		}
-		const { error } = await admin
-			.from("food_compatibility_feedback")
-			.insert({
-				reported_by: userId,
-				policy_version_id: policyVersion.id,
-				shared_product_id: product.sharedProductId,
-				shared_product_revision_id: product.sharedProductRevisionId,
-				source_key: product.sourceKey,
-				source_id: product.sourceId,
-				barcode: product.barcode,
-				food_description: product.foodDescription,
-				feedback_type: "missing_warning",
-				warning_id: null,
-				issue_code: null,
-				issue_params: {},
-				fact_snapshot: product.factSnapshot,
-				preference_type: preference.ruleType,
-				preference_value: preference.rawValue,
-				preference_tag_id: preference.tag.id,
-				observed_label_date: input.observedLabelDate,
-				evidence_path: evidence?.path ?? null,
-				evidence_sha256: evidence?.sha256 ?? null,
-				report_reason: "missing_warning",
-				report_details: input.reportDetails,
-				report_fingerprint: reportFingerprint,
-			});
+		const { error } = await admin.from("food_compatibility_feedback").insert({
+			reported_by: userId,
+			policy_version_id: policyVersion.id,
+			shared_product_id: product.sharedProductId,
+			shared_product_revision_id: product.sharedProductRevisionId,
+			source_key: product.sourceKey,
+			source_id: product.sourceId,
+			barcode: product.barcode,
+			food_description: product.foodDescription,
+			feedback_type: "missing_warning",
+			warning_id: null,
+			issue_code: null,
+			issue_params: {},
+			fact_snapshot: product.factSnapshot,
+			preference_type: preference.ruleType,
+			preference_value: preference.rawValue,
+			preference_tag_id: preference.tag.id,
+			observed_label_date: input.observedLabelDate,
+			evidence_path: evidence?.path ?? null,
+			evidence_sha256: evidence?.sha256 ?? null,
+			report_reason: "missing_warning",
+			report_details: input.reportDetails,
+			report_fingerprint: reportFingerprint,
+		});
 
 		if (!error) return "submitted" as const;
 		if (error.code === "23505") {
@@ -543,89 +552,100 @@ export const listPendingFoodCompatibilityFeedback = async () => {
 		.order("created_at", { ascending: true });
 
 	if (error) throw error;
-	return Promise.all((data ?? []).map(async (feedback) => ({
-		...feedback,
-		evidence_signed_url: await createFoodCompatibilityEvidenceSignedUrl(
-			feedback.evidence_path,
-		),
-	})));
+	return Promise.all(
+		(data ?? []).map(async (feedback) => ({
+			...feedback,
+			evidence_signed_url: await createFoodCompatibilityEvidenceSignedUrl(
+				feedback.evidence_path,
+			),
+		})),
+	);
 };
 
-export const listOpenFoodCompatibilityFollowUps = async (): Promise<FoodCompatibilityFollowUps> => {
-	const admin = getSupabaseAdminClient();
-	const [correctionResult, policyResult] = await Promise.all([
-		admin
-			.from("catalog_correction_origins")
-			.select(
-				"id, shared_product_id, affected_field_paths, status, submission_id, created_at, product:shared_products(product_name, barcode), feedback:food_compatibility_feedback(feedback_type, report_reason)",
-			)
-			.eq("origin_type", "food_warning_report")
-			.in("status", ["waiting_for_correction", "linked"])
-			.order("created_at", { ascending: true }),
-		admin
-			.from("food_warning_policy_review_cases")
-			.select(
-				"id, case_type, responsible_group, shared_product_id, source_key, status, created_at, product:shared_products(product_name, barcode), feedback:food_compatibility_feedback(food_description, feedback_type, report_reason)",
-			)
-			.in("status", ["open", "deferred"])
-			.order("created_at", { ascending: true }),
-	]);
+export const listOpenFoodCompatibilityFollowUps =
+	async (): Promise<FoodCompatibilityFollowUps> => {
+		const admin = getSupabaseAdminClient();
+		const [correctionResult, policyResult] = await Promise.all([
+			admin
+				.from("catalog_correction_origins")
+				.select(
+					"id, shared_product_id, affected_field_paths, status, submission_id, created_at, product:shared_products(product_name, barcode), feedback:food_compatibility_feedback(feedback_type, report_reason)",
+				)
+				.eq("origin_type", "food_warning_report")
+				.in("status", ["waiting_for_correction", "linked"])
+				.order("created_at", { ascending: true }),
+			admin
+				.from("food_warning_policy_review_cases")
+				.select(
+					"id, case_type, responsible_group, shared_product_id, source_key, status, created_at, product:shared_products(product_name, barcode), feedback:food_compatibility_feedback(food_description, feedback_type, report_reason)",
+				)
+				.in("status", ["open", "deferred"])
+				.order("created_at", { ascending: true }),
+		]);
 
-	if (correctionResult.error || policyResult.error) {
-		throw correctionResult.error ?? policyResult.error;
-	}
+		if (correctionResult.error || policyResult.error) {
+			throw correctionResult.error ?? policyResult.error;
+		}
 
-
-	return {
-		productCorrections: (correctionResult.data ?? []).map((record) => {
-			const product = readJoinedRecord(record.product);
-			const feedback = readJoinedRecord(record.feedback);
-			return {
-				id: record.id,
-				sharedProductId: record.shared_product_id,
-				productName: typeof product.product_name === "string"
-					? product.product_name
-					: "Catalog product",
-				barcode: typeof product.barcode === "string" ? product.barcode : "Barcode unavailable",
-				affectedFieldPaths: record.affected_field_paths,
-				status: record.status,
-				submissionId: record.submission_id,
-				feedbackType: typeof feedback.feedback_type === "string"
-					? feedback.feedback_type
-					: "warning_report",
-				reportReason: typeof feedback.report_reason === "string"
-					? feedback.report_reason
-					: "other",
-				createdAt: record.created_at,
-			};
-		}),
-		policyReviews: (policyResult.data ?? []).map((record) => {
-			const product = readJoinedRecord(record.product);
-			const feedback = readJoinedRecord(record.feedback);
-			return {
-				id: record.id,
-				caseType: record.case_type,
-				responsibleGroup: record.responsible_group,
-				sharedProductId: record.shared_product_id,
-				productName: typeof product.product_name === "string"
-					? product.product_name
-					: typeof feedback.food_description === "string"
-						? feedback.food_description
-						: "Reported food",
-				barcode: typeof product.barcode === "string" ? product.barcode : null,
-				sourceKey: record.source_key,
-				status: record.status,
-				feedbackType: typeof feedback.feedback_type === "string"
-					? feedback.feedback_type
-					: "warning_report",
-				reportReason: typeof feedback.report_reason === "string"
-					? feedback.report_reason
-					: "other",
-				createdAt: record.created_at,
-			};
-		}),
+		return {
+			productCorrections: (correctionResult.data ?? []).map((record) => {
+				const product = readJoinedRecord(record.product);
+				const feedback = readJoinedRecord(record.feedback);
+				return {
+					id: record.id,
+					sharedProductId: record.shared_product_id,
+					productName:
+						typeof product.product_name === "string"
+							? product.product_name
+							: "Catalog product",
+					barcode:
+						typeof product.barcode === "string"
+							? product.barcode
+							: "Barcode unavailable",
+					affectedFieldPaths: record.affected_field_paths,
+					status: record.status,
+					submissionId: record.submission_id,
+					feedbackType:
+						typeof feedback.feedback_type === "string"
+							? feedback.feedback_type
+							: "warning_report",
+					reportReason:
+						typeof feedback.report_reason === "string"
+							? feedback.report_reason
+							: "other",
+					createdAt: record.created_at,
+				};
+			}),
+			policyReviews: (policyResult.data ?? []).map((record) => {
+				const product = readJoinedRecord(record.product);
+				const feedback = readJoinedRecord(record.feedback);
+				return {
+					id: record.id,
+					caseType: record.case_type,
+					responsibleGroup: record.responsible_group,
+					sharedProductId: record.shared_product_id,
+					productName:
+						typeof product.product_name === "string"
+							? product.product_name
+							: typeof feedback.food_description === "string"
+								? feedback.food_description
+								: "Reported food",
+					barcode: typeof product.barcode === "string" ? product.barcode : null,
+					sourceKey: record.source_key,
+					status: record.status,
+					feedbackType:
+						typeof feedback.feedback_type === "string"
+							? feedback.feedback_type
+							: "warning_report",
+					reportReason:
+						typeof feedback.report_reason === "string"
+							? feedback.report_reason
+							: "other",
+					createdAt: record.created_at,
+				};
+			}),
+		};
 	};
-};
 
 export const reviewFoodCompatibilityFeedback = async (
 	supabase: SupabaseClient<Database>,
@@ -660,21 +680,21 @@ export const reviewFoodCompatibilityFeedback = async (
 		throw new TypeError("Food-warning review returned an invalid response.");
 	}
 	const result = data as Record<string, unknown>;
-	const followUpStatus = result.followUpStatus === "open"
-		? "open"
-		: "not_required";
+	const followUpStatus =
+		result.followUpStatus === "open" ? "open" : "not_required";
 	const followUpType = [
 		"rule_review",
 		"source_correction",
 		"product_correction",
 	].includes(String(result.followUpType))
-		? result.followUpType as FoodCompatibilityFeedbackReviewResult["followUpType"]
+		? (result.followUpType as FoodCompatibilityFeedbackReviewResult["followUpType"])
 		: null;
 
 	return {
 		reviewed: result.reviewed === true,
 		followUpStatus,
 		followUpType,
-		followUpId: typeof result.followUpId === "string" ? result.followUpId : null,
+		followUpId:
+			typeof result.followUpId === "string" ? result.followUpId : null,
 	};
 };

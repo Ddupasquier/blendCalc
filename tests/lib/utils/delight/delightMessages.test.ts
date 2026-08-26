@@ -29,15 +29,14 @@ const createGoalDifference = (
 	status,
 });
 
-const createFood = (description: string, fdcId: number) =>
-	({
-		...createCustomFood({
-			name: description,
-			servingWeightGrams: 100,
-			nutrients: [],
-		}),
-		fdcId,
-	});
+const createFood = (description: string, fdcId: number) => ({
+	...createCustomFood({
+		name: description,
+		servingWeightGrams: 100,
+		nutrients: [],
+	}),
+	fdcId,
+});
 
 describe("delight messages", () => {
 	afterEach(() => configureAppReferenceCatalog(appReferenceCatalogFixture));
@@ -110,48 +109,56 @@ describe("delight messages", () => {
 				},
 			],
 		};
-		const selection = [{
-			contextKey: "ingredients" as const,
-			triggerKey: "food-added",
-			matchKeys: ["bread"],
-		}];
+		const selection = [
+			{
+				contextKey: "ingredients" as const,
+				triggerKey: "food-added",
+				matchKeys: ["bread"],
+			},
+		];
 
 		expect(resolveDelightMessage(selection, { catalog })).toBe(
 			"Nice buns. Nutritionally speaking.",
 		);
-		expect(resolveDelightMessage(selection, {
-			catalog,
-			allowPlayfulMessages: false,
-		})).toBe("Standard bread message.");
+		expect(
+			resolveDelightMessage(selection, {
+				catalog,
+				allowPlayfulMessages: false,
+			}),
+		).toBe("Standard bread message.");
 	});
 
 	it("rejects playful copy outside explicitly eligible success triggers", () => {
-		expect(resolveDelightMessage([
-			{ contextKey: "app", triggerKey: "error" },
-		], {
-			allowPlayfulMessages: true,
-			catalog: {
-				...appReferenceCatalogFixture,
-				delightMessages: [{
-					key: "unsafe-error-copy",
-					contextKey: "app",
-					triggerKey: "error",
-					matchKey: null,
-					message: "Not eligible.",
-					minimumValue: null,
-					maximumValue: null,
-					priority: 1,
-					tone: "cheeky",
-				}],
-			},
-		})).toBeNull();
+		expect(
+			resolveDelightMessage([{ contextKey: "app", triggerKey: "error" }], {
+				allowPlayfulMessages: true,
+				catalog: {
+					...appReferenceCatalogFixture,
+					delightMessages: [
+						{
+							key: "unsafe-error-copy",
+							contextKey: "app",
+							triggerKey: "error",
+							matchKey: null,
+							message: "Not eligible.",
+							minimumValue: null,
+							maximumValue: null,
+							priority: 1,
+							tone: "cheeky",
+						},
+					],
+				},
+			}),
+		).toBeNull();
 	});
 
 	it("matches food puns through the reviewed food-symbol catalog", () => {
 		const eggs = { ...createFood("Scrambled eggs", 1), symbolKey: "eggs" };
 
 		expect(resolveFoodAddedDelightMessage(eggs)).toBe("Eggcellent choice.");
-		expect(resolveFoodAddedDelightMessage(createFood("Plain oatmeal", 2))).toBeNull();
+		expect(
+			resolveFoodAddedDelightMessage(createFood("Plain oatmeal", 2)),
+		).toBeNull();
 	});
 
 	it("uses composition before goal or serving messages", () => {
@@ -191,9 +198,7 @@ describe("delight messages", () => {
 			resolveMixDelightMessage({
 				foods: [water],
 				servingGrams: { [water.fdcId]: 600 },
-				goalDifferences: [
-					createGoalDifference(NUTRIENT_IDS.PROTEIN, "met"),
-				],
+				goalDifferences: [createGoalDifference(NUTRIENT_IDS.PROTEIN, "met")],
 				hasDangerWarning: false,
 			}),
 		).toBe("Premium artisanal hydration.");
@@ -222,9 +227,7 @@ describe("delight messages", () => {
 			resolveMixDelightMessage({
 				foods: [eggs],
 				servingGrams: { [eggs.fdcId]: 100 },
-				goalDifferences: [
-					createGoalDifference(NUTRIENT_IDS.PROTEIN, "met"),
-				],
+				goalDifferences: [createGoalDifference(NUTRIENT_IDS.PROTEIN, "met")],
 				hasDangerWarning: true,
 			}),
 		).toBeNull();

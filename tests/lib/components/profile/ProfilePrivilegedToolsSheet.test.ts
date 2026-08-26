@@ -40,32 +40,45 @@ describe("Profile privileged tools sheet", () => {
 			},
 		});
 
-		expect(screen.getByRole("button", { name: /Product submissions/ }))
-			.toBeEnabled();
-		expect(screen.getByRole("button", { name: /Food warning reports/ }))
-			.toBeDisabled();
-		expect(screen.getByRole("button", { name: /Profile images/ }))
-			.toBeDisabled();
-		expect(screen.getByRole("button", { name: /Account access/ }))
-			.toBeEnabled();
-		expect(screen.getByRole("button", { name: /Catalog review work/ }))
-			.toBeEnabled();
-		expect(screen.queryByRole("button", { name: /Catalog data operations/ }))
-			.not.toBeInTheDocument();
-		expect(screen.getByLabelText("4 product submissions requiring review"))
-			.toBeVisible();
+		expect(
+			screen.getByRole("button", { name: /Product submissions/ }),
+		).toBeEnabled();
+		expect(
+			screen.getByRole("button", { name: /Food warning reports/ }),
+		).toBeDisabled();
+		expect(
+			screen.getByRole("button", { name: /Profile images/ }),
+		).toBeDisabled();
+		expect(
+			screen.getByRole("button", { name: /Account access/ }),
+		).toBeEnabled();
+		expect(
+			screen.getByRole("button", { name: /Catalog review work/ }),
+		).toBeEnabled();
+		expect(
+			screen.queryByRole("button", { name: /Catalog data operations/ }),
+		).not.toBeInTheDocument();
+		expect(
+			screen.getByLabelText("4 product submissions requiring review"),
+		).toBeVisible();
 		expect(
 			screen.getAllByRole("heading", { name: "Moderator tools" }),
 		).toHaveLength(1);
 		expect(
 			screen.getByRole("dialog", { name: "Moderator tools" }),
 		).toBeInTheDocument();
-		expect(container.querySelectorAll(".privileged-action-badge")).toHaveLength(1);
+		expect(container.querySelectorAll(".privileged-action-badge")).toHaveLength(
+			1,
+		);
 		expect(
-			container.querySelector(".bottom-sheet__title-accessory .privileged-action-badge"),
+			container.querySelector(
+				".bottom-sheet__title-accessory .privileged-action-badge",
+			),
 		).toBeInTheDocument();
 
-		await fireEvent.click(screen.getByRole("button", { name: /Product submissions/ }));
+		await fireEvent.click(
+			screen.getByRole("button", { name: /Product submissions/ }),
+		);
 		expect(onClose).toHaveBeenCalledOnce();
 		expect(onNavigate).toHaveBeenCalledWith(
 			"/profile/privileged-tools/product-submissions",
@@ -96,14 +109,18 @@ describe("Profile privileged tools sheet", () => {
 			"Food warning reports",
 			"Profile images",
 		]) {
-			expect(screen.getByRole("button", { name: new RegExp(actionName) }))
-				.toBeEnabled();
+			expect(
+				screen.getByRole("button", { name: new RegExp(actionName) }),
+			).toBeEnabled();
 		}
-		expect(screen.getAllByText("Verify your identity to check this queue"))
-			.toHaveLength(3);
+		expect(
+			screen.getAllByText("Verify your identity to check this queue"),
+		).toHaveLength(3);
 		expect(screen.queryByLabelText(/requiring review/)).not.toBeInTheDocument();
 
-		await fireEvent.click(screen.getByRole("button", { name: /Product submissions/ }));
+		await fireEvent.click(
+			screen.getByRole("button", { name: /Product submissions/ }),
+		);
 		expect(onClose).toHaveBeenCalledOnce();
 		expect(onNavigate).toHaveBeenCalledWith(
 			"/profile/privileged-tools/product-submissions",
@@ -132,13 +149,16 @@ describe("Profile privileged tools sheet", () => {
 			"Food warning reports",
 			"Profile images",
 		]) {
-			expect(screen.getByRole("button", { name: new RegExp(actionName) }))
-				.toBeDisabled();
+			expect(
+				screen.getByRole("button", { name: new RegExp(actionName) }),
+			).toBeDisabled();
 		}
-		expect(screen.getByRole("button", { name: /Account access/ }))
-			.toBeEnabled();
-		expect(screen.getByRole("button", { name: /Catalog review work/ }))
-			.toBeEnabled();
+		expect(
+			screen.getByRole("button", { name: /Account access/ }),
+		).toBeEnabled();
+		expect(
+			screen.getByRole("button", { name: /Catalog review work/ }),
+		).toBeEnabled();
 	});
 
 	it("routes every moderator responsibility to its focused Profile view", async () => {
@@ -161,7 +181,10 @@ describe("Profile privileged tools sheet", () => {
 
 		const destinations = [
 			["Product submissions", "/profile/privileged-tools/product-submissions"],
-			["Food warning reports", "/profile/privileged-tools/food-warning-reports"],
+			[
+				"Food warning reports",
+				"/profile/privileged-tools/food-warning-reports",
+			],
 			["Profile images", "/profile/privileged-tools/profile-images"],
 			["Account access", "/profile/privileged-tools/account-access"],
 			["Catalog review work", "/profile/privileged-tools/catalog-review-work"],
@@ -179,25 +202,37 @@ describe("Profile privileged tools sheet", () => {
 		render(ProfilePrivilegedToolsSheet, {
 			props: {
 				open: true,
-				access: createAccess({
-					pendingProductSubmissions: 0,
-					pendingFoodWarningReports: 0,
-					pendingProfileImageReviews: 0,
-					totalPendingReviews: 0,
-					unavailable: false,
-					identityVerificationRequired: false,
-				}, {
-					role: "admin",
-					permissions: ["moderation.access", "data_operations.catalog_health.read"],
-				}),
+				access: createAccess(
+					{
+						pendingProductSubmissions: 0,
+						pendingFoodWarningReports: 0,
+						pendingProfileImageReviews: 0,
+						totalPendingReviews: 0,
+						unavailable: false,
+						identityVerificationRequired: false,
+					},
+					{
+						role: "admin",
+						permissions: [
+							"moderation.access",
+							"data_operations.catalog_health.read",
+						],
+					},
+				),
 				onClose: vi.fn(),
 				onNavigate: vi.fn(),
 			},
 		});
 
 		expect(screen.getByRole("heading", { name: "Admin tools" })).toBeVisible();
-		expect(screen.getByRole("button", { name: /Catalog data operations/ })).toBeEnabled();
-		expect(screen.queryByRole("button", { name: /Account access/ })).not.toBeInTheDocument();
-		expect(screen.queryByRole("button", { name: /Product submissions/ })).not.toBeInTheDocument();
+		expect(
+			screen.getByRole("button", { name: /Catalog data operations/ }),
+		).toBeEnabled();
+		expect(
+			screen.queryByRole("button", { name: /Account access/ }),
+		).not.toBeInTheDocument();
+		expect(
+			screen.queryByRole("button", { name: /Product submissions/ }),
+		).not.toBeInTheDocument();
 	});
 });

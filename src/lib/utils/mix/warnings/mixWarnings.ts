@@ -121,7 +121,10 @@ export const getFoodPreferenceWarningsForMix = (
 				getFoodPreferenceWarningEvidenceReviewMessage(warning);
 			const details: MixWarningDetail[] = [
 				{
-					label: warning.category === "allergen" ? "Selected allergen" : "Selected preference",
+					label:
+						warning.category === "allergen"
+							? "Selected allergen"
+							: "Selected preference",
 					value: warning.label,
 				},
 			];
@@ -129,7 +132,10 @@ export const getFoodPreferenceWarningsForMix = (
 				details.push({ label: "Evidence", value: evidenceMessage });
 			}
 			if (evidenceReviewMessage) {
-				details.push({ label: "Evidence review", value: evidenceReviewMessage });
+				details.push({
+					label: "Evidence review",
+					value: evidenceReviewMessage,
+				});
 			}
 
 			return {
@@ -138,9 +144,10 @@ export const getFoodPreferenceWarningsForMix = (
 				symbol: warning.level === "warning" ? "!" : "?",
 				title: food.description,
 				message: getFoodPreferenceWarningMessage(warning),
-				detailSummary: warning.category === "allergen"
-					? `Selected allergen: ${warning.label}`
-					: `Selected preference: ${warning.label}`,
+				detailSummary:
+					warning.category === "allergen"
+						? `Selected allergen: ${warning.label}`
+						: `Selected preference: ${warning.label}`,
 				details,
 			};
 		});

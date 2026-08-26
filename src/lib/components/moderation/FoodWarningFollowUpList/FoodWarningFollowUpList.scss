@@ -44,9 +44,9 @@
 	font-weight: $app-font-weight-semibold;
 }
 
-@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
 	.food-warning-follow-up-list__item {
 		padding: $app-gap-xs;
 	}
 }
-

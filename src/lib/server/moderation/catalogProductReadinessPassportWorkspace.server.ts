@@ -3,20 +3,30 @@ import { readCatalogProductReadinessPassport } from "$lib/server/moderation/cata
 import { requireModeratorPermission } from "$lib/server/moderation/moderationAccess.server";
 import type { AppPermission } from "$lib/utils/moderation/moderation";
 
-type CatalogProductReadinessPassportLoadEvent = Pick<RequestEvent, "locals" | "params">;
+type CatalogProductReadinessPassportLoadEvent = Pick<
+	RequestEvent,
+	"locals" | "params"
+>;
 
 export const loadCatalogProductReadinessPassportWorkspace = async (
 	{ locals, params }: CatalogProductReadinessPassportLoadEvent,
 	permission: AppPermission,
 	returnPath: string,
 ) => {
-	const { role } = await requireModeratorPermission(locals, permission, returnPath);
+	const { role } = await requireModeratorPermission(
+		locals,
+		permission,
+		returnPath,
+	);
 	const productId = params.productId ?? "";
 	if (!productId) throw new TypeError("Catalog product ID is required.");
 
 	return {
 		viewerRole: role,
-		passport: await readCatalogProductReadinessPassport(locals.supabase, productId),
+		passport: await readCatalogProductReadinessPassport(
+			locals.supabase,
+			productId,
+		),
 	};
 };
 

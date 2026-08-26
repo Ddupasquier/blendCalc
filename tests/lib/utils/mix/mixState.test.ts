@@ -37,7 +37,10 @@ describe("mix serving state", () => {
 
 	it("uses account nutrient priorities as the default Mix display order", () => {
 		const defaultFields = getDefaultMixFields();
-		const prioritizedIds = defaultFields.slice(0, 2).map((field) => field.id).reverse();
+		const prioritizedIds = defaultFields
+			.slice(0, 2)
+			.map((field) => field.id)
+			.reverse();
 
 		expect(getDefaultMixState(prioritizedIds).selected.slice(0, 2)).toEqual(
 			prioritizedIds,
@@ -60,12 +63,14 @@ describe("mix serving state", () => {
 			fdcId: 2,
 			description: "Banana, Raw",
 			foodNutrients: [],
-			foodServings: [{
-				label: "1 medium banana (118 g)",
-				gramWeight: 118,
-				isPrimary: true,
-				gramWeightMethod: "source-reported",
-			}],
+			foodServings: [
+				{
+					label: "1 medium banana (118 g)",
+					gramWeight: 118,
+					isPrimary: true,
+					gramWeightMethod: "source-reported",
+				},
+			],
 		};
 		const defaultState = getStateWithToggledFood(
 			{
@@ -84,12 +89,7 @@ describe("mix serving state", () => {
 		expect(defaultState.servingQuantities[banana.fdcId]).toBe(1);
 		expect(defaultState.servingGrams[banana.fdcId]).toBe(118);
 		expect(
-			getStateWithServingAmount(
-				defaultState,
-				banana,
-				"2",
-				sourceServingUnit,
-			),
+			getStateWithServingAmount(defaultState, banana, "2", sourceServingUnit),
 		).toMatchObject({
 			servingQuantities: { [banana.fdcId]: 2 },
 			servingGrams: { [banana.fdcId]: 236 },

@@ -11,9 +11,12 @@ const DEFAULT_REVIEW_LIMIT = 20;
 export const readCatalogReviewWork = async (
 	supabase: SupabaseClient<Database>,
 ): Promise<CatalogReviewWorkSummary> => {
-	const { data, error } = await supabase.rpc("get_catalog_review_work_summary", {
-		p_limit: DEFAULT_REVIEW_LIMIT,
-	});
+	const { data, error } = await supabase.rpc(
+		"get_catalog_review_work_summary",
+		{
+			p_limit: DEFAULT_REVIEW_LIMIT,
+		},
+	);
 
 	if (error || data === null) {
 		throwAppError(502, "MODERATION_DATA_UNAVAILABLE");

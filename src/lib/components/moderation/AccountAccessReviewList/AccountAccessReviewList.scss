@@ -99,7 +99,8 @@
 	background: $app-accent;
 }
 
-@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
 	.account-access,
 	.account-access__heading,
 	.account-access__search,

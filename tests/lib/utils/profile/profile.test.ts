@@ -1,8 +1,5 @@
 import type { Database } from "$lib/types/database.types";
-import {
-	getSignedAvatarUrl,
-	getUserProfile,
-} from "$lib/utils/profile/profile";
+import { getSignedAvatarUrl, getUserProfile } from "$lib/utils/profile/profile";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it, vi } from "vitest";
 
@@ -20,7 +17,8 @@ describe("profile request efficiency", () => {
 	});
 
 	it("keeps profile reads usable before the optional preference column rolls out", async () => {
-		const maybeSingle = vi.fn()
+		const maybeSingle = vi
+			.fn()
 			.mockResolvedValueOnce({
 				data: null,
 				error: {
@@ -65,10 +63,12 @@ describe("profile request efficiency", () => {
 		} as unknown as SupabaseClient<Database>;
 		const avatarPath = `user/avatar-${Date.now()}.png`;
 
-		await expect(Promise.all([
-			getSignedAvatarUrl(supabase, avatarPath),
-			getSignedAvatarUrl(supabase, avatarPath),
-		])).resolves.toEqual([
+		await expect(
+			Promise.all([
+				getSignedAvatarUrl(supabase, avatarPath),
+				getSignedAvatarUrl(supabase, avatarPath),
+			]),
+		).resolves.toEqual([
 			"https://example.com/avatar",
 			"https://example.com/avatar",
 		]);

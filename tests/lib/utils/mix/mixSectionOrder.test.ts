@@ -44,9 +44,9 @@ describe("Mix section order", () => {
 	});
 
 	it("moves sections by absolute and relative positions", () => {
-		expect(
-			moveMixSection(DEFAULT_MIX_SECTION_ORDER, "warnings", 0)[0],
-		).toBe("warnings");
+		expect(moveMixSection(DEFAULT_MIX_SECTION_ORDER, "warnings", 0)[0]).toBe(
+			"warnings",
+		);
 		expect(
 			moveMixSectionRelative(
 				DEFAULT_MIX_SECTION_ORDER,

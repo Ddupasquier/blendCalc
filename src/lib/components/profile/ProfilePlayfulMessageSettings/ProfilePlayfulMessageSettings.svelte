@@ -34,8 +34,8 @@
 <div class="profile-playful-message-settings">
 	<p>
 		Show an occasional playful food joke after successful, non-safety actions.
-		This is on by default and never appears in warnings, recalls, health guidance,
-		authentication, or errors.
+		This is on by default and never appears in warnings, recalls, health
+		guidance, authentication, or errors.
 	</p>
 	{#if errorMessage}
 		<StatusMessage tone="danger" message={errorMessage} />
@@ -49,8 +49,15 @@
 		use:enhance={enhancePreference}
 		aria-busy={isSaving}
 	>
-		<input type="hidden" name="playfulMessagesEnabled" value={enabled ? "true" : "false"} />
-		<label class="profile-playful-message-settings__toggle" for="playful-messages-enabled">
+		<input
+			type="hidden"
+			name="playfulMessagesEnabled"
+			value={enabled ? "true" : "false"}
+		/>
+		<label
+			class="profile-playful-message-settings__toggle"
+			for="playful-messages-enabled"
+		>
 			<span>
 				<strong>Playful messages</strong>
 				<small>{enabled ? "On" : "Off"}</small>

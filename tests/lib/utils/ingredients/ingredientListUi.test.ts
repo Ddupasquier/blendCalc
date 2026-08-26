@@ -10,17 +10,21 @@ import {
 
 describe("ingredient list UI helpers", () => {
 	it("keeps a reported zero-calorie value distinct from missing data", () => {
-		expect(getFoodCalories({
-			fdcId: 3,
-			description: "Zero-calorie food",
-			foodNutrients: [{
-				nutrientId: 1008,
-				nutrientName: "Energy",
-				nutrientNumber: "208",
-				unitName: "KCAL",
-				value: 0,
-			}],
-		})).toBe(0);
+		expect(
+			getFoodCalories({
+				fdcId: 3,
+				description: "Zero-calorie food",
+				foodNutrients: [
+					{
+						nutrientId: 1008,
+						nutrientName: "Energy",
+						nutrientNumber: "208",
+						unitName: "KCAL",
+						value: 0,
+					},
+				],
+			}),
+		).toBe(0);
 	});
 
 	it("formats saved-list membership status for nutrition details", () => {
@@ -79,27 +83,31 @@ describe("ingredient list UI helpers", () => {
 			fdcId: 9,
 			description: "Recalled product",
 			foodNutrients: [],
-			preferenceWarnings: [{
-				id: "preference-warning",
-				level: "warning",
-				category: "allergen",
-				label: "milk",
-				code: "FOOD_ALLERGEN_CONTAINS",
-				params: {},
-			}],
-			safetyAlerts: [{
-				id: "ea81b720-5e12-46a9-89cc-f6795aa68d08",
-				providerKey: "open-fda-food-enforcement",
-				sourceName: "openFDA Food Enforcement",
-				sourceAttribution: "U.S. Food and Drug Administration",
-				alertType: "recall",
-				status: "Ongoing",
-				productDescription: "Recalled product",
-				sourceUrl: "https://api.fda.gov/food/enforcement.json",
-				matchType: "exact_gtin",
-				requiresPackageCheck: false,
-				detectedAt: "2026-08-14T12:00:00.000Z",
-			}],
+			preferenceWarnings: [
+				{
+					id: "preference-warning",
+					level: "warning",
+					category: "allergen",
+					label: "milk",
+					code: "FOOD_ALLERGEN_CONTAINS",
+					params: {},
+				},
+			],
+			safetyAlerts: [
+				{
+					id: "ea81b720-5e12-46a9-89cc-f6795aa68d08",
+					providerKey: "open-fda-food-enforcement",
+					sourceName: "openFDA Food Enforcement",
+					sourceAttribution: "U.S. Food and Drug Administration",
+					alertType: "recall",
+					status: "Ongoing",
+					productDescription: "Recalled product",
+					sourceUrl: "https://api.fda.gov/food/enforcement.json",
+					matchType: "exact_gtin",
+					requiresPackageCheck: false,
+					detectedAt: "2026-08-14T12:00:00.000Z",
+				},
+			],
 		} satisfies FoodItem;
 
 		expect(getPrimaryFoodWarning(food)).toBe(
@@ -109,18 +117,22 @@ describe("ingredient list UI helpers", () => {
 	});
 
 	it("keeps ordinary preference conflicts on the warning edge", () => {
-		expect(getFoodWarningEdgeTone({
-			fdcId: 10,
-			description: "Preference conflict",
-			foodNutrients: [],
-			preferenceWarnings: [{
-				id: "preference-warning",
-				level: "warning",
-				category: "allergen",
-				label: "milk",
-				code: "FOOD_ALLERGEN_CONTAINS",
-				params: {},
-			}],
-		})).toBe("warning");
+		expect(
+			getFoodWarningEdgeTone({
+				fdcId: 10,
+				description: "Preference conflict",
+				foodNutrients: [],
+				preferenceWarnings: [
+					{
+						id: "preference-warning",
+						level: "warning",
+						category: "allergen",
+						label: "milk",
+						code: "FOOD_ALLERGEN_CONTAINS",
+						params: {},
+					},
+				],
+			}),
+		).toBe("warning");
 	});
 });

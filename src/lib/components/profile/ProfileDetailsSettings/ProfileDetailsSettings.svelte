@@ -28,14 +28,21 @@
 </script>
 
 <div class="profile-details-settings">
-	<p>Choose the name you see in the app and add an optional note about yourself.</p>
+	<p>
+		Choose the name you see in the app and add an optional note about yourself.
+	</p>
 	{#if errorMessage}
 		<StatusMessage tone="danger" message={errorMessage} />
 	{:else if successMessage}
 		<StatusMessage tone="success" message={successMessage} />
 	{/if}
 
-	<form method="POST" action="/profile?/saveProfile" use:enhance={enhanceProfile} aria-busy={isSaving}>
+	<form
+		method="POST"
+		action="/profile?/saveProfile"
+		use:enhance={enhanceProfile}
+		aria-busy={isSaving}
+	>
 		<TextField
 			id="profile-display-name"
 			name="displayName"

@@ -1,6 +1,4 @@
-import {
-	getAppReferenceCatalog,
-} from "$lib/server/reference/appReferenceCatalog.server";
+import { getAppReferenceCatalog } from "$lib/server/reference/appReferenceCatalog.server";
 import {
 	getFoodSafetyPolicy,
 	type FoodSafetyPolicy,
@@ -10,10 +8,7 @@ import {
 	PROFILE_AVATAR_POLICY_ITEMS,
 	PROFILE_AVATAR_REQUIRE_HUMAN_FACE,
 } from "$lib/utils/profile/avatarPolicy";
-import {
-	getSignedAvatarUrl,
-	getUserProfile,
-} from "$lib/utils/profile/profile";
+import { getSignedAvatarUrl, getUserProfile } from "$lib/utils/profile/profile";
 import { getDefaultDisplayName } from "$lib/utils/profile/profileValidation";
 import {
 	getFoodPreferenceProfile,
@@ -36,41 +31,46 @@ import { readMfaSecurityStatus } from "$lib/server/auth/mfaAccess.server";
 
 export const getRegulatoryRegionOptions = (
 	policy: FoodSafetyPolicy,
-): RegulatoryRegionOption[] => policy.regionalProfiles.map((profile) => ({
-	regionCode: profile.regionCode,
-	displayName: profile.displayName,
-	authority: profile.authority,
-	policyVersion: policy.version,
-	policyReviewedAt: policy.reviewedAt,
-}));
+): RegulatoryRegionOption[] =>
+	policy.regionalProfiles.map((profile) => ({
+		regionCode: profile.regionCode,
+		displayName: profile.displayName,
+		authority: profile.authority,
+		policyVersion: policy.version,
+		policyReviewedAt: policy.reviewedAt,
+	}));
 
 export const loadProfilePageData = async ({
 	supabase,
 	userId,
 	appRole,
 }: ProfilePageDataReaderOptions) => {
-	const profileWithAvatarPromise = getUserProfile(supabase, userId)
-		.then(async (profile) => ({
+	const profileWithAvatarPromise = getUserProfile(supabase, userId).then(
+		async (profile) => ({
 			profile,
 			avatarUrl: await getSignedAvatarUrl(supabase, profile?.avatar_path),
-		}));
+		}),
+	);
 	const privilegedToolAccessPromise = appRole
 		? readAppRolePermissions(appRole)
-			.then(async (permissions) => ({
-				role: appRole,
-				permissions,
-				reviewSummary: await readMfaSecurityStatus(supabase)
-					.then((status) => status.currentLevel === "aal2"
-						? readPrivilegedToolReviewSummary(permissions).catch(() =>
-							getUnavailablePrivilegedToolReviewSummary())
-						: getIdentityVerificationRequiredPrivilegedToolReviewSummary())
-					.catch(() => getUnavailablePrivilegedToolReviewSummary()),
-			}))
-			.catch(() => ({
-				role: appRole,
-				permissions: [],
-				reviewSummary: getUnavailablePrivilegedToolReviewSummary(),
-			}))
+				.then(async (permissions) => ({
+					role: appRole,
+					permissions,
+					reviewSummary: await readMfaSecurityStatus(supabase)
+						.then((status) =>
+							status.currentLevel === "aal2"
+								? readPrivilegedToolReviewSummary(permissions).catch(() =>
+										getUnavailablePrivilegedToolReviewSummary(),
+									)
+								: getIdentityVerificationRequiredPrivilegedToolReviewSummary(),
+						)
+						.catch(() => getUnavailablePrivilegedToolReviewSummary()),
+				}))
+				.catch(() => ({
+					role: appRole,
+					permissions: [],
+					reviewSummary: getUnavailablePrivilegedToolReviewSummary(),
+				}))
 		: Promise.resolve(null);
 
 	const [

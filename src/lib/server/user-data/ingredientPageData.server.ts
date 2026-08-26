@@ -36,11 +36,16 @@ const createEmptyIngredientListIndex = (): CloudIngredientListIndex => ({
 });
 
 const annotateIngredientListPageWithFoodSafety = (
-	ingredientListPage: NonNullable<Awaited<ReturnType<typeof readCloudIngredientListPage>>>,
+	ingredientListPage: NonNullable<
+		Awaited<ReturnType<typeof readCloudIngredientListPage>>
+	>,
 	foodSafetyContext: FoodSafetyEvaluationContext,
 ) => ({
 	...ingredientListPage,
-	foods: annotateFoodsWithFoodSafety(ingredientListPage.foods, foodSafetyContext),
+	foods: annotateFoodsWithFoodSafety(
+		ingredientListPage.foods,
+		foodSafetyContext,
+	),
 });
 
 const readInitialIngredientListPage = (
@@ -64,7 +69,10 @@ const readIngredientRouteFoodByApplicationId = async (
 	options: LoadIngredientPageDataOptions,
 ) => {
 	const applicationFoodId = options.routeFoodId;
-	if (!Number.isSafeInteger(applicationFoodId) || Number(applicationFoodId) === 0) {
+	if (
+		!Number.isSafeInteger(applicationFoodId) ||
+		Number(applicationFoodId) === 0
+	) {
 		return null;
 	}
 
@@ -117,7 +125,10 @@ export const loadIngredientPageData = async (
 			routeFood,
 		] = await Promise.all([
 			readInitialIngredientListPage(cloudDataContext, MIX_STORAGE_KEYS.fridge),
-			readInitialIngredientListPage(cloudDataContext, MIX_STORAGE_KEYS.shoppingList),
+			readInitialIngredientListPage(
+				cloudDataContext,
+				MIX_STORAGE_KEYS.shoppingList,
+			),
 			readCloudCustomFoods(cloudDataContext),
 			readCloudIngredientListIndex(cloudDataContext),
 			readIngredientProvenanceOptions(cloudDataContext.supabase),
@@ -133,14 +144,18 @@ export const loadIngredientPageData = async (
 		}
 
 		return {
-			fridge: annotateIngredientListPageWithFoodSafety(fridge, foodSafetyContext),
+			fridge: annotateIngredientListPageWithFoodSafety(
+				fridge,
+				foodSafetyContext,
+			),
 			shoppingList: annotateIngredientListPageWithFoodSafety(
 				shoppingList,
 				foodSafetyContext,
 			),
 			customFoods: annotateFoodsWithFoodSafety(customFoods, foodSafetyContext),
 			routeFood: routeFood
-				? annotateFoodsWithFoodSafety([routeFood], foodSafetyContext)[0] ?? null
+				? (annotateFoodsWithFoodSafety([routeFood], foodSafetyContext)[0] ??
+					null)
 				: null,
 			listIndex,
 			provenanceOptions: provenanceOptions ?? [],

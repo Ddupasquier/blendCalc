@@ -26,8 +26,8 @@ export const isMissingCheekyMessagesPreferenceColumn = (
 ) =>
 	Boolean(
 		error?.code &&
-			["42703", "PGRST204"].includes(error.code) &&
-			error.message?.toLowerCase().includes("cheeky_messages_enabled"),
+		["42703", "PGRST204"].includes(error.code) &&
+		error.message?.toLowerCase().includes("cheeky_messages_enabled"),
 	);
 
 export const getUserProfile = async (

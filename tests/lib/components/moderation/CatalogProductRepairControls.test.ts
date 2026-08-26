@@ -11,9 +11,14 @@ describe("CatalogProductRepairControls", () => {
 		});
 
 		expect(screen.getByText("Safe catalog repairs")).toBeInTheDocument();
-		expect(screen.getByText(/never guess, invent changes, or replace current product values/u))
-			.toBeInTheDocument();
-		expect(screen.getByRole("button", { name: "Check repair" })).toBeInTheDocument();
+		expect(
+			screen.getByText(
+				/never guess, invent changes, or replace current product values/u,
+			),
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole("button", { name: "Check repair" }),
+		).toBeInTheDocument();
 		expect(screen.queryByText(/reviewed dry run/u)).not.toBeInTheDocument();
 	});
 
@@ -31,12 +36,18 @@ describe("CatalogProductRepairControls", () => {
 
 		expect(screen.getByText("Exact evidence found")).toBeInTheDocument();
 		expect(screen.getAllByText("Nutrition value")).toHaveLength(2);
-		expect(screen.getByText(/still need stronger evidence/u)).toBeInTheDocument();
-		const applyButton = screen.getByRole("button", { name: "Apply safe repair" });
+		expect(
+			screen.getByText(/still need stronger evidence/u),
+		).toBeInTheDocument();
+		const applyButton = screen.getByRole("button", {
+			name: "Apply safe repair",
+		});
 		const applyForm = applyButton.closest("form");
 		expect(applyForm).not.toBeNull();
-		expect(within(applyForm as HTMLFormElement).getByDisplayValue(
-			catalogHealthRepairDryRunFixture.runId,
-		)).toHaveAttribute("name", "dryRunId");
+		expect(
+			within(applyForm as HTMLFormElement).getByDisplayValue(
+				catalogHealthRepairDryRunFixture.runId,
+			),
+		).toHaveAttribute("name", "dryRunId");
 	});
 });

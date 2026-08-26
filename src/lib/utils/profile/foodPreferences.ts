@@ -28,7 +28,11 @@ export const normalizeUnitSystem = (
 	value: FormDataEntryValue | null,
 ): FoodPreferenceUnitSystem | null => {
 	const normalized = String(value ?? "").trim();
-	if (FOOD_PREFERENCE_UNIT_SYSTEMS.includes(normalized as FoodPreferenceUnitSystem)) {
+	if (
+		FOOD_PREFERENCE_UNIT_SYSTEMS.includes(
+			normalized as FoodPreferenceUnitSystem,
+		)
+	) {
 		return normalized as FoodPreferenceUnitSystem;
 	}
 	return null;
@@ -101,7 +105,8 @@ export const getExactServingSizeConversionPreview = (
 ) => {
 	const parsedQuantity = Number(quantity);
 	const grams = getServingSizeGrams(quantity, unit);
-	if (!Number.isFinite(parsedQuantity) || parsedQuantity <= 0 || !grams) return null;
+	if (!Number.isFinite(parsedQuantity) || parsedQuantity <= 0 || !grams)
+		return null;
 
 	const convertedUnit: DefaultServingUnit = unit === "g" ? "oz" : "g";
 	const convertedAmount = unit === "g" ? grams / OUNCE_TO_GRAMS : grams;
@@ -111,11 +116,11 @@ export const getExactServingSizeConversionPreview = (
 export const hasFoodPreferenceValues = (values: FoodPreferenceFormValues) =>
 	Boolean(
 		values.unitSystem ||
-			values.regulatoryRegionCode ||
-			values.allergens.length ||
-			values.dietaryRestrictions.length ||
-			values.prioritizedNutrientIds.length ||
-			values.defaultMixServingSize.trim(),
+		values.regulatoryRegionCode ||
+		values.allergens.length ||
+		values.dietaryRestrictions.length ||
+		values.prioritizedNutrientIds.length ||
+		values.defaultMixServingSize.trim(),
 	);
 
 const getLongPreferenceItem = (values: string[]) =>
@@ -133,8 +138,8 @@ export const getFoodPreferencesValidationError = (
 ) => {
 	if (
 		values.regulatoryRegionCode &&
-		!regulatoryRegionOptions.some((option) =>
-			option.regionCode === values.regulatoryRegionCode
+		!regulatoryRegionOptions.some(
+			(option) => option.regionCode === values.regulatoryRegionCode,
 		)
 	) {
 		return "Choose a supported label region and try again.";

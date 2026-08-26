@@ -36,13 +36,25 @@ type FoodImageAssetRow = {
 type FoodImageQueryClient = {
 	from: (table: "food_image_assets") => {
 		select: (columns: string) => {
-			eq: (column: string, value: string) => {
-				eq: (column: string, value: string) => {
-					in: (column: string, values: string[]) => {
+			eq: (
+				column: string,
+				value: string,
+			) => {
+				eq: (
+					column: string,
+					value: string,
+				) => {
+					in: (
+						column: string,
+						values: string[],
+					) => {
 						order: (
 							column: string,
 							options: { ascending: boolean },
-						) => PromiseLike<{ data: FoodImageAssetRow[] | null; error: unknown }>;
+						) => PromiseLike<{
+							data: FoodImageAssetRow[] | null;
+							error: unknown;
+						}>;
 					};
 				};
 			};
@@ -119,17 +131,19 @@ export const selectPreferredFoodImageAsset = (
 ): FoodImageAsset | null => {
 	if (!images.length) return null;
 
-	return [...images].sort((left, right) => {
-		const canonicalDifference =
-			Number(right.canonicalStatus === "selected") -
-			Number(left.canonicalStatus === "selected");
-		if (canonicalDifference !== 0) return canonicalDifference;
-		const confidenceDifference =
-			FOOD_IMAGE_CONFIDENCE_PRIORITY[right.confidence] -
-			FOOD_IMAGE_CONFIDENCE_PRIORITY[left.confidence];
-		if (confidenceDifference !== 0) return confidenceDifference;
-		return getFoodImageTimestamp(right) - getFoodImageTimestamp(left);
-	})[0] ?? null;
+	return (
+		[...images].sort((left, right) => {
+			const canonicalDifference =
+				Number(right.canonicalStatus === "selected") -
+				Number(left.canonicalStatus === "selected");
+			if (canonicalDifference !== 0) return canonicalDifference;
+			const confidenceDifference =
+				FOOD_IMAGE_CONFIDENCE_PRIORITY[right.confidence] -
+				FOOD_IMAGE_CONFIDENCE_PRIORITY[left.confidence];
+			if (confidenceDifference !== 0) return confidenceDifference;
+			return getFoodImageTimestamp(right) - getFoodImageTimestamp(left);
+		})[0] ?? null
+	);
 };
 
 const getFoodBarcode = (food: FoodItem) =>
@@ -164,8 +178,7 @@ const toFoodImageAsset = (row: FoodImageAssetRow): FoodImageAsset => ({
 		row.placement_suggestion_confidence === null
 			? undefined
 			: Number(row.placement_suggestion_confidence),
-	suggestionAcceptedAt:
-		row.placement_suggestion_accepted_at ?? undefined,
+	suggestionAcceptedAt: row.placement_suggestion_accepted_at ?? undefined,
 	approvedBy: row.approved_by ?? undefined,
 	approvedAt: row.approved_at ?? undefined,
 	fetchedAt: row.fetched_at,

@@ -30,13 +30,16 @@
 	});
 	const delightMessage = $derived(
 		!hasItems && activeList === MIX_STORAGE_KEYS.fridge
-			? resolveDelightMessage([
-				{
-						contextKey: "ingredients",
-						triggerKey: "empty-list",
-						matchKeys: ["fridge"],
-					},
-			], { allowPlayfulMessages })
+			? resolveDelightMessage(
+					[
+						{
+							contextKey: "ingredients",
+							triggerKey: "empty-list",
+							matchKeys: ["fridge"],
+						},
+					],
+					{ allowPlayfulMessages },
+				)
 			: null,
 	);
 </script>

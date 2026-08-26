@@ -29,7 +29,8 @@
 	padding-block: $app-gap-sm $app-gap-lg;
 }
 
-@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
 	.privileged-tool-right-sheet__header {
 		gap: $app-gap-xs;
 	}

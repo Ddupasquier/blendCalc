@@ -17,9 +17,14 @@
 	}: ProfileMeasurementDefaultsProps = $props();
 
 	const conversionPreview = $derived(
-		getExactServingSizeConversionPreview(defaultServingSize, defaultServingUnit),
+		getExactServingSizeConversionPreview(
+			defaultServingSize,
+			defaultServingUnit,
+		),
 	);
-	const hasOverrides = $derived(Boolean(unitSystem || defaultServingSize.trim()));
+	const hasOverrides = $derived(
+		Boolean(unitSystem || defaultServingSize.trim()),
+	);
 </script>
 
 <div class="profile-measurement-defaults">
@@ -38,10 +43,15 @@
 			onValueChange={(value) =>
 				onUnitSystemChange(value === "metric" || value === "us" ? value : "")}
 		/>
-		<p>Controls the default weight unit shown for new Mix ingredients when no package serving is available.</p>
+		<p>
+			Controls the default weight unit shown for new Mix ingredients when no
+			package serving is available.
+		</p>
 	</div>
 
-	<div class="profile-measurement-defaults__group profile-measurement-defaults__serving">
+	<div
+		class="profile-measurement-defaults__group profile-measurement-defaults__serving"
+	>
 		<span>Default Mix starting amount</span>
 		<div>
 			<NumberInput

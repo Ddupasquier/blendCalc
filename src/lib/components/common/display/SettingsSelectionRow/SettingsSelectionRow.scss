@@ -44,7 +44,8 @@
 	gap: $app-gap-2xs;
 }
 
-@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
 	.settings-selection-row {
 		gap: $app-gap-2xs;
 		padding: $app-gap-xs;

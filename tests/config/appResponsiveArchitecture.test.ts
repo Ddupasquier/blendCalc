@@ -27,7 +27,9 @@ describe("app-wide responsive architecture", () => {
 		expect(app).toContain("$app-shell-header-height-compact");
 		expect(app).toContain("$app-shell-nav-height-compact");
 		expect(app).toContain("env(safe-area-inset-bottom)");
-		expect(sheets).toContain("--sheet-top-offset: #{$app-shell-header-height-compact}");
+		expect(sheets).toContain(
+			"--sheet-top-offset: #{$app-shell-header-height-compact}",
+		);
 		expect(sheets).toContain("$app-shell-nav-height-compact");
 		expect(sheets).toContain("100dvh");
 	});
