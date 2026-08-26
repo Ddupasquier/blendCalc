@@ -4,12 +4,12 @@ select plan(25);
 
 select has_table(
 	'public',
-	'api_publication_concerns',
+	'blendcalc_api_publication_concerns',
 	'publication concerns have private durable storage'
 );
 select has_table(
 	'public',
-	'api_publication_holds',
+	'blendcalc_api_publication_holds',
 	'publication holds have private durable storage'
 );
 select has_function(
@@ -20,33 +20,33 @@ select has_function(
 );
 select has_function(
 	'public',
-	'sync_product_publication_hold_conflict',
+	'sync_blendcalc_api_product_publication_hold_conflict',
 	array[]::text[],
 	'product holds integrate with the canonical conflict gate'
 );
 
 select ok(
-	not has_table_privilege('authenticated', 'public.api_publication_concerns', 'SELECT'),
+	not has_table_privilege('authenticated', 'public.blendcalc_api_publication_concerns', 'SELECT'),
 	'ordinary users cannot read concern contact details or evidence'
 );
 select ok(
-	not has_table_privilege('anon', 'public.api_publication_concerns', 'INSERT'),
+	not has_table_privilege('anon', 'public.blendcalc_api_publication_concerns', 'INSERT'),
 	'anonymous callers cannot bypass the validated server intake'
 );
 select ok(
-	not has_table_privilege('authenticated', 'public.api_publication_holds', 'SELECT'),
+	not has_table_privilege('authenticated', 'public.blendcalc_api_publication_holds', 'SELECT'),
 	'ordinary users cannot read internal publication holds'
 );
 select ok(
-	not has_table_privilege('anon', 'public.api_publication_holds', 'INSERT'),
+	not has_table_privilege('anon', 'public.blendcalc_api_publication_holds', 'INSERT'),
 	'anonymous callers cannot place publication holds'
 );
 select ok(
-	has_table_privilege('service_role', 'public.api_publication_concerns', 'INSERT'),
+	has_table_privilege('service_role', 'public.blendcalc_api_publication_concerns', 'INSERT'),
 	'the trusted server can store validated concerns'
 );
 select ok(
-	has_table_privilege('service_role', 'public.api_publication_holds', 'UPDATE'),
+	has_table_privilege('service_role', 'public.blendcalc_api_publication_holds', 'UPDATE'),
 	'the trusted server can release a hold without deleting it'
 );
 
@@ -57,13 +57,13 @@ select set_config(
 	true
 );
 select throws_ok(
-	$$ select count(*) from public.api_publication_concerns $$,
+	$$ select count(*) from public.blendcalc_api_publication_concerns $$,
 	'42501',
-	'permission denied for table api_publication_concerns',
+	'permission denied for table blendcalc_api_publication_concerns',
 	'a browser moderator cannot bypass the protected AAL2 server route'
 );
 select throws_ok(
-	$$ insert into public.api_publication_holds (
+	$$ insert into public.blendcalc_api_publication_holds (
 		subject_type,
 		shared_product_id,
 		reason_code,
@@ -79,12 +79,12 @@ select throws_ok(
 		'9e3f226d-5781-41f4-8455-6be35956f7a7'
 	) $$,
 	'42501',
-	'permission denied for table api_publication_holds',
+	'permission denied for table blendcalc_api_publication_holds',
 	'a browser moderator cannot bypass the protected hold route'
 );
 reset role;
 
-insert into public.api_publication_concerns (
+insert into public.blendcalc_api_publication_concerns (
 	id,
 	reporter_type,
 	contact_email,
@@ -118,7 +118,7 @@ where product.barcode = '00021130493609';
 select is(
 	(
 		select count(*)::integer
-		from public.api_publication_concerns
+		from public.blendcalc_api_publication_concerns
 		where id = '87000000-0000-4000-8000-000000000001'
 			and shared_product_id is not null
 			and food_image_asset_id is null
@@ -130,7 +130,7 @@ select is(
 );
 
 select throws_ok(
-	$$ insert into public.api_publication_holds (
+	$$ insert into public.blendcalc_api_publication_holds (
 		subject_type,
 		source_key,
 		reason_code,
@@ -154,7 +154,7 @@ select throws_ok(
 );
 
 select throws_ok(
-	$$ update public.api_publication_concerns
+	$$ update public.blendcalc_api_publication_concerns
 	set
 		status = 'resolved',
 		resolution_action = 'publication-hold',
@@ -173,7 +173,7 @@ select ok(
 	'a reviewed source starts eligible before a hold'
 );
 
-insert into public.api_publication_holds (
+insert into public.blendcalc_api_publication_holds (
 	id,
 	subject_type,
 	shared_product_id,
@@ -220,7 +220,7 @@ select ok(
 select is(
 	(
 		select count(*)::integer
-		from public.get_blendcalc_product_v1('00021130493609')
+		from public.get_blendcalc_api_product_v1('00021130493609')
 	),
 	0,
 	'a held product disappears from the public API immediately'
@@ -244,7 +244,7 @@ select ok(
 	'a hold preserves immutable revision history'
 );
 
-update public.api_publication_holds hold
+update public.blendcalc_api_publication_holds hold
 set
 	released_by = actor.id,
 	released_at = now(),
@@ -272,7 +272,7 @@ select ok(
 	'a released hold no longer blocks product readiness'
 );
 
-insert into public.api_publication_holds (
+insert into public.blendcalc_api_publication_holds (
 	id,
 	subject_type,
 	source_key,
@@ -298,7 +298,7 @@ select ok(
 	'a source hold fails attribution eligibility for every dependent field'
 );
 
-insert into public.api_publication_holds (
+insert into public.blendcalc_api_publication_holds (
 	id,
 	subject_type,
 	food_image_asset_id,
@@ -324,7 +324,7 @@ where image.id = '85000000-0000-4000-8000-000000000001';
 select is(
 	(
 		select count(*)::integer
-		from public.api_publication_holds
+		from public.blendcalc_api_publication_holds
 		where food_image_asset_id = '85000000-0000-4000-8000-000000000001'
 			and released_at is null
 	),

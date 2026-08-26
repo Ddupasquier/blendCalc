@@ -80,7 +80,7 @@ select is(
 select is(
 	(
 		select count(*)::integer
-		from public.search_blendcalc_products_v1(
+		from public.search_blendcalc_api_products_v1(
 			'afewa',
 			array['afewa'],
 			10,
@@ -89,7 +89,7 @@ select is(
 		where brand_owner = 'Safeway, Inc.'
 	),
 	1,
-	'API v1 catalog search accepts partial brand text for publication-ready products'
+	'blendCalcAPI v1 catalog search accepts partial brand text for publication-ready products'
 );
 
 select is(
