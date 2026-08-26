@@ -1,4 +1,3 @@
-import { getSupabaseBrowserClient } from "$lib/supabase/client";
 import type { Database } from "$lib/types/database.types";
 import type { NutritionLabelOcrMapping } from "$lib/utils/food/ocr/nutritionLabelOcr";
 export type { NutritionLabelOcrMapping } from "$lib/utils/food/ocr/nutritionLabelOcr";
@@ -22,7 +21,7 @@ type UnitConversionRow = Pick<
 const OCR_SOURCE_KEY = "nutrition-label-ocr";
 
 export const readNutritionLabelOcrMappings = async (
-	supabase: SupabaseClient<Database> | null = getSupabaseBrowserClient(),
+	supabase: SupabaseClient<Database> | null,
 ): Promise<NutritionLabelOcrMapping[] | null> => {
 	if (!supabase) return null;
 
@@ -36,7 +35,9 @@ export const readNutritionLabelOcrMappings = async (
 	if (mappingError || !mappings?.length) return null;
 
 	const nutrientIds = [
-		...new Set((mappings as SourceMappingRow[]).map((mapping) => mapping.nutrient_id)),
+		...new Set(
+			(mappings as SourceMappingRow[]).map((mapping) => mapping.nutrient_id),
+		),
 	];
 	const [definitionsResult, conversionsResult] = await Promise.all([
 		supabase
@@ -52,10 +53,9 @@ export const readNutritionLabelOcrMappings = async (
 	if (definitionsResult.error || conversionsResult.error) return null;
 
 	const definitionsById = new Map(
-		((definitionsResult.data ?? []) as NutrientDefinitionRow[]).map((definition) => [
-			definition.nutrient_id,
-			definition,
-		]),
+		((definitionsResult.data ?? []) as NutrientDefinitionRow[]).map(
+			(definition) => [definition.nutrient_id, definition],
+		),
 	);
 	const conversions = (conversionsResult.data ?? []) as UnitConversionRow[];
 
@@ -66,8 +66,10 @@ export const readNutritionLabelOcrMappings = async (
 			const conversion = conversions.find(
 				(item) =>
 					item.nutrient_id === mapping.nutrient_id &&
-					item.from_unit_name.toUpperCase() === mapping.source_unit_name.toUpperCase() &&
-					item.to_unit_name.toUpperCase() === definition.default_unit_name.toUpperCase(),
+					item.from_unit_name.toUpperCase() ===
+						mapping.source_unit_name.toUpperCase() &&
+					item.to_unit_name.toUpperCase() ===
+						definition.default_unit_name.toUpperCase(),
 			);
 			return [
 				{
@@ -77,7 +79,9 @@ export const readNutritionLabelOcrMappings = async (
 					nutrientName: definition.nutrient_name,
 					targetUnitName: definition.default_unit_name,
 					priority: mapping.priority,
-					conversionMultiplier: conversion ? Number(conversion.multiplier) : null,
+					conversionMultiplier: conversion
+						? Number(conversion.multiplier)
+						: null,
 				},
 			];
 		},

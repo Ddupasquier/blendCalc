@@ -1,4 +1,3 @@
-import { getSupabaseBrowserClient } from "$lib/supabase/client";
 import type { Database } from "$lib/types/database.types";
 import { formatNutrientUnitNameForDisplay } from "$lib/utils/food/nutrients/nutrientUnitNames";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -149,7 +148,8 @@ const toManualEntryNutrientDefinition = (
 const sortDefinitions = (
 	left: ManualEntryNutrientDefinition,
 	right: ManualEntryNutrientDefinition,
-) => left.sort - right.sort || left.nutrientName.localeCompare(right.nutrientName);
+) =>
+	left.sort - right.sort || left.nutrientName.localeCompare(right.nutrientName);
 
 const preferDefinition = (
 	left: ManualEntryNutrientDefinition,
@@ -220,7 +220,7 @@ export const groupManualEntryNutrients = (
 };
 
 export const readManualEntryNutrientGroups = async (
-	supabase: SupabaseClient<Database> | null = getSupabaseBrowserClient(),
+	supabase: SupabaseClient<Database> | null,
 ): Promise<ManualEntryNutrientGroupsByStep | null> => {
 	if (!supabase) return null;
 
@@ -255,8 +255,8 @@ export const readManualEntryNutrientGroups = async (
 
 	const rawFields = (fields ?? []) as RawManualEntryFieldRecord[];
 	if (rawFields.length === 0) return null;
-	const requiredRows =
-		(requiredNutrients ?? []) as RequiredManualEntryNutrientRecord[];
+	const requiredRows = (requiredNutrients ??
+		[]) as RequiredManualEntryNutrientRecord[];
 	const requiredRowsByNutrientId = new Map(
 		requiredRows.map((row) => [row.nutrient_id, row]),
 	);
@@ -310,22 +310,22 @@ export const readManualEntryNutrientGroups = async (
 	);
 
 	const definitions = rawFields
-		.map(
-			(field): ManualEntryFieldRecord => {
-				const requiredRow = requiredRowsByNutrientId.get(field.nutrient_id);
-				return {
-					...field,
-					group_id: requiredRow?.group_id ?? field.group_id,
-					sort_order: requiredRow?.field_sort_order ?? field.sort_order,
-					required_for_manual_entry: Boolean(requiredRow),
-					nutrient_definitions: nutrientsById.get(field.nutrient_id) ?? null,
-					nutrient_manual_entry_groups:
-						groupsById.get(requiredRow?.group_id ?? field.group_id) ?? null,
-				};
-			},
-		)
+		.map((field): ManualEntryFieldRecord => {
+			const requiredRow = requiredRowsByNutrientId.get(field.nutrient_id);
+			return {
+				...field,
+				group_id: requiredRow?.group_id ?? field.group_id,
+				sort_order: requiredRow?.field_sort_order ?? field.sort_order,
+				required_for_manual_entry: Boolean(requiredRow),
+				nutrient_definitions: nutrientsById.get(field.nutrient_id) ?? null,
+				nutrient_manual_entry_groups:
+					groupsById.get(requiredRow?.group_id ?? field.group_id) ?? null,
+			};
+		})
 		.map(toManualEntryNutrientDefinition)
-		.filter((definition): definition is ManualEntryNutrientDefinition => Boolean(definition));
+		.filter((definition): definition is ManualEntryNutrientDefinition =>
+			Boolean(definition),
+		);
 
 	return definitions.length > 0 ? groupManualEntryNutrients(definitions) : null;
 };
