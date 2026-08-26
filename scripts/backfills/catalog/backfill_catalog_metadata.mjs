@@ -36,8 +36,7 @@ const limit = limitArgument
 	: null;
 const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const fdcApiKey =
-	process.env.FDC_API_KEY?.trim() || process.env.VITE_FDC_API_KEY?.trim();
+const fdcApiKey = process.env.FDC_API_KEY?.trim();
 
 if (!supabaseUrl || !serviceRoleKey) {
 	throw new Error(
@@ -45,9 +44,7 @@ if (!supabaseUrl || !serviceRoleKey) {
 	);
 }
 if (!cachedOnly && !fdcApiKey) {
-	throw new Error(
-		"FDC_API_KEY or VITE_FDC_API_KEY is required unless --cached-only is used.",
-	);
+	throw new Error("FDC_API_KEY is required unless --cached-only is used.");
 }
 if (limitArgument && (!Number.isSafeInteger(limit) || limit <= 0)) {
 	throw new Error("--limit must be a positive integer.");

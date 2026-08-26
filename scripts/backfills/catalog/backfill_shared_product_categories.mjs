@@ -28,8 +28,7 @@ config({ path: ".env", quiet: true });
 const isDryRun = process.argv.includes("--dry-run");
 const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const fdcApiKey =
-	process.env.FDC_API_KEY?.trim() || process.env.VITE_FDC_API_KEY?.trim();
+const fdcApiKey = process.env.FDC_API_KEY?.trim();
 const APP_USER_AGENT = createAppUserAgent("shared product category backfill");
 const OPEN_FOOD_FACTS_URL = "https://world.openfoodfacts.org/api/v2/product";
 const OPEN_FOOD_FACTS_FIELDS = [

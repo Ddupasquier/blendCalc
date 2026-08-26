@@ -4,15 +4,15 @@ import { describe, expect, it } from "vitest";
 
 const activeQueues = [
 	{
-		file: "docs/QA/launch-blocker-qa-tasks.md",
+		file: "docs/workspace/qa/launch-blocker-qa-tasks.md",
 		label: "Launch blockers",
 	},
 	{
-		file: "docs/QA/before-launch-qa-tasks.md",
+		file: "docs/workspace/qa/before-launch-qa-tasks.md",
 		label: "Before launch",
 	},
 	{
-		file: "docs/QA/post-launch-qa-tasks.md",
+		file: "docs/workspace/qa/post-launch-qa-tasks.md",
 		label: "Post-launch",
 	},
 ] as const;
@@ -45,8 +45,8 @@ const readTasks = (file: string) => {
 };
 
 const localTrackersAvailable = [
-	"docs/QA/qa-tasks.md",
-	"docs/QA/completed-qa-tasks.md",
+	"docs/workspace/qa/qa-tasks.md",
+	"docs/workspace/qa/completed-qa-tasks.md",
 	...activeQueues.map((queue) => queue.file),
 ].every(existsSync);
 
@@ -136,7 +136,7 @@ describe.runIf(localTrackersAvailable)("QA task structure", () => {
 				readTasks(queue.file).map((task) => task.id),
 			),
 		);
-		const completed = readTasks("docs/QA/completed-qa-tasks.md");
+		const completed = readTasks("docs/workspace/qa/completed-qa-tasks.md");
 		for (const task of completed) {
 			expect(
 				task.state,
@@ -174,7 +174,7 @@ describe.runIf(localTrackersAvailable)("QA task structure", () => {
 	});
 
 	it("keeps the QA index task totals synchronized", () => {
-		const index = readFileSync("docs/QA/qa-tasks.md", "utf8");
+		const index = readFileSync("docs/workspace/qa/qa-tasks.md", "utf8");
 		for (const queue of activeQueues) {
 			const total = readTasks(queue.file).length;
 			expect(index).toContain(
@@ -187,7 +187,9 @@ describe.runIf(localTrackersAvailable)("QA task structure", () => {
 			);
 		}
 
-		const completedTotal = readTasks("docs/QA/completed-qa-tasks.md").length;
+		const completedTotal = readTasks(
+			"docs/workspace/qa/completed-qa-tasks.md",
+		).length;
 		expect(index).toContain(
 			`Completed QA tasks](./completed-qa-tasks.md): ${completedTotal} completed tasks.`,
 		);
@@ -195,9 +197,9 @@ describe.runIf(localTrackersAvailable)("QA task structure", () => {
 
 	it("keeps local QA documentation links valid", () => {
 		for (const file of [
-			"docs/QA/qa-tasks.md",
+			"docs/workspace/qa/qa-tasks.md",
 			...activeQueues.map((queue) => queue.file),
-			"docs/QA/completed-qa-tasks.md",
+			"docs/workspace/qa/completed-qa-tasks.md",
 		]) {
 			const source = readFileSync(file, "utf8");
 			for (const match of source.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)) {

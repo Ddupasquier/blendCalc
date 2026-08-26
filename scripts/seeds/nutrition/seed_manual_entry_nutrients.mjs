@@ -27,8 +27,7 @@ const projectRoot = path.resolve(scriptDirectory, "../../..");
 config({ path: path.join(projectRoot, ".env.moderation.local"), quiet: true });
 config({ path: path.join(projectRoot, ".env"), quiet: true });
 
-const FDC_API_KEY =
-	process.env.FDC_API_KEY?.trim() || process.env.VITE_FDC_API_KEY?.trim();
+const FDC_API_KEY = process.env.FDC_API_KEY?.trim();
 const SUPABASE_URL = process.env.PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const BASE_URL = "https://api.nal.usda.gov/fdc/v1";

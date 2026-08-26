@@ -21,31 +21,29 @@ if (!allowedBumps.has(bump)) {
 	process.exit(1);
 }
 
-const versioningPath = resolve(repositoryRoot, "docs/versioning.md");
+const versioningPath = resolve(
+	repositoryRoot,
+	"docs/development/versioning.md",
+);
 const currentDocumentation = readFileSync(versioningPath, "utf8");
 const applicationReleaseRow = /\| Application release \| `[^`]+` \|/;
-const applicationBuildRow =
-	/\| Application build \| `[^`]+\+<deployment>` \|/;
+const applicationBuildRow = /\| Application build \| `[^`]+\+<deployment>` \|/;
 
 if (
 	!applicationReleaseRow.test(currentDocumentation) ||
 	!applicationBuildRow.test(currentDocumentation)
 ) {
 	console.error(
-		"docs/versioning.md does not contain the expected application version rows.",
+		"docs/development/versioning.md does not contain the expected application version rows.",
 	);
 	process.exit(1);
 }
 
-const npmResult = spawnSync(
-	"npm",
-	["version", bump, "--no-git-tag-version"],
-	{
-		cwd: repositoryRoot,
-		encoding: "utf8",
-		stdio: "inherit",
-	},
-);
+const npmResult = spawnSync("npm", ["version", bump, "--no-git-tag-version"], {
+	cwd: repositoryRoot,
+	encoding: "utf8",
+	stdio: "inherit",
+});
 
 if (npmResult.status !== 0) process.exit(npmResult.status ?? 1);
 
@@ -64,7 +62,9 @@ const nextDocumentation = currentDocumentation
 	);
 
 if (nextDocumentation === currentDocumentation) {
-	console.error("Could not update the application rows in docs/versioning.md.");
+	console.error(
+		"Could not update the application rows in docs/development/versioning.md.",
+	);
 	process.exit(1);
 }
 writeFileSync(versioningPath, nextDocumentation);

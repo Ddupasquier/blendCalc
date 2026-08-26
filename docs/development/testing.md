@@ -283,7 +283,7 @@ reset a linked project. See [Database Testing](database-testing.md).
 Automation can complete a QA task only when it proves every step and expected outcome
 with the required corpus, project, route, and viewport. Physical devices, named
 installed browsers, OS permissions, assistive technology, and subjective visual
-approval remain manual. See [QA Tasks](QA/qa-tasks.md).
+approval remain manual.
 
 ## Avoid
 

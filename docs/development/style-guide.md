@@ -61,7 +61,7 @@ Use this order when implementing or reviewing styling:
 
 1. [`dev-rules/dev-rules.md`](dev-rules/dev-rules.md) for mandatory rules.
 2. This guide for the approved Ingredients visual language and component selection.
-3. [`src/styles/_variables.scss`](../src/styles/_variables.scss) for exact app-wide
+3. [`src/styles/_variables.scss`](../../src/styles/_variables.scss) for exact app-wide
    values.
 4. The reusable component and its paired SCSS file for component behavior and local
    geometry.

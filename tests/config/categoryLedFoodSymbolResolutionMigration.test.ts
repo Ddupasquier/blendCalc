@@ -5,11 +5,8 @@ const migration = readFileSync(
 	"supabase/migrations/20260814231000_category_led_food_symbol_resolution.sql",
 	"utf8",
 );
-const databaseTypes = readFileSync(
-	"src/lib/types/database.types.ts",
-	"utf8",
-);
-const schemaGuide = readFileSync("docs/supabase-schema.md", "utf8");
+const databaseTypes = readFileSync("src/lib/types/database.types.ts", "utf8");
+const schemaGuide = readFileSync("docs/development/supabase-schema.md", "utf8");
 
 describe("category-led food symbol resolution migration", () => {
 	it("stores family membership and explicit rule scopes in the database", () => {

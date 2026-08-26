@@ -20,7 +20,9 @@ the final instruction to read before running it.
 
 All commands require Node.js 24. Database-writing and privileged workflows normally
 load ignored credentials from `.env.moderation.local`; provider-only audits may use
-`.env`. Never pass secrets on the command line or place generated data in tracked files.
+`.env`. The exact variable ownership is defined in
+[Environment Configuration](../docs/development/environment.md). Never pass secrets on
+the command line or place generated data in tracked files.
 
 ## Quick Navigation
 
@@ -95,7 +97,7 @@ start or reset only localhost Supabase, writes an ignored test environment, appl
 | `npm run catalog:qa-image-clean -- <email>`                             | Remove unapproved image fixtures created for that email.                                             |
 
 The full persona inventory, safe reset behavior, and database QA workflow live in
-[Database Testing](../docs/database-testing.md).
+[Database Testing](../docs/development/database-testing.md).
 
 ## Visible Verification Dashboard
 
@@ -232,7 +234,8 @@ node scripts/operations/recovery/verify_protected_hosted_backup.mjs \
 
 The backup workflow reads production without changing it. Verification checks required
 database artifacts, Storage manifest coverage, owner-only permissions, and SHA-256
-checksums without contacting Supabase. See [Hosted Security](../docs/hosted-security.md)
+checksums without contacting Supabase. See
+[Hosted Security](../docs/development/hosted-security.md)
 for retention, restore drills, and incident procedures.
 
 ## Privileged Operations
@@ -261,7 +264,8 @@ deployments.
 
 The API generator may call providers and read stored query terms but never mutates
 Supabase. Generated references are not runtime types. See
-[External API Structure References](../docs/api-structures/README.md) for their ownership.
+[External API Structure References](../docs/development/api-structures/README.md) for
+their ownership.
 
 ## Maintaining This Directory
 

@@ -32,6 +32,8 @@ Thumbs.db
 !.env.example
 !.env.moderation.example
 !.env.test
+!.env.vercel.example
+!supabase/functions/.env.example
 
 # Logs and local caches
 *.log
@@ -50,14 +52,8 @@ pnpm-debug.log*
 # Generated internal script output (reports, OCR models, and audit artifacts)
 /scripts/output/
 
-# Local QA task tracker and screenshot references
-/docs/work-queue.md
-/docs/qa-tasks.md
-/docs/QA/*.md
-/docs/QA/assets/
-
-# Local development recovery context
-/docs/local-context/
+# Local work queue, QA evidence, recovery context, and commit planning
+/docs/workspace/
 
 # Personal notes
 /notes/

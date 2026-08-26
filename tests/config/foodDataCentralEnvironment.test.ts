@@ -9,34 +9,31 @@ const collectFiles = (directory: string): string[] =>
 	});
 
 describe("FoodData Central environment configuration", () => {
-	it("documents only the server-owned application key", () => {
-		const environmentExample = readFileSync(".env.example", "utf8");
-
-		expect(environmentExample).toMatch(/^FDC_API_KEY=$/m);
-		expect(environmentExample).not.toMatch(/^VITE_FDC_API_KEY=$/m);
-	});
-
-	it("prefers the server-only key before the temporary legacy fallback", () => {
-		const applicationReader = readFileSync(
-			"src/lib/server/products/usdaCache.server.ts",
-			"utf8",
-		);
-		const scriptReaders = collectFiles("scripts")
-			.filter((path) => path.endsWith(".mjs"))
-			.map((path) => ({ path, source: readFileSync(path, "utf8") }))
-			.filter(({ source }) => source.includes("VITE_FDC_API_KEY"));
-
-		for (const { path, source } of [
-			{
-				path: "src/lib/server/products/usdaCache.server.ts",
-				source: applicationReader,
-			},
-			...scriptReaders,
+	it("documents the server-owned key in each environment that uses USDA lookups", () => {
+		for (const environmentExamplePath of [
+			".env.example",
+			".env.moderation.example",
+			".env.vercel.example",
 		]) {
-			expect(source, path).toContain("FDC_API_KEY");
-			expect(source.indexOf("FDC_API_KEY"), path).toBeLessThan(
-				source.indexOf("VITE_FDC_API_KEY"),
+			const environmentExample = readFileSync(environmentExamplePath, "utf8");
+			expect(environmentExample, environmentExamplePath).toMatch(
+				/^FDC_API_KEY=$/m,
 			);
 		}
+
+		expect(readFileSync("supabase/functions/.env.example", "utf8")).toMatch(
+			/^USDA_API_KEY=$/m,
+		);
+	});
+
+	it("removes the retired browser-prefixed key from runtime and script readers", () => {
+		const retiredKey = ["VITE", "FDC", "API", "KEY"].join("_");
+		const affectedSource = [...collectFiles("src"), ...collectFiles("scripts")]
+			.filter((path) => /\.(?:ts|svelte|mjs)$/.test(path))
+			.map((path) => readFileSync(path, "utf8"))
+			.join("\n");
+
+		expect(affectedSource).not.toContain(retiredKey);
+		expect(affectedSource).toContain("FDC_API_KEY");
 	});
 });

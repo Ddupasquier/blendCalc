@@ -2,7 +2,7 @@
 
 This directory documents the app-owned, versioned HTTP contract for approved canonical
 catalog data. External provider payloads remain separately documented under
-[`docs/api-structures`](../api-structures/README.md); they are not blendCalcAPI contracts.
+[`docs/development/api-structures`](../api-structures/README.md); they are not blendCalcAPI contracts.
 
 `blendCalcAPI` is the canonical product name for blendCalc's app-owned food-data API.
 Use `blendCalcAPI v1` when referring to the current contract, `internal blendCalcAPI v1`
@@ -34,7 +34,7 @@ fields retain their stable versioned names.
 
 The executable contract is split between:
 
-- [`static/api/v1/openapi.json`](../../static/api/v1/openapi.json) for routes, schemas,
+- [`static/api/v1/openapi.json`](../../../static/api/v1/openapi.json) for routes, schemas,
   status metadata, and authentication;
 - `src/lib/blendCalcAPI/v1/blendCalcAPITypes.ts` for application-owned response types;
 - versioned SvelteKit routes under `src/routes/api/v1/`;
@@ -144,7 +144,7 @@ Related operational routes are deliberately outside `/api/v1`:
 Publication holds are reversible. They never delete the canonical product, revision,
 observation, image, or submitted evidence. The stable operator entry point is
 `npm run blendCalcAPI:publication -- ...`; exact examples live in that script's header and in
-[Repository Scripts](../../scripts/README.md).
+[Repository Scripts](../../../scripts/README.md).
 
 ## Versioning
 

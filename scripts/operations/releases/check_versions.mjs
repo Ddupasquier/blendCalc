@@ -44,7 +44,7 @@ const apiHttpSource = readText(
 );
 const appVersionTest = readText("tests/config/appVersioning.test.ts");
 const apiRouteTest = readText("tests/routes/blendCalcAPIV1Routes.test.ts");
-const versioningDocumentation = readText("docs/versioning.md");
+const versioningDocumentation = readText("docs/development/versioning.md");
 const openAPI = readJson("static/api/v1/openapi.json");
 
 requireCondition(
@@ -177,7 +177,7 @@ requireCondition(
 			escapeRegularExpression(appVersion) +
 			"`\\s*\\|",
 	).test(versioningDocumentation),
-	`docs/versioning.md must list application release ${appVersion}.`,
+	`docs/development/versioning.md must list application release ${appVersion}.`,
 );
 requireCondition(
 	new RegExp(
@@ -185,13 +185,13 @@ requireCondition(
 			escapeRegularExpression(`${appVersion}+<deployment>`) +
 			"`\\s*\\|",
 	).test(versioningDocumentation),
-	`docs/versioning.md must list build prefix ${appVersion}+<deployment>.`,
+	`docs/development/versioning.md must list build prefix ${appVersion}+<deployment>.`,
 );
 requireCondition(
 	versioningDocumentation.includes(
 		`URL \`/api/v${apiMajor}\`, response \`${apiVersion}\`, OpenAPI \`${openAPIVersion}\``,
 	),
-	"docs/versioning.md must list the current API path, response, and OpenAPI versions.",
+	"docs/development/versioning.md must list the current API path, response, and OpenAPI versions.",
 );
 
 if (failures.length > 0) {

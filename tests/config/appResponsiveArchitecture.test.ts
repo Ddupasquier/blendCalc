@@ -6,8 +6,8 @@ const readStyles = (path: string) => readFileSync(path, "utf8");
 describe("app-wide responsive architecture", () => {
 	it("defines one shared width and compact-height contract", () => {
 		const variables = readStyles("src/styles/_variables.scss");
-		const rules = readStyles("docs/dev-rules/dev-rules.md");
-		const styleGuide = readStyles("docs/style-guide.md");
+		const rules = readStyles("docs/development/dev-rules/dev-rules.md");
+		const styleGuide = readStyles("docs/development/style-guide.md");
 
 		expect(variables).toContain("$app-breakpoint-xs: 420px");
 		expect(variables).toContain("$app-breakpoint-sm: 520px");

@@ -28,8 +28,7 @@ const GENERIC_USDA_DATA_TYPES = "Foundation,SR Legacy,Survey (FNDDS)";
 
 type CacheRequestKind = "search" | "barcode-search" | "food-detail";
 
-const getFdcApiKey = () =>
-	env.FDC_API_KEY?.trim() || env.VITE_FDC_API_KEY?.trim() || null;
+const getFdcApiKey = () => env.FDC_API_KEY?.trim() || null;
 
 const buildFdcUrl = (path: string, params: Record<string, string> = {}) => {
 	const apiKey = getFdcApiKey();

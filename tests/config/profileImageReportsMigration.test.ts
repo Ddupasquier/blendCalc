@@ -3,29 +3,47 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const migration = readFileSync(
-	resolve("supabase/migrations/20260822110000_report_driven_profile_image_moderation.sql"),
+	resolve(
+		"supabase/migrations/20260822110000_report_driven_profile_image_moderation.sql",
+	),
 	"utf8",
 );
-const databaseTypes = readFileSync(resolve("src/lib/types/database.types.ts"), "utf8");
-const schemaDocumentation = readFileSync(resolve("docs/supabase-schema.md"), "utf8");
+const databaseTypes = readFileSync(
+	resolve("src/lib/types/database.types.ts"),
+	"utf8",
+);
+const schemaDocumentation = readFileSync(
+	resolve("docs/development/supabase-schema.md"),
+	"utf8",
+);
 
 describe("report-driven profile image moderation migration", () => {
 	it("stores reports against the exact current profile image", () => {
 		expect(migration).toContain("create table public.profile_image_reports");
 		expect(migration).toContain("avatar_path text not null");
-		expect(migration).toContain("Profile image report must reference the current profile image.");
-		expect(migration).toContain("unique (reported_by, reported_profile_user_id, avatar_path)");
+		expect(migration).toContain(
+			"Profile image report must reference the current profile image.",
+		);
+		expect(migration).toContain(
+			"unique (reported_by, reported_profile_user_id, avatar_path)",
+		);
 	});
 
 	it("prevents self-reports and requires a reviewer for final decisions", () => {
-		expect(migration).toContain("check (reported_by <> reported_profile_user_id)");
+		expect(migration).toContain(
+			"check (reported_by <> reported_profile_user_id)",
+		);
 		expect(migration).toContain("status in ('dismissed', 'removed')");
-		expect(migration).toContain("reviewed_by is not null and reviewed_at is not null");
+		expect(migration).toContain(
+			"reviewed_by is not null and reviewed_at is not null",
+		);
 	});
 
 	it("supersedes reports when the user replaces the reported image", () => {
 		expect(migration).toContain("supersede_replaced_profile_image_reports");
-		expect(migration).toContain("old.avatar_path is distinct from new.avatar_path");
+		expect(migration).toContain(
+			"old.avatar_path is distinct from new.avatar_path",
+		);
 		expect(migration).toContain("status = 'superseded'");
 	});
 

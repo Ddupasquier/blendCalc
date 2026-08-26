@@ -193,6 +193,6 @@ blendCalcAPI v1 is not a proxy for USDA, Open Food Facts, or a national dataset.
 ## Audit Command
 
 The maintained catalog-readiness command, strict-mode behavior, and output contract are
-documented in [`scripts/README.md`](../../scripts/README.md#catalog-and-api-audits). Run that
+documented in [`scripts/README.md`](../../../scripts/README.md#catalog-and-api-audits). Run that
 audit after migrations, source-policy changes, imports, moderation publishing, or
 backfills that can affect this field-lineage contract.

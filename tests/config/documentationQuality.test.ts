@@ -2,15 +2,18 @@ import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, extname, relative, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
-const excludedDocumentationDirectories = new Set(["QA", "local-context"]);
-const localOnlyRepositoryPathPrefixes = [
-	"docs/QA/",
-	"docs/local-context/",
-	"scripts/output/",
-];
+const excludedDocumentationDirectories = new Set(["workspace"]);
+const localOnlyRepositoryPathPrefixes = ["docs/workspace/", "scripts/output/"];
 const localOnlyRepositoryPaths = new Set([
-	"docs/work-queue.md",
+	".env",
+	".env.local",
+	".env.moderation.local",
+	".env.test.local",
+	".env.vercel.preview.local",
+	".env.vercel.production.local",
+	"docs/workspace",
 	"scripts/output",
+	"supabase/functions/.env.local",
 ]);
 
 const isLocalOnlyRepositoryPath = (path: string): boolean => {
@@ -174,11 +177,18 @@ describe("documentation quality", () => {
 	});
 
 	it("keeps every UI behavior contract reachable from its stable index", () => {
-		const uiBehaviorIndex = readFileSync("docs/ui-functionality.md", "utf8");
-		const viewContracts = collectMarkdownFiles("docs/ui-functionality");
+		const uiBehaviorIndex = readFileSync(
+			"docs/development/ui-functionality.md",
+			"utf8",
+		);
+		const viewContracts = collectMarkdownFiles(
+			"docs/development/ui-functionality",
+		);
 
 		for (const viewContract of viewContracts) {
-			expect(uiBehaviorIndex).toContain(viewContract.replace("docs/", ""));
+			expect(uiBehaviorIndex).toContain(
+				viewContract.replace("docs/development/", ""),
+			);
 		}
 	});
 
@@ -210,22 +220,23 @@ describe("documentation quality", () => {
 
 	it("distinguishes intentionally local workflow artifacts from tracked documentation", () => {
 		for (const localOnlyPath of [
-			"docs/work-queue.md",
-			"docs/QA/qa-tasks.md",
-			"docs/local-context/working-context.md",
+			"docs/workspace/work-queue.md",
+			"docs/workspace/qa/qa-tasks.md",
+			"docs/workspace/context/working-context.md",
 			"scripts/output/audit.json",
 		]) {
 			expect(isLocalOnlyRepositoryPath(localOnlyPath), localOnlyPath).toBe(
 				true,
 			);
 		}
-		expect(isLocalOnlyRepositoryPath("docs/testing.md")).toBe(false);
+		expect(isLocalOnlyRepositoryPath("docs/development/testing.md")).toBe(
+			false,
+		);
 	});
 
 	it("keeps maintained documentation independent from local-only workflow files", () => {
 		const localWorkflowReferences: string[] = [];
-		const forbiddenReference =
-			/(?:docs\/(?:work-queue\.md|QA\/|local-context\/)|(?:^|[(`/])notes\/)/m;
+		const forbiddenReference = /(?:docs\/workspace\/|(?:^|[(`/])notes\/)/m;
 
 		for (const documentationFile of maintainedDocumentationFiles) {
 			const source = removeFencedCode(readFileSync(documentationFile, "utf8"));
@@ -240,8 +251,9 @@ describe("documentation quality", () => {
 	it("keeps current user-facing behavior docs free of retired product terms", () => {
 		const currentProductDocumentation = [
 			"README.md",
-			"docs/ui-functionality.md",
-			...collectMarkdownFiles("docs/ui-functionality"),
+			"docs/user/README.md",
+			"docs/development/ui-functionality.md",
+			...collectMarkdownFiles("docs/development/ui-functionality"),
 		]
 			.map((file) => readFileSync(file, "utf8"))
 			.join("\n");

@@ -65,9 +65,13 @@ describe("Playwright browser-testing architecture", () => {
 
 	it("exposes maintained local-database browser commands and documentation", () => {
 		const packageSource = readSource("package.json");
-		const testingStrategy = readSource("docs/testing.md");
-		const browserTestingGuide = readSource("docs/browser-testing.md");
-		const developmentRules = readSource("docs/dev-rules/dev-rules.md");
+		const testingStrategy = readSource("docs/development/testing.md");
+		const browserTestingGuide = readSource(
+			"docs/development/browser-testing.md",
+		);
+		const developmentRules = readSource(
+			"docs/development/dev-rules/dev-rules.md",
+		);
 
 		for (const command of [
 			'test:e2e"',

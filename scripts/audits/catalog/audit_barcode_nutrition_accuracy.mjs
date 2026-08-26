@@ -71,10 +71,10 @@ const reportPath = reportArgument
 
 const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const usdaApiKey = process.env.FDC_API_KEY || process.env.VITE_FDC_API_KEY;
+const usdaApiKey = process.env.FDC_API_KEY;
 if (!supabaseUrl || !serviceRoleKey || !usdaApiKey) {
 	throw new Error(
-		"PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, and FDC_API_KEY or VITE_FDC_API_KEY are required.",
+		"PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, and FDC_API_KEY are required.",
 	);
 }
 

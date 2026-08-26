@@ -26,7 +26,8 @@ skip the inventory.
 
 1. Read the applicable rules in this document. Read the
    [development-audit method](dev-rules-audit.md) when performing or updating an audit.
-2. Read every applicable domain source identified by `AGENTS.md` and `docs/README.md`.
+2. Read every applicable domain source identified by `AGENTS.md` and
+   `docs/development/README.md`.
 3. State the observable outcome, affected users and systems, explicit non-goals, and
    completion evidence before editing.
 4. Compare the request with maintained contracts. Stop and ask which contract should
@@ -114,32 +115,33 @@ the audit document remains a procedure, not a findings list.
 Use the grouped navigation above when reading by subject. Use this compact finder
 when you already know the rule you need.
 
-| Rule                                                                     | Rule                                                                               | Rule                                                                             |
-| ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| [Core Engineering Rules](#rule-best-practices)                           | [Canonical Change Lifecycle](#canonical-change-lifecycle)                          | [Mandatory Rules Preflight](#rule-rules-preflight)                               |
-| [Repository Hygiene](#rule-repository-hygiene)                           | [Dependency Supply-Chain Safety](#rule-dependency-supply-chain)                    | [Test Layer Ownership](#rule-test-layer-ownership)                               |
-| [Development Tooling Privacy](#rule-development-tooling-privacy)         | [Cross-View Cohesion](#rule-cross-view-cohesion)                                   | [Browser And Mobile Compatibility](#rule-browser-compatibility)                  |
-| [Accessibility](#rule-accessibility)                                     | [Strict Content Security Policy](#rule-content-security-policy)                    | [Server And Database Security Boundaries](#rule-server-database-security)        |
-| [Search Relevance](#rule-search-relevance)                               | [Explicit Pagination Controls](#rule-pagination-controls)                          | [Shared Loading Indicators](#rule-loading-indicators)                            |
-| [Design Tokens And Spacing](#rule-design-tokens)                         | [Light And Dark Theme Support](#rule-theme-support)                                | [Component Styles And Folder Structure](#rule-style-file-boundaries)             |
-| [Canonical Project Map](../project-structure.md)                         | [Shared Style Utilities](#rule-shared-style-utilities)                             | [Reusable Components And Buttons](#rule-reusable-components)                     |
-| [Circular Icon Alignment](#rule-circular-icon-alignment)                 | [Ingredient Card Media](#rule-ingredient-card-media)                               | [Verified Status Badge](#rule-verified-status-badge)                             |
-| [Destructive Action Confirmation](#rule-destructive-action-confirmation) | [Primary Card Interactions](#rule-primary-card-interactions)                       | [Reorderable Collections](#rule-reorderable-collections)                         |
-| [Component And Route Boundaries](#rule-component-boundaries)             | [Targeted Component Responsibilities](#rule-targeted-component-responsibilities)   | [Semantic Naming](#rule-semantic-naming)                                         |
-| [Manual Entry Modularization](#rule-manual-entry-modularization)         | [Database And API-Driven Data](#rule-no-hardcoded-reference-data)                  | [Schema Documentation Synchronization](#rule-schema-documentation)               |
-| [Database And API Hygiene](#rule-database-api-hygiene)                   | [Manual Entry Nutrient Classification](#rule-manual-entry-nutrient-classification) | [Canonical Category Picker](#rule-canonical-category-picker)                     |
-| [USDA Food Source Priority](#rule-usda-source-priority)                  | [Source Quality Measurement](#rule-source-quality-measurement)                     | [Field-Level Product Enrichment](#rule-field-level-product-enrichment)           |
-| [National Nutrition Datasets](#rule-national-nutrition-datasets)         | [Missing Nutrient Semantics](#rule-missing-nutrient-semantics)                     | [Product Ingredients And Allergen Disclosure](#rule-product-allergen-disclosure) |
-| [Compatibility Evaluation Status](#rule-compatibility-evaluation-status) | [Nutrition Food Deep Dive](#rule-nutrition-food-deep-dive)                         | [Confirmed Label OCR](#rule-confirmed-label-ocr)                                 |
-| [GS1 Product QR Safety](#rule-gs1-digital-link)                          | [Source Lifecycle Reviews](#rule-source-lifecycle-reviews)                         | [Data Source Licensing Ledger](#rule-source-licensing-ledger)                    |
-| [Future Public Data API And Retention](#rule-store-useful-api-data)      | [Versioned Catalog Read API](#rule-catalog-read-api)                               | [Independent App And API Versioning](#rule-app-versioning)                       |
-| [Ingredient Source And Trust Identity](#rule-ingredient-provenance)      | [Private Custom Food Classification](#rule-private-custom-food-classification)     | [External API Request Efficiency](#rule-external-api-request-efficiency)         |
-| [External API Rate Limits](#rule-api-rate-limit-handling)                | [Source-Backed Food Images](#rule-source-backed-food-images)                       | [Source-Backed Food Servings](#rule-source-backed-food-servings)                 |
-| [Source Product Name Formatting](#rule-source-product-name-formatting)   | [Weight And Volume Conversions](#rule-serving-weight-volume-conversions)           | [Backend And Validation](#rule-backend-best-practices)                           |
-| [Test Database Isolation](#rule-test-database-isolation)                 | [Exclusive Ingredient List Membership](#rule-exclusive-list-membership)            | [Atomic Bulk Ingredient Moves](#rule-bulk-list-moves)                            |
-| [Long-Press Ingredient Selection](#rule-long-press-selection)            | [Sheets, Views, And URL State](#rule-bottom-sheet-flows)                           | [Readable URLs And Browser Titles](#rule-page-metadata)                          |
-| [Privileged Actions](#rule-privileged-action-badges)                     | [QA Process](#rule-qa-process)                                                     | [QA Task Consistency](#rule-qa-task-consistency)                                 |
-| [MVP QA Priorities](#rule-qa-priorities)                                 | [Unfinished Work Ownership](#rule-unfinished-work-ownership)                       | [Development Audit Method](dev-rules-audit.md)                                   |
+| Rule                                                                             | Rule                                                                     | Rule                                                                               |
+| -------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------- |
+| [Core Engineering Rules](#rule-best-practices)                                   | [Canonical Change Lifecycle](#canonical-change-lifecycle)                | [Mandatory Rules Preflight](#rule-rules-preflight)                                 |
+| [Repository Hygiene](#rule-repository-hygiene)                                   | [Dependency Supply-Chain Safety](#rule-dependency-supply-chain)          | [Environment Ownership](#rule-environment-ownership)                               |
+| [Test Layer Ownership](#rule-test-layer-ownership)                               | [Development Tooling Privacy](#rule-development-tooling-privacy)         | [Cross-View Cohesion](#rule-cross-view-cohesion)                                   |
+| [Browser And Mobile Compatibility](#rule-browser-compatibility)                  | [Accessibility](#rule-accessibility)                                     | [Strict Content Security Policy](#rule-content-security-policy)                    |
+| [Server And Database Security Boundaries](#rule-server-database-security)        | [Search Relevance](#rule-search-relevance)                               | [Explicit Pagination Controls](#rule-pagination-controls)                          |
+| [Shared Loading Indicators](#rule-loading-indicators)                            | [Design Tokens And Spacing](#rule-design-tokens)                         | [Light And Dark Theme Support](#rule-theme-support)                                |
+| [Component Styles And Folder Structure](#rule-style-file-boundaries)             | [Canonical Project Map](../project-structure.md)                         | [Shared Style Utilities](#rule-shared-style-utilities)                             |
+| [Reusable Components And Buttons](#rule-reusable-components)                     | [Circular Icon Alignment](#rule-circular-icon-alignment)                 | [Ingredient Card Media](#rule-ingredient-card-media)                               |
+| [Verified Status Badge](#rule-verified-status-badge)                             | [Destructive Action Confirmation](#rule-destructive-action-confirmation) | [Primary Card Interactions](#rule-primary-card-interactions)                       |
+| [Reorderable Collections](#rule-reorderable-collections)                         | [Component And Route Boundaries](#rule-component-boundaries)             | [Targeted Component Responsibilities](#rule-targeted-component-responsibilities)   |
+| [Semantic Naming](#rule-semantic-naming)                                         | [Manual Entry Modularization](#rule-manual-entry-modularization)         | [Database And API-Driven Data](#rule-no-hardcoded-reference-data)                  |
+| [Schema Documentation Synchronization](#rule-schema-documentation)               | [Database And API Hygiene](#rule-database-api-hygiene)                   | [Manual Entry Nutrient Classification](#rule-manual-entry-nutrient-classification) |
+| [Canonical Category Picker](#rule-canonical-category-picker)                     | [USDA Food Source Priority](#rule-usda-source-priority)                  | [Source Quality Measurement](#rule-source-quality-measurement)                     |
+| [Field-Level Product Enrichment](#rule-field-level-product-enrichment)           | [National Nutrition Datasets](#rule-national-nutrition-datasets)         | [Missing Nutrient Semantics](#rule-missing-nutrient-semantics)                     |
+| [Product Ingredients And Allergen Disclosure](#rule-product-allergen-disclosure) | [Compatibility Evaluation Status](#rule-compatibility-evaluation-status) | [Nutrition Food Deep Dive](#rule-nutrition-food-deep-dive)                         |
+| [Confirmed Label OCR](#rule-confirmed-label-ocr)                                 | [GS1 Product QR Safety](#rule-gs1-digital-link)                          | [Source Lifecycle Reviews](#rule-source-lifecycle-reviews)                         |
+| [Data Source Licensing Ledger](#rule-source-licensing-ledger)                    | [Future Public Data API And Retention](#rule-store-useful-api-data)      | [Versioned Catalog Read API](#rule-catalog-read-api)                               |
+| [Independent App And API Versioning](#rule-app-versioning)                       | [Ingredient Source And Trust Identity](#rule-ingredient-provenance)      | [Private Custom Food Classification](#rule-private-custom-food-classification)     |
+| [External API Request Efficiency](#rule-external-api-request-efficiency)         | [External API Rate Limits](#rule-api-rate-limit-handling)                | [Source-Backed Food Images](#rule-source-backed-food-images)                       |
+| [Source-Backed Food Servings](#rule-source-backed-food-servings)                 | [Source Product Name Formatting](#rule-source-product-name-formatting)   | [Weight And Volume Conversions](#rule-serving-weight-volume-conversions)           |
+| [Backend And Validation](#rule-backend-best-practices)                           | [Test Database Isolation](#rule-test-database-isolation)                 | [Exclusive Ingredient List Membership](#rule-exclusive-list-membership)            |
+| [Atomic Bulk Ingredient Moves](#rule-bulk-list-moves)                            | [Long-Press Ingredient Selection](#rule-long-press-selection)            | [Sheets, Views, And URL State](#rule-bottom-sheet-flows)                           |
+| [Readable URLs And Browser Titles](#rule-page-metadata)                          | [Privileged Actions](#rule-privileged-action-badges)                     | [QA Process](#rule-qa-process)                                                     |
+| [QA Task Consistency](#rule-qa-task-consistency)                                 | [MVP QA Priorities](#rule-qa-priorities)                                 | [Unfinished Work Ownership](#rule-unfinished-work-ownership)                       |
+| [Development Audit Method](dev-rules-audit.md)                                   |                                                                          |                                                                                    |
 
 ## Rules
 
@@ -255,6 +257,20 @@ belong in Vitest, and physical-device or subjective judgment remains manual QA. 
 duplicate assertions across runners or move pure calculations, schema contracts,
 provider mappings, or injected failures into browser flows. Follow the execution,
 isolation, parallelism, and evidence rules in [Testing Strategy](../testing.md).
+
+<a id="rule-environment-ownership"></a>
+
+#### Rule 0g — Environment Ownership And Synchronization
+
+Every environment variable must have one documented consumer and appear only in that
+consumer's tracked example. Keep local application, privileged-operation, test, Vercel,
+and Supabase Edge Function contracts separate as defined in
+[Environment Configuration](../environment.md). When adding, removing, renaming, or
+rotating a value, update the applicable tracked example, ignored local mirror, deployed
+Vercel or Supabase configuration, source reader, and focused tests in the same task.
+Never duplicate a secret into unrelated environments, expose a server secret through
+`PUBLIC_` or `VITE_`, preserve an obsolete alias after its replacement is confirmed, or
+print secret values in logs, documentation, tests, issues, or command arguments.
 
 ### Platform, Accessibility, And Security
 
@@ -409,7 +425,7 @@ semantic names and direct readable values; do not preserve implementation-era na
 such as `figma` or `rebuild`, source-color aliases, duplicate semantic layers, or chains
 where one variable points to another variable that points to the real value.
 Use the maintained, Ingredients-derived implementation reference in
-`docs/style-guide.md` when selecting tokens, primitives, and established visual patterns.
+`docs/development/style-guide.md` when selecting tokens, primitives, and established visual patterns.
 This development-rules file remains authoritative when the documents overlap.
 All application `font-family`, `font-size`, `font-weight`, `line-height`, and
 `letter-spacing` declarations must use the shared semantic typography scale or explicit
@@ -883,7 +899,7 @@ radii, unique motion timing, and layout details in the paired SCSS file. Shared 
 timing and easing belong in `src/lib/utils/animation/_motion.scss`. Do not create global
 one-off variables to make a local declaration look tokenized. `src/styles` must contain
 only true app-wide style infrastructure, never ingredient-card or other feature styles.
-Follow the complete ownership map in `docs/project-structure.md`. Do not create generic
+Follow the complete ownership map in `docs/development/project-structure.md`. Do not create generic
 dumping folders such as `defaults`, `helpers`, `misc`, or `shared`; place configuration,
 constants, and utilities with the domain that owns them.
 
@@ -1039,7 +1055,7 @@ tables, RLS, indexes, and app access paths to avoid duplicated concepts.
 #### Rule 26a — Schema Documentation
 
 Update
-`docs/supabase-schema.md` in the same change as every database table, column,
+`docs/development/supabase-schema.md` in the same change as every database table, column,
 constraint, index, trigger, function/RPC, RLS policy, Storage policy, seed contract, or
 other durable schema behavior change. Keep the documented table map, relationships,
 access boundaries, backfill behavior, and operational commands synchronized with the
@@ -1616,7 +1632,7 @@ status, terms, and API version before every major integration expansion.
 #### Rule 30l.1 — Source Licensing Ledger
 
 Maintain the tracked
-`docs/data-source-licensing.md` ledger for every external data API, imported dataset,
+`docs/development/data-source-licensing.md` ledger for every external data API, imported dataset,
 image source, standards service, and data-processing tool. Before integrating a source,
 changing its cache or retention behavior, importing a release, promoting any field to
 the canonical catalog, rendering its attribution, or exposing it through an API, record
@@ -1924,7 +1940,7 @@ keep its actions reachable, and scroll its own content rather than the obscured 
 Keep external API structure references
 generated and isolated. When the app needs a full understanding of vendor payload shape,
 run `npm run generate:api-structures` and store the generated reference files under
-`docs/api-structures`. These files are documentation only and must not be imported by
+`docs/development/api-structures`. These files are documentation only and must not be imported by
 runtime app code. If runtime types are needed, create curated app-owned types in
 `src/lib/types` or the relevant `src/lib/utils/**` domain.
 

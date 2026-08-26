@@ -202,18 +202,20 @@ not duplicate the same assertion across runners.
 
 ## Documentation
 
-[`README.md`](README.md) is the canonical documentation ownership map. Add detail to the
-document that owns the subject and link to it from supporting documents; do not create a
-second rule set, schema map, provider ledger, API field map, command guide, or QA
-checklist.
+The tracked documentation entry point is [`docs/README.md`](../README.md). Product help
+belongs under `docs/user/`; engineering rules, contracts, architecture, testing,
+deployment, schema, and API references belong under `docs/development/`. Add detail to
+the document that owns the subject and link to it from supporting documents; do not
+create a second rule set, schema map, provider ledger, API field map, command guide, or
+QA checklist.
 
 Repository setup and the stable developer command surface remain in the root
-[`README.md`](../README.md). Script execution and organization remain in
-[`scripts/README.md`](../scripts/README.md). The audit method remains under
-`docs/dev-rules/`. Active project tracking, temporary recovery material, commit planning,
-and manual QA evidence are workflow artifacts rather than maintained repository
-documentation. Tracked documents must not link to or depend on those machine-local
-files.
+[`README.md`](../../README.md). Script execution and organization remain in
+[`scripts/README.md`](../../scripts/README.md). The audit method remains under
+`docs/development/dev-rules/`. Active project tracking, temporary recovery material,
+commit planning, and manual QA evidence are machine-local workflow artifacts rather
+than maintained repository documentation. Tracked documents must not link to or depend
+on those local files.
 
 Keep a focused document as one file. When a long document contains independently owned
 domains, preserve its established path as a short index and move each domain into a

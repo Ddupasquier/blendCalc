@@ -15,7 +15,7 @@ export default defineConfig(
 		"playwright-report/**",
 		"scripts/output/**",
 		"supabase/.temp/**",
-		"docs/api-structures/*.reference.ts",
+		"docs/development/api-structures/*.reference.ts",
 		"src/lib/types/database.types.ts",
 		"test-results/**",
 	]),

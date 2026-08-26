@@ -17,8 +17,7 @@ config({ path: ".env", quiet: true });
 
 const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const fdcApiKey =
-	process.env.FDC_API_KEY?.trim() || process.env.VITE_FDC_API_KEY?.trim();
+const fdcApiKey = process.env.FDC_API_KEY?.trim();
 const dryRun = process.argv.includes("--dry-run");
 const explicitQueries = process.argv
 	.slice(2)

@@ -582,16 +582,16 @@ Use `npm run blendCalcAPI:publication -- list` for the bounded operator queue an
 
 | Responsibility                             | Location                                                       |
 | ------------------------------------------ | -------------------------------------------------------------- |
-| Human-readable licensing ledger            | `docs/data-source-licensing.md`                                |
-| Source capabilities and intake boundaries  | `docs/api-structures/source-data-inventory.md`                 |
+| Human-readable licensing ledger            | `docs/development/data-source-licensing.md`                    |
+| Source capabilities and intake boundaries  | `docs/development/api-structures/source-data-inventory.md`     |
 | Source identity and canonical policy       | `product_data_sources`                                         |
 | Imported dataset release policy            | `generic_food_datasets`                                        |
 | Per-image licence and attribution          | `food_image_assets`                                            |
 | Provider cache                             | `product_api_cache`                                            |
 | blendCalcAPI v1 source attribution mapping | `src/lib/server/blendCalcAPI/v1/blendCalcAPICatalog.server.ts` |
 | blendCalcAPI v1 row publication gate       | `blendcalc_api_v1_product_readiness`                           |
-| blendCalcAPI v1 field lineage              | `docs/blendCalcAPI/catalog-field-lineage.md`                   |
+| blendCalcAPI v1 field lineage              | `docs/development/blendCalcAPI/catalog-field-lineage.md`       |
 | Runtime provider requests                  | `src/lib/server/products/sources/`                             |
 | Request caching/rate controls              | `src/lib/server/products/productApiRequests.server.ts`         |
-| Shared catalog policy                      | `docs/shared-product-catalog.md`                               |
-| Database table map                         | `docs/supabase-schema.md`                                      |
+| Shared catalog policy                      | `docs/development/shared-product-catalog.md`                   |
+| Database table map                         | `docs/development/supabase-schema.md`                          |

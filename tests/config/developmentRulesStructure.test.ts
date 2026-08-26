@@ -1,8 +1,8 @@
 import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-const rulesPath = "docs/dev-rules/dev-rules.md";
-const auditPath = "docs/dev-rules/dev-rules-audit.md";
+const rulesPath = "docs/development/dev-rules/dev-rules.md";
+const auditPath = "docs/development/dev-rules/dev-rules-audit.md";
 const legacyCombinedPath = "docs/development-rules-audit.md";
 const rules = readFileSync(rulesPath, "utf8");
 const audit = readFileSync(auditPath, "utf8");

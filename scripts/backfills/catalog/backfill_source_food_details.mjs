@@ -24,19 +24,18 @@ config({ path: ".env", quiet: true });
 
 const isDryRun = process.argv.includes("--dry-run");
 const limitArgument = process.argv.find((argument) =>
-	argument.startsWith("--limit=")
+	argument.startsWith("--limit="),
 );
 const limit = limitArgument
 	? Number.parseInt(limitArgument.split("=")[1] ?? "", 10)
 	: null;
 const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const fdcApiKey =
-	process.env.FDC_API_KEY?.trim() || process.env.VITE_FDC_API_KEY?.trim();
+const fdcApiKey = process.env.FDC_API_KEY?.trim();
 
 if (!supabaseUrl || !serviceRoleKey || !fdcApiKey) {
 	throw new Error(
-		"PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, and FDC_API_KEY or VITE_FDC_API_KEY are required.",
+		"PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, and FDC_API_KEY are required.",
 	);
 }
 if (limitArgument && (!Number.isSafeInteger(limit) || limit <= 0)) {
@@ -207,9 +206,7 @@ const normalizeNutrients = (detail) =>
 		const nutrientName = String(
 			nutrient?.name ?? entry?.nutrientName ?? "",
 		).trim();
-		const unitName = String(
-			nutrient?.unitName ?? entry?.unitName ?? "",
-		).trim();
+		const unitName = String(nutrient?.unitName ?? entry?.unitName ?? "").trim();
 		if (
 			!Number.isSafeInteger(nutrientId) ||
 			nutrientId <= 0 ||
@@ -220,19 +217,19 @@ const normalizeNutrients = (detail) =>
 		) {
 			return [];
 		}
-		return [{
-			nutrientId,
-			nutrientName,
-			nutrientNumber: String(
-				nutrient?.number ?? entry?.nutrientNumber ?? "",
-			),
-			unitName,
-			value,
-			valueOrigin: "reported",
-			source: "usda",
-			sourceReference: String(detail.fdcId),
-			confidence: "source-verified",
-		}];
+		return [
+			{
+				nutrientId,
+				nutrientName,
+				nutrientNumber: String(nutrient?.number ?? entry?.nutrientNumber ?? ""),
+				unitName,
+				value,
+				valueOrigin: "reported",
+				source: "usda",
+				sourceReference: String(detail.fdcId),
+				confidence: "source-verified",
+			},
+		];
 	});
 
 const getPortionLabel = (portion) =>
@@ -242,7 +239,9 @@ const getPortionLabel = (portion) =>
 			[
 				toPositiveNumber(portion?.amount),
 				portion?.measureUnit?.abbreviation || portion?.measureUnit?.name,
-			].filter(Boolean).join(" "),
+			]
+				.filter(Boolean)
+				.join(" "),
 	).trim();
 
 const normalizeServings = (detail) => {
@@ -250,16 +249,20 @@ const normalizeServings = (detail) => {
 		const label = getPortionLabel(portion);
 		const gramWeight = toPositiveNumber(portion?.gramWeight);
 		if (!label || gramWeight === null) return [];
-		return [{
-			label,
-			gramWeight,
-			amount: toPositiveNumber(portion?.amount) ?? undefined,
-			order: toPositiveNumber(portion?.sequenceNumber),
-		}];
+		return [
+			{
+				label,
+				gramWeight,
+				amount: toPositiveNumber(portion?.amount) ?? undefined,
+				order: toPositiveNumber(portion?.sequenceNumber),
+			},
+		];
 	});
 	if (rows.length === 0) {
 		const gramWeight =
-			String(detail?.servingSizeUnit ?? "").trim().toLocaleLowerCase() === "g"
+			String(detail?.servingSizeUnit ?? "")
+				.trim()
+				.toLocaleLowerCase() === "g"
 				? toPositiveNumber(detail?.servingSize)
 				: null;
 		const label = String(detail?.householdServingFullText ?? "").trim();
@@ -271,9 +274,7 @@ const normalizeServings = (detail) => {
 	return rows.map((serving, index) => ({
 		label: serving.label,
 		gramWeight: serving.gramWeight,
-		...(serving.amount === undefined
-			? {}
-			: { amount: serving.amount }),
+		...(serving.amount === undefined ? {} : { amount: serving.amount }),
 		isPrimary: serving.order === 1 || (!hasPrimary && index === 0),
 		source: "usda",
 		sourceReference: String(detail.fdcId),
@@ -317,10 +318,10 @@ const mergeUsdaDetail = (current, detail) => {
 			usdaFdcId: sourceReference,
 			...(detail.ndbNumber
 				? {
-					usdaNdbNumber: String(detail.ndbNumber)
-						.replace(/\D/g, "")
-						.padStart(5, "0"),
-				}
+						usdaNdbNumber: String(detail.ndbNumber)
+							.replace(/\D/g, "")
+							.padStart(5, "0"),
+					}
 				: {}),
 		},
 		foodNutrients,
@@ -332,46 +333,46 @@ const mergeUsdaDetail = (current, detail) => {
 		],
 		...(foodServings.length > 0
 			? {
-				foodServings,
-				hasSourceServing: true,
-				customServingLabel: foodServings[0].label,
-				customServingWeightGrams: foodServings[0].gramWeight,
-			}
+					foodServings,
+					hasSourceServing: true,
+					customServingLabel: foodServings[0].label,
+					customServingWeightGrams: foodServings[0].gramWeight,
+				}
 			: {}),
 		...(ingredients
 			? {
-				ingredients,
-				ingredientList: splitIngredientList(ingredients),
-			}
+					ingredients,
+					ingredientList: splitIngredientList(ingredients),
+				}
 			: {}),
 		fieldProvenance: {
 			...(current.fieldProvenance ?? {}),
 			...(sourceNutrients.length > 0
 				? {
-					nutrition: {
-						source: "usda",
-						sourceReference,
-						confidence: "source-verified",
-					},
-				}
+						nutrition: {
+							source: "usda",
+							sourceReference,
+							confidence: "source-verified",
+						},
+					}
 				: {}),
 			...(foodServings.length > 0
 				? {
-					serving: {
-						source: "usda",
-						sourceReference,
-						confidence: "source-verified",
-					},
-				}
+						serving: {
+							source: "usda",
+							sourceReference,
+							confidence: "source-verified",
+						},
+					}
 				: {}),
 			...(ingredients
 				? {
-					ingredients: {
-						source: "usda",
-						sourceReference,
-						confidence: "source-verified",
-					},
-				}
+						ingredients: {
+							source: "usda",
+							sourceReference,
+							confidence: "source-verified",
+						},
+					}
 				: {}),
 		},
 	};
@@ -385,14 +386,16 @@ const candidates = allRows.filter((row) => {
 	if (row.shared_product_id) return false;
 	const food = row.food ?? {};
 	const barcode = normalizeBarcode(food.barcode ?? food.gtinUpc);
-	return Boolean(barcode) ||
-		(
-			row.source_key === "usda" &&
+	return (
+		Boolean(barcode) ||
+		(row.source_key === "usda" &&
 			Number.isSafeInteger(Number(food.fdcId ?? row.fdc_id)) &&
-			Number(food.fdcId ?? row.fdc_id) > 0
-		);
+			Number(food.fdcId ?? row.fdc_id) > 0)
+	);
 });
-const rows = Number.isSafeInteger(limit) ? candidates.slice(0, limit) : candidates;
+const rows = Number.isSafeInteger(limit)
+	? candidates.slice(0, limit)
+	: candidates;
 const summary = {
 	candidates: rows.length,
 	updated: 0,
@@ -434,8 +437,7 @@ for (const [index, row] of rows.entries()) {
 				food.foodServings ?? [],
 				nextFood.foodServings ?? [],
 			) ||
-			String(food.ingredients ?? "") !==
-				String(nextFood.ingredients ?? "") ||
+			String(food.ingredients ?? "") !== String(nextFood.ingredients ?? "") ||
 			!isDeepStrictEqual(
 				food.sourceIdentifiers ?? {},
 				nextFood.sourceIdentifiers ?? {},
@@ -456,9 +458,9 @@ for (const [index, row] of rows.entries()) {
 		if (addedIngredients) summary.ingredientsAdded += 1;
 		console.log(
 			`  ${isDryRun ? "would add" : "added"} ` +
-			`${Math.max(nextNutrientCount - currentNutrientCount, 0)} nutrients, ` +
-			`${Math.max(nextServingCount - currentServingCount, 0)} servings` +
-			`${addedIngredients ? ", ingredients" : ""}`,
+				`${Math.max(nextNutrientCount - currentNutrientCount, 0)} nutrients, ` +
+				`${Math.max(nextServingCount - currentServingCount, 0)} servings` +
+				`${addedIngredients ? ", ingredients" : ""}`,
 		);
 		if (isDryRun) continue;
 		const { error } = await supabase
@@ -468,7 +470,9 @@ for (const [index, row] of rows.entries()) {
 		if (error) throw error;
 	} catch (error) {
 		summary.errors += 1;
-		console.error(`  failed: ${error instanceof Error ? error.message : error}`);
+		console.error(
+			`  failed: ${error instanceof Error ? error.message : error}`,
+		);
 	}
 }
 

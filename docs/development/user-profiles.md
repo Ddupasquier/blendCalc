@@ -144,7 +144,7 @@ control must ship with the social surface that exposes other users' profile imag
 must not be added as an unreachable or speculative form before then.
 
 Account roles, blocks, audit history, and signup blocklists are documented in
-`docs/moderation.md`.
+`docs/development/moderation.md`.
 
 ## Change Verification
 

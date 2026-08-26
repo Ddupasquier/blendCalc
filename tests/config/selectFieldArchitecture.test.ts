@@ -22,11 +22,13 @@ describe("select field architecture", () => {
 		const primitive = readFileSync(nativeSelectOwners[0], "utf8");
 		expect(primitive).toContain('role="combobox"');
 		expect(primitive).toContain('role="listbox"');
-		expect(primitive).toContain('popover={popoverSupported ? "manual" : undefined}');
+		expect(primitive).toContain(
+			'popover={popoverSupported ? "manual" : undefined}',
+		);
 	});
 
 	it("documents the primitive and preserves specialized searchable pickers", () => {
-		const styleGuide = readFileSync("docs/style-guide.md", "utf8");
+		const styleGuide = readFileSync("docs/development/style-guide.md", "utf8");
 
 		expect(styleGuide).toContain("| Fixed-choice dropdown");
 		expect(styleGuide).toContain("`SelectField`");

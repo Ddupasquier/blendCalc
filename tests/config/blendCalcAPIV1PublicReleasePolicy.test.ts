@@ -44,7 +44,10 @@ describe("blendCalcAPI v1 public-release policy", () => {
 	);
 
 	it("keeps the tracked release review explicit and pending", () => {
-		const review = readFileSync("docs/blendCalcAPI/public-release.md", "utf8");
+		const review = readFileSync(
+			"docs/development/blendCalcAPI/public-release.md",
+			"utf8",
+		);
 		for (const section of [
 			"Acceptable Use",
 			"Privacy",

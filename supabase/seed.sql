@@ -2113,7 +2113,7 @@ select
 	end,
 	'canonical',
 	case when fixture.evidence_source = 'usda' then 'exact-usda-fdc-nutrient-id' else 'local-qa-label-fixture' end,
-	'docs/database-testing.md'
+	'docs/development/database-testing.md'
 from private.qa_catalog_product_fixtures fixture
 cross join lateral jsonb_array_elements(fixture.food -> 'foodNutrients') nutrient(value)
 on conflict (shared_product_id, nutrient_id) where shared_product_id is not null

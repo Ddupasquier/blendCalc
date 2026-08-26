@@ -1,6 +1,6 @@
 /**
  * Purpose: Sample USDA and Open Food Facts payloads and regenerate documentation-only
- * TypeScript structure references under `docs/api-structures`. It reads observed query
+ * TypeScript structure references under `docs/development/api-structures`. It reads observed query
  * terms from Supabase unless explicit queries are supplied, but never mutates the DB.
  * Run: `npm run generate:api-structures`
  * Targeted run: `npm run generate:api-structures -- --query="almond milk" --samples=2`
@@ -31,8 +31,7 @@ const MAX_QUERY_READS = 24;
 const MAX_ARRAY_SAMPLES = 50;
 const APP_USER_AGENT = createAppUserAgent("API structure reference generator");
 
-const fdcApiKey =
-	process.env.FDC_API_KEY?.trim() || process.env.VITE_FDC_API_KEY?.trim();
+const fdcApiKey = process.env.FDC_API_KEY?.trim();
 const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 

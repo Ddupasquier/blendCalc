@@ -69,34 +69,20 @@ Use `.env` for the local application runtime. Only `PUBLIC_*` values are intende
 the browser; every other credential stays server-only. Use the ignored
 `.env.moderation.local` for privileged CLI and linked-database operations.
 
-| Configuration                                                                                  | When it is needed                                                                                                                                              |
-| ---------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_PUBLISHABLE_KEY`                                       | Normal app authentication and data access                                                                                                                      |
-| `FDC_API_KEY`                                                                                  | Server-only USDA FoodData Central lookups in the app and maintenance scripts                                                                                   |
-| `PUBLIC_SITE_URL`                                                                              | Production authentication callbacks and canonical links                                                                                                        |
-| `PUBLIC_TURNSTILE_SITE_KEY`                                                                    | Auth bot protection after the matching hosted secret is configured                                                                                             |
-| `COLA_CLOUD_API_KEY`                                                                           | Optional server-only U.S. alcohol-label enrichment                                                                                                             |
-| `USDA_API_KEY`, `OPENFDA_API_KEY`, `CATALOG_MONITOR_CRON_SECRET`                               | Deployed catalog-monitor Edge Function; openFDA key is optional but recommended                                                                                |
-| `FDA_RECALL_PROXY_URL`, `FDA_RECALL_PROXY_SECRET`, `FDA_RECALL_PROXY_PROTECTION_BYPASS_SECRET` | Protected app-server relay for current FDA notices when Edge egress is blocked; the optional bypass secret is required only for a deployment-protected preview |
-| `SUPABASE_SERVICE_ROLE_KEY`                                                                    | Protected server reads and writes, request quotas, catalog and food-safety policy, Profile operations, privileged review, and trusted scripts                  |
-| `SUPABASE_PROJECT_ID`, `SUPABASE_DB_PASSWORD`                                                  | Linked Supabase administration and guarded migration delivery                                                                                                  |
-| `RESEND_API_KEY`, `MODERATION_EMAIL_FROM`, `MODERATION_SUPPORT_EMAIL`                          | Optional moderation email delivery                                                                                                                             |
-| `VERCEL_ANALYTICS_ACCESS_TOKEN`, `VERCEL_TEAM_ID`, `CRON_SECRET`                               | Production aggregate analytics synchronization                                                                                                                 |
+Each runtime has a separate tracked example so Edge Function, Vercel, test, and
+privileged-operation variables do not leak into environments that never consume them.
+See [Environment Configuration](docs/development/environment.md) for the file map,
+deployment ownership, and synchronization workflow. Never prefix a server secret with
+`PUBLIC_` or `VITE_`; ignored value files must never be committed.
 
-Never prefix a server secret with `PUBLIC_` or `VITE_`. Both local env files are
-ignored and must not be committed. See [Authentication](docs/authentication.md) for the
-complete hosted configuration and verification checklist.
-
-Older local environments may still contain `VITE_FDC_API_KEY`. Runtime and maintenance
-scripts accept it only as a temporary compatibility fallback; new local and hosted
-configuration must use `FDC_API_KEY` so the credential can never enter the browser
-bundle.
+See [Authentication](docs/development/authentication.md) for the complete hosted Auth
+configuration and verification checklist.
 
 The scheduled catalog monitor also requires Vault values named
 `blendcalc_project_url` and `blendcalc_catalog_monitor_cron_secret`. Keep the monitor's
 database setting disabled until the deployed Edge Function and matching secret pass a
 manual smoke run. The full table, retry, and enablement contract is documented in
-[Supabase Schema](docs/supabase-schema.md#catalog-monitoring-and-food-safety).
+[Supabase Schema](docs/development/supabase-schema.md#catalog-monitoring-and-food-safety).
 
 ### 3. Run The App
 
@@ -150,9 +136,9 @@ intentionally omitted.
 | `npm run verify:release`         | Run the bounded blocking release profile in the dashboard.                |
 | `npm run verify:nightly`         | Run exhaustive nonblocking browser confidence in the dashboard.           |
 
-Use the [Testing Strategy](docs/testing.md) to choose a test layer. Browser setup lives
-in [Browser Testing](docs/browser-testing.md); database fixtures and personas live in
-[Database Testing](docs/database-testing.md).
+Use the [Testing Strategy](docs/development/testing.md) to choose a test layer. Browser
+setup lives in [Browser Testing](docs/development/browser-testing.md); database fixtures
+and personas live in [Database Testing](docs/development/database-testing.md).
 
 ### Database And QA
 
@@ -211,11 +197,12 @@ privileged operations, or direct `node scripts/...` workflows.
 | `supabase/migrations/` | Immutable migration history and forward-only schema changes          |
 | `tests/`               | Vitest, Playwright, architecture, route, and database tests          |
 | `scripts/`             | Audits, imports, seeds, backfills, QA data, and protected operations |
-| `docs/`                | Rules, contracts, architecture, operations, and QA documentation     |
+| `docs/user/`           | Product-facing help and feature guidance                             |
+| `docs/development/`    | Tracked engineering rules, contracts, architecture, and operations   |
 
-[Project Structure](docs/project-structure.md) owns exact file placement and naming.
-[Data Architecture](docs/data-architecture.md) owns read, write, cache, and external
-source boundaries.
+[Project Structure](docs/development/project-structure.md) owns exact file placement and
+naming. [Data Architecture](docs/development/data-architecture.md) owns read, write,
+cache, and external source boundaries.
 
 ## Documentation
 
@@ -223,12 +210,13 @@ Start with the [Documentation Map](docs/README.md). It identifies the one mainta
 owner for each subject so rules, contracts, schema details, and QA instructions do not
 drift into duplicate copies.
 
-| Before changing...           | Read                                                                             |
-| ---------------------------- | -------------------------------------------------------------------------------- |
-| Anything                     | [Development Rules](docs/dev-rules/dev-rules.md)                                 |
-| A specific feature or system | The task-specific owner in the [Documentation Map](docs/README.md)               |
-| blendCalcAPI v1              | [blendCalcAPI](docs/blendCalcAPI/README.md) and [Versioning](docs/versioning.md) |
+| Before changing...           | Read                                                                                                     |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Anything                     | [Development Rules](docs/development/dev-rules/dev-rules.md)                                             |
+| A specific feature or system | The task-specific owner in the [Documentation Map](docs/README.md)                                       |
+| blendCalcAPI v1              | [blendCalcAPI](docs/development/blendCalcAPI/README.md) and [Versioning](docs/development/versioning.md) |
 
 The internal API overview and OpenAPI entry point are in
-[blendCalcAPI](docs/blendCalcAPI/README.md). Application and API releases are
-versioned independently as documented in [Versioning](docs/versioning.md).
+[blendCalcAPI](docs/development/blendCalcAPI/README.md). Application and API releases
+are versioned independently as documented in
+[Versioning](docs/development/versioning.md).
