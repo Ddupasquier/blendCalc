@@ -19,25 +19,28 @@ const getStorageKey = () => getScopedStorageKey(MANUAL_ENTRY_DRAFT_KEY);
 const hasMeaningfulDraft = (form: ManualEntryFormResetState) =>
 	Boolean(
 		form.name.trim() ||
-			form.brandOwner.trim() ||
-			form.category.trim() ||
-			form.barcode.trim() ||
-			form.servingLabel.trim() ||
-			form.servingWeightGrams !== null ||
-			form.volumeQuantity !== null ||
-			Object.keys(form.manualNutrientValues).length > 0 ||
-			form.importedNutrients.length > 0 ||
-			form.ingredients.trim() ||
-			form.ingredientList.length > 0 ||
-			form.allergens.length > 0 ||
-			form.traces.length > 0,
+		form.brandOwner.trim() ||
+		form.category.trim() ||
+		form.barcode.trim() ||
+		form.servingLabel.trim() ||
+		form.servingWeightGrams !== null ||
+		form.volumeQuantity !== null ||
+		Object.keys(form.manualNutrientValues).length > 0 ||
+		form.importedNutrients.length > 0 ||
+		form.ingredients.trim() ||
+		form.ingredientList.length > 0 ||
+		form.allergens.length > 0 ||
+		form.traces.length > 0,
 	);
 
-const getDraftData = (form: ManualEntryFormResetState): ManualEntryDraftData => {
+const getDraftData = (
+	form: ManualEntryFormResetState,
+): ManualEntryDraftData => {
 	const {
 		frontPhoto: _frontPhoto,
 		nutritionPhoto: _nutritionPhoto,
 		barcodePhoto: _barcodePhoto,
+		barcodeSafetyAlerts: _barcodeSafetyAlerts,
 		checkingBarcodeReference: _checkingBarcodeReference,
 		validatingBarcodeShare: _validatingBarcodeShare,
 		...draftData

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
 	getBarcodeDraftState,
 	getBarcodeImportMessage,
+	getManualBarcodeReferenceResult,
 } from "$lib/components/ingredients/manual-entry/utils/barcodeFlow";
 import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
 
@@ -25,6 +26,40 @@ const makeSparseDraft = (
 });
 
 describe("sparse alcohol barcode form state", () => {
+	it("preserves exact recall notices when product details are unavailable", () => {
+		const result = getManualBarcodeReferenceResult({
+			lookup: {
+				status: "not-found",
+				barcode: "00860014523120",
+				safetyCheck: {
+					status: "checked",
+					alerts: [
+						{
+							id: "recall-1",
+							providerKey: "fda-recalls",
+							sourceName: "FDA Recalls",
+							sourceAttribution: "U.S. Food and Drug Administration",
+							alertType: "recall",
+							status: "ongoing",
+							productDescription: "Everything Sprouts Alfalfa Sprouts",
+							reason: "Potential Salmonella and E. coli contamination.",
+							sourceUrl: "https://www.fda.gov/example-recall",
+							matchType: "exact_gtin",
+							requiresPackageCheck: true,
+							detectedAt: "2026-08-25T00:00:00.000Z",
+						},
+					],
+				},
+			},
+			referenceKey: "00860014523120",
+			normalizedName: "",
+		});
+
+		expect(result.status).toBe("not-found");
+		expect(result.safetyAlerts).toHaveLength(1);
+		expect(result.safetyAlerts[0]?.matchType).toBe("exact_gtin");
+	});
+
 	it("keeps the technical 100g basis out of the package-serving UI", () => {
 		const draft = makeSparseDraft({
 			alcoholByVolume: {

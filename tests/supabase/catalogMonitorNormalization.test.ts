@@ -224,7 +224,10 @@ describe("official food safety alert normalization and matching", () => {
 				const url = new URL(String(input));
 				expect(url.searchParams.get("source")).toBe("fsis");
 				const headers = new Headers(init?.headers);
-				expect(headers.get("authorization")).toBe("Bearer proxy-secret");
+				expect(headers.get("x-blendcalc-food-safety-relay-secret")).toBe(
+					"proxy-secret",
+				);
+				expect(headers.get("authorization")).toBeNull();
 				expect(headers.get("if-none-match")).toBe('"fsis-previous"');
 				return new Response(null, {
 					status: 304,
@@ -288,7 +291,87 @@ describe("official food safety alert normalization and matching", () => {
 			reportDate: "2026-07-18",
 			isActive: true,
 		});
-		expect(alert?.identifiers).toEqual([]);
+		expect(
+			alert?.identifiers.filter(
+				({ type }) => type === "upc" || type === "gtin",
+			),
+		).toEqual([]);
+	});
+
+	it("extracts exact UPCs and package evidence from current FDA recall tables", () => {
+		const currentRecallTableFixtures = [
+			{
+				record: {
+					path: "/safety/recalls-market-withdrawals-safety-alerts/taylor-fresh-foods-recalls-products-made-jalapeno-peppers-because-possible-health-risk",
+					field_change_date_2: "08/13/2026",
+					field_brand_name: "Freshness Guaranteed, Trader Joe's",
+					field_product_description: "Products made with jalapeño peppers",
+					field_recall_reason_description: "Possible health risk",
+					field_company_name: "Taylor Fresh Foods",
+					field_regulated_product_field: "Food &amp; Beverages",
+				},
+				detailHtml: `
+					<table>
+						<tr><th>Store(s)</th><th>Brand</th><th>Description</th><th>Best if Used By</th><th>UPC</th><th>Distributed to States</th></tr>
+						<tr><td>Walmart</td><td>Freshness Guaranteed</td><td>Hot Pico De Gallo</td><td>8/08/2026 - 8/16/2026</td><td>681131276351</td><td>FL, IL</td></tr>
+						<tr><td>Trader Joe's</td><td>Trader Joe's</td><td>Fiesta Style Salad Shrimp</td><td>8/07/2026 - 8/12/2026</td><td>000000818377</td><td>TX</td></tr>
+						<tr><td>Control</td><td>Invalid</td><td>Invalid check digit</td><td>8/10/2026</td><td>681131276352</td><td>OR</td></tr>
+					</table>
+				`,
+				expectedIdentifiers: ["00681131276351", "00000000818377"],
+			},
+			{
+				record: {
+					path: "/safety/recalls-market-withdrawals-safety-alerts/frankies-organic-issues-allergy-alert-undeclared-milk-frankies-organic-plant-based-vegan-cheddar",
+					field_change_date_2: "08/14/2026",
+					field_brand_name: "Frankie's Organic",
+					field_product_description: "Plant Based Vegan Cheddar Puffs",
+					field_recall_reason_description: "Undeclared milk",
+					field_company_name: "Frankie's Organic",
+					field_regulated_product_field: "Food &amp; Beverages",
+				},
+				detailHtml: `
+					<table>
+						<tr><th>Product Name</th><th>Best If Used By</th><th>UPC</th><th>Lot Code</th><th>Territory</th><th>Size</th></tr>
+						<tr><td>Frankie's Organic Plant Based Vegan Cheddar Puffs</td><td>May 16,<br>2027</td><td>816929000089</td><td>05 16 2027</td><td>Washington</td><td>4 oz.</td></tr>
+					</table>
+				`,
+				expectedIdentifiers: ["00816929000089", "05 16 2027"],
+			},
+			{
+				record: {
+					path: "/safety/recalls-market-withdrawals-safety-alerts/kettle-cuisine-recalls-marketside-tomato-bisque-soup-kit-sold-exclusively-walmart-stores-because",
+					field_change_date_2: "08/14/2026",
+					field_brand_name: "Marketside",
+					field_product_description: "Tomato Bisque Soup Kit",
+					field_recall_reason_description: "Possible contamination",
+					field_company_name: "Kettle Cuisine",
+					field_regulated_product_field: "Food &amp; Beverages",
+				},
+				detailHtml: `
+					<table>
+						<tr><th>Brand</th><th>Product Description</th><th>Package Size</th><th>UPC</th><th>Best-by / use-by Date</th><th>Quantity Recalled</th></tr>
+						<tr><td>Marketside</td><td>Tomato Bisque Soup Kit</td><td>14 oz</td><td>194346474004</td><td>8/22/26</td><td>3240 packs</td></tr>
+					</table>
+				`,
+				expectedIdentifiers: ["00194346474004", "8/22/26"],
+			},
+		];
+
+		for (const fixture of currentRecallTableFixtures) {
+			const alert = normalizeFdaRecallAnnouncement(
+				fixture.record,
+				fixture.detailHtml,
+			);
+			const normalizedIdentifiers =
+				alert?.identifiers.map(({ normalizedValue }) => normalizedValue) ?? [];
+			expect(normalizedIdentifiers).toEqual(
+				expect.arrayContaining(fixture.expectedIdentifiers),
+			);
+			expect(normalizedIdentifiers).not.toContain("PRODUCT");
+			expect(normalizedIdentifiers).not.toContain("TERRITORY");
+			expect(normalizedIdentifiers).not.toContain("00681131276352");
+		}
 	});
 
 	it("does not turn generic lot-code labels into package evidence", () => {
@@ -474,7 +557,69 @@ describe("official food safety alert normalization and matching", () => {
 			});
 			expect(page.nextCursor).toMatchObject({
 				fdaAnnouncementSweepComplete: true,
+				fdaAnnouncementParserVersion: 2,
 				fdaAnnouncementEtag: '"taylor-fixture"',
+			});
+		} finally {
+			vi.unstubAllGlobals();
+		}
+	});
+
+	it("replays recent FDA announcements after the identifier parser changes", async () => {
+		const announcementRequests: Headers[] = [];
+		const fetchMock = vi.fn(
+			async (input: string | URL | Request, init?: RequestInit) => {
+				const url = String(input);
+				if (url.startsWith("https://api.fda.gov/food/enforcement.json")) {
+					return new Response("", { status: 404 });
+				}
+				if (url.includes("datatables-json/recalls-market-withdrawals.json")) {
+					announcementRequests.push(new Headers(init?.headers));
+					return new Response(
+						JSON.stringify([
+							{
+								path: "/safety/recalls-market-withdrawals-safety-alerts/kettle-cuisine-recalls-marketside-tomato-bisque-soup-kit-sold-exclusively-walmart-stores-because",
+								field_change_date_2: "08/14/2026",
+								field_brand_name: "Marketside",
+								field_product_description: "Tomato Bisque Soup Kit",
+								field_recall_reason_description: "Possible contamination",
+								field_company_name: "Kettle Cuisine",
+								field_regulated_product_field: "Food &amp; Beverages",
+							},
+						]),
+						{ status: 200, headers: { etag: '"current-fixture"' } },
+					);
+				}
+				return new Response(
+					"<table><tr><th>UPC</th></tr><tr><td>194346474004</td></tr></table>",
+					{ status: 200 },
+				);
+			},
+		);
+		vi.stubGlobal("fetch", fetchMock);
+
+		try {
+			const page = await fetchOpenFdaAlertPage(
+				"2026-08-25T00:00:00.000Z",
+				{
+					fdaAnnouncementSweepComplete: true,
+					fdaAnnouncementParserVersion: 1,
+					fdaAnnouncementEtag: '"stale-fixture"',
+				},
+				100,
+			);
+
+			expect(announcementRequests).toHaveLength(1);
+			expect(announcementRequests[0].has("if-none-match")).toBe(false);
+			expect(page.alerts[0].normalizedAlert.identifiers).toContainEqual(
+				expect.objectContaining({
+					type: "upc",
+					normalizedValue: "00194346474004",
+				}),
+			);
+			expect(page.nextCursor).toMatchObject({
+				fdaAnnouncementParserVersion: 2,
+				fdaAnnouncementSweepComplete: true,
 			});
 		} finally {
 			vi.unstubAllGlobals();
@@ -566,9 +711,11 @@ describe("official food safety alert normalization and matching", () => {
 				if (url.hostname === "api.fda.gov") {
 					return new Response("", { status: 404 });
 				}
-				expect(new Headers(init?.headers).get("authorization")).toBe(
-					"Bearer proxy-secret",
+				const headers = new Headers(init?.headers);
+				expect(headers.get("x-blendcalc-food-safety-relay-secret")).toBe(
+					"proxy-secret",
 				);
+				expect(headers.get("authorization")).toBeNull();
 				if (!url.searchParams.has("sourcePath")) {
 					return new Response(
 						JSON.stringify([

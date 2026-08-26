@@ -5,6 +5,7 @@
 	import FoodCategoryPicker from "$lib/components/ingredients/manual-entry/FoodCategoryPicker/FoodCategoryPicker.svelte";
 	import ManualEntryField from "$lib/components/ingredients/manual-entry/ManualEntryField/ManualEntryField.svelte";
 	import ManualEntryStepLayout from "$lib/components/ingredients/manual-entry/ManualEntryStepLayout/ManualEntryStepLayout.svelte";
+	import ProductSafetyAlerts from "$lib/components/ingredients/nutrition/ProductSafetyAlerts/ProductSafetyAlerts.svelte";
 	import type { IdentityStepProps } from "./types";
 
 	let {
@@ -16,6 +17,7 @@
 		categoryWarningMessage,
 		categorySourceValues,
 		barcodeMessage,
+		barcodeSafetyAlerts,
 		barcodeValidationMessage,
 		checkingBarcodeReference,
 		barcodeSuggestion = null,
@@ -40,7 +42,11 @@
 </script>
 
 <ManualEntryStepLayout>
-	<ManualEntryField forId="custom-ingredient-barcode" label="UPC / Barcode" optional>
+	<ManualEntryField
+		forId="custom-ingredient-barcode"
+		label="UPC / Barcode"
+		optional
+	>
 		<InputLoadingFrame
 			loading={checkingBarcodeReference}
 			loadingLabel="Checking barcode sources"
@@ -58,7 +64,8 @@
 			/>
 		</InputLoadingFrame>
 		<small class="manual-entry-field__info">
-			We’ll check trusted sources and offer autofill if existing data is available.
+			We’ll check trusted sources and offer autofill if existing data is
+			available.
 		</small>
 		{#if !checkingBarcodeReference && barcodeValidationMessage}
 			<small class="manual-entry-field__status" role="status">
@@ -69,6 +76,7 @@
 				{barcodeMessage}
 			</small>
 		{/if}
+		<ProductSafetyAlerts alerts={barcodeSafetyAlerts} />
 		{#if barcodeSuggestion}
 			<BarcodeAutofillSuggestion
 				name={barcodeSuggestion.name}
@@ -118,7 +126,11 @@
 		onStatusChange={onCategoryStatusChange}
 	/>
 
-	<RoundedActionButton fullWidth busy={checkingBarcodeReference} onclick={onNext}>
+	<RoundedActionButton
+		fullWidth
+		busy={checkingBarcodeReference}
+		onclick={onNext}
+	>
 		Continue
 	</RoundedActionButton>
 </ManualEntryStepLayout>

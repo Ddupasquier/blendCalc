@@ -1602,7 +1602,9 @@ service key; `OPENFDA_API_KEY` is optional but recommended for regular use.
 names and connect the worker to the protected fixed-origin app-server relay when
 FDA.gov or FSIS denies Edge traffic; the same proxy secret must be configured
 server-side in the deployed app. The relay accepts only the FDA recall index, allowed
-FDA notice paths, and the fixed FSIS recall endpoint.
+FDA notice paths, and the fixed FSIS recall endpoint. Worker requests authenticate with
+the dedicated `x-blendcalc-food-safety-relay-secret` header so deployment-protection
+authentication cannot consume the relay credential.
 `FDA_RECALL_PROXY_PROTECTION_BYPASS_SECRET` is optional and is sent only to that fixed
 relay when its Vercel preview uses Deployment Protection. Production does not require
 it when the canonical domain is public. Enable

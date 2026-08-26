@@ -18,6 +18,7 @@ import type {
 	FoodServing,
 	FoodAlcoholByVolume,
 	FoodRegulatoryDisclosure,
+	FoodSafetyAlert,
 } from "$lib/utils/food/types";
 import type {
 	ManualEntryStepId,
@@ -55,6 +56,7 @@ export type ManualEntryFormResetState = {
 	barcodeSource: FoodItem["barcodeSource"];
 	barcodeProvenance?: FoodBarcodeProvenance;
 	barcodeMessage: string;
+	barcodeSafetyAlerts: FoodSafetyAlert[];
 	checkingBarcodeReference: boolean;
 	checkedBarcodeReferenceKey: string;
 	barcodeReferenceDraft: BarcodeProductDraft | null;
@@ -112,6 +114,7 @@ export const getManualEntryFormResetState = (): ManualEntryFormResetState => ({
 	barcodeSource: "manual",
 	barcodeProvenance: undefined,
 	barcodeMessage: "",
+	barcodeSafetyAlerts: [],
 	checkingBarcodeReference: false,
 	checkedBarcodeReferenceKey: "",
 	barcodeReferenceDraft: null,
@@ -177,13 +180,13 @@ export const getManualEntryFormStateFromFood = (
 		categorySymbolKey: food.symbolKey ?? "generic",
 		servingLabel: usesInternal100GramBasis
 			? ""
-			: serving?.label ??
+			: (serving?.label ??
 				food.customServingLabel ??
 				food.householdServingFullText ??
-				`${servingWeightGrams}g`,
+				`${servingWeightGrams}g`),
 		servingWeightGrams,
 		usesInternal100GramBasis,
-		serving: usesInternal100GramBasis ? undefined : serving ?? undefined,
+		serving: usesInternal100GramBasis ? undefined : (serving ?? undefined),
 		importedNutrients: nutrientsPerServing,
 		manualNutrientValues: Object.fromEntries(
 			nutrientsPerServing.map((nutrient) => [
@@ -194,6 +197,7 @@ export const getManualEntryFormStateFromFood = (
 		barcode: food.barcode ?? food.gtinUpc ?? "",
 		barcodeSource: food.barcodeSource ?? "community",
 		barcodeProvenance: food.barcodeProvenance,
+		barcodeSafetyAlerts: [...(food.safetyAlerts ?? [])],
 		shareWithCatalog: intent === "catalog_correction",
 		reportedNutrientIds: [
 			...(food.reportedNutrientIds ??
@@ -220,4 +224,5 @@ export const getManualEntryFormStateFromFood = (
 	};
 };
 
-export const getInitialSaveDestination = (): IngredientListKey => MIX_STORAGE_KEYS.fridge;
+export const getInitialSaveDestination = (): IngredientListKey =>
+	MIX_STORAGE_KEYS.fridge;

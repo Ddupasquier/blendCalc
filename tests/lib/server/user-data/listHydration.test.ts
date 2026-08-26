@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
 	hydrateFoodsWithCachedImages: vi.fn(),
 	readSelectedCatalogFieldProvenance: vi.fn(),
 	readActiveProductSafetyAlertsByProduct: vi.fn(),
+	readActiveProductSafetyAlertsByBarcodes: vi.fn(),
 	getSupabaseAdminClient: vi.fn(),
 }));
 
@@ -19,22 +20,28 @@ vi.mock("$lib/utils/storage/supabase/servings", () => ({
 vi.mock("$lib/utils/storage/supabase/foodImages", () => ({
 	hydrateFoodsWithCachedImages: mocks.hydrateFoodsWithCachedImages,
 }));
-vi.mock("$lib/server/products/catalogFieldProvenance.server", async (importOriginal) => {
-	const original = await importOriginal<
-		typeof import("$lib/server/products/catalogFieldProvenance.server")
-	>();
-	return {
-		...original,
-		readSelectedCatalogFieldProvenance:
-			mocks.readSelectedCatalogFieldProvenance,
-	};
-});
+vi.mock(
+	"$lib/server/products/catalogFieldProvenance.server",
+	async (importOriginal) => {
+		const original =
+			await importOriginal<
+				typeof import("$lib/server/products/catalogFieldProvenance.server")
+			>();
+		return {
+			...original,
+			readSelectedCatalogFieldProvenance:
+				mocks.readSelectedCatalogFieldProvenance,
+		};
+	},
+);
 vi.mock("$lib/supabase/admin.server", () => ({
 	getSupabaseAdminClient: mocks.getSupabaseAdminClient,
 }));
 vi.mock("$lib/server/products/productSafetyAlerts.server", () => ({
 	readActiveProductSafetyAlertsByProduct:
 		mocks.readActiveProductSafetyAlertsByProduct,
+	readActiveProductSafetyAlertsByBarcodes:
+		mocks.readActiveProductSafetyAlertsByBarcodes,
 }));
 
 import { hydrateCloudFoodListRows } from "$lib/server/user-data/listHydration.server";
@@ -45,123 +52,145 @@ const sharedProductId = "81000000-0000-4000-8000-000000000011";
 describe("cloud food-list hydration", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		mocks.readNormalizedNutrientsByParent.mockResolvedValue(new Map([
-			[listItemId, [
-				{
-					nutrientId: 1008,
-					nutrientName: "Energy",
-					nutrientNumber: "208",
-					unitName: "KCAL",
-					value: 48,
-					valueOrigin: "reported",
-					source: "usda",
-					sourceReference: "2032704",
-					confidence: "source-verified",
-					valueStatus: "reported",
-					standardError: null,
-					sourceNutrientKey: "1008",
-					sourceNutrientCode: "208",
-					mappingStatus: "canonical",
-					mappingMethod: null,
-					mappingReviewReference: null,
-					derivationMethod: null,
-				},
-				{
-					nutrientId: 1079,
-					nutrientName: "Fiber, total dietary",
-					nutrientNumber: "291",
-					unitName: "G",
-					value: 1.6,
-					valueOrigin: "reported",
-					source: "usda",
-					sourceReference: "2032704",
-					confidence: "source-verified",
-					valueStatus: "reported",
-					standardError: null,
-					sourceNutrientKey: "1079",
-					sourceNutrientCode: "291",
-					mappingStatus: "canonical",
-					mappingMethod: null,
-					mappingReviewReference: null,
-					derivationMethod: null,
-				},
-			]],
-		]));
-		mocks.readFoodServingsByParent.mockResolvedValue(new Map([
-			[listItemId, [{
-				servingOrder: 0,
-				label: "1/2 cup",
-				gramWeight: 125,
-				amount: 0.5,
-				unitKey: "cup",
-				isPrimary: true,
-				measureType: "Package serving",
-				isHouseholdMeasure: true,
-				sourceMeasureKey: "usda:2032704:serving",
-				origin: "package-label",
-				gramWeightMethod: "source-reported",
-				calculationBasis: null,
-				source: "usda",
-				sourceReference: "2032704",
-				confidence: "source-verified",
-			}]],
-		]));
-		mocks.readActiveProductSafetyAlertsByProduct.mockResolvedValue(new Map());
-		mocks.hydrateFoodsWithCachedImages.mockImplementation(
-			async (_supabase: unknown, foods: FoodItem[]) => foods.map((food) => ({
-				...food,
-				image: {
-					source: "open-food-facts" as const,
-					sourceReference: "021130493609",
-					role: "front" as const,
-					imageUrl: "https://example.com/pasta-sauce.jpg",
-					licenseName: "CC BY-SA 3.0",
-					licenseUrl: "https://creativecommons.org/licenses/by-sa/3.0/",
-					attributionText: "Open Food Facts contributors",
-					confidence: "imported" as const,
-				},
-			})),
+		mocks.readNormalizedNutrientsByParent.mockResolvedValue(
+			new Map([
+				[
+					listItemId,
+					[
+						{
+							nutrientId: 1008,
+							nutrientName: "Energy",
+							nutrientNumber: "208",
+							unitName: "KCAL",
+							value: 48,
+							valueOrigin: "reported",
+							source: "usda",
+							sourceReference: "2032704",
+							confidence: "source-verified",
+							valueStatus: "reported",
+							standardError: null,
+							sourceNutrientKey: "1008",
+							sourceNutrientCode: "208",
+							mappingStatus: "canonical",
+							mappingMethod: null,
+							mappingReviewReference: null,
+							derivationMethod: null,
+						},
+						{
+							nutrientId: 1079,
+							nutrientName: "Fiber, total dietary",
+							nutrientNumber: "291",
+							unitName: "G",
+							value: 1.6,
+							valueOrigin: "reported",
+							source: "usda",
+							sourceReference: "2032704",
+							confidence: "source-verified",
+							valueStatus: "reported",
+							standardError: null,
+							sourceNutrientKey: "1079",
+							sourceNutrientCode: "291",
+							mappingStatus: "canonical",
+							mappingMethod: null,
+							mappingReviewReference: null,
+							derivationMethod: null,
+						},
+					],
+				],
+			]),
 		);
-		mocks.readSelectedCatalogFieldProvenance.mockResolvedValue(new Map([
-			[sharedProductId, {
-				nutrition: {
-					observationId: "82000000-0000-4000-8000-000000000001",
-					source: "usda",
-					sourceReference: "2032704",
-					confidence: "source-verified",
-					observedAt: "2026-08-01T00:00:00.000Z",
-					verificationMethod: "exact-barcode",
-					reviewState: "accepted",
-				},
-				categories: {
-					observationId: "82000000-0000-4000-8000-000000000001",
-					source: "usda",
-					sourceReference: "2032704",
-					confidence: "source-verified",
-					observedAt: "2026-08-01T00:00:00.000Z",
-					verificationMethod: "exact-barcode",
-					reviewState: "accepted",
-				},
-				serving: {
-					observationId: "82000000-0000-4000-8000-000000000001",
-					source: "usda",
-					sourceReference: "2032704",
-					confidence: "source-verified",
-					observedAt: "2026-08-01T00:00:00.000Z",
-					verificationMethod: "exact-barcode",
-					reviewState: "accepted",
-				},
-				image: {
-					observationId: "82000000-0000-4000-8000-000000000002",
-					source: "open-food-facts",
-					sourceReference: "021130493609",
-					confidence: "imported",
-					observedAt: "2026-08-01T00:00:00.000Z",
-					verificationMethod: "exact-barcode",
-					reviewState: "accepted",
-				},
-			}],
-		]));
+		mocks.readFoodServingsByParent.mockResolvedValue(
+			new Map([
+				[
+					listItemId,
+					[
+						{
+							servingOrder: 0,
+							label: "1/2 cup",
+							gramWeight: 125,
+							amount: 0.5,
+							unitKey: "cup",
+							isPrimary: true,
+							measureType: "Package serving",
+							isHouseholdMeasure: true,
+							sourceMeasureKey: "usda:2032704:serving",
+							origin: "package-label",
+							gramWeightMethod: "source-reported",
+							calculationBasis: null,
+							source: "usda",
+							sourceReference: "2032704",
+							confidence: "source-verified",
+						},
+					],
+				],
+			]),
+		);
+		mocks.readActiveProductSafetyAlertsByProduct.mockResolvedValue(new Map());
+		mocks.readActiveProductSafetyAlertsByBarcodes.mockResolvedValue({
+			status: "checked",
+			alertsByBarcode: new Map(),
+		});
+		mocks.hydrateFoodsWithCachedImages.mockImplementation(
+			async (_supabase: unknown, foods: FoodItem[]) =>
+				foods.map((food) => ({
+					...food,
+					image: {
+						source: "open-food-facts" as const,
+						sourceReference: "021130493609",
+						role: "front" as const,
+						imageUrl: "https://example.com/pasta-sauce.jpg",
+						licenseName: "CC BY-SA 3.0",
+						licenseUrl: "https://creativecommons.org/licenses/by-sa/3.0/",
+						attributionText: "Open Food Facts contributors",
+						confidence: "imported" as const,
+					},
+				})),
+		);
+		mocks.readSelectedCatalogFieldProvenance.mockResolvedValue(
+			new Map([
+				[
+					sharedProductId,
+					{
+						nutrition: {
+							observationId: "82000000-0000-4000-8000-000000000001",
+							source: "usda",
+							sourceReference: "2032704",
+							confidence: "source-verified",
+							observedAt: "2026-08-01T00:00:00.000Z",
+							verificationMethod: "exact-barcode",
+							reviewState: "accepted",
+						},
+						categories: {
+							observationId: "82000000-0000-4000-8000-000000000001",
+							source: "usda",
+							sourceReference: "2032704",
+							confidence: "source-verified",
+							observedAt: "2026-08-01T00:00:00.000Z",
+							verificationMethod: "exact-barcode",
+							reviewState: "accepted",
+						},
+						serving: {
+							observationId: "82000000-0000-4000-8000-000000000001",
+							source: "usda",
+							sourceReference: "2032704",
+							confidence: "source-verified",
+							observedAt: "2026-08-01T00:00:00.000Z",
+							verificationMethod: "exact-barcode",
+							reviewState: "accepted",
+						},
+						image: {
+							observationId: "82000000-0000-4000-8000-000000000002",
+							source: "open-food-facts",
+							sourceReference: "021130493609",
+							confidence: "imported",
+							observedAt: "2026-08-01T00:00:00.000Z",
+							verificationMethod: "exact-barcode",
+							reviewState: "accepted",
+						},
+					},
+				],
+			]),
+		);
 	});
 
 	it("reconstructs canonical field sources after a list reload", async () => {
@@ -188,11 +217,13 @@ describe("cloud food-list hydration", () => {
 				return {
 					select: vi.fn(() => ({
 						in: vi.fn(async () => ({
-							data: [{
-								id: sharedProductId,
-								food: sharedProductFood,
-								compatibility_summary: null,
-							}],
+							data: [
+								{
+									id: sharedProductId,
+									food: sharedProductFood,
+									compatibility_summary: null,
+								},
+							],
 							error: null,
 						})),
 					})),
@@ -201,33 +232,39 @@ describe("cloud food-list hydration", () => {
 		};
 		const catalogSupabase = { from: vi.fn() };
 
-		const rows = [{
-			id: listItemId,
-			food: staleSnapshot as never,
-			created_at: "2026-08-01T00:00:00.000Z",
-			shared_product_id: sharedProductId,
-			shared_product_submission_id: null,
-			source_key: "shared-catalog",
-			trust_status: "source-verified",
-		}];
+		const rows = [
+			{
+				id: listItemId,
+				food: staleSnapshot as never,
+				created_at: "2026-08-01T00:00:00.000Z",
+				shared_product_id: sharedProductId,
+				shared_product_submission_id: null,
+				source_key: "shared-catalog",
+				trust_status: "source-verified",
+			},
+		];
 		const [food] = await hydrateCloudFoodListRows(
 			supabase as never,
 			rows,
 			catalogSupabase as never,
 		);
 
-		expect(mocks.readSelectedCatalogFieldProvenance)
-			.toHaveBeenCalledWith(catalogSupabase, [sharedProductId]);
+		expect(mocks.readSelectedCatalogFieldProvenance).toHaveBeenCalledWith(
+			catalogSupabase,
+			[sharedProductId],
+		);
 
 		expect(food.foodCategory).toBe("Dips And Salsa");
-		expect(food.foodNutrients).toEqual(expect.arrayContaining([
-			expect.objectContaining({
-				nutrientId: 1079,
-				value: 1.6,
-				source: "usda",
-				sourceReference: "2032704",
-			}),
-		]));
+		expect(food.foodNutrients).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					nutrientId: 1079,
+					value: 1.6,
+					source: "usda",
+					sourceReference: "2032704",
+				}),
+			]),
+		);
 		expect(food.foodServings).toEqual([
 			expect.objectContaining({
 				label: "1/2 cup",
@@ -266,7 +303,60 @@ describe("cloud food-list hydration", () => {
 		mocks.getSupabaseAdminClient.mockReturnValue(catalogSupabase);
 		await hydrateCloudFoodListRows(supabase as never, rows);
 		expect(mocks.getSupabaseAdminClient).toHaveBeenCalledOnce();
-		expect(mocks.readSelectedCatalogFieldProvenance)
-			.toHaveBeenLastCalledWith(catalogSupabase, [sharedProductId]);
+		expect(mocks.readSelectedCatalogFieldProvenance).toHaveBeenLastCalledWith(
+			catalogSupabase,
+			[sharedProductId],
+		);
+	});
+
+	it("hydrates exact recall notices for private foods that are not catalog products", async () => {
+		const recallAlert = {
+			id: "recall-1",
+			providerKey: "fda-recalls",
+			sourceName: "FDA Recalls",
+			sourceAttribution: "U.S. Food and Drug Administration",
+			alertType: "recall" as const,
+			status: "ongoing",
+			productDescription: "Everything Sprouts Alfalfa Sprouts",
+			reason: "Potential Salmonella and E. coli contamination.",
+			sourceUrl: "https://www.fda.gov/example-recall",
+			matchType: "exact_gtin" as const,
+			requiresPackageCheck: true,
+			detectedAt: "2026-08-25T00:00:00.000Z",
+		};
+		mocks.readActiveProductSafetyAlertsByBarcodes.mockResolvedValue({
+			status: "checked",
+			alertsByBarcode: new Map([["00860014523120", [recallAlert]]]),
+		});
+		const privateFood: FoodItem = {
+			fdcId: -1,
+			description: "Alfalfa Sprouts",
+			barcode: "860014523120",
+			foodNutrients: [],
+		};
+		const rows = [
+			{
+				id: listItemId,
+				food: privateFood as never,
+				created_at: "2026-08-25T00:00:00.000Z",
+				shared_product_id: null,
+				shared_product_submission_id: null,
+				source_key: "user",
+				trust_status: "private",
+			},
+		];
+		const catalogSupabase = { from: vi.fn() };
+
+		const [food] = await hydrateCloudFoodListRows(
+			{ from: vi.fn() } as never,
+			rows,
+			catalogSupabase as never,
+		);
+
+		expect(mocks.readActiveProductSafetyAlertsByBarcodes).toHaveBeenCalledWith(
+			["00860014523120"],
+			catalogSupabase,
+		);
+		expect(food.safetyAlerts).toEqual([recallAlert]);
 	});
 });

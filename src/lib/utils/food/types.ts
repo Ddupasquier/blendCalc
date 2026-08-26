@@ -278,6 +278,11 @@ export type FoodSafetyAlert = {
 	detectedAt: string;
 };
 
+export type FoodSafetyAlertCheck = {
+	status: "checked" | "unavailable";
+	alerts: FoodSafetyAlert[];
+};
+
 export type FoodTrackedField =
 	| "productName"
 	| "brandOwner"

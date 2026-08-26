@@ -104,7 +104,7 @@ export const createManualEntryBarcodeController = ({
 		form.data.shareWithCatalog &&
 			(form.data.submissionIntent === "catalog_correction" ||
 				form.data.barcodeSource === "manual" ||
-					Boolean(hasSharedCatalogReference && referenceHasChanges)),
+				Boolean(hasSharedCatalogReference && referenceHasChanges)),
 	);
 	const trustedProductImage = $derived(
 		pickFoodFullImageUrl(form.data.image) ? form.data.image : undefined,
@@ -113,8 +113,8 @@ export const createManualEntryBarcodeController = ({
 	const hasAcceptedSourceBarcode = $derived(
 		Boolean(
 			normalizedBarcode &&
-				form.data.barcodeReferenceAcceptedBarcode === normalizedBarcode &&
-				form.data.barcodeReferenceSourceDraft?.barcode === normalizedBarcode,
+			form.data.barcodeReferenceAcceptedBarcode === normalizedBarcode &&
+			form.data.barcodeReferenceSourceDraft?.barcode === normalizedBarcode,
 		),
 	);
 	const privateCustomFood = $derived(
@@ -126,11 +126,11 @@ export const createManualEntryBarcodeController = ({
 	const showOptionalProductImageUpload = $derived(
 		Boolean(
 			normalizedBarcode &&
-				hasAcceptedSourceBarcode &&
-				!hasTrustedProductImage &&
-				(form.data.barcodeSource === "open-food-facts" ||
-					form.data.barcodeSource === "cola-cloud" ||
-					form.data.barcodeSource === "usda"),
+			hasAcceptedSourceBarcode &&
+			!hasTrustedProductImage &&
+			(form.data.barcodeSource === "open-food-facts" ||
+				form.data.barcodeSource === "cola-cloud" ||
+				form.data.barcodeSource === "usda"),
 		),
 	);
 	const shouldSubmitOptionalProductImageReview = $derived(
@@ -146,9 +146,9 @@ export const createManualEntryBarcodeController = ({
 			? "Show us what changed and add clear package photos. Your correction will be reviewed before the shared product changes."
 			: hasSharedCatalogReference && referenceHasChanges
 				? "Submit your edits for moderator review. Your private ingredient can still be saved now."
-			: canShareWithCatalog
-				? "Make this ingredient available to other users. All submissions are reviewed for accuracy."
-				: "Add a valid UPC or barcode if you want to submit this ingredient for shared search.",
+				: canShareWithCatalog
+					? "Make this ingredient available to other users. All submissions are reviewed for accuracy."
+					: "Add a valid UPC or barcode if you want to submit this ingredient for shared search.",
 	);
 	const barcodeShareMismatch = $derived<ManualEntryBarcodeShareMismatch>(
 		form.data.barcodeShareValidation?.status === "name-mismatch"
@@ -214,6 +214,7 @@ export const createManualEntryBarcodeController = ({
 			form.data.barcodeReferenceDraft = null;
 			form.data.barcodeReferenceSourceDraft = null;
 			form.data.barcodeReferenceAcceptedBarcode = "";
+			form.data.barcodeSafetyAlerts = [];
 			if (!state.lookingUpBarcode) form.data.barcodeMessage = "";
 			return;
 		}
@@ -223,6 +224,7 @@ export const createManualEntryBarcodeController = ({
 			form.data.barcodeReferenceDraft = null;
 			form.data.barcodeReferenceSourceDraft = null;
 			form.data.barcodeReferenceAcceptedBarcode = "";
+			form.data.barcodeSafetyAlerts = [];
 			return;
 		}
 
@@ -242,6 +244,7 @@ export const createManualEntryBarcodeController = ({
 
 			form.data.checkedBarcodeReferenceKey = lookup.referenceKey;
 			form.data.barcodeSource = "manual";
+			form.data.barcodeSafetyAlerts = lookup.safetyAlerts;
 			if (lookup.status === "found") {
 				form.data.barcodeReferenceDraft = lookup.draft;
 				form.data.barcodeReferenceSourceDraft = lookup.draft;
@@ -345,6 +348,7 @@ export const createManualEntryBarcodeController = ({
 		form.data.barcodeReferenceDraft = null;
 		form.data.barcodeReferenceSourceDraft = null;
 		form.data.barcodeReferenceAcceptedBarcode = "";
+		form.data.barcodeSafetyAlerts = [];
 		if (!state.lookingUpBarcode) form.data.barcodeMessage = "";
 		scheduleManualBarcodeReferenceCheck();
 	};
@@ -462,14 +466,16 @@ export const createManualEntryBarcodeController = ({
 		} catch (error) {
 			if (generation !== shareValidationGeneration) return;
 			console.error("[manual entry] Barcode sharing check failed", error);
-			onError(getUserFacingErrorMessage(error, {
-				fallback:
-					"We couldn't confirm this barcode for community sharing. Try again, or turn off sharing to save it to your account.",
-				network:
-					"We couldn't connect to check this barcode. Try again, or turn off sharing to save it to your account.",
-				timeout:
-					"The barcode check took too long. Try again, or turn off sharing to save it to your account.",
-			}));
+			onError(
+				getUserFacingErrorMessage(error, {
+					fallback:
+						"We couldn't confirm this barcode for community sharing. Try again, or turn off sharing to save it to your account.",
+					network:
+						"We couldn't connect to check this barcode. Try again, or turn off sharing to save it to your account.",
+					timeout:
+						"The barcode check took too long. Try again, or turn off sharing to save it to your account.",
+				}),
+			);
 		} finally {
 			if (generation === shareValidationGeneration) {
 				form.data.validatingBarcodeShare = false;
@@ -515,6 +521,7 @@ export const createManualEntryBarcodeController = ({
 		};
 		form.data.barcodeReferenceDraft = null;
 		form.data.barcodeReferenceAcceptedBarcode = "";
+		form.data.barcodeSafetyAlerts = [];
 		form.data.activeStep = "share";
 
 		let focusTarget: BarcodeScanCompletion["focusTarget"] = "name";
@@ -531,6 +538,7 @@ export const createManualEntryBarcodeController = ({
 
 			focusTarget = outcome.focusTarget;
 			form.data.barcodeMessage = outcome.message;
+			form.data.barcodeSafetyAlerts = outcome.safetyAlerts;
 			if (outcome.status === "found") {
 				form.data.barcodeReferenceDraft = outcome.draft;
 				applyBarcodeProductDraft(outcome.draft);

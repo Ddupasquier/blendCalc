@@ -11,6 +11,7 @@
 	import ManualEntryField from "$lib/components/ingredients/manual-entry/ManualEntryField/ManualEntryField.svelte";
 	import ManualEntryStepLayout from "$lib/components/ingredients/manual-entry/ManualEntryStepLayout/ManualEntryStepLayout.svelte";
 	import ManualEntryToggleRow from "$lib/components/ingredients/manual-entry/ManualEntryToggleRow/ManualEntryToggleRow.svelte";
+	import ProductSafetyAlerts from "$lib/components/ingredients/nutrition/ProductSafetyAlerts/ProductSafetyAlerts.svelte";
 	import type { ShareStepProps } from "./types";
 	import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
 	import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
@@ -23,6 +24,7 @@
 		optionalNutrientCount,
 		validationItems,
 		barcodeMessage,
+		barcodeSafetyAlerts,
 		canShareWithCatalog,
 		shareUnavailableMessage,
 		shareHelpMessage,
@@ -160,6 +162,8 @@
 		{#if barcodeMessage}
 			<StatusMessage message={barcodeMessage} />
 		{/if}
+
+		<ProductSafetyAlerts alerts={barcodeSafetyAlerts} />
 
 		{#if barcodeShareMismatch}
 			<BarcodeAutofillSuggestion

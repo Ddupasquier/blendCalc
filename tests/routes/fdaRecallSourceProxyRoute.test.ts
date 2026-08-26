@@ -13,13 +13,14 @@ vi.mock("$env/dynamic/private", () => ({
 import { GET } from "../../src/routes/api/internal/food-safety/fda-recall-source/+server";
 
 const PROXY_SECRET = "test-fda-recall-proxy-secret";
+const RELAY_SECRET_HEADER = "x-blendcalc-food-safety-relay-secret";
 
 const createEvent = (
 	path = "http://localhost/api/internal/food-safety/fda-recall-source",
 	secret: string | null = PROXY_SECRET,
 ) => ({
 	request: new Request(path, {
-		headers: secret ? { authorization: `Bearer ${secret}` } : undefined,
+		headers: secret ? { [RELAY_SECRET_HEADER]: secret } : undefined,
 	}),
 	url: new URL(path),
 });
@@ -40,6 +41,18 @@ describe("FDA recall source proxy route", () => {
 		).rejects.toMatchObject({
 			status: 401,
 		});
+	});
+
+	it("does not use the deployment authorization header as the relay secret", async () => {
+		const path = "http://localhost/api/internal/food-safety/fda-recall-source";
+		await expect(
+			GET({
+				request: new Request(path, {
+					headers: { authorization: `Bearer ${PROXY_SECRET}` },
+				}),
+				url: new URL(path),
+			} as never),
+		).rejects.toMatchObject({ status: 401 });
 	});
 
 	it("rejects arbitrary upstream paths", async () => {

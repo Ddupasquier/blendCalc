@@ -255,6 +255,7 @@
 		categorySourceValues:
 			form.data.barcodeReferenceSourceDraft?.categories ?? form.data.categories,
 		barcodeMessage: form.data.barcodeMessage,
+		barcodeSafetyAlerts: form.data.barcodeSafetyAlerts,
 		barcodeValidationMessage: barcode.barcodeValidationMessage,
 		checkingBarcodeReference: barcode.barcodeReferenceLookupPending,
 		barcodeSuggestion: barcode.barcodeSuggestion,
@@ -357,6 +358,7 @@
 			validation.validationItems,
 		),
 		barcodeMessage: form.data.barcodeMessage,
+		barcodeSafetyAlerts: form.data.barcodeSafetyAlerts,
 		canShareWithCatalog: barcode.canShareWithCatalog,
 		shareUnavailableMessage: barcode.shareUnavailableMessage,
 		shareHelpMessage: barcode.shareHelpMessage,

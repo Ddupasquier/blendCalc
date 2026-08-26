@@ -10,6 +10,9 @@ const FSIS_RECALL_URL = "https://www.fsis.usda.gov/fsis/api/recall/v/1";
 const MAXIMUM_FDA_RESPONSE_BYTES = 3 * 1024 * 1024;
 const MAXIMUM_FSIS_RESPONSE_BYTES = 16 * 1024 * 1024;
 
+export const OFFICIAL_FOOD_SAFETY_RELAY_SECRET_HEADER =
+	"x-blendcalc-food-safety-relay-secret";
+
 export type OfficialFoodSafetySource = "fda" | "fsis";
 
 const secretsMatch = (provided: string, expected: string) => {

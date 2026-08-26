@@ -3,8 +3,12 @@
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import type { ProductSafetyAlertsProps } from "./types";
 
-	let { food, mode = "all" }: ProductSafetyAlertsProps = $props();
-	const alerts = $derived(food.safetyAlerts ?? []);
+	let {
+		food,
+		alerts: providedAlerts,
+		mode = "all",
+	}: ProductSafetyAlertsProps = $props();
+	const alerts = $derived(providedAlerts ?? food?.safetyAlerts ?? []);
 	const showSummary = $derived(mode !== "details");
 	const showDetails = $derived(mode !== "summary");
 	const requiresPackageCheck = $derived(
@@ -13,12 +17,17 @@
 </script>
 
 {#if alerts.length > 0}
-	<section class="product-safety-alerts" aria-label="Official food safety alerts">
+	<section
+		class="product-safety-alerts"
+		aria-label="Official food safety alerts"
+	>
 		{#if showSummary}
 			<StatusMessage
 				tone="danger"
 				iconPlacement="top-end"
-				title={requiresPackageCheck ? "Check your package" : "Active food safety recall"}
+				title={requiresPackageCheck
+					? "Check your package"
+					: "Active food safety recall"}
 			>
 				<p class="product-safety-alerts__summary">
 					{requiresPackageCheck
@@ -48,11 +57,15 @@
 								<p>{alert.reason}</p>
 							{/if}
 							{#if alert.requiresPackageCheck}
-								<p><strong>Check your package:</strong> The notice is limited by package, lot, or date information.</p>
+								<p>
+									<strong>Check your package:</strong> The notice is limited by package,
+									lot, or date information.
+								</p>
 							{/if}
 							<p class="product-safety-alerts__source">
 								{alert.sourceAttribution}
-								{#if alert.reportDate} · Reported {alert.reportDate}{/if}
+								{#if alert.reportDate}
+									· Reported {alert.reportDate}{/if}
 							</p>
 							<a href={alert.sourceUrl} target="_blank" rel="noreferrer">
 								Read the official notice
@@ -60,7 +73,9 @@
 						</article>
 					{/each}
 					<p class="product-safety-alerts__disclaimer">
-						Official recall data is safety information, not medical advice. If anyone may be ill or injured, contact a qualified medical professional.
+						Official recall data is safety information, not medical advice. If
+						anyone may be ill or injured, contact a qualified medical
+						professional.
 					</p>
 				</div>
 			</CollapsibleSection>

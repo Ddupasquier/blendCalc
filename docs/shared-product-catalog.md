@@ -536,9 +536,16 @@ alerts are ingested with immutable revisions and exact identifiers. The announce
 channel closes the gap where FDA has published a current notice that has not yet reached
 openFDA enforcement data. Current FDA announcement and FSIS dataset reads may pass
 through blendCalc's fixed-origin protected relay when an official source blocks the
-Edge runtime. The FSIS adapter reads the source's current `field_*` contract, keeps
+Edge runtime. The worker authenticates to that relay with a dedicated internal header
+that remains independent from deployment-protection authorization. The FSIS adapter
+reads the source's current `field_*` contract, keeps
 active and recently changed notices, and uses conditional validators to avoid
-reprocessing an unchanged dataset. Match policy is deliberately conservative:
+reprocessing an unchanged dataset. FDA announcement details are read as structured
+tables when the notice publishes package identifiers in UPC, GTIN, lot-code, or
+use-by columns; unlabeled numbers and invalid GTIN check digits remain ignored. The
+announcement cursor records the parser version so a parser correction deliberately
+replays recent notices instead of accepting a stale `not modified` response. Match
+policy is deliberately conservative:
 
 - an exact normalized GTIN can become visible immediately;
 - a strong brand, product, and package identity match requires moderation, including
@@ -549,10 +556,14 @@ reprocessing an unchanged dataset. Match policy is deliberately conservative:
 - a closed official notice supersedes current matches without deleting its history.
 
 An official notice does not modify the product record or imply that products without a
-match are safe. Active exact and confirmed matches are shown on catalog-backed foods and
-exposed through the public product contract with source attribution and an official
-link. Raw source payloads, private match evidence, moderator identity, and per-user
-delivery state remain outside public reads.
+match are safe. Active exact identifiers are checked independently during barcode lookup,
+so a user can receive an attributed official warning even when no catalog or provider
+product exists. That safety-only result never fabricates a food record or nutrition.
+Catalog-backed foods continue to use exact or confirmed matches; saved private foods can
+receive current exact-barcode notices during server hydration. Public product responses
+include notices only for products that independently satisfy the public catalog contract.
+Raw source payloads, private match evidence, moderator identity, and per-user delivery
+state remain outside public reads.
 
 ## Catalog Security Boundary
 
