@@ -43,10 +43,6 @@
 		grid-template-columns: 1fr;
 	}
 
-	.profile-nutrient-priority-settings__add > :global(.rounded-action-button) {
-		width: 100%;
-	}
-
 	.profile-nutrient-priority-settings__empty {
 		font-size: $app-font-size-xs;
 	}

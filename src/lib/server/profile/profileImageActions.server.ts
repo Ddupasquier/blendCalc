@@ -1,5 +1,10 @@
 import { createHash, randomUUID } from "node:crypto";
 import { fail, type RequestEvent } from "@sveltejs/kit";
+import {
+	clearCurrentUserProfileImage,
+	saveCurrentUserProfileImage,
+	saveCurrentUserProfileImageDescription,
+} from "$lib/server/profile/profileOwnerSettings.server";
 import { getAppIssueMessage } from "$lib/utils/errors/appIssues";
 import {
 	PROFILE_AVATAR_POLICY_ITEMS,
@@ -11,7 +16,6 @@ import {
 	PROFILE_AVATAR_BUCKET,
 } from "$lib/utils/profile/profile";
 import {
-	getDefaultDisplayName,
 	isProfileAvatarType,
 	matchesAvatarFileSignature,
 	normalizeOptionalProfileText,
@@ -26,6 +30,7 @@ import { requireAuthenticatedProfileUser } from "./profileActionAuthentication.s
 
 const PROFILE_AVATAR_FORM_MAX_BYTES = PROFILE_AVATAR_MAX_BYTES + 1024 * 1024;
 const PROFILE_AVATAR_MAX_DIMENSION = 2048;
+const PROFILE_IMAGE_DESCRIPTION_FORM_MAX_BYTES = 64 * 1024;
 
 type ProfileImageUploadActionEvent = Pick<RequestEvent, "locals" | "request">;
 type ProfileImageRemovalActionEvent = Pick<RequestEvent, "locals">;
@@ -172,20 +177,21 @@ export const uploadProfileImage = async ({
 		});
 	}
 
-	const { error: profileError } = await admin.from("profiles").upsert(
+	const { error: profileError } = await saveCurrentUserProfileImage(
+		locals.supabase,
 		{
-			user_id: user.id,
-			display_name:
-				existingProfile?.display_name ?? getDefaultDisplayName(user.id),
-			avatar_path: avatarPath,
-			avatar_alt_text: altText,
-			avatar_moderation_status: "self_attested",
-			avatar_policy_acknowledged_at: new Date().toISOString(),
+			avatarPath,
+			avatarAltText: altText,
+			policyVersion: PROFILE_AVATAR_POLICY_VERSION,
 		},
-		{ onConflict: "user_id" },
 	);
 
 	if (profileError) {
+		await admin
+			.from("profile_image_policy_acceptances")
+			.delete()
+			.eq("user_id", user.id)
+			.eq("avatar_path", avatarPath);
 		await admin.storage.from(PROFILE_AVATAR_BUCKET).remove([avatarPath]);
 		return fail(500, {
 			avatarError: "The profile image could not be saved. Try again.",
@@ -201,6 +207,49 @@ export const uploadProfileImage = async ({
 	return { avatarSuccess: "Profile image updated." };
 };
 
+export const saveProfileImageDescription = async ({
+	locals,
+	request,
+}: ProfileImageUploadActionEvent) => {
+	const user = await requireAuthenticatedProfileUser(locals);
+	const profile = await getUserProfile(locals.supabase, user.id);
+	if (!profile?.avatar_path) {
+		return fail(409, {
+			avatarError: "Add a profile image before saving its description.",
+		});
+	}
+
+	const formData = await readLimitedFormData(
+		request,
+		PROFILE_IMAGE_DESCRIPTION_FORM_MAX_BYTES,
+	);
+	const altText = normalizeOptionalProfileText(formData.get("avatarAltText"));
+	if (altText && altText.length > PROFILE_AVATAR_ALT_TEXT_MAX_LENGTH) {
+		return fail(400, {
+			avatarError: `Image description must be ${PROFILE_AVATAR_ALT_TEXT_MAX_LENGTH} characters or fewer.`,
+			avatarAltText: altText,
+		});
+	}
+
+	const { data: saved, error } = await saveCurrentUserProfileImageDescription(
+		locals.supabase,
+		{
+			expectedAvatarPath: profile.avatar_path,
+			avatarAltText: altText,
+		},
+	);
+	if (error || !saved) {
+		return fail(error ? 500 : 409, {
+			avatarError: error
+				? "The image description could not be saved. Try again."
+				: "The profile image changed before its description was saved. Try again.",
+			avatarAltText: altText,
+		});
+	}
+
+	return { avatarSuccess: "Image description saved." };
+};
+
 export const removeProfileImage = async ({
 	locals,
 }: ProfileImageRemovalActionEvent) => {
@@ -210,24 +259,22 @@ export const removeProfileImage = async ({
 		return { avatarSuccess: "No profile image to remove." };
 	}
 
-	const admin = getSupabaseAdminClient();
-	const { error } = await admin
-		.from("profiles")
-		.update({
-			avatar_path: null,
-			avatar_alt_text: null,
-			avatar_moderation_status: "none",
-			avatar_policy_acknowledged_at: null,
-		})
-		.eq("user_id", user.id);
+	const { data: removed, error } = await clearCurrentUserProfileImage(
+		locals.supabase,
+		profile.avatar_path,
+	);
 
-	if (error) {
+	if (error || !removed) {
 		return fail(500, {
-			avatarError: "The profile image could not be removed.",
+			avatarError: error
+				? "The profile image could not be removed."
+				: "The profile image changed before it could be removed. Try again.",
 		});
 	}
 
-	await admin.storage.from(PROFILE_AVATAR_BUCKET).remove([profile.avatar_path]);
+	await getSupabaseAdminClient()
+		.storage.from(PROFILE_AVATAR_BUCKET)
+		.remove([profile.avatar_path]);
 
 	return { avatarSuccess: "Profile image removed." };
 };

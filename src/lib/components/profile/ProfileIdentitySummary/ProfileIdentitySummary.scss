@@ -45,12 +45,16 @@
 	font-size: $app-font-size-lg;
 }
 
-.profile-identity-summary__copy span {
+.profile-identity-summary__copy span,
+.profile-identity-summary__copy p {
+	margin: 0;
 	color: $app-shell-text-muted;
 	font-size: $app-font-size-sm;
+	line-height: $app-line-height-body;
 }
 
-@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
 	:global(.profile-identity-summary__avatar) {
 		--circular-media-frame-size: #{3.25rem};
 	}
@@ -59,7 +63,8 @@
 		font-size: $app-font-size-md;
 	}
 
-	.profile-identity-summary__copy span {
+	.profile-identity-summary__copy span,
+	.profile-identity-summary__copy p {
 		font-size: $app-font-size-xs;
 	}
 }

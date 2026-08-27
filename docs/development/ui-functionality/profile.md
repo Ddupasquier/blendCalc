@@ -75,7 +75,9 @@ session settings. Detailed privacy and storage rules live in
 ## Avatar
 
 - Accept JPEG, PNG, and WebP up to 5 MB through the shared photo input.
-- Allow optional image description/alt text.
+- Show the current image and a friendly availability state before replacement controls.
+- Allow optional image description/alt text to be edited without re-uploading the image.
+- Require the shared two-step confirmation before removing the current image.
 - Validate the file signature rather than trusting the browser MIME type.
 - Keep image rules in a closed disclosure.
 - Require confirmation that the image contains no explicit nudity, sexual content,
