@@ -82,9 +82,13 @@ Notes:
   occasional secondary copy, defaults to `true`, and remains user-disableable.
 - Avatar files live in the private `profile-avatars` storage bucket under the user id
   folder.
-- Profile and avatar-policy writes are server-owned so browser clients cannot bypass
-  field validation, image normalization, or moderation-state assignment. Users retain
-  RLS-scoped reads of their own profile and private avatar.
+- Profile fields are updated through narrow authenticated functions that derive the
+  owner from `auth.uid()` and validate only the field family they own. Browser clients
+  still cannot update the table directly.
+- Avatar bytes and policy-acceptance evidence remain trusted-server writes. An avatar
+  can become current only when `save_current_user_profile_image` finds matching policy
+  evidence for the same authenticated owner, exact private Storage path, and policy
+  version.
 
 ### `user_food_preferences`
 
@@ -1850,6 +1854,12 @@ category, or serving fields.
 | `default_profile_display_name`                         | Builds a safe default display/profile name                                                                                                                                                             |
 | `set_default_profile_display_name`                     | Trigger helper that fills missing profile display names                                                                                                                                                |
 | `create_profile_for_new_auth_user`                     | Auth trigger helper that creates a profile row for new users                                                                                                                                           |
+| `save_current_user_profile_details`                    | Updates only the authenticated account's validated display name and bio                                                                                                                                |
+| `save_current_user_appearance_theme`                   | Updates only the authenticated account's validated appearance preference                                                                                                                               |
+| `save_current_user_playful_message_preference`         | Updates only the authenticated account's playful-message preference                                                                                                                                    |
+| `save_current_user_profile_image`                      | Activates one exact owner-scoped avatar only after matching server-recorded policy evidence exists                                                                                                     |
+| `save_current_user_profile_image_description`          | Updates accessible text for the authenticated account's exact current avatar without replacing it                                                                                                      |
+| `clear_current_user_profile_image`                     | Clears the authenticated account's avatar only while its exact expected Storage path remains current                                                                                                   |
 | `replace_food_nutrients`                               | Replaces normalized nutrient rows for exactly one food parent                                                                                                                                          |
 | `apply_food_nutrient_uncertainty`                      | Trigger helper that retains exact source status, standard error, mapping, and derivation metadata without changing the accepted amount                                                                 |
 | `replace_food_servings`                                | Replaces normalized serving rows for exactly one food parent; parent triggers call it after relevant writes                                                                                            |
