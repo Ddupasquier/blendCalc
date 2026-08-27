@@ -40,6 +40,8 @@
 
 .search-toolbar :global(.filter-button) {
 	grid-area: filter;
+	align-self: stretch;
+	height: auto;
 }
 
 :global(.filter-button__icon) {

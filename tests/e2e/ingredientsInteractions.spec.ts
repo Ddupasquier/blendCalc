@@ -468,6 +468,39 @@ test("Ingredients exposes one page-level manual-entry action without a duplicate
 	await expect(page).toHaveURL(/\/ingredients\/fridge\/manual-entry$/);
 });
 
+test("Ingredients keeps Filters level with Manual Entry across the compact breakpoint", async ({
+	page,
+}, testInfo) => {
+	test.skip(
+		testInfo.project.name !== "desktop-chromium",
+		"One deterministic Chromium project owns the responsive control geometry matrix.",
+	);
+
+	for (const viewport of [
+		{ width: 420, height: 844 },
+		{ width: 421, height: 844 },
+		{ width: 768, height: 1024 },
+	]) {
+		await page.setViewportSize(viewport);
+		await page.goto("/ingredients/fridge");
+		await waitForAppReady(page);
+
+		const manualEntryBounds = await page
+			.getByRole("button", { name: "Enter a custom ingredient manually" })
+			.boundingBox();
+		const filterBounds = await page
+			.getByRole("button", { name: "Sort saved ingredients", exact: true })
+			.boundingBox();
+
+		expect(manualEntryBounds).not.toBeNull();
+		expect(filterBounds).not.toBeNull();
+		expect(
+			Math.abs(manualEntryBounds!.height - filterBounds!.height),
+			`${viewport.width}px toolbar controls should have matching heights`,
+		).toBeLessThanOrEqual(1);
+	}
+});
+
 test("ingredient-card copy never occupies the trailing action area", async ({
 	page,
 }) => {
