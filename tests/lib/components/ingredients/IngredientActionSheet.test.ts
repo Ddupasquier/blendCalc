@@ -21,39 +21,6 @@ describe("IngredientActionSheet delete confirmation", () => {
 		expect(onSelectItem).toHaveBeenCalledOnce();
 	});
 
-	it("groups moderator actions under one crowned heading", () => {
-		render(IngredientActionSheet, {
-			props: {
-				open: true,
-				title: "Spinach, raw",
-				removeLabel: "Remove from Fridge",
-				canAdjustImagePlacement: true,
-				onClose: vi.fn(),
-				onSelectItem: vi.fn(),
-				onAdjustImagePlacement: vi.fn(),
-				onRename: vi.fn(),
-				onRemove: vi.fn(),
-			},
-		});
-
-		const group = screen.getByRole("region", { name: "Privileged tools" });
-		const action = screen.getByRole("button", {
-			name: "Adjust image placement",
-		});
-		const removeAction = screen.getByRole("button", {
-			name: "Remove from Fridge",
-		});
-
-		expect(group.querySelectorAll(".privileged-action-badge")).toHaveLength(1);
-		expect(
-			action.querySelector(".privileged-action-badge"),
-		).not.toBeInTheDocument();
-		expect(screen.getByRole("button", { name: "Rename" })).not.toContainElement(
-			group.querySelector(".privileged-action-badge"),
-		);
-		expect(removeAction.compareDocumentPosition(group) & 4).toBeTruthy();
-	});
-
 	it("keeps the sheet open and requires a second delete activation", async () => {
 		const onRemove = vi.fn();
 

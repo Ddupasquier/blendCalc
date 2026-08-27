@@ -1015,6 +1015,15 @@ its own feature branch, publish that branch pointer to `origin`, and leave the o
 working tree untouched. Branch creation and initial remote publication do not grant
 permission to commit, push changed content, merge, deploy, or include unrelated files.
 
+**22c.** Remove completed local branch state after a successful merge. Once the complete
+feature-branch tip is proven to be an ancestor of the approved target branch and that
+target's required checks pass, remove the branch's clean auxiliary worktree and delete
+the local feature branch. Never delete `main`, `staging`, the current active work branch,
+a dirty worktree, an unpushed commit, an unmerged branch, or a branch whose migration,
+application, or contract responsibility was only partially promoted. Remote branch
+cleanup remains a separate explicit action; deleting a merged local branch does not
+authorize deleting its remote branch.
+
 **23.** Stable high-risk components require explicit written approval before material
 alteration. The nutrient chart and barcode scanner are currently protected; preserve
 their approved behavior and focused regression coverage when adjacent work changes.

@@ -26,6 +26,14 @@
 		type IngredientActionItem,
 	} from "$lib/utils/ingredients/ingredientListUi";
 	import type { IngredientProvenanceOption } from "$lib/utils/ingredients/ingredientProvenance";
+	import {
+		addFoodToIngredientListViewState,
+		moveFoodIdentityToIngredientListViewState,
+		moveFoodsBetweenIngredientListsInViewState,
+		removeFoodFromIngredientListViewState,
+		renameFoodInIngredientListViewState,
+		type IngredientListViewState,
+	} from "$lib/utils/ingredients/ingredientListStateTransitions";
 	import { isModerationAppRole } from "$lib/utils/moderation/moderation";
 	import {
 		buildIngredientRouteHref,
@@ -550,56 +558,41 @@
 		});
 	};
 
-	const addFoodToListState = (key: IngredientListKey, food: FoodItem) => {
-		const currentFoods =
-			key === MIX_STORAGE_KEYS.fridge ? onHand : shoppingList;
-		if (!currentFoods.some((candidate) => candidate.fdcId === food.fdcId)) {
-			const addedFood = {
-				...food,
-				listAddedAt: food.listAddedAt ?? Date.now(),
-			};
-			if (key === MIX_STORAGE_KEYS.fridge) {
-				onHand = [addedFood, ...onHand];
-				onHandTotalCount += 1;
-			} else {
-				shoppingList = [addedFood, ...shoppingList];
-				shoppingListTotalCount += 1;
-			}
-		}
+	const getIngredientListViewState = (): IngredientListViewState => ({
+		foodsByList: {
+			[MIX_STORAGE_KEYS.fridge]: onHand,
+			[MIX_STORAGE_KEYS.shoppingList]: shoppingList,
+		},
+		totalCountsByList: {
+			[MIX_STORAGE_KEYS.fridge]: onHandTotalCount,
+			[MIX_STORAGE_KEYS.shoppingList]: shoppingListTotalCount,
+		},
+		listIndex,
+	});
 
-		const currentIndex = listIndex[key];
-		if (currentIndex.foodIds.includes(food.fdcId)) return;
-		listIndex = {
-			...listIndex,
-			[key]: {
-				foodIds: [food.fdcId, ...currentIndex.foodIds],
-				foodIdentityKeys: [
-					getFoodIdentityKey(food),
-					...currentIndex.foodIdentityKeys,
-				],
-			},
-		};
+	const applyIngredientListViewState = (state: IngredientListViewState) => {
+		onHand = state.foodsByList[MIX_STORAGE_KEYS.fridge];
+		shoppingList = state.foodsByList[MIX_STORAGE_KEYS.shoppingList];
+		onHandTotalCount = state.totalCountsByList[MIX_STORAGE_KEYS.fridge];
+		shoppingListTotalCount =
+			state.totalCountsByList[MIX_STORAGE_KEYS.shoppingList];
+		listIndex = state.listIndex;
+	};
+
+	const addFoodToListState = (key: IngredientListKey, food: FoodItem) => {
+		applyIngredientListViewState(
+			addFoodToIngredientListViewState(getIngredientListViewState(), key, food),
+		);
 	};
 
 	const removeFoodFromListState = (key: IngredientListKey, foodId: number) => {
-		if (key === MIX_STORAGE_KEYS.fridge) {
-			onHand = onHand.filter((food) => food.fdcId !== foodId);
-			onHandTotalCount = Math.max(0, onHandTotalCount - 1);
-		} else {
-			shoppingList = shoppingList.filter((food) => food.fdcId !== foodId);
-			shoppingListTotalCount = Math.max(0, shoppingListTotalCount - 1);
-		}
-
-		const currentIndex = listIndex[key];
-		listIndex = {
-			...listIndex,
-			[key]: {
-				foodIds: currentIndex.foodIds.filter((id) => id !== foodId),
-				foodIdentityKeys: currentIndex.foodIdentityKeys.filter(
-					(_, index) => currentIndex.foodIds[index] !== foodId,
-				),
-			},
-		};
+		applyIngredientListViewState(
+			removeFoodFromIngredientListViewState(
+				getIngredientListViewState(),
+				key,
+				foodId,
+			),
+		);
 	};
 
 	const renameFoodInListState = (
@@ -607,24 +600,14 @@
 		foodId: number,
 		description: string,
 	) => {
-		const rename = (foods: FoodItem[]) =>
-			foods.map((food) =>
-				food.fdcId === foodId
-					? {
-							...food,
-							canonicalDescription:
-								food.canonicalDescription ?? food.description,
-							description,
-							nameProvenance: "user" as const,
-						}
-					: food,
-			);
-
-		if (key === MIX_STORAGE_KEYS.fridge) {
-			onHand = rename(onHand);
-		} else {
-			shoppingList = rename(shoppingList);
-		}
+		applyIngredientListViewState(
+			renameFoodInIngredientListViewState(
+				getIngredientListViewState(),
+				key,
+				foodId,
+				description,
+			),
+		);
 	};
 
 	const moveSearchResultToListState = (
@@ -632,70 +615,21 @@
 		food: FoodItem,
 	) => {
 		const sourceKey = getOppositeIngredientListKey(targetKey);
-		const foodIdentityKey = getFoodIdentityKey(food);
-		const sourceIndex = listIndex[sourceKey];
-		const targetIndex = listIndex[targetKey];
-		const sourceFoodIds = sourceIndex.foodIds.filter(
-			(_, index) => sourceIndex.foodIdentityKeys[index] === foodIdentityKey,
-		);
-		const sourceFoodIdSet = new Set(sourceFoodIds);
-		const sourceContainedFood = sourceFoodIds.length > 0;
-		const targetContainedFood =
-			targetIndex.foodIdentityKeys.includes(foodIdentityKey);
-		const movedFood = { ...food, listAddedAt: Date.now() };
-		const removeMatchingFood = (foods: FoodItem[]) =>
-			foods.filter(
-				(candidate) => getFoodIdentityKey(candidate) !== foodIdentityKey,
+		const { nextState, removedSourceFoodIds } =
+			moveFoodIdentityToIngredientListViewState(
+				getIngredientListViewState(),
+				targetKey,
+				food,
 			);
+		const removedSourceFoodIdSet = new Set(removedSourceFoodIds);
 
-		if (targetKey === MIX_STORAGE_KEYS.fridge) {
-			shoppingList = removeMatchingFood(shoppingList);
-			onHand = [movedFood, ...removeMatchingFood(onHand)];
-			if (sourceContainedFood) {
-				shoppingListTotalCount = Math.max(0, shoppingListTotalCount - 1);
-			}
-			if (!targetContainedFood) onHandTotalCount += 1;
-		} else {
-			onHand = removeMatchingFood(onHand);
-			shoppingList = [movedFood, ...removeMatchingFood(shoppingList)];
-			if (sourceContainedFood) {
-				onHandTotalCount = Math.max(0, onHandTotalCount - 1);
-			}
-			if (!targetContainedFood) shoppingListTotalCount += 1;
-		}
-
+		applyIngredientListViewState(nextState);
 		setSelectedIds(
 			sourceKey,
 			(selectedListItemIds[sourceKey] ?? []).filter(
-				(foodId) => !sourceFoodIdSet.has(foodId),
+				(foodId) => !removedSourceFoodIdSet.has(foodId),
 			),
 		);
-		listIndex = {
-			...listIndex,
-			[sourceKey]: {
-				foodIds: sourceIndex.foodIds.filter(
-					(_, index) => sourceIndex.foodIdentityKeys[index] !== foodIdentityKey,
-				),
-				foodIdentityKeys: sourceIndex.foodIdentityKeys.filter(
-					(identityKey) => identityKey !== foodIdentityKey,
-				),
-			},
-			[targetKey]: {
-				foodIds: [
-					food.fdcId,
-					...targetIndex.foodIds.filter(
-						(_, index) =>
-							targetIndex.foodIdentityKeys[index] !== foodIdentityKey,
-					),
-				],
-				foodIdentityKeys: [
-					foodIdentityKey,
-					...targetIndex.foodIdentityKeys.filter(
-						(identityKey) => identityKey !== foodIdentityKey,
-					),
-				],
-			},
-		};
 	};
 
 	const placeSearchResultInActiveList = async (food: FoodItem) => {
@@ -985,57 +919,13 @@
 		sourceKey: IngredientListKey,
 		foods: FoodItem[],
 	) => {
-		const movedIds = new Set(foods.map((food) => food.fdcId));
-		const movedAt = Date.now();
-		const movedFoods = foods.map((food) => ({ ...food, listAddedAt: movedAt }));
-		const targetKey = getOppositeIngredientListKey(sourceKey);
-
-		if (sourceKey === MIX_STORAGE_KEYS.fridge) {
-			onHand = onHand.filter((food) => !movedIds.has(food.fdcId));
-			shoppingList = [
-				...movedFoods,
-				...shoppingList.filter((food) => !movedIds.has(food.fdcId)),
-			];
-			onHandTotalCount = Math.max(0, onHandTotalCount - movedFoods.length);
-			shoppingListTotalCount += movedFoods.length;
-		} else {
-			shoppingList = shoppingList.filter((food) => !movedIds.has(food.fdcId));
-			onHand = [
-				...movedFoods,
-				...onHand.filter((food) => !movedIds.has(food.fdcId)),
-			];
-			shoppingListTotalCount = Math.max(
-				0,
-				shoppingListTotalCount - movedFoods.length,
-			);
-			onHandTotalCount += movedFoods.length;
-		}
-
-		const sourceIndex = listIndex[sourceKey];
-		const targetIndex = listIndex[targetKey];
-		const movedIdentityKeys = foods.map(getFoodIdentityKey);
-		const movedIdentityKeySet = new Set(movedIdentityKeys);
-		listIndex = {
-			...listIndex,
-			[sourceKey]: {
-				foodIds: sourceIndex.foodIds.filter((id) => !movedIds.has(id)),
-				foodIdentityKeys: sourceIndex.foodIdentityKeys.filter(
-					(_, index) => !movedIds.has(sourceIndex.foodIds[index]),
-				),
-			},
-			[targetKey]: {
-				foodIds: [
-					...foods.map((food) => food.fdcId),
-					...targetIndex.foodIds.filter((id) => !movedIds.has(id)),
-				],
-				foodIdentityKeys: [
-					...movedIdentityKeys,
-					...targetIndex.foodIdentityKeys.filter(
-						(identityKey) => !movedIdentityKeySet.has(identityKey),
-					),
-				],
-			},
-		};
+		applyIngredientListViewState(
+			moveFoodsBetweenIngredientListsInViewState(
+				getIngredientListViewState(),
+				sourceKey,
+				foods,
+			),
+		);
 	};
 
 	const moveFoodBetweenLists = async (

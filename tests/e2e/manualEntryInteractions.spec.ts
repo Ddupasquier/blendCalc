@@ -5,11 +5,12 @@ import {
 	readApprovedManualEntryNutrientCatalog,
 	type ExpectedManualEntryNutrientGroup,
 } from "./support/localManualEntryNutrientCatalog";
-import { MANUAL_ENTRY_REFERENCE_DATA_UNAVAILABLE_MESSAGE } from "$lib/utils/food/nutrients/manualEntryReferenceData";
 
 const canonicalCategoryDisplayTestName = "Canonical Category Display Test";
 const canonicalCategoryDisplayTestNameKey =
 	canonicalCategoryDisplayTestName.toLocaleLowerCase("en-US");
+const expectedManualEntryReferenceDataUnavailableMessage =
+	"Nutrition tools couldn’t load. Refresh and try again before continuing.";
 const escapeRegularExpression = (value: string) =>
 	value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
@@ -98,6 +99,34 @@ const expectRenderedManualEntryNutrientGroups = async (
 	await expect
 		.poll(() => readRenderedManualEntryNutrientGroups(dialog))
 		.toEqual(expectedGroups);
+};
+
+const expectManualEntryNutrientGroupOpenStates = async (
+	dialog: Locator,
+	expectedOpenStates: boolean[],
+) => {
+	const renderedGroups = dialog.locator(".manual-nutrients__group");
+	await expect(renderedGroups).toHaveCount(expectedOpenStates.length);
+	await expect
+		.poll(() =>
+			renderedGroups.evaluateAll((groupElements) =>
+				groupElements.map(
+					(groupElement) => (groupElement as HTMLDetailsElement).open,
+				),
+			),
+		)
+		.toEqual(expectedOpenStates);
+};
+
+const findNutrientGroupIndex = (
+	groups: ExpectedManualEntryNutrientGroup[],
+	titleFragment: string,
+) => {
+	const groupIndex = groups.findIndex((group) =>
+		group.title.toLocaleLowerCase("en-US").includes(titleFragment),
+	);
+	expect(groupIndex).toBeGreaterThanOrEqual(0);
+	return groupIndex;
 };
 
 const findSavedIngredientCard = async (
@@ -222,7 +251,7 @@ test("manual entry shows one message when its reference catalog response is unav
 	await dialog.getByRole("button", { name: "Continue" }).click();
 
 	await expect(
-		dialog.getByText(MANUAL_ENTRY_REFERENCE_DATA_UNAVAILABLE_MESSAGE),
+		dialog.getByText(expectedManualEntryReferenceDataUnavailableMessage),
 	).toHaveCount(1);
 	await expect(
 		dialog.getByText("Nutrition label scanning is unavailable.", {
@@ -592,6 +621,10 @@ test("manual entry renders every approved DB nutrient group and field", async ({
 	await expect(dialog.getByLabel("Label includes volume")).not.toBeChecked();
 	await dialog.getByRole("button", { name: "Continue" }).click();
 
+	await expectManualEntryNutrientGroupOpenStates(
+		dialog,
+		nutrientCatalog.macros.map((_, index) => index === 0),
+	);
 	await expectRenderedManualEntryNutrientGroups(dialog, nutrientCatalog.macros);
 	await expect(
 		dialog.locator(".manual-nutrients__group", { hasText: "Mineral details" }),
@@ -612,6 +645,90 @@ test("manual entry renders every approved DB nutrient group and field", async ({
 		"aria-current",
 		"step",
 	);
+
+	const extendedGroups = dialog.locator(".manual-nutrients__group");
+	const allExtendedGroupsClosed = nutrientCatalog.extended.map(() => false);
+	await expectManualEntryNutrientGroupOpenStates(
+		dialog,
+		allExtendedGroupsClosed,
+	);
+	for (let index = 0; index < nutrientCatalog.extended.length; index += 1) {
+		await expect(
+			extendedGroups.nth(index).locator("summary .text-badge"),
+		).toHaveCount(1);
+		await expect(
+			extendedGroups.nth(index).locator("summary .text-badge"),
+		).toHaveText("optional");
+	}
+	await expect(
+		dialog.locator(".manual-nutrients__fields .text-badge"),
+	).toHaveCount(0);
+
+	const vitaminsIndex = findNutrientGroupIndex(
+		nutrientCatalog.extended,
+		"vitamin",
+	);
+	const mineralsIndex = findNutrientGroupIndex(
+		nutrientCatalog.extended,
+		"mineral",
+	);
+	const aminoAcidsIndex = findNutrientGroupIndex(
+		nutrientCatalog.extended,
+		"amino",
+	);
+	const expectedOpenStates = [...allExtendedGroupsClosed];
+
+	await extendedGroups.nth(vitaminsIndex).locator("summary").click();
+	expectedOpenStates[vitaminsIndex] = true;
+	await expectManualEntryNutrientGroupOpenStates(dialog, expectedOpenStates);
+	const vitaminInput = extendedGroups
+		.nth(vitaminsIndex)
+		.locator(".manual-nutrients__fields input")
+		.first();
+	await vitaminInput.fill("1.25");
+
+	await extendedGroups.nth(mineralsIndex).locator("summary").click();
+	expectedOpenStates[mineralsIndex] = true;
+	await expectManualEntryNutrientGroupOpenStates(dialog, expectedOpenStates);
+
+	await extendedGroups.nth(aminoAcidsIndex).locator("summary").click();
+	expectedOpenStates[aminoAcidsIndex] = true;
+	await expectManualEntryNutrientGroupOpenStates(dialog, expectedOpenStates);
+
+	await extendedGroups.nth(mineralsIndex).locator("summary").click();
+	expectedOpenStates[mineralsIndex] = false;
+	await expectManualEntryNutrientGroupOpenStates(dialog, expectedOpenStates);
+
+	await extendedGroups.nth(vitaminsIndex).locator("summary").click();
+	expectedOpenStates[vitaminsIndex] = false;
+	await expectManualEntryNutrientGroupOpenStates(dialog, expectedOpenStates);
+	await extendedGroups.nth(vitaminsIndex).locator("summary").click();
+	expectedOpenStates[vitaminsIndex] = true;
+	await expectManualEntryNutrientGroupOpenStates(dialog, expectedOpenStates);
+	await expect(vitaminInput).toHaveValue("1.25");
+
+	await dialog.getByRole("button", { name: "Back", exact: true }).click();
+	await expect(dialog.getByRole("tab", { name: "Macros" })).toHaveAttribute(
+		"aria-current",
+		"step",
+	);
+	await dialog.getByRole("button", { name: "Continue" }).click();
+	await expect(dialog.getByRole("tab", { name: "Extended" })).toHaveAttribute(
+		"aria-current",
+		"step",
+	);
+	await expectManualEntryNutrientGroupOpenStates(
+		dialog,
+		allExtendedGroupsClosed,
+	);
+	await extendedGroups.nth(vitaminsIndex).locator("summary").click();
+	await expect(
+		extendedGroups
+			.nth(vitaminsIndex)
+			.locator(".manual-nutrients__fields input")
+			.first(),
+	).toHaveValue("1.25");
+
 	await expectRenderedManualEntryNutrientGroups(
 		dialog,
 		nutrientCatalog.extended,
