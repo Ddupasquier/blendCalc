@@ -592,6 +592,16 @@ test("goal sliders and number inputs stay synchronized", async ({
 	await input.fill(originalValue);
 	await input.blur();
 	await expect(slider).toHaveValue(originalValue);
+
+	const proteinInput = page.getByRole("spinbutton", {
+		name: "Goal value for Protein in g",
+	});
+	const originalProteinValue = await proteinInput.inputValue();
+	await proteinInput.click();
+	await page.keyboard.type("31");
+	await expect(proteinInput).toHaveValue("31");
+	await proteinInput.fill(originalProteinValue);
+	await proteinInput.blur();
 	await expect
 		.poll(async () => {
 			const configuration = await captureLocalQaMixGoalConfiguration(
@@ -1256,7 +1266,7 @@ test(
 	},
 );
 
-test("selected ingredient amount controls change once and restore the original value", async ({
+test("selected ingredient amount typing and controls change once and restore the original value", async ({
 	page,
 }, testInfo) => {
 	test.skip(
@@ -1278,6 +1288,25 @@ test("selected ingredient amount controls change once and restore the original v
 		name: "Quantity for Mango, Raw",
 	});
 	const originalValue = await quantity.inputValue();
+	await selectedSection
+		.getByRole("searchbox", { name: "Find selected ingredients" })
+		.fill("");
+	const representativeQuantityInputs = selectedSection.locator(
+		".mix-ingredient-amount-card__quantity-input",
+	);
+	expect(await representativeQuantityInputs.count()).toBeGreaterThanOrEqual(2);
+	for (const [index, replacementValue] of ["37.5", "42.25"].entries()) {
+		const representativeInput = representativeQuantityInputs.nth(index);
+		const representativeOriginalValue = await representativeInput.inputValue();
+		await representativeInput.click();
+		await page.keyboard.type(replacementValue);
+		await expect(representativeInput).toHaveValue(replacementValue);
+		await representativeInput.fill(representativeOriginalValue);
+		await representativeInput.blur();
+	}
+	await selectedSection
+		.getByRole("searchbox", { name: "Find selected ingredients" })
+		.fill("Mango");
 	await selectedSection
 		.getByRole("button", { name: "Use more Mango, Raw" })
 		.click();

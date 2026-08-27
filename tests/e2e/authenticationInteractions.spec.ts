@@ -49,6 +49,14 @@ test(
 
 		await expect(passwordField).toHaveAttribute("autocomplete", "new-password");
 		await expect(passwordField).toHaveAttribute("minlength", "15");
+		await expect(passwordField).toHaveAttribute(
+			"placeholder",
+			"Use a long passphrase",
+		);
+		await expect(confirmationField).toHaveAttribute(
+			"placeholder",
+			"Enter it again",
+		);
 		await passwordField.fill("long temporary passphrase");
 		await confirmationField.fill("long temporary passphrase");
 		await expect(
