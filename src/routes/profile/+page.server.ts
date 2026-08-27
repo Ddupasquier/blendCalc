@@ -7,6 +7,7 @@ import {
 import { saveProfileFoodPreferences } from "$lib/server/profile/profileFoodPreferenceActions.server";
 import {
 	removeProfileImage,
+	saveProfileImageDescription,
 	uploadProfileImage,
 } from "$lib/server/profile/profileImageActions.server";
 
@@ -16,5 +17,6 @@ export const actions: Actions = {
 	saveProfile: saveProfileDetails,
 	saveFoodPreferences: saveProfileFoodPreferences,
 	uploadAvatar: uploadProfileImage,
+	saveAvatarDescription: saveProfileImageDescription,
 	removeAvatar: removeProfileImage,
 };

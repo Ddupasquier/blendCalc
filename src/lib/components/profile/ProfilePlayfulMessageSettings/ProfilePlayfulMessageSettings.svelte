@@ -71,7 +71,7 @@
 				onChange={(checked) => (enabled = checked)}
 			/>
 		</label>
-		<RoundedActionButton type="submit" busy={isSaving}>
+		<RoundedActionButton type="submit" fullWidth busy={isSaving}>
 			Save playful messages
 		</RoundedActionButton>
 	</form>

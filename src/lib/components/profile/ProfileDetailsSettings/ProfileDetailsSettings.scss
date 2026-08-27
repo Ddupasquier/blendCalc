@@ -14,11 +14,8 @@ form {
 	line-height: $app-line-height-body;
 }
 
-:global(.rounded-action-button) {
-	width: 100%;
-}
-
-@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
 	.profile-details-settings > p {
 		font-size: $app-font-size-xs;
 	}

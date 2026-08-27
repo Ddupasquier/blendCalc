@@ -12,7 +12,6 @@
 	let {
 		appearanceTheme,
 		playfulMessagesEnabled,
-		displayName,
 		bio,
 		hasProfileImage,
 		activeFoodPreferenceCount,
@@ -27,7 +26,7 @@
 			: `${appearanceTheme[0].toUpperCase()}${appearanceTheme.slice(1)} theme`,
 	);
 	const profileDetailsDescription = $derived(
-		bio ? `${displayName} · Bio added` : `${displayName} · No bio added`,
+		bio ? "Name and bio saved" : "Name saved · Add a bio",
 	);
 	const foodPreferenceDescription = $derived(
 		activeFoodPreferenceCount || pendingFoodPreferenceCount

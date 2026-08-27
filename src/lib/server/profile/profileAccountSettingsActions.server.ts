@@ -1,7 +1,11 @@
 import { dev } from "$app/environment";
 import { fail, type RequestEvent } from "@sveltejs/kit";
+import {
+	saveCurrentUserAppearanceTheme,
+	saveCurrentUserPlayfulMessagePreference,
+	saveCurrentUserProfileDetails,
+} from "$lib/server/profile/profileOwnerSettings.server";
 import { readLimitedFormData } from "$lib/server/security/requestBody.server";
-import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
 import {
 	getUserProfile,
 	isMissingCheekyMessagesPreferenceColumn,
@@ -38,27 +42,18 @@ export const savePlayfulMessagesPreference = async ({
 	locals,
 	request,
 }: ProfileAccountSettingsActionEvent) => {
-	const user = await requireAuthenticatedProfileUser(locals);
+	await requireAuthenticatedProfileUser(locals);
 	const formData = await readLimitedFormData(
 		request,
 		PROFILE_ACCOUNT_SETTINGS_FORM_MAX_BYTES,
 	);
 	const playfulMessagesEnabled =
 		formData.get("playfulMessagesEnabled") === "true";
-	const existingProfile = await getUserProfile(locals.supabase, user.id);
-	const { data: savedPreference, error } = await getSupabaseAdminClient()
-		.from("profiles")
-		.upsert(
-			{
-				user_id: user.id,
-				display_name:
-					existingProfile?.display_name ?? getDefaultDisplayName(user.id),
-				cheeky_messages_enabled: playfulMessagesEnabled,
-			},
-			{ onConflict: "user_id" },
-		)
-		.select("cheeky_messages_enabled")
-		.single();
+	const { data: savedPreference, error } =
+		await saveCurrentUserPlayfulMessagePreference(
+			locals.supabase,
+			playfulMessagesEnabled,
+		);
 
 	if (error) {
 		return fail(isMissingCheekyMessagesPreferenceColumn(error) ? 503 : 500, {
@@ -71,7 +66,7 @@ export const savePlayfulMessagesPreference = async ({
 
 	return {
 		playfulMessagesSuccess: "Playful messages saved.",
-		playfulMessagesEnabled: savedPreference.cheeky_messages_enabled,
+		playfulMessagesEnabled: savedPreference,
 	};
 };
 
@@ -80,7 +75,7 @@ export const saveProfileAppearance = async ({
 	request,
 	cookies,
 }: ProfileAppearanceActionEvent) => {
-	const user = await requireAuthenticatedProfileUser(locals);
+	await requireAuthenticatedProfileUser(locals);
 	const formData = await readLimitedFormData(
 		request,
 		PROFILE_ACCOUNT_SETTINGS_FORM_MAX_BYTES,
@@ -93,18 +88,10 @@ export const saveProfileAppearance = async ({
 		});
 	}
 
-	const existingProfile = await getUserProfile(locals.supabase, user.id);
-	const { error } = await getSupabaseAdminClient()
-		.from("profiles")
-		.upsert(
-			{
-				user_id: user.id,
-				display_name:
-					existingProfile?.display_name ?? getDefaultDisplayName(user.id),
-				appearance_theme: appearanceTheme,
-			},
-			{ onConflict: "user_id" },
-		);
+	const { error } = await saveCurrentUserAppearanceTheme(
+		locals.supabase,
+		appearanceTheme,
+	);
 
 	if (error) {
 		return fail(500, {
@@ -153,14 +140,10 @@ export const saveProfileDetails = async ({
 		};
 	}
 
-	const { error } = await getSupabaseAdminClient().from("profiles").upsert(
-		{
-			user_id: user.id,
-			display_name: displayName,
-			bio: values.bio,
-		},
-		{ onConflict: "user_id" },
-	);
+	const { error } = await saveCurrentUserProfileDetails(locals.supabase, {
+		displayName,
+		bio: values.bio,
+	});
 
 	if (error) {
 		return fail(500, {

@@ -43,10 +43,6 @@ form {
 	margin: 0;
 }
 
-.profile-food-preference-settings__actions > :global(.rounded-action-button) {
-	width: 100%;
-}
-
 @media (max-width: $app-breakpoint-xs),
 	(max-height: $app-breakpoint-height-compact) {
 	.profile-food-preference-settings,

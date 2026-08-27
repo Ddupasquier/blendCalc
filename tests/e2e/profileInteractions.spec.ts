@@ -135,28 +135,112 @@ test("playful messages persist the exact saved account preference", async ({
 	}
 });
 
-test("profile photo selection uses the shared accessible upload control", async ({
-	page,
-}) => {
-	await page.goto("/profile");
-	await waitForAppReady(page);
-	await page.getByRole("button", { name: /Profile image/ }).click();
-	await expect(page).toHaveURL(/\/profile\/image$/);
+test(
+	"profile image upload, description, preview, and removal persist",
+	{ tag: "@mobile" },
+	async ({ page }, testInfo) => {
+		const initialDescription = `Playwright ${testInfo.project.name} profile`;
+		const updatedDescription = `${initialDescription} updated`;
 
-	const profileImageSheet = page.getByRole("dialog", { name: "Profile image" });
-	const input = profileImageSheet.locator('input[type="file"][name="avatar"]');
-	await input.setInputFiles({
-		name: "playwright-profile.png",
-		mimeType: "image/png",
-		buffer: tinyPng,
-	});
-	await expect(page.getByText("playwright-profile.png")).toBeVisible();
-	await expect(
-		profileImageSheet.getByRole("button", {
-			name: "Clear profile photo selection",
-		}),
-	).toBeVisible();
-});
+		await page.goto("/profile/image");
+		await waitForAppReady(page);
+		let profileImageSheet = page.getByRole("dialog", {
+			name: "Profile image",
+		});
+
+		if (
+			(await profileImageSheet
+				.getByRole("button", { name: "Remove image" })
+				.count()) > 0
+		) {
+			await profileImageSheet
+				.getByRole("button", { name: "Remove image" })
+				.click();
+			await expect(
+				profileImageSheet.getByText(
+					"Select remove again to permanently remove this profile image.",
+				),
+			).toBeVisible();
+			await profileImageSheet
+				.getByRole("button", { name: "Confirm removal" })
+				.click();
+			await expect(page).toHaveURL(/\/profile$/);
+			await page.goto("/profile/image");
+			await waitForAppReady(page);
+			profileImageSheet = page.getByRole("dialog", {
+				name: "Profile image",
+			});
+		}
+
+		const input = profileImageSheet.locator(
+			'input[type="file"][name="avatar"]',
+		);
+		await input.setInputFiles({
+			name: "playwright-profile.png",
+			mimeType: "image/png",
+			buffer: tinyPng,
+		});
+		await expect(page.getByText("playwright-profile.png")).toBeVisible();
+		await expect(
+			profileImageSheet.getByRole("button", {
+				name: "Clear profile photo selection",
+			}),
+		).toBeVisible();
+		await profileImageSheet
+			.getByRole("textbox", { name: "Image description" })
+			.fill(initialDescription);
+		await profileImageSheet
+			.getByRole("checkbox", {
+				name: /I confirm this image follows the profile image rules/,
+			})
+			.check();
+		await profileImageSheet
+			.getByRole("button", { name: "Upload image" })
+			.click();
+		await expect(page).toHaveURL(/\/profile$/);
+
+		await page.getByRole("button", { name: /Profile image/ }).click();
+		await expect(page).toHaveURL(/\/profile\/image$/);
+		profileImageSheet = page.getByRole("dialog", { name: "Profile image" });
+		await expect(
+			profileImageSheet.getByRole("img", { name: initialDescription }),
+		).toBeVisible();
+		await expect(profileImageSheet.getByText("Ready to use")).toBeVisible();
+		const savedDescription = profileImageSheet.getByRole("textbox", {
+			name: "Image description",
+		});
+		await expect(savedDescription).toHaveValue(initialDescription);
+		await savedDescription.fill(updatedDescription);
+		await profileImageSheet
+			.getByRole("button", { name: "Save description" })
+			.click();
+		await expect(page).toHaveURL(/\/profile$/);
+
+		await page.getByRole("button", { name: /Profile image/ }).click();
+		profileImageSheet = page.getByRole("dialog", { name: "Profile image" });
+		await expect(
+			profileImageSheet.getByRole("img", { name: updatedDescription }),
+		).toBeVisible();
+		await profileImageSheet
+			.getByRole("button", { name: "Remove image" })
+			.click();
+		await expect(page).toHaveURL(/\/profile\/image$/);
+		await expect(
+			profileImageSheet.getByRole("button", { name: "Confirm removal" }),
+		).toBeVisible();
+		await profileImageSheet
+			.getByRole("button", { name: "Confirm removal" })
+			.click();
+		await expect(page).toHaveURL(/\/profile$/);
+
+		await page.getByRole("button", { name: /Profile image/ }).click();
+		profileImageSheet = page.getByRole("dialog", { name: "Profile image" });
+		await expect(profileImageSheet.getByText("Current image")).toHaveCount(0);
+		await expect(
+			profileImageSheet.getByRole("button", { name: "Upload image" }),
+		).toBeVisible();
+	},
+);
 
 test("profile selects support keyboard dismissal without changing the value", async ({
 	page,

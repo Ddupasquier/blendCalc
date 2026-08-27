@@ -67,7 +67,7 @@
 			multiline
 			disabled={isSaving}
 		/>
-		<RoundedActionButton type="submit" busy={isSaving}>
+		<RoundedActionButton type="submit" fullWidth busy={isSaving}>
 			Save profile
 		</RoundedActionButton>
 	</form>
