@@ -43,10 +43,6 @@ form {
 	font-weight: $app-font-weight-medium;
 }
 
-:global(.rounded-action-button) {
-	width: 100%;
-}
-
 @media (max-width: $app-breakpoint-xs),
 	(max-height: $app-breakpoint-height-compact) {
 	.profile-playful-message-settings > p {

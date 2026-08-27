@@ -47,6 +47,14 @@ import { consumeRequestRateLimit } from "$lib/server/security/requestRateLimit.s
 import { getAppIssueMessage } from "$lib/utils/errors/appIssues";
 import { getFoodSafetyPolicy } from "$lib/server/food-safety/foodSafetyPolicy.server";
 import { getRegulatoryRegionOptions } from "$lib/server/profile/profilePageData.server";
+import {
+	clearCurrentUserProfileImage,
+	saveCurrentUserAppearanceTheme,
+	saveCurrentUserPlayfulMessagePreference,
+	saveCurrentUserProfileDetails,
+	saveCurrentUserProfileImage,
+	saveCurrentUserProfileImageDescription,
+} from "$lib/server/profile/profileOwnerSettings.server";
 import { getAppReferenceCatalog } from "$lib/server/reference/appReferenceCatalog.server";
 import { getDefaultMixFields } from "$lib/utils/food/reference/appReferenceCatalog";
 
@@ -97,27 +105,18 @@ const getFoodPreferenceFormValues = (
 
 export const actions: Actions = {
 	savePlayfulMessages: async ({ locals, request }) => {
-		const user = await getAuthenticatedUser(locals);
+		await getAuthenticatedUser(locals);
 		const formData = await readLimitedFormData(
 			request,
 			PROFILE_TEXT_FORM_MAX_BYTES,
 		);
 		const playfulMessagesEnabled =
 			formData.get("playfulMessagesEnabled") === "true";
-		const existingProfile = await getUserProfile(locals.supabase, user.id);
-		const { data: savedPreference, error } = await getSupabaseAdminClient()
-			.from("profiles")
-			.upsert(
-				{
-					user_id: user.id,
-					display_name:
-						existingProfile?.display_name ?? getDefaultDisplayName(user.id),
-					cheeky_messages_enabled: playfulMessagesEnabled,
-				},
-				{ onConflict: "user_id" },
-			)
-			.select("cheeky_messages_enabled")
-			.single();
+		const { data: savedPreference, error } =
+			await saveCurrentUserPlayfulMessagePreference(
+				locals.supabase,
+				playfulMessagesEnabled,
+			);
 
 		if (error) {
 			return fail(isMissingCheekyMessagesPreferenceColumn(error) ? 503 : 500, {
@@ -130,11 +129,11 @@ export const actions: Actions = {
 
 		return {
 			playfulMessagesSuccess: "Playful messages saved.",
-			playfulMessagesEnabled: savedPreference.cheeky_messages_enabled,
+			playfulMessagesEnabled: savedPreference,
 		};
 	},
 	saveAppearance: async ({ locals, request, cookies }) => {
-		const user = await getAuthenticatedUser(locals);
+		await getAuthenticatedUser(locals);
 		const formData = await readLimitedFormData(
 			request,
 			PROFILE_TEXT_FORM_MAX_BYTES,
@@ -147,18 +146,10 @@ export const actions: Actions = {
 			});
 		}
 
-		const existingProfile = await getUserProfile(locals.supabase, user.id);
-		const { error } = await getSupabaseAdminClient()
-			.from("profiles")
-			.upsert(
-				{
-					user_id: user.id,
-					display_name:
-						existingProfile?.display_name ?? getDefaultDisplayName(user.id),
-					appearance_theme: appearanceTheme,
-				},
-				{ onConflict: "user_id" },
-			);
+		const { error } = await saveCurrentUserAppearanceTheme(
+			locals.supabase,
+			appearanceTheme,
+		);
 
 		if (error) {
 			return fail(500, {
@@ -203,14 +194,10 @@ export const actions: Actions = {
 			};
 		}
 
-		const { error } = await getSupabaseAdminClient().from("profiles").upsert(
-			{
-				user_id: user.id,
-				display_name: displayName,
-				bio: values.bio,
-			},
-			{ onConflict: "user_id" },
-		);
+		const { error } = await saveCurrentUserProfileDetails(locals.supabase, {
+			displayName,
+			bio: values.bio,
+		});
 
 		if (error) {
 			return fail(500, {
@@ -443,20 +430,21 @@ export const actions: Actions = {
 			});
 		}
 
-		const { error: profileError } = await admin.from("profiles").upsert(
+		const { error: profileError } = await saveCurrentUserProfileImage(
+			locals.supabase,
 			{
-				user_id: user.id,
-				display_name:
-					existingProfile?.display_name ?? getDefaultDisplayName(user.id),
-				avatar_path: avatarPath,
-				avatar_alt_text: altText,
-				avatar_moderation_status: "self_attested",
-				avatar_policy_acknowledged_at: new Date().toISOString(),
+				avatarPath,
+				avatarAltText: altText,
+				policyVersion: PROFILE_AVATAR_POLICY_VERSION,
 			},
-			{ onConflict: "user_id" },
 		);
 
 		if (profileError) {
+			await admin
+				.from("profile_image_policy_acceptances")
+				.delete()
+				.eq("user_id", user.id)
+				.eq("avatar_path", avatarPath);
 			await admin.storage.from(PROFILE_AVATAR_BUCKET).remove([avatarPath]);
 			return fail(500, {
 				avatarError: "The profile image could not be saved. Try again.",
@@ -471,31 +459,66 @@ export const actions: Actions = {
 
 		return { avatarSuccess: "Profile image updated." };
 	},
+	saveAvatarDescription: async ({ locals, request }) => {
+		const user = await getAuthenticatedUser(locals);
+		const profile = await getUserProfile(locals.supabase, user.id);
+		if (!profile?.avatar_path) {
+			return fail(409, {
+				avatarError: "Add a profile image before saving its description.",
+			});
+		}
+
+		const formData = await readLimitedFormData(
+			request,
+			PROFILE_TEXT_FORM_MAX_BYTES,
+		);
+		const altText = normalizeOptionalProfileText(formData.get("avatarAltText"));
+		if (altText && altText.length > PROFILE_AVATAR_ALT_TEXT_MAX_LENGTH) {
+			return fail(400, {
+				avatarError: `Image description must be ${PROFILE_AVATAR_ALT_TEXT_MAX_LENGTH} characters or fewer.`,
+				avatarAltText: altText,
+			});
+		}
+
+		const { data: saved, error } = await saveCurrentUserProfileImageDescription(
+			locals.supabase,
+			{
+				expectedAvatarPath: profile.avatar_path,
+				avatarAltText: altText,
+			},
+		);
+		if (error || !saved) {
+			return fail(error ? 500 : 409, {
+				avatarError: error
+					? "The image description could not be saved. Try again."
+					: "The profile image changed before its description was saved. Try again.",
+				avatarAltText: altText,
+			});
+		}
+
+		return { avatarSuccess: "Image description saved." };
+	},
 	removeAvatar: async ({ locals }) => {
 		const user = await getAuthenticatedUser(locals);
 		const profile = await getUserProfile(locals.supabase, user.id);
 		if (!profile?.avatar_path)
 			return { avatarSuccess: "No profile image to remove." };
 
-		const admin = getSupabaseAdminClient();
-		const { error } = await admin
-			.from("profiles")
-			.update({
-				avatar_path: null,
-				avatar_alt_text: null,
-				avatar_moderation_status: "none",
-				avatar_policy_acknowledged_at: null,
-			})
-			.eq("user_id", user.id);
+		const { data: removed, error } = await clearCurrentUserProfileImage(
+			locals.supabase,
+			profile.avatar_path,
+		);
 
-		if (error) {
+		if (error || !removed) {
 			return fail(500, {
-				avatarError: "The profile image could not be removed.",
+				avatarError: error
+					? "The profile image could not be removed."
+					: "The profile image changed before it could be removed. Try again.",
 			});
 		}
 
-		await admin.storage
-			.from(PROFILE_AVATAR_BUCKET)
+		await getSupabaseAdminClient()
+			.storage.from(PROFILE_AVATAR_BUCKET)
 			.remove([profile.avatar_path]);
 
 		return { avatarSuccess: "Profile image removed." };

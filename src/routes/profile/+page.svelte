@@ -76,6 +76,13 @@
 			data.profile?.cheeky_messages_enabled ??
 			true,
 	);
+	const submittedAvatarAltText = $derived<string | null | undefined>(
+		form &&
+			"avatarAltText" in form &&
+			(typeof form.avatarAltText === "string" || form.avatarAltText === null)
+			? form.avatarAltText
+			: undefined,
+	);
 	const savedFoodSafetyPreferenceCount = $derived(
 		(data.foodPreferences?.allergens.length ?? 0) +
 			(data.foodPreferences?.dietaryRestrictions.length ?? 0),
@@ -185,8 +192,11 @@
 	onClose={closeSettingsRoute}
 >
 	<ProfileImageSettings
+		currentImageUrl={data.avatarUrl}
 		currentAltText={data.profile?.avatar_alt_text}
+		submittedAltText={submittedAvatarAltText}
 		hasCurrentImage={Boolean(data.profile?.avatar_path)}
+		moderationStatus={data.profile?.avatar_moderation_status}
 		policyItems={data.avatarPolicyItems}
 		requireHumanFace={data.requireHumanFace}
 		errorMessage={form?.avatarError}
@@ -246,12 +256,12 @@
 				avatarUrl={data.avatarUrl}
 				avatarAltText={data.profile?.avatar_alt_text}
 				displayName={data.profile?.display_name ?? data.defaultDisplayName}
+				bio={data.profile?.bio}
 			/>
 
 			<ProfileSettingsMenu
 				{appearanceTheme}
 				{playfulMessagesEnabled}
-				{displayName}
 				{bio}
 				hasProfileImage={Boolean(data.profile?.avatar_path)}
 				{activeFoodPreferenceCount}
