@@ -508,14 +508,12 @@ test("goal presets preserve explicit extras only when requested and survive a ne
 			replacementGoals,
 		);
 
-		await page.context().clearCookies();
-		await page.goto("/auth?next=/mix");
 		const qaAccount = getLocalQaAccountForWorker(testInfo.parallelIndex);
-		await page.getByLabel("Email").fill(qaAccount.email);
-		await page.getByLabel("Password", { exact: true }).fill(qaAccount.password);
-		await page.getByRole("button", { name: "Sign in", exact: true }).click();
-		await expect(page).toHaveURL(/\/mix$/);
-		await waitForAppReady(page);
+		await signInLocalQaAccount({
+			page,
+			email: qaAccount.email,
+			nextPath: "/mix",
+		});
 		reopenedGoals = await openMixGoals(page);
 		await expect(
 			reopenedGoals.goalsSection.getByRole("combobox", {

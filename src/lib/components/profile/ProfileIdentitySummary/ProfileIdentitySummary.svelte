@@ -7,11 +7,15 @@
 		avatarUrl,
 		avatarAltText,
 		displayName,
+		bio,
 	}: ProfileIdentitySummaryProps = $props();
 </script>
 
 <section class="profile-identity-summary" aria-label="Current profile">
-	<CircularMediaFrame class="profile-identity-summary__avatar" label="Current profile image">
+	<CircularMediaFrame
+		class="profile-identity-summary__avatar"
+		label="Current profile image"
+	>
 		{#if avatarUrl}
 			<img src={avatarUrl} alt={avatarAltText ?? "Your profile"} />
 		{:else}
@@ -20,7 +24,11 @@
 	</CircularMediaFrame>
 	<div class="profile-identity-summary__copy">
 		<strong>{displayName}</strong>
-		<span>Preferred name</span>
+		{#if bio}
+			<p>{bio}</p>
+		{:else}
+			<span>No bio added</span>
+		{/if}
 	</div>
 </section>
 

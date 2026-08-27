@@ -7,7 +7,11 @@
 	title="Help &amp; tutorial"
 	description="Replay the guided tour whenever you want a refresher."
 >
-	<RoundedActionLink href="/profile/tutorial">Open guided tutorial</RoundedActionLink>
+	<div class="profile-tutorial-settings__action">
+		<RoundedActionLink href="/profile/tutorial"
+			>Open guided tutorial</RoundedActionLink
+		>
+	</div>
 </ProfileSettingsSection>
 
 <style lang="scss">

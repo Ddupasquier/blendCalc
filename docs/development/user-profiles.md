@@ -117,8 +117,15 @@ This document owns profile behavior and privacy. Auth configuration belongs in
 - The server accepts JPEG, PNG, and WebP files up to 5 MB and validates the file
   signature instead of trusting the browser-provided MIME type.
 - Images are rendered with short-lived signed URLs.
+- Profile displays the current image, its user-facing availability state, and editable
+  assistive description before presenting replacement controls.
+- Changing an image description does not require uploading the image again. Removing
+  an image requires a deliberate two-step confirmation.
 - Replacing an image uploads the new object first, updates the profile, and then removes
   the old object. A failed profile update removes the newly uploaded object.
+- Ordinary profile fields use narrow owner-scoped database functions. Image bytes and
+  policy evidence remain trusted-server operations; the database activates an image
+  only when exact owner, path, and policy-version evidence already exists.
 
 ## Content Policy And Moderation Boundary
 

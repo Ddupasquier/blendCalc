@@ -81,7 +81,7 @@
 			visuallyHideLegend
 			onSelect={selectTheme}
 		/>
-		<RoundedActionButton type="submit" busy={isSaving}>
+		<RoundedActionButton type="submit" fullWidth busy={isSaving}>
 			Save appearance
 		</RoundedActionButton>
 	</form>

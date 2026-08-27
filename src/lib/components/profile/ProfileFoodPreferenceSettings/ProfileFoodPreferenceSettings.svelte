@@ -244,6 +244,7 @@
 		<div class="profile-food-preference-settings__actions">
 			<RoundedActionButton
 				type="submit"
+				fullWidth
 				busy={preferenceFormState.form.isSaving}
 				disabled={foodPreferencesUnavailable}
 			>
