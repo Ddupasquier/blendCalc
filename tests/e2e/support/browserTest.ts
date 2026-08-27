@@ -361,6 +361,12 @@ export const expectCompactHeaderHidesAndRevealsWithScroll = async (
 				.map((animation) => animation.finished.catch(() => undefined)),
 		);
 	});
+	await scrollContainer.evaluate(
+		() =>
+			new Promise<void>((resolve) => {
+				requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+			}),
+	);
 
 	await scrollContainer.evaluate((element) =>
 		element.scrollTo({ top: Math.max(0, element.scrollTop - 160) }),
