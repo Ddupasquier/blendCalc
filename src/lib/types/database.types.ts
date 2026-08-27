@@ -7,6 +7,11 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.17"
+  }
   graphql_public: {
     Tables: {
       [_ in never]: never
@@ -4324,7 +4329,7 @@ export type Database = {
           {
             foreignKeyName: "nutrient_manual_entry_fields_nutrient_id_fkey"
             columns: ["nutrient_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "nutrient_definitions"
             referencedColumns: ["nutrient_id"]
           },
@@ -8759,10 +8764,6 @@ export type Database = {
         }
         Returns: Json
       }
-      save_custom_food: {
-        Args: { p_fdc_id: number; p_food: Json }
-        Returns: string
-      }
       save_current_user_appearance_theme: {
         Args: { p_appearance_theme: string }
         Returns: undefined
@@ -8772,23 +8773,24 @@ export type Database = {
         Returns: boolean
       }
       save_current_user_profile_details: {
-        Args: { p_bio?: string | null; p_display_name: string }
+        Args: { p_bio?: string; p_display_name: string }
         Returns: undefined
       }
       save_current_user_profile_image: {
         Args: {
-          p_avatar_alt_text: string | null
+          p_avatar_alt_text: string
           p_avatar_path: string
           p_policy_version: string
         }
         Returns: undefined
       }
       save_current_user_profile_image_description: {
-        Args: {
-          p_avatar_alt_text: string | null
-          p_expected_avatar_path: string
-        }
+        Args: { p_avatar_alt_text: string; p_expected_avatar_path: string }
         Returns: boolean
+      }
+      save_custom_food: {
+        Args: { p_fdc_id: number; p_food: Json }
+        Returns: string
       }
       save_mix_goal_configuration: {
         Args: {
