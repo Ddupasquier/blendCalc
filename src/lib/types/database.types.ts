@@ -8349,6 +8349,10 @@ export type Database = {
           provider_key: string
         }[]
       }
+      clear_current_user_profile_image: {
+        Args: { p_expected_avatar_path: string }
+        Returns: boolean
+      }
       compatibility_first_regex_match: {
         Args: { p_pattern: string; p_value: string }
         Returns: string
@@ -8758,6 +8762,33 @@ export type Database = {
       save_custom_food: {
         Args: { p_fdc_id: number; p_food: Json }
         Returns: string
+      }
+      save_current_user_appearance_theme: {
+        Args: { p_appearance_theme: string }
+        Returns: undefined
+      }
+      save_current_user_playful_message_preference: {
+        Args: { p_enabled: boolean }
+        Returns: boolean
+      }
+      save_current_user_profile_details: {
+        Args: { p_bio?: string | null; p_display_name: string }
+        Returns: undefined
+      }
+      save_current_user_profile_image: {
+        Args: {
+          p_avatar_alt_text: string | null
+          p_avatar_path: string
+          p_policy_version: string
+        }
+        Returns: undefined
+      }
+      save_current_user_profile_image_description: {
+        Args: {
+          p_avatar_alt_text: string | null
+          p_expected_avatar_path: string
+        }
+        Returns: boolean
       }
       save_mix_goal_configuration: {
         Args: {

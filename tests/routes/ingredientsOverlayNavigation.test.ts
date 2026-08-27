@@ -141,12 +141,10 @@ describe("ingredient overlay navigation", () => {
 		);
 		expect(addSearchResult).not.toContain("handleSearchSelect");
 		expect(addSearchResult).not.toContain("navigateIngredientRoute");
-		expect(addFoodToListState).toContain("onHand = [addedFood, ...onHand]");
-		expect(addFoodToListState).toContain("onHandTotalCount += 1");
 		expect(addFoodToListState).toContain(
-			"foodIds: [food.fdcId, ...currentIndex.foodIds]",
+			"addFoodToIngredientListViewState(getIngredientListViewState(), key, food)",
 		);
-		expect(addFoodToListState).toContain("getFoodIdentityKey(food)");
+		expect(addFoodToListState).toContain("applyIngredientListViewState(");
 	});
 
 	it("uses the URL as the only source of truth for the active list tab", () => {

@@ -1,12 +1,5 @@
 <script lang="ts">
-	import { browser } from "$app/environment";
 	import type { FoodItem } from "$lib/utils/food/types";
-	import { searchFoodPage } from "$lib/utils/food/sources/fdc";
-	import { getUserFacingErrorMessage } from "$lib/utils/errors/userFacingErrors";
-	import {
-		INGREDIENT_SEARCH_LOAD_MORE_PAGE_SIZE,
-		INGREDIENT_SEARCH_PAGE_SIZE,
-	} from "$lib/utils/ingredients/ingredientSearchPagination";
 	import { CUSTOM_FOODS_CHANGED_EVENT } from "$lib/utils/food/custom/customFoods";
 	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton/CircleIconButton.svelte";
 	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
@@ -15,6 +8,7 @@
 	import X from "$lib/assets/icons/X/X.svelte";
 	import { createEventDispatcher, onMount, tick } from "svelte";
 	import type { IngredientSearchProps } from "./types";
+	import { createIngredientSearchRequestController } from "./ingredientSearchRequestController.svelte";
 	import SearchDropdown from "../SearchDropdown/SearchDropdown.svelte";
 	import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 
@@ -32,191 +26,51 @@
 		trustFilter = "any",
 		actions,
 	}: IngredientSearchProps = $props();
-	let query = $state("");
-	let results = $state<FoodItem[]>([]);
-	let loading = $state(false);
-	let loadingMore = $state(false);
-	let hasMoreResults = $state(false);
-	let nextOffset = $state<number | null>(null);
-	let error = $state("");
-	let completedSearchQuery = $state("");
-	let searchReady = $state(false);
 	let activeResultIndex = $state(-1);
 	let searchWrapElement = $state<HTMLDivElement | null>(null);
 	let searchInputElement = $state<HTMLInputElement | null>(null);
 	let composing = $state(false);
-	let debounceTimer: ReturnType<typeof setTimeout>;
-	let searchRequestVersion = 0;
-	let activeSearchAbortController: AbortController | null = null;
-	let loadMoreAbortController: AbortController | null = null;
-	let activeFilterSignature = "";
 	const dispatch = createEventDispatcher();
-	const sortedResults = () => results;
-	const abortPendingSearchRequests = () => {
-		activeSearchAbortController?.abort();
-		activeSearchAbortController = null;
-		loadMoreAbortController?.abort();
-		loadMoreAbortController = null;
-	};
-
-	const triggerSearch = () => {
-		if (!browser || !searchReady) return;
-		clearTimeout(debounceTimer);
-		abortPendingSearchRequests();
-		const requestVersion = ++searchRequestVersion;
-		error = "";
-		loading = false;
-		loadingMore = false;
-		hasMoreResults = false;
-		nextOffset = null;
-		const searchString = query.trim();
-		completedSearchQuery = "";
-		if (!searchString) {
-			results = [];
+	const searchRequest = createIngredientSearchRequestController({
+		getSourceFilter: () => sourceFilter,
+		getTrustFilter: () => trustFilter,
+		onResultsChanged: (results, query) => {
 			activeResultIndex = -1;
-			return;
-		}
-		debounceTimer = setTimeout(async () => {
-			const abortController = new AbortController();
-			activeSearchAbortController = abortController;
-			loading = true;
-			try {
-				const page = await searchFoodPage(searchString, {
-					offset: 0,
-					limit: INGREDIENT_SEARCH_PAGE_SIZE,
-					sourceFilter,
-					trustFilter,
-					signal: abortController.signal,
-				});
-				if (requestVersion !== searchRequestVersion) return;
-				results = page.foods;
-				hasMoreResults = page.hasMore;
-				nextOffset = page.nextOffset;
-				completedSearchQuery = searchString;
-				activeResultIndex = -1;
-				dispatch("results", { results, query: searchString });
-			} catch (searchError) {
-				if (
-					abortController.signal.aborted ||
-					requestVersion !== searchRequestVersion
-				)
-					return;
-				results = [];
-				hasMoreResults = false;
-				nextOffset = null;
-				activeResultIndex = -1;
-				dispatch("results", { results, query: searchString });
-				console.error("[ingredient search] Search failed", searchError);
-				error = getUserFacingErrorMessage(searchError, {
-					fallback:
-						"We couldn't search foods right now. Wait a moment and try again.",
-					network:
-						"We couldn't connect to food search. Check your connection and try again.",
-					timeout:
-						"Food search took too long. Check your connection and try again.",
-				});
-			} finally {
-				if (activeSearchAbortController === abortController) {
-					activeSearchAbortController = null;
-				}
-				if (requestVersion === searchRequestVersion) {
-					loading = false;
-				}
-			}
-		}, 500);
-	};
-
-	const loadMoreResults = async () => {
-		const searchString = query.trim();
-		const offset = nextOffset;
-		if (
-			!searchString ||
-			offset === null ||
-			!hasMoreResults ||
-			loading ||
-			loadingMore
-		)
-			return;
-
-		const requestVersion = searchRequestVersion;
-		const abortController = new AbortController();
-		loadMoreAbortController = abortController;
-		loadingMore = true;
-		error = "";
-		try {
-			const page = await searchFoodPage(searchString, {
-				offset,
-				limit: INGREDIENT_SEARCH_LOAD_MORE_PAGE_SIZE,
-				sourceFilter,
-				trustFilter,
-				signal: abortController.signal,
-			});
-			if (
-				requestVersion !== searchRequestVersion ||
-				query.trim() !== searchString
-			)
-				return;
-
-			results = [...results, ...page.foods];
-			hasMoreResults = page.hasMore;
-			nextOffset = page.nextOffset;
-			dispatch("results", { results, query: searchString });
-		} catch {
-			if (
-				abortController.signal.aborted ||
-				requestVersion !== searchRequestVersion
-			)
-				return;
-			error = "More search results could not be loaded. Try again.";
-		} finally {
-			if (loadMoreAbortController === abortController) {
-				loadMoreAbortController = null;
-			}
-			if (requestVersion === searchRequestVersion) {
-				loadingMore = false;
-			}
-		}
-	};
+			dispatch("results", { results, query });
+		},
+	});
+	const sortedResults = () => searchRequest.state.results;
 
 	const handleInput = (event: Event) => {
 		onSearchFocus();
 		activeResultIndex = -1;
 		if (composing || (event as InputEvent).isComposing) return;
-		triggerSearch();
+		searchRequest.triggerSearch();
 	};
 
 	const handleCompositionEnd = () => {
 		composing = false;
 		onSearchFocus();
 		activeResultIndex = -1;
-		triggerSearch();
+		searchRequest.triggerSearch();
 	};
 
 	const clearSearch = () => {
-		clearTimeout(debounceTimer);
-		abortPendingSearchRequests();
-		searchRequestVersion += 1;
-		query = "";
-		results = [];
-		error = "";
-		completedSearchQuery = "";
-		loading = false;
-		loadingMore = false;
-		hasMoreResults = false;
-		nextOffset = null;
+		searchRequest.clearSearch();
 		activeResultIndex = -1;
 		void tick().then(() => searchInputElement?.focus({ preventScroll: true }));
 	};
 
 	const hasActiveSearch = $derived(
-		query.trim().length > 0 || results.length > 0,
+		searchRequest.state.query.trim().length > 0 ||
+			searchRequest.state.results.length > 0,
 	);
 	const showEmptySearchMessage = $derived(
-		completedSearchQuery.length > 0 &&
-			completedSearchQuery === query.trim() &&
-			results.length === 0 &&
-			!loading &&
-			!error,
+		searchRequest.state.completedQuery.length > 0 &&
+			searchRequest.state.completedQuery === searchRequest.state.query.trim() &&
+			searchRequest.state.results.length === 0 &&
+			!searchRequest.state.loading &&
+			!searchRequest.state.error,
 	);
 
 	$effect(() => {
@@ -230,27 +84,12 @@
 
 	$effect(() => {
 		const filterSignature = `${sourceFilter}:${trustFilter}`;
-		if (!searchReady) {
-			activeFilterSignature = filterSignature;
-			return;
-		}
-		if (filterSignature === activeFilterSignature) return;
-		activeFilterSignature = filterSignature;
-		triggerSearch();
+		searchRequest.synchronizeFilters(filterSignature);
 	});
 
 	const select = (food: FoodItem) => {
-		clearTimeout(debounceTimer);
-		abortPendingSearchRequests();
-		searchRequestVersion += 1;
 		onSelect(food);
-		query = "";
-		results = [];
-		completedSearchQuery = "";
-		loading = false;
-		loadingMore = false;
-		hasMoreResults = false;
-		nextOffset = null;
+		searchRequest.clearSearch();
 		activeResultIndex = -1;
 	};
 
@@ -321,25 +160,21 @@
 	};
 
 	onMount(() => {
-		searchReady = true;
-		triggerSearch();
+		searchRequest.activate();
 		if (autofocus) {
 			void tick().then(() => searchInputElement?.focus());
 		}
 
 		const refreshCustomResults = () => {
-			const searchString = query.trim();
+			const searchString = searchRequest.state.query.trim();
 			if (!searchString) return;
-			triggerSearch();
+			searchRequest.triggerSearch();
 		};
 
 		window.addEventListener(CUSTOM_FOODS_CHANGED_EVENT, refreshCustomResults);
 		window.addEventListener("keydown", handleWindowKeydown);
 		return () => {
-			searchReady = false;
-			searchRequestVersion += 1;
-			clearTimeout(debounceTimer);
-			abortPendingSearchRequests();
+			searchRequest.destroy();
 			window.removeEventListener(
 				CUSTOM_FOODS_CHANGED_EVENT,
 				refreshCustomResults,
@@ -362,7 +197,7 @@
 		<div
 			class="search-row"
 			class:search-row--active={hasActiveSearch}
-			aria-busy={loading}
+			aria-busy={searchRequest.state.loading}
 		>
 			<Search class="search-icon" />
 			<input
@@ -378,7 +213,7 @@
 				role="combobox"
 				class="search-input"
 				placeholder="Search ingredients..."
-				bind:value={query}
+				bind:value={searchRequest.state.query}
 				onfocus={onSearchFocus}
 				oninput={handleInput}
 				onkeydown={handleSearchKeydown}
@@ -394,12 +229,12 @@
 					? `ingredient-search-result-${sortedResults()[activeResultIndex].fdcId}`
 					: undefined}
 			/>
-			{#if loading || query}
+			{#if searchRequest.state.loading || searchRequest.state.query}
 				<span class="search-status-actions">
-					{#if loading}
+					{#if searchRequest.state.loading}
 						<LoadingSpinner size="small" label="Searching ingredients" />
 					{/if}
-					{#if query}
+					{#if searchRequest.state.query}
 						<CircleIconButton
 							class="search-clear"
 							label="Clear ingredient search"
@@ -425,22 +260,22 @@
 			<span>↵ view nutrition</span>
 		</p>
 	{/if}
-	{#if error}
-		<StatusMessage tone="danger" message={error} />
+	{#if searchRequest.state.error}
+		<StatusMessage tone="danger" message={searchRequest.state.error} />
 	{:else if showEmptySearchMessage}
 		<StatusMessage
 			tone="info"
 			title="Nothing found"
-			message={`We couldn't find a match for “${completedSearchQuery}”. Try another name, brand, category, ingredient, or barcode.`}
+			message={`We couldn't find a match for “${searchRequest.state.completedQuery}”. Try another name, brand, category, ingredient, or barcode.`}
 		/>
 	{/if}
 	<SearchDropdown
 		results={sortedResults()}
 		{activeResultIndex}
 		{addingFoodId}
-		{hasMoreResults}
-		{loadingMore}
-		contentVersion={`${query.trim()}:${results.length}`}
+		hasMoreResults={searchRequest.state.hasMoreResults}
+		loadingMore={searchRequest.state.loadingMore}
+		contentVersion={`${searchRequest.state.query.trim()}:${searchRequest.state.results.length}`}
 		{destinationListKey}
 		{destinationListFoodIdentityKeys}
 		{otherListFoodIdentityKeys}
@@ -448,7 +283,7 @@
 		onSelect={select}
 		{onAdd}
 		onActivate={(index) => (activeResultIndex = index)}
-		onLoadMore={loadMoreResults}
+		onLoadMore={searchRequest.loadMoreResults}
 	/>
 </div>
 

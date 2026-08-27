@@ -47,7 +47,9 @@ describe("local QA reference seed", () => {
 		expect(seed).toContain('"traces": ["nuts"]');
 		expect(seed).toContain('"precautionaryStatements": [{"type":"may_contain"');
 		expect(seed).toContain("evidence_license = 'Open Database License 1.0'");
-		expect(seed).toContain("('structuredIngredients', fixture.food -> 'structuredIngredients'");
+		expect(seed).toContain(
+			"('structuredIngredients', fixture.food -> 'structuredIngredients'",
+		);
 		expect(seed).toContain("('additives', fixture.food -> 'additives'");
 	});
 
@@ -60,6 +62,15 @@ describe("local QA reference seed", () => {
 		expect(seed).toContain("'open-food-facts'");
 	});
 
+	it("provides source-backed package images for image-control role checks", () => {
+		expect(seed).toContain(
+			"https://images.openfoodfacts.org/images/products/002/113/049/3609/front_en.5.400.jpg",
+		);
+		expect(seed).toContain(
+			"https://images.openfoodfacts.org/images/products/880/100/552/3455/front_en.6.400.jpg",
+		);
+	});
+
 	it("provides broad generic-food fixtures for cross-view QA", () => {
 		expect(seed).toContain("qa_generic_foods");
 		expect(seed).toContain("'09000000000018'");
@@ -70,7 +81,9 @@ describe("local QA reference seed", () => {
 		expect(seed).toContain("'Lemon Juice, Raw'");
 		expect(seed).toContain("'09000000000179'");
 		expect(seed).toContain("'Tomatoes, Green, Raw'");
-		expect(seed).toContain("'Babyfood, Ravioli, Cheese Filled, With Tomato Sauce'");
+		expect(seed).toContain(
+			"'Babyfood, Ravioli, Cheese Filled, With Tomato Sauce'",
+		);
 		expect(seed).toContain("'Babyfood, Dinner, Macaroni And Tomato'");
 	});
 
@@ -83,8 +96,12 @@ describe("local QA reference seed", () => {
 		expect(seed).toContain('"allergens": ["sulfites"]');
 		expect(seed).toContain("'09000000000230'");
 		expect(seed).toContain('"profileKey":"us-ttb-alcohol-beverage-v1"');
-		expect(seed).toContain("('alcoholByVolume', fixture.food -> 'alcoholByVolume'");
-		expect(seed).toContain("('regulatoryDisclosure', fixture.food -> 'regulatoryDisclosure'");
+		expect(seed).toContain(
+			"('alcoholByVolume', fixture.food -> 'alcoholByVolume'",
+		);
+		expect(seed).toContain(
+			"('regulatoryDisclosure', fixture.food -> 'regulatoryDisclosure'",
+		);
 	});
 
 	it("provides authoritative generic-food deep-dive fixtures", () => {
@@ -93,7 +110,9 @@ describe("local QA reference seed", () => {
 		expect(seed).toContain(
 			"'Crustaceans, shrimp, mixed species, raw (may contain additives to retain moisture)'",
 		);
-		expect(seed).toContain("'https://fdc.nal.usda.gov/food-details/171711/nutrients'");
+		expect(seed).toContain(
+			"'https://fdc.nal.usda.gov/food-details/171711/nutrients'",
+		);
 		expect(seed).toContain("'CC0 1.0 / U.S. public domain'");
 		expect(seed).toContain("public.generic_food_source_identifiers");
 		expect(seed).toContain("'fdc-portion-93941'");
@@ -101,7 +120,9 @@ describe("local QA reference seed", () => {
 
 	it("provides licensed image attribution without a live image-source request", () => {
 		expect(seed).toContain("insert into public.food_image_assets");
-		expect(seed).toContain("'https://world.openfoodfacts.org/product/0021130493609'");
+		expect(seed).toContain(
+			"'https://world.openfoodfacts.org/product/0021130493609'",
+		);
 		expect(seed).toContain("'CC BY-SA 3.0'");
 		expect(seed).toContain("'Open Food Facts contributors'");
 	});

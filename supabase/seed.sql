@@ -2203,22 +2203,39 @@ insert into public.food_image_assets (
 	fetched_at
 )
 select
-	'85000000-0000-4000-8000-000000000001'::uuid,
+	image_fixture.id,
 	fixture.barcode,
 	fixture.product_id,
 	'open-food-facts',
-	'https://world.openfoodfacts.org/product/0021130493609',
+	image_fixture.source_reference,
 	'front',
-	'https://images.openfoodfacts.org/images/products/002/113/049/3609/front_en.5.400.jpg',
-	'https://images.openfoodfacts.org/images/products/002/113/049/3609/front_en.5.200.jpg',
+	image_fixture.image_url,
+	image_fixture.thumbnail_url,
 	'CC BY-SA 3.0',
 	'https://creativecommons.org/licenses/by-sa/3.0/',
 	'Open Food Facts contributors',
 	'imported',
 	'active',
 	'2026-08-01T00:00:00Z'
-from private.qa_catalog_product_fixtures fixture
-where fixture.barcode = '00021130493609'
+from (
+	values
+		(
+			'85000000-0000-4000-8000-000000000001'::uuid,
+			'00021130493609',
+			'https://world.openfoodfacts.org/product/0021130493609',
+			'https://images.openfoodfacts.org/images/products/002/113/049/3609/front_en.5.400.jpg',
+			'https://images.openfoodfacts.org/images/products/002/113/049/3609/front_en.5.200.jpg'
+		),
+		(
+			'85000000-0000-4000-8000-000000000002'::uuid,
+			'08801005523455',
+			'https://world.openfoodfacts.org/product/8801005523455',
+			'https://images.openfoodfacts.org/images/products/880/100/552/3455/front_en.6.400.jpg',
+			'https://images.openfoodfacts.org/images/products/880/100/552/3455/front_en.6.200.jpg'
+		)
+) as image_fixture(id, barcode, source_reference, image_url, thumbnail_url)
+join private.qa_catalog_product_fixtures fixture
+	on fixture.barcode = image_fixture.barcode
 on conflict (source, source_reference, image_role) do update set
 	barcode = excluded.barcode,
 	shared_product_id = excluded.shared_product_id,
