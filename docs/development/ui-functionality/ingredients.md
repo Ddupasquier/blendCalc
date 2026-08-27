@@ -27,6 +27,8 @@ the baseline for other views.
 - At the compact tier, manual entry is a pencil-only rounded icon control in the same
   row as Search, Barcode, and Filters. The visual and keyboard order is Search, Barcode,
   Manual Entry, then Filters, and its accessible name remains complete.
+- Above the compact width tier, Filters remains beside the complete Manual Entry action
+  and stretches to the same rendered height so the second toolbar row stays level.
 - The toolbar manual-entry control is the only page-level manual-entry action. Do not
   duplicate it with a floating add button.
 - Keep Fridge/Shopping List tabs available. Compact visual pills still provide at least
