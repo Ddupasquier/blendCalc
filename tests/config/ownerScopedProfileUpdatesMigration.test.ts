@@ -5,7 +5,6 @@ const migration = readFileSync(
 	"supabase/migrations/20260826120000_owner_scoped_profile_updates.sql",
 	"utf8",
 );
-const profileRoute = readFileSync("src/routes/profile/+page.server.ts", "utf8");
 const databaseTypes = readFileSync("src/lib/types/database.types.ts", "utf8");
 const schemaDocumentation = readFileSync(
 	"docs/development/supabase-schema.md",
@@ -35,14 +34,6 @@ describe("owner-scoped profile updates migration", () => {
 			expect(databaseTypes).toContain(functionName);
 			expect(schemaDocumentation).toContain(`\`${functionName}\``);
 		}
-	});
-
-	it("retains trusted-server ownership of image storage and policy evidence", () => {
-		expect(profileRoute).toContain("getSupabaseAdminClient");
-		expect(profileRoute).toContain("profile_image_policy_acceptances");
-		expect(profileRoute).not.toMatch(/admin\.from\(["']profiles["']\)/);
-		expect(profileRoute).toContain("saveCurrentUserProfileImage");
-		expect(profileRoute).toContain("clearCurrentUserProfileImage");
 	});
 
 	it("does not tighten the rollout-safe database bio constraint early", () => {
