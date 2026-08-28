@@ -674,6 +674,51 @@ test("search scanner and saved-list sort return to the active search context", a
 	}
 });
 
+test(
+	"nutrition routes replace and restore descriptive browser titles",
+	{ tag: "@compatibility" },
+	async ({ page }) => {
+		await page.goto("/ingredients/fridge/search");
+		await waitForAppReady(page);
+		await expect(page).toHaveTitle("Search Ingredients · blendCalc");
+
+		const searchDialog = page.getByRole("dialog", { name: "Ingredients" });
+		const searchInput = searchDialog.getByRole("combobox", {
+			name: "Search ingredients",
+		});
+		await searchInput.fill("spinach");
+
+		const spinachRawResult = searchDialog.getByRole("row", {
+			name: /^Spinach, Raw,/,
+		});
+		await expect(spinachRawResult).toBeVisible();
+		await spinachRawResult
+			.getByRole("button", { name: /^View nutrition for Spinach, Raw/ })
+			.click();
+		await expect(page).toHaveURL(/\/ingredients\/fridge\/nutrition\/9200001$/);
+		await expect(page).toHaveTitle("Spinach, Raw Nutrition · blendCalc");
+
+		await page.goBack();
+		await expect(page).toHaveURL(/\/ingredients\/fridge\/search$/);
+		await expect(page).toHaveTitle("Search Ingredients · blendCalc");
+		await searchInput.fill("spinach");
+
+		const packagedSpinachNutritionButton = searchDialog
+			.locator("#ingredient-search-result-1905313")
+			.getByRole("button", {
+				name: /^View nutrition for Spinach/,
+			});
+		await expect(packagedSpinachNutritionButton).toBeVisible();
+		await packagedSpinachNutritionButton.click();
+		await expect(page).toHaveURL(/\/ingredients\/fridge\/nutrition\/1905313$/);
+		await expect(page).toHaveTitle("Spinach Nutrition · blendCalc");
+
+		await page.reload();
+		await waitForAppReady(page);
+		await expect(page).toHaveTitle("Spinach Nutrition · blendCalc");
+	},
+);
+
 test("partial ingredient words combine every eligible source and remain selectable", async ({
 	page,
 }) => {
@@ -1146,22 +1191,40 @@ test("inside interactions and browser focus changes keep routed overlays open", 
 test("modal sheet focus wraps without reaching the underlying page", async ({
 	page,
 }) => {
-	await page.goto("/ingredients/fridge");
-	await waitForAppReady(page);
-	await page.getByRole("button", { name: "Sort saved ingredients" }).click();
+	for (const { route, dialogName } of [
+		{ route: "/ingredients/fridge/filters", dialogName: "Sort" },
+		{
+			route: "/ingredients/fridge/manual-entry",
+			dialogName: "Enter Manually",
+		},
+	]) {
+		await page.goto(route);
+		await waitForAppReady(page);
 
-	const dialog = page.getByRole("dialog", { name: "Sort" });
-	const closeButton = dialog.getByRole("button", { name: "Close sheet" });
-	await expect(closeButton).toBeFocused();
+		const dialog = page.getByRole("dialog", { name: dialogName });
+		const closeButton = dialog.getByRole("button", { name: "Close sheet" });
+		await closeButton.focus();
 
-	await page.keyboard.press("Shift+Tab");
-	await expect
-		.poll(() =>
-			dialog.evaluate((element) => element.contains(document.activeElement)),
-		)
-		.toBe(true);
-	await page.keyboard.press("Tab");
-	await expect(closeButton).toBeFocused();
+		await page.keyboard.press("Shift+Tab");
+		await expect
+			.poll(() =>
+				dialog.evaluate((element) => {
+					const focusableElements = Array.from(
+						element.querySelectorAll<HTMLElement>(
+							"a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex='-1'])",
+						),
+					).filter(
+						(focusableElement) =>
+							!focusableElement.closest("[hidden], [aria-hidden='true']") &&
+							focusableElement.getAttribute("aria-disabled") !== "true",
+					);
+					return document.activeElement === focusableElements.at(-1);
+				}),
+			)
+			.toBe(true);
+		await page.keyboard.press("Tab");
+		await expect(closeButton).toBeFocused();
+	}
 });
 
 test("right-sheet view frames keep edge focus outlines inside their clipping boundary", async ({

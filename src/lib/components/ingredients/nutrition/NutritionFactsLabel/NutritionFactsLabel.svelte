@@ -23,7 +23,9 @@
 		provenanceOptions = [],
 	}: NutritionFactsLabelProps = $props();
 	const nutritionBasis = $derived(
-		viewingServing ? "Amount per serving" : getNutritionBasisLabel(viewingGrams),
+		viewingServing
+			? "Amount per serving"
+			: getNutritionBasisLabel(viewingGrams),
 	);
 	const foodName = $derived(food ? getCanonicalFoodDescription(food) : "");
 
@@ -46,17 +48,18 @@
 	const extraRows = $derived(
 		food
 			? food.foodNutrients
-					.filter(
-						(n) =>
-							!vitalIds.some((id) => isMatchingFoodNutrient(n, id)),
-					)
+					.filter((n) => !vitalIds.some((id) => isMatchingFoodNutrient(n, id)))
 					.flatMap((n) => {
 						const scaledValue = scalePer100gValue(n.value, viewingGrams);
-						return scaledValue === null || scaledValue === 0 ? [] : [{
-							label: n.nutrientName,
-							value: formatNutritionAmount(scaledValue),
-							unit: n.unitName,
-						}];
+						return scaledValue === null || scaledValue === 0
+							? []
+							: [
+									{
+										label: n.nutrientName,
+										value: formatNutritionAmount(scaledValue),
+										unit: n.unitName,
+									},
+								];
 					})
 			: [],
 	);
@@ -124,10 +127,10 @@
 					</span>
 				</li>
 				{#if i === 0}
-					<div class="nf-thick-divider"></div>
+					<li class="nf-thick-divider" aria-hidden="true"></li>
 				{/if}
 				{#if i === vitalRows.length - 2}
-					<div class="nf-divider"></div>
+					<li class="nf-divider" aria-hidden="true"></li>
 				{/if}
 			{/each}
 		</ul>

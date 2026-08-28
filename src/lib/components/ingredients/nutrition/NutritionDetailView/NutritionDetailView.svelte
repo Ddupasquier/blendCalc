@@ -44,13 +44,15 @@
 		if (currentFoodId === null) {
 			currentFoodId = food.fdcId;
 			viewingGrams =
-				getPrimaryFoodServing(food)?.gramWeight ?? DEFAULT_NUTRITION_VIEWING_GRAMS;
+				getPrimaryFoodServing(food)?.gramWeight ??
+				DEFAULT_NUTRITION_VIEWING_GRAMS;
 			return;
 		}
 		if (food.fdcId === currentFoodId) return;
 		currentFoodId = food.fdcId;
 		viewingGrams =
-			getPrimaryFoodServing(food)?.gramWeight ?? DEFAULT_NUTRITION_VIEWING_GRAMS;
+			getPrimaryFoodServing(food)?.gramWeight ??
+			DEFAULT_NUTRITION_VIEWING_GRAMS;
 	});
 
 	const decreaseViewingAmount = (step: number) => {
@@ -67,19 +69,27 @@
 		<header class="nutrition-detail-view__header">
 			<BackButton
 				class="nutrition-detail-view__back"
-					label="Back to ingredients"
-					variant="soft"
-					size="small"
-					onclick={onClose}
-				/>
+				label="Back to ingredients"
+				variant="soft"
+				size="small"
+				onclick={onClose}
+			/>
 			<h1 id="nutrition-detail-view-title">{foodName}</h1>
-			<span class="nutrition-detail-view__source" aria-label="Linked source" title="Linked source">
+			<span
+				class="nutrition-detail-view__source"
+				role="img"
+				aria-label="Linked source"
+				title="Linked source"
+			>
 				<Link size={16} strokeWidth={2.2} />
 			</span>
 		</header>
 
 		<div class="nutrition-detail-view__measurement-controls">
-			<section class="nutrition-detail-view__amount" aria-label="Viewing amount">
+			<section
+				class="nutrition-detail-view__amount"
+				aria-label="Viewing amount"
+			>
 				<h2>Viewing Amount</h2>
 				<div class="nutrition-detail-view__amount-controls">
 					<AcceleratingStepButton
