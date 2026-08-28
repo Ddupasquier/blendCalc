@@ -9,6 +9,18 @@ const searchCards = readFileSync(
 	"src/lib/components/ingredients/search/IngredientSearchCard/IngredientSearchCard.svelte",
 	"utf8",
 );
+const mixAmountCard = readFileSync(
+	"src/lib/components/mix/ingredients/MixIngredientAmountCard/MixIngredientAmountCard.svelte",
+	"utf8",
+);
+const mixOptionCard = readFileSync(
+	"src/lib/components/mix/ingredients/MixIngredientOption/MixIngredientOption.svelte",
+	"utf8",
+);
+const placementPreview = readFileSync(
+	"src/lib/components/common/images/ImagePlacementCardPreview/ImagePlacementCardPreview.svelte",
+	"utf8",
+);
 const cardMedia = readFileSync(
 	"src/lib/components/ingredients/card/IngredientCardMedia/IngredientCardMedia.svelte",
 	"utf8",
@@ -17,25 +29,38 @@ const provenanceBadges = readFileSync(
 	"src/lib/components/ingredients/provenance/IngredientProvenanceBadges/IngredientProvenanceBadges.svelte",
 	"utf8",
 );
-const warningEdge = readFileSync(
-	"src/lib/components/common/display/CardWarningEdge/CardWarningEdge.svelte",
+const warningFrame = readFileSync(
+	"src/lib/components/common/display/CardWarningFrame/CardWarningFrame.svelte",
 	"utf8",
 );
-const warningEdgeStyles = readFileSync(
-	"src/lib/components/common/display/CardWarningEdge/CardWarningEdge.scss",
+const warningFrameStyles = readFileSync(
+	"src/lib/components/common/display/CardWarningFrame/CardWarningFrame.scss",
 	"utf8",
 );
 
 describe("ingredient warning card architecture", () => {
-	it("uses the shared edge treatment on saved and search cards", () => {
-		expect(savedCard).toContain("<CardWarningEdge tone={warningEdgeTone} />");
-		expect(searchCards).toContain("<CardWarningEdge tone={warningEdgeTone} />");
-		expect(warningEdge).toContain('class="card-warning-edge"');
-		expect(warningEdge).toContain("data-tone={tone}");
-		expect(warningEdgeStyles).toMatch(/inline-size:\s*[^;]+;/);
-		expect(warningEdgeStyles).toContain("block-size: 100%");
-		expect(warningEdgeStyles).toContain("background: $app-highlight");
-		expect(warningEdgeStyles).toContain("background: $app-shell-accent-danger");
+	it("uses one shared rounded warning frame across compact food cards", () => {
+		for (const cardSource of [
+			savedCard,
+			searchCards,
+			mixAmountCard,
+			mixOptionCard,
+			placementPreview,
+		]) {
+			expect(cardSource).toContain("<CardWarningFrame");
+			expect(cardSource).not.toContain("<CardWarningEdge");
+		}
+		expect(warningFrame).toContain('class="card-warning-frame"');
+		expect(warningFrame).toContain("data-tone={tone}");
+		expect(warningFrameStyles).toContain("border: 3px solid transparent");
+		expect(warningFrameStyles).toContain(
+			"--card-warning-frame-solid-stop: 16%",
+		);
+		expect(warningFrameStyles).toContain("--card-warning-frame-fade-end: 55%");
+		expect(warningFrameStyles).toContain("mask-composite: exclude");
+		expect(warningFrameStyles).toContain(
+			"--card-warning-frame-color: #{$app-shell-accent-danger}",
+		);
 	});
 
 	it("does not render warning icons inside compact card badges", () => {

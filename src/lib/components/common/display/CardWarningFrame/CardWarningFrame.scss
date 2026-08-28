@@ -1,0 +1,39 @@
+@use "../../../../../styles/variables" as *;
+
+.card-warning-frame {
+	--card-warning-frame-color: #{$app-highlight};
+	--card-warning-frame-solid-stop: 16%;
+	--card-warning-frame-fade-midpoint: 32%;
+	--card-warning-frame-fade-end: 55%;
+
+	position: absolute;
+	z-index: 5;
+	inset: 0;
+	display: block;
+	box-sizing: border-box;
+	color: var(--card-warning-frame-color);
+	border: 3px solid transparent;
+	border-radius: inherit;
+	background: linear-gradient(
+			90deg,
+			var(--card-warning-frame-color) 0%,
+			var(--card-warning-frame-color) var(--card-warning-frame-solid-stop),
+			color-mix(in srgb, var(--card-warning-frame-color) 48%, transparent)
+				var(--card-warning-frame-fade-midpoint),
+			transparent var(--card-warning-frame-fade-end)
+		)
+		border-box;
+	-webkit-mask:
+		linear-gradient(currentcolor 0 0) padding-box,
+		linear-gradient(currentcolor 0 0);
+	-webkit-mask-composite: xor;
+	mask:
+		linear-gradient(currentcolor 0 0) padding-box,
+		linear-gradient(currentcolor 0 0);
+	mask-composite: exclude;
+	pointer-events: none;
+}
+
+.card-warning-frame[data-tone="danger"] {
+	--card-warning-frame-color: #{$app-shell-accent-danger};
+}

@@ -3,7 +3,7 @@ import type { FoodItem } from "$lib/utils/food/types";
 import {
 	getFoodCalories,
 	getFoodDisplayCategory,
-	getFoodWarningEdgeTone,
+	getFoodWarningFrameTone,
 	getIngredientMembershipLabel,
 	getPrimaryFoodWarning,
 } from "$lib/utils/ingredients/ingredientListUi";
@@ -113,12 +113,12 @@ describe("ingredient list UI helpers", () => {
 		expect(getPrimaryFoodWarning(food)).toBe(
 			"This product appears in an active official recall.",
 		);
-		expect(getFoodWarningEdgeTone(food)).toBe("danger");
+		expect(getFoodWarningFrameTone(food)).toBe("danger");
 	});
 
-	it("keeps ordinary preference conflicts on the warning edge", () => {
+	it("keeps ordinary preference conflicts on the warning frame", () => {
 		expect(
-			getFoodWarningEdgeTone({
+			getFoodWarningFrameTone({
 				fdcId: 10,
 				description: "Preference conflict",
 				foodNutrients: [],

@@ -4,7 +4,7 @@ $card-media-lane-width: 28cqw;
 $card-content-inset: 18cqw;
 $card-title-shift: $app-gap-lg;
 $card-supporting-copy-indent: $app-gap-sm;
-$card-border-width: 2px;
+$card-border-width: 3px;
 $card-min-height-narrow: 4.1rem;
 $card-action-size-narrow: 2rem;
 
@@ -15,8 +15,7 @@ $card-action-size-narrow: 2rem;
 		#{$card-content-inset} + #{$app-gap-xs}
 	);
 	--ingredient-card-copy-start-offset: calc(
-		#{$app-shell-card-padding-compact} +
-			var(--ingredient-card-content-inset) -
+		#{$app-shell-card-padding-compact} + var(--ingredient-card-content-inset) -
 			#{$card-title-shift}
 	);
 	position: relative;
@@ -35,11 +34,11 @@ $card-action-size-narrow: 2rem;
 	border: $card-border-width solid transparent;
 	border-radius: $app-shell-radius-card;
 
-	@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	@media (max-width: $app-breakpoint-xs),
+		(max-height: $app-breakpoint-height-compact) {
 		--ingredient-card-action-size: #{$card-action-size-narrow};
 		--ingredient-card-copy-start-offset: calc(
-			#{$app-gap-sm} +
-				var(--ingredient-card-content-inset) -
+			#{$app-gap-sm} + var(--ingredient-card-content-inset) -
 				#{$card-title-shift}
 		);
 		gap: $app-gap-xs;
@@ -135,7 +134,8 @@ $card-action-size-narrow: 2rem;
 		}
 	}
 
-	@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	@media (max-width: $app-breakpoint-xs),
+		(max-height: $app-breakpoint-height-compact) {
 		strong {
 			font-size: $app-font-size-sm;
 		}
@@ -180,7 +180,8 @@ $card-action-size-narrow: 2rem;
 
 	gap: $app-gap-sm;
 
-	@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	@media (max-width: $app-breakpoint-xs),
+		(max-height: $app-breakpoint-height-compact) {
 		gap: $app-gap-xs;
 	}
 }

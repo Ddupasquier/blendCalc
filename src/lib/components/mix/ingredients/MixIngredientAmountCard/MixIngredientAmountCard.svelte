@@ -6,7 +6,7 @@
 	import AcceleratingStepButton from "$lib/components/common/buttons/AcceleratingStepButton/AcceleratingStepButton.svelte";
 	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton/CircleIconButton.svelte";
 	import DisclosureChevron from "$lib/components/common/disclosure/DisclosureChevron/DisclosureChevron.svelte";
-	import CardWarningEdge from "$lib/components/common/display/CardWarningEdge/CardWarningEdge.svelte";
+	import CardWarningFrame from "$lib/components/common/display/CardWarningFrame/CardWarningFrame.svelte";
 	import Popover from "$lib/components/common/display/Popover/Popover.svelte";
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import NumberInput from "$lib/components/common/forms/NumberInput/NumberInput.svelte";
@@ -27,7 +27,7 @@
 		getSourceServingMeasureOptions,
 	} from "$lib/utils/serving/servingAmount";
 	import { isPrivateCustomFood } from "$lib/utils/food/records/foodClassification";
-	import { getFoodWarningEdgeTone } from "$lib/utils/ingredients/ingredientListUi";
+	import { getFoodWarningFrameTone } from "$lib/utils/ingredients/ingredientListUi";
 	import {
 		getMotionSafeDuration,
 		MOTION_DURATION_MS,
@@ -51,7 +51,7 @@
 
 	let detailsOpen = $state(false);
 	const preferenceWarnings = $derived(food.preferenceWarnings ?? []);
-	const warningEdgeTone = $derived(getFoodWarningEdgeTone(food));
+	const warningFrameTone = $derived(getFoodWarningFrameTone(food));
 	const detailsElementId = $derived(`mix-ingredient-${food.fdcId}-details`);
 	const servingUnitOptions = $derived([
 		...SERVING_MEASURE_OPTIONS.filter((option) =>
@@ -83,9 +83,10 @@
 <article
 	class="mix-ingredient-amount-card"
 	class:mix-ingredient-amount-card--custom={isPrivateCustomFood(food)}
-	class:mix-ingredient-amount-card--warning={warningEdgeTone !== null}
+	class:mix-ingredient-amount-card--warning={warningFrameTone !== null}
+	data-warning-tone={warningFrameTone ?? undefined}
 >
-	{#if warningEdgeTone}<CardWarningEdge tone={warningEdgeTone} />{/if}
+	{#if warningFrameTone}<CardWarningFrame tone={warningFrameTone} />{/if}
 	<span class="mix-ingredient-amount-card__symbol" aria-hidden="true"
 		><FoodSymbol {food} /></span
 	>

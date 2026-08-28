@@ -4,12 +4,12 @@
 	import Plus from "$lib/assets/icons/Plus/Plus.svelte";
 	import ShoppingBag from "$lib/assets/icons/ShoppingBag/ShoppingBag.svelte";
 	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton/CircleIconButton.svelte";
-	import CardWarningEdge from "$lib/components/common/display/CardWarningEdge/CardWarningEdge.svelte";
+	import CardWarningFrame from "$lib/components/common/display/CardWarningFrame/CardWarningFrame.svelte";
 	import IngredientCardMedia from "$lib/components/ingredients/card/IngredientCardMedia/IngredientCardMedia.svelte";
 	import IngredientProvenanceBadges from "$lib/components/ingredients/provenance/IngredientProvenanceBadges/IngredientProvenanceBadges.svelte";
 	import {
 		getFoodDisplayCategory,
-		getFoodWarningEdgeTone,
+		getFoodWarningFrameTone,
 		getIngredientListLabel,
 		getOppositeIngredientListKey,
 		getPrimaryFoodWarning,
@@ -33,7 +33,7 @@
 
 	const category = $derived(getFoodDisplayCategory(food));
 	const warning = $derived(getPrimaryFoodWarning(food));
-	const warningEdgeTone = $derived(getFoodWarningEdgeTone(food));
+	const warningFrameTone = $derived(getFoodWarningFrameTone(food));
 	const destinationListLabel = $derived(
 		getIngredientListLabel(destinationListKey),
 	);
@@ -58,7 +58,9 @@
 	id={`ingredient-search-result-${food.fdcId}`}
 	class="ingredient-search-card ingredient-search-card--media"
 	class:ingredient-search-card--active={active}
+	class:ingredient-search-card--warning={warningFrameTone !== null}
 	class:ingredient-search-card--without-placement-action={alreadyInDestinationList}
+	data-warning-tone={warningFrameTone ?? undefined}
 	role="row"
 	tabindex="-1"
 	aria-label={`${food.description}, ${category}${listMembershipDescription ? `, ${listMembershipDescription}` : ""}${warning ? `, warning: ${warning}` : ""}`}
@@ -66,8 +68,8 @@
 	onmouseenter={() => onActivate(index)}
 >
 	<IngredientCardMedia {food} />
-	{#if warning && warningEdgeTone}
-		<CardWarningEdge tone={warningEdgeTone} />
+	{#if warningFrameTone}
+		<CardWarningFrame tone={warningFrameTone} />
 	{/if}
 	<span class="ingredient-search-card__main-cell" role="gridcell">
 		<button
