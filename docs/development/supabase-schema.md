@@ -1659,7 +1659,9 @@ Notes:
   contains `user`, `moderator`, `admin`, and `developer`, while assignments store only
   elevated roles. `app_role_permissions` maps those roles to database-owned
   capabilities. Developer permissions are explicit rows matching the current admin
-  capability set; they are not inferred through a role hierarchy.
+  capability set; they are not inferred through a role hierarchy. The service role may
+  read this reviewed policy but cannot insert, update, or delete permission rows;
+  permission-policy changes require a forward migration.
 - Catalog review and catalog data operations are separate capabilities. Moderators,
   admins, and developers receive `moderation.catalog.review`. Only admins and developers
   receive `data_operations.catalog_health.read`,
