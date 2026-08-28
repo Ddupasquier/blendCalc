@@ -26,7 +26,7 @@ skip the inventory.
 
 1. Read the applicable rules in this document. Read the
    [development-audit method](dev-rules-audit.md) when performing or updating an audit.
-2. Read every applicable domain source identified by `AGENTS.md` and
+2. Read every applicable domain source identified by
    `docs/development/README.md`.
 3. State the observable outcome, affected users and systems, explicit non-goals, and
    completion evidence before editing.
@@ -119,7 +119,7 @@ when you already know the rule you need.
 | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------- |
 | [Core Engineering Rules](#rule-best-practices)                                   | [Canonical Change Lifecycle](#canonical-change-lifecycle)                | [Mandatory Rules Preflight](#rule-rules-preflight)                                 |
 | [Repository Hygiene](#rule-repository-hygiene)                                   | [Dependency Supply-Chain Safety](#rule-dependency-supply-chain)          | [Environment Ownership](#rule-environment-ownership)                               |
-| [Test Layer Ownership](#rule-test-layer-ownership)                               | [Development Tooling Privacy](#rule-development-tooling-privacy)         | [Cross-View Cohesion](#rule-cross-view-cohesion)                                   |
+| [Test Layer Ownership](#rule-test-layer-ownership)                               | [Public Artifact Privacy](#rule-public-artifact-privacy)                 | [Cross-View Cohesion](#rule-cross-view-cohesion)                                   |
 | [Browser And Mobile Compatibility](#rule-browser-compatibility)                  | [Accessibility](#rule-accessibility)                                     | [Strict Content Security Policy](#rule-content-security-policy)                    |
 | [Server And Database Security Boundaries](#rule-server-database-security)        | [Search Relevance](#rule-search-relevance)                               | [Explicit Pagination Controls](#rule-pagination-controls)                          |
 | [Shared Loading Indicators](#rule-loading-indicators)                            | [Design Tokens And Spacing](#rule-design-tokens)                         | [Light And Dark Theme Support](#rule-theme-support)                                |
@@ -195,19 +195,18 @@ explicitly requires the empty path; document that rare requirement beside the ow
 configuration. Do not use `.gitkeep` to preserve speculative directories—create a
 directory when it gains real content and remove it when its final file is removed.
 
-<a id="rule-development-tooling-privacy"></a>
+<a id="rule-public-artifact-privacy"></a>
 
-#### Rule 0c — Development Tooling Privacy
+#### Rule 0c — Public Artifact Privacy
 
-Do not identify or imply automated
-authorship or development-assistance tooling in any tracked or public artifact. This
-includes application code, comments, documentation, tests, UI copy, metadata, generated
-notices, commit-facing notes, and public assets. Do not add tool names, authorship
-labels, maintenance labels, generated-by markers, or commentary about who or what
-produced the work. Private workflow context may record that information only in an
-explicitly Git-ignored local file. Before handoff, audit changed tracked files for
-accidental disclosure. Technical HTTP `User-Agent` headers and dependency package names
-are protocol/runtime terminology and are not authorship disclosure.
+Keep tracked and public artifacts limited to product source, durable engineering
+contracts, reproducible verification, and information intentionally meant for project
+users or contributors. Do not publish private workspace content, local task tracking,
+recovery context, private operational instructions, generated-by labels, or unrelated
+maintenance metadata. Keep machine-local workflow context outside version control and
+audit changed tracked files for accidental disclosure before handoff. Technical HTTP
+`User-Agent` headers and dependency package names remain valid protocol and runtime
+terminology.
 
 <a id="rule-cross-view-cohesion"></a>
 

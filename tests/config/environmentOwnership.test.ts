@@ -95,6 +95,5 @@ describe("environment ownership", () => {
 		}
 		expect(gitignore).toContain("!.env.vercel.example");
 		expect(gitignore).toContain("!supabase/functions/.env.example");
-		expect(gitignore).toContain("/docs/workspace/");
 	});
 });

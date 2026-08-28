@@ -52,16 +52,6 @@ pnpm-debug.log*
 # Generated internal script output (reports, OCR models, and audit artifacts)
 /scripts/output/
 
-# Local work queue, QA evidence, recovery context, and commit planning
-/docs/workspace/
-
-# Personal notes
-/notes/
-
-# Local development tooling
-/.agents/
-/skills-lock.json
-
 # Local database scratch work
 /supabase/snippets/
 
