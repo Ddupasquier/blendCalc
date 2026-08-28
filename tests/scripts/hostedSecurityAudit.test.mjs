@@ -53,6 +53,12 @@ const createSecureSnapshot = () => ({
 		smtp_pass: "never-serialize-this-either",
 		smtp_user: "blendcalc",
 	},
+	privilegedMfaSummary: {
+		checked: true,
+		elevatedAccountCount: 3,
+		verifiedTotpAccountCount: 3,
+		userIds: ["never-serialize-this-user-id"],
+	},
 });
 
 describe("hosted security audit", () => {
@@ -69,6 +75,42 @@ describe("hosted security audit", () => {
 		expect(
 			report.findings.find(({ id }) => id === "password-policy")?.status,
 		).toBe("pass");
+		expect(
+			report.findings.find(({ id }) => id === "privileged-mfa-enforcement")
+				?.status,
+		).toBe("pass");
+	});
+
+	it("fails when an elevated account has no verified TOTP factor", () => {
+		const snapshot = createSecureSnapshot();
+		snapshot.privilegedMfaSummary.verifiedTotpAccountCount = 2;
+
+		const report = evaluateHostedSecuritySnapshot(snapshot, {
+			now: new Date("2026-08-11T20:00:00.000Z"),
+		});
+
+		expect(
+			report.findings.find(({ id }) => id === "privileged-mfa-enforcement")
+				?.status,
+		).toBe("fail");
+	});
+
+	it("blocks enrollment verification when protected credentials are unavailable", () => {
+		const snapshot = createSecureSnapshot();
+		snapshot.privilegedMfaSummary = {
+			checked: false,
+			elevatedAccountCount: null,
+			verifiedTotpAccountCount: null,
+		};
+
+		const report = evaluateHostedSecuritySnapshot(snapshot, {
+			now: new Date("2026-08-11T20:00:00.000Z"),
+		});
+
+		expect(
+			report.findings.find(({ id }) => id === "privileged-mfa-enforcement")
+				?.status,
+		).toBe("blocked");
 	});
 
 	it("fails world-open database access and stale backups", () => {
@@ -97,7 +139,9 @@ describe("hosted security audit", () => {
 
 		expect(serializedSnapshot).not.toContain("192.0.2.10");
 		expect(serializedSnapshot).not.toContain("never-serialize-this");
+		expect(serializedSnapshot).not.toContain("never-serialize-this-user-id");
 		expect(serializedSnapshot).toContain('"ipv4EntryCount":1');
 		expect(serializedSnapshot).toContain('"customSmtpConfigured":true');
+		expect(serializedSnapshot).toContain('"verifiedTotpAccountCount":3');
 	});
 });

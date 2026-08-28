@@ -113,7 +113,37 @@ const evaluateBackups = (backupConfiguration, now) => {
 	];
 };
 
-const evaluateAuthConfiguration = (authConfiguration) => {
+const evaluatePrivilegedMfaEnrollment = (privilegedMfaSummary) => {
+	if (privilegedMfaSummary?.checked !== true) {
+		return createFinding(
+			"privileged-mfa-enforcement",
+			"Privileged-account MFA",
+			"blocked",
+			"Elevated-account enrollment could not be checked. Provide the protected hosted database credentials to the operator audit.",
+		);
+	}
+
+	const elevatedAccountCount = Number(
+		privilegedMfaSummary.elevatedAccountCount,
+	);
+	const verifiedTotpAccountCount = Number(
+		privilegedMfaSummary.verifiedTotpAccountCount,
+	);
+	const everyElevatedAccountHasVerifiedTotp =
+		elevatedAccountCount > 0 &&
+		verifiedTotpAccountCount === elevatedAccountCount;
+
+	return createFinding(
+		"privileged-mfa-enforcement",
+		"Privileged-account MFA",
+		everyElevatedAccountHasVerifiedTotp ? "pass" : "fail",
+		everyElevatedAccountHasVerifiedTotp
+			? `All ${elevatedAccountCount} elevated accounts have a verified TOTP factor.`
+			: `${verifiedTotpAccountCount} of ${elevatedAccountCount} elevated accounts have a verified TOTP factor.`,
+	);
+};
+
+const evaluateAuthConfiguration = (authConfiguration, privilegedMfaSummary) => {
 	const redirectUrls = splitRedirectUrls(authConfiguration?.uri_allow_list);
 	const missingRedirectUrls = REQUIRED_REDIRECT_URLS.filter(
 		(requiredUrl) => !redirectUrls.includes(requiredUrl),
@@ -160,7 +190,8 @@ const evaluateAuthConfiguration = (authConfiguration) => {
 			"Password policy",
 			Number(authConfiguration?.password_min_length) >= 15 &&
 				authConfiguration?.password_hibp_enabled === true &&
-				authConfiguration?.security_update_password_require_reauthentication === true
+				authConfiguration?.security_update_password_require_reauthentication ===
+					true
 				? "pass"
 				: "fail",
 			"Requires 15-character passphrases, breached-password screening, and secure password changes.",
@@ -199,12 +230,7 @@ const evaluateAuthConfiguration = (authConfiguration) => {
 				: "fail",
 			"TOTP enrollment and verification must be available without accepting low-assurance MFA sessions.",
 		),
-		createFinding(
-			"privileged-mfa-enforcement",
-			"Privileged-account MFA",
-			"blocked",
-			"Application enrollment, challenge, recovery guidance, and AAL2 enforcement are implemented; every elevated production account still needs verified factor enrollment.",
-		),
+		evaluatePrivilegedMfaEnrollment(privilegedMfaSummary),
 		createFinding(
 			"custom-smtp",
 			"Production email delivery",
@@ -217,14 +243,20 @@ const evaluateAuthConfiguration = (authConfiguration) => {
 };
 
 export const evaluateHostedSecuritySnapshot = (
-	{ project, networkRestrictions, backupConfiguration, authConfiguration },
+	{
+		project,
+		networkRestrictions,
+		backupConfiguration,
+		authConfiguration,
+		privilegedMfaSummary,
+	},
 	{ now = new Date() } = {},
 ) => {
 	const findings = [
 		evaluateProjectHealth(project),
 		evaluateNetworkRestrictions(networkRestrictions),
 		...evaluateBackups(backupConfiguration, now),
-		...evaluateAuthConfiguration(authConfiguration),
+		...evaluateAuthConfiguration(authConfiguration, privilegedMfaSummary),
 		createFinding(
 			"auth-audit-events",
 			"Authentication audit events",
@@ -248,6 +280,7 @@ export const getSerializableHostedSecuritySnapshot = ({
 	networkRestrictions,
 	backupConfiguration,
 	authConfiguration,
+	privilegedMfaSummary,
 }) => ({
 	project: {
 		id: project?.id ?? null,
@@ -258,10 +291,8 @@ export const getSerializableHostedSecuritySnapshot = ({
 	},
 	networkRestrictions: {
 		status: networkRestrictions?.status ?? null,
-		ipv4EntryCount:
-			networkRestrictions?.config?.dbAllowedCidrs?.length ?? 0,
-		ipv6EntryCount:
-			networkRestrictions?.config?.dbAllowedCidrsV6?.length ?? 0,
+		ipv4EntryCount: networkRestrictions?.config?.dbAllowedCidrs?.length ?? 0,
+		ipv6EntryCount: networkRestrictions?.config?.dbAllowedCidrsV6?.length ?? 0,
 	},
 	backupConfiguration: {
 		backups: (backupConfiguration?.backups ?? []).map(
@@ -278,8 +309,7 @@ export const getSerializableHostedSecuritySnapshot = ({
 	authConfiguration: {
 		siteUrl: authConfiguration?.site_url ?? null,
 		redirectUrls: splitRedirectUrls(authConfiguration?.uri_allow_list),
-		emailConfirmationRequired:
-			authConfiguration?.mailer_autoconfirm === false,
+		emailConfirmationRequired: authConfiguration?.mailer_autoconfirm === false,
 		minimumPasswordLength: authConfiguration?.password_min_length ?? null,
 		breachedPasswordScreeningEnabled:
 			authConfiguration?.password_hibp_enabled === true,
@@ -292,8 +322,7 @@ export const getSerializableHostedSecuritySnapshot = ({
 			authConfiguration?.security_refresh_token_reuse_interval ?? null,
 		captchaEnabled: authConfiguration?.security_captcha_enabled === true,
 		captchaProvider: authConfiguration?.security_captcha_provider ?? null,
-		totpEnrollmentEnabled:
-			authConfiguration?.mfa_totp_enroll_enabled === true,
+		totpEnrollmentEnabled: authConfiguration?.mfa_totp_enroll_enabled === true,
 		totpVerificationEnabled:
 			authConfiguration?.mfa_totp_verify_enabled === true,
 		lowAssuranceMfaAllowed: authConfiguration?.mfa_allow_low_aal === true,
@@ -303,5 +332,16 @@ export const getSerializableHostedSecuritySnapshot = ({
 			authConfiguration?.smtp_pass,
 			authConfiguration?.smtp_user,
 		].every((value) => String(value ?? "").trim().length > 0),
+	},
+	privilegedMfaSummary: {
+		checked: privilegedMfaSummary?.checked === true,
+		elevatedAccountCount:
+			privilegedMfaSummary?.checked === true
+				? Number(privilegedMfaSummary.elevatedAccountCount)
+				: null,
+		verifiedTotpAccountCount:
+			privilegedMfaSummary?.checked === true
+				? Number(privilegedMfaSummary.verifiedTotpAccountCount)
+				: null,
 	},
 });
