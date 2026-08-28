@@ -341,11 +341,13 @@ test("URL-backed ingredient overlays close through Escape and browser history", 
 	await expect(manualEntryButton).toBeFocused();
 
 	const sortButton = page.getByRole("button", {
-		name: "Sort saved ingredients",
+		name: "Filter and sort saved ingredients",
 	});
 	await sortButton.click();
 	await expect(page).toHaveURL(/\/ingredients\/fridge\/filters$/);
-	await expect(page.getByRole("dialog", { name: "Sort" })).toBeVisible();
+	await expect(
+		page.getByRole("dialog", { name: "Filter and sort" }),
+	).toBeVisible();
 	await page.keyboard.press("Escape");
 	await expect(page).toHaveURL(/\/ingredients\/fridge$/);
 	await expect(sortButton).toBeFocused();
@@ -371,12 +373,12 @@ test("manual entry closes through every supported sheet control without activati
 		name: "Enter a custom ingredient manually",
 	});
 	const sortButton = page.getByRole("button", {
-		name: "Sort saved ingredients",
+		name: "Filter and sort saved ingredients",
 	});
 	const manualEntryDialog = page.getByRole("dialog", {
 		name: "Enter Manually",
 	});
-	const sortDialog = page.getByRole("dialog", { name: "Sort" });
+	const sortDialog = page.getByRole("dialog", { name: "Filter and sort" });
 	const openManualEntry = async () => {
 		await manualEntryButton.click({ noWaitAfter: true });
 		await expect(page).toHaveURL(/\/ingredients\/fridge\/manual-entry$/);
@@ -504,8 +506,10 @@ test("short and filled bottom sheets honor shared responsive height bounds", asy
 		await page.goto("/ingredients/fridge");
 		await waitForAppReady(page);
 
-		await page.getByRole("button", { name: "Sort saved ingredients" }).click();
-		const sortDialog = page.getByRole("dialog", { name: "Sort" });
+		await page
+			.getByRole("button", { name: "Filter and sort saved ingredients" })
+			.click();
+		const sortDialog = page.getByRole("dialog", { name: "Filter and sort" });
 		await expect(sortDialog).toBeVisible();
 		await waitForBottomSheetToSettle(sortDialog);
 		const sortHeight = await sortDialog
@@ -621,7 +625,7 @@ test("search scanner and saved-list sort return to the active search context", a
 			name: "Scan barcode",
 		});
 		const sortButton = searchDialog.getByRole("button", {
-			name: "Sort ingredients",
+			name: "Filter and sort ingredients",
 		});
 
 		const partialQuery = query.slice(0, 4);
@@ -651,7 +655,10 @@ test("search scanner and saved-list sort return to the active search context", a
 
 		await sortButton.click();
 		await expect(page).toHaveURL(new RegExp(`${listRoute}/search/filters$`));
-		const sortDialog = page.getByRole("dialog", { name: "Sort", exact: true });
+		const sortDialog = page.getByRole("dialog", {
+			name: "Filter and sort",
+			exact: true,
+		});
 		await expect(sortDialog).toBeVisible();
 		await sortDialog.getByRole("button", { name: "Close sheet" }).click();
 		await expect(page).toHaveURL(new RegExp(`${listRoute}/search$`));
@@ -1079,10 +1086,12 @@ test("shared ingredient bottom sheets enter from below and preserve app chrome b
 
 	await expectBottomSheetPlacement(
 		page,
-		page.getByRole("dialog", { name: "Sort" }),
+		page.getByRole("dialog", { name: "Filter and sort" }),
 		async () => {
 			await page
-				.getByRole("button", { name: "Sort saved ingredients" })
+				.getByRole("button", {
+					name: "Filter and sort saved ingredients",
+				})
 				.click({ noWaitAfter: true });
 		},
 	);
@@ -1132,10 +1141,10 @@ test("shared ingredient bottom sheets render identical chrome", async ({
 	await page.getByRole("button", { name: "Close sheet" }).click();
 
 	await page
-		.getByRole("button", { name: "Sort saved ingredients" })
+		.getByRole("button", { name: "Filter and sort saved ingredients" })
 		.click({ noWaitAfter: true });
 	const sortChrome = await readBottomSheetChrome(
-		page.getByRole("dialog", { name: "Sort" }),
+		page.getByRole("dialog", { name: "Filter and sort" }),
 	);
 	await page.getByRole("button", { name: "Close sheet" }).click();
 
@@ -1192,7 +1201,10 @@ test("modal sheet focus wraps without reaching the underlying page", async ({
 	page,
 }) => {
 	for (const { route, dialogName } of [
-		{ route: "/ingredients/fridge/filters", dialogName: "Sort" },
+		{
+			route: "/ingredients/fridge/filters",
+			dialogName: "Filter and sort",
+		},
 		{
 			route: "/ingredients/fridge/manual-entry",
 			dialogName: "Enter Manually",

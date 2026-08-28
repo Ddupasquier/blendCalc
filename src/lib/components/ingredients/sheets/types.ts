@@ -1,4 +1,5 @@
 import type { FoodListSort } from "$lib/utils/list/listNavigation";
+import type { FoodSafetyFilter } from "$lib/utils/food/safety/foodSafetyFilters";
 
 export type IngredientFilterOption = {
 	value: string;
@@ -13,4 +14,5 @@ export type IngredientSortOption = {
 export type IngredientFilterApplyPayload = {
 	query: string;
 	sortValue: string;
+	safetyFilter: FoodSafetyFilter;
 };

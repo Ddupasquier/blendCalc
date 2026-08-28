@@ -122,3 +122,26 @@ test("saved recipe search filters by recipe and ingredient text", async ({
 	await expect(search).toHaveValue("");
 	await expect(page.locator(".saved-recipe-card")).toHaveCount(4);
 });
+
+test("saved recipe controls expose warning and recall filters", async ({
+	page,
+}) => {
+	await page.goto("/saved");
+	await waitForAppReady(page);
+
+	await page
+		.getByRole("button", { name: "Filter and sort saved recipes" })
+		.click();
+	await expect(page).toHaveURL(/\/saved\/sort$/);
+	const filterSheet = page.getByRole("dialog", {
+		name: "Filter and sort",
+	});
+	await expect(
+		filterSheet.getByRole("button", { name: "Recipes with warnings" }),
+	).toBeVisible();
+	await expect(
+		filterSheet.getByRole("button", {
+			name: "Recipes with active recalls",
+		}),
+	).toBeVisible();
+});

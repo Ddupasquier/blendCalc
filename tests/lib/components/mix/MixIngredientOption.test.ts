@@ -48,7 +48,9 @@ describe("MixIngredientOption", () => {
 		)?.[1];
 
 		expect(card).toContainElement(selectionIndicator as HTMLElement);
-		expect(selectionButton).not.toContainElement(selectionIndicator as HTMLElement);
+		expect(selectionButton).not.toContainElement(
+			selectionIndicator as HTMLElement,
+		);
 		expect(name).toHaveAttribute("title", description);
 		expect(optionStyles).toContain(
 			"@include ingredient-card-layout.selection-layout",
@@ -68,18 +70,20 @@ describe("MixIngredientOption", () => {
 			props: {
 				food: {
 					...food,
-					preferenceWarnings: [{
-						id: "preference-warning",
-						level: "warning",
-						category: "restriction",
-						label: "Pork",
-						code: "FOOD_RESTRICTION_CONFLICT",
-						params: {
-							factLabel: "Pork",
-							restrictionLabel: "Vegan",
-							evidenceType: "intrinsic",
+					preferenceWarnings: [
+						{
+							id: "preference-warning",
+							level: "warning",
+							category: "restriction",
+							label: "Pork",
+							code: "FOOD_RESTRICTION_CONFLICT",
+							params: {
+								factLabel: "Pork",
+								restrictionLabel: "Vegan",
+								evidenceType: "intrinsic",
+							},
 						},
-					}],
+					],
 				},
 				selected: true,
 				onSelect: vi.fn(),
@@ -90,8 +94,51 @@ describe("MixIngredientOption", () => {
 			name: /remove pork chorizo from this mix\. warning:/i,
 		});
 		expect(selectionButton).toHaveAttribute("aria-pressed", "true");
-		expect(container.querySelector(".ingredient-card-media-lane")).toBeInTheDocument();
-		expect(container.querySelector(".card-warning-edge")).toBeInTheDocument();
+		expect(
+			container.querySelector(".ingredient-card-media-lane"),
+		).toBeInTheDocument();
+		expect(container.querySelector(".card-warning-frame")).toBeInTheDocument();
+	});
+
+	it("keeps recall danger framing above selected styling", () => {
+		const { container } = render(MixIngredientOption, {
+			props: {
+				food: {
+					...food,
+					safetyAlerts: [
+						{
+							id: "recall-alert",
+							providerKey: "open-fda-food-enforcement",
+							sourceName: "openFDA Food Enforcement",
+							sourceAttribution: "U.S. Food and Drug Administration",
+							alertType: "recall",
+							status: "Ongoing",
+							productDescription: "Recalled pork chorizo",
+							sourceUrl: "https://api.fda.gov/food/enforcement.json",
+							matchType: "exact_gtin",
+							requiresPackageCheck: false,
+							detectedAt: "2026-08-25T12:00:00.000Z",
+						},
+					],
+				},
+				selected: true,
+				onSelect: vi.fn(),
+			},
+		});
+
+		const card = container.querySelector(".mix-ingredient-option");
+		expect(card).toHaveClass("mix-ingredient-option--selected");
+		expect(card).toHaveClass("mix-ingredient-option--warning");
+		expect(card).toHaveAttribute("data-warning-tone", "danger");
+		expect(container.querySelector(".card-warning-frame")).toHaveAttribute(
+			"data-tone",
+			"danger",
+		);
+		expect(
+			screen.getByRole("button", {
+				name: /active official recall/i,
+			}),
+		).toHaveAttribute("aria-pressed", "true");
 	});
 
 	it("keeps private-custom classification out of compact card badges", () => {

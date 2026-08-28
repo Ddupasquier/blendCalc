@@ -34,7 +34,7 @@
 		description = "Adjust how the image appears in ingredient cards.",
 		showIntro = true,
 		editable = true,
-		showWarningEdge = false,
+		warningFrameTone = null,
 		smartPlacementSource = imageUrl,
 		automaticallyPlaceNewImage = false,
 		onPlacementProcessingStateChange,
@@ -97,7 +97,8 @@
 		);
 	};
 
-	const formatZoom = (zoom: number) => `${zoom.toFixed(2).replace(/\.00$/, "")}×`;
+	const formatZoom = (zoom: number) =>
+		`${zoom.toFixed(2).replace(/\.00$/, "")}×`;
 	const clearSuggestionFeedback = () => {
 		suggestionMessage = "";
 		suggestionError = "";
@@ -122,12 +123,10 @@
 		clearSuggestionFeedback();
 
 		try {
-			const { suggestImagePlacement } = await import(
-				"$lib/utils/food/images/smartImagePlacement.client"
-			);
-			const { isConfidentAutomaticImagePlacementSuggestion } = await import(
-				"$lib/utils/food/images/smartImagePlacement"
-			);
+			const { suggestImagePlacement } =
+				await import("$lib/utils/food/images/smartImagePlacement.client");
+			const { isConfidentAutomaticImagePlacementSuggestion } =
+				await import("$lib/utils/food/images/smartImagePlacement");
 			const suggestion = await suggestImagePlacement({
 				image: smartPlacementSource,
 				geometry: previewGeometry,
@@ -144,11 +143,10 @@
 			}
 			if (
 				automatic &&
-				(
-					startingEditRevision !== placementEditRevision ||
-					placementSource !== smartPlacementSource
-				)
-			) return;
+				(startingEditRevision !== placementEditRevision ||
+					placementSource !== smartPlacementSource)
+			)
+				return;
 			if (
 				automatic &&
 				!isConfidentAutomaticImagePlacementSuggestion(suggestion)
@@ -184,7 +182,8 @@
 			!previewGeometry.ready ||
 			suggestingPlacement ||
 			lastAutomaticallyProcessedSource === placementSource
-		) return;
+		)
+			return;
 
 		lastAutomaticallyProcessedSource = placementSource;
 		void suggestPlacement({ automatic: true });
@@ -211,7 +210,7 @@
 			{foodName}
 			{category}
 			ariaLabel="Interactive card image preview"
-			{showWarningEdge}
+			{warningFrameTone}
 			interactive={editable}
 			{instructionsId}
 			onChange={handlePreviewChange}
@@ -219,8 +218,8 @@
 		/>
 		{#if editable}
 			<p id={instructionsId}>
-				Drag left to shift the image, or drag right to return it. Pinch to
-				zoom, or use the controls below.
+				Drag left to shift the image, or drag right to return it. Pinch to zoom,
+				or use the controls below.
 			</p>
 		{/if}
 	</div>
@@ -246,7 +245,11 @@
 					<StatusMessage tone="danger" message={suggestionError} />
 				{/if}
 			{/if}
-			<div class="image-placement-editor__presets" role="group" aria-label="Image fit">
+			<div
+				class="image-placement-editor__presets"
+				role="group"
+				aria-label="Image fit"
+			>
 				<PillButton
 					pressed={activeFitMode === "contain"}
 					variant={activeFitMode === "contain" ? "primary" : "neutral"}
@@ -281,7 +284,9 @@
 			<label>
 				<span>
 					Shift image left
-					{#if !previewGeometry.ready}<small>Available after the image loads</small>{/if}
+					{#if !previewGeometry.ready}<small
+							>Available after the image loads</small
+						>{/if}
 				</span>
 				<RangeInput
 					id="image-placement-horizontal-shift"
@@ -296,15 +301,15 @@
 							cropX:
 								CARD_IMAGE_PLACEMENT_MIN_X +
 								(value / 100) *
-									(CARD_IMAGE_PLACEMENT_MAX_X -
-										CARD_IMAGE_PLACEMENT_MIN_X),
+									(CARD_IMAGE_PLACEMENT_MAX_X - CARD_IMAGE_PLACEMENT_MIN_X),
 						})}
 				/>
 			</label>
 			<label>
 				<span>
 					Vertical position
-					{#if !previewGeometry.canMoveY}<small>Centered at this zoom</small>{/if}
+					{#if !previewGeometry.canMoveY}<small>Centered at this zoom</small
+						>{/if}
 				</span>
 				<RangeInput
 					id="image-placement-vertical-position"
@@ -314,12 +319,14 @@
 					value={value.cropY}
 					disabled={!previewGeometry.canMoveY}
 					ariaLabel="Vertical image position"
-					onValueChange={(nextValue) =>
-						updateCustomValue({ cropY: nextValue })}
+					onValueChange={(nextValue) => updateCustomValue({ cropY: nextValue })}
 				/>
 			</label>
 			<label>
-				<span>Zoom <output>{formatZoom(previewGeometry.effectiveZoom)}</output></span>
+				<span
+					>Zoom <output>{formatZoom(previewGeometry.effectiveZoom)}</output
+					></span
+				>
 				<RangeInput
 					id="image-placement-zoom"
 					min={1}

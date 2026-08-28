@@ -21,7 +21,8 @@ describe("evidence-based ingredient verification UI", () => {
 	});
 
 	it("does not expose provider or internal review-method filters", () => {
-		expect(sortSheet).toContain('title="Sort"');
+		expect(sortSheet).toContain('title="Filter and sort"');
+		expect(sortSheet).toContain("FOOD_SAFETY_FILTER_OPTIONS");
 		expect(sortSheet).not.toContain("filter-source-heading");
 		expect(sortSheet).not.toContain("filter-trust-heading");
 	});

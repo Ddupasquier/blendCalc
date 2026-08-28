@@ -21,9 +21,15 @@ test(
 		await page.goto("/ingredients/fridge");
 		await waitForAppReady(page);
 		await page
-			.getByRole("button", { name: "Sort saved ingredients", exact: true })
+			.getByRole("button", {
+				name: "Filter and sort saved ingredients",
+				exact: true,
+			})
 			.click();
-		const sortDialog = page.getByRole("dialog", { name: "Sort", exact: true });
+		const sortDialog = page.getByRole("dialog", {
+			name: "Filter and sort",
+			exact: true,
+		});
 		await sortDialog.getByRole("button", { name: "A → Z" }).click();
 		await sortDialog.getByRole("button", { name: "Apply" }).click();
 		await expect(sortDialog).toBeHidden();

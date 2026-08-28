@@ -1,5 +1,10 @@
 <script lang="ts">
 	import ListSortSheet from "$lib/components/common/lists/ListSortSheet/ListSortSheet.svelte";
+	import {
+		FOOD_SAFETY_FILTER_OPTIONS,
+		FOOD_SAFETY_FILTER_VALUES,
+		isFoodSafetyFilter,
+	} from "$lib/utils/food/safety/foodSafetyFilters";
 	import type { IngredientFilterSheetProps } from "./types";
 
 	let {
@@ -7,6 +12,7 @@
 		query,
 		sortValue,
 		sortOptions,
+		safetyFilter,
 		loading = false,
 		onApply,
 		onClose,
@@ -15,20 +21,29 @@
 	const visibleSortOptions = $derived(
 		sortOptions.filter((option) => option.value !== "name-desc"),
 	);
+	const resolveSafetyFilter = (value: string | undefined) => {
+		const candidate = value ?? "";
+		return isFoodSafetyFilter(candidate)
+			? candidate
+			: FOOD_SAFETY_FILTER_VALUES.all;
+	};
 </script>
 
 <ListSortSheet
 	{open}
-	title="Sort"
 	titleId="ingredient-filter-sheet-title"
-	label="Sort saved ingredients"
+	label="Filter and sort saved ingredients"
 	value={sortValue}
 	options={visibleSortOptions}
+	filterValue={safetyFilter}
+	filterOptions={FOOD_SAFETY_FILTER_OPTIONS}
+	title="Filter and sort"
 	{loading}
-	onApply={(nextSortValue) =>
+	onApply={(nextSortValue, nextSafetyFilter) =>
 		onApply({
 			query,
 			sortValue: nextSortValue,
+			safetyFilter: resolveSafetyFilter(nextSafetyFilter),
 		})}
-	onClose={onClose}
+	{onClose}
 />

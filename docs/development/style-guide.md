@@ -146,15 +146,15 @@ theme surface as permanent black-label paper.
 
 ### Semantic Supporting Colors
 
-| Role                  | Token                  | Value     | Use                                                        |
-| --------------------- | ---------------------- | --------- | ---------------------------------------------------------- |
-| Warning amber         | `$app-highlight`       | `#f4b942` | Ordinary ingredient-card warning edge and privileged crown |
-| Warning hover/strong  | `$app-highlight-hover` | `#d99a24` | Strong warning emphasis, not ordinary copy                 |
-| Error base            | `$app-danger-bg`       | `#e7b0b8` | Source color for error surfaces                            |
-| Destructive brown-red | `$app-danger-action`   | `#9c5f46` | Destructive/strong error treatment                         |
-| Warning base          | `$app-warning-bg`      | `#efc6a9` | Source color for warning surfaces                          |
-| Custom base           | `$app-custom-bg`       | `#cbb8e8` | Private unmatched custom-food tint                         |
-| Custom strong         | `$app-custom-strong`   | `#7b5fa3` | Custom-food text/accent where needed                       |
+| Role                  | Token                  | Value     | Use                                                         |
+| --------------------- | ---------------------- | --------- | ----------------------------------------------------------- |
+| Warning amber         | `$app-highlight`       | `#f4b942` | Ordinary ingredient-card warning frame and privileged crown |
+| Warning hover/strong  | `$app-highlight-hover` | `#d99a24` | Strong warning emphasis, not ordinary copy                  |
+| Error base            | `$app-danger-bg`       | `#e7b0b8` | Source color for error surfaces                             |
+| Destructive brown-red | `$app-danger-action`   | `#9c5f46` | Destructive/strong error treatment                          |
+| Warning base          | `$app-warning-bg`      | `#efc6a9` | Source color for warning surfaces                           |
+| Custom base           | `$app-custom-bg`       | `#cbb8e8` | Private unmatched custom-food tint                          |
+| Custom strong         | `$app-custom-strong`   | `#7b5fa3` | Custom-food text/accent where needed                        |
 
 `StatusMessage` derives its final warning and danger surfaces from the semantic colors
 above. Use the component rather than reproducing those color mixes.
@@ -552,7 +552,8 @@ They remain separate behavior components because their actions differ.
 Current card rules:
 
 - White panel, `1rem` radius, `5.25rem` standard minimum height, and `0.85rem`
-  compact padding.
+  compact padding. Compact food cards reserve a transparent `3px` border so warning
+  state changes never shift card geometry or content.
 - At `420px` and below—or at the compact-height breakpoint—the shared card shell uses a
   local `4.1rem` minimum height, `$app-gap-sm` padding, tighter shared gaps, `0.88rem`
   ingredient names, `0.76rem` supporting copy, and `2rem` visual card controls without
@@ -572,12 +573,15 @@ Current card rules:
 - A custom-food tint indicates a private unmatched item; it is not selection.
 - Selection mode uses the reserved card border and an honest selected state. Do not show
   always-present checkboxes outside selection mode.
-- A conflict uses the full-height amber `CardWarningEdge`, clipped by the card, with no
-  compact warning icon or text. The card's accessible label includes the warning.
+- Compact food-card conflicts use a shared `3px` rounded semantic frame with full amber or
+  danger color through the left `16%`, just beyond the `28cqw` media lane's midpoint,
+  then fade completely into the card surface by `55%` of the card width.
+  They do not add a separate left fill, compact warning icon, or warning text. The
+  card's accessible label includes the warning.
 
 The card shell and shared primary-target interaction layers live in
 `IngredientCardMediaLane/_IngredientCardLayout.scss`. Change shared card geometry or
-target layering there, not separately in saved and search cards.
+target layering there, not separately in saved, search, or Mix option cards.
 
 ### Ingredient Card Media
 
@@ -599,20 +603,24 @@ Current local geometry:
 - Fade: radial ellipse from the left, solid through `35%`, soft at `55%`, transparent
   at `80%`.
 - Fade shape: `100%` horizontal mask radius and `140%` vertical mask radius.
+- Contained or left-shifted images dynamically shorten that horizontal radius so the
+  fade reaches transparency at least `3px` before the rendered image edge. Never expose
+  a rectangular source-image seam or persist a viewport-specific pixel crop to hide it.
 - Left corners follow the card; right corners remain square beneath the fade.
 - Images and fallback symbols preserve aspect ratio and never stretch.
 - Fallback symbols use the same media lane rather than a circular container.
 - Fallback symbols are centered between the card's left edge and the ingredient title's
   actual shifted start, using the shared card-geometry calculation rather than a
   one-off offset.
-- The warning edge stays above the media through its explicit z-index.
+- The shared warning frame surrounds card media without changing its clipping or
+  placement and stays above it through an explicit z-index.
 - The complete placement-preview card is the drag/pinch/wheel surface. Do not limit
   interaction to the masked media lane or let copy and fade layers create dead zones.
 
 These are intentionally component-local values in
 `IngredientCardMediaLane.scss` and `_IngredientCardLayout.scss`. They are not app-wide
-tokens. When tuning the fade, update the shared lane so saved cards, search cards, and
-placement previews remain identical.
+tokens. When tuning the fade, update the shared lane so saved cards, search cards, Mix
+option cards, and placement previews remain identical.
 
 ### Search Results
 
@@ -620,7 +628,8 @@ placement previews remain identical.
   add/open behavior.
 - Results already in Fridge or Shopping do not show an add button.
 - Verification may appear before adding because it informs the user's choice.
-- Preference conflicts use the same warning edge as saved cards.
+- Preference conflicts use the shared rounded warning frame in search results and after
+  the item is saved to Fridge or Shopping.
 - Ranking, filtering, and pagination happen on the server; the client renders the
   ordered page.
 
@@ -687,9 +696,9 @@ placement previews remain identical.
   payloads, internal matching evidence, or language that claims an unmatched product is
   safe. Official-notice presentation never replaces medical advice or checking the
   current package.
-- Compact cards use the danger-red warning edge for a current exact or confirmed
+- Compact cards use the danger-red warning frame for a current exact or confirmed
   official recall or similarly major safety alert. Ordinary dietary and preference
-  conflicts retain the amber warning edge.
+  conflicts use the amber frame.
 - Ingredients, `Contains`, `May contain`, source-backed dietary labels, and reviewed
   dietary considerations remain plain text against the app background unless
   interaction or status requires a surface. Do not expose internal match expressions,
@@ -726,7 +735,7 @@ medical guidance, authentication, validation, errors, body weight, or minors. Do
 infer playful triggers from unreviewed food names, density, texture, or other guessed
 properties.
 
-Compact ingredient conflicts do not use `StatusMessage`; they use `CardWarningEdge` and
+Compact ingredient conflicts do not use `StatusMessage`; they use `CardWarningFrame` and
 an accessible action label. The full warning appears in the detailed view.
 Detailed ingredient preference conflicts use the shared `StatusMessage` top-end icon
 layout so the warning icon sits in the top-right while the title and reasons remain

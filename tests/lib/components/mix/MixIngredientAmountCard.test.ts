@@ -226,7 +226,7 @@ describe("MixIngredientAmountCard", () => {
 			},
 		});
 
-		expect(container.querySelector(".card-warning-edge")).toBeInTheDocument();
+		expect(container.querySelector(".card-warning-frame")).toBeInTheDocument();
 		const detailsButton = screen.getByRole("button", {
 			name: "Show warning and details for Pork Chorizo",
 		});

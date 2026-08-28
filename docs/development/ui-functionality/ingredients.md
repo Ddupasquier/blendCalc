@@ -159,7 +159,10 @@ imported generic-food sources through the server-owned search flow.
   notice that repeats the query and suggests other searchable food fields. Do not show
   the notice before the request completes, while loading, or in place of an error.
 - Show names, useful category or brand context, image or category symbol, actionable
-  verification state, completeness state, and warning edge when available.
+  verification state, completeness state, and warning frame when available.
+- Search filters can show only results with current preference or public-health warnings,
+  or only results in an active recall. Recall results remain separate from the broader
+  warning set and filtering occurs before result pagination.
 - Keep provider hierarchy badges off compact cards. Private custom classification may
   support filtering and details but does not create a resting-card badge or border.
 - Product details preserve all complete source and licence attributions represented by
@@ -264,7 +267,7 @@ The server returns one result for the current account and food:
 - `incomplete`: settings were applied but evidence or policy coverage is missing;
 - `not_checked`: no active settings were applied.
 
-No state is a safety guarantee. A card warning edge means `conflict`; no edge does not
+No state is a safety guarantee. A card warning frame means `conflict`; no frame does not
 mean `checked`. Product names, brands, and categories never provide packaged-food
 allergen evidence.
 
@@ -297,7 +300,10 @@ unchanged until review.
 Both lists share the same card and list behavior:
 
 - Search, filtering, DB-backed sorting, visible result count, progressive loading, and
-  return-to-top controls.
+  return-to-top controls. The shared filter sheet can show all items, items with current
+  preference or public-health warnings, or items in an active recall. Safety filtering
+  uses current server-annotated DB evidence before pagination so counts and pages stay
+  accurate.
 - The full card performs its primary open/select action. Trailing move, options, and
   delete controls remain separate and take priority.
 - Long-press enters selection mode and selects the held card. Selection remains visible
@@ -307,7 +313,7 @@ Both lists share the same card and list behavior:
 - Fridge and Shopping List membership is exclusive; a move cannot leave duplicate
   copies in both lists.
 - Cards show the accepted image or centered category symbol with the shared media lane,
-  warning edge, title, category, and actionable status without exposing provider rank.
+  warning frame, title, category, and actionable status without exposing provider rank.
 - Missing-image symbols come from the shared database catalog. A reviewed category
   selects the broad symbol family, then the canonical food name may select a more
   specific symbol only inside that family. Recognizable prepared forms such as pizza,

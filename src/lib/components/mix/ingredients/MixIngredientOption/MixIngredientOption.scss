@@ -1,19 +1,18 @@
 @use "../../../../../styles/variables" as *;
 @use "../../../../utils/animation/motion" as motion;
-@use "../../../ingredients/card/IngredientCardMediaLane/IngredientCardLayout" as ingredient-card-layout;
+@use "../../../ingredients/card/IngredientCardMediaLane/IngredientCardLayout" as
+	ingredient-card-layout;
 
 .mix-ingredient-option {
 	@include ingredient-card-layout.frame;
 	@include ingredient-card-layout.selection-layout;
-	min-height: calc($app-shell-control-height + $app-gap-sm);
-	padding-block: $app-gap-xs;
 	transition:
 		background-color motion.$duration-state motion.$easing-standard,
 		border-color motion.$duration-state motion.$easing-standard,
 		opacity motion.$duration-state motion.$easing-standard;
 }
 
-.mix-ingredient-option--selected {
+.mix-ingredient-option--selected:not(.mix-ingredient-option--warning) {
 	background: $app-shell-surface-panel;
 	border-color: $app-shell-accent-primary;
 }

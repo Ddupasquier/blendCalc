@@ -5,7 +5,12 @@ $media-lane-fade-end: 80%;
 $media-lane-mask-horizontal-radius: 100%;
 $media-lane-mask-vertical-radius: 140%;
 $media-lane-mask: radial-gradient(
-	ellipse $media-lane-mask-horizontal-radius $media-lane-mask-vertical-radius at left center,
+	ellipse
+		var(
+			--ingredient-card-media-mask-horizontal-radius,
+			#{$media-lane-mask-horizontal-radius}
+		)
+		$media-lane-mask-vertical-radius at left center,
 	#000 0%,
 	#000 $media-lane-fade-solid,
 	rgb(0 0 0 / 35%) $media-lane-fade-soft,

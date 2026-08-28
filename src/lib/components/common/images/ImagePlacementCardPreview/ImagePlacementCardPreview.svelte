@@ -2,7 +2,7 @@
 	import Chevron from "$lib/assets/icons/Chevron/Chevron.svelte";
 	import DotsHorizontal from "$lib/assets/icons/DotsHorizontal/DotsHorizontal.svelte";
 	import X from "$lib/assets/icons/X/X.svelte";
-	import CardWarningEdge from "$lib/components/common/display/CardWarningEdge/CardWarningEdge.svelte";
+	import CardWarningFrame from "$lib/components/common/display/CardWarningFrame/CardWarningFrame.svelte";
 	import CircularIconFrame from "$lib/components/common/icons/CircularIconFrame/CircularIconFrame.svelte";
 	import IngredientCardMediaLane from "$lib/components/ingredients/card/IngredientCardMediaLane/IngredientCardMediaLane.svelte";
 	import { EMPTY_IMAGE_PLACEMENT_GEOMETRY } from "$lib/utils/food/images/imagePlacement";
@@ -17,7 +17,7 @@
 		foodName = "Product name",
 		category = "Ingredient category",
 		ariaLabel = "Card image preview",
-		showWarningEdge = false,
+		warningFrameTone = null,
 		interactive = false,
 		instructionsId = undefined,
 		onChange,
@@ -45,6 +45,7 @@
 <div
 	class="image-placement-card-preview"
 	class:image-placement-card-preview--interactive={interactive}
+	class:image-placement-card-preview--warning={warningFrameTone !== null}
 	role="group"
 	aria-label={ariaLabel}
 	aria-describedby={interactive ? instructionsId : undefined}
@@ -62,8 +63,8 @@
 		onGeometryChange={handleGeometryChange}
 		{onError}
 	/>
-	{#if showWarningEdge}
-		<CardWarningEdge />
+	{#if warningFrameTone}
+		<CardWarningFrame tone={warningFrameTone} />
 	{/if}
 	<span class="image-placement-card-preview__copy">
 		<strong>{foodName}</strong>

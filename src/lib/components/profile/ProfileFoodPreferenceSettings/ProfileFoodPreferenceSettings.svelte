@@ -43,13 +43,13 @@
 		allergens: {
 			title: "Allergens",
 			description:
-				"Applies to search ranking, warning edges, Nutrition details, and Mix checks. New wording stays saved while its match is reviewed.",
+				"Applies to search ranking, warning frames, Nutrition details, and Mix checks. New wording stays saved while its match is reviewed.",
 			customEntryLabel: "Add a specific allergen",
 		},
 		dietaryRestrictions: {
 			title: "Dietary restrictions",
 			description:
-				"Applies to search ranking, warning edges, Nutrition details, and Mix checks without blocking a food from being added.",
+				"Applies to search ranking, warning frames, Nutrition details, and Mix checks without blocking a food from being added.",
 			customEntryLabel: "Add a specific restriction",
 		},
 	};

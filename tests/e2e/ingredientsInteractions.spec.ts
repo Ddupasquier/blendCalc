@@ -448,7 +448,7 @@ test("Ingredients exposes one page-level manual-entry action without a duplicate
 		}),
 	).toHaveCount(1);
 	const filterAction = page.getByRole("button", {
-		name: "Sort saved ingredients",
+		name: "Filter and sort saved ingredients",
 		exact: true,
 	});
 	const manualEntryBounds = await manualEntryAction.boundingBox();
@@ -489,7 +489,10 @@ test("Ingredients keeps Filters level with Manual Entry across the compact break
 			.getByRole("button", { name: "Enter a custom ingredient manually" })
 			.boundingBox();
 		const filterBounds = await page
-			.getByRole("button", { name: "Sort saved ingredients", exact: true })
+			.getByRole("button", {
+				name: "Filter and sort saved ingredients",
+				exact: true,
+			})
 			.boundingBox();
 
 		expect(manualEntryBounds).not.toBeNull();
@@ -1032,17 +1035,27 @@ test("reduced motion moves selected cards immediately through one atomic request
 	}
 });
 
-test("the shared sort sheet applies a choice and closes its URL-backed overlay", async ({
+test("the shared filter-and-sort sheet applies safety and sort choices from its URL-backed overlay", async ({
 	page,
 }) => {
 	await page.goto("/ingredients/fridge");
 	await waitForAppReady(page);
 	await page
-		.getByRole("button", { name: "Sort saved ingredients", exact: true })
+		.getByRole("button", {
+			name: "Filter and sort saved ingredients",
+			exact: true,
+		})
 		.click();
 	await expect(page).toHaveURL(/\/ingredients\/fridge\/filters$/);
-	const dialog = page.getByRole("dialog", { name: "Sort", exact: true });
+	const dialog = page.getByRole("dialog", {
+		name: "Filter and sort",
+		exact: true,
+	});
 	await expect(dialog).toBeVisible();
+	await expect(dialog.getByRole("button", { name: "Warnings" })).toBeVisible();
+	await expect(
+		dialog.getByRole("button", { name: "Active recalls" }),
+	).toBeVisible();
 	await dialog.getByRole("button", { name: "A → Z" }).click();
 	await dialog.getByRole("button", { name: "Apply" }).click();
 	await expect(page).toHaveURL(/\/ingredients\/fridge$/);

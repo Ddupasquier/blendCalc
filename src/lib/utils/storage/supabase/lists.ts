@@ -5,6 +5,7 @@ import {
 } from "$lib/utils/food/records/foodRecords";
 import { deduplicateFoodItemsByIdentity } from "$lib/utils/food/records/foodIdentity";
 import type { FoodItem } from "$lib/utils/food/types";
+import type { FoodSafetyFilter } from "$lib/utils/food/safety/foodSafetyFilters";
 import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
 import {
 	CLOUD_CURSOR_PAGE_SIZE,
@@ -74,6 +75,7 @@ export type CloudIngredientListPageOptions = {
 	sort?: CloudListSort;
 	sourceFilter?: string;
 	trustFilter?: string;
+	safetyFilter?: FoodSafetyFilter;
 };
 
 export const readCloudIngredientListIndex = async (

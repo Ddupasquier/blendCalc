@@ -93,9 +93,7 @@ describe("SavedIngredientList overlay behavior", () => {
 		await fireEvent.scroll(list);
 
 		expect(onRevealMore).not.toHaveBeenCalled();
-		expect(
-			screen.getByRole("button", { name: "Load more" }),
-		).toBeDisabled();
+		expect(screen.getByRole("button", { name: "Load more" })).toBeDisabled();
 	});
 
 	it("does not swallow the compact-header gesture after an ordinary list resize", async () => {
@@ -179,36 +177,36 @@ describe("SavedIngredientList overlay behavior", () => {
 	] as const)(
 		"uses full-height product images across %s cards",
 		(_, activeList) => {
-		const { container } = render(SavedIngredientList, {
-			props: {
-				activeList,
-				foods: [food, sempioGochuJang],
-				onSelectAll: vi.fn(),
-				onEnterSelection: vi.fn(),
-				onCancelSelection: vi.fn(),
-				onMoveSelection: vi.fn(),
-				onMoveItem: vi.fn(),
-				onToggle: vi.fn(),
-				onPreview: vi.fn(),
-				onActions: vi.fn(),
-				onRemove: vi.fn(),
-				onRevealMore: vi.fn(),
-			},
-		});
+			const { container } = render(SavedIngredientList, {
+				props: {
+					activeList,
+					foods: [food, sempioGochuJang],
+					onSelectAll: vi.fn(),
+					onEnterSelection: vi.fn(),
+					onCancelSelection: vi.fn(),
+					onMoveSelection: vi.fn(),
+					onMoveItem: vi.fn(),
+					onToggle: vi.fn(),
+					onPreview: vi.fn(),
+					onActions: vi.fn(),
+					onRemove: vi.fn(),
+					onRevealMore: vi.fn(),
+				},
+			});
 
-		expect(
-			container.querySelector(
-				".saved-ingredient-card > .ingredient-card-media-lane img",
-			),
-		).toHaveAttribute(
-			"src",
-			"https://images.example.com/sempio-gochu-jang.jpg",
-		);
-		expect(
-			screen.getAllByRole("button", {
-				name: "Preview Sempio, Gochu Jang Hot & Sweet Chili Sauce",
-			}),
-		).toHaveLength(1);
+			expect(
+				container.querySelector(
+					".saved-ingredient-card > .ingredient-card-media-lane img",
+				),
+			).toHaveAttribute(
+				"src",
+				"https://images.example.com/sempio-gochu-jang.jpg",
+			);
+			expect(
+				screen.getAllByRole("button", {
+					name: "Preview Sempio, Gochu Jang Hot & Sweet Chili Sauce",
+				}),
+			).toHaveLength(1);
 		},
 	);
 
@@ -238,7 +236,9 @@ describe("SavedIngredientList overlay behavior", () => {
 				".ingredient-card-media__fallback .food-symbol__fallback",
 			),
 		).toBeInTheDocument();
-		expect(container.querySelector(".circular-media-frame")).not.toBeInTheDocument();
+		expect(
+			container.querySelector(".circular-media-frame"),
+		).not.toBeInTheDocument();
 	});
 
 	it("keeps the full-height media lane when a product image fails", async () => {
@@ -273,20 +273,24 @@ describe("SavedIngredientList overlay behavior", () => {
 				".ingredient-card-media__fallback .food-symbol__fallback",
 			),
 		).toBeInTheDocument();
-		expect(container.querySelector(".circular-media-frame")).not.toBeInTheDocument();
+		expect(
+			container.querySelector(".circular-media-frame"),
+		).not.toBeInTheDocument();
 	});
 
-	it("keeps the warning edge above cards with feature images", () => {
+	it("keeps the warning frame around cards with feature images", () => {
 		const warningFood: FoodItem = {
 			...sempioGochuJang,
-			preferenceWarnings: [{
-				id: "allergen-warning",
-				level: "warning",
-				category: "allergen",
-				label: "Soy",
-				code: "FOOD_ALLERGEN_CONTAINS",
-				params: { factLabel: "Soy" },
-			}],
+			preferenceWarnings: [
+				{
+					id: "allergen-warning",
+					level: "warning",
+					category: "allergen",
+					label: "Soy",
+					code: "FOOD_ALLERGEN_CONTAINS",
+					params: { factLabel: "Soy" },
+				},
+			],
 		};
 		const { container } = render(SavedIngredientList, {
 			props: {
@@ -307,21 +311,15 @@ describe("SavedIngredientList overlay behavior", () => {
 
 		const card = container.querySelector(".saved-ingredient-card");
 		const image = card?.querySelector(".ingredient-card-media-lane");
-		const warningEdge = card?.querySelector(".card-warning-edge");
 		expect(image).toBeInTheDocument();
-		expect(warningEdge).toBeInTheDocument();
-		if (!image || !warningEdge) {
-			throw new Error("Expected both the feature image and warning edge.");
-		}
+		expect(card).toHaveClass("saved-ingredient-card--warning");
+		expect(card).toHaveAttribute("data-warning-tone", "warning");
+		expect(card?.querySelector(".card-warning-frame")).toBeInTheDocument();
 		expect(
-			image.compareDocumentPosition(warningEdge) &
-				Node.DOCUMENT_POSITION_FOLLOWING,
-		).toBeTruthy();
-			expect(
-				screen.getByRole("button", {
-					name: /Warning: The label lists soy as an allergen/,
-				}),
-			).toBeInTheDocument();
+			screen.getByRole("button", {
+				name: /Warning: The label lists soy as an allergen/,
+			}),
+		).toBeInTheDocument();
 	});
 
 	it("announces selection mode and the selected count", () => {
@@ -466,9 +464,7 @@ describe("SavedIngredientList overlay behavior", () => {
 		await fireEvent(window, new Event("resize"));
 
 		expect(onRevealMore).not.toHaveBeenCalled();
-		expect(
-			screen.getByRole("button", { name: "Return to top" }),
-		).toBeVisible();
+		expect(screen.getByRole("button", { name: "Return to top" })).toBeVisible();
 
 		await fireEvent.click(screen.getByRole("button", { name: "Load more" }));
 		expect(onRevealMore).toHaveBeenCalledOnce();

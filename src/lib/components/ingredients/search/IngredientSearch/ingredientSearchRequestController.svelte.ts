@@ -2,6 +2,7 @@ import { browser } from "$app/environment";
 import { getUserFacingErrorMessage } from "$lib/utils/errors/userFacingErrors";
 import { searchFoodPage } from "$lib/utils/food/sources/fdc";
 import type { FoodItem } from "$lib/utils/food/types";
+import type { FoodSafetyFilter } from "$lib/utils/food/safety/foodSafetyFilters";
 import {
 	INGREDIENT_SEARCH_LOAD_MORE_PAGE_SIZE,
 	INGREDIENT_SEARCH_PAGE_SIZE,
@@ -10,12 +11,14 @@ import {
 type IngredientSearchRequestControllerOptions = {
 	getSourceFilter: () => string;
 	getTrustFilter: () => string;
+	getSafetyFilter?: () => FoodSafetyFilter;
 	onResultsChanged: (results: FoodItem[], query: string) => void;
 };
 
 export const createIngredientSearchRequestController = ({
 	getSourceFilter,
 	getTrustFilter,
+	getSafetyFilter,
 	onResultsChanged,
 }: IngredientSearchRequestControllerOptions) => {
 	const state = $state({
@@ -80,6 +83,7 @@ export const createIngredientSearchRequestController = ({
 					limit: INGREDIENT_SEARCH_PAGE_SIZE,
 					sourceFilter: getSourceFilter(),
 					trustFilter: getTrustFilter(),
+					safetyFilter: getSafetyFilter?.() ?? "all",
 					signal: abortController.signal,
 				});
 				if (currentRequestVersion !== requestVersion) return;
@@ -143,6 +147,7 @@ export const createIngredientSearchRequestController = ({
 				limit: INGREDIENT_SEARCH_LOAD_MORE_PAGE_SIZE,
 				sourceFilter: getSourceFilter(),
 				trustFilter: getTrustFilter(),
+				safetyFilter: getSafetyFilter?.() ?? "all",
 				signal: abortController.signal,
 			});
 			if (

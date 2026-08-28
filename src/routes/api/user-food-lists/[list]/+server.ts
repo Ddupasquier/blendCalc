@@ -1,6 +1,4 @@
-import {
-	annotateFoodsWithFoodSafety,
-} from "$lib/server/food-safety/foodSafetyEvaluation.server";
+import { annotateFoodsWithFoodSafety } from "$lib/server/food-safety/foodSafetyEvaluation.server";
 import { LIST_PAGE_LIMITS } from "$lib/config/listPagination";
 import { getUserFoodSafetyContext } from "$lib/server/food-safety/userFoodSafety.server";
 import {
@@ -11,18 +9,26 @@ import {
 import {
 	isIngredientSourceFilter,
 	isIngredientTrustFilter,
+	matchesIngredientProvenance,
 } from "$lib/utils/ingredients/ingredientProvenance";
 import type { FoodListSort } from "$lib/utils/list/listNavigation";
 import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
 import {
+	readCloudIngredientList,
 	readCloudIngredientListPage,
 } from "$lib/server/user-data/foodLists.server";
-import {
-	enrichFoodForListPlacement,
-} from "$lib/server/user-data/foodListPlacement.server";
+import { enrichFoodForListPlacement } from "$lib/server/user-data/foodListPlacement.server";
 import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 import type { Json } from "$lib/types/database.types";
 import type { FoodItem } from "$lib/utils/food/types";
+import {
+	filterFoodsBySafety,
+	isFoodSafetyFilter,
+} from "$lib/utils/food/safety/foodSafetyFilters";
+import {
+	filterItemsByQuery,
+	sortFoodListItems,
+} from "$lib/utils/list/listNavigation";
 import { readLimitedJson } from "$lib/server/security/requestBody.server";
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
 import { json } from "@sveltejs/kit";
@@ -49,10 +55,12 @@ const getListType = (listKey: IngredientListKey) =>
 const isFood = (value: unknown): value is FoodItem => {
 	if (!value || typeof value !== "object") return false;
 	const food = value as Partial<FoodItem>;
-	return Number.isSafeInteger(food.fdcId) &&
+	return (
+		Number.isSafeInteger(food.fdcId) &&
 		typeof food.description === "string" &&
 		food.description.trim().length > 0 &&
-		Array.isArray(food.foodNutrients);
+		Array.isArray(food.foodNutrients)
+	);
 };
 
 export const GET: RequestHandler = async ({ locals, params, url }) => {
@@ -73,6 +81,7 @@ export const GET: RequestHandler = async ({ locals, params, url }) => {
 	const sort = (url.searchParams.get("sort") ?? "recent") as FoodListSort;
 	const sourceFilter = url.searchParams.get("source")?.trim() || "all";
 	const trustFilter = url.searchParams.get("trust")?.trim() || "any";
+	const safetyFilter = url.searchParams.get("safety")?.trim() || "all";
 
 	if (
 		!Number.isInteger(limit) ||
@@ -89,35 +98,72 @@ export const GET: RequestHandler = async ({ locals, params, url }) => {
 	if (
 		!VALID_SORTS.has(sort) ||
 		!isIngredientSourceFilter(sourceFilter) ||
-		!isIngredientTrustFilter(trustFilter)
+		!isIngredientTrustFilter(trustFilter) ||
+		!isFoodSafetyFilter(safetyFilter)
 	) {
-		throwAppError(400, "SEARCH_FILTER_INVALID");
+		return throwAppError(400, "SEARCH_FILTER_INVALID");
 	}
 
 	try {
-		const [page, foodSafetyContext] = await Promise.all([
-			readCloudIngredientListPage(
-				listKey,
-				{
-					limit,
-					offset,
-					query,
-					sort,
-					sourceFilter,
-					trustFilter,
-				},
-				{ supabase: locals.supabase, userId: user.id },
-			),
-			getUserFoodSafetyContext(locals.supabase, user.id),
-		]);
-		if (!page) throw new Error("User food list was unavailable.");
+		const cloudDataContext = {
+			supabase: locals.supabase,
+			userId: user.id,
+		};
+		const foodSafetyContextPromise = getUserFoodSafetyContext(
+			locals.supabase,
+			user.id,
+		);
 
-		return json({
-			...page,
-			foods: annotateFoodsWithFoodSafety(
-				page.foods,
-				foodSafetyContext,
+		if (safetyFilter === "all") {
+			const [page, foodSafetyContext] = await Promise.all([
+				readCloudIngredientListPage(
+					listKey,
+					{
+						limit,
+						offset,
+						query,
+						sort,
+						sourceFilter,
+						trustFilter,
+					},
+					cloudDataContext,
+				),
+				foodSafetyContextPromise,
+			]);
+			if (!page) throw new Error("User food list was unavailable.");
+			return json({
+				...page,
+				foods: annotateFoodsWithFoodSafety(page.foods, foodSafetyContext),
+			});
+		}
+
+		const [allFoods, foodSafetyContext] = await Promise.all([
+			readCloudIngredientList(listKey, cloudDataContext),
+			foodSafetyContextPromise,
+		]);
+		if (!allFoods) throw new Error("User food list was unavailable.");
+		const matchingFoods = sortFoodListItems(
+			filterFoodsBySafety(
+				filterItemsByQuery(
+					annotateFoodsWithFoodSafety(allFoods, foodSafetyContext).filter(
+						(food) =>
+							matchesIngredientProvenance(food, sourceFilter, trustFilter),
+					),
+					query,
+					(food) =>
+						[food.description, food.brandOwner, food.foodCategory]
+							.filter(Boolean)
+							.join(" "),
+				),
+				safetyFilter,
 			),
+			sort,
+			(food) => food.description,
+			(food) => food.listAddedAt,
+		);
+		return json({
+			foods: matchingFoods.slice(offset, offset + limit),
+			totalCount: matchingFoods.length,
 		});
 	} catch {
 		return throwAppError(503, "SERVICE_UNAVAILABLE");

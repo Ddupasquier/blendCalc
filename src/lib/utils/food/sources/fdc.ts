@@ -82,27 +82,27 @@ const normalizeFoodNutrient = (
 			!nutrientName ||
 			!unitName ||
 			value === null
-		) return null;
-			return {
+		)
+			return null;
+		return {
 			nutrientId,
 			nutrientName,
 			nutrientNumber: String(nutrient.nutrientNumber ?? ""),
 			unitName,
-				value,
-				valueOrigin: nutrient.valueOrigin ?? "reported",
-				valueStatus: nutrient.valueStatus ??
-					(value === 0 ? "reported-zero" : "reported"),
-				standardError: nutrient.standardError,
-				sourceNutrientKey:
-					nutrient.sourceNutrientKey ?? String(nutrientId),
-				sourceNutrientCode:
-					nutrient.sourceNutrientCode ??
-					(String(nutrient.nutrientNumber ?? "") || undefined),
-				mappingStatus: nutrient.mappingStatus ?? "canonical",
-				mappingMethod: nutrient.mappingMethod ?? "source-identifier",
-				mappingReviewReference: nutrient.mappingReviewReference,
-				derivationMethod: nutrient.derivationMethod,
-			};
+			value,
+			valueOrigin: nutrient.valueOrigin ?? "reported",
+			valueStatus:
+				nutrient.valueStatus ?? (value === 0 ? "reported-zero" : "reported"),
+			standardError: nutrient.standardError,
+			sourceNutrientKey: nutrient.sourceNutrientKey ?? String(nutrientId),
+			sourceNutrientCode:
+				nutrient.sourceNutrientCode ??
+				(String(nutrient.nutrientNumber ?? "") || undefined),
+			mappingStatus: nutrient.mappingStatus ?? "canonical",
+			mappingMethod: nutrient.mappingMethod ?? "source-identifier",
+			mappingReviewReference: nutrient.mappingReviewReference,
+			derivationMethod: nutrient.derivationMethod,
+		};
 	}
 
 	const definition = nutrient.nutrient;
@@ -116,20 +116,21 @@ const normalizeFoodNutrient = (
 		!nutrientName ||
 		!unitName ||
 		value === null
-	) return null;
-		return {
+	)
+		return null;
+	return {
 		nutrientId,
 		nutrientName,
 		nutrientNumber: String(definition?.number ?? ""),
 		unitName,
-			value,
-			valueOrigin: "reported",
-			valueStatus: value === 0 ? "reported-zero" : "reported",
-			sourceNutrientKey: String(nutrientId),
-			sourceNutrientCode: String(definition?.number ?? "") || undefined,
-			mappingStatus: "canonical",
-			mappingMethod: "source-identifier",
-		};
+		value,
+		valueOrigin: "reported",
+		valueStatus: value === 0 ? "reported-zero" : "reported",
+		sourceNutrientKey: String(nutrientId),
+		sourceNutrientCode: String(definition?.number ?? "") || undefined,
+		mappingStatus: "canonical",
+		mappingMethod: "source-identifier",
+	};
 };
 
 const toPositiveNumber = (value: unknown) => {
@@ -144,15 +145,16 @@ const getDetailPortionLabel = (portion: FdcDetailPortion) =>
 		toPositiveNumber(portion.amount),
 		portion.measureUnit?.abbreviation?.trim() ||
 			portion.measureUnit?.name?.trim(),
-	].filter(Boolean).join(" ");
+	]
+		.filter(Boolean)
+		.join(" ");
 
 const getSearchMeasureLabel = (measure: FdcSearchMeasure) =>
 	measure.disseminationText?.trim() ||
 	measure.modifier?.trim() ||
-	[
-		toPositiveNumber(measure.amount),
-		measure.measureUnitName?.trim(),
-	].filter(Boolean).join(" ");
+	[toPositiveNumber(measure.amount), measure.measureUnitName?.trim()]
+		.filter(Boolean)
+		.join(" ");
 
 const getFdcFoodIdentityType = (food: FdcFoodResponse): FoodIdentityType => {
 	if (food.foodIdentityType) return food.foodIdentityType;
@@ -184,9 +186,7 @@ const getFdcServingOrigin = (food: FdcFoodResponse): FoodServing["origin"] => {
 	return "unknown";
 };
 
-const normalizeFoodServings = (
-	food: FdcFoodResponse,
-): FoodServing[] => {
+const normalizeFoodServings = (food: FdcFoodResponse): FoodServing[] => {
 	const sourceReference = String(food.fdcId);
 	const origin = getFdcServingOrigin(food);
 	const rows = [
@@ -194,26 +194,31 @@ const normalizeFoodServings = (
 			const label = getDetailPortionLabel(portion);
 			const gramWeight = toPositiveNumber(portion.gramWeight);
 			const amount = toPositiveNumber(portion.amount);
-			const sourceUnit = portion.measureUnit?.abbreviation?.trim() ||
+			const sourceUnit =
+				portion.measureUnit?.abbreviation?.trim() ||
 				portion.measureUnit?.name?.trim();
-			const parsedMeasure = amount !== null && sourceUnit
-				? parseSourceServingMeasure(`${amount} ${sourceUnit}`)
-				: null;
+			const parsedMeasure =
+				amount !== null && sourceUnit
+					? parseSourceServingMeasure(`${amount} ${sourceUnit}`)
+					: null;
 			return label && gramWeight !== null
-				? [{
-					label,
-					gramWeight,
-					amount,
-					unitKey: parsedMeasure?.unit,
-					measureType: portion.measureUnit?.name?.trim() || "Food portion",
-					isHouseholdMeasure: true,
-					sourceMeasureKey: portion.sequenceNumber === undefined
-						? undefined
-						: `portion:${portion.sequenceNumber}`,
-					origin,
-					gramWeightMethod: "source-reported" as const,
-					order: toPositiveNumber(portion.sequenceNumber),
-				}]
+				? [
+						{
+							label,
+							gramWeight,
+							amount,
+							unitKey: parsedMeasure?.unit,
+							measureType: portion.measureUnit?.name?.trim() || "Food portion",
+							isHouseholdMeasure: true,
+							sourceMeasureKey:
+								portion.sequenceNumber === undefined
+									? undefined
+									: `portion:${portion.sequenceNumber}`,
+							origin,
+							gramWeightMethod: "source-reported" as const,
+							order: toPositiveNumber(portion.sequenceNumber),
+						},
+					]
 				: [];
 		}),
 		...(food.foodMeasures ?? []).flatMap((measure) => {
@@ -221,24 +226,28 @@ const normalizeFoodServings = (
 			const gramWeight = toPositiveNumber(measure.gramWeight);
 			const amount = toPositiveNumber(measure.amount);
 			const sourceUnit = measure.measureUnitName?.trim();
-			const parsedMeasure = amount !== null && sourceUnit
-				? parseSourceServingMeasure(`${amount} ${sourceUnit}`)
-				: null;
+			const parsedMeasure =
+				amount !== null && sourceUnit
+					? parseSourceServingMeasure(`${amount} ${sourceUnit}`)
+					: null;
 			return label && gramWeight !== null
-				? [{
-					label,
-					gramWeight,
-					amount,
-					unitKey: parsedMeasure?.unit,
-					measureType: measure.measureUnitName?.trim() || "Food measure",
-					isHouseholdMeasure: true,
-					sourceMeasureKey: measure.rank === undefined
-						? undefined
-						: `measure:${measure.rank}`,
-					origin,
-					gramWeightMethod: "source-reported" as const,
-					order: toPositiveNumber(measure.rank),
-				}]
+				? [
+						{
+							label,
+							gramWeight,
+							amount,
+							unitKey: parsedMeasure?.unit,
+							measureType: measure.measureUnitName?.trim() || "Food measure",
+							isHouseholdMeasure: true,
+							sourceMeasureKey:
+								measure.rank === undefined
+									? undefined
+									: `measure:${measure.rank}`,
+							origin,
+							gramWeightMethod: "source-reported" as const,
+							order: toPositiveNumber(measure.rank),
+						},
+					]
 				: [];
 		}),
 	];
@@ -247,15 +256,16 @@ const normalizeFoodServings = (
 		const key = `${serving.label.toLocaleLowerCase("en-US")}:${serving.gramWeight}`;
 		if (seen.has(key)) return [];
 		seen.add(key);
-		return [{
-			label: serving.label,
-			gramWeight: serving.gramWeight,
+		return [
+			{
+				label: serving.label,
+				gramWeight: serving.gramWeight,
 				amount: serving.amount ?? undefined,
 				unitKey: serving.unitKey,
-				isPrimary: serving.order === 1 || (index === 0 && !rows.some(
-				(candidate) => candidate.order === 1,
-			)),
-			source: "usda" as const,
+				isPrimary:
+					serving.order === 1 ||
+					(index === 0 && !rows.some((candidate) => candidate.order === 1)),
+				source: "usda" as const,
 				sourceReference,
 				confidence: "unknown" as const,
 				measureType: serving.measureType,
@@ -263,7 +273,8 @@ const normalizeFoodServings = (
 				sourceMeasureKey: serving.sourceMeasureKey,
 				origin: serving.origin,
 				gramWeightMethod: serving.gramWeightMethod,
-			}];
+			},
+		];
 	});
 };
 
@@ -286,7 +297,9 @@ const toSourceTimestamp = (value: string | undefined) => {
 		return undefined;
 	}
 	const timestamp = Date.parse(trimmed);
-	return Number.isFinite(timestamp) ? new Date(timestamp).toISOString() : undefined;
+	return Number.isFinite(timestamp)
+		? new Date(timestamp).toISOString()
+		: undefined;
 };
 
 const normalizeSourceRecordMetadata = (food: FdcFoodResponse) => {
@@ -300,10 +313,10 @@ const normalizeSourceRecordMetadata = (food: FdcFoodResponse) => {
 		...(food.sourceMetadata?.publishedAt
 			? {}
 			: {
-				publishedAt: toSourceTimestamp(
-					food.publishedDate ?? food.publicationDate,
-				),
-			}),
+					publishedAt: toSourceTimestamp(
+						food.publishedDate ?? food.publicationDate,
+					),
+				}),
 		...(food.sourceMetadata?.availableAt
 			? {}
 			: { availableAt: toSourceTimestamp(food.availableDate) }),
@@ -350,9 +363,7 @@ export const normalizeFdcFood = (food: FdcFoodResponse): FoodItem => {
 		sourceIdentifiers: {
 			...food.sourceIdentifiers,
 			usdaFdcId: String(food.fdcId),
-			...(legacyUsdaNdbNumber
-				? { usdaNdbNumber: legacyUsdaNdbNumber }
-				: {}),
+			...(legacyUsdaNdbNumber ? { usdaNdbNumber: legacyUsdaNdbNumber } : {}),
 		},
 		nameProvenance: "source",
 		brandOwner: brandOwner || undefined,
@@ -362,7 +373,8 @@ export const normalizeFdcFood = (food: FdcFoodResponse): FoodItem => {
 		foodServings,
 		hasSourceServing: foodServings.length > 0,
 		packageQuantity:
-			food.packageQuantity ?? (packageLabel ? { label: packageLabel } : undefined),
+			food.packageQuantity ??
+			(packageLabel ? { label: packageLabel } : undefined),
 		sourceMetadata,
 		fieldProvenance: {
 			...food.fieldProvenance,
@@ -427,12 +439,12 @@ export const normalizeFdcFood = (food: FdcFoodResponse): FoodItem => {
 				: {}),
 			...(food.alternateDescription?.trim()
 				? {
-						alternateDescription:
-							food.fieldProvenance?.alternateDescription ?? {
-								source: "usda" as const,
-								sourceReference,
-								confidence: "imported" as const,
-							},
+						alternateDescription: food.fieldProvenance
+							?.alternateDescription ?? {
+							source: "usda" as const,
+							sourceReference,
+							confidence: "imported" as const,
+						},
 					}
 				: {}),
 			...(food.preparation?.trim()
@@ -464,27 +476,26 @@ export const searchFoodPage = async (
 		limit: String(limit),
 		source: options.sourceFilter ?? "all",
 		trust: options.trustFilter ?? "any",
+		safety: options.safetyFilter ?? "all",
 	});
 
-	const response = await fetch(
-		`/api/foods/search?${searchParams.toString()}`,
-		{
-			headers: { accept: "application/json" },
-			signal: options.signal,
-		},
-	);
+	const response = await fetch(`/api/foods/search?${searchParams.toString()}`, {
+		headers: { accept: "application/json" },
+		signal: options.signal,
+	});
 	if (!response.ok) {
 		throw new FdcConfigurationError();
 	}
-	const data = await response.json() as Partial<IngredientSearchPage>;
+	const data = (await response.json()) as Partial<IngredientSearchPage>;
 	const foods = data.foods ?? [];
-	const nextOffset = typeof data.nextOffset === "number" &&
-		Number.isInteger(data.nextOffset)
-		? data.nextOffset
-		: null;
-	const total = typeof data.total === "number" && Number.isInteger(data.total)
-		? data.total
-		: foods.length;
+	const nextOffset =
+		typeof data.nextOffset === "number" && Number.isInteger(data.nextOffset)
+			? data.nextOffset
+			: null;
+	const total =
+		typeof data.total === "number" && Number.isInteger(data.total)
+			? data.total
+			: foods.length;
 	return {
 		foods,
 		hasMore: data.hasMore === true,

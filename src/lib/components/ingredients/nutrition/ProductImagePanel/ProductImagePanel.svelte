@@ -12,7 +12,7 @@
 		getFoodImageAltText,
 		pickFoodFullImageUrl,
 	} from "$lib/utils/food/images/foodImages";
-	import { getPrimaryFoodWarning } from "$lib/utils/ingredients/ingredientListUi";
+	import { getFoodWarningFrameTone } from "$lib/utils/ingredients/ingredientListUi";
 	import { updateFoodImagePlacement } from "$lib/utils/food/images/foodImagePlacement";
 	import { getUserFacingErrorMessage } from "$lib/utils/errors/userFacingErrors";
 	import { getCanonicalFoodDescription } from "$lib/utils/food/records/foodRecords";
@@ -32,8 +32,8 @@
 	const foodName = $derived(
 		food ? getCanonicalFoodDescription(food) : "Ingredient",
 	);
-	const showWarningEdge = $derived(
-		Boolean(food && getPrimaryFoodWarning(food)),
+	const warningFrameTone = $derived(
+		food ? getFoodWarningFrameTone(food) : null,
 	);
 	const imageAlt = $derived(
 		getFoodImageAltText({
@@ -50,17 +50,19 @@
 	let placementMessage = $state("");
 	let placementError = $state("");
 
-	const savedPlacement = $derived<ImagePlacementValue>(getStoredImagePlacement({
-		cropX: food?.image?.cropX ?? 50,
-		cropY: food?.image?.cropY ?? 50,
-		cropZoom: food?.image?.cropZoom ?? 1,
-		rotationDegrees: food?.image?.rotationDegrees,
-		fitMode: food?.image?.fitMode,
-		placementVersion: food?.image?.placementVersion,
-		placementMethod: food?.image?.placementMethod,
-		suggestionVersion: food?.image?.suggestionVersion,
-		suggestionConfidence: food?.image?.suggestionConfidence,
-	}));
+	const savedPlacement = $derived<ImagePlacementValue>(
+		getStoredImagePlacement({
+			cropX: food?.image?.cropX ?? 50,
+			cropY: food?.image?.cropY ?? 50,
+			cropZoom: food?.image?.cropZoom ?? 1,
+			rotationDegrees: food?.image?.rotationDegrees,
+			fitMode: food?.image?.fitMode,
+			placementVersion: food?.image?.placementVersion,
+			placementMethod: food?.image?.placementMethod,
+			suggestionVersion: food?.image?.suggestionVersion,
+			suggestionConfidence: food?.image?.suggestionConfidence,
+		}),
+	);
 	const imageKey = $derived(
 		[
 			food?.image?.source ?? "",
@@ -80,8 +82,7 @@
 		draftPlacement.placementVersion !== savedPlacement.placementVersion ||
 		draftPlacement.placementMethod !== savedPlacement.placementMethod ||
 		draftPlacement.suggestionVersion !== savedPlacement.suggestionVersion ||
-		draftPlacement.suggestionConfidence !==
-			savedPlacement.suggestionConfidence;
+		draftPlacement.suggestionConfidence !== savedPlacement.suggestionConfidence;
 
 	$effect(() => {
 		if (imageUrl !== lastImageUrl) {
@@ -130,8 +131,7 @@
 					"We couldn't save this image placement. Restore the default or try again.",
 				network:
 					"We couldn't connect while saving. Check your connection and try again.",
-				timeout:
-					"Saving took too long. Check your connection and try again.",
+				timeout: "Saving took too long. Check your connection and try again.",
 			});
 		} finally {
 			saveRequestInFlight = false;
@@ -152,7 +152,7 @@
 {#snippet placementEditor()}
 	<div class="product-image-panel__placement-content">
 		<ImagePlacementEditor
-			imageUrl={imageUrl}
+			{imageUrl}
 			alt={imageAlt}
 			{foodName}
 			brandName={food?.brandOwner ?? ""}
@@ -160,7 +160,7 @@
 			title="Card image placement"
 			description="Drag the image in the card preview or use the controls below."
 			showIntro={placementPresentation !== "flat"}
-			{showWarningEdge}
+			{warningFrameTone}
 			value={draftPlacement}
 			onChange={(value) => {
 				draftPlacement = value;
@@ -178,9 +178,7 @@
 				fullWidth
 				busy={savingPlacement}
 			>
-				{savingPlacement
-					? "Saving image placement…"
-					: "Save image placement"}
+				{savingPlacement ? "Saving image placement…" : "Save image placement"}
 			</RoundedActionButton>
 			{#if placementMessage}
 				<StatusMessage tone="success" message={placementMessage} />

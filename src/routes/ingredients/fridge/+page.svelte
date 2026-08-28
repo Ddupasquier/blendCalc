@@ -15,6 +15,10 @@
 	import SavedIngredientListLayout from "$lib/components/ingredients/list/SavedIngredientListLayout/SavedIngredientListLayout.svelte";
 	import { LIST_PAGE_SIZES } from "$lib/config/listPagination";
 	import type { FoodItem, FoodImageAsset } from "$lib/utils/food/types";
+	import {
+		FOOD_SAFETY_FILTER_VALUES,
+		type FoodSafetyFilter,
+	} from "$lib/utils/food/safety/foodSafetyFilters";
 	import { getFoodIdentityKey } from "$lib/utils/food/records/foodIdentity";
 	import { getCanonicalFoodDescription } from "$lib/utils/food/records/foodRecords";
 	import {
@@ -124,6 +128,9 @@
 	let listQuery = $state("");
 	const sourceFilter = "all";
 	const trustFilter = "any";
+	let listSafetyFilter = $state<FoodSafetyFilter>(
+		FOOD_SAFETY_FILTER_VALUES.all,
+	);
 	let listSort = $state<FoodListSort>("recent");
 	const activeIngredientRouteHref = $derived(
 		getActiveIngredientRouteHref(page.url, page.state.ingredientRouteHref),
@@ -350,6 +357,7 @@
 			sort: listSort,
 			sourceFilter,
 			trustFilter,
+			safetyFilter: listSafetyFilter,
 		});
 		if (!cloudPage) throw new Error("Saved ingredients are unavailable.");
 
@@ -1101,12 +1109,17 @@
 	const applyListFilters = ({
 		query,
 		sortValue,
+		safetyFilter,
 	}: IngredientFilterApplyPayload) => {
 		const nextSort = sortValue as FoodListSort;
-		const unchanged = listQuery === query && listSort === nextSort;
+		const unchanged =
+			listQuery === query &&
+			listSort === nextSort &&
+			listSafetyFilter === safetyFilter;
 
 		listQuery = query;
 		listSort = nextSort;
+		listSafetyFilter = safetyFilter;
 		void closeIngredientSheet();
 
 		if (unchanged) return;
@@ -1248,7 +1261,8 @@
 
 		<IngredientsSearchPanel
 			{barcodeLookupBusy}
-			filtersActive={activeSheet === "filters"}
+			filtersActive={activeSheet === "filters" ||
+				listSafetyFilter !== FOOD_SAFETY_FILTER_VALUES.all}
 			onOpenSearch={openSearchView}
 			onScan={startBarcodeScan}
 			onToggleFilters={toggleFilters}
@@ -1307,6 +1321,7 @@
 	{imagePlacementItem}
 	{listQuery}
 	{listSort}
+	{listSafetyFilter}
 	{removingItem}
 	{renameBusy}
 	{renameError}

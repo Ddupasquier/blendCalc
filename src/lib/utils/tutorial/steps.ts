@@ -15,7 +15,8 @@ export const tutorialSteps: TutorialStep[] = [
 	},
 	{
 		title: "Scan packaged foods",
-		description: "The barcode button looks up a package without typing its name.",
+		description:
+			"The barcode button looks up a package without typing its name.",
 		points: [
 			"Known details can be filled from the catalog and connected providers.",
 			"Use the pencil beside it when you need to enter a food manually.",
@@ -27,7 +28,8 @@ export const tutorialSteps: TutorialStep[] = [
 	},
 	{
 		title: "Open one ingredient",
-		description: "Each card represents one food in your Fridge or Shopping List.",
+		description:
+			"Each card represents one food in your Fridge or Shopping List.",
 		points: [
 			"Open the card for ingredients, allergens, servings, and complete nutrition details.",
 			"An amber edge means the food may conflict with a dietary setting.",
@@ -103,7 +105,7 @@ export const tutorialSteps: TutorialStep[] = [
 		title: "Make warnings relevant to you",
 		description: "Profile lets you save optional food-safety preferences.",
 		points: [
-			"Allergens and dietary restrictions can add warning edges and detailed notices.",
+			"Allergens and dietary restrictions can add warning frames and detailed notices.",
 			"Warnings depend on available data; they are helpful prompts, not medical guarantees.",
 		],
 		icon: "goals",

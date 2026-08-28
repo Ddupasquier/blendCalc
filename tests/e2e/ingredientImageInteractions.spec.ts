@@ -43,6 +43,21 @@ const openSavedIngredientActions = async (page: Page, productName: string) => {
 	) {
 		const loadMoreButton = page.getByRole("button", { name: "Load more" });
 		if (!(await loadMoreButton.isVisible().catch(() => false))) break;
+		await expect
+			.poll(async () => {
+				if (await actionButton.isVisible().catch(() => false)) {
+					return "target-visible";
+				}
+				if (!(await loadMoreButton.isVisible().catch(() => false))) {
+					return "pagination-finished";
+				}
+				return (await loadMoreButton.isEnabled().catch(() => false))
+					? "ready"
+					: "loading";
+			})
+			.not.toBe("loading");
+		if (await actionButton.isVisible().catch(() => false)) break;
+		if (!(await loadMoreButton.isVisible().catch(() => false))) break;
 		await loadMoreButton.click();
 	}
 	await expect(actionButton).toBeVisible();

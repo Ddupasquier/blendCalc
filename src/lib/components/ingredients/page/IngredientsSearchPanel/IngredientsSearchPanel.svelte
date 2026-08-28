@@ -29,7 +29,7 @@
 		<ManualEntryLauncher onSelect={onOpenManualEntry} />
 		<IconControlButton
 			class="filter-button"
-			label="Sort saved ingredients"
+			label="Filter and sort saved ingredients"
 			active={filtersActive}
 			aria-expanded={filtersActive}
 			aria-controls="ingredient-filter-sheet-title"
