@@ -1,5 +1,8 @@
 import { createManualEntryCustomFood } from "$lib/components/ingredients/manual-entry/utils/customFoodPayload";
-import { saveManualEntryCustomFood } from "$lib/components/ingredients/manual-entry/utils/submitFlow";
+import {
+	saveManualEntryCustomFood,
+	type ManualEntryCatalogMessageTone,
+} from "$lib/components/ingredients/manual-entry/utils/submitFlow";
 import { getManualEntrySubmitState } from "$lib/components/ingredients/manual-entry/utils/submitValidation";
 import { volumeAmountRequiredMessage } from "$lib/components/ingredients/manual-entry/formTypes";
 import type { ManualEntryFormState } from "./manualEntryFormState.svelte";
@@ -28,9 +31,15 @@ export const createManualEntrySubmissionController = ({
 	onReset,
 	getCatalogSubmissionOnly = () => false,
 }: ManualEntrySubmissionControllerOptions) => {
-	const state = $state({
+	const state = $state<{
+		error: string;
+		catalogMessage: string;
+		catalogMessageTone: ManualEntryCatalogMessageTone;
+		saving: boolean;
+	}>({
 		error: "",
 		catalogMessage: "",
+		catalogMessageTone: "success",
 		saving: false,
 	});
 
@@ -42,6 +51,7 @@ export const createManualEntrySubmissionController = ({
 		if (state.saving) return;
 		state.error = "";
 		state.catalogMessage = "";
+		state.catalogMessageTone = "success";
 		outcome.resetBeforeSubmit();
 
 		const submitState = getManualEntrySubmitState({
@@ -177,6 +187,7 @@ export const createManualEntrySubmissionController = ({
 			if (result.status === "cancelled") return;
 
 			state.catalogMessage = result.catalogMessage;
+			state.catalogMessageTone = result.catalogMessageTone;
 			if (catalogSubmissionOnly) return;
 			if (result.resetForm) onReset();
 		} catch {

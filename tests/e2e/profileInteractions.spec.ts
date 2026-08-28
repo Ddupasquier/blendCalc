@@ -6,29 +6,18 @@ import {
 	test,
 	waitForAppReady,
 } from "./support/browserTest";
-import type { Locator, Page } from "@playwright/test";
-import { createCurrentAuthenticatorVerificationCode } from "./support/authenticatorVerificationCode";
+import type { Locator } from "@playwright/test";
 import {
 	getAuthenticatedBrowserStatePath,
 	getLocalQaAccountForWorker,
 } from "./support/localQaAccounts";
 import { deleteLocalQaAuthenticatorFactorsForEmail } from "./support/localQaDatabase";
+import { finishLocalQaAuthenticatorEnrollment } from "./support/localQaAuthenticator";
 
 const tinyPng = Buffer.from(
 	"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
 	"base64",
 );
-
-const finishAuthenticatorEnrollment = async (page: Page) => {
-	await page.getByRole("button", { name: "Start setup" }).click();
-	const setupKey = await page
-		.locator(".mfa-enrollment__secret code")
-		.innerText();
-	await page
-		.getByLabel("Six-digit code")
-		.fill(createCurrentAuthenticatorVerificationCode(setupKey));
-	await page.getByRole("button", { name: "Finish setup" }).click();
-};
 
 const openFoodPreferenceDisclosure = async (
 	foodPreferencesView: Locator,
@@ -798,7 +787,7 @@ test("privileged tools stay hidden from regular accounts and use the shared shee
 	).toBeVisible();
 
 	try {
-		await finishAuthenticatorEnrollment(page);
+		await finishLocalQaAuthenticatorEnrollment(page);
 
 		await expect(page).toHaveURL(
 			/\/profile\/privileged-tools\/product-submissions$/,
@@ -870,7 +859,7 @@ test("administrators can open data operations after direct AAL2 verification", a
 		await expect(page).toHaveURL(
 			/\/auth\/mfa\/enroll\?next=%2Fprofile%2Fprivileged-tools%2Fdata-operations$/,
 		);
-		await finishAuthenticatorEnrollment(page);
+		await finishLocalQaAuthenticatorEnrollment(page);
 
 		await expect(page).toHaveURL((url) => url.pathname === dataOperationsPath);
 		const dataOperationsSheet = page.getByRole("dialog", {

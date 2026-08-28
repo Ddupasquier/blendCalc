@@ -47,6 +47,7 @@
 		error,
 		placementMessage,
 		catalogMessage,
+		catalogMessageTone,
 		saving,
 		catalogSubmissionOnly,
 		onShareChange,
@@ -321,7 +322,7 @@
 		<StatusMessage tone="info" message={placementMessage} />
 	{/if}
 	{#if catalogMessage}
-		<StatusMessage tone="success" message={catalogMessage} />
+		<StatusMessage tone={catalogMessageTone} message={catalogMessage} />
 	{/if}
 
 	<ManualEntryActions

@@ -31,6 +31,29 @@ const readLocalQaDatabaseEnvironment = async () => {
 	return { publishableKey, serviceRoleKey, supabaseUrl };
 };
 
+const createLocalQaServiceRoleDatabaseClient = async () => {
+	const { serviceRoleKey, supabaseUrl } =
+		await readLocalQaDatabaseEnvironment();
+	return createClient<Database>(supabaseUrl, serviceRoleKey, {
+		auth: { autoRefreshToken: false, persistSession: false },
+	});
+};
+
+const findLocalQaUserByEmail = async (email: string) => {
+	const admin = await createLocalQaServiceRoleDatabaseClient();
+	const { data: users, error: usersError } = await admin.auth.admin.listUsers({
+		page: 1,
+		perPage: 1000,
+	});
+	if (usersError) throw usersError;
+	const user = users.users.find(
+		(candidate) =>
+			candidate.email?.toLocaleLowerCase() === email.toLocaleLowerCase(),
+	);
+	if (!user) throw new Error(`The local QA account ${email} does not exist.`);
+	return { admin, user };
+};
+
 export const getAuthenticatedLocalQaDatabaseClient = async (
 	parallelWorkerIndex: number,
 ): Promise<SupabaseClient<Database>> => {
@@ -65,23 +88,7 @@ export const getAuthenticatedLocalQaDatabaseClient = async (
 export const deleteLocalQaAuthenticatorFactorsForEmail = async (
 	email: string,
 ) => {
-	const { serviceRoleKey, supabaseUrl } =
-		await readLocalQaDatabaseEnvironment();
-	const admin = createClient<Database>(supabaseUrl, serviceRoleKey, {
-		auth: { autoRefreshToken: false, persistSession: false },
-	});
-	const { data: users, error: usersError } = await admin.auth.admin.listUsers({
-		page: 1,
-		perPage: 1000,
-	});
-	if (usersError) throw usersError;
-	const user = users.users.find(
-		(candidate) =>
-			candidate.email?.toLocaleLowerCase() === email.toLocaleLowerCase(),
-	);
-	if (!user) {
-		throw new Error(`The local QA account ${email} does not exist.`);
-	}
+	const { admin, user } = await findLocalQaUserByEmail(email);
 
 	const { data: factors, error: factorsError } =
 		await admin.auth.admin.mfa.listFactors({ userId: user.id });
@@ -93,6 +100,65 @@ export const deleteLocalQaAuthenticatorFactorsForEmail = async (
 		});
 		if (deleteError) throw deleteError;
 	}
+};
+
+export type LocalQaCatalogSubmissionEnforcementSnapshot = {
+	enforcement:
+		| Database["public"]["Tables"]["user_catalog_submission_enforcement"]["Row"]
+		| null;
+	userId: string;
+};
+
+export const captureAndSetLocalQaCatalogSubmissionSuspension = async ({
+	email,
+	moderatorRejectionCount = 51,
+}: {
+	email: string;
+	moderatorRejectionCount?: number;
+}): Promise<LocalQaCatalogSubmissionEnforcementSnapshot> => {
+	const { admin, user } = await findLocalQaUserByEmail(email);
+	const { data: enforcement, error: enforcementError } = await admin
+		.from("user_catalog_submission_enforcement")
+		.select("*")
+		.eq("user_id", user.id)
+		.maybeSingle();
+	if (enforcementError) throw enforcementError;
+
+	const now = new Date();
+	const suspensionEnd = new Date(now);
+	suspensionEnd.setUTCMonth(suspensionEnd.getUTCMonth() + 6);
+	const { error: upsertError } = await admin
+		.from("user_catalog_submission_enforcement")
+		.upsert({
+			user_id: user.id,
+			moderator_rejection_count: moderatorRejectionCount,
+			sharing_suspended_until: suspensionEnd.toISOString(),
+			latest_rejected_at: now.toISOString(),
+			updated_at: now.toISOString(),
+		});
+	if (upsertError) throw upsertError;
+
+	return { enforcement, userId: user.id };
+};
+
+export const restoreLocalQaCatalogSubmissionEnforcement = async ({
+	enforcement,
+	userId,
+}: LocalQaCatalogSubmissionEnforcementSnapshot) => {
+	const admin = await createLocalQaServiceRoleDatabaseClient();
+	if (enforcement) {
+		const { error } = await admin
+			.from("user_catalog_submission_enforcement")
+			.upsert(enforcement);
+		if (error) throw error;
+		return;
+	}
+
+	const { error } = await admin
+		.from("user_catalog_submission_enforcement")
+		.delete()
+		.eq("user_id", userId);
+	if (error) throw error;
 };
 
 type LocalQaMixGoalConfigurationSnapshot = {

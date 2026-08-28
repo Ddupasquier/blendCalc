@@ -23,6 +23,7 @@ vi.mock("$lib/utils/storage/client/ingredientLists", () => ({
 }));
 
 import { saveManualEntryCustomFood } from "$lib/components/ingredients/manual-entry/utils/submitFlow";
+import { createUserFacingIssueError } from "$lib/utils/errors/userFacingErrors";
 import type { FoodItem } from "$lib/utils/food/types";
 
 const food: FoodItem = {
@@ -62,6 +63,7 @@ describe("manual entry catalog submission", () => {
 		expect(result).toEqual({
 			status: "complete",
 			catalogMessage: "",
+			catalogMessageTone: "success",
 			resetForm: true,
 		});
 		expect(mocks.saveCustomFood).toHaveBeenCalledOnce();
@@ -86,6 +88,7 @@ describe("manual entry catalog submission", () => {
 		expect(result).toEqual({
 			status: "complete",
 			catalogMessage: "Submitted",
+			catalogMessageTone: "success",
 			resetForm: true,
 		});
 		expect(mocks.saveCustomFood).toHaveBeenCalledOnce();
@@ -114,6 +117,37 @@ describe("manual entry catalog submission", () => {
 		expect(mocks.saveCustomFood).toHaveBeenCalledOnce();
 		expect(useIngredient).toHaveBeenCalledOnce();
 		expect(mocks.submitSharedProduct).not.toHaveBeenCalled();
+		expect(mocks.notifyIngredientListsChanged).not.toHaveBeenCalled();
+	});
+
+	it("keeps a suspended account's ingredient private and explains why sharing stopped", async () => {
+		const useIngredient = vi.fn().mockResolvedValue(true);
+		mocks.submitSharedProduct.mockRejectedValue(
+			createUserFacingIssueError("CATALOG_SUBMISSION_BLOCKED", {
+				blockedUntil: "Feb 10, 2027",
+			}),
+		);
+
+		const result = await saveManualEntryCustomFood({
+			food,
+			name: food.description,
+			normalizedBarcode: food.barcode ?? null,
+			shareWithCatalog: true,
+			photos,
+			reviewFlags: [],
+			useIngredient,
+		});
+
+		expect(result).toEqual({
+			status: "complete",
+			catalogMessage:
+				"Product sharing is paused for this account until Feb 10, 2027. You can still save ingredients to your own profile.",
+			catalogMessageTone: "warning",
+			resetForm: true,
+		});
+		expect(mocks.saveCustomFood).toHaveBeenCalledOnce();
+		expect(useIngredient).toHaveBeenCalledOnce();
+		expect(mocks.submitSharedProduct).toHaveBeenCalledOnce();
 		expect(mocks.notifyIngredientListsChanged).not.toHaveBeenCalled();
 	});
 });
