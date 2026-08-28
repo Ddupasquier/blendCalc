@@ -1538,6 +1538,13 @@ test("nutrition details preserve the complete source-backed food record", async 
 			),
 		).toBe(true);
 	};
+	const waitForDisclosureAnimation = async (details: Locator) => {
+		await details.evaluate(async (element) => {
+			await Promise.allSettled(
+				element.getAnimations().map((animation) => animation.finished),
+			);
+		});
+	};
 	const openDisclosure = async (nutritionDetails: Locator, title: string) => {
 		const summary = nutritionDetails
 			.locator("summary")
@@ -1548,6 +1555,7 @@ test("nutrition details preserve the complete source-backed food record", async 
 		const details = summary.locator("..");
 		await summary.click();
 		await expect(details).toHaveAttribute("open", "");
+		await waitForDisclosureAnimation(details);
 		return details;
 	};
 	const openDisclosureWithKeyboard = async (
@@ -1565,6 +1573,7 @@ test("nutrition details preserve the complete source-backed food record", async 
 		await expect(summary).toBeFocused();
 		await summary.press("Enter");
 		await expect(details).toHaveAttribute("open", "");
+		await waitForDisclosureAnimation(details);
 		return details;
 	};
 
