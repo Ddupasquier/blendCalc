@@ -24,6 +24,7 @@
 		provenanceOptions = [],
 		sourceFilter = "all",
 		trustFilter = "any",
+		safetyFilter = "all",
 		onScan,
 		onFilter,
 		onClose,
@@ -64,13 +65,14 @@
 			{provenanceOptions}
 			{sourceFilter}
 			{trustFilter}
+			{safetyFilter}
 			onSearchFocus={() => {}}
 		>
 			{#snippet actions()}
 				<BarcodeScanButton {scanning} compact onclick={onScan} />
 				<IconControlButton
 					class="ingredient-search-view__filter"
-					label="Sort ingredients"
+					label="Filter and sort ingredients"
 					active={filtersActive}
 					aria-expanded={filtersActive}
 					aria-controls="ingredient-filter-sheet-title"

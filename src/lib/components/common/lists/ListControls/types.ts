@@ -16,7 +16,7 @@ export type ListControlsProps = {
 	resultSummary?: string;
 	filterLabel?: string;
 	filterValue?: string;
-	filterOptions?: ListFilterOption[];
+	filterOptions?: readonly ListFilterOption[];
 	onFilterChange?: (value: string) => void;
 	filtersActive?: boolean;
 	filterControlsId?: string;

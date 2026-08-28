@@ -3,7 +3,7 @@ import { expect, test, waitForAppReady } from "./support/browserTest";
 const shallowRouteOverlayCases = [
 	{
 		baseRoute: "/ingredients/fridge",
-		launcherName: "Sort saved ingredients",
+		launcherName: "Filter and sort saved ingredients",
 		overlayRoute: "/ingredients/fridge/filters",
 		dialogName: "Sort",
 	},
@@ -44,7 +44,10 @@ for (const routeCase of shallowRouteOverlayCases) {
 			if ("documentTitle" in routeCase) {
 				await expect(page).toHaveTitle(routeCase.documentTitle);
 				await expect(
-					page.getByRole("heading", { name: "Sort", exact: true }),
+					page.getByRole("heading", {
+						name: "Filter and sort",
+						exact: true,
+					}),
 				).toHaveCount(1);
 			}
 

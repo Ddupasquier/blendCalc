@@ -19,6 +19,7 @@ export const readIngredientListPage = async (
 		sort: options.sort ?? "recent",
 		source: options.sourceFilter ?? "all",
 		trust: options.trustFilter ?? "any",
+		safety: options.safetyFilter ?? "all",
 	});
 	if (options.query?.trim()) parameters.set("q", options.query.trim());
 
@@ -28,7 +29,7 @@ export const readIngredientListPage = async (
 	if (!response.ok) {
 		throw new Error("Saved ingredients could not be loaded.");
 	}
-	return await response.json() as IngredientListPage;
+	return (await response.json()) as IngredientListPage;
 };
 
 export const readIngredientListWindow = async (

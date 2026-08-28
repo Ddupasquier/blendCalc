@@ -21,6 +21,13 @@
 		MOTION_DURATION_MS,
 	} from "$lib/utils/animation/motion";
 	import { filterItemsByQuery } from "$lib/utils/list/listNavigation";
+	import {
+		FOOD_SAFETY_FILTER_OPTIONS,
+		FOOD_SAFETY_FILTER_VALUES,
+		foodMatchesSafetyFilter,
+		isFoodSafetyFilter,
+		type FoodSafetyFilter,
+	} from "$lib/utils/food/safety/foodSafetyFilters";
 	import { createScrollAwareHeaderVisibilityController } from "$lib/utils/navigation/scrollAwareHeaderVisibilityController.svelte";
 	import { navigateShallowRoute } from "$lib/utils/navigation/shallowRouteNavigation";
 	import {
@@ -42,6 +49,7 @@
 	);
 	let query = $state("");
 	let sort = $state("newest");
+	let safetyFilter = $state<FoodSafetyFilter>(FOOD_SAFETY_FILTER_VALUES.all);
 	let visibleCount = $state<number>(LIST_PAGE_SIZES.savedRecipes);
 	let deletingRecipeId = $state<string | null>(null);
 	let loadingRecipeId = $state<string | null>(null);
@@ -60,13 +68,14 @@
 	];
 
 	const filteredRecipes = $derived.by(() => {
-		const matchingRecipes = filterItemsByQuery(
-			recipes,
-			query,
-			(recipe) =>
-				[recipe.name, ...recipe.foods.map((food) => food.description)].join(
-					" ",
-				),
+		const matchingRecipes = filterItemsByQuery(recipes, query, (recipe) =>
+			[recipe.name, ...recipe.foods.map((food) => food.description)].join(" "),
+		).filter((recipe) =>
+			safetyFilter === FOOD_SAFETY_FILTER_VALUES.all
+				? true
+				: recipe.foods.some((food) =>
+						foodMatchesSafetyFilter(food, safetyFilter),
+					),
 		);
 
 		return [...matchingRecipes].sort((first, second) => {
@@ -80,10 +89,7 @@
 		visibleRecipes.length < filteredRecipes.length,
 	);
 	const activeSavedRecipesRouteUrl = $derived(
-		getActiveShallowRouteUrl(
-			page.url,
-			page.state.savedRecipesRouteHref,
-		),
+		getActiveShallowRouteUrl(page.url, page.state.savedRecipesRouteHref),
 	);
 	const sortSheetOpen = $derived(
 		activeSavedRecipesRouteUrl.pathname === "/saved/sort",
@@ -182,8 +188,12 @@
 		});
 	};
 
-	const applySort = (value: string) => {
+	const applySort = (value: string, nextSafetyFilter?: string) => {
 		updateSort(value);
+		const requestedSafetyFilter = nextSafetyFilter ?? "";
+		safetyFilter = isFoodSafetyFilter(requestedSafetyFilter)
+			? requestedSafetyFilter
+			: FOOD_SAFETY_FILTER_VALUES.all;
 		closeSortSheet();
 	};
 
@@ -197,10 +207,7 @@
 	onMount(() => {
 		window.addEventListener(SAVED_RECIPES_CHANGED_EVENT, loadSavedRecipes);
 		return () => {
-			window.removeEventListener(
-				SAVED_RECIPES_CHANGED_EVENT,
-				loadSavedRecipes,
-			);
+			window.removeEventListener(SAVED_RECIPES_CHANGED_EVENT, loadSavedRecipes);
 		};
 	});
 
@@ -215,8 +222,19 @@
 	open={sortSheetOpen}
 	value={sort}
 	options={sortOptions}
+	filterValue={safetyFilter}
+	filterOptions={FOOD_SAFETY_FILTER_OPTIONS.map((option) => ({
+		...option,
+		label:
+			option.value === FOOD_SAFETY_FILTER_VALUES.all
+				? "All recipes"
+				: option.value === FOOD_SAFETY_FILTER_VALUES.warnings
+					? "Recipes with warnings"
+					: "Recipes with active recalls",
+	}))}
+	title="Filter and sort"
 	titleId="saved-sort-sheet-title"
-	label="Sort saved recipes"
+	label="Filter and sort saved recipes"
 	onApply={applySort}
 	onClose={closeSortSheet}
 />
@@ -234,20 +252,21 @@
 		{#if recipes.length > 0}
 			<ListControls
 				id="saved-recipes-search"
-					{query}
-					onQueryChange={updateQuery}
-					placeholder="Search saved recipes…"
-					label="Search saved recipes by name or ingredient"
-					totalCount={recipes.length}
-					visibleCount={filteredRecipes.length}
-					itemLabel="recipes"
-					filterLabel="Sort saved recipes"
-					filterValue={sort}
-					filterOptions={sortOptions}
-					filtersActive={sortSheetOpen}
-					filterControlsId="saved-sort-sheet-title"
-					onFilterOpen={openSortSheet}
-				/>
+				{query}
+				onQueryChange={updateQuery}
+				placeholder="Search saved recipes…"
+				label="Search saved recipes by name or ingredient"
+				totalCount={recipes.length}
+				visibleCount={filteredRecipes.length}
+				itemLabel="recipes"
+				filterLabel="Filter and sort saved recipes"
+				filterValue={safetyFilter}
+				filterOptions={FOOD_SAFETY_FILTER_OPTIONS}
+				filtersActive={sortSheetOpen ||
+					safetyFilter !== FOOD_SAFETY_FILTER_VALUES.all}
+				filterControlsId="saved-sort-sheet-title"
+				onFilterOpen={openSortSheet}
+			/>
 		{/if}
 	</ViewTop>
 
@@ -274,7 +293,9 @@
 						<ul class="saved-page__list" aria-label="Saved recipes">
 							{#each visibleRecipes as recipe, index (recipe.id)}
 								<li
-									data-tutorial-target={index === 0 ? "saved-recipe" : undefined}
+									data-tutorial-target={index === 0
+										? "saved-recipe"
+										: undefined}
 									animate:flip={{ duration: getListReflowDuration() }}
 								>
 									<SavedRecipeCard
@@ -283,8 +304,7 @@
 										deleting={deletingRecipeId === recipe.id}
 										disabled={loadingRecipeId !== null ||
 											deletingRecipeId !== null}
-										onLoad={(selectedRecipe) =>
-											void loadRecipe(selectedRecipe)}
+										onLoad={(selectedRecipe) => void loadRecipe(selectedRecipe)}
 										onDelete={(selectedRecipe) =>
 											void removeRecipe(selectedRecipe)}
 									/>
@@ -295,15 +315,12 @@
 							{scrollContainer}
 							hasMoreItems={hasMoreRecipes}
 							loadMoreLabel="Load more recipes"
-							contentVersion={`${query}:${sort}:${visibleRecipes.length}`}
+							contentVersion={`${query}:${sort}:${safetyFilter}:${visibleRecipes.length}`}
 							containerElement="div"
 							onLoadMore={revealMoreRecipes}
 						/>
 					{:else}
-						<SavedRecipesEmptyState
-							filtered
-							onAction={() => updateQuery("")}
-						/>
+						<SavedRecipesEmptyState filtered onAction={() => updateQuery("")} />
 					{/if}
 				{:else}
 					<SavedRecipesEmptyState onAction={() => void goto("/mix")} />

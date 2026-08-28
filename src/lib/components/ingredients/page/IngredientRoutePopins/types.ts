@@ -14,6 +14,7 @@ import type {
 } from "$lib/utils/ingredients/ingredientListUi";
 import type { IngredientProvenanceOption } from "$lib/utils/ingredients/ingredientProvenance";
 import type { FoodListSort } from "$lib/utils/list/listNavigation";
+import type { FoodSafetyFilter } from "$lib/utils/food/safety/foodSafetyFilters";
 import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
 
 export type IngredientRoutePopinsProps = {
@@ -25,6 +26,7 @@ export type IngredientRoutePopinsProps = {
 	imagePlacementItem: IngredientActionItem | null;
 	listQuery: string;
 	listSort: FoodListSort;
+	listSafetyFilter: FoodSafetyFilter;
 	removingItem: string | null;
 	renameBusy: boolean;
 	renameError: string;

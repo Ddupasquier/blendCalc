@@ -1,5 +1,6 @@
 import { LIST_PAGE_SIZES } from "$lib/config/listPagination";
 import type { FoodItem } from "$lib/utils/food/types";
+import type { FoodSafetyFilter } from "$lib/utils/food/safety/foodSafetyFilters";
 
 export const INGREDIENT_SEARCH_PAGE_SIZE = LIST_PAGE_SIZES.foodSearch;
 export const INGREDIENT_SEARCH_LOAD_MORE_PAGE_SIZE =
@@ -11,6 +12,7 @@ export type IngredientSearchPageOptions = {
 	limit?: number;
 	sourceFilter?: string;
 	trustFilter?: string;
+	safetyFilter?: FoodSafetyFilter;
 	signal?: AbortSignal;
 };
 

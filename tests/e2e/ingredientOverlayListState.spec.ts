@@ -130,10 +130,15 @@ test("Sort preserves the loaded Fridge cards and scroll position", async ({
 
 	const listRequests = recordIngredientListRequests(page);
 	await page
-		.getByRole("button", { name: "Sort saved ingredients", exact: true })
+		.getByRole("button", {
+			name: "Filter and sort saved ingredients",
+			exact: true,
+		})
 		.click();
 	await expect(page).toHaveURL(/\/ingredients\/fridge\/filters$/);
-	await expect(page.getByRole("dialog", { name: "Sort" })).toBeVisible();
+	await expect(
+		page.getByRole("dialog", { name: "Filter and sort" }),
+	).toBeVisible();
 	await page.getByRole("button", { name: "Close sheet" }).click();
 	await expect(page).toHaveURL(/\/ingredients\/fridge$/);
 	await expectIngredientListSnapshot(page, expectedSnapshot);

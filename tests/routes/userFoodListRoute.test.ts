@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
 	enrichFoodForListPlacement: vi.fn(),
 	getSupabaseAdminClient: vi.fn(),
 	getUserFoodSafetyContext: vi.fn(),
+	readCloudIngredientList: vi.fn(),
 	readCloudIngredientListPage: vi.fn(),
 }));
 
@@ -16,6 +17,7 @@ vi.mock("$lib/server/food-safety/userFoodSafety.server", () => ({
 	getUserFoodSafetyContext: mocks.getUserFoodSafetyContext,
 }));
 vi.mock("$lib/server/user-data/foodLists.server", () => ({
+	readCloudIngredientList: mocks.readCloudIngredientList,
 	readCloudIngredientListPage: mocks.readCloudIngredientListPage,
 }));
 vi.mock("$lib/server/user-data/foodListPlacement.server", () => ({
@@ -31,10 +33,7 @@ import {
 	POST,
 } from "../../src/routes/api/user-food-lists/[list]/+server";
 
-const createEvent = (
-	list = "fridge",
-	userId: string | null = "user-id",
-) => ({
+const createEvent = (list = "fridge", userId: string | null = "user-id") => ({
 	locals: {
 		getVerifiedUser: vi.fn().mockResolvedValue(userId ? { id: userId } : null),
 		supabase: { source: "test" },
@@ -53,20 +52,17 @@ const createPostEvent = (
 	const rpc = vi.fn().mockResolvedValue({ data: "added", error: null });
 	return {
 		locals: {
-			getVerifiedUser: vi.fn().mockResolvedValue(
-				userId ? { id: userId } : null,
-			),
+			getVerifiedUser: vi
+				.fn()
+				.mockResolvedValue(userId ? { id: userId } : null),
 			supabase: { rpc },
 		},
 		params: { list },
-		request: new Request(
-			`http://localhost:5173/api/user-food-lists/${list}`,
-			{
-				method: "POST",
-				headers: { "content-type": "application/json" },
-				body: JSON.stringify(body),
-			},
-		),
+		request: new Request(`http://localhost:5173/api/user-food-lists/${list}`, {
+			method: "POST",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify(body),
+		}),
 		rpc,
 	};
 };
@@ -81,9 +77,9 @@ const createDeleteEvent = (
 	if (foodId !== null) url.searchParams.set("foodId", foodId);
 	return {
 		locals: {
-			getVerifiedUser: vi.fn().mockResolvedValue(
-				userId ? { id: userId } : null,
-			),
+			getVerifiedUser: vi
+				.fn()
+				.mockResolvedValue(userId ? { id: userId } : null),
 			supabase: { rpc },
 		},
 		params: { list },
@@ -100,6 +96,7 @@ describe("user food list route", () => {
 			foods: [{ fdcId: 1, description: "Milk", foodNutrients: [] }],
 			totalCount: 1,
 		});
+		mocks.readCloudIngredientList.mockResolvedValue([]);
 		mocks.getUserFoodSafetyContext.mockResolvedValue({
 			profile: null,
 			policy: {
@@ -110,20 +107,24 @@ describe("user food list route", () => {
 				regionalProfiles: [],
 			},
 		});
-		mocks.annotateFoodsWithFoodSafety.mockReturnValue([{
-			fdcId: 1,
-			description: "Milk",
-			foodNutrients: [],
-			allergenDisclosure: { contains: ["Milk"], mayContain: [] },
-			preferenceWarnings: [],
-		}]);
+		mocks.annotateFoodsWithFoodSafety.mockReturnValue([
+			{
+				fdcId: 1,
+				description: "Milk",
+				foodNutrients: [],
+				allergenDisclosure: { contains: ["Milk"], mayContain: [] },
+				preferenceWarnings: [],
+			},
+		]);
 		mocks.enrichFoodForListPlacement.mockImplementation(
 			async (_supabase, food) => food,
 		);
 	});
 
 	it("requires a signed-in user", async () => {
-		await expect(GET(createEvent("fridge", null) as never)).rejects.toMatchObject({
+		await expect(
+			GET(createEvent("fridge", null) as never),
+		).rejects.toMatchObject({
 			status: 401,
 		});
 	});
@@ -141,13 +142,15 @@ describe("user food list route", () => {
 
 		expect(response.status).toBe(200);
 		expect(await response.json()).toEqual({
-			foods: [{
-				fdcId: 1,
-				description: "Milk",
-				foodNutrients: [],
-				allergenDisclosure: { contains: ["Milk"], mayContain: [] },
-				preferenceWarnings: [],
-			}],
+			foods: [
+				{
+					fdcId: 1,
+					description: "Milk",
+					foodNutrients: [],
+					allergenDisclosure: { contains: ["Milk"], mayContain: [] },
+					preferenceWarnings: [],
+				},
+			],
 			totalCount: 1,
 		});
 		expect(mocks.readCloudIngredientListPage).toHaveBeenCalledWith(
@@ -163,13 +166,121 @@ describe("user food list route", () => {
 			},
 		);
 		expect(mocks.annotateFoodsWithFoodSafety).toHaveBeenCalledTimes(1);
+		expect(mocks.readCloudIngredientList).not.toHaveBeenCalled();
+	});
+
+	it("filters warnings before paginating the complete list", async () => {
+		const ordinaryFood = {
+			fdcId: 1,
+			description: "Rice",
+			foodNutrients: [],
+		};
+		const warningFood = {
+			fdcId: 2,
+			description: "Milk",
+			foodNutrients: [],
+			preferenceWarnings: [
+				{
+					id: "milk-warning",
+					level: "warning",
+					category: "allergen",
+					label: "Milk",
+					code: "FOOD_ALLERGEN_CONTAINS",
+					params: {},
+				},
+			],
+		};
+		mocks.readCloudIngredientList.mockResolvedValue([
+			ordinaryFood,
+			warningFood,
+		]);
+		mocks.annotateFoodsWithFoodSafety.mockReturnValue([
+			ordinaryFood,
+			warningFood,
+		]);
+		const event = createEvent();
+		event.url.searchParams.set("safety", "warnings");
+		event.url.searchParams.set("limit", "1");
+
+		const response = await GET(event as never);
+
+		expect(response.status).toBe(200);
+		expect(await response.json()).toEqual({
+			foods: [warningFood],
+			totalCount: 1,
+		});
+		expect(mocks.readCloudIngredientListPage).not.toHaveBeenCalled();
+		expect(mocks.readCloudIngredientList).toHaveBeenCalledOnce();
+	});
+
+	it("keeps active recalls separate from other warnings", async () => {
+		const warningFood = {
+			fdcId: 1,
+			description: "Milk",
+			foodNutrients: [],
+			preferenceWarnings: [
+				{
+					id: "milk-warning",
+					level: "warning",
+					category: "allergen",
+					label: "Milk",
+					code: "FOOD_ALLERGEN_CONTAINS",
+					params: {},
+				},
+			],
+		};
+		const recalledFood = {
+			fdcId: 2,
+			description: "Recalled salad",
+			foodNutrients: [],
+			safetyAlerts: [
+				{
+					id: "recall-1",
+					providerKey: "open-fda-food-enforcement",
+					sourceName: "openFDA Food Enforcement",
+					sourceAttribution: "U.S. Food and Drug Administration",
+					alertType: "recall",
+					status: "Ongoing",
+					productDescription: "Recalled salad",
+					sourceUrl: "https://api.fda.gov/food/enforcement.json",
+					matchType: "exact_gtin",
+					requiresPackageCheck: false,
+					detectedAt: "2026-08-14T12:00:00.000Z",
+				},
+			],
+		};
+		mocks.readCloudIngredientList.mockResolvedValue([
+			warningFood,
+			recalledFood,
+		]);
+		mocks.annotateFoodsWithFoodSafety.mockReturnValue([
+			warningFood,
+			recalledFood,
+		]);
+		const event = createEvent();
+		event.url.searchParams.set("safety", "active-recalls");
+
+		const response = await GET(event as never);
+
+		expect((await response.json()).foods).toEqual([recalledFood]);
+	});
+
+	it("rejects unknown safety filters", async () => {
+		const event = createEvent();
+		event.url.searchParams.set("safety", "maybe-dangerous");
+
+		await expect(GET(event as never)).rejects.toMatchObject({ status: 400 });
 	});
 
 	it("requires authentication for list placement", async () => {
 		const response = await POST(
-			createPostEvent({
-				food: { fdcId: 1, description: "Milk", foodNutrients: [] },
-			}, "fridge", null) as never,
+			createPostEvent(
+				{
+					food: { fdcId: 1, description: "Milk", foodNutrients: [] },
+				},
+				"fridge",
+				null,
+			) as never,
 		);
 
 		expect(response.status).toBe(401);
@@ -244,9 +355,7 @@ describe("user food list route", () => {
 		const unauthenticated = await DELETE(
 			createDeleteEvent("42", "fridge", null) as never,
 		);
-		const invalidFood = await DELETE(
-			createDeleteEvent("not-a-food") as never,
-		);
+		const invalidFood = await DELETE(createDeleteEvent("not-a-food") as never);
 
 		expect(unauthenticated.status).toBe(401);
 		expect(invalidFood.status).toBe(400);
