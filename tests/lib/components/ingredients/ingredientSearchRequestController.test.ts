@@ -35,6 +35,7 @@ describe("createIngredientSearchRequestController", () => {
 		const controller = createIngredientSearchRequestController({
 			getSourceFilter: () => "all",
 			getTrustFilter: () => "any",
+			getSafetyFilter: () => "warnings",
 			onResultsChanged,
 		});
 		controller.activate();
@@ -50,6 +51,7 @@ describe("createIngredientSearchRequestController", () => {
 				offset: 0,
 				sourceFilter: "all",
 				trustFilter: "any",
+				safetyFilter: "warnings",
 			}),
 		);
 		expect(controller.state.results).toEqual([food(1, "Apple, raw")]);
@@ -101,6 +103,7 @@ describe("createIngredientSearchRequestController", () => {
 
 	it("reruns the active query when filters change", async () => {
 		let sourceFilter = "all";
+		let safetyFilter: "all" | "active-recalls" = "all";
 		searchFoodPage.mockResolvedValue({
 			foods: [],
 			hasMore: false,
@@ -110,22 +113,27 @@ describe("createIngredientSearchRequestController", () => {
 		const controller = createIngredientSearchRequestController({
 			getSourceFilter: () => sourceFilter,
 			getTrustFilter: () => "any",
+			getSafetyFilter: () => safetyFilter,
 			onResultsChanged: vi.fn(),
 		});
-		controller.synchronizeFilters("all:any");
+		controller.synchronizeFilters("all:any:all");
 		controller.activate();
 		controller.state.query = "apple";
 		controller.triggerSearch();
 		await vi.advanceTimersByTimeAsync(500);
 
 		sourceFilter = "shared";
-		controller.synchronizeFilters("shared:any");
+		safetyFilter = "active-recalls";
+		controller.synchronizeFilters("shared:any:active-recalls");
 		await vi.advanceTimersByTimeAsync(500);
 
 		expect(searchFoodPage).toHaveBeenCalledTimes(2);
 		expect(searchFoodPage).toHaveBeenLastCalledWith(
 			"apple",
-			expect.objectContaining({ sourceFilter: "shared" }),
+			expect.objectContaining({
+				sourceFilter: "shared",
+				safetyFilter: "active-recalls",
+			}),
 		);
 	});
 

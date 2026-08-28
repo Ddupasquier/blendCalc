@@ -2,6 +2,7 @@ import type { Snippet } from "svelte";
 import type { FoodItem } from "$lib/utils/food/types";
 import type { IngredientProvenanceOption } from "$lib/utils/ingredients/ingredientProvenance";
 import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
+import type { FoodSafetyFilter } from "$lib/utils/food/safety/foodSafetyFilters";
 
 export type IngredientSearchProps = {
 	onSelect: (food: FoodItem) => void;
@@ -15,5 +16,6 @@ export type IngredientSearchProps = {
 	provenanceOptions?: readonly IngredientProvenanceOption[];
 	sourceFilter?: string;
 	trustFilter?: string;
+	safetyFilter?: FoodSafetyFilter;
 	actions?: Snippet;
 };

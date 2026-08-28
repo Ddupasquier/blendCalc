@@ -513,6 +513,7 @@ describe("IngredientSearch", () => {
 					limit: 15,
 					sourceFilter: "all",
 					trustFilter: "any",
+					safetyFilter: "all",
 					signal: expect.any(AbortSignal),
 				}),
 			{ timeout: 2000 },
@@ -572,6 +573,7 @@ describe("IngredientSearch", () => {
 			limit: 15,
 			sourceFilter: "all",
 			trustFilter: "any",
+			safetyFilter: "all",
 			signal: expect.any(AbortSignal),
 		});
 

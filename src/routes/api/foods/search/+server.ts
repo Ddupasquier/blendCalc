@@ -30,6 +30,10 @@ import {
 } from "$lib/server/errors/appError.server";
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
 import { hydrateFoodsWithCachedImages } from "$lib/utils/storage/supabase/foodImages";
+import {
+	filterFoodsBySafety,
+	isFoodSafetyFilter,
+} from "$lib/utils/food/safety/foodSafetyFilters";
 
 export const GET: RequestHandler = async ({ locals, url }) => {
 	const user = requireAppValue(
@@ -41,6 +45,7 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 	const query = url.searchParams.get("q")?.trim() ?? "";
 	const sourceFilter = url.searchParams.get("source")?.trim() || "all";
 	const trustFilter = url.searchParams.get("trust")?.trim() || "any";
+	const safetyFilter = url.searchParams.get("safety")?.trim() || "all";
 	const offset = Number(url.searchParams.get("offset") ?? 0);
 	const limit = Number(
 		url.searchParams.get("limit") ?? INGREDIENT_SEARCH_PAGE_SIZE,
@@ -66,6 +71,9 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 	}
 	if (!isIngredientTrustFilter(trustFilter)) {
 		throwAppError(400, "SEARCH_FILTER_INVALID");
+	}
+	if (!isFoodSafetyFilter(safetyFilter)) {
+		return throwAppError(400, "SEARCH_FILTER_INVALID");
 	}
 
 	try {
@@ -126,7 +134,7 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 			foodSafetyContext,
 		);
 		const foods = sortIngredientSearchResults(
-			foodsWithSafetyEvaluation,
+			filterFoodsBySafety(foodsWithSafetyEvaluation, safetyFilter),
 			query,
 			nutritionCompletenessCatalog,
 		);

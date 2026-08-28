@@ -17,6 +17,10 @@
 	import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
 	import { LIST_PAGE_SIZES } from "$lib/config/listPagination";
 	import { isPrivateCustomFood } from "$lib/utils/food/records/foodClassification";
+	import {
+		FOOD_SAFETY_FILTER_VALUES,
+		foodMatchesSafetyFilter,
+	} from "$lib/utils/food/safety/foodSafetyFilters";
 
 	let {
 		fridgeItems,
@@ -45,6 +49,18 @@
 			activeItems.filter((food) => {
 				if (filter === "selected") return selectedFoodIds.includes(food.fdcId);
 				if (filter === "custom") return isPrivateCustomFood(food);
+				if (filter === FOOD_SAFETY_FILTER_VALUES.warnings) {
+					return foodMatchesSafetyFilter(
+						food,
+						FOOD_SAFETY_FILTER_VALUES.warnings,
+					);
+				}
+				if (filter === FOOD_SAFETY_FILTER_VALUES.activeRecalls) {
+					return foodMatchesSafetyFilter(
+						food,
+						FOOD_SAFETY_FILTER_VALUES.activeRecalls,
+					);
+				}
 				return true;
 			}),
 			query,
@@ -84,6 +100,11 @@
 		{ value: "all", label: "All ingredients" },
 		{ value: "selected", label: "Selected only" },
 		{ value: "custom", label: "Custom only" },
+		{ value: FOOD_SAFETY_FILTER_VALUES.warnings, label: "Warnings" },
+		{
+			value: FOOD_SAFETY_FILTER_VALUES.activeRecalls,
+			label: "Active recalls",
+		},
 	];
 
 	const resetVisibleItems = () => (visibleCount = LIST_PAGE_SIZES.mixChooser);

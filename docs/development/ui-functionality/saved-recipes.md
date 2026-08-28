@@ -8,8 +8,10 @@ combinations.
 ## Collection Controls
 
 - Search by recipe name or ingredient name.
-- Sort by Newest first, Oldest first, or Name A–Z through the shared route-backed sort
-  sheet. Do not use a native select in the toolbar.
+- Filter recipes by current ingredient warnings or active recalls, then sort by Newest
+  first, Oldest first, or Name A–Z through the shared route-backed filter-and-sort
+  sheet. A recipe matches when at least one ingredient matches the selected safety
+  filter. Do not use a native select in the toolbar.
 - Use progressive `Load more` and `Return to top`; do not use numbered pagination.
 - On compact screens, downward list scrolling retracts the title and search/sort
   controls. A short upward scroll reveals them before the list reaches the top.

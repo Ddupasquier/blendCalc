@@ -19,6 +19,7 @@
 		imagePlacementItem,
 		listQuery,
 		listSort,
+		listSafetyFilter,
 		removingItem,
 		renameBusy,
 		renameError,
@@ -105,6 +106,7 @@
 	query={listQuery}
 	sortValue={listSort}
 	sortOptions={[...sortOptions]}
+	safetyFilter={listSafetyFilter}
 	loading={listLoading}
 	onApply={onApplyFilters}
 	onClose={onCloseIngredientSheet}
@@ -131,7 +133,7 @@
 >
 	<IngredientSearchView
 		scanning={barcodeLookupBusy}
-		filtersActive={activeSheet === "filters"}
+		filtersActive={activeSheet === "filters" || listSafetyFilter !== "all"}
 		onSelect={onSearchSelect}
 		onAdd={onAddSearchResult}
 		addingFoodId={searchAddFoodId}
@@ -139,6 +141,7 @@
 		{destinationListFoodIdentityKeys}
 		{otherListFoodIdentityKeys}
 		{provenanceOptions}
+		safetyFilter={listSafetyFilter}
 		{onScan}
 		onFilter={onFilterFromSearch}
 		onClose={onCloseSearch}

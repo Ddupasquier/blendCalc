@@ -199,7 +199,8 @@ remain in status summaries and accessible text.
 
 - Switch between Fridge and Shopping List with the shared animated segmented control.
 - Use one full-width search control and one adjacent filter/sort trigger. The routed
-  filter sheet owns Show and Sort choices.
+  filter sheet owns Show and Sort choices, including separate views for items with
+  current warnings and items in active recalls.
 - Use progressive `Load more` and `Return to top`; keep earlier results mounted.
 - At either inner-scroll boundary, continued wheel or touch scrolling passes to the
   main Mix page instead of trapping the user.
