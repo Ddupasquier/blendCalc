@@ -22,7 +22,7 @@ const baseProps = {
 };
 
 describe("SavedIngredientCard warning treatment", () => {
-	it("uses a card-edge warning bar without a visible warning icon", () => {
+	it("uses the shared semantic warning frame without a warning icon", () => {
 		const { container } = render(SavedIngredientCard, {
 			props: {
 				...baseProps,
@@ -30,7 +30,17 @@ describe("SavedIngredientCard warning treatment", () => {
 			},
 		});
 
-		expect(container.querySelector(".card-warning-edge")).toBeInTheDocument();
+		expect(container.querySelector(".card-warning-frame")).toHaveAttribute(
+			"data-tone",
+			"warning",
+		);
+		expect(container.querySelector(".saved-ingredient-card")).toHaveClass(
+			"saved-ingredient-card--warning",
+		);
+		expect(container.querySelector(".saved-ingredient-card")).toHaveAttribute(
+			"data-warning-tone",
+			"warning",
+		);
 		expect(
 			screen.getByRole("button", {
 				name: "Preview Ground Beef. Warning: Peanut may be present",
@@ -49,14 +59,20 @@ describe("SavedIngredientCard warning treatment", () => {
 		});
 
 		expect(
-			container.querySelector(".card-warning-edge"),
+			container.querySelector(".card-warning-frame"),
 		).not.toBeInTheDocument();
+		expect(container.querySelector(".saved-ingredient-card")).not.toHaveClass(
+			"saved-ingredient-card--warning",
+		);
+		expect(
+			container.querySelector(".saved-ingredient-card"),
+		).not.toHaveAttribute("data-warning-tone");
 		expect(
 			screen.getByRole("button", { name: "Preview Ground Beef" }),
 		).toBeInTheDocument();
 	});
 
-	it("uses the danger edge for active official recalls", () => {
+	it("uses the danger frame for active official recalls", () => {
 		const { container } = render(SavedIngredientCard, {
 			props: {
 				...baseProps,
@@ -83,8 +99,12 @@ describe("SavedIngredientCard warning treatment", () => {
 			},
 		});
 
-		expect(container.querySelector(".card-warning-edge")).toHaveAttribute(
+		expect(container.querySelector(".card-warning-frame")).toHaveAttribute(
 			"data-tone",
+			"danger",
+		);
+		expect(container.querySelector(".saved-ingredient-card")).toHaveAttribute(
+			"data-warning-tone",
 			"danger",
 		);
 	});

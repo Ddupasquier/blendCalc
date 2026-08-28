@@ -1,18 +1,21 @@
 @use "../../../../../styles/variables" as *;
 @use "../../../../utils/animation/motion" as motion;
-@use "../../card/IngredientCardMediaLane/IngredientCardLayout" as ingredient-card-layout;
+@use "../../card/IngredientCardMediaLane/IngredientCardLayout" as
+	ingredient-card-layout;
 
 $selection-border-color: color-mix(
 	in srgb,
 	$app-shell-accent-primary 65%,
 	$app-primary
 );
-
 .saved-ingredient-card {
 	@include ingredient-card-layout.frame;
 	@include ingredient-card-layout.action-button;
 
+	--saved-ingredient-card-surface: #{$app-shell-surface-panel};
+
 	grid-template-columns: minmax(0, 1fr) auto auto;
+	background: var(--saved-ingredient-card-surface);
 	transition:
 		border-color motion.$duration-state motion.$easing-standard,
 		background-color motion.$duration-state motion.$easing-standard,
@@ -20,18 +23,22 @@ $selection-border-color: color-mix(
 }
 
 .saved-ingredient-card--active:not(.saved-ingredient-card--selection-mode) {
-	background: $app-shell-surface-panel;
+	--saved-ingredient-card-surface: #{$app-shell-surface-panel};
 }
 
 .saved-ingredient-card--custom:not(.saved-ingredient-card--selection-mode) {
-	background: color-mix(in srgb, $app-custom-bg 30%, $app-shell-surface-panel);
+	--saved-ingredient-card-surface: color-mix(
+		in srgb,
+		#{$app-custom-bg} 30%,
+		#{$app-shell-surface-panel}
+	);
 }
 
 .saved-ingredient-card--checked {
-	background: color-mix(
+	--saved-ingredient-card-surface: color-mix(
 		in srgb,
-		$app-shell-accent-soft 65%,
-		$app-shell-surface-panel
+		#{$app-shell-accent-soft} 65%,
+		#{$app-shell-surface-panel}
 	);
 }
 
@@ -39,8 +46,11 @@ $selection-border-color: color-mix(
 	@include ingredient-card-layout.selection-layout;
 }
 
-.saved-ingredient-card--selection-mode.saved-ingredient-card--checked {
+.saved-ingredient-card--selection-mode.saved-ingredient-card--checked:not(
+		.saved-ingredient-card--warning
+	) {
 	border-color: $selection-border-color;
+	background: var(--saved-ingredient-card-surface);
 }
 
 .saved-ingredient-card__select {

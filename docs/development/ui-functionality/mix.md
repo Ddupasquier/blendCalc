@@ -203,9 +203,10 @@ remain in status summaries and accessible text.
 - Use progressive `Load more` and `Return to top`; keep earlier results mounted.
 - At either inner-scroll boundary, continued wheel or touch scrolling passes to the
   main Mix page instead of trapping the user.
-- Use compact selectable cards with food identity, media, warning edge, and selection
-  state. Category and private-custom status remain searchable but are not repeated as
-  resting-card metadata or badges.
+- Use selectable cards with food identity, the exact shared Ingredients card height,
+  image placement, media lane, fade, warning frame, and selection state. Category and
+  private-custom status remain searchable but are not repeated as resting-card metadata
+  or badges.
 - The full card selects. The selection control remains a separate accessible state
   indicator and long text reserves its column.
 - Do not show an edit action in this chooser.
@@ -215,7 +216,7 @@ remain in status summaries and accessible text.
 ## Selected Ingredients
 
 - Show one amount card per selected food with identity, normalized gram amount, amount
-  input, unit selector, details action, remove action, and conflict edge when needed.
+  input, unit selector, details action, remove action, and warning frame when needed.
 - Do not repeat a gram value under the name when that same gram value is already the
   editable amount.
 - Weight is primary. Volume is available only with explicit, evidence-backed conversion

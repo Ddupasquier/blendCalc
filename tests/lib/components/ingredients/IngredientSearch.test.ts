@@ -307,7 +307,7 @@ describe("IngredientSearch", () => {
 		expect(searchFoodPage).toHaveBeenCalledTimes(1);
 	});
 
-	it("uses product images and warning edges without changing search actions", async () => {
+	it("uses product images and warning frames without changing search actions", async () => {
 		const onSelect = vi.fn();
 		const onAdd = vi.fn();
 		const imageFood: FoodItem = {
@@ -353,7 +353,7 @@ describe("IngredientSearch", () => {
 			name: /peanut butter, smooth.*warning/i,
 		});
 		expect(card).toHaveClass("ingredient-search-card--media");
-		expect(card.querySelector(".card-warning-edge")).toBeInTheDocument();
+		expect(card.querySelector(".card-warning-frame")).toBeInTheDocument();
 		expect(
 			card.querySelector(".ingredient-card-media-lane img"),
 		).toHaveAttribute("src", "https://images.example.com/peanut-butter.jpg");

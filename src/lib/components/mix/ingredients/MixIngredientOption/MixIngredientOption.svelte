@@ -1,25 +1,27 @@
 <script lang="ts">
-	import CardWarningEdge from "$lib/components/common/display/CardWarningEdge/CardWarningEdge.svelte";
+	import CardWarningFrame from "$lib/components/common/display/CardWarningFrame/CardWarningFrame.svelte";
 	import CardSelectionIndicator from "$lib/components/common/display/CardSelectionIndicator/CardSelectionIndicator.svelte";
 	import IngredientCardMedia from "$lib/components/ingredients/card/IngredientCardMedia/IngredientCardMedia.svelte";
 	import {
-		getFoodWarningEdgeTone,
+		getFoodWarningFrameTone,
 		getPrimaryFoodWarning,
 	} from "$lib/utils/ingredients/ingredientListUi";
 	import type { MixIngredientOptionProps } from "./types";
 
 	let { food, selected, onSelect }: MixIngredientOptionProps = $props();
 	const warning = $derived(getPrimaryFoodWarning(food));
-	const warningEdgeTone = $derived(getFoodWarningEdgeTone(food));
+	const warningFrameTone = $derived(getFoodWarningFrameTone(food));
 </script>
 
 <article
 	class="mix-ingredient-option mix-ingredient-option--media"
 	class:mix-ingredient-option--selected={selected}
+	class:mix-ingredient-option--warning={warningFrameTone !== null}
+	data-warning-tone={warningFrameTone ?? undefined}
 >
 	<IngredientCardMedia {food} />
-	{#if warning && warningEdgeTone}
-		<CardWarningEdge tone={warningEdgeTone} />
+	{#if warningFrameTone}
+		<CardWarningFrame tone={warningFrameTone} />
 	{/if}
 	<button
 		type="button"

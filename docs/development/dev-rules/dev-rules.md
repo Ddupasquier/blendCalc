@@ -324,8 +324,10 @@ CSS motion remains covered by the global reduced-motion rule. Do not add animati
 static content merely for decoration. Ambient progress, scanning, and loading motion
 may loop only while the related process is active and must stop or become immediate
 under reduced-motion preferences. Compact ingredient cards with a preference conflict
-must retain the shared full-height amber `CardWarningEdge`; do not replace it with an
-inline warning icon, text block, or image treatment. The card's accessible action label
+must retain the shared full-card amber `CardWarningFrame`; do not replace it with an
+inline warning icon, text block, or image treatment. The frame must use the shared
+three-pixel border treatment, remain solid at the left, and fade across the card without
+changing card geometry. The card's accessible action label
 must include the warning text so the visual edge is not the only communicated signal.
 
 <a id="rule-content-security-policy"></a>
@@ -556,7 +558,12 @@ image-or-fallback slot. Source-backed product images and database-driven fallbac
 symbols use that same full-height left media lane,
 left-corner clipping, fade, content offset, and warning-edge layering. The shared mask
 must reach full transparency before the lane's text-facing boundary so source images
-with opaque rectangular backgrounds do not leave a visible vertical seam. Use a broad
+with opaque rectangular backgrounds do not leave a visible vertical seam. When a
+contained or shifted image ends before the standard mask does, derive the mask radius
+from the measured rendered image edge and finish the fade at least three pixels before
+that edge. This is a render-time normalized constraint, not a fixed persisted crop or
+card-specific offset, so existing images and every responsive card size receive the
+same protection. Use a broad
 elliptical transition with a soft intermediate opacity rather than a straight vertical
 edge or abrupt opacity drop. The approved shared mask uses a `100%` horizontal radius
 and `140%` vertical radius in `IngredientCardMediaLane.scss`; preserve that
@@ -581,7 +588,7 @@ contained according to placement, but never stretched. Missing and failed images
 switch to the fallback within the existing media lane without changing card geometry,
 hiding the media on small screens, or moving the card copy.
 Use one shared media-lane proportion between 25% and 30% for saved cards, search cards,
-and image-placement card previews. Keep the copy inset separate and narrower than the
+Mix option cards, and image-placement card previews. Keep the copy inset separate and narrower than the
 media lane so titles may overlap only the lane's low-opacity faded tail without covering
 the solid, readable image. Resolve both measurements from the outer card's inline-size
 container through `IngredientCardLayout.scss`; percentage padding on an inner grid
@@ -591,8 +598,8 @@ their available width and must not impose a separate maximum width. User upload,
 privileged moderator/admin/developer adjustment and moderation-review flows must render the same
 `ImagePlacementCardPreview`; do not create a simplified, circular, capped-width, or
 differently proportioned placement preview. When the current user's preference profile
-would place a warning edge on the saved card, the adjustment preview must include that
-same shared `CardWarningEdge` so it does not conceal part of the saved result.
+would place a warning frame on the saved card, the adjustment preview must include that
+same shared `CardWarningFrame` so it does not conceal part of the saved result.
 Saved and search cards must not independently recreate image failure state, placement
 resolution, fallback wrappers, media widths, masks, or clipping behavior.
 
@@ -1497,7 +1504,7 @@ user preference warning. DB-reviewed exact-match rules may create
 these facts must retain their matching provenance and must never be presented as package
 `Contains` or `May contain` statements. Packaged-product titles, descriptions,
 categories, brand names, and generic labels must never create a preference warning,
-warning edge, allergen fact, or trace fact. An explicitly typed generic-food record from
+warning frame, allergen fact, or trace fact. An explicitly typed generic-food record from
 an authoritative source dataset may create an intrinsic `contains` compatibility fact
 from its food identity taxonomy—for example, a generic shrimp record is intrinsically
 shellfish—but it must retain generic identity and taxonomy provenance and must never be
@@ -1570,7 +1577,7 @@ produces `incomplete` when preferences are active. No active preference profile 
 Never describe a non-conflict result as safe or allergen-free. Use wording equivalent to
 `No conflict found in available information`, explain incomplete and unchecked states
 distinctly, and remind users that the current package label remains the final authority.
-Only `conflict` may create the compact warning edge on cards; absence of that edge is
+Only `conflict` may create the compact warning frame on cards; absence of that frame is
 not a checked or safety claim. Saved-list, search, nutrition-detail, and versioned API
 reads must use this same contract. Client components may render the bounded status and
 translate it through the shared message catalog, but they must not recompute evidence

@@ -11,7 +11,7 @@ describe("ImagePlacementCardPreview", () => {
 				alt: "Package image",
 				foodName: "Sempio Gochu Jang",
 				category: "Dips & Salsa",
-				showWarningEdge: true,
+				warningFrameTone: "warning",
 				value: {
 					cropX: 25,
 					cropY: 75,
@@ -33,7 +33,7 @@ describe("ImagePlacementCardPreview", () => {
 		expect(screen.getByText("Sempio Gochu Jang")).toBeInTheDocument();
 		expect(screen.getByText("Dips & Salsa")).toBeInTheDocument();
 		expect(image.closest(".ingredient-card-media-lane")).toBeInTheDocument();
-		expect(document.querySelector(".card-warning-edge")).toBeInTheDocument();
+		expect(document.querySelector(".card-warning-frame")).toBeInTheDocument();
 	});
 
 	it("uses the complete card preview as the direct-manipulation surface", () => {

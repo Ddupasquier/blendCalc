@@ -3,13 +3,13 @@
 	import X from "$lib/assets/icons/X/X.svelte";
 	import TwoStepConfirmation from "$lib/components/common/actions/TwoStepConfirmation/TwoStepConfirmation.svelte";
 	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton/CircleIconButton.svelte";
-	import CardWarningEdge from "$lib/components/common/display/CardWarningEdge/CardWarningEdge.svelte";
+	import CardWarningFrame from "$lib/components/common/display/CardWarningFrame/CardWarningFrame.svelte";
 	import CardSelectionIndicator from "$lib/components/common/display/CardSelectionIndicator/CardSelectionIndicator.svelte";
 	import IngredientCardMedia from "$lib/components/ingredients/card/IngredientCardMedia/IngredientCardMedia.svelte";
 	import IngredientMoveIcon from "$lib/components/ingredients/list/IngredientMoveIcon/IngredientMoveIcon.svelte";
 	import IngredientProvenanceBadges from "$lib/components/ingredients/provenance/IngredientProvenanceBadges/IngredientProvenanceBadges.svelte";
 	import { isPrivateCustomFood } from "$lib/utils/food/records/foodClassification";
-	import { getFoodWarningEdgeTone } from "$lib/utils/ingredients/ingredientListUi";
+	import { getFoodWarningFrameTone } from "$lib/utils/ingredients/ingredientListUi";
 	import { longPress } from "$lib/utils/interaction/longPress";
 	import type { SavedIngredientCardProps } from "./types";
 
@@ -40,9 +40,10 @@
 		}
 		onPreview();
 	};
-	const warningEdgeTone = $derived(
-		getFoodWarningEdgeTone(food) ?? (warning ? "warning" : null),
+	const warningFrameTone = $derived(
+		getFoodWarningFrameTone(food) ?? (warning ? "warning" : null),
 	);
+	const hasWarningFrame = $derived(Boolean(warning && warningFrameTone));
 </script>
 
 <article
@@ -51,10 +52,12 @@
 	class:saved-ingredient-card--checked={checked}
 	class:saved-ingredient-card--custom={isPrivateCustomFood(food)}
 	class:saved-ingredient-card--selection-mode={selectionMode}
+	class:saved-ingredient-card--warning={hasWarningFrame}
+	data-warning-tone={hasWarningFrame ? warningFrameTone : undefined}
 >
 	<IngredientCardMedia {food} />
-	{#if warning && warningEdgeTone}
-		<CardWarningEdge tone={warningEdgeTone} />
+	{#if hasWarningFrame && warningFrameTone}
+		<CardWarningFrame tone={warningFrameTone} />
 	{/if}
 	<button
 		class="saved-ingredient-card__select"

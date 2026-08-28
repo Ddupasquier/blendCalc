@@ -106,7 +106,7 @@ This document owns profile behavior and privacy. Auth configuration belongs in
 - Nutrient priorities preserve user order. A DB-provided default target includes its
   unit; nutrients without one are identified as display emphasis only. Priorities order
   the default Mix presentation and do not create or rewrite nutrition goals.
-- Each disclosure states where it applies: search ranking, warning edges, Nutrition
+- Each disclosure states where it applies: search ranking, warning frames, Nutrition
   details, or Mix. These explanations do not duplicate saved values.
 
 ## Profile Images

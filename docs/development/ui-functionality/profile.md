@@ -135,7 +135,7 @@ Do not reintroduce general dislikes or ingredients-to-avoid without a separate p
 decision.
 
 Saved allergens and restrictions drive search downranking, nutrition warnings, Fridge
-and Shopping List warning edges, Mix warnings, and suggestion safety. Region affects
+and Shopping List warning frames, Mix warnings, and suggestion safety. Region affects
 regional warning and Nutrition-detail context. Measurement defaults affect new Mix
 amount controls, and nutrient priorities affect default Mix nutrient order. Explain
 those impacts briefly inside the matching disclosure without repeating saved values.
