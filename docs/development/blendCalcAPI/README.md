@@ -16,6 +16,7 @@ fields retain their stable versioned names.
 | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | Understand API access and stability | [blendCalcAPI v1 Status](#blendcalcapi-v1-status), [Versioning](#versioning), and [Privacy And Rights](#privacy-and-rights) |
 | Inspect available reads             | [Read Endpoints](#read-endpoints)                                                                                           |
+| Review response budgets             | [Response Targets](#response-targets)                                                                                       |
 | Understand publication rules        | [What Can Be Published](#what-can-be-published) and [Corrections And Rapid Removal](#corrections-and-rapid-removal)         |
 | Inspect upstream provider samples   | [External API Structure References](../api-structures/README.md)                                                            |
 
@@ -69,6 +70,26 @@ caching and errors use `no-store`.
 
 Route tests validate every status against the exact OpenAPI schema. Undeclared response
 fields are rejected rather than silently entering blendCalcAPI v1.
+
+## Response Targets
+
+The internal API has measured p95 response budgets for representative authenticated
+reads. These are regression budgets for the repeatable local production-preview audit,
+not promises enforced inside live request handling.
+
+| Scenario            | p95 budget | What is measured                                 |
+| ------------------- | ---------- | ------------------------------------------------ |
+| Exact product       | 1,000 ms   | One publication-ready product by exact GTIN      |
+| Category first page | 750 ms     | First 50 enabled canonical categories            |
+| Search first page   | 1,000 ms   | First 15 publication-ready matches for one query |
+| Warm product repeat | 150 ms     | Same exact product URL after one priming read    |
+
+Run `npm run test:e2e:session:start`, then run
+`npm run audit:blendCalcAPI-performance` in another terminal. The audit reports p50,
+p95, and maximum latency. It uses unique URLs for cold scenarios and a stable URL for
+repeat reads so those two measurements cannot be
+silently conflated. A noisy audit failure does not alter API availability or catalog
+data.
 
 ## What Can Be Published
 

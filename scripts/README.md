@@ -151,10 +151,17 @@ and changed write semantics require a later contract migration.
 | `node scripts/audits/catalog/audit_catalog_transparency.mjs`                   | Verification dates, revisions, observations, source quality, ingredients, uncertainty, compatibility, API exposure, and app reads                  |
 | `node scripts/audits/catalog/audit_catalog_transparency.mjs --json`            | The same read-only transparency report as structured output                                                                                        |
 | `node scripts/audits/catalog/audit_barcode_nutrition_accuracy.mjs --limit=300` | At least 300 exact GTINs plus every active catalog product across provider evidence, units, servings, normalized values, provenance, and conflicts |
+| `npm run audit:blendCalcAPI-performance`                                       | Authenticated production-preview p50/p95 checks for product, category, first-page search, and browser-cached repeat reads                          |
 
 The barcode audit writes its detailed report to ignored `scripts/output/`. Provider
 anomalies, source disagreements, app math defects, and legally blocked fields remain
 separate findings; the audit never promotes data merely to improve its pass rate.
+
+Run the performance audit while `npm run test:e2e:session:start` is serving the local
+production build on port `5174`. It uses the disposable QA account and fails only the
+audit process when a response budget regresses; the budgets never block application
+traffic. Use `--json`, `--samples=15`, `--barcode=<14-digit GTIN>`, or `--query=<term>`
+to produce structured evidence or change the representative input.
 
 ## Source Coverage And Quality
 
