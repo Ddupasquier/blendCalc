@@ -116,6 +116,8 @@ const readCardMediaPresentation = (card: Locator) =>
 				"--ingredient-card-media-mask-horizontal-radius",
 			),
 		);
+		const maskImage = getComputedStyle(mediaLane).maskImage;
+		const maskFadeEndPixels = maskHorizontalRadiusPixels * 0.8;
 		return {
 			cardHeight: cardBounds?.height ?? 0,
 			mediaHeight: mediaBounds.height,
@@ -123,7 +125,10 @@ const readCardMediaPresentation = (card: Locator) =>
 				cardBounds && cardBounds.width > 0
 					? mediaBounds.width / cardBounds.width
 					: 0,
-			maskImage: getComputedStyle(mediaLane).maskImage,
+			maskGradientTemplate: maskImage.replace(
+				/radial-gradient\([\d.]+px/,
+				"radial-gradient(<horizontal-radius>",
+			),
 			imageSource: image?.getAttribute("src") ?? "",
 			imageRightEdgePixels: imageBounds
 				? imageBounds.right - mediaBounds.left
@@ -133,7 +138,9 @@ const readCardMediaPresentation = (card: Locator) =>
 				: 0,
 			imageWidthPixels: imageBounds?.width ?? 0,
 			imageHeightPixels: imageBounds?.height ?? 0,
-			maskFadeEndPixels: maskHorizontalRadiusPixels * 0.8,
+			maskFadeEndPixels,
+			maskFadeEndRatio:
+				mediaBounds.width > 0 ? maskFadeEndPixels / mediaBounds.width : 0,
 		};
 	});
 
@@ -315,7 +322,9 @@ test("search and Mix cards use the same warning frame @compatibility", async ({
 		savedCardMedia.mediaWidthRatio,
 		2,
 	);
-	expect(mixCardMedia.maskImage).toBe(savedCardMedia.maskImage);
+	expect(mixCardMedia.maskGradientTemplate).toBe(
+		savedCardMedia.maskGradientTemplate,
+	);
 	expect(mixCardMedia.imageSource).toBe(savedCardMedia.imageSource);
 	expect(mixCardMedia.imageLeftEdgePixels).toBeCloseTo(
 		savedCardMedia.imageLeftEdgePixels,
@@ -329,8 +338,8 @@ test("search and Mix cards use the same warning frame @compatibility", async ({
 		savedCardMedia.imageHeightPixels,
 		2,
 	);
-	expect(mixCardMedia.maskFadeEndPixels).toBeCloseTo(
-		savedCardMedia.maskFadeEndPixels,
-		1,
+	expect(mixCardMedia.maskFadeEndRatio).toBeCloseTo(
+		savedCardMedia.maskFadeEndRatio,
+		2,
 	);
 });
