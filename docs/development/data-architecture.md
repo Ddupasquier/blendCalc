@@ -16,6 +16,12 @@ canonical food catalog. Browser storage is not a second database.
 
 ## API Correction Boundary
 
+blendCalcAPI consumer credentials are server-owned durable data. High-entropy keys are
+shown once at issuance; only hashes and short display prefixes persist. Browser roles
+cannot read key rows. Names, scopes, issue/use/expiry dates, revocation, and atomic
+rotation are separate from Supabase user sessions, and API routes do not accept these
+keys until the reviewed access policy explicitly enables keyed access.
+
 Public-data concerns are accepted only by the server route and stored in private
 `blendcalc_api_publication_concerns`; browser roles have no direct table privileges. Exact targets
 resolve against canonical IDs before storage, while contact details and evidence remain

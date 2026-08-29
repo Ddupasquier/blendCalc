@@ -22,16 +22,16 @@ fields retain their stable versioned names.
 
 ## blendCalcAPI v1 Status
 
-| Property               | Current value                                     |
-| ---------------------- | ------------------------------------------------- |
-| Status                 | Internal, read-only preview                       |
-| Access                 | Existing authenticated blendCalc Supabase session |
-| Base path              | `/api/v1`                                         |
-| Response version       | `1.0`                                             |
-| OpenAPI version        | `1.0.0`                                           |
-| Live provider requests | None; reads use stored canonical data only        |
-| Public API keys        | Not available                                     |
-| Public release         | Blocked pending the reviewed release process      |
+| Property               | Current value                                                   |
+| ---------------------- | --------------------------------------------------------------- |
+| Status                 | Internal, read-only preview                                     |
+| Access                 | Existing authenticated blendCalc Supabase session               |
+| Base path              | `/api/v1`                                                       |
+| Response version       | `1.0`                                                           |
+| OpenAPI version        | `1.0.0`                                                         |
+| Live provider requests | None; reads use stored canonical data only                      |
+| Public API keys        | Credential lifecycle implemented; route access remains disabled |
+| Public release         | Blocked pending the reviewed release process                    |
 
 The executable contract is split between:
 
@@ -44,6 +44,11 @@ The executable contract is split between:
 Open the OpenAPI document at `/api/v1/openapi.json`. To inspect raw API JSON in a
 browser, sign in to blendCalc first and then open one of the endpoints below in the same
 browser session. Public bearer keys and anonymous catalog access do not exist yet.
+
+The server can issue, expire, revoke, and atomically rotate high-entropy API keys while
+storing only hashes and short display prefixes. This credential foundation does not by
+itself expose any endpoint: keyed route access remains disabled until the reviewed
+scope and public-access policies are implemented and enabled.
 
 ## Read Endpoints
 

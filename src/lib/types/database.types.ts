@@ -240,6 +240,105 @@ export type Database = {
         }
         Relationships: []
       }
+      blendcalc_api_clients: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          owner_user_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          owner_user_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          owner_user_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      blendcalc_api_keys: {
+        Row: {
+          client_id: string
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          issued_at: string
+          key_hash: string
+          key_prefix: string
+          last_used_at: string | null
+          name: string
+          revocation_reason: string | null
+          revoked_at: string | null
+          rotated_from_key_id: string | null
+          scopes: string[]
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          issued_at?: string
+          key_hash: string
+          key_prefix: string
+          last_used_at?: string | null
+          name: string
+          revocation_reason?: string | null
+          revoked_at?: string | null
+          rotated_from_key_id?: string | null
+          scopes?: string[]
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          issued_at?: string
+          key_hash?: string
+          key_prefix?: string
+          last_used_at?: string | null
+          name?: string
+          revocation_reason?: string | null
+          revoked_at?: string | null
+          rotated_from_key_id?: string | null
+          scopes?: string[]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blendcalc_api_keys_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "blendcalc_api_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blendcalc_api_keys_rotated_from_key_id_fkey"
+            columns: ["rotated_from_key_id"]
+            isOneToOne: false
+            referencedRelation: "blendcalc_api_keys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       blendcalc_api_publication_concerns: {
         Row: {
           concern_fingerprint: string
@@ -8294,6 +8393,10 @@ export type Database = {
       }
     }
     Functions: {
+      blendcalc_api_key_scopes_are_well_formed: {
+        Args: { p_scopes: string[] }
+        Returns: boolean
+      }
       activate_food_compatibility_policy_version: {
         Args: { p_policy_version_id: string }
         Returns: number
@@ -8658,6 +8761,19 @@ export type Database = {
           exact_matches_activated: number
           probable_matches_queued: number
         }[]
+      }
+      rotate_blendcalc_api_key: {
+        Args: {
+          p_created_by?: string
+          p_current_key_id: string
+          p_expires_at: string | null
+          p_key_hash: string
+          p_key_prefix: string
+          p_name: string
+          p_new_key_id: string
+          p_scopes: string[]
+        }
+        Returns: string
       }
       record_product_source_daily_metric: {
         Args: {
