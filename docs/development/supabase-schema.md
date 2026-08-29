@@ -502,7 +502,8 @@ Notes:
 
 - Runtime lookups record daily counters through the service-role-only
   `record_product_source_daily_metric` function, using one atomic upsert per completed
-  source attempt.
+  source attempt. Only the cache-aware 23-argument signature remains; the superseded
+  recorder that predated miss, stale-fallback, and coalescing counters is removed.
 - The table deliberately stores no barcode, search text, user id, or vendor payload.
 - `runtime` rows explain real traffic and API/cache load. `benchmark` rows send the same
   saved barcodes to each source for a fair coverage comparison.

@@ -1,0 +1,22 @@
+drop function if exists public.record_product_source_daily_metric(
+	text,
+	text,
+	text,
+	text,
+	bigint,
+	bigint,
+	bigint,
+	bigint,
+	bigint,
+	bigint,
+	bigint,
+	bigint,
+	bigint,
+	bigint,
+	bigint,
+	bigint,
+	bigint,
+	bigint,
+	bigint,
+	bigint
+);
