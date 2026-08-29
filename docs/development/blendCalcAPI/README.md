@@ -70,6 +70,20 @@ caching and errors use `no-store`.
 Route tests validate every status against the exact OpenAPI schema. Undeclared response
 fields are rejected rather than silently entering blendCalcAPI v1.
 
+## Query Plan Audit
+
+Run `node scripts/audits/catalog/audit_blendCalcAPI_query_plans.mjs` after starting the
+local test database. The read-only audit measures exact-product, representative search,
+broad search, deepest bounded search and revision pages, plus first and deepest category
+pages. It also inspects the exact-product and broad-search core predicates so index use
+is visible even though PostgreSQL reports security-definer API functions as function
+scans.
+
+The report includes planning and execution time, buffers, node types, and sequential
+scans. A sequential scan requests index review only after processing at least 10,000
+rows. This keeps small-table scans visible without adding speculative indexes that cost
+more to maintain than they save.
+
 ## What Can Be Published
 
 The shared catalog intentionally stores more than the API publishes. blendCalcAPI v1 returns only
