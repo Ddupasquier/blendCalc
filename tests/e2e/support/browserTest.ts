@@ -347,12 +347,32 @@ export const expectCompactHeaderHidesAndRevealsWithScroll = async (
 	await scrollContainer.evaluate((element) => element.scrollTo({ top: 0 }));
 	await expect(header).not.toHaveClass(/view-top--compact-hidden/);
 	await expect(header).toBeVisible();
+	const waitForScrollObservers = () =>
+		scrollContainer.evaluate(
+			() =>
+				new Promise<void>((resolve) => {
+					requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+				}),
+		);
+	await waitForScrollObservers();
 	const maximumScrollTop = await scrollContainer.evaluate((element) => {
-		const nextScrollTop = element.scrollHeight - element.clientHeight;
-		element.scrollTo({ top: nextScrollTop });
-		return nextScrollTop;
+		return element.scrollHeight - element.clientHeight;
 	});
 	expect(maximumScrollTop).toBeGreaterThan(0);
+	for (const scrollProgress of [0.25, 0.5, 0.75, 1]) {
+		await scrollContainer.evaluate(
+			(element, scrollTop) => element.scrollTo({ top: scrollTop }),
+			maximumScrollTop * scrollProgress,
+		);
+		await waitForScrollObservers();
+		if (
+			await header.evaluate((element) =>
+				element.classList.contains("view-top--compact-hidden"),
+			)
+		) {
+			break;
+		}
+	}
 	await expect(header).toHaveClass(/view-top--compact-hidden/);
 	await header.evaluate(async (element) => {
 		await Promise.all(
@@ -361,12 +381,7 @@ export const expectCompactHeaderHidesAndRevealsWithScroll = async (
 				.map((animation) => animation.finished.catch(() => undefined)),
 		);
 	});
-	await scrollContainer.evaluate(
-		() =>
-			new Promise<void>((resolve) => {
-				requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
-			}),
-	);
+	await waitForScrollObservers();
 
 	await scrollContainer.evaluate((element) =>
 		element.scrollTo({ top: Math.max(0, element.scrollTop - 160) }),

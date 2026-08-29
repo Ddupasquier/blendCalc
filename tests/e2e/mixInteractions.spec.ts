@@ -88,6 +88,13 @@ const openSavedRecipeCard = async (
 		await details.locator(":scope > summary").click();
 	}
 	await expect(details).toHaveAttribute("open", "");
+	await details.evaluate(async (element) => {
+		await Promise.all(
+			element
+				.getAnimations({ subtree: true })
+				.map((animation) => animation.finished.catch(() => undefined)),
+		);
+	});
 	return card;
 };
 
