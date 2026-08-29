@@ -44,4 +44,32 @@ describe("createServerCachedLoader", () => {
 		await expect(getValue()).resolves.toBe("recovered");
 		expect(load).toHaveBeenCalledTimes(2);
 	});
+
+	it("can serve a previously verified value during a transient refresh failure", async () => {
+		let now = 1_000;
+		const load = vi
+			.fn()
+			.mockResolvedValueOnce("verified")
+			.mockRejectedValueOnce(new Error("temporary failure"));
+		const getValue = createServerCachedLoader({
+			load,
+			ttlMilliseconds: 100,
+			useStaleValueOnError: true,
+			now: () => now,
+		});
+
+		expect(await getValue()).toBe("verified");
+		now = 1_100;
+		expect(await getValue()).toBe("verified");
+		expect(load).toHaveBeenCalledTimes(2);
+	});
+
+	it("still fails closed when no verified stale value exists", async () => {
+		const getValue = createServerCachedLoader({
+			load: vi.fn().mockRejectedValue(new Error("unavailable")),
+			useStaleValueOnError: true,
+		});
+
+		await expect(getValue()).rejects.toThrow("unavailable");
+	});
 });

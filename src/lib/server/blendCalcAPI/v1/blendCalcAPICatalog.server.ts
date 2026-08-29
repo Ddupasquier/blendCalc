@@ -23,6 +23,7 @@ import type { FoodCompatibilityFact } from "$lib/utils/food/quality/compatibilit
 import { getFoodCompatibilityEvaluation } from "$lib/utils/food/quality/foodCompatibilityEvaluation";
 import type { FoodImageAsset } from "$lib/utils/food/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { createServerCachedLoader } from "$lib/server/cache/serverCachedLoader";
 
 const uniqueStrings = (values: Array<string | null | undefined>) => [
 	...new Set(values.map((value) => value?.trim()).filter(Boolean) as string[]),
@@ -249,7 +250,7 @@ export const mapBlendCalcAPIV1SourceAttributionCatalog = (
 	return { sources, datasetsBySource, datasetSourceKeys, assetSources };
 };
 
-export const readBlendCalcAPIV1SourceAttributionCatalog = async (
+const readBlendCalcAPIV1SourceAttributionCatalogFromDatabase = async (
 	supabase: SupabaseClient<Database>,
 ): Promise<BlendCalcAPIV1SourceAttributionCatalog> => {
 	const [sourceResult, datasetResult] = await Promise.all([
@@ -272,6 +273,27 @@ export const readBlendCalcAPIV1SourceAttributionCatalog = async (
 		(sourceResult.data ?? []) as SourceAttributionRow[],
 		(datasetResult.data ?? []) as DatasetAttributionRow[],
 	);
+};
+
+const sourceAttributionLoaders = new WeakMap<
+	SupabaseClient<Database>,
+	() => Promise<BlendCalcAPIV1SourceAttributionCatalog>
+>();
+
+export const readBlendCalcAPIV1SourceAttributionCatalog = (
+	supabase: SupabaseClient<Database>,
+) => {
+	let loader = sourceAttributionLoaders.get(supabase);
+	if (!loader) {
+		loader = createServerCachedLoader({
+			load: () =>
+				readBlendCalcAPIV1SourceAttributionCatalogFromDatabase(supabase),
+			ttlMilliseconds: 5 * 60 * 1_000,
+			useStaleValueOnError: true,
+		});
+		sourceAttributionLoaders.set(supabase, loader);
+	}
+	return loader();
 };
 
 type RepresentedSource = {

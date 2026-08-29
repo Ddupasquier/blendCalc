@@ -181,6 +181,12 @@ bounded expired batch at a time. Daily metrics distinguish fresh hits, misses,
 stale-on-error fallbacks, coalesced requests, and real outbound requests without storing
 queries, barcodes, or user identifiers.
 
+blendCalcAPI reads do not depend on optional analytics, provider traffic, or intake
+processing. Source attribution remains legally required, but the server retains the
+last complete attribution catalog for a bounded refresh interval and may reuse that
+verified value during a transient database failure. With no verified attribution value,
+the read fails closed rather than emitting incomplete legal metadata.
+
 Exact USDA barcode lookup preserves its bounded detail read because the detail record
 adds category and availability metadata omitted by search results. Shared caching and
 request coalescing prevent repeated outbound detail calls. Stable UCUM unit codes and
