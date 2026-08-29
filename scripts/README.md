@@ -154,6 +154,7 @@ and changed write semantics require a later contract migration.
 | `node scripts/audits/catalog/audit_catalog_transparency.mjs --json`            | The same read-only transparency report as structured output                                                                                        |
 | `node scripts/audits/catalog/audit_barcode_nutrition_accuracy.mjs --limit=300` | At least 300 exact GTINs plus every active catalog product across provider evidence, units, servings, normalized values, provenance, and conflicts |
 | `npm run audit:blendCalcAPI-performance`                                       | Authenticated production-preview p50/p95 checks for product, category, first-page search, and browser-cached repeat reads                          |
+| `npm run audit:blendCalcAPI-load`                                              | Bounded authenticated load corpus for common, broad, empty, warmed, and mixed concurrent blendCalcAPI reads                                        |
 
 The barcode audit writes its detailed report to ignored `scripts/output/`. Provider
 anomalies, source disagreements, app math defects, and legally blocked fields remain
@@ -164,6 +165,12 @@ production build on port `5174`. It uses the disposable QA account and fails onl
 audit process when a response budget regresses; the budgets never block application
 traffic. Use `--json`, `--samples=15`, `--barcode=<14-digit GTIN>`, or `--query=<term>`
 to produce structured evidence or change the representative input.
+
+Run the load audit against the same prepared preview. It defaults to five concurrent
+clients and five iterations, remains read-only, and fails on any HTTP error or missed
+scenario-specific p95 budget. Use `--concurrency=2..10`, `--iterations=3..20`, and
+`--json` for a controlled pre-beta run; do not point it at production without explicit
+authorization.
 
 ## Source Coverage And Quality
 
