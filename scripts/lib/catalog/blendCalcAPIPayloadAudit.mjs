@@ -1,6 +1,7 @@
 /**
  * Purpose: Provide pure byte-size calculations for the authenticated blendCalcAPI
- * payload audit. Import this module from tests or the executable audit; do not run it.
+ * payload audit. Do not run directly; import this module from tests or the executable
+ * audit.
  */
 
 const rounded = (value, digits = 1) => Number(value.toFixed(digits));
