@@ -22,6 +22,27 @@ const serveDeterministicOpenFoodFactsImages = (page: Page) =>
 const getIngredientList = (page: Page, label: "Fridge" | "Shopping List") =>
 	page.getByRole("list", { name: `${label} ingredients` });
 
+const findPicturedWarningCard = async (page: Page, ingredientList: Locator) => {
+	const picturedWarningCards = ingredientList
+		.locator(".saved-ingredient-card--warning")
+		.filter({ has: page.locator(".ingredient-card-media-lane img") });
+	for (let loadedPageCount = 0; loadedPageCount < 10; loadedPageCount += 1) {
+		if ((await picturedWarningCards.count()) > 0) {
+			return picturedWarningCards.first();
+		}
+		const loadMoreButton = ingredientList.getByRole("button", {
+			name: "Load more",
+		});
+		if (!(await loadMoreButton.isVisible())) break;
+		const previousCardCount = await ingredientList.locator("li").count();
+		await loadMoreButton.click();
+		await expect
+			.poll(() => ingredientList.locator("li").count())
+			.toBeGreaterThan(previousCardCount);
+	}
+	return picturedWarningCards.first();
+};
+
 const openMixSection = async (page: Page, selector: string) => {
 	const section = page.locator(selector);
 	const details = section.locator(":scope > details");
@@ -252,10 +273,10 @@ test("search and Mix cards use the same warning frame @compatibility", async ({
 		.locator('.saved-ingredient-card--warning[data-warning-tone="danger"]')
 		.first();
 	await expectRoundedGradientFrame(recallSavedCard, "danger");
-	const picturedWarningCard = getIngredientList(page, "Fridge")
-		.locator(".saved-ingredient-card--warning")
-		.filter({ has: page.locator(".ingredient-card-media-lane img") })
-		.first();
+	const picturedWarningCard = await findPicturedWarningCard(
+		page,
+		getIngredientList(page, "Fridge"),
+	);
 	await expect(picturedWarningCard).toBeVisible();
 	const picturedWarningTone =
 		await picturedWarningCard.getAttribute("data-warning-tone");
