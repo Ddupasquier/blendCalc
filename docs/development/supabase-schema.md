@@ -1807,6 +1807,10 @@ Notes:
 - `consume_request_rate_limit` validates all quota configuration, resets expired
   windows atomically, opportunistically prunes counters expired for more than one day,
   and is executable only by the service role.
+- `consume_request_rate_limits` consumes at most 12 endpoint-specific burst and
+  sustained windows for the client IP, authenticated account, and presented API-key
+  identity in one service-role-only database call. Every applicable layer must allow
+  the request.
 - All application JSON and form endpoints parse through bounded request readers.
   Declared and streamed bodies that exceed the route limit are rejected before domain
   logic runs; compressed request bodies are rejected to prevent decompression abuse.
@@ -1956,6 +1960,7 @@ category, or serving fields.
 | `mark_product_safety_alert_notification_read`          | Lets an authenticated owner mark exactly one of their alert notifications as read                                                                                                                      |
 | `catalog_change_summary_is_valid`                      | Validates unique structured old/new field changes before a catalog product update can be accepted                                                                                                      |
 | `consume_request_rate_limit`                           | Atomically consumes one private server-side request quota unit; service role only                                                                                                                      |
+| `consume_request_rate_limits`                          | Atomically consumes bounded endpoint, IP, account, API-key, burst, and sustained quota layers; service role only                                                                                       |
 | `replace_app_interaction_daily_metrics`                | Atomically replaces a bounded production date range of private Vercel interaction aggregates; service role only                                                                                        |
 | `reject_blocked_signup`                                | Supabase Auth hook for hashed email signup blocks                                                                                                                                                      |
 | `custom_access_token_hook`                             | Supabase Auth hook that adds the current database-owned `user`, `moderator`, `admin`, or `developer` role to newly issued JWTs as `app_role`                                                           |

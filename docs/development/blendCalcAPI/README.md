@@ -166,6 +166,11 @@ refresh failure may reuse the last complete verified attribution catalog, while 
 initial failure still fails closed. Core catalog failures continue to return the safe
 documented unavailable response.
 
+The request boundary applies endpoint-specific burst and sustained quotas to each
+available client identity: network address, authenticated account, and presented API
+key. The private database consumes every applicable layer in one call; exceeding any
+layer returns the documented `429 rate_limited` response and retry delay.
+
 ## Payload Measurement
 
 Run `npm run audit:blendCalcAPI-payloads` against the prepared local preview to measure

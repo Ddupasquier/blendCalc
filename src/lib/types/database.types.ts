@@ -8646,6 +8646,14 @@ export type Database = {
           retry_after_seconds: number
         }[]
       }
+      consume_request_rate_limits: {
+        Args: { p_limits: Json }
+        Returns: {
+          allowed: boolean
+          remaining: number
+          retry_after_seconds: number
+        }[]
+      }
       create_food_compatibility_policy_draft: {
         Args: {
           p_change_summary: string

@@ -12,9 +12,9 @@ const mocks = vi.hoisted(() => {
 
 	return {
 		applySecurityHeaders: vi.fn(),
-		consumeRequestRateLimit: vi.fn(),
+		consumeRequestRateLimits: vi.fn(),
 		createSupabaseServerClient: vi.fn(),
-		getRequestRateLimitPolicy: vi.fn(),
+		getRequestRateLimitLayers: vi.fn(),
 		isActiveAccountBlock: vi.fn(),
 		moderationQuery,
 		readVerifiedAuthUser: vi.fn(),
@@ -34,8 +34,8 @@ vi.mock("$lib/server/auth/verifiedAuthUser.server", () => ({
 	readVerifiedAuthUser: mocks.readVerifiedAuthUser,
 }));
 vi.mock("$lib/server/security/requestRateLimit.server", () => ({
-	consumeRequestRateLimit: mocks.consumeRequestRateLimit,
-	getRequestRateLimitPolicy: mocks.getRequestRateLimitPolicy,
+	consumeRequestRateLimits: mocks.consumeRequestRateLimits,
+	getRequestRateLimitLayers: mocks.getRequestRateLimitLayers,
 }));
 vi.mock("$lib/utils/http/securityHeaders", () => ({
 	applySecurityHeaders: mocks.applySecurityHeaders,
@@ -77,12 +77,15 @@ describe("blendCalcAPI v1 server request boundary", () => {
 			from: vi.fn(() => mocks.moderationQuery),
 		});
 		mocks.readVerifiedAuthUser.mockResolvedValue(null);
-		mocks.getRequestRateLimitPolicy.mockReturnValue({
-			limit: 180,
-			scope: "api-v1:read",
-			windowSeconds: 60,
-		});
-		mocks.consumeRequestRateLimit.mockResolvedValue({
+		mocks.getRequestRateLimitLayers.mockReturnValue([
+			{
+				limit: 180,
+				scope: "api-v1:read:ip:burst",
+				subject: "client:127.0.0.1",
+				windowSeconds: 60,
+			},
+		]);
+		mocks.consumeRequestRateLimits.mockResolvedValue({
 			allowed: true,
 			remaining: 179,
 			retryAfterSeconds: 0,
@@ -95,7 +98,7 @@ describe("blendCalcAPI v1 server request boundary", () => {
 	});
 
 	it("returns a documented API error when the request is rate limited", async () => {
-		mocks.consumeRequestRateLimit.mockResolvedValue({
+		mocks.consumeRequestRateLimits.mockResolvedValue({
 			allowed: false,
 			remaining: 0,
 			retryAfterSeconds: 14,
@@ -114,7 +117,7 @@ describe("blendCalcAPI v1 server request boundary", () => {
 	});
 
 	it("returns a documented API error when rate-limit storage fails", async () => {
-		mocks.consumeRequestRateLimit.mockRejectedValue(
+		mocks.consumeRequestRateLimits.mockRejectedValue(
 			new Error("private rate-limit database detail"),
 		);
 		const consoleError = vi

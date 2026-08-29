@@ -8,6 +8,10 @@ export type RequestRateLimitPolicy = {
 	windowSeconds: number;
 };
 
+export type RequestRateLimitLayer = RequestRateLimitPolicy & {
+	subject: string;
+};
+
 const API_DEFAULT_POLICY: RequestRateLimitPolicy = {
 	scope: "api:default",
 	limit: 240,
@@ -121,6 +125,51 @@ export const getRequestRateLimitPolicy = (
 	};
 };
 
+export const getRequestRateLimitLayers = ({
+	apiKey,
+	clientAddress,
+	method,
+	pathname,
+	userId,
+}: {
+	apiKey?: string | null;
+	clientAddress: string;
+	method: string;
+	pathname: string;
+	userId?: string | null;
+}): RequestRateLimitLayer[] => {
+	const endpointPolicy = getRequestRateLimitPolicy(method, pathname);
+	if (!endpointPolicy) return [];
+
+	const sustainedWindowSeconds = Math.min(
+		endpointPolicy.windowSeconds * 10,
+		24 * 60 * 60,
+	);
+	const sustainedLimit = Math.min(endpointPolicy.limit * 6, 10_000);
+	const identities = [
+		{ dimension: "ip", subject: `client:${clientAddress}` },
+		...(userId ? [{ dimension: "account", subject: `user:${userId}` }] : []),
+		...(apiKey?.trim()
+			? [{ dimension: "key", subject: `api-key:${apiKey.trim()}` }]
+			: []),
+	];
+
+	return identities.flatMap(({ dimension, subject }) => [
+		{
+			scope: `${endpointPolicy.scope}:${dimension}:burst`,
+			limit: endpointPolicy.limit,
+			windowSeconds: endpointPolicy.windowSeconds,
+			subject,
+		},
+		{
+			scope: `${endpointPolicy.scope}:${dimension}:sustained`,
+			limit: sustainedLimit,
+			windowSeconds: sustainedWindowSeconds,
+			subject,
+		},
+	]);
+};
+
 const hashSubject = (value: string) => {
 	const key = env.SUPABASE_SERVICE_ROLE_KEY;
 	if (!key) throw new Error("SUPABASE_SERVICE_ROLE_KEY is not configured.");
@@ -130,20 +179,21 @@ const hashSubject = (value: string) => {
 		.digest("hex");
 };
 
-export const consumeRequestRateLimit = async ({
-	policy,
-	subject,
-}: {
-	policy: RequestRateLimitPolicy;
-	subject: string;
-}) => {
+export const consumeRequestRateLimits = async (
+	layers: RequestRateLimitLayer[],
+) => {
+	if (layers.length === 0) {
+		return { allowed: true, remaining: 0, retryAfterSeconds: 0 };
+	}
 	const { data, error } = await getSupabaseAdminClient().rpc(
-		"consume_request_rate_limit",
+		"consume_request_rate_limits",
 		{
-			p_limit: policy.limit,
-			p_scope: policy.scope,
-			p_subject_hash: hashSubject(subject),
-			p_window_seconds: policy.windowSeconds,
+			p_limits: layers.map((layer) => ({
+				limit: layer.limit,
+				scope: layer.scope,
+				subject_hash: hashSubject(layer.subject),
+				window_seconds: layer.windowSeconds,
+			})),
 		},
 	);
 	if (error) throw error;
@@ -156,3 +206,11 @@ export const consumeRequestRateLimit = async ({
 		retryAfterSeconds: result.retry_after_seconds,
 	};
 };
+
+export const consumeRequestRateLimit = ({
+	policy,
+	subject,
+}: {
+	policy: RequestRateLimitPolicy;
+	subject: string;
+}) => consumeRequestRateLimits([{ ...policy, subject }]);
