@@ -113,4 +113,132 @@ describe("ingredient search route", () => {
 		expect(body.foods[0].image.imageUrl).toContain("example.com");
 		expect(body.total).toBe(3);
 	});
+
+	it("does not contact USDA when database results fill the requested page", async () => {
+		mocks.areExternalProductLookupsEnabled.mockReturnValue(true);
+		mocks.searchApprovedSharedProducts.mockResolvedValue([
+			makeFood(1, "Apple, raw"),
+			makeFood(2, "Apple, dried"),
+		]);
+		const locals = {
+			getVerifiedUser: vi.fn().mockResolvedValue({ id: "user-id" }),
+			supabase: { source: "authenticated-browser" },
+		};
+
+		const response = await GET({
+			locals,
+			url: new URL("http://localhost/api/foods/search?q=apple&limit=2"),
+		} as never);
+
+		expect(response.status).toBe(200);
+		expect(mocks.searchUsdaFoods).not.toHaveBeenCalled();
+	});
+
+	it("contacts USDA only after database coverage is insufficient", async () => {
+		mocks.areExternalProductLookupsEnabled.mockReturnValue(true);
+		mocks.searchApprovedSharedProducts.mockResolvedValue([
+			makeFood(1, "Apple, raw"),
+		]);
+		mocks.searchUsdaFoods.mockResolvedValue([makeFood(2, "Apple, dried")]);
+		const locals = {
+			getVerifiedUser: vi.fn().mockResolvedValue({ id: "user-id" }),
+			supabase: { source: "authenticated-browser" },
+		};
+
+		const response = await GET({
+			locals,
+			url: new URL("http://localhost/api/foods/search?q=apple&limit=2"),
+		} as never);
+
+		expect(response.status).toBe(200);
+		expect(mocks.searchUsdaFoods).toHaveBeenCalledOnce();
+		expect((await response.json()).foods).toHaveLength(2);
+	});
+
+	it("filters current warning evidence before paginating search results", async () => {
+		const ordinaryFood = makeFood(1, "Apple, raw");
+		const warningFood = {
+			...makeFood(2, "Apple yogurt"),
+			preferenceWarnings: [
+				{
+					id: "milk-warning",
+					level: "warning" as const,
+					category: "allergen" as const,
+					label: "Milk",
+					code: "FOOD_ALLERGEN_CONTAINS",
+					params: {},
+				},
+			],
+		};
+		const recalledFood = {
+			...makeFood(3, "Recalled apple salad"),
+			safetyAlerts: [
+				{
+					id: "recall-1",
+					providerKey: "open-fda-food-enforcement",
+					sourceName: "openFDA Food Enforcement",
+					sourceAttribution: "U.S. Food and Drug Administration",
+					alertType: "recall" as const,
+					status: "Ongoing",
+					productDescription: "Recalled apple salad",
+					sourceUrl: "https://api.fda.gov/food/enforcement.json",
+					matchType: "exact_gtin" as const,
+					requiresPackageCheck: false,
+					detectedAt: "2026-08-14T12:00:00.000Z",
+				},
+			],
+		};
+		mocks.searchApprovedSharedProducts.mockResolvedValue([
+			ordinaryFood,
+			warningFood,
+			recalledFood,
+		]);
+		mocks.annotateFoodsWithFoodSafety.mockReturnValue([
+			ordinaryFood,
+			warningFood,
+			recalledFood,
+		]);
+		const locals = {
+			getVerifiedUser: vi.fn().mockResolvedValue({ id: "user-id" }),
+			supabase: { source: "authenticated-browser" },
+		};
+
+		const warningResponse = await GET({
+			locals,
+			url: new URL(
+				"http://localhost/api/foods/search?q=apple&limit=1&safety=warnings",
+			),
+		} as never);
+		const recallResponse = await GET({
+			locals,
+			url: new URL(
+				"http://localhost/api/foods/search?q=apple&limit=1&safety=active-recalls",
+			),
+		} as never);
+
+		expect(await warningResponse.json()).toMatchObject({
+			foods: [expect.objectContaining({ fdcId: 2 })],
+			total: 1,
+		});
+		expect(await recallResponse.json()).toMatchObject({
+			foods: [expect.objectContaining({ fdcId: 3 })],
+			total: 1,
+		});
+	});
+
+	it("rejects unknown safety filters", async () => {
+		const locals = {
+			getVerifiedUser: vi.fn().mockResolvedValue({ id: "user-id" }),
+			supabase: { source: "authenticated-browser" },
+		};
+
+		await expect(
+			GET({
+				locals,
+				url: new URL(
+					"http://localhost/api/foods/search?q=apple&safety=unknown",
+				),
+			} as never),
+		).rejects.toMatchObject({ status: 400 });
+	});
 });

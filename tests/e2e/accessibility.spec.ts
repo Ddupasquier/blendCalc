@@ -3,6 +3,10 @@ import { expect, test, waitForAppReady } from "./support/browserTest";
 
 const accessibilityRoutes = [
 	"/ingredients/fridge",
+	"/ingredients/fridge/search",
+	"/ingredients/fridge/manual-entry",
+	"/ingredients/fridge/filters",
+	"/ingredients/fridge/nutrition/9200001",
 	"/mix",
 	"/saved",
 	"/profile",

@@ -382,6 +382,7 @@
 		error: submission.state.error,
 		placementMessage: outcome.state.placementMessage,
 		catalogMessage: submission.state.catalogMessage,
+		catalogMessageTone: submission.state.catalogMessageTone,
 		saving: submission.state.saving,
 		catalogSubmissionOnly,
 		onShareChange: barcode.handleShareChange,

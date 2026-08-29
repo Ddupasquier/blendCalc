@@ -33,6 +33,10 @@ const searchCard = readFileSync(
 	"src/lib/components/ingredients/search/IngredientSearchCard/IngredientSearchCard.svelte",
 	"utf8",
 );
+const mixIngredientOption = readFileSync(
+	"src/lib/components/mix/ingredients/MixIngredientOption/MixIngredientOption.svelte",
+	"utf8",
+);
 const savedCardStyles = readFileSync(
 	"src/lib/components/ingredients/list/SavedIngredientCard/SavedIngredientCard.scss",
 	"utf8",
@@ -79,16 +83,17 @@ const mixIngredientOptionStyles = readFileSync(
 );
 
 describe("ingredient card media architecture", () => {
-	it("uses one full-height media component across saved and search cards", () => {
+	it("uses one full-height media component across saved, search, and Mix cards", () => {
 		expect(savedCard).toContain("<IngredientCardMedia {food} />");
 		expect(searchCard).toContain("<IngredientCardMedia {food} />");
+		expect(mixIngredientOption).toContain("<IngredientCardMedia {food} />");
 		expect(cardMedia).toContain("<IngredientCardMediaLane");
 		expect(cardMedia).toContain("<FoodSymbol food={fallbackFood} />");
 		expect(savedCard).not.toContain("CircularMediaFrame");
 		expect(searchCard).not.toContain("CircularMediaFrame");
 	});
 
-	it("keeps saved, search, and placement-preview geometry identical", () => {
+	it("keeps saved, search, Mix, and placement-preview geometry identical", () => {
 		expect(cardLayoutStyles).toContain("$card-media-lane-width: 28cqw");
 		expect(cardLayoutStyles).toContain("$card-content-inset: 18cqw");
 		expect(cardLayoutStyles).toContain("$card-title-shift: $app-gap-lg");
@@ -98,6 +103,8 @@ describe("ingredient card media architecture", () => {
 		expect(cardLayoutStyles).toContain(
 			"margin-inline-start: -$card-title-shift",
 		);
+		expect(mixIngredientOptionStyles).not.toContain("min-height:");
+		expect(mixIngredientOptionStyles).not.toContain("padding-block:");
 		expect(cardLayoutStyles).toContain(
 			"-#{$card-title-shift} + #{$card-supporting-copy-indent}",
 		);
@@ -170,10 +177,10 @@ describe("ingredient card media architecture", () => {
 
 	it("uses the exact card preview in user and privileged placement flows", () => {
 		expect(imagePlacementEditor).toContain("<ImagePlacementCardPreview");
-		expect(imagePlacementEditor).toContain("{showWarningEdge}");
+		expect(imagePlacementEditor).toContain("{warningFrameTone}");
 		expect(productImageEvidenceInput).toContain("<ImagePlacementEditor");
 		expect(productImagePanel).toContain("<ImagePlacementEditor");
-		expect(productImagePanel).toContain("{showWarningEdge}");
+		expect(productImagePanel).toContain("{warningFrameTone}");
 		expect(productSubmissionReviewList).toContain("<ImagePlacementEditor");
 	});
 
@@ -230,8 +237,12 @@ describe("ingredient card media architecture", () => {
 		expect(mediaLaneStyles).toMatch(/\$media-lane-fade-end:\s*\d+%/);
 		expect(mediaLaneStyles).toContain("$media-lane-mask: radial-gradient");
 		expect(mediaLaneStyles).toContain(
-			"ellipse $media-lane-mask-horizontal-radius $media-lane-mask-vertical-radius at left center",
+			"--ingredient-card-media-mask-horizontal-radius",
 		);
+		expect(mediaLane).toContain(
+			"getIngredientCardMediaMaskHorizontalRadiusPixels",
+		);
+		expect(mediaLane).toContain("onGeometryChange={handleGeometryChange}");
 		expect(horizontalRadius).toBe(100);
 		expect(verticalRadius).toBe(140);
 		expect(mediaLaneStyles).toMatch(

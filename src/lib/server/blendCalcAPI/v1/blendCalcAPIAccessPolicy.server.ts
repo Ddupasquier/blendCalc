@@ -1,5 +1,12 @@
 import { BLENDCALC_API_V1_ACCESS_POLICY } from "$lib/blendCalcAPI/v1/blendCalcAPIAccessPolicy";
 
+export {
+	authenticateBlendCalcAPIKey,
+	issueBlendCalcAPIKey,
+	revokeBlendCalcAPIKey,
+	rotateBlendCalcAPIKey,
+} from "$lib/server/blendCalcAPI/security/blendCalcAPIKeys.server";
+
 type BlendCalcAPIV1RequestLocals = Pick<App.Locals, "getVerifiedUser">;
 
 export const hasBlendCalcAPIV1CatalogReadAccess = async (

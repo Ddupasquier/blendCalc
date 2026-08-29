@@ -341,11 +341,13 @@ test("URL-backed ingredient overlays close through Escape and browser history", 
 	await expect(manualEntryButton).toBeFocused();
 
 	const sortButton = page.getByRole("button", {
-		name: "Sort saved ingredients",
+		name: "Filter and sort saved ingredients",
 	});
 	await sortButton.click();
 	await expect(page).toHaveURL(/\/ingredients\/fridge\/filters$/);
-	await expect(page.getByRole("dialog", { name: "Sort" })).toBeVisible();
+	await expect(
+		page.getByRole("dialog", { name: "Filter and sort" }),
+	).toBeVisible();
 	await page.keyboard.press("Escape");
 	await expect(page).toHaveURL(/\/ingredients\/fridge$/);
 	await expect(sortButton).toBeFocused();
@@ -371,12 +373,12 @@ test("manual entry closes through every supported sheet control without activati
 		name: "Enter a custom ingredient manually",
 	});
 	const sortButton = page.getByRole("button", {
-		name: "Sort saved ingredients",
+		name: "Filter and sort saved ingredients",
 	});
 	const manualEntryDialog = page.getByRole("dialog", {
 		name: "Enter Manually",
 	});
-	const sortDialog = page.getByRole("dialog", { name: "Sort" });
+	const sortDialog = page.getByRole("dialog", { name: "Filter and sort" });
 	const openManualEntry = async () => {
 		await manualEntryButton.click({ noWaitAfter: true });
 		await expect(page).toHaveURL(/\/ingredients\/fridge\/manual-entry$/);
@@ -504,8 +506,10 @@ test("short and filled bottom sheets honor shared responsive height bounds", asy
 		await page.goto("/ingredients/fridge");
 		await waitForAppReady(page);
 
-		await page.getByRole("button", { name: "Sort saved ingredients" }).click();
-		const sortDialog = page.getByRole("dialog", { name: "Sort" });
+		await page
+			.getByRole("button", { name: "Filter and sort saved ingredients" })
+			.click();
+		const sortDialog = page.getByRole("dialog", { name: "Filter and sort" });
 		await expect(sortDialog).toBeVisible();
 		await waitForBottomSheetToSettle(sortDialog);
 		const sortHeight = await sortDialog
@@ -621,7 +625,7 @@ test("search scanner and saved-list sort return to the active search context", a
 			name: "Scan barcode",
 		});
 		const sortButton = searchDialog.getByRole("button", {
-			name: "Sort ingredients",
+			name: "Filter and sort ingredients",
 		});
 
 		const partialQuery = query.slice(0, 4);
@@ -651,7 +655,10 @@ test("search scanner and saved-list sort return to the active search context", a
 
 		await sortButton.click();
 		await expect(page).toHaveURL(new RegExp(`${listRoute}/search/filters$`));
-		const sortDialog = page.getByRole("dialog", { name: "Sort", exact: true });
+		const sortDialog = page.getByRole("dialog", {
+			name: "Filter and sort",
+			exact: true,
+		});
 		await expect(sortDialog).toBeVisible();
 		await sortDialog.getByRole("button", { name: "Close sheet" }).click();
 		await expect(page).toHaveURL(new RegExp(`${listRoute}/search$`));
@@ -673,6 +680,51 @@ test("search scanner and saved-list sort return to the active search context", a
 		await expect(page.locator("#nutrition-detail-view-title")).toBeVisible();
 	}
 });
+
+test(
+	"nutrition routes replace and restore descriptive browser titles",
+	{ tag: "@compatibility" },
+	async ({ page }) => {
+		await page.goto("/ingredients/fridge/search");
+		await waitForAppReady(page);
+		await expect(page).toHaveTitle("Search Ingredients · blendCalc");
+
+		const searchDialog = page.getByRole("dialog", { name: "Ingredients" });
+		const searchInput = searchDialog.getByRole("combobox", {
+			name: "Search ingredients",
+		});
+		await searchInput.fill("spinach");
+
+		const spinachRawResult = searchDialog.getByRole("row", {
+			name: /^Spinach, Raw,/,
+		});
+		await expect(spinachRawResult).toBeVisible();
+		await spinachRawResult
+			.getByRole("button", { name: /^View nutrition for Spinach, Raw/ })
+			.click();
+		await expect(page).toHaveURL(/\/ingredients\/fridge\/nutrition\/9200001$/);
+		await expect(page).toHaveTitle("Spinach, Raw Nutrition · blendCalc");
+
+		await page.goBack();
+		await expect(page).toHaveURL(/\/ingredients\/fridge\/search$/);
+		await expect(page).toHaveTitle("Search Ingredients · blendCalc");
+		await searchInput.fill("spinach");
+
+		const packagedSpinachNutritionButton = searchDialog
+			.locator("#ingredient-search-result-1905313")
+			.getByRole("button", {
+				name: /^View nutrition for Spinach/,
+			});
+		await expect(packagedSpinachNutritionButton).toBeVisible();
+		await packagedSpinachNutritionButton.click();
+		await expect(page).toHaveURL(/\/ingredients\/fridge\/nutrition\/1905313$/);
+		await expect(page).toHaveTitle("Spinach Nutrition · blendCalc");
+
+		await page.reload();
+		await waitForAppReady(page);
+		await expect(page).toHaveTitle("Spinach Nutrition · blendCalc");
+	},
+);
 
 test("partial ingredient words combine every eligible source and remain selectable", async ({
 	page,
@@ -1034,10 +1086,12 @@ test("shared ingredient bottom sheets enter from below and preserve app chrome b
 
 	await expectBottomSheetPlacement(
 		page,
-		page.getByRole("dialog", { name: "Sort" }),
+		page.getByRole("dialog", { name: "Filter and sort" }),
 		async () => {
 			await page
-				.getByRole("button", { name: "Sort saved ingredients" })
+				.getByRole("button", {
+					name: "Filter and sort saved ingredients",
+				})
 				.click({ noWaitAfter: true });
 		},
 	);
@@ -1087,10 +1141,10 @@ test("shared ingredient bottom sheets render identical chrome", async ({
 	await page.getByRole("button", { name: "Close sheet" }).click();
 
 	await page
-		.getByRole("button", { name: "Sort saved ingredients" })
+		.getByRole("button", { name: "Filter and sort saved ingredients" })
 		.click({ noWaitAfter: true });
 	const sortChrome = await readBottomSheetChrome(
-		page.getByRole("dialog", { name: "Sort" }),
+		page.getByRole("dialog", { name: "Filter and sort" }),
 	);
 	await page.getByRole("button", { name: "Close sheet" }).click();
 
@@ -1146,22 +1200,43 @@ test("inside interactions and browser focus changes keep routed overlays open", 
 test("modal sheet focus wraps without reaching the underlying page", async ({
 	page,
 }) => {
-	await page.goto("/ingredients/fridge");
-	await waitForAppReady(page);
-	await page.getByRole("button", { name: "Sort saved ingredients" }).click();
+	for (const { route, dialogName } of [
+		{
+			route: "/ingredients/fridge/filters",
+			dialogName: "Filter and sort",
+		},
+		{
+			route: "/ingredients/fridge/manual-entry",
+			dialogName: "Enter Manually",
+		},
+	]) {
+		await page.goto(route);
+		await waitForAppReady(page);
 
-	const dialog = page.getByRole("dialog", { name: "Sort" });
-	const closeButton = dialog.getByRole("button", { name: "Close sheet" });
-	await expect(closeButton).toBeFocused();
+		const dialog = page.getByRole("dialog", { name: dialogName });
+		const closeButton = dialog.getByRole("button", { name: "Close sheet" });
+		await closeButton.focus();
 
-	await page.keyboard.press("Shift+Tab");
-	await expect
-		.poll(() =>
-			dialog.evaluate((element) => element.contains(document.activeElement)),
-		)
-		.toBe(true);
-	await page.keyboard.press("Tab");
-	await expect(closeButton).toBeFocused();
+		await page.keyboard.press("Shift+Tab");
+		await expect
+			.poll(() =>
+				dialog.evaluate((element) => {
+					const focusableElements = Array.from(
+						element.querySelectorAll<HTMLElement>(
+							"a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex='-1'])",
+						),
+					).filter(
+						(focusableElement) =>
+							!focusableElement.closest("[hidden], [aria-hidden='true']") &&
+							focusableElement.getAttribute("aria-disabled") !== "true",
+					);
+					return document.activeElement === focusableElements.at(-1);
+				}),
+			)
+			.toBe(true);
+		await page.keyboard.press("Tab");
+		await expect(closeButton).toBeFocused();
+	}
 });
 
 test("right-sheet view frames keep edge focus outlines inside their clipping boundary", async ({
@@ -1475,6 +1550,13 @@ test("nutrition details preserve the complete source-backed food record", async 
 			),
 		).toBe(true);
 	};
+	const waitForDisclosureAnimation = async (details: Locator) => {
+		await details.evaluate(async (element) => {
+			await Promise.allSettled(
+				element.getAnimations().map((animation) => animation.finished),
+			);
+		});
+	};
 	const openDisclosure = async (nutritionDetails: Locator, title: string) => {
 		const summary = nutritionDetails
 			.locator("summary")
@@ -1485,6 +1567,7 @@ test("nutrition details preserve the complete source-backed food record", async 
 		const details = summary.locator("..");
 		await summary.click();
 		await expect(details).toHaveAttribute("open", "");
+		await waitForDisclosureAnimation(details);
 		return details;
 	};
 	const openDisclosureWithKeyboard = async (
@@ -1502,6 +1585,7 @@ test("nutrition details preserve the complete source-backed food record", async 
 		await expect(summary).toBeFocused();
 		await summary.press("Enter");
 		await expect(details).toHaveAttribute("open", "");
+		await waitForDisclosureAnimation(details);
 		return details;
 	};
 

@@ -30,6 +30,10 @@ import {
 } from "$lib/server/errors/appError.server";
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
 import { hydrateFoodsWithCachedImages } from "$lib/utils/storage/supabase/foodImages";
+import {
+	filterFoodsBySafety,
+	isFoodSafetyFilter,
+} from "$lib/utils/food/safety/foodSafetyFilters";
 
 export const GET: RequestHandler = async ({ locals, url }) => {
 	const user = requireAppValue(
@@ -41,6 +45,7 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 	const query = url.searchParams.get("q")?.trim() ?? "";
 	const sourceFilter = url.searchParams.get("source")?.trim() || "all";
 	const trustFilter = url.searchParams.get("trust")?.trim() || "any";
+	const safetyFilter = url.searchParams.get("safety")?.trim() || "all";
 	const offset = Number(url.searchParams.get("offset") ?? 0);
 	const limit = Number(
 		url.searchParams.get("limit") ?? INGREDIENT_SEARCH_PAGE_SIZE,
@@ -67,12 +72,15 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 	if (!isIngredientTrustFilter(trustFilter)) {
 		throwAppError(400, "SEARCH_FILTER_INVALID");
 	}
+	if (!isFoodSafetyFilter(safetyFilter)) {
+		return throwAppError(400, "SEARCH_FILTER_INVALID");
+	}
 
 	try {
-		const searches: Promise<FoodItem[]>[] = [];
+		const databaseSearches: Promise<FoodItem[]>[] = [];
 		const catalogClient = getSupabaseAdminClient();
 		if (trustFilter === "any" || trustFilter === "user-private") {
-			searches.push(
+			databaseSearches.push(
 				searchUserCustomFoods(locals.supabase, user.id, query, {
 					sourceFilter,
 					trustFilter,
@@ -80,7 +88,7 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 			);
 		}
 		if (sourceFilter !== "custom" && trustFilter !== "user-private") {
-			searches.push(
+			databaseSearches.push(
 				searchApprovedSharedProducts(catalogClient, query, {
 					sourceFilter,
 					trustFilter,
@@ -88,35 +96,55 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 			);
 		}
 		if (
-			areExternalProductLookupsEnabled() &&
-			(sourceFilter === "all" || sourceFilter === "usda") &&
-			(trustFilter === "any" || trustFilter === "source-verified")
-		) {
-			searches.push(searchUsdaFoods(query));
-		}
-		if (
 			(sourceFilter === "all" || sourceFilter === "national-dataset") &&
 			(trustFilter === "any" || trustFilter === "imported")
 		) {
-			searches.push(searchGenericFoods(locals.supabase, query));
+			databaseSearches.push(searchGenericFoods(locals.supabase, query));
 		}
-		const searchPromise = Promise.allSettled(searches);
-		const [searchResults, nutritionCompletenessCatalog, foodSafetyContext] =
-			await Promise.all([
-				searchPromise,
-				getNutritionCompletenessCatalog(),
-				getUserFoodSafetyContext(locals.supabase, user.id),
-			]);
+		const [
+			databaseSearchResults,
+			nutritionCompletenessCatalog,
+			foodSafetyContext,
+		] = await Promise.all([
+			Promise.allSettled(databaseSearches),
+			getNutritionCompletenessCatalog(),
+			getUserFoodSafetyContext(locals.supabase, user.id),
+		]);
+		const databaseResultGroups = databaseSearchResults.map((result) =>
+			result.status === "fulfilled" ? result.value : [],
+		);
+		const usableDatabaseFoods = mergeIngredientSearchResults(
+			...databaseResultGroups,
+		).filter(
+			(food) =>
+				isUsableIngredientSearchResult(food) &&
+				matchesIngredientProvenance(food, sourceFilter, trustFilter),
+		);
+		const shouldSearchUsda =
+			areExternalProductLookupsEnabled() &&
+			(sourceFilter === "all" || sourceFilter === "usda") &&
+			(trustFilter === "any" || trustFilter === "source-verified") &&
+			usableDatabaseFoods.length < offset + limit;
+		let externalFoods: FoodItem[] = [];
+		if (shouldSearchUsda) {
+			try {
+				externalFoods = await searchUsdaFoods(query);
+			} catch {
+				externalFoods = [];
+			}
+		}
 		if (
-			searchResults.length > 0 &&
-			searchResults.every((result) => result.status === "rejected")
+			usableDatabaseFoods.length === 0 &&
+			externalFoods.length === 0 &&
+			databaseSearchResults.length > 0 &&
+			databaseSearchResults.every((result) => result.status === "rejected")
 		) {
 			throw new Error("Every ingredient search source failed.");
 		}
-		const resultGroups = searchResults.map((result) =>
-			result.status === "fulfilled" ? result.value : [],
-		);
-		const mergedFoods = mergeIngredientSearchResults(...resultGroups).filter(
+		const mergedFoods = mergeIngredientSearchResults(
+			usableDatabaseFoods,
+			externalFoods,
+		).filter(
 			(food) =>
 				isUsableIngredientSearchResult(food) &&
 				matchesIngredientProvenance(food, sourceFilter, trustFilter),
@@ -126,7 +154,7 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 			foodSafetyContext,
 		);
 		const foods = sortIngredientSearchResults(
-			foodsWithSafetyEvaluation,
+			filterFoodsBySafety(foodsWithSafetyEvaluation, safetyFilter),
 			query,
 			nutritionCompletenessCatalog,
 		);

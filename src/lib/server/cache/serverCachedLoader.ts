@@ -1,12 +1,14 @@
 type ServerCachedLoaderOptions<Value> = {
 	load: () => Promise<Value>;
 	ttlMilliseconds?: number;
+	useStaleValueOnError?: boolean;
 	now?: () => number;
 };
 
 export const createServerCachedLoader = <Value>({
 	load,
 	ttlMilliseconds = Number.POSITIVE_INFINITY,
+	useStaleValueOnError = false,
 	now = Date.now,
 }: ServerCachedLoaderOptions<Value>) => {
 	let cachedValue: Value;
@@ -24,6 +26,10 @@ export const createServerCachedLoader = <Value>({
 				hasCachedValue = true;
 				cacheExpiresAt = now() + ttlMilliseconds;
 				return value;
+			})
+			.catch((error) => {
+				if (useStaleValueOnError && hasCachedValue) return cachedValue;
+				throw error;
 			})
 			.finally(() => {
 				pendingValue = null;

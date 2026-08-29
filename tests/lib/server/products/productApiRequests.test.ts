@@ -4,16 +4,25 @@ const {
 	recordProductSourceApiError,
 	recordProductSourceApiRequest,
 	recordProductSourceCacheHit,
+	recordProductSourceCacheMiss,
+	recordProductSourceCoalescedRequest,
+	recordProductSourceStaleFallback,
 } = vi.hoisted(() => ({
 	recordProductSourceApiError: vi.fn(),
 	recordProductSourceApiRequest: vi.fn(),
 	recordProductSourceCacheHit: vi.fn(),
+	recordProductSourceCacheMiss: vi.fn(),
+	recordProductSourceCoalescedRequest: vi.fn(),
+	recordProductSourceStaleFallback: vi.fn(),
 }));
 
 vi.mock("$lib/server/products/sourceMetrics.server", () => ({
 	recordProductSourceApiError,
 	recordProductSourceApiRequest,
 	recordProductSourceCacheHit,
+	recordProductSourceCacheMiss,
+	recordProductSourceCoalescedRequest,
+	recordProductSourceStaleFallback,
 }));
 
 import {
@@ -26,6 +35,9 @@ describe("coalesceProductApiRequest", () => {
 		recordProductSourceApiError.mockClear();
 		recordProductSourceApiRequest.mockClear();
 		recordProductSourceCacheHit.mockClear();
+		recordProductSourceCacheMiss.mockClear();
+		recordProductSourceCoalescedRequest.mockClear();
+		recordProductSourceStaleFallback.mockClear();
 	});
 
 	it("shares one pending provider request across concurrent lookups", async () => {
@@ -46,7 +58,7 @@ describe("coalesceProductApiRequest", () => {
 			"result",
 		]);
 		expect(request).toHaveBeenCalledTimes(1);
-		expect(recordProductSourceCacheHit).toHaveBeenCalledTimes(1);
+		expect(recordProductSourceCoalescedRequest).toHaveBeenCalledTimes(1);
 	});
 
 	it("removes a finished request so later lookups can refresh", async () => {
@@ -80,6 +92,9 @@ describe("fetchCachedProductApiJson", () => {
 		recordProductSourceApiError.mockClear();
 		recordProductSourceApiRequest.mockClear();
 		recordProductSourceCacheHit.mockClear();
+		recordProductSourceCacheMiss.mockClear();
+		recordProductSourceCoalescedRequest.mockClear();
+		recordProductSourceStaleFallback.mockClear();
 	});
 
 	it("returns a fresh persistent cache entry without an external request", async () => {
@@ -108,6 +123,7 @@ describe("fetchCachedProductApiJson", () => {
 
 		expect(fetcher).not.toHaveBeenCalled();
 		expect(recordProductSourceCacheHit).toHaveBeenCalledTimes(1);
+		expect(recordProductSourceCacheMiss).not.toHaveBeenCalled();
 	});
 
 	it("writes successful provider responses to persistent cache", async () => {
@@ -143,6 +159,7 @@ describe("fetchCachedProductApiJson", () => {
 				etag: "response-v1",
 			}),
 		);
+		expect(recordProductSourceCacheMiss).toHaveBeenCalledOnce();
 	});
 
 	it("uses a recently expired cache entry when the provider is unavailable", async () => {
@@ -173,6 +190,8 @@ describe("fetchCachedProductApiJson", () => {
 
 		expect(fetcher).toHaveBeenCalledTimes(2);
 		expect(recordProductSourceCacheHit).toHaveBeenCalledTimes(1);
+		expect(recordProductSourceCacheMiss).toHaveBeenCalledOnce();
+		expect(recordProductSourceStaleFallback).toHaveBeenCalledOnce();
 	});
 
 	it("caches an accepted not-found response without writing a database null", async () => {

@@ -148,21 +148,38 @@ and changed write semantics require a later contract migration.
 | `npm run audit:blendCalcAPI-catalog`                                           | Every active catalog row's publication status, gate failures, provenance, nutrition, servings, images, and rights metadata                         |
 | `npm run audit:blendCalcAPI-catalog -- --strict`                               | The same audit, failing unless every active row is publication-ready                                                                               |
 | `npm run audit:blendCalcAPI-catalog -- --json`                                 | The same fresh readiness reassessment with DB-owned automated-repair, review-owner, and unresolved-contract classifications as structured output   |
+| `node scripts/audits/catalog/audit_blendCalcAPI_query_plans.mjs`               | Representative and bounded worst-case local PostgreSQL plans; flags only measured high-row sequential scans for index review                       |
+| `npm run audit:blendCalcAPI-payloads`                                          | Read-only authenticated byte-size and gzip-size measurements for every blendCalcAPI v1 read shape                                                  |
 | `node scripts/audits/catalog/audit_catalog_transparency.mjs`                   | Verification dates, revisions, observations, source quality, ingredients, uncertainty, compatibility, API exposure, and app reads                  |
 | `node scripts/audits/catalog/audit_catalog_transparency.mjs --json`            | The same read-only transparency report as structured output                                                                                        |
 | `node scripts/audits/catalog/audit_barcode_nutrition_accuracy.mjs --limit=300` | At least 300 exact GTINs plus every active catalog product across provider evidence, units, servings, normalized values, provenance, and conflicts |
+| `npm run audit:blendCalcAPI-performance`                                       | Authenticated production-preview p50/p95 checks for product, category, first-page search, and browser-cached repeat reads                          |
+| `npm run audit:blendCalcAPI-load`                                              | Bounded authenticated load corpus for common, broad, empty, warmed, and mixed concurrent blendCalcAPI reads                                        |
 
 The barcode audit writes its detailed report to ignored `scripts/output/`. Provider
 anomalies, source disagreements, app math defects, and legally blocked fields remain
 separate findings; the audit never promotes data merely to improve its pass rate.
+
+Run the performance audit while `npm run test:e2e:session:start` is serving the local
+production build on port `5174`. It uses the disposable QA account and fails only the
+audit process when a response budget regresses; the budgets never block application
+traffic. Use `--json`, `--samples=15`, `--barcode=<14-digit GTIN>`, or `--query=<term>`
+to produce structured evidence or change the representative input.
+
+Run the load audit against the same prepared preview. It defaults to five concurrent
+clients and five iterations, remains read-only, and fails on any HTTP error or missed
+scenario-specific p95 budget. Use `--concurrency=2..10`, `--iterations=3..20`, and
+`--json` for a controlled pre-beta run; do not point it at production without explicit
+authorization.
 
 ## Source Coverage And Quality
 
 | Command                                                                                   | Purpose                                                                                                                         |
 | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | `node scripts/audits/food-sources/benchmark_product_sources.mjs --limit=10`               | Controlled same-barcode provider comparison recorded as benchmark metrics                                                       |
-| `npm run report:source-quality -- --days=30 --origin=runtime`                             | Stored runtime coverage, reliability, cache efficiency, and request cost                                                        |
-| `npm run report:source-quality -- --days=30 --origin=benchmark`                           | Stored controlled-benchmark metrics                                                                                             |
+| `npm run report:source-quality -- --days=30 --origin=runtime`                             | Runtime requests, cache use, coverage, selected field contributions, missing fields, and unresolved disagreements               |
+| `npm run report:source-quality -- --days=30 --origin=benchmark`                           | Controlled-benchmark metrics plus current contribution, missing-field, and disagreement evidence                                |
+| `npm run report:source-quality -- --days=30 --origin=runtime --json`                      | The same privacy-safe report with field-level counts as structured JSON                                                         |
 | `node scripts/audits/food-sources/audit_barcode_provider_experience.mjs --sample-size=50` | Read-only USDA, Open Food Facts, and COLA Cloud exact-barcode coverage, latency, source math, and manual-entry experience audit |
 | `node scripts/audits/food-sources/audit_generic_dataset_contribution.mjs --queries=100`   | Read-only imported-dataset record, nutrient, measure, identity, and bounded search contribution                                 |
 

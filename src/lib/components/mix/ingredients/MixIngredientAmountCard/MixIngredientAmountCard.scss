@@ -15,11 +15,8 @@
 	padding: $app-gap-sm;
 	overflow: hidden;
 	background: $app-shell-surface-soft;
+	border: 3px solid transparent;
 	border-radius: $app-shell-radius-card;
-}
-
-.mix-ingredient-amount-card--warning {
-	padding-inline-start: $app-gap-md;
 }
 
 .mix-ingredient-amount-card--custom {
@@ -100,7 +97,9 @@
 }
 
 :global(.mix-ingredient-amount-card__quantity-input::-webkit-inner-spin-button),
-:global(.mix-ingredient-amount-card__quantity-input::-webkit-outer-spin-button) {
+:global(
+	.mix-ingredient-amount-card__quantity-input::-webkit-outer-spin-button
+) {
 	margin: 0;
 	appearance: none;
 }
@@ -140,14 +139,11 @@
 	}
 }
 
-@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
 	.mix-ingredient-amount-card {
 		gap: $app-gap-xs;
 		padding: $app-gap-xs;
-	}
-
-	.mix-ingredient-amount-card--warning {
-		padding-inline-start: $app-gap-md;
 	}
 
 	.mix-ingredient-amount-card__symbol {

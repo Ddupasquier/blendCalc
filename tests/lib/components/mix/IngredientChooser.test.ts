@@ -93,6 +93,63 @@ describe("IngredientChooser custom filtering", () => {
 		expect(screen.getByText("Plain Pantry Item")).toBeInTheDocument();
 		expect(screen.queryByText("Protein Bars")).not.toBeInTheDocument();
 	});
+
+	it("offers separate warning and active-recall filters", async () => {
+		const preferenceWarningFood = food({
+			fdcId: 4,
+			description: "Milk yogurt",
+			preferenceWarnings: [
+				{
+					id: "milk-warning",
+					level: "warning",
+					category: "allergen",
+					label: "Milk",
+					code: "FOOD_ALLERGEN_CONTAINS",
+					params: {},
+				},
+			],
+		});
+		const recalledFood = food({
+			fdcId: 5,
+			description: "Recalled salad",
+			safetyAlerts: [
+				{
+					id: "recall-1",
+					providerKey: "open-fda-food-enforcement",
+					sourceName: "openFDA Food Enforcement",
+					sourceAttribution: "U.S. Food and Drug Administration",
+					alertType: "recall",
+					status: "Ongoing",
+					productDescription: "Recalled salad",
+					sourceUrl: "https://api.fda.gov/food/enforcement.json",
+					matchType: "exact_gtin",
+					requiresPackageCheck: false,
+					detectedAt: "2026-08-14T12:00:00.000Z",
+				},
+			],
+		});
+		renderChooser(
+			[
+				food({ fdcId: 3, description: "Rice" }),
+				preferenceWarningFood,
+				recalledFood,
+			],
+			true,
+		);
+
+		await fireEvent.click(screen.getByRole("button", { name: "Warnings" }));
+		await fireEvent.click(screen.getByRole("button", { name: "Apply" }));
+		expect(screen.getByText("Milk yogurt")).toBeInTheDocument();
+		expect(screen.queryByText("Recalled salad")).not.toBeInTheDocument();
+		expect(screen.queryByText("Rice")).not.toBeInTheDocument();
+
+		await fireEvent.click(
+			screen.getByRole("button", { name: "Active recalls" }),
+		);
+		await fireEvent.click(screen.getByRole("button", { name: "Apply" }));
+		expect(screen.getByText("Recalled salad")).toBeInTheDocument();
+		expect(screen.queryByText("Milk yogurt")).not.toBeInTheDocument();
+	});
 });
 
 describe("IngredientChooser progressive loading", () => {

@@ -9,25 +9,50 @@ import {
 	readBlendCalcAPIV1ErrorDefinition,
 	type BlendCalcAPIV1ErrorCode,
 } from "$lib/blendCalcAPI/v1/blendCalcAPIErrors";
+import { createHash } from "node:crypto";
 import { json } from "@sveltejs/kit";
 
 const BLENDCALC_API_V1_HEADERS = {
-	"cache-control": "private, max-age=60, stale-while-revalidate=300",
 	"x-blendcalc-api-version": BLENDCALC_API_V1,
+};
+
+type BlendCalcAPIV1SuccessOptions = {
+	ifNoneMatch?: string | null;
+	cacheVisibility?: "private" | "public";
 };
 
 export const blendCalcAPIV1Success = <Data>(
 	data: Data,
 	pagination?: BlendCalcAPIV1Pagination,
-) =>
-	json(
-		{
-			apiVersion: BLENDCALC_API_V1,
-			data,
-			...(pagination ? { meta: { pagination } } : {}),
-		} satisfies BlendCalcAPIV1Success<Data>,
-		{ headers: BLENDCALC_API_V1_HEADERS },
-	);
+	options: BlendCalcAPIV1SuccessOptions = {},
+) => {
+	const payload = {
+		apiVersion: BLENDCALC_API_V1,
+		data,
+		...(pagination ? { meta: { pagination } } : {}),
+	} satisfies BlendCalcAPIV1Success<Data>;
+	const etag = `"${createHash("sha256")
+		.update(JSON.stringify(payload))
+		.digest("base64url")}"`;
+	const isPublic = options.cacheVisibility === "public";
+	const headers = {
+		...BLENDCALC_API_V1_HEADERS,
+		"cache-control": isPublic
+			? "public, max-age=60, s-maxage=300, stale-while-revalidate=300"
+			: "private, max-age=60, stale-while-revalidate=300",
+		etag,
+		vary: isPublic ? "accept-encoding" : "authorization, accept-encoding",
+	};
+	if (
+		options.ifNoneMatch
+			?.split(",")
+			.map((value) => value.trim())
+			.includes(etag)
+	) {
+		return new Response(null, { status: 304, headers });
+	}
+	return json(payload, { headers });
+};
 
 export const blendCalcAPIV1Error = (
 	code: BlendCalcAPIV1ErrorCode,

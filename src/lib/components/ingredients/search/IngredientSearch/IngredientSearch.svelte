@@ -24,6 +24,7 @@
 		provenanceOptions = [],
 		sourceFilter = "all",
 		trustFilter = "any",
+		safetyFilter = "all",
 		actions,
 	}: IngredientSearchProps = $props();
 	let activeResultIndex = $state(-1);
@@ -34,6 +35,7 @@
 	const searchRequest = createIngredientSearchRequestController({
 		getSourceFilter: () => sourceFilter,
 		getTrustFilter: () => trustFilter,
+		getSafetyFilter: () => safetyFilter,
 		onResultsChanged: (results, query) => {
 			activeResultIndex = -1;
 			dispatch("results", { results, query });
@@ -83,7 +85,7 @@
 	});
 
 	$effect(() => {
-		const filterSignature = `${sourceFilter}:${trustFilter}`;
+		const filterSignature = `${sourceFilter}:${trustFilter}:${safetyFilter}`;
 		searchRequest.synchronizeFilters(filterSignature);
 	});
 

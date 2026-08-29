@@ -1,4 +1,5 @@
 import type { ImagePlacementValue } from "$lib/utils/food/images/types";
+import type { CardWarningFrameTone } from "$lib/components/common/display/CardWarningFrame/types";
 
 export type ImagePlacementEditorProps = {
 	imageUrl: string;
@@ -11,7 +12,7 @@ export type ImagePlacementEditorProps = {
 	description?: string;
 	showIntro?: boolean;
 	editable?: boolean;
-	showWarningEdge?: boolean;
+	warningFrameTone?: CardWarningFrameTone | null;
 	smartPlacementSource?: Blob | string;
 	automaticallyPlaceNewImage?: boolean;
 	onPlacementProcessingStateChange?: (busy: boolean) => void;

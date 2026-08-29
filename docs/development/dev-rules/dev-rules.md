@@ -26,7 +26,7 @@ skip the inventory.
 
 1. Read the applicable rules in this document. Read the
    [development-audit method](dev-rules-audit.md) when performing or updating an audit.
-2. Read every applicable domain source identified by `AGENTS.md` and
+2. Read every applicable domain source identified by
    `docs/development/README.md`.
 3. State the observable outcome, affected users and systems, explicit non-goals, and
    completion evidence before editing.
@@ -119,7 +119,7 @@ when you already know the rule you need.
 | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------- |
 | [Core Engineering Rules](#rule-best-practices)                                   | [Canonical Change Lifecycle](#canonical-change-lifecycle)                | [Mandatory Rules Preflight](#rule-rules-preflight)                                 |
 | [Repository Hygiene](#rule-repository-hygiene)                                   | [Dependency Supply-Chain Safety](#rule-dependency-supply-chain)          | [Environment Ownership](#rule-environment-ownership)                               |
-| [Test Layer Ownership](#rule-test-layer-ownership)                               | [Development Tooling Privacy](#rule-development-tooling-privacy)         | [Cross-View Cohesion](#rule-cross-view-cohesion)                                   |
+| [Test Layer Ownership](#rule-test-layer-ownership)                               | [Public Artifact Privacy](#rule-public-artifact-privacy)                 | [Cross-View Cohesion](#rule-cross-view-cohesion)                                   |
 | [Browser And Mobile Compatibility](#rule-browser-compatibility)                  | [Accessibility](#rule-accessibility)                                     | [Strict Content Security Policy](#rule-content-security-policy)                    |
 | [Server And Database Security Boundaries](#rule-server-database-security)        | [Search Relevance](#rule-search-relevance)                               | [Explicit Pagination Controls](#rule-pagination-controls)                          |
 | [Shared Loading Indicators](#rule-loading-indicators)                            | [Design Tokens And Spacing](#rule-design-tokens)                         | [Light And Dark Theme Support](#rule-theme-support)                                |
@@ -195,19 +195,18 @@ explicitly requires the empty path; document that rare requirement beside the ow
 configuration. Do not use `.gitkeep` to preserve speculative directories—create a
 directory when it gains real content and remove it when its final file is removed.
 
-<a id="rule-development-tooling-privacy"></a>
+<a id="rule-public-artifact-privacy"></a>
 
-#### Rule 0c — Development Tooling Privacy
+#### Rule 0c — Public Artifact Privacy
 
-Do not identify or imply automated
-authorship or development-assistance tooling in any tracked or public artifact. This
-includes application code, comments, documentation, tests, UI copy, metadata, generated
-notices, commit-facing notes, and public assets. Do not add tool names, authorship
-labels, maintenance labels, generated-by markers, or commentary about who or what
-produced the work. Private workflow context may record that information only in an
-explicitly Git-ignored local file. Before handoff, audit changed tracked files for
-accidental disclosure. Technical HTTP `User-Agent` headers and dependency package names
-are protocol/runtime terminology and are not authorship disclosure.
+Keep tracked and public artifacts limited to product source, durable engineering
+contracts, reproducible verification, and information intentionally meant for project
+users or contributors. Do not publish private workspace content, local task tracking,
+recovery context, private operational instructions, generated-by labels, or unrelated
+maintenance metadata. Keep machine-local workflow context outside version control and
+audit changed tracked files for accidental disclosure before handoff. Technical HTTP
+`User-Agent` headers and dependency package names remain valid protocol and runtime
+terminology.
 
 <a id="rule-cross-view-cohesion"></a>
 
@@ -325,8 +324,10 @@ CSS motion remains covered by the global reduced-motion rule. Do not add animati
 static content merely for decoration. Ambient progress, scanning, and loading motion
 may loop only while the related process is active and must stop or become immediate
 under reduced-motion preferences. Compact ingredient cards with a preference conflict
-must retain the shared full-height amber `CardWarningEdge`; do not replace it with an
-inline warning icon, text block, or image treatment. The card's accessible action label
+must retain the shared full-card amber `CardWarningFrame`; do not replace it with an
+inline warning icon, text block, or image treatment. The frame must use the shared
+three-pixel border treatment, remain solid at the left, and fade across the card without
+changing card geometry. The card's accessible action label
 must include the warning text so the visual edge is not the only communicated signal.
 
 <a id="rule-content-security-policy"></a>
@@ -557,7 +558,12 @@ image-or-fallback slot. Source-backed product images and database-driven fallbac
 symbols use that same full-height left media lane,
 left-corner clipping, fade, content offset, and warning-edge layering. The shared mask
 must reach full transparency before the lane's text-facing boundary so source images
-with opaque rectangular backgrounds do not leave a visible vertical seam. Use a broad
+with opaque rectangular backgrounds do not leave a visible vertical seam. When a
+contained or shifted image ends before the standard mask does, derive the mask radius
+from the measured rendered image edge and finish the fade at least three pixels before
+that edge. This is a render-time normalized constraint, not a fixed persisted crop or
+card-specific offset, so existing images and every responsive card size receive the
+same protection. Use a broad
 elliptical transition with a soft intermediate opacity rather than a straight vertical
 edge or abrupt opacity drop. The approved shared mask uses a `100%` horizontal radius
 and `140%` vertical radius in `IngredientCardMediaLane.scss`; preserve that
@@ -582,7 +588,7 @@ contained according to placement, but never stretched. Missing and failed images
 switch to the fallback within the existing media lane without changing card geometry,
 hiding the media on small screens, or moving the card copy.
 Use one shared media-lane proportion between 25% and 30% for saved cards, search cards,
-and image-placement card previews. Keep the copy inset separate and narrower than the
+Mix option cards, and image-placement card previews. Keep the copy inset separate and narrower than the
 media lane so titles may overlap only the lane's low-opacity faded tail without covering
 the solid, readable image. Resolve both measurements from the outer card's inline-size
 container through `IngredientCardLayout.scss`; percentage padding on an inner grid
@@ -592,8 +598,8 @@ their available width and must not impose a separate maximum width. User upload,
 privileged moderator/admin/developer adjustment and moderation-review flows must render the same
 `ImagePlacementCardPreview`; do not create a simplified, circular, capped-width, or
 differently proportioned placement preview. When the current user's preference profile
-would place a warning edge on the saved card, the adjustment preview must include that
-same shared `CardWarningEdge` so it does not conceal part of the saved result.
+would place a warning frame on the saved card, the adjustment preview must include that
+same shared `CardWarningFrame` so it does not conceal part of the saved result.
 Saved and search cards must not independently recreate image failure state, placement
 resolution, fallback wrappers, media widths, masks, or clipping behavior.
 
@@ -990,6 +996,20 @@ not permission to commit, push, merge, or deploy.
 
 **21.** Verify meaningful changes with `npm run check`, focused tests, and builds when
 scope warrants it.
+
+**21a.** When the user sets an explicit work-queue quota, complete the entire quota
+before the final handoff instead of stopping after each item. Keep every responsibility
+on its own locally reviewable feature branch and run its focused checks while iterating.
+After the last quota item is engineering-complete, assemble the exact combined
+uncommitted diffs in a temporary local quota-integration worktree created from current
+`staging`, then run one blocking `npm run verify:release` over that combined candidate.
+Do not commit, push changed content, merge, or promote merely to create the test
+candidate. If the combined check fails, fix the owning feature branch, rebuild the
+candidate, and rerun the failed stage before handoff. The final report must list every
+quota branch, its focused evidence, and the combined Release Check result so one user
+approval can authorize the already-reviewed next Git action. The exhaustive Nightly
+Check remains separate unless the user explicitly requests it or the release scope
+requires it.
 
 **22.** At the start of every request, compare the requested outcome with the active
 branch's single responsibility. Continue only when they match. If the prompt introduces
@@ -1498,7 +1518,7 @@ user preference warning. DB-reviewed exact-match rules may create
 these facts must retain their matching provenance and must never be presented as package
 `Contains` or `May contain` statements. Packaged-product titles, descriptions,
 categories, brand names, and generic labels must never create a preference warning,
-warning edge, allergen fact, or trace fact. An explicitly typed generic-food record from
+warning frame, allergen fact, or trace fact. An explicitly typed generic-food record from
 an authoritative source dataset may create an intrinsic `contains` compatibility fact
 from its food identity taxonomy—for example, a generic shrimp record is intrinsically
 shellfish—but it must retain generic identity and taxonomy provenance and must never be
@@ -1571,7 +1591,7 @@ produces `incomplete` when preferences are active. No active preference profile 
 Never describe a non-conflict result as safe or allergen-free. Use wording equivalent to
 `No conflict found in available information`, explain incomplete and unchecked states
 distinctly, and remind users that the current package label remains the final authority.
-Only `conflict` may create the compact warning edge on cards; absence of that edge is
+Only `conflict` may create the compact warning frame on cards; absence of that frame is
 not a checked or safety claim. Saved-list, search, nutrition-detail, and versioned API
 reads must use this same contract. Client components may render the bounded status and
 translate it through the shared message catalog, but they must not recompute evidence

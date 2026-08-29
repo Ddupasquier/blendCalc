@@ -8,6 +8,9 @@ import type { ImagePlacementValue } from "$lib/utils/food/images/types";
 import { submitSharedProduct } from "$lib/utils/products/catalog";
 import type { CatalogSubmissionIntent } from "$lib/utils/products/catalog";
 import { notifyIngredientListsChanged } from "$lib/utils/storage/client/ingredientLists";
+import { getUserFacingErrorMessage } from "$lib/utils/errors/userFacingErrors";
+
+export type ManualEntryCatalogMessageTone = "success" | "warning";
 
 export type ManualEntrySharedProductPhotos = {
 	frontPhoto: File | null;
@@ -20,6 +23,7 @@ export type ManualEntrySubmitFlowResult =
 	| {
 			status: "complete";
 			catalogMessage: string;
+			catalogMessageTone: ManualEntryCatalogMessageTone;
 			resetForm: boolean;
 	  }
 	| {
@@ -57,7 +61,8 @@ export const saveManualEntryCustomFood = async ({
 		if (!normalizedBarcode || !shareWithCatalog) {
 			return {
 				status: "error",
-				error: "Keep community sharing on to submit this correction for review.",
+				error:
+					"Keep community sharing on to submit this correction for review.",
 			};
 		}
 		try {
@@ -68,12 +73,14 @@ export const saveManualEntryCustomFood = async ({
 			return {
 				status: "complete",
 				catalogMessage: submission.message,
+				catalogMessageTone: "success",
 				resetForm: false,
 			};
 		} catch {
 			return {
 				status: "error",
-				error: "We couldn’t submit this correction. Check your connection and try again.",
+				error:
+					"We couldn’t submit this correction. Check your connection and try again.",
 			};
 		}
 	}
@@ -85,7 +92,12 @@ export const saveManualEntryCustomFood = async ({
 		if (existingFood) {
 			const usedIngredient = await useIngredient(existingFood, true);
 			if (!usedIngredient) return { status: "cancelled" };
-			return { status: "complete", catalogMessage: "", resetForm: true };
+			return {
+				status: "complete",
+				catalogMessage: "",
+				catalogMessageTone: "success",
+				resetForm: true,
+			};
 		}
 
 		return {
@@ -102,12 +114,18 @@ export const saveManualEntryCustomFood = async ({
 		if (existingFood) {
 			const usedIngredient = await useIngredient(existingFood, true);
 			if (!usedIngredient) return { status: "cancelled" };
-			return { status: "complete", catalogMessage: "", resetForm: true };
+			return {
+				status: "complete",
+				catalogMessage: "",
+				catalogMessageTone: "success",
+				resetForm: true,
+			};
 		}
 
 		return {
 			status: "error",
-			error: "An ingredient with this barcode is already saved to your account.",
+			error:
+				"An ingredient with this barcode is already saved to your account.",
 		};
 	}
 
@@ -122,6 +140,7 @@ export const saveManualEntryCustomFood = async ({
 	const addedToDestination = await useIngredient(food);
 	if (!addedToDestination) return { status: "cancelled" };
 	let catalogMessage = "";
+	let catalogMessageTone: ManualEntryCatalogMessageTone = "success";
 
 	if (
 		normalizedBarcode &&
@@ -135,11 +154,19 @@ export const saveManualEntryCustomFood = async ({
 			});
 			catalogMessage = submission.message;
 			notifyIngredientListsChanged();
-		} catch {
-			catalogMessage =
-				"The ingredient was saved privately, but catalog review could not be started. You can try again later.";
+		} catch (error) {
+			catalogMessage = getUserFacingErrorMessage(error, {
+				fallback:
+					"The ingredient was saved privately, but catalog review could not be started. You can try again later.",
+			});
+			catalogMessageTone = "warning";
 		}
 	}
 
-	return { status: "complete", catalogMessage, resetForm: true };
+	return {
+		status: "complete",
+		catalogMessage,
+		catalogMessageTone,
+		resetForm: true,
+	};
 };

@@ -140,13 +140,13 @@ confirming the requested recovery point and expected downtime.
 
 ## Routine Schedule
 
-| Frequency                  | Action                                                                                                    |
-| -------------------------- | --------------------------------------------------------------------------------------------------------- |
-| Before every release       | Run the hosted audit and verify the newest managed backup is recent                                       |
-| Monthly                    | Create and checksum-verify a protected database/Storage backup                                            |
-| Quarterly                  | Perform the complete disposable local recovery drill                                                      |
-| After role or Auth changes | Review elevated assignments, callback URLs, MFA capability, and Auth audit events                         |
-| After an incident          | Preserve relevant hosted logs, rotate affected credentials, run the audit, and record the recovery result |
+| Frequency                  | Action                                                                                                                |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Before every release       | Run the hosted audit and verify the newest managed backup is recent                                                   |
+| Monthly                    | Create and checksum-verify a protected database/Storage backup                                                        |
+| Quarterly                  | Perform the complete disposable local recovery drill                                                                  |
+| After role or Auth changes | Run the hosted audit to verify elevated-account TOTP enrollment, callback URLs, MFA capability, and Auth audit events |
+| After an incident          | Preserve relevant hosted logs, rotate affected credentials, run the audit, and record the recovery result             |
 
 GitHub's required `Hosted Auth Health` check is deliberately narrower than the operator
 audit: it proves that the canonical site and public Auth endpoint are reachable using
@@ -154,6 +154,12 @@ only public client configuration. It never receives a Supabase management token,
 database password, or service-role key. Backup recency, network restrictions, protected
 Auth settings, and unresolved provider controls remain part of the operator audit and
 release runbook rather than untrusted pull-request execution.
+
+When `.env.moderation.local` provides the hosted URL and service-role key, the operator
+audit reads elevated role assignments and verified TOTP factors. Its report contains
+only aggregate account counts. It never serializes email addresses, user identifiers,
+factor identifiers, or credentials. Without those protected values, the check reports
+privileged enrollment as blocked rather than guessing.
 
 Delete superseded protected backups according to the approved retention period only
 after a newer backup has passed checksum verification. Do not leave incomplete backup

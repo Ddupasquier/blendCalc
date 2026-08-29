@@ -1,48 +1,57 @@
-import { existsSync, readFileSync, readdirSync } from "node:fs";
-import { dirname, extname, relative, resolve } from "node:path";
+import { execFileSync } from "node:child_process";
+import { existsSync, readFileSync } from "node:fs";
+import { dirname, relative, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
-const excludedDocumentationDirectories = new Set(["workspace"]);
-const localOnlyRepositoryPathPrefixes = ["docs/workspace/", "scripts/output/"];
-const localOnlyRepositoryPaths = new Set([
-	".env",
-	".env.local",
-	".env.moderation.local",
-	".env.test.local",
-	".env.vercel.preview.local",
-	".env.vercel.production.local",
-	"docs/workspace",
+const trackedRepositoryPaths = new Set(
+	execFileSync("git", ["ls-files"], { encoding: "utf8" })
+		.trim()
+		.split("\n")
+		.filter(Boolean),
+);
+const trackedRepositoryDirectories = new Set(
+	[...trackedRepositoryPaths].flatMap((path) => {
+		const segments = path.split("/");
+		return segments
+			.slice(1)
+			.map((_, index) => segments.slice(0, index + 1).join("/"));
+	}),
+);
+const documentedRuntimeOnlyPaths = new Set([
 	"scripts/output",
 	"supabase/functions/.env.local",
 ]);
 
-const isLocalOnlyRepositoryPath = (path: string): boolean => {
-	const repositoryPath = relative(process.cwd(), resolve(path)).replaceAll(
-		"\\",
-		"/",
-	);
+const repositoryRelativePath = (path: string): string =>
+	relative(process.cwd(), resolve(path))
+		.replaceAll("\\", "/")
+		.replace(/\/$/, "");
+
+const isDocumentedRuntimeOnlyPath = (path: string): boolean =>
+	documentedRuntimeOnlyPaths.has(repositoryRelativePath(path));
+
+const isTrackedRepositoryPath = (path: string): boolean => {
+	const repositoryPath = repositoryRelativePath(path);
 	return (
-		localOnlyRepositoryPaths.has(repositoryPath) ||
-		localOnlyRepositoryPathPrefixes.some((prefix) =>
-			repositoryPath.startsWith(prefix),
-		)
+		trackedRepositoryPaths.has(repositoryPath) ||
+		trackedRepositoryDirectories.has(repositoryPath)
 	);
 };
 
 const collectMarkdownFiles = (directory: string): string[] =>
-	readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
-		if (entry.isDirectory()) {
-			if (excludedDocumentationDirectories.has(entry.name)) return [];
-			return collectMarkdownFiles(`${directory}/${entry.name}`);
-		}
-		return extname(entry.name) === ".md" ? [`${directory}/${entry.name}`] : [];
-	});
+	maintainedDocumentationFiles.filter((path) =>
+		path.startsWith(`${directory}/`),
+	);
 
-const maintainedDocumentationFiles = [
-	"README.md",
-	"scripts/README.md",
-	...collectMarkdownFiles("docs"),
-].filter((path) => !isLocalOnlyRepositoryPath(path));
+const maintainedDocumentationFiles = [...trackedRepositoryPaths]
+	.filter(
+		(path) =>
+			path.endsWith(".md") &&
+			(path === "README.md" ||
+				path === "scripts/README.md" ||
+				path.startsWith("docs/")),
+	)
+	.sort();
 
 const removeFencedCode = (source: string) =>
 	source.replace(/```[\s\S]*?```/g, "");
@@ -92,7 +101,7 @@ describe("documentation quality", () => {
 					dirname(documentationFile),
 					decodeURIComponent(target),
 				);
-				if (!existsSync(targetPath) && !isLocalOnlyRepositoryPath(targetPath)) {
+				if (!existsSync(targetPath) || !isTrackedRepositoryPath(targetPath)) {
 					brokenLinks.push(`${documentationFile}: ${link}`);
 				}
 			}
@@ -119,7 +128,7 @@ describe("documentation quality", () => {
 							decodeURIComponent(target.split("?")[0]),
 						)
 					: resolve(documentationFile);
-				if (!existsSync(targetPath) || isLocalOnlyRepositoryPath(targetPath))
+				if (!existsSync(targetPath) || !isTrackedRepositoryPath(targetPath))
 					continue;
 
 				let anchors = anchorCache.get(targetPath);
@@ -167,7 +176,10 @@ describe("documentation quality", () => {
 					.replace(/:\d+(?::\d+)?$/, "");
 				if (/[<{*]|\.\.\./.test(target)) continue;
 				target = target.split("#")[0];
-				if (!existsSync(target) && !isLocalOnlyRepositoryPath(target)) {
+				if (
+					(!existsSync(target) || !isTrackedRepositoryPath(target)) &&
+					!isDocumentedRuntimeOnlyPath(target)
+				) {
 					missingPaths.push(`${documentationFile}: ${target}`);
 				}
 			}
@@ -216,36 +228,6 @@ describe("documentation quality", () => {
 		}
 
 		expect(missingNavigation).toEqual([]);
-	});
-
-	it("distinguishes intentionally local workflow artifacts from tracked documentation", () => {
-		for (const localOnlyPath of [
-			"docs/workspace/work-queue.md",
-			"docs/workspace/qa/qa-tasks.md",
-			"docs/workspace/context/working-context.md",
-			"scripts/output/audit.json",
-		]) {
-			expect(isLocalOnlyRepositoryPath(localOnlyPath), localOnlyPath).toBe(
-				true,
-			);
-		}
-		expect(isLocalOnlyRepositoryPath("docs/development/testing.md")).toBe(
-			false,
-		);
-	});
-
-	it("keeps maintained documentation independent from local-only workflow files", () => {
-		const localWorkflowReferences: string[] = [];
-		const forbiddenReference = /(?:docs\/workspace\/|(?:^|[(`/])notes\/)/m;
-
-		for (const documentationFile of maintainedDocumentationFiles) {
-			const source = removeFencedCode(readFileSync(documentationFile, "utf8"));
-			if (forbiddenReference.test(source)) {
-				localWorkflowReferences.push(documentationFile);
-			}
-		}
-
-		expect(localWorkflowReferences).toEqual([]);
 	});
 
 	it("keeps current user-facing behavior docs free of retired product terms", () => {

@@ -1127,6 +1127,12 @@ test("Mix ingredient chooser preserves selection across search, sorting, paginat
 	let filterSheet = page.getByRole("dialog", {
 		name: "Filter and sort ingredients",
 	});
+	await expect(
+		filterSheet.getByRole("button", { name: "Warnings" }),
+	).toBeVisible();
+	await expect(
+		filterSheet.getByRole("button", { name: "Active recalls" }),
+	).toBeVisible();
 	await filterSheet.getByRole("button", { name: "Selected only" }).click();
 	await filterSheet.getByRole("button", { name: "A → Z" }).click();
 	await filterSheet.getByRole("button", { name: "Apply" }).click();
