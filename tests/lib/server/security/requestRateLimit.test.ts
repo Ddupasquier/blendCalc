@@ -1,4 +1,7 @@
-import { getRequestRateLimitPolicy } from "$lib/server/security/requestRateLimit.server";
+import {
+	getRequestRateLimitLayers,
+	getRequestRateLimitPolicy,
+} from "$lib/server/security/requestRateLimit.server";
 import { describe, expect, it } from "vitest";
 
 describe("request rate-limit policies", () => {
@@ -75,5 +78,26 @@ describe("request rate-limit policies", () => {
 		expect(
 			getRequestRateLimitPolicy("GET", "/api/internal/analytics/sync"),
 		).toBeNull();
+	});
+
+	it("layers burst and sustained endpoint limits across every available identity", () => {
+		const layers = getRequestRateLimitLayers({
+			apiKey: "key-id",
+			clientAddress: "192.0.2.1",
+			method: "GET",
+			pathname: "/api/v1/categories",
+			userId: "user-id",
+		});
+		expect(layers).toHaveLength(6);
+		expect(layers.map(({ scope }) => scope)).toEqual([
+			"api-v1:read:ip:burst",
+			"api-v1:read:ip:sustained",
+			"api-v1:read:account:burst",
+			"api-v1:read:account:sustained",
+			"api-v1:read:key:burst",
+			"api-v1:read:key:sustained",
+		]);
+		expect(layers[0]).toMatchObject({ limit: 180, windowSeconds: 60 });
+		expect(layers[1]).toMatchObject({ limit: 1080, windowSeconds: 600 });
 	});
 });

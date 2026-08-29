@@ -10,8 +10,8 @@ import {
 	normalizeBlendCalcAPIV1BoundaryResponse,
 } from "$lib/server/blendCalcAPI/v1/blendCalcAPIHttp.server";
 import {
-	consumeRequestRateLimit,
-	getRequestRateLimitPolicy,
+	consumeRequestRateLimits,
+	getRequestRateLimitLayers,
 } from "$lib/server/security/requestRateLimit.server";
 import {
 	DARK_THEME_COLOR,
@@ -128,23 +128,22 @@ export const handle: Handle = async ({ event, resolve }) => {
 		}
 	}
 
-	const rateLimitPolicy = getRequestRateLimitPolicy(
-		event.request.method,
-		event.url.pathname,
-	);
-	if (rateLimitPolicy) {
-		let clientAddress = "unavailable";
+	const rateLimitLayers = getRequestRateLimitLayers({
+		apiKey: event.request.headers.get("x-blendcalc-api-key"),
+		clientAddress: (() => {
+			try {
+				return event.getClientAddress();
+			} catch {
+				return "unavailable";
+			}
+		})(),
+		method: event.request.method,
+		pathname: event.url.pathname,
+		userId: user?.id,
+	});
+	if (rateLimitLayers.length > 0) {
 		try {
-			clientAddress = event.getClientAddress();
-		} catch {
-			// The authenticated user id remains the primary subject in hosted runtime.
-		}
-		const subject = user ? `user:${user.id}` : `client:${clientAddress}`;
-		try {
-			const rateLimit = await consumeRequestRateLimit({
-				policy: rateLimitPolicy,
-				subject,
-			});
+			const rateLimit = await consumeRequestRateLimits(rateLimitLayers);
 			if (!rateLimit.allowed) {
 				const response = isBlendCalcAPIV1Pathname(event.url.pathname)
 					? blendCalcAPIV1Error("rate_limited", undefined, {

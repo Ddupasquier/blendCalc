@@ -128,6 +128,11 @@ workflows, so an upstream outage or rate limit cannot turn into a blendCalcAPI r
 failure. Architecture and route tests block live-provider imports, direct outbound
 requests, and accidental provider fallback inside the versioned read boundary.
 
+The request boundary applies endpoint-specific burst and sustained quotas to each
+available client identity: network address, authenticated account, and presented API
+key. The private database consumes every applicable layer in one call; exceeding any
+layer returns the documented `429 rate_limited` response and retry delay.
+
 ## Payload Measurement
 
 Run `npm run audit:blendCalcAPI-payloads` against the prepared local preview to measure
