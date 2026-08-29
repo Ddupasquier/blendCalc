@@ -105,6 +105,12 @@ repeat reads so those two measurements cannot be
 silently conflated. A noisy audit failure does not alter API availability or catalog
 data.
 
+`npm run audit:blendCalcAPI-load` measures the common exact-product path, a broad first
+search page, an empty search, a warmed product read, and a mixed concurrent read batch.
+The bounded default uses five concurrent clients and fails on any unsuccessful response
+or missed scenario p95 budget. It is a pre-beta regression audit, not a production
+traffic generator or live request blocker.
+
 ## Query Plan Audit
 
 Run `node scripts/audits/catalog/audit_blendCalcAPI_query_plans.mjs` after starting the
