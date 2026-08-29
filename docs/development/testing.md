@@ -150,6 +150,23 @@ after documentation, comments, or unrelated source-only edits.
 
 ### Release Confidence
 
+#### Work-Quota Closeout
+
+An explicit work-queue quota is one review batch, not permission to combine its source
+responsibilities. Run focused checks on each feature branch while implementing. After
+the full quota is engineering-complete, create a temporary local integration worktree
+from current `staging`, apply the exact uncommitted quota diffs without committing them,
+and run one `npm run verify:release` against that combined candidate. Repair failures in
+the feature branch that owns them, recreate the integration candidate, and rerun the
+failed stage before presenting the batch for approval.
+
+The quota handoff must include every local branch, focused verification, the combined
+Release Check result, and any remaining direct user-verification steps. A green quota
+check does not authorize commits, changed-content pushes, merges, database deployment,
+or promotion. `npm run verify:nightly` remains a separate pre-release or explicitly
+requested matrix so quota closeout does not reintroduce the former 45-minute browser
+workflow.
+
 Before promoting browser-facing work to a release branch, run:
 
 ```bash

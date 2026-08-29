@@ -858,6 +858,37 @@ describe("blendCalcAPI v1 catalog mapping", () => {
 		expect(createPagination(15, 30, 31).nextOffset).toBeNull();
 	});
 
+	it("traverses bounded pages without duplicates or skipped records", () => {
+		const total = 31;
+		const limit = 15;
+		const visitedIndexes: number[] = [];
+		let offset = 0;
+
+		while (offset < total) {
+			const pagination = createPagination(limit, offset, total);
+			visitedIndexes.push(
+				...Array.from(
+					{ length: Math.min(limit, total - offset) },
+					(_, index) => offset + index,
+				),
+			);
+			if (pagination.nextOffset === null) break;
+			offset = pagination.nextOffset;
+		}
+
+		expect(visitedIndexes).toEqual(
+			Array.from({ length: total }, (_, index) => index),
+		);
+		expect(new Set(visitedIndexes).size).toBe(total);
+		expect(createPagination(limit, total + 10, total)).toEqual({
+			limit,
+			offset: total + 10,
+			total,
+			hasMore: false,
+			nextOffset: null,
+		});
+	});
+
 	it("maps structured revision changes without exposing revision snapshots", async () => {
 		const rpc = vi.fn().mockResolvedValue({
 			data: [
@@ -1251,5 +1282,46 @@ describe("blendCalcAPI v1 catalog mapping", () => {
 				),
 			),
 		).toThrow("Required API dataset attribution is unavailable.");
+	});
+
+	it("uses provider attribution for direct records from a source that also publishes datasets", () => {
+		const directProviderRecord = structuredClone(record);
+		for (const fieldSource of Object.values(
+			directProviderRecord.fieldProvenance,
+		)) {
+			fieldSource.source = "usda";
+			fieldSource.sourceReference = "2032704";
+		}
+		for (const nutrient of directProviderRecord.food.foodNutrients) {
+			nutrient.source = "usda";
+			nutrient.sourceReference = "2032704";
+		}
+		for (const serving of directProviderRecord.food.foodServings ?? []) {
+			serving.source = "usda";
+			serving.sourceReference = "2032704";
+		}
+		const providerAttribution = sourceAttribution(
+			"usda",
+			"USDA FoodData Central",
+			"CC0 1.0",
+		);
+
+		const product = mapApprovedCatalogRecordToBlendCalcAPIV1Product(
+			directProviderRecord,
+			attributionCatalog(
+				{ usda: providerAttribution },
+				{
+					usda: {
+						"usda-sr-legacy": sourceAttribution(
+							"usda",
+							"USDA FoodData Central SR Legacy",
+							"CC0 1.0",
+						),
+					},
+				},
+			),
+		);
+
+		expect(product.sourceAttributions).toEqual([providerAttribution]);
 	});
 });

@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { BLENDCALC_API_V1_ERROR_DEFINITIONS } from "$lib/blendCalcAPI/v1/blendCalcAPIErrors";
 import { BLENDCALC_API_V1_ACCESS_POLICY } from "$lib/blendCalcAPI/v1/blendCalcAPIAccessPolicy";
+import { BLENDCALC_API_V1_PAGINATION_LIMITS } from "$lib/blendCalcAPI/v1/blendCalcAPIRequest";
 
 const specification = JSON.parse(
 	readFileSync("static/api/v1/openapi.json", "utf8"),
@@ -31,6 +32,52 @@ describe("blendCalcAPI v1 OpenAPI contract", () => {
 		]);
 		for (const path of Object.values(specification.paths)) {
 			expect(Object.keys(path)).toEqual(["get"]);
+		}
+	});
+
+	it("keeps documented pagination aligned with runtime limits", () => {
+		const readQueryParameter = (path: string, name: string) => {
+			const operation = specification.paths[path]?.get as {
+				parameters: Array<{
+					name: string;
+					schema: { default: number; maximum: number; minimum: number };
+				}>;
+			};
+			return operation.parameters.find((parameter) => parameter.name === name)
+				?.schema;
+		};
+
+		expect(readQueryParameter("/api/v1/foods/search", "limit")).toEqual({
+			type: "integer",
+			minimum: 1,
+			maximum: BLENDCALC_API_V1_PAGINATION_LIMITS.search.maximumLimit,
+			default: BLENDCALC_API_V1_PAGINATION_LIMITS.search.defaultLimit,
+		});
+		expect(readQueryParameter("/api/v1/categories", "limit")).toEqual({
+			type: "integer",
+			minimum: 1,
+			maximum: BLENDCALC_API_V1_PAGINATION_LIMITS.categories.maximumLimit,
+			default: BLENDCALC_API_V1_PAGINATION_LIMITS.categories.defaultLimit,
+		});
+		expect(
+			readQueryParameter("/api/v1/products/{barcode}/revisions", "limit"),
+		).toEqual({
+			type: "integer",
+			minimum: 1,
+			maximum: BLENDCALC_API_V1_PAGINATION_LIMITS.revisions.maximumLimit,
+			default: BLENDCALC_API_V1_PAGINATION_LIMITS.revisions.defaultLimit,
+		});
+		for (const path of [
+			"/api/v1/foods/search",
+			"/api/v1/categories",
+			"/api/v1/products/{barcode}/revisions",
+		]) {
+			expect(readQueryParameter(path, "offset")).toEqual({
+				type: "integer",
+				minimum: 0,
+				maximum: BLENDCALC_API_V1_PAGINATION_LIMITS.maximumOffset,
+				default: 0,
+			});
 		}
 	});
 

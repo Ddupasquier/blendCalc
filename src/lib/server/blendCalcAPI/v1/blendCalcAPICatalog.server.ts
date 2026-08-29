@@ -337,7 +337,8 @@ const selectSourceAttributions = (
 				.filter((key): key is string => Boolean(key)),
 		);
 		if (representedDatasetKeys.size === 0) {
-			throw new Error("Required API dataset attribution is unavailable.");
+			attributions.set(representedSource.source, providerAttribution);
+			continue;
 		}
 		const datasetCatalog = catalog.datasetsBySource[representedSource.source];
 		if (!datasetCatalog) {

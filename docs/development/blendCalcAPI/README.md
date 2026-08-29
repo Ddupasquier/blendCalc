@@ -16,6 +16,7 @@ fields retain their stable versioned names.
 | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | Understand API access and stability | [blendCalcAPI v1 Status](#blendcalcapi-v1-status), [Versioning](#versioning), and [Privacy And Rights](#privacy-and-rights) |
 | Inspect available reads             | [Read Endpoints](#read-endpoints)                                                                                           |
+| Review response budgets             | [Response Targets](#response-targets)                                                                                       |
 | Understand publication rules        | [What Can Be Published](#what-can-be-published) and [Corrections And Rapid Removal](#corrections-and-rapid-removal)         |
 | Inspect upstream provider samples   | [External API Structure References](../api-structures/README.md)                                                            |
 
@@ -67,8 +68,78 @@ and never expose raw database, provider, moderation, or server exception text. E
 response includes `x-blendcalc-api-version`; successful reads use private short-lived
 caching and errors use `no-store`.
 
+### Pagination
+
+| Read              | Default limit | Maximum limit | Maximum offset |
+| ----------------- | ------------: | ------------: | -------------: |
+| Product search    |            15 |            50 |          1,000 |
+| Categories        |            50 |           100 |          1,000 |
+| Product revisions |            25 |           100 |          1,000 |
+
+`limit` and `offset` must be whole numbers inside those bounds. Every paginated response
+returns the applied limit and offset, total result count, whether another page exists,
+and the next offset. Search results, categories, and revisions each use deterministic
+database ordering with a unique final key, so following `nextOffset` visits the bounded
+result set once without page overlap.
+
 Route tests validate every status against the exact OpenAPI schema. Undeclared response
 fields are rejected rather than silently entering blendCalcAPI v1.
+
+## Response Targets
+
+The internal API has measured p95 response budgets for representative authenticated
+reads. These are regression budgets for the repeatable local production-preview audit,
+not promises enforced inside live request handling.
+
+| Scenario            | p95 budget | What is measured                                 |
+| ------------------- | ---------- | ------------------------------------------------ |
+| Exact product       | 1,000 ms   | One publication-ready product by exact GTIN      |
+| Category first page | 750 ms     | First 50 enabled canonical categories            |
+| Search first page   | 1,000 ms   | First 15 publication-ready matches for one query |
+| Warm product repeat | 150 ms     | Same exact product URL after one priming read    |
+
+Run `npm run test:e2e:session:start`, then run
+`npm run audit:blendCalcAPI-performance` in another terminal. The audit reports p50,
+p95, and maximum latency. It uses unique URLs for cold scenarios and a stable URL for
+repeat reads so those two measurements cannot be
+silently conflated. A noisy audit failure does not alter API availability or catalog
+data.
+
+## Query Plan Audit
+
+Run `node scripts/audits/catalog/audit_blendCalcAPI_query_plans.mjs` after starting the
+local test database. The read-only audit measures exact-product, representative search,
+broad search, deepest bounded search and revision pages, plus first and deepest category
+pages. It also inspects the exact-product and broad-search core predicates so index use
+is visible even though PostgreSQL reports security-definer API functions as function
+scans.
+
+The report includes planning and execution time, buffers, node types, and sequential
+scans. A sequential scan requests index review only after processing at least 10,000
+rows. This keeps small-table scans visible without adding speculative indexes that cost
+more to maintain than they save.
+
+## Provider Independence
+
+Every blendCalcAPI read uses stored, publication-ready canonical data. API routes never
+contact USDA, Open Food Facts, COLA, recall feeds, or another external provider while
+serving a request. Provider enrichment and monitoring remain separate background intake
+workflows, so an upstream outage or rate limit cannot turn into a blendCalcAPI read
+failure. Architecture and route tests block live-provider imports, direct outbound
+requests, and accidental provider fallback inside the versioned read boundary.
+
+## Payload Measurement
+
+Run `npm run audit:blendCalcAPI-payloads` against the prepared local preview to measure
+the exact and gzip-estimated byte size of a full product, first search page, maximum
+category page, and maximum revision page. The audit is read-only, authenticates like an
+ordinary app session, and does not turn observational measurements into a production
+request blocker.
+
+No reduced-detail response shape exists today because no current client has demonstrated
+a need for one. Adding summary/detail modes would expand the versioned contract and its
+test matrix; that complexity is justified only when measured payloads and a real client
+workflow show that the complete canonical response is wasteful.
 
 ## What Can Be Published
 

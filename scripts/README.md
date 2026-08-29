@@ -148,13 +148,22 @@ and changed write semantics require a later contract migration.
 | `npm run audit:blendCalcAPI-catalog`                                           | Every active catalog row's publication status, gate failures, provenance, nutrition, servings, images, and rights metadata                         |
 | `npm run audit:blendCalcAPI-catalog -- --strict`                               | The same audit, failing unless every active row is publication-ready                                                                               |
 | `npm run audit:blendCalcAPI-catalog -- --json`                                 | The same fresh readiness reassessment with DB-owned automated-repair, review-owner, and unresolved-contract classifications as structured output   |
+| `node scripts/audits/catalog/audit_blendCalcAPI_query_plans.mjs`               | Representative and bounded worst-case local PostgreSQL plans; flags only measured high-row sequential scans for index review                       |
+| `npm run audit:blendCalcAPI-payloads`                                          | Read-only authenticated byte-size and gzip-size measurements for every blendCalcAPI v1 read shape                                                  |
 | `node scripts/audits/catalog/audit_catalog_transparency.mjs`                   | Verification dates, revisions, observations, source quality, ingredients, uncertainty, compatibility, API exposure, and app reads                  |
 | `node scripts/audits/catalog/audit_catalog_transparency.mjs --json`            | The same read-only transparency report as structured output                                                                                        |
 | `node scripts/audits/catalog/audit_barcode_nutrition_accuracy.mjs --limit=300` | At least 300 exact GTINs plus every active catalog product across provider evidence, units, servings, normalized values, provenance, and conflicts |
+| `npm run audit:blendCalcAPI-performance`                                       | Authenticated production-preview p50/p95 checks for product, category, first-page search, and browser-cached repeat reads                          |
 
 The barcode audit writes its detailed report to ignored `scripts/output/`. Provider
 anomalies, source disagreements, app math defects, and legally blocked fields remain
 separate findings; the audit never promotes data merely to improve its pass rate.
+
+Run the performance audit while `npm run test:e2e:session:start` is serving the local
+production build on port `5174`. It uses the disposable QA account and fails only the
+audit process when a response budget regresses; the budgets never block application
+traffic. Use `--json`, `--samples=15`, `--barcode=<14-digit GTIN>`, or `--query=<term>`
+to produce structured evidence or change the representative input.
 
 ## Source Coverage And Quality
 
