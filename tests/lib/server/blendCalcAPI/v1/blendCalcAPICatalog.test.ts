@@ -1252,4 +1252,45 @@ describe("blendCalcAPI v1 catalog mapping", () => {
 			),
 		).toThrow("Required API dataset attribution is unavailable.");
 	});
+
+	it("uses provider attribution for direct records from a source that also publishes datasets", () => {
+		const directProviderRecord = structuredClone(record);
+		for (const fieldSource of Object.values(
+			directProviderRecord.fieldProvenance,
+		)) {
+			fieldSource.source = "usda";
+			fieldSource.sourceReference = "2032704";
+		}
+		for (const nutrient of directProviderRecord.food.foodNutrients) {
+			nutrient.source = "usda";
+			nutrient.sourceReference = "2032704";
+		}
+		for (const serving of directProviderRecord.food.foodServings ?? []) {
+			serving.source = "usda";
+			serving.sourceReference = "2032704";
+		}
+		const providerAttribution = sourceAttribution(
+			"usda",
+			"USDA FoodData Central",
+			"CC0 1.0",
+		);
+
+		const product = mapApprovedCatalogRecordToBlendCalcAPIV1Product(
+			directProviderRecord,
+			attributionCatalog(
+				{ usda: providerAttribution },
+				{
+					usda: {
+						"usda-sr-legacy": sourceAttribution(
+							"usda",
+							"USDA FoodData Central SR Legacy",
+							"CC0 1.0",
+						),
+					},
+				},
+			),
+		);
+
+		expect(product.sourceAttributions).toEqual([providerAttribution]);
+	});
 });
