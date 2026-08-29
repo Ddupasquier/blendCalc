@@ -70,6 +70,19 @@ caching and errors use `no-store`.
 Route tests validate every status against the exact OpenAPI schema. Undeclared response
 fields are rejected rather than silently entering blendCalcAPI v1.
 
+## Payload Measurement
+
+Run `npm run audit:blendCalcAPI-payloads` against the prepared local preview to measure
+the exact and gzip-estimated byte size of a full product, first search page, maximum
+category page, and maximum revision page. The audit is read-only, authenticates like an
+ordinary app session, and does not turn observational measurements into a production
+request blocker.
+
+No reduced-detail response shape exists today because no current client has demonstrated
+a need for one. Adding summary/detail modes would expand the versioned contract and its
+test matrix; that complexity is justified only when measured payloads and a real client
+workflow show that the complete canonical response is wasteful.
+
 ## What Can Be Published
 
 The shared catalog intentionally stores more than the API publishes. blendCalcAPI v1 returns only
