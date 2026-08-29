@@ -161,8 +161,9 @@ separate findings; the audit never promotes data merely to improve its pass rate
 | Command                                                                                   | Purpose                                                                                                                         |
 | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | `node scripts/audits/food-sources/benchmark_product_sources.mjs --limit=10`               | Controlled same-barcode provider comparison recorded as benchmark metrics                                                       |
-| `npm run report:source-quality -- --days=30 --origin=runtime`                             | Stored runtime coverage, reliability, cache efficiency, and request cost                                                        |
-| `npm run report:source-quality -- --days=30 --origin=benchmark`                           | Stored controlled-benchmark metrics                                                                                             |
+| `npm run report:source-quality -- --days=30 --origin=runtime`                             | Runtime requests, cache use, coverage, selected field contributions, missing fields, and unresolved disagreements               |
+| `npm run report:source-quality -- --days=30 --origin=benchmark`                           | Controlled-benchmark metrics plus current contribution, missing-field, and disagreement evidence                                |
+| `npm run report:source-quality -- --days=30 --origin=runtime --json`                      | The same privacy-safe report with field-level counts as structured JSON                                                         |
 | `node scripts/audits/food-sources/audit_barcode_provider_experience.mjs --sample-size=50` | Read-only USDA, Open Food Facts, and COLA Cloud exact-barcode coverage, latency, source math, and manual-entry experience audit |
 | `node scripts/audits/food-sources/audit_generic_dataset_contribution.mjs --queries=100`   | Read-only imported-dataset record, nutrient, measure, identity, and bounded search contribution                                 |
 
