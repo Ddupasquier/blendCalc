@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+	BLENDCALC_API_V1_PAGINATION_LIMITS,
 	BlendCalcAPIV1RequestError,
 	readBlendCalcAPIV1CategoryRequest,
 	readBlendCalcAPIV1RevisionHistoryRequest,
@@ -30,6 +31,40 @@ describe("blendCalcAPI v1 request validation", () => {
 		).toEqual({ limit: 10, offset: 20 });
 	});
 
+	it("accepts every documented pagination boundary", () => {
+		expect(
+			readBlendCalcAPIV1SearchRequest(
+				new URL(
+					`https://blendcalc.test/api/v1/foods/search?q=tomato&limit=${BLENDCALC_API_V1_PAGINATION_LIMITS.search.maximumLimit}&offset=${BLENDCALC_API_V1_PAGINATION_LIMITS.maximumOffset}`,
+				),
+			),
+		).toEqual({
+			query: "tomato",
+			limit: BLENDCALC_API_V1_PAGINATION_LIMITS.search.maximumLimit,
+			offset: BLENDCALC_API_V1_PAGINATION_LIMITS.maximumOffset,
+		});
+		expect(
+			readBlendCalcAPIV1CategoryRequest(
+				new URL(
+					`https://blendcalc.test/api/v1/categories?limit=${BLENDCALC_API_V1_PAGINATION_LIMITS.categories.maximumLimit}&offset=0`,
+				),
+			),
+		).toEqual({
+			limit: BLENDCALC_API_V1_PAGINATION_LIMITS.categories.maximumLimit,
+			offset: 0,
+		});
+		expect(
+			readBlendCalcAPIV1RevisionHistoryRequest(
+				new URL(
+					`https://blendcalc.test/api/v1/products/00021130493609/revisions?limit=${BLENDCALC_API_V1_PAGINATION_LIMITS.revisions.maximumLimit}&offset=0`,
+				),
+			),
+		).toEqual({
+			limit: BLENDCALC_API_V1_PAGINATION_LIMITS.revisions.maximumLimit,
+			offset: 0,
+		});
+	});
+
 	it.each([
 		"?q=t",
 		"?q=tomato&limit=51",
@@ -57,6 +92,19 @@ describe("blendCalcAPI v1 request validation", () => {
 					"https://blendcalc.test/api/v1/products/00021130493609/revisions?offset=1001",
 				),
 			),
+		).toThrow(BlendCalcAPIV1RequestError);
+	});
+
+	it.each([
+		["categories", readBlendCalcAPIV1CategoryRequest, "?limit=0"],
+		["categories", readBlendCalcAPIV1CategoryRequest, "?limit=101"],
+		["categories", readBlendCalcAPIV1CategoryRequest, "?offset=-1"],
+		["categories", readBlendCalcAPIV1CategoryRequest, "?offset=1.5"],
+		["revisions", readBlendCalcAPIV1RevisionHistoryRequest, "?limit=0"],
+		["revisions", readBlendCalcAPIV1RevisionHistoryRequest, "?offset=-1"],
+	])("rejects invalid %s pagination %s", (_, readRequest, search) => {
+		expect(() =>
+			readRequest(new URL(`https://blendcalc.test/api/v1/example${search}`)),
 		).toThrow(BlendCalcAPIV1RequestError);
 	});
 });

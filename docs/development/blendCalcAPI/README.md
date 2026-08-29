@@ -68,6 +68,20 @@ and never expose raw database, provider, moderation, or server exception text. E
 response includes `x-blendcalc-api-version`; successful reads use private short-lived
 caching and errors use `no-store`.
 
+### Pagination
+
+| Read              | Default limit | Maximum limit | Maximum offset |
+| ----------------- | ------------: | ------------: | -------------: |
+| Product search    |            15 |            50 |          1,000 |
+| Categories        |            50 |           100 |          1,000 |
+| Product revisions |            25 |           100 |          1,000 |
+
+`limit` and `offset` must be whole numbers inside those bounds. Every paginated response
+returns the applied limit and offset, total result count, whether another page exists,
+and the next offset. Search results, categories, and revisions each use deterministic
+database ordering with a unique final key, so following `nextOffset` visits the bounded
+result set once without page overlap.
+
 Route tests validate every status against the exact OpenAPI schema. Undeclared response
 fields are rejected rather than silently entering blendCalcAPI v1.
 
