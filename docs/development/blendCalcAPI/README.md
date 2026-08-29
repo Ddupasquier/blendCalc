@@ -22,16 +22,16 @@ fields retain their stable versioned names.
 
 ## blendCalcAPI v1 Status
 
-| Property               | Current value                                     |
-| ---------------------- | ------------------------------------------------- |
-| Status                 | Internal, read-only preview                       |
-| Access                 | Existing authenticated blendCalc Supabase session |
-| Base path              | `/api/v1`                                         |
-| Response version       | `1.0`                                             |
-| OpenAPI version        | `1.0.0`                                           |
-| Live provider requests | None; reads use stored canonical data only        |
-| Public API keys        | Not available                                     |
-| Public release         | Blocked pending the reviewed release process      |
+| Property               | Current value                                                   |
+| ---------------------- | --------------------------------------------------------------- |
+| Status                 | Internal, read-only preview                                     |
+| Access                 | Existing authenticated blendCalc Supabase session               |
+| Base path              | `/api/v1`                                                       |
+| Response version       | `1.0`                                                           |
+| OpenAPI version        | `1.0.0`                                                         |
+| Live provider requests | None; reads use stored canonical data only                      |
+| Public API keys        | Credential lifecycle implemented; route access remains disabled |
+| Public release         | Blocked pending the reviewed release process                    |
 
 The executable contract is split between:
 
@@ -44,6 +44,30 @@ The executable contract is split between:
 Open the OpenAPI document at `/api/v1/openapi.json`. To inspect raw API JSON in a
 browser, sign in to blendCalc first and then open one of the endpoints below in the same
 browser session. Public bearer keys and anonymous catalog access do not exist yet.
+
+The server can issue, expire, revoke, and atomically rotate high-entropy API keys while
+storing only hashes and short display prefixes. This credential foundation does not by
+itself expose any endpoint: keyed route access remains disabled until the reviewed
+scope and public-access policies are implemented and enabled.
+
+## Access Scopes
+
+The database owns reviewed least-privilege scopes for the planned keyed API. Defining
+these scopes does not enable public keys or anonymous access.
+
+| Scope               | Planned responsibility                                                   |
+| ------------------- | ------------------------------------------------------------------------ |
+| `catalog.read`      | Read bounded publication-ready catalog responses                         |
+| `intake.write`      | Submit bounded observations through existing catalog intake              |
+| `corrections.write` | Submit evidence-backed corrections without changing canonical data       |
+| `moderation.read`   | Read private moderation work                                             |
+| `moderation.write`  | Resolve moderation work and implicitly read the related queue            |
+| `administration`    | Manage approved API access resources and explicitly includes every scope |
+
+Scopes grant only their named responsibility. Catalog reads do not grant intake,
+intake does not grant corrections, and neither ordinary write scope grants moderation.
+Unknown scope values fail closed. Route enforcement will be enabled only through the
+deliberate public-release process after API keys and terms are approved.
 
 ## Read Endpoints
 
@@ -65,8 +89,10 @@ All successful responses use the same envelope:
 
 Paginated responses add `meta.pagination`. Errors use the documented safe error envelope
 and never expose raw database, provider, moderation, or server exception text. Every
-response includes `x-blendcalc-api-version`; successful reads use private short-lived
-caching and errors use `no-store`.
+response includes `x-blendcalc-api-version`; successful reads include a stable ETag,
+honor `If-None-Match`, use private short-lived caching by default, and return errors with
+`no-store`. Shared/CDN caching requires an explicit public route decision and is never
+inferred from a successful authenticated response.
 
 ### Pagination
 
@@ -105,6 +131,12 @@ repeat reads so those two measurements cannot be
 silently conflated. A noisy audit failure does not alter API availability or catalog
 data.
 
+`npm run audit:blendCalcAPI-load` measures the common exact-product path, a broad first
+search page, an empty search, a warmed product read, and a mixed concurrent read batch.
+The bounded default uses five concurrent clients and fails on any unsuccessful response
+or missed scenario p95 budget. It is a pre-beta regression audit, not a production
+traffic generator or live request blocker.
+
 ## Query Plan Audit
 
 Run `node scripts/audits/catalog/audit_blendCalcAPI_query_plans.mjs` after starting the
@@ -127,6 +159,17 @@ serving a request. Provider enrichment and monitoring remain separate background
 workflows, so an upstream outage or rate limit cannot turn into a blendCalcAPI read
 failure. Architecture and route tests block live-provider imports, direct outbound
 requests, and accidental provider fallback inside the versioned read boundary.
+
+Optional analytics and intake processing are not read-path dependencies. Required
+source attribution uses a short server cache with stale-on-error protection: a transient
+refresh failure may reuse the last complete verified attribution catalog, while an
+initial failure still fails closed. Core catalog failures continue to return the safe
+documented unavailable response.
+
+The request boundary applies endpoint-specific burst and sustained quotas to each
+available client identity: network address, authenticated account, and presented API
+key. The private database consumes every applicable layer in one call; exceeding any
+layer returns the documented `429 rate_limited` response and retry delay.
 
 ## Payload Measurement
 

@@ -154,6 +154,7 @@ and changed write semantics require a later contract migration.
 | `node scripts/audits/catalog/audit_catalog_transparency.mjs --json`            | The same read-only transparency report as structured output                                                                                        |
 | `node scripts/audits/catalog/audit_barcode_nutrition_accuracy.mjs --limit=300` | At least 300 exact GTINs plus every active catalog product across provider evidence, units, servings, normalized values, provenance, and conflicts |
 | `npm run audit:blendCalcAPI-performance`                                       | Authenticated production-preview p50/p95 checks for product, category, first-page search, and browser-cached repeat reads                          |
+| `npm run audit:blendCalcAPI-load`                                              | Bounded authenticated load corpus for common, broad, empty, warmed, and mixed concurrent blendCalcAPI reads                                        |
 
 The barcode audit writes its detailed report to ignored `scripts/output/`. Provider
 anomalies, source disagreements, app math defects, and legally blocked fields remain
@@ -165,13 +166,20 @@ audit process when a response budget regresses; the budgets never block applicat
 traffic. Use `--json`, `--samples=15`, `--barcode=<14-digit GTIN>`, or `--query=<term>`
 to produce structured evidence or change the representative input.
 
+Run the load audit against the same prepared preview. It defaults to five concurrent
+clients and five iterations, remains read-only, and fails on any HTTP error or missed
+scenario-specific p95 budget. Use `--concurrency=2..10`, `--iterations=3..20`, and
+`--json` for a controlled pre-beta run; do not point it at production without explicit
+authorization.
+
 ## Source Coverage And Quality
 
 | Command                                                                                   | Purpose                                                                                                                         |
 | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | `node scripts/audits/food-sources/benchmark_product_sources.mjs --limit=10`               | Controlled same-barcode provider comparison recorded as benchmark metrics                                                       |
-| `npm run report:source-quality -- --days=30 --origin=runtime`                             | Stored runtime coverage, reliability, cache efficiency, and request cost                                                        |
-| `npm run report:source-quality -- --days=30 --origin=benchmark`                           | Stored controlled-benchmark metrics                                                                                             |
+| `npm run report:source-quality -- --days=30 --origin=runtime`                             | Runtime requests, cache use, coverage, selected field contributions, missing fields, and unresolved disagreements               |
+| `npm run report:source-quality -- --days=30 --origin=benchmark`                           | Controlled-benchmark metrics plus current contribution, missing-field, and disagreement evidence                                |
+| `npm run report:source-quality -- --days=30 --origin=runtime --json`                      | The same privacy-safe report with field-level counts as structured JSON                                                         |
 | `node scripts/audits/food-sources/audit_barcode_provider_experience.mjs --sample-size=50` | Read-only USDA, Open Food Facts, and COLA Cloud exact-barcode coverage, latency, source math, and manual-entry experience audit |
 | `node scripts/audits/food-sources/audit_generic_dataset_contribution.mjs --queries=100`   | Read-only imported-dataset record, nutrient, measure, identity, and bounded search contribution                                 |
 

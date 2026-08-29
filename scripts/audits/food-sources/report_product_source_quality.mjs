@@ -1,23 +1,37 @@
 /**
- * Purpose: Read stored daily source metrics and print a ranked coverage, reliability,
- * cache-efficiency, and request-cost report for runtime or controlled benchmark lookups.
- * This report is read-only and requires Supabase script credentials.
+ * Purpose: Read stored source evidence and print privacy-safe operational metrics,
+ * selected canonical field contributions, current missing-field outcomes, and unresolved
+ * disagreements for runtime or controlled benchmark lookups. This report is read-only
+ * and requires Supabase script credentials.
  * Run: `npm run report:source-quality -- --days=30 --origin=runtime`
  * Benchmark report: `npm run report:source-quality -- --days=30 --origin=benchmark`
+ * Structured report: `npm run report:source-quality -- --days=30 --origin=runtime --json`
  */
 
 import { config } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
 import WebSocket from "ws";
+import {
+	buildSourceContributionReport,
+	buildSourceOperationalRows,
+} from "../../lib/catalog/productSourceContributionReport.mjs";
 
 config({ path: ".env.moderation.local", quiet: true });
 config({ path: ".env", quiet: true });
 
 const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const daysArgument = process.argv.find((argument) => argument.startsWith("--days="));
-const originArgument = process.argv.find((argument) => argument.startsWith("--origin="));
-const days = Math.max(1, Number.parseInt(daysArgument?.split("=")[1] ?? "30", 10));
+const daysArgument = process.argv.find((argument) =>
+	argument.startsWith("--days="),
+);
+const originArgument = process.argv.find((argument) =>
+	argument.startsWith("--origin="),
+);
+const outputJson = process.argv.includes("--json");
+const days = Math.max(
+	1,
+	Number.parseInt(daysArgument?.split("=")[1] ?? "30", 10),
+);
 const origin = originArgument?.split("=")[1] ?? "runtime";
 
 if (!supabaseUrl || !serviceRoleKey) {
@@ -40,117 +54,152 @@ const supabase = createClient(supabaseUrl, serviceRoleKey, {
 	},
 });
 
+const databasePageSize = 1_000;
+
+const queryAllRows = async (table, columns, configure = (query) => query) => {
+	const rows = [];
+	for (let offset = 0; ; offset += databasePageSize) {
+		const query = configure(supabase.from(table).select(columns));
+		const { data, error } = await query.range(
+			offset,
+			offset + databasePageSize - 1,
+		);
+		if (error) throw error;
+		rows.push(...(data ?? []));
+		if ((data?.length ?? 0) < databasePageSize) return rows;
+	}
+};
+
 const since = new Date();
 since.setUTCDate(since.getUTCDate() - days + 1);
 const sinceDate = since.toISOString().slice(0, 10);
 
-const [{ data: metricRows, error: metricError }, { data: sources, error: sourceError }] =
-	await Promise.all([
-		supabase
-			.from("product_source_daily_metrics")
-			.select("*")
+const now = new Date().toISOString();
+const [
+	metricRows,
+	sources,
+	selectedProvenanceRows,
+	observationRows,
+	coverageRows,
+	openConflictRows,
+] = await Promise.all([
+	queryAllRows("product_source_daily_metrics", "*", (query) =>
+		query
 			.gte("metric_date", sinceDate)
-			.eq("lookup_origin", origin),
-		supabase
-			.from("product_data_sources")
-			.select("key, display_name"),
-	]);
+			.eq("lookup_origin", origin)
+			.order("metric_date")
+			.order("source_key")
+			.order("lookup_kind")
+			.order("source_data_type"),
+	),
+	queryAllRows("product_data_sources", "key, display_name", (query) =>
+		query.order("key"),
+	),
+	queryAllRows(
+		"shared_product_field_provenance",
+		"id, observation_id, field_path",
+		(query) => query.eq("selected", true).order("id"),
+	),
+	queryAllRows("shared_product_observations", "id, source", (query) =>
+		query.order("id"),
+	),
+	queryAllRows(
+		"product_source_field_coverage",
+		"barcode, provider_key, field_path, coverage_status",
+		(query) =>
+			query
+				.gt("expires_at", now)
+				.order("barcode")
+				.order("provider_key")
+				.order("field_path"),
+	),
+	queryAllRows(
+		"shared_product_conflicts",
+		"id, field_path, observed_values",
+		(query) => query.eq("status", "open").order("id"),
+	),
+]);
 
-if (metricError) throw metricError;
-if (sourceError) throw sourceError;
+const sourceNames = new Map(
+	(sources ?? []).map((source) => [source.key, source.display_name]),
+);
+const operationalRows = buildSourceOperationalRows(
+	metricRows ?? [],
+	sourceNames,
+);
+const contributionReport = buildSourceContributionReport({
+	observationRows: observationRows ?? [],
+	selectedProvenanceRows: selectedProvenanceRows ?? [],
+	coverageRows: coverageRows ?? [],
+	openConflictRows: openConflictRows ?? [],
+	sourceNames,
+});
 
-const sourceNames = new Map((sources ?? []).map((source) => [source.key, source.display_name]));
-const totals = new Map();
-const numericFields = [
-	"lookup_count",
-	"api_request_count",
-	"api_error_count",
-	"cache_hit_count",
-	"completed_lookup_count",
-	"match_count",
-	"exact_barcode_match_count",
-	"error_count",
-	"evaluated_product_count",
-	"reported_nutrient_total",
-	"brand_present_count",
-	"category_present_count",
-	"serving_present_count",
-	"ingredients_present_count",
-	"image_present_count",
-	"response_milliseconds_total",
-];
-
-for (const row of metricRows ?? []) {
-	const total = totals.get(row.source_key) ?? Object.fromEntries(
-		numericFields.map((field) => [field, 0]),
-	);
-	for (const field of numericFields) total[field] += Number(row[field] ?? 0);
-	totals.set(row.source_key, total);
-}
-
-const percentage = (numerator, denominator) =>
-	denominator > 0 ? (numerator / denominator) * 100 : 0;
-const rounded = (value, digits = 1) => Number(value.toFixed(digits));
-
-const report = [...totals.entries()].map(([sourceKey, total]) => {
-	const matchRate = percentage(total.match_count, total.lookup_count);
-	const reliabilityRate = percentage(
-		total.completed_lookup_count,
-		total.lookup_count,
-	);
-	const averageNutrients = total.evaluated_product_count > 0
-		? total.reported_nutrient_total / total.evaluated_product_count
-		: 0;
-	const metadataFields =
-		total.brand_present_count
-		+ total.category_present_count
-		+ total.serving_present_count
-		+ total.ingredients_present_count
-		+ total.image_present_count;
-	const metadataCoverage = percentage(
-		metadataFields,
-		total.evaluated_product_count * 5,
-	);
-	const coverageIndex =
-		(matchRate * 0.35)
-		+ (reliabilityRate * 0.15)
-		+ (Math.min(averageNutrients / 20, 1) * 100 * 0.25)
-		+ (metadataCoverage * 0.25);
-
-	return {
-		Source: sourceNames.get(sourceKey) ?? sourceKey,
-		Lookups: total.lookup_count,
-		"API calls": total.api_request_count,
-		"Calls / lookup": rounded(
-			total.api_request_count / Math.max(total.lookup_count, 1),
+if (outputJson) {
+	console.log(
+		JSON.stringify(
+			{
+				period: { sinceDate, through: now.slice(0, 10), origin },
+				operationalRows,
+				...contributionReport,
+			},
+			null,
 			2,
 		),
-		"Cache hits": total.cache_hit_count,
-		"API errors": total.api_error_count,
-		"Match %": rounded(matchRate),
-		"Exact barcode": total.exact_barcode_match_count,
-		"Avg nutrients": rounded(averageNutrients),
-		"Metadata %": rounded(metadataCoverage),
-		"Avg ms": rounded(
-			total.response_milliseconds_total / Math.max(total.lookup_count, 1),
-			0,
-		),
-		"Coverage index": rounded(coverageIndex),
-	};
-}).sort((left, right) => right["Coverage index"] - left["Coverage index"]);
+	);
+	process.exit(0);
+}
 
 console.log(`Product source quality: ${sinceDate} through today (${origin})`);
-if (report.length === 0) {
+if (operationalRows.length === 0) {
 	console.log("No source metrics have been recorded in this period yet.");
 } else {
-	console.table(report);
-	const inefficientSources = report.filter((row) => row["Calls / lookup"] > 2.5);
+	console.table(
+		operationalRows.map((row) => ({
+			Source: row.source,
+			Lookups: row.lookups,
+			"API calls": row.apiRequests,
+			"Calls / lookup": row.requestsPerLookup,
+			"Cache hits": row.cacheHits,
+			"API errors": row.apiErrors,
+			"Match %": row.matchPercent,
+			"Exact barcode": row.exactBarcodeMatches,
+			"Avg nutrients": row.averageNutrients,
+			"Metadata %": row.metadataPercent,
+			"Avg ms": row.averageResponseMilliseconds,
+			"Coverage index": row.coverageIndex,
+		})),
+	);
+	const inefficientSources = operationalRows.filter(
+		(row) => row.requestsPerLookup > 2.5,
+	);
 	if (inefficientSources.length > 0) {
 		console.warn(
-			`Review request fan-out for: ${inefficientSources.map((row) => row.Source).join(", ")}. Each source averaged more than 2.5 outbound calls per logical lookup.`,
+			`Review request fan-out for: ${inefficientSources.map((row) => row.source).join(", ")}. Each source averaged more than 2.5 outbound calls per logical lookup.`,
 		);
 	}
 }
+console.log("\nCurrent canonical contributions and source outcomes");
+if (contributionReport.sourceRows.length === 0) {
+	console.log(
+		"No current field contribution, coverage, or disagreement evidence exists.",
+	);
+} else {
+	console.table(
+		contributionReport.sourceRows.map((row) => ({
+			Source: row.source,
+			"Selected fields": row.selectedFieldCount,
+			Reported: row.reportedCoverageCount,
+			"Not reported": row.notReportedCoverageCount,
+			"Not applicable": row.notApplicableCoverageCount,
+			"Products not found": row.productNotFoundCount,
+			"Open disagreements": row.openDisagreementCount,
+		})),
+	);
+}
 console.log(
 	"Coverage index measures observed match/fullness/reliability, not authority. Runtime fallback sources receive harder requests, so use benchmark-origin rows for direct source comparisons.",
+);
+console.log(
+	"Selected fields are accepted canonical contributions. Coverage describes current lookup outcomes only; it is not provenance. Open disagreements are unresolved evidence conflicts, not provider error scores. Use --json for field-level counts.",
 );

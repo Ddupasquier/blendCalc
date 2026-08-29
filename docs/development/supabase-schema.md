@@ -494,9 +494,9 @@ Notes:
 
 ### `product_source_daily_metrics`
 
-| Table                          | Documented columns                                                                                                                                                                                                                                                       |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `product_source_daily_metrics` | `metric_date`, `source_key`, `source_data_type`, `lookup_kind`, `lookup_origin`, lookup/API/cache/error/match counters, evaluated product and reported nutrient totals, brand/category/serving/ingredient/image coverage counters, response milliseconds, and timestamps |
+| Table                          | Documented columns                                                                                                                                                                                                                                                                                          |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `product_source_daily_metrics` | `metric_date`, `source_key`, `source_data_type`, `lookup_kind`, `lookup_origin`, lookup/API/error/match counters, cache hit/miss/stale/coalesced counters, evaluated product and reported nutrient totals, brand/category/serving/ingredient/image coverage counters, response milliseconds, and timestamps |
 
 Notes:
 
@@ -506,9 +506,8 @@ Notes:
 - The table deliberately stores no barcode, search text, user id, or vendor payload.
 - `runtime` rows explain real traffic and API/cache load. `benchmark` rows send the same
   saved barcodes to each source for a fair coverage comparison.
-- Cache hits also include reuse of an identical provider request that was already
-  running in the same server process; this prevents concurrent requests from creating
-  duplicate outbound traffic.
+- Cache hits, cache misses, stale-on-provider-error fallbacks, and reuse of an identical
+  in-flight request are separate counters, so coalescing does not inflate cache hits.
 - Run `npm run report:source-quality` for runtime activity, or run
   `node scripts/audits/food-sources/benchmark_product_sources.mjs --limit=10` followed by
   `npm run report:source-quality -- --origin=benchmark` for a direct comparison.
@@ -699,10 +698,20 @@ removes those aliases after all application callers switch to the canonical
 | `catalog_correction_origins`          | `id`                    | Private correction workflow     | Evidence-backed provider changes, field conflicts, and warning reports waiting on or linked to one real catalog correction | Product, base revision, exactly one origin, optional submission and resolved revision |
 | `blendcalc_api_publication_concerns`  | `id`                    | Private blendCalcAPI review     | Evidence-backed correction, rights, attribution, privacy, and source concerns                                              | Exactly one product, image, dataset release, or source target                         |
 | `blendcalc_api_publication_holds`     | `id`                    | Private blendCalcAPI operations | Reversible public-output holds with placing and release audit history                                                      | Exactly one product, image, dataset release, or source target                         |
+| `blendcalc_api_clients`               | `id`                    | Private blendCalcAPI security   | Server-managed API consumer identity, ownership, and lifecycle                                                             | Optional owner and creator auth users                                                 |
+| `blendcalc_api_keys`                  | `id`                    | Private blendCalcAPI security   | Hashed API credentials, names, scopes, issue/use/expiry dates, rotation lineage, and revocation                            | `client_id → blendcalc_api_clients.id`, optional previous key                         |
 | `food_image_assets`                   | `id`                    | Shared image reference          | Source-backed product/ingredient image metadata rendered by ingredient UI                                                  | Optional `shared_product_id → shared_products.id`, optional barcode                   |
 | `product_api_cache`                   | `(provider, cache_key)` | Server cache                    | External API response cache for searches, barcode lookup, and food detail                                                  | No user ownership                                                                     |
 | `user_catalog_submission_enforcement` | `user_id`               | One current row per auth user   | Cumulative moderator rejection count and current public-sharing suspension                                                 | `user_id → auth.users.id`, optional latest submission/reviewer                        |
 | `product_submission_blocks`           | `id`                    | One auth user per block event   | Immutable history of public catalog submission suspensions                                                                 | `user_id → auth.users.id`, optional source submission                                 |
+
+### blendCalcAPI clients and keys
+
+`blendcalc_api_keys` never stores a plaintext credential. The server returns a newly
+generated key once and persists only its SHA-256 hash plus a short display prefix.
+Browser roles have no table privileges. Rotation inserts the replacement and revokes
+the prior key in one service-role-only database transaction; expiry, last use, explicit
+revocation, and rotation lineage remain auditable.
 
 ### `shared_product_submissions`
 
@@ -1046,6 +1055,12 @@ data. Negative results keep their provider status code and store an explicit non
 JSON outcome marker; `null` never doubles as both “not found” and “missing cache data.”
 Provider and request-kind names use normalized kebab-case so a new integration can use
 the shared request boundary without a new provider-specific schema constraint.
+
+`product_source_request_budgets` stores service-only operational ceilings by provider
+and request kind. `get_product_api_cache_health` reports configured budgets together
+with cache size, expiry, and provider distribution. `cleanup_expired_product_api_cache`
+deletes one locked, bounded batch of expired rows so maintenance cannot turn into an
+unbounded request. These operational records contain no user, query, or barcode data.
 
 ### Reviewed product resolution policy and source coverage
 
@@ -1755,6 +1770,23 @@ Notes:
 
 ## Request Security And Least Privilege
 
+### blendCalcAPI access scopes
+
+Reviewed scope and operation definitions prepare public API access without enabling it.
+Both tables are service-role-readable only; browser roles cannot inspect or alter access
+policy.
+
+| Table                          | Primary key     | Purpose                                                                    |
+| ------------------------------ | --------------- | -------------------------------------------------------------------------- |
+| `blendcalc_api_scopes`         | `key`           | Reviewed least-privilege capabilities with risk, source, and review status |
+| `blendcalc_api_scope_policies` | `operation_key` | Required scope for each bounded API operation                              |
+
+The initial scopes separate catalog reads, intake, corrections, moderation reads,
+moderation decisions, and administration. `moderation.write` implies only
+`moderation.read`; `administration` is the sole all-scope capability. Unknown scope
+values fail closed. Public API keys remain disabled until the separate release gate is
+approved.
+
 ### `request_rate_limits`
 
 Private fixed-window counters protect bounded application API scopes from abusive or
@@ -1775,6 +1807,10 @@ Notes:
 - `consume_request_rate_limit` validates all quota configuration, resets expired
   windows atomically, opportunistically prunes counters expired for more than one day,
   and is executable only by the service role.
+- `consume_request_rate_limits` consumes at most 12 endpoint-specific burst and
+  sustained windows for the client IP, authenticated account, and presented API-key
+  identity in one service-role-only database call. Every applicable layer must allow
+  the request.
 - All application JSON and form endpoints parse through bounded request readers.
   Declared and streamed bodies that exceed the route limit are rejected before domain
   logic runs; compressed request bodies are rejected to prevent decompression abuse.
@@ -1924,6 +1960,7 @@ category, or serving fields.
 | `mark_product_safety_alert_notification_read`          | Lets an authenticated owner mark exactly one of their alert notifications as read                                                                                                                      |
 | `catalog_change_summary_is_valid`                      | Validates unique structured old/new field changes before a catalog product update can be accepted                                                                                                      |
 | `consume_request_rate_limit`                           | Atomically consumes one private server-side request quota unit; service role only                                                                                                                      |
+| `consume_request_rate_limits`                          | Atomically consumes bounded endpoint, IP, account, API-key, burst, and sustained quota layers; service role only                                                                                       |
 | `replace_app_interaction_daily_metrics`                | Atomically replaces a bounded production date range of private Vercel interaction aggregates; service role only                                                                                        |
 | `reject_blocked_signup`                                | Supabase Auth hook for hashed email signup blocks                                                                                                                                                      |
 | `custom_access_token_hook`                             | Supabase Auth hook that adds the current database-owned `user`, `moderator`, `admin`, or `developer` role to newly issued JWTs as `app_role`                                                           |

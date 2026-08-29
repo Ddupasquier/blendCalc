@@ -14,6 +14,10 @@ const retentionMigration = readFileSync(
 	),
 	"utf8",
 );
+const layeredRateLimitMigration = readFileSync(
+	resolve("supabase/migrations/20260828160000_layered_request_rate_limits.sql"),
+	"utf8",
+);
 
 describe("security least-privilege migration", () => {
 	it("removes dangerous current and default Data API privileges", () => {
@@ -57,9 +61,7 @@ describe("security least-privilege migration", () => {
 		expect(migration).toContain(
 			"create or replace function public.consume_request_rate_limit(",
 		);
-		expect(migration).toContain(
-			"to service_role;",
-		);
+		expect(migration).toContain("to service_role;");
 		expect(migration).toContain("security definer");
 		expect(migration).toContain("set search_path = ''");
 	});
@@ -72,9 +74,20 @@ describe("security least-privilege migration", () => {
 			"where expires_at < v_now - interval '1 day'",
 		);
 		expect(retentionMigration).toContain("limit 1000");
-		expect(retentionMigration).toContain(
-			"from public, anon, authenticated",
-		);
+		expect(retentionMigration).toContain("from public, anon, authenticated");
 		expect(retentionMigration).toContain("to service_role");
+	});
+
+	it("consumes bounded layered quotas in one private database call", () => {
+		expect(layeredRateLimitMigration).toContain(
+			"create or replace function public.consume_request_rate_limits(p_limits jsonb)",
+		);
+		expect(layeredRateLimitMigration).toContain(
+			"jsonb_array_length(p_limits) not between 1 and 12",
+		);
+		expect(layeredRateLimitMigration).toContain(
+			"from public.consume_request_rate_limit(",
+		);
+		expect(layeredRateLimitMigration).toContain("to service_role");
 	});
 });

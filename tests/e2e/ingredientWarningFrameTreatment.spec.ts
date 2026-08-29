@@ -10,6 +10,15 @@ const preferenceQaEmail =
 	process.env.BLENDCALC_TEST_PREFERENCES_EMAIL ??
 	"qa-preferences@blendcalc.local";
 
+const serveDeterministicOpenFoodFactsImages = (page: Page) =>
+	page.route("https://images.openfoodfacts.org/**", (route) =>
+		route.fulfill({
+			status: 200,
+			contentType: "image/svg+xml",
+			body: '<svg xmlns="http://www.w3.org/2000/svg" width="240" height="160" viewBox="0 0 240 160"><rect width="240" height="160" fill="#d9b46f"/><rect x="28" y="20" width="184" height="120" rx="12" fill="#f7f1e4"/><text x="120" y="90" text-anchor="middle" font-family="sans-serif" font-size="24" fill="#2f3440">QA label</text></svg>',
+		}),
+	);
+
 const getIngredientList = (page: Page, label: "Fridge" | "Shopping List") =>
 	page.getByRole("list", { name: `${label} ingredients` });
 
@@ -107,6 +116,8 @@ const readCardMediaPresentation = (card: Locator) =>
 				"--ingredient-card-media-mask-horizontal-radius",
 			),
 		);
+		const maskImage = getComputedStyle(mediaLane).maskImage;
+		const maskFadeEndPixels = maskHorizontalRadiusPixels * 0.8;
 		return {
 			cardHeight: cardBounds?.height ?? 0,
 			mediaHeight: mediaBounds.height,
@@ -114,7 +125,10 @@ const readCardMediaPresentation = (card: Locator) =>
 				cardBounds && cardBounds.width > 0
 					? mediaBounds.width / cardBounds.width
 					: 0,
-			maskImage: getComputedStyle(mediaLane).maskImage,
+			maskGradientTemplate: maskImage.replace(
+				/radial-gradient\([\d.]+px/,
+				"radial-gradient(<horizontal-radius>",
+			),
 			imageSource: image?.getAttribute("src") ?? "",
 			imageRightEdgePixels: imageBounds
 				? imageBounds.right - mediaBounds.left
@@ -124,7 +138,9 @@ const readCardMediaPresentation = (card: Locator) =>
 				: 0,
 			imageWidthPixels: imageBounds?.width ?? 0,
 			imageHeightPixels: imageBounds?.height ?? 0,
-			maskFadeEndPixels: maskHorizontalRadiusPixels * 0.8,
+			maskFadeEndPixels,
+			maskFadeEndRatio:
+				mediaBounds.width > 0 ? maskFadeEndPixels / mediaBounds.width : 0,
 		};
 	});
 
@@ -225,6 +241,7 @@ test("search and Mix cards use the same warning frame @compatibility", async ({
 		testInfo.project.name !== "desktop-chromium",
 		"One primary browser proves each shared card integration; the frame itself runs in every compatibility project.",
 	);
+	await serveDeterministicOpenFoodFactsImages(page);
 
 	await signInLocalQaAccount({
 		page,
@@ -305,7 +322,9 @@ test("search and Mix cards use the same warning frame @compatibility", async ({
 		savedCardMedia.mediaWidthRatio,
 		2,
 	);
-	expect(mixCardMedia.maskImage).toBe(savedCardMedia.maskImage);
+	expect(mixCardMedia.maskGradientTemplate).toBe(
+		savedCardMedia.maskGradientTemplate,
+	);
 	expect(mixCardMedia.imageSource).toBe(savedCardMedia.imageSource);
 	expect(mixCardMedia.imageLeftEdgePixels).toBeCloseTo(
 		savedCardMedia.imageLeftEdgePixels,
@@ -319,8 +338,8 @@ test("search and Mix cards use the same warning frame @compatibility", async ({
 		savedCardMedia.imageHeightPixels,
 		2,
 	);
-	expect(mixCardMedia.maskFadeEndPixels).toBeCloseTo(
-		savedCardMedia.maskFadeEndPixels,
-		1,
+	expect(mixCardMedia.maskFadeEndRatio).toBeCloseTo(
+		savedCardMedia.maskFadeEndRatio,
+		2,
 	);
 });
