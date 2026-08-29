@@ -4,7 +4,13 @@ import {
 } from "$lib/blendCalcAPI/v1/blendCalcAPIErrors";
 
 const MAX_QUERY_LENGTH = 120;
-const MAX_OFFSET = 1000;
+
+export const BLENDCALC_API_V1_PAGINATION_LIMITS = Object.freeze({
+	search: Object.freeze({ defaultLimit: 15, maximumLimit: 50 }),
+	categories: Object.freeze({ defaultLimit: 50, maximumLimit: 100 }),
+	revisions: Object.freeze({ defaultLimit: 25, maximumLimit: 100 }),
+	maximumOffset: 1000,
+});
 
 export class BlendCalcAPIV1RequestError extends Error {
 	status: number;
@@ -55,17 +61,53 @@ export const readBlendCalcAPIV1SearchRequest = (url: URL) => {
 	}
 	return {
 		query,
-		limit: readWholeNumber(url, "limit", 15, 1, 50),
-		offset: readWholeNumber(url, "offset", 0, 0, MAX_OFFSET),
+		limit: readWholeNumber(
+			url,
+			"limit",
+			BLENDCALC_API_V1_PAGINATION_LIMITS.search.defaultLimit,
+			1,
+			BLENDCALC_API_V1_PAGINATION_LIMITS.search.maximumLimit,
+		),
+		offset: readWholeNumber(
+			url,
+			"offset",
+			0,
+			0,
+			BLENDCALC_API_V1_PAGINATION_LIMITS.maximumOffset,
+		),
 	};
 };
 
 export const readBlendCalcAPIV1CategoryRequest = (url: URL) => ({
-	limit: readWholeNumber(url, "limit", 50, 1, 100),
-	offset: readWholeNumber(url, "offset", 0, 0, MAX_OFFSET),
+	limit: readWholeNumber(
+		url,
+		"limit",
+		BLENDCALC_API_V1_PAGINATION_LIMITS.categories.defaultLimit,
+		1,
+		BLENDCALC_API_V1_PAGINATION_LIMITS.categories.maximumLimit,
+	),
+	offset: readWholeNumber(
+		url,
+		"offset",
+		0,
+		0,
+		BLENDCALC_API_V1_PAGINATION_LIMITS.maximumOffset,
+	),
 });
 
 export const readBlendCalcAPIV1RevisionHistoryRequest = (url: URL) => ({
-	limit: readWholeNumber(url, "limit", 25, 1, 100),
-	offset: readWholeNumber(url, "offset", 0, 0, MAX_OFFSET),
+	limit: readWholeNumber(
+		url,
+		"limit",
+		BLENDCALC_API_V1_PAGINATION_LIMITS.revisions.defaultLimit,
+		1,
+		BLENDCALC_API_V1_PAGINATION_LIMITS.revisions.maximumLimit,
+	),
+	offset: readWholeNumber(
+		url,
+		"offset",
+		0,
+		0,
+		BLENDCALC_API_V1_PAGINATION_LIMITS.maximumOffset,
+	),
 });

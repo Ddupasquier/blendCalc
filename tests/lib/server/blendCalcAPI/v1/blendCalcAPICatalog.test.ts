@@ -858,6 +858,37 @@ describe("blendCalcAPI v1 catalog mapping", () => {
 		expect(createPagination(15, 30, 31).nextOffset).toBeNull();
 	});
 
+	it("traverses bounded pages without duplicates or skipped records", () => {
+		const total = 31;
+		const limit = 15;
+		const visitedIndexes: number[] = [];
+		let offset = 0;
+
+		while (offset < total) {
+			const pagination = createPagination(limit, offset, total);
+			visitedIndexes.push(
+				...Array.from(
+					{ length: Math.min(limit, total - offset) },
+					(_, index) => offset + index,
+				),
+			);
+			if (pagination.nextOffset === null) break;
+			offset = pagination.nextOffset;
+		}
+
+		expect(visitedIndexes).toEqual(
+			Array.from({ length: total }, (_, index) => index),
+		);
+		expect(new Set(visitedIndexes).size).toBe(total);
+		expect(createPagination(limit, total + 10, total)).toEqual({
+			limit,
+			offset: total + 10,
+			total,
+			hasMore: false,
+			nextOffset: null,
+		});
+	});
+
 	it("maps structured revision changes without exposing revision snapshots", async () => {
 		const rpc = vi.fn().mockResolvedValue({
 			data: [
