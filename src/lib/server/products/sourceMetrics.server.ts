@@ -9,13 +9,20 @@ export type ProductSourceRequestTrace = {
 	apiRequestCount: number;
 	apiErrorCount: number;
 	cacheHitCount: number;
+	cacheMissCount: number;
+	staleFallbackCount: number;
+	coalescedRequestCount: number;
 };
 
-export const createProductSourceRequestTrace = (): ProductSourceRequestTrace => ({
-	apiRequestCount: 0,
-	apiErrorCount: 0,
-	cacheHitCount: 0,
-});
+export const createProductSourceRequestTrace =
+	(): ProductSourceRequestTrace => ({
+		apiRequestCount: 0,
+		apiErrorCount: 0,
+		cacheHitCount: 0,
+		cacheMissCount: 0,
+		staleFallbackCount: 0,
+		coalescedRequestCount: 0,
+	});
 
 export const recordProductSourceApiRequest = (
 	trace?: ProductSourceRequestTrace,
@@ -33,6 +40,24 @@ export const recordProductSourceCacheHit = (
 	trace?: ProductSourceRequestTrace,
 ) => {
 	if (trace) trace.cacheHitCount += 1;
+};
+
+export const recordProductSourceCacheMiss = (
+	trace?: ProductSourceRequestTrace,
+) => {
+	if (trace) trace.cacheMissCount += 1;
+};
+
+export const recordProductSourceStaleFallback = (
+	trace?: ProductSourceRequestTrace,
+) => {
+	if (trace) trace.staleFallbackCount += 1;
+};
+
+export const recordProductSourceCoalescedRequest = (
+	trace?: ProductSourceRequestTrace,
+) => {
+	if (trace) trace.coalescedRequestCount += 1;
 };
 
 export const recordProductSourceLookup = async (input: {
@@ -74,10 +99,12 @@ const writeProductSourceLookup = async (input: {
 				p_api_request_count: input.trace.apiRequestCount,
 				p_api_error_count: input.trace.apiErrorCount,
 				p_cache_hit_count: input.trace.cacheHitCount,
+				p_cache_miss_count: input.trace.cacheMissCount,
+				p_stale_fallback_count: input.trace.staleFallbackCount,
+				p_coalesced_request_count: input.trace.coalescedRequestCount,
 				p_completed_lookup_count: completed ? 1 : 0,
 				p_match_count: matched ? 1 : 0,
-				p_exact_barcode_match_count:
-					matched && input.exactBarcodeMatch ? 1 : 0,
+				p_exact_barcode_match_count: matched && input.exactBarcodeMatch ? 1 : 0,
 				p_error_count: input.outcome === "error" ? 1 : 0,
 				p_evaluated_product_count: quality ? 1 : 0,
 				p_reported_nutrient_total: quality?.reportedNutrientCount ?? 0,
@@ -86,7 +113,10 @@ const writeProductSourceLookup = async (input: {
 				p_serving_present_count: quality?.hasServing ? 1 : 0,
 				p_ingredients_present_count: quality?.hasIngredients ? 1 : 0,
 				p_image_present_count: quality?.hasImage ? 1 : 0,
-				p_response_milliseconds_total: Math.max(0, Date.now() - input.startedAt),
+				p_response_milliseconds_total: Math.max(
+					0,
+					Date.now() - input.startedAt,
+				),
 			},
 		);
 		if (error) throw error;

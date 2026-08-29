@@ -7,6 +7,9 @@ import {
 	recordProductSourceApiError,
 	recordProductSourceApiRequest,
 	recordProductSourceCacheHit,
+	recordProductSourceCacheMiss,
+	recordProductSourceCoalescedRequest,
+	recordProductSourceStaleFallback,
 	type ProductSourceRequestTrace,
 } from "$lib/server/products/sourceMetrics.server";
 
@@ -190,7 +193,7 @@ export const coalesceProductApiRequest = async <T>(
 	const existingRequest = inFlightRequests.get(requestKey) as
 		Promise<T> | undefined;
 	if (existingRequest) {
-		recordProductSourceCacheHit(trace);
+		recordProductSourceCoalescedRequest(trace);
 		return existingRequest;
 	}
 
@@ -232,6 +235,7 @@ export const fetchCachedProductApiJson = async <T>(
 					input.notFoundValue,
 				);
 			}
+			recordProductSourceCacheMiss(input.trace);
 
 			const headers = new Headers(input.headers);
 			if (cached?.etag) headers.set("if-none-match", cached.etag);
@@ -314,6 +318,7 @@ export const fetchCachedProductApiJson = async <T>(
 				const staleUntil = expiresAt + (input.staleIfErrorMilliseconds ?? 0);
 				if (cached && staleUntil > Date.now()) {
 					recordProductSourceCacheHit(input.trace);
+					recordProductSourceStaleFallback(input.trace);
 					return getCachedProductApiValue(
 						cached,
 						notFoundStatuses,

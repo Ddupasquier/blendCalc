@@ -28,6 +28,7 @@ import {
 	sourceCoverageConfirmsFieldsUnavailable,
 	sourceCoverageConfirmsProductNotFound,
 } from "./productSourceFieldCoverage.server";
+import { persistLegallyStorableExactProductObservation } from "./productSourceObservation.server";
 
 export {
 	lookupUsdaBarcodeProduct,
@@ -151,6 +152,13 @@ export const lookupExternalBarcodeProduct = async (
 		}
 
 		const draft = await lookup();
+		if (draft && !hasInjectedProvider) {
+			await persistLegallyStorableExactProductObservation({
+				draft,
+				providerKey,
+				productReferenceCatalog,
+			});
+		}
 		if (sourceCoverageSupabase && resolutionPolicy) {
 			try {
 				await recordProductSourceFieldCoverage(sourceCoverageSupabase, {

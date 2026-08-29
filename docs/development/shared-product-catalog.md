@@ -416,6 +416,10 @@ Provider requests and caches are server-only enrichment inputs. The catalog chec
 canonical data first, requests only missing permitted fields, coalesces identical
 requests, and may use an explicitly stale cache only during a provider outage.
 Provider credentials and raw licensed caches never enter public catalog responses.
+Exact runtime results may become immutable source observations only when the source row
+has reviewed canonical-storage permission and license metadata. This evidence write is
+asynchronous and does not bypass comparison, conflict, verification, or publication
+policy. Sources without approved retention, including COLA Cloud, remain transient.
 USDA exact-barcode lookup retains one bounded detail read because the detail record adds
 source category and availability fields omitted by search results. Shared caching and
 request coalescing prevent repeated outbound detail calls. Open Food Facts remains a

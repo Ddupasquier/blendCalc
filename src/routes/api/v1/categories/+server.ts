@@ -11,7 +11,11 @@ import {
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
 import type { RequestHandler } from "./$types";
 
-export const GET: RequestHandler = async ({ locals, url }) => {
+export const GET: RequestHandler = async ({
+	locals,
+	request: httpRequest,
+	url,
+}) => {
 	if (!(await hasBlendCalcAPIV1CatalogReadAccess(locals))) {
 		return blendCalcAPIV1Error("authentication_required");
 	}
@@ -29,7 +33,9 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 			getSupabaseAdminClient(),
 			request,
 		);
-		return blendCalcAPIV1Success(result.categories, result.pagination);
+		return blendCalcAPIV1Success(result.categories, result.pagination, {
+			ifNoneMatch: httpRequest?.headers.get("if-none-match"),
+		});
 	} catch (error) {
 		console.error("blendCalcAPI v1 category read failed.", error);
 		return blendCalcAPIV1Error("catalog_unavailable");

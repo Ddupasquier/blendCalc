@@ -12,7 +12,12 @@ import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
 import { normalizeBarcode } from "$lib/utils/barcode/barcode";
 import type { RequestHandler } from "./$types";
 
-export const GET: RequestHandler = async ({ locals, params, url }) => {
+export const GET: RequestHandler = async ({
+	locals,
+	params,
+	request: httpRequest,
+	url,
+}) => {
 	if (!(await hasBlendCalcAPIV1CatalogReadAccess(locals))) {
 		return blendCalcAPIV1Error("authentication_required");
 	}
@@ -38,7 +43,9 @@ export const GET: RequestHandler = async ({ locals, params, url }) => {
 		if (!result) {
 			return blendCalcAPIV1Error("product_not_found");
 		}
-		return blendCalcAPIV1Success(result.revisions, result.pagination);
+		return blendCalcAPIV1Success(result.revisions, result.pagination, {
+			ifNoneMatch: httpRequest?.headers.get("if-none-match"),
+		});
 	} catch (error) {
 		console.error("blendCalcAPI v1 revision-history read failed.", error);
 		return blendCalcAPIV1Error("catalog_unavailable");
