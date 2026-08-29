@@ -70,6 +70,15 @@ caching and errors use `no-store`.
 Route tests validate every status against the exact OpenAPI schema. Undeclared response
 fields are rejected rather than silently entering blendCalcAPI v1.
 
+## Provider Independence
+
+Every blendCalcAPI read uses stored, publication-ready canonical data. API routes never
+contact USDA, Open Food Facts, COLA, recall feeds, or another external provider while
+serving a request. Provider enrichment and monitoring remain separate background intake
+workflows, so an upstream outage or rate limit cannot turn into a blendCalcAPI read
+failure. Architecture and route tests block live-provider imports, direct outbound
+requests, and accidental provider fallback inside the versioned read boundary.
+
 ## What Can Be Published
 
 The shared catalog intentionally stores more than the API publishes. blendCalcAPI v1 returns only
