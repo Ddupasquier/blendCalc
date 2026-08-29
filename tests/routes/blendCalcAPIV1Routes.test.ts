@@ -7,6 +7,12 @@ import {
 	blendCalcAPIV1ProductFixture,
 	blendCalcAPIV1ProductRevisionFixture,
 } from "../fixtures/blendCalcAPIV1Catalog";
+import {
+	blendCalcAPIV1CompletePackagedProductFixture,
+	blendCalcAPIV1PartialPackagedProductFixture,
+	blendCalcAPIV1RepresentativePublishedProductFixtures,
+	blendCalcAPIV1SourceConflictFixture,
+} from "../fixtures/blendCalcAPIV1RepresentativeProducts";
 import { expectBlendCalcAPIV1ResponseToMatchOpenAPI } from "../lib/blendCalcAPI/v1/openAPIResponseValidation";
 
 const mocks = vi.hoisted(() => ({
@@ -115,11 +121,11 @@ describe("blendCalcAPI v1 route responses", () => {
 
 	it("returns a complete approved product matching ProductResponse", async () => {
 		mocks.readBlendCalcAPIV1ProductByBarcode.mockResolvedValue(
-			blendCalcAPIV1ProductFixture,
+			blendCalcAPIV1CompletePackagedProductFixture,
 		);
 		const response = await getProduct({
 			locals: createLocals(),
-			params: { barcode: blendCalcAPIV1ProductFixture.barcode },
+			params: { barcode: blendCalcAPIV1CompletePackagedProductFixture.barcode },
 		} as never);
 
 		expect(response.status).toBe(200);
@@ -132,12 +138,50 @@ describe("blendCalcAPI v1 route responses", () => {
 		});
 		expect(payload).toEqual({
 			apiVersion: BLENDCALC_API_V1,
-			data: blendCalcAPIV1ProductFixture,
+			data: blendCalcAPIV1CompletePackagedProductFixture,
 		});
 		expect(mocks.readBlendCalcAPIV1ProductByBarcode).toHaveBeenCalledWith(
 			mocks.adminClient,
-			blendCalcAPIV1ProductFixture.barcode,
+			blendCalcAPIV1CompletePackagedProductFixture.barcode,
 		);
+	});
+
+	it.each(blendCalcAPIV1RepresentativePublishedProductFixtures)(
+		"returns the representative $caseName fixture matching ProductResponse",
+		async ({ product }) => {
+			mocks.readBlendCalcAPIV1ProductByBarcode.mockResolvedValue(product);
+			const response = await getProduct({
+				locals: createLocals(),
+				params: { barcode: product.barcode },
+			} as never);
+
+			expect(response.status).toBe(200);
+			const payload = await expectBlendCalcAPIV1ResponseToMatchOpenAPI({
+				path: PRODUCT_PATH,
+				response,
+			});
+			expect(payload).toMatchObject({ data: { id: product.id } });
+		},
+	);
+
+	it.each([
+		blendCalcAPIV1PartialPackagedProductFixture,
+		blendCalcAPIV1SourceConflictFixture,
+	])("withholds the representative $caseName fixture", async (fixture) => {
+		mocks.readBlendCalcAPIV1ProductByBarcode.mockResolvedValue(null);
+		const response = await getProduct({
+			locals: createLocals(),
+			params: { barcode: fixture.barcode },
+		} as never);
+
+		expect(response.status).toBe(404);
+		const payload = await expectBlendCalcAPIV1ResponseToMatchOpenAPI({
+			path: PRODUCT_PATH,
+			response,
+		});
+		expect(payload).toMatchObject({
+			error: { code: fixture.expectedPublicResult },
+		});
 	});
 
 	it.each([
