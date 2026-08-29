@@ -175,6 +175,7 @@ the exact migration source already exists on remote `main`.
 | `npm run audit:blendCalcAPI-catalog`           | Audit blendCalcAPI publication readiness and field lineage.                                            |
 | `npm run audit:blendCalcAPI-catalog -- --json` | Reassess active products and print machine-repair, review, and unresolved readiness ownership as JSON. |
 | `npm run audit:blendCalcAPI-performance`       | Measure authenticated product, category, search, and browser-cached repeat response budgets.           |
+| `npm run audit:blendCalcAPI-payloads`          | Measure authenticated blendCalcAPI response sizes without changing catalog data.                       |
 | `npm run report:source-quality`                | Report stored provider coverage, reliability, and request cost.                                        |
 | `npm run generate:api-structures`              | Regenerate documentation-only provider payload references.                                             |
 | `npm run moderate -- ...`                      | Run privileged role or account operations.                                                             |

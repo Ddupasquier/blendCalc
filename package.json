@@ -42,6 +42,7 @@
 		"import:nutrition:cofid": "node scripts/imports/nutrition/import_cofid_2021.mjs",
 		"audit:blendCalcAPI-catalog": "node scripts/audits/catalog/audit_blendCalcAPI_catalog_readiness.mjs",
 		"audit:blendCalcAPI-performance": "node scripts/audits/catalog/audit_blendCalcAPI_response_performance.mjs",
+		"audit:blendCalcAPI-payloads": "node scripts/audits/catalog/audit_blendCalcAPI_payload_sizes.mjs",
 		"report:source-quality": "node scripts/audits/food-sources/report_product_source_quality.mjs",
 		"generate:api-structures": "node scripts/generators/api/generate_api_structures.mjs",
 		"pretest": "npm run version:check",
