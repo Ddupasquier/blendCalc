@@ -997,6 +997,20 @@ not permission to commit, push, merge, or deploy.
 **21.** Verify meaningful changes with `npm run check`, focused tests, and builds when
 scope warrants it.
 
+**21a.** When the user sets an explicit work-queue quota, complete the entire quota
+before the final handoff instead of stopping after each item. Keep every responsibility
+on its own locally reviewable feature branch and run its focused checks while iterating.
+After the last quota item is engineering-complete, assemble the exact combined
+uncommitted diffs in a temporary local quota-integration worktree created from current
+`staging`, then run one blocking `npm run verify:release` over that combined candidate.
+Do not commit, push changed content, merge, or promote merely to create the test
+candidate. If the combined check fails, fix the owning feature branch, rebuild the
+candidate, and rerun the failed stage before handoff. The final report must list every
+quota branch, its focused evidence, and the combined Release Check result so one user
+approval can authorize the already-reviewed next Git action. The exhaustive Nightly
+Check remains separate unless the user explicitly requests it or the release scope
+requires it.
+
 **22.** At the start of every request, compare the requested outcome with the active
 branch's single responsibility. Continue only when they match. If the prompt introduces
 a separate feature, fix, refactor, migration, test effort, documentation policy, or
