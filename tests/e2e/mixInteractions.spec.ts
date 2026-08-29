@@ -1731,6 +1731,53 @@ test("Mix goal values, units, trace precision, and statuses stay synchronized ac
 		testInfo.parallelIndex,
 	);
 	try {
+		await saveLocalQaMixGoalConfiguration(testInfo.parallelIndex, [
+			{
+				goal_type: "exact",
+				importance_weight: 1,
+				nutrient_id: 1008,
+				sort_order: 1,
+				target_amount: 350,
+				tolerance_ratio: 0.05,
+				upper_amount: null,
+			},
+			{
+				goal_type: "minimum",
+				importance_weight: 1,
+				nutrient_id: 1003,
+				sort_order: 2,
+				target_amount: 20,
+				tolerance_ratio: 0.05,
+				upper_amount: null,
+			},
+			{
+				goal_type: "minimum",
+				importance_weight: 1,
+				nutrient_id: 1079,
+				sort_order: 3,
+				target_amount: 10,
+				tolerance_ratio: 0.05,
+				upper_amount: null,
+			},
+			{
+				goal_type: "exact",
+				importance_weight: 1,
+				nutrient_id: 1005,
+				sort_order: 4,
+				target_amount: 60,
+				tolerance_ratio: 0.05,
+				upper_amount: null,
+			},
+			{
+				goal_type: "maximum",
+				importance_weight: 1,
+				nutrient_id: 1004,
+				sort_order: 5,
+				target_amount: 20,
+				tolerance_ratio: 0.05,
+				upper_amount: null,
+			},
+		]);
 		await saveLocalQaMixState(testInfo.parallelIndex, {
 			version: 1,
 			selected: [1008, 1003, 1079, 1005, 1004],
