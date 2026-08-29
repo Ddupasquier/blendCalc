@@ -310,6 +310,55 @@ describe("blendCalcAPI v1 route responses", () => {
 		);
 	});
 
+	it("serves every read endpoint without outbound provider requests", async () => {
+		const outboundFetch = vi
+			.spyOn(globalThis, "fetch")
+			.mockRejectedValue(new Error("External providers are unavailable."));
+		mocks.readBlendCalcAPIV1ProductByBarcode.mockResolvedValue(
+			blendCalcAPIV1ProductFixture,
+		);
+		mocks.readBlendCalcAPIV1ProductRevisionHistory.mockResolvedValue({
+			revisions: [blendCalcAPIV1ProductRevisionFixture],
+			pagination: createPagination({ limit: 25 }),
+		});
+		mocks.searchBlendCalcAPIV1Products.mockResolvedValue({
+			products: [blendCalcAPIV1ProductFixture],
+			pagination: blendCalcAPIV1PaginationFixture,
+		});
+		mocks.readBlendCalcAPIV1Categories.mockResolvedValue({
+			categories: [blendCalcAPIV1CategoryFixture],
+			pagination: createPagination({ limit: 50 }),
+		});
+
+		const responses = await Promise.all([
+			getProduct({
+				locals: createLocals(),
+				params: { barcode: blendCalcAPIV1ProductFixture.barcode },
+			} as never),
+			getProductRevisions({
+				locals: createLocals(),
+				params: { barcode: blendCalcAPIV1ProductFixture.barcode },
+				url: new URL(
+					`http://localhost/api/v1/products/${blendCalcAPIV1ProductFixture.barcode}/revisions`,
+				),
+			} as never),
+			searchFoods({
+				locals: createLocals(),
+				url: new URL("http://localhost/api/v1/foods/search?q=tomato"),
+			} as never),
+			getCategories({
+				locals: createLocals(),
+				url: new URL("http://localhost/api/v1/categories"),
+			} as never),
+		]);
+
+		expect(responses.map((response) => response.status)).toEqual([
+			200, 200, 200, 200,
+		]);
+		expect(outboundFetch).not.toHaveBeenCalled();
+		outboundFetch.mockRestore();
+	});
+
 	it.each([
 		{
 			path: PRODUCT_PATH,
