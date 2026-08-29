@@ -240,6 +240,83 @@ export type Database = {
         }
         Relationships: []
       }
+      blendcalc_api_scope_policies: {
+        Row: {
+          created_at: string
+          description: string
+          enabled: boolean
+          operation_key: string
+          required_scope: string
+          reviewed_at: string
+          source_reference: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          enabled?: boolean
+          operation_key: string
+          required_scope: string
+          reviewed_at: string
+          source_reference: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          enabled?: boolean
+          operation_key?: string
+          required_scope?: string
+          reviewed_at?: string
+          source_reference?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blendcalc_api_scope_policies_required_scope_fkey"
+            columns: ["required_scope"]
+            isOneToOne: false
+            referencedRelation: "blendcalc_api_scopes"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      blendcalc_api_scopes: {
+        Row: {
+          created_at: string
+          description: string
+          display_name: string
+          enabled: boolean
+          key: string
+          reviewed_at: string
+          risk_level: string
+          source_reference: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          display_name: string
+          enabled?: boolean
+          key: string
+          reviewed_at: string
+          risk_level: string
+          source_reference: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          display_name?: string
+          enabled?: boolean
+          key?: string
+          reviewed_at?: string
+          risk_level?: string
+          source_reference?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       blendcalc_api_publication_concerns: {
         Row: {
           concern_fingerprint: string

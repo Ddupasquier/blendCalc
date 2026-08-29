@@ -1755,6 +1755,23 @@ Notes:
 
 ## Request Security And Least Privilege
 
+### blendCalcAPI access scopes
+
+Reviewed scope and operation definitions prepare public API access without enabling it.
+Both tables are service-role-readable only; browser roles cannot inspect or alter access
+policy.
+
+| Table                          | Primary key     | Purpose                                                                    |
+| ------------------------------ | --------------- | -------------------------------------------------------------------------- |
+| `blendcalc_api_scopes`         | `key`           | Reviewed least-privilege capabilities with risk, source, and review status |
+| `blendcalc_api_scope_policies` | `operation_key` | Required scope for each bounded API operation                              |
+
+The initial scopes separate catalog reads, intake, corrections, moderation reads,
+moderation decisions, and administration. `moderation.write` implies only
+`moderation.read`; `administration` is the sole all-scope capability. Unknown scope
+values fail closed. Public API keys remain disabled until the separate release gate is
+approved.
+
 ### `request_rate_limits`
 
 Private fixed-window counters protect bounded application API scopes from abusive or
