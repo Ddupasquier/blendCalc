@@ -699,10 +699,20 @@ removes those aliases after all application callers switch to the canonical
 | `catalog_correction_origins`          | `id`                    | Private correction workflow     | Evidence-backed provider changes, field conflicts, and warning reports waiting on or linked to one real catalog correction | Product, base revision, exactly one origin, optional submission and resolved revision |
 | `blendcalc_api_publication_concerns`  | `id`                    | Private blendCalcAPI review     | Evidence-backed correction, rights, attribution, privacy, and source concerns                                              | Exactly one product, image, dataset release, or source target                         |
 | `blendcalc_api_publication_holds`     | `id`                    | Private blendCalcAPI operations | Reversible public-output holds with placing and release audit history                                                      | Exactly one product, image, dataset release, or source target                         |
+| `blendcalc_api_clients`               | `id`                    | Private blendCalcAPI security   | Server-managed API consumer identity, ownership, and lifecycle                                                             | Optional owner and creator auth users                                                 |
+| `blendcalc_api_keys`                  | `id`                    | Private blendCalcAPI security   | Hashed API credentials, names, scopes, issue/use/expiry dates, rotation lineage, and revocation                            | `client_id → blendcalc_api_clients.id`, optional previous key                         |
 | `food_image_assets`                   | `id`                    | Shared image reference          | Source-backed product/ingredient image metadata rendered by ingredient UI                                                  | Optional `shared_product_id → shared_products.id`, optional barcode                   |
 | `product_api_cache`                   | `(provider, cache_key)` | Server cache                    | External API response cache for searches, barcode lookup, and food detail                                                  | No user ownership                                                                     |
 | `user_catalog_submission_enforcement` | `user_id`               | One current row per auth user   | Cumulative moderator rejection count and current public-sharing suspension                                                 | `user_id → auth.users.id`, optional latest submission/reviewer                        |
 | `product_submission_blocks`           | `id`                    | One auth user per block event   | Immutable history of public catalog submission suspensions                                                                 | `user_id → auth.users.id`, optional source submission                                 |
+
+### blendCalcAPI clients and keys
+
+`blendcalc_api_keys` never stores a plaintext credential. The server returns a newly
+generated key once and persists only its SHA-256 hash plus a short display prefix.
+Browser roles have no table privileges. Rotation inserts the replacement and revokes
+the prior key in one service-role-only database transaction; expiry, last use, explicit
+revocation, and rotation lineage remain auditable.
 
 ### `shared_product_submissions`
 
