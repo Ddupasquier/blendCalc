@@ -65,8 +65,10 @@ All successful responses use the same envelope:
 
 Paginated responses add `meta.pagination`. Errors use the documented safe error envelope
 and never expose raw database, provider, moderation, or server exception text. Every
-response includes `x-blendcalc-api-version`; successful reads use private short-lived
-caching and errors use `no-store`.
+response includes `x-blendcalc-api-version`; successful reads include a stable ETag,
+honor `If-None-Match`, use private short-lived caching by default, and return errors with
+`no-store`. Shared/CDN caching requires an explicit public route decision and is never
+inferred from a successful authenticated response.
 
 ### Pagination
 

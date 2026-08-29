@@ -114,6 +114,47 @@ describe("ingredient search route", () => {
 		expect(body.total).toBe(3);
 	});
 
+	it("does not contact USDA when database results fill the requested page", async () => {
+		mocks.areExternalProductLookupsEnabled.mockReturnValue(true);
+		mocks.searchApprovedSharedProducts.mockResolvedValue([
+			makeFood(1, "Apple, raw"),
+			makeFood(2, "Apple, dried"),
+		]);
+		const locals = {
+			getVerifiedUser: vi.fn().mockResolvedValue({ id: "user-id" }),
+			supabase: { source: "authenticated-browser" },
+		};
+
+		const response = await GET({
+			locals,
+			url: new URL("http://localhost/api/foods/search?q=apple&limit=2"),
+		} as never);
+
+		expect(response.status).toBe(200);
+		expect(mocks.searchUsdaFoods).not.toHaveBeenCalled();
+	});
+
+	it("contacts USDA only after database coverage is insufficient", async () => {
+		mocks.areExternalProductLookupsEnabled.mockReturnValue(true);
+		mocks.searchApprovedSharedProducts.mockResolvedValue([
+			makeFood(1, "Apple, raw"),
+		]);
+		mocks.searchUsdaFoods.mockResolvedValue([makeFood(2, "Apple, dried")]);
+		const locals = {
+			getVerifiedUser: vi.fn().mockResolvedValue({ id: "user-id" }),
+			supabase: { source: "authenticated-browser" },
+		};
+
+		const response = await GET({
+			locals,
+			url: new URL("http://localhost/api/foods/search?q=apple&limit=2"),
+		} as never);
+
+		expect(response.status).toBe(200);
+		expect(mocks.searchUsdaFoods).toHaveBeenCalledOnce();
+		expect((await response.json()).foods).toHaveLength(2);
+	});
+
 	it("filters current warning evidence before paginating search results", async () => {
 		const ordinaryFood = makeFood(1, "Apple, raw");
 		const warningFood = {

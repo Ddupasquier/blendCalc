@@ -7,6 +7,9 @@ vi.mock("$lib/server/products/sourceMetrics.server", () => ({
 		apiRequestCount: 0,
 		apiErrorCount: 0,
 		cacheHitCount: 0,
+		cacheMissCount: 0,
+		staleFallbackCount: 0,
+		coalescedRequestCount: 0,
 	}),
 	recordProductSourceApiRequest: (trace?: { apiRequestCount: number }) => {
 		if (trace) trace.apiRequestCount += 1;
@@ -17,6 +20,9 @@ vi.mock("$lib/server/products/sourceMetrics.server", () => ({
 	recordProductSourceCacheHit: (trace?: { cacheHitCount: number }) => {
 		if (trace) trace.cacheHitCount += 1;
 	},
+	recordProductSourceCacheMiss: vi.fn(),
+	recordProductSourceStaleFallback: vi.fn(),
+	recordProductSourceCoalescedRequest: vi.fn(),
 	recordProductSourceLookup: vi.fn(),
 }));
 
@@ -25,7 +31,8 @@ const productReferenceCatalog: ProductReferenceCatalog = {
 		"cola-cloud": {
 			key: "cola-cloud",
 			displayName: "COLA Cloud",
-			attributionText: "Alcohol label data from TTB records through COLA Cloud.",
+			attributionText:
+				"Alcohol label data from TTB records through COLA Cloud.",
 			canonicalStorageAllowed: false,
 			canonicalLicenseName: null,
 		},
@@ -39,13 +46,11 @@ const barcode = "649754706570";
 const canonicalBarcode = "00649754706570";
 const approvalId = "26188001000045";
 
-const jsonResponse = (data: unknown, status = 200) => new Response(
-	JSON.stringify(data),
-	{
+const jsonResponse = (data: unknown, status = 200) =>
+	new Response(JSON.stringify(data), {
 		status,
 		headers: { "content-type": "application/json" },
-	},
-);
+	});
 
 const makeFetch = (detailOverrides: Record<string, unknown> = {}) =>
 	vi.fn<typeof fetch>(async (input, init) => {
@@ -213,11 +218,13 @@ describe("COLA Cloud exact-barcode lookup", () => {
 				return jsonResponse({
 					data: {
 						barcode_value: barcode,
-						colas: [{
-							ttb_id: approvalId,
-							application_status: "approved",
-							approval_date: "2026-07-13",
-						}],
+						colas: [
+							{
+								ttb_id: approvalId,
+								application_status: "approved",
+								approval_date: "2026-07-13",
+							},
+						],
 					},
 				});
 			}

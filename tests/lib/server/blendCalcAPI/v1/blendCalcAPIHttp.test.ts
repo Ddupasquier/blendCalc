@@ -2,8 +2,39 @@ import { describe, expect, it } from "vitest";
 import { BLENDCALC_API_V1_ERROR_DEFINITIONS } from "$lib/blendCalcAPI/v1/blendCalcAPIErrors";
 import {
 	blendCalcAPIV1Error,
+	blendCalcAPIV1Success,
 	normalizeBlendCalcAPIV1BoundaryResponse,
 } from "$lib/server/blendCalcAPI/v1/blendCalcAPIHttp.server";
+
+describe("blendCalcAPI v1 success responses", () => {
+	it("returns a stable private ETag and honors conditional reads", async () => {
+		const first = blendCalcAPIV1Success({ id: "product-1" });
+		const etag = first.headers.get("etag");
+		expect(etag).toMatch(/^"[A-Za-z0-9_-]+"$/);
+		expect(first.headers.get("cache-control")).toBe(
+			"private, max-age=60, stale-while-revalidate=300",
+		);
+		expect(first.headers.get("vary")).toContain("authorization");
+
+		const conditional = blendCalcAPIV1Success({ id: "product-1" }, undefined, {
+			ifNoneMatch: etag,
+		});
+		expect(conditional.status).toBe(304);
+		expect(conditional.headers.get("etag")).toBe(etag);
+	});
+
+	it("supports shared caching only when a caller explicitly marks data public", () => {
+		const response = blendCalcAPIV1Success(
+			{ id: "public-product" },
+			undefined,
+			{ cacheVisibility: "public" },
+		);
+		expect(response.headers.get("cache-control")).toBe(
+			"public, max-age=60, s-maxage=300, stale-while-revalidate=300",
+		);
+		expect(response.headers.get("vary")).not.toContain("authorization");
+	});
+});
 
 describe("blendCalcAPI v1 error responses", () => {
 	it.each(Object.entries(BLENDCALC_API_V1_ERROR_DEFINITIONS))(

@@ -494,9 +494,9 @@ Notes:
 
 ### `product_source_daily_metrics`
 
-| Table                          | Documented columns                                                                                                                                                                                                                                                       |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `product_source_daily_metrics` | `metric_date`, `source_key`, `source_data_type`, `lookup_kind`, `lookup_origin`, lookup/API/cache/error/match counters, evaluated product and reported nutrient totals, brand/category/serving/ingredient/image coverage counters, response milliseconds, and timestamps |
+| Table                          | Documented columns                                                                                                                                                                                                                                                                                          |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `product_source_daily_metrics` | `metric_date`, `source_key`, `source_data_type`, `lookup_kind`, `lookup_origin`, lookup/API/error/match counters, cache hit/miss/stale/coalesced counters, evaluated product and reported nutrient totals, brand/category/serving/ingredient/image coverage counters, response milliseconds, and timestamps |
 
 Notes:
 
@@ -506,9 +506,8 @@ Notes:
 - The table deliberately stores no barcode, search text, user id, or vendor payload.
 - `runtime` rows explain real traffic and API/cache load. `benchmark` rows send the same
   saved barcodes to each source for a fair coverage comparison.
-- Cache hits also include reuse of an identical provider request that was already
-  running in the same server process; this prevents concurrent requests from creating
-  duplicate outbound traffic.
+- Cache hits, cache misses, stale-on-provider-error fallbacks, and reuse of an identical
+  in-flight request are separate counters, so coalescing does not inflate cache hits.
 - Run `npm run report:source-quality` for runtime activity, or run
   `node scripts/audits/food-sources/benchmark_product_sources.mjs --limit=10` followed by
   `npm run report:source-quality -- --origin=benchmark` for a direct comparison.
@@ -1046,6 +1045,12 @@ data. Negative results keep their provider status code and store an explicit non
 JSON outcome marker; `null` never doubles as both “not found” and “missing cache data.”
 Provider and request-kind names use normalized kebab-case so a new integration can use
 the shared request boundary without a new provider-specific schema constraint.
+
+`product_source_request_budgets` stores service-only operational ceilings by provider
+and request kind. `get_product_api_cache_health` reports configured budgets together
+with cache size, expiry, and provider distribution. `cleanup_expired_product_api_cache`
+deletes one locked, bounded batch of expired rows so maintenance cannot turn into an
+unbounded request. These operational records contain no user, query, or barcode data.
 
 ### Reviewed product resolution policy and source coverage
 
