@@ -50,6 +50,25 @@ storing only hashes and short display prefixes. This credential foundation does 
 itself expose any endpoint: keyed route access remains disabled until the reviewed
 scope and public-access policies are implemented and enabled.
 
+## Access Scopes
+
+The database owns reviewed least-privilege scopes for the planned keyed API. Defining
+these scopes does not enable public keys or anonymous access.
+
+| Scope               | Planned responsibility                                                   |
+| ------------------- | ------------------------------------------------------------------------ |
+| `catalog.read`      | Read bounded publication-ready catalog responses                         |
+| `intake.write`      | Submit bounded observations through existing catalog intake              |
+| `corrections.write` | Submit evidence-backed corrections without changing canonical data       |
+| `moderation.read`   | Read private moderation work                                             |
+| `moderation.write`  | Resolve moderation work and implicitly read the related queue            |
+| `administration`    | Manage approved API access resources and explicitly includes every scope |
+
+Scopes grant only their named responsibility. Catalog reads do not grant intake,
+intake does not grant corrections, and neither ordinary write scope grants moderation.
+Unknown scope values fail closed. Route enforcement will be enabled only through the
+deliberate public-release process after API keys and terms are approved.
+
 ## Read Endpoints
 
 | Method and path                            | Returns                                                              |

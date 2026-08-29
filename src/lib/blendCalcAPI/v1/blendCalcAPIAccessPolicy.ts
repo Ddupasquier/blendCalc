@@ -1,3 +1,8 @@
+import {
+	BLENDCALC_API_OPERATION_SCOPE_REQUIREMENTS,
+	BLENDCALC_API_SCOPE_KEYS,
+} from "$lib/blendCalcAPI/blendCalcAPIScopes";
+
 export const BLENDCALC_API_V1_REQUIRED_PUBLIC_TERMS_REVIEWS = [
 	"acceptable-use",
 	"privacy",
@@ -18,4 +23,8 @@ export const BLENDCALC_API_V1_ACCESS_POLICY = {
 		reviewReference: null,
 	},
 	requiredTermsReviews: BLENDCALC_API_V1_REQUIRED_PUBLIC_TERMS_REVIEWS,
+	plannedKeyedAccess: {
+		scopes: BLENDCALC_API_SCOPE_KEYS,
+		operationScopeRequirements: BLENDCALC_API_OPERATION_SCOPE_REQUIREMENTS,
+	},
 } as const;
