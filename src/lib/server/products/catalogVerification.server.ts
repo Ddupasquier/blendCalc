@@ -135,7 +135,7 @@ const addFoodProvenance = (
 						food.householdServingFullText ??
 						`${food.customServingWeightGrams} g`,
 					gramWeight: food.customServingWeightGrams,
-			}
+				}
 			: null);
 	const servingWeightGrams =
 		primaryServing?.gramWeight ?? food.customServingWeightGrams;
