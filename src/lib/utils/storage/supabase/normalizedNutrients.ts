@@ -1,6 +1,7 @@
 import type { Database } from "$lib/types/database.types";
 import type { NormalizedNutrientRow } from "$lib/utils/food/nutrients/normalizedNutrients";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { applyDatabaseQueryAbortSignal } from "./databaseQueryAbortSignal";
 
 export type NormalizedNutrientParentColumn =
 	"user_food_list_item_id" | "custom_food_id" | "shared_product_id";
@@ -54,6 +55,7 @@ const readNutrientRows = async (
 	supabase: SupabaseClient<Database>,
 	parentColumn: NormalizedNutrientParentColumn,
 	parentIds: string[],
+	databaseAbortSignal?: AbortSignal,
 ) => {
 	const rows: FoodNutrientRecordWithDefinition[] = [];
 
@@ -63,12 +65,16 @@ const readNutrientRows = async (
 			.select(
 				"user_food_list_item_id, custom_food_id, shared_product_id, nutrient_id, amount_per_100g, unit_name, value_origin, value_qualifier, source, source_reference, confidence, value_status, standard_error, source_nutrient_key, source_nutrient_code, mapping_status, mapping_method, mapping_review_reference, derivation_method, nutrient_definitions(nutrient_id, nutrient_name, nutrient_number, default_unit_name)",
 			);
-		const response =
+		const databaseQuery =
 			parentColumn === "user_food_list_item_id"
-				? await baseQuery.in("user_food_list_item_id", parentIdChunk)
+				? baseQuery.in("user_food_list_item_id", parentIdChunk)
 				: parentColumn === "custom_food_id"
-					? await baseQuery.in("custom_food_id", parentIdChunk)
-					: await baseQuery.in("shared_product_id", parentIdChunk);
+					? baseQuery.in("custom_food_id", parentIdChunk)
+					: baseQuery.in("shared_product_id", parentIdChunk);
+		const response = await applyDatabaseQueryAbortSignal(
+			databaseQuery,
+			databaseAbortSignal,
+		);
 
 		if (response.error) throw response.error;
 		rows.push(...(response.data as FoodNutrientRecordWithDefinition[]));
@@ -81,6 +87,7 @@ export const readNormalizedNutrientsByParent = async (
 	supabase: SupabaseClient<Database>,
 	parentColumn: NormalizedNutrientParentColumn,
 	parentIds: string[],
+	databaseAbortSignal?: AbortSignal,
 ): Promise<Map<string, NormalizedNutrientRow[]>> => {
 	const uniqueParentIds = [...new Set(parentIds.filter(Boolean))];
 	if (uniqueParentIds.length === 0) return new Map();
@@ -89,6 +96,7 @@ export const readNormalizedNutrientsByParent = async (
 		supabase,
 		parentColumn,
 		uniqueParentIds,
+		databaseAbortSignal,
 	);
 	if (nutrientRows.length === 0) return new Map();
 

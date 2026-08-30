@@ -11,6 +11,7 @@ import {
 	type CatalogFieldVerificationMethod,
 } from "$lib/utils/products/catalogFieldProvenance";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { applyDatabaseQueryAbortSignal } from "$lib/utils/storage/supabase/databaseQueryAbortSignal";
 
 const FOOD_TRACKED_FIELD_PATHS = new Set<FoodTrackedField>([
 	"productName",
@@ -68,19 +69,24 @@ export type CatalogFieldSource = {
 export const readSelectedCatalogFieldProvenance = async (
 	supabase: SupabaseClient<Database>,
 	productIds: string[],
+	databaseAbortSignal?: AbortSignal,
 ) => {
 	const uniqueProductIds = [...new Set(productIds.filter(Boolean))];
 	if (uniqueProductIds.length === 0) {
 		return new Map<string, Record<string, CatalogFieldSource>>();
 	}
 
-	const { data, error } = await supabase
+	const databaseQuery = supabase
 		.from("shared_product_field_provenance")
 		.select(
 			"shared_product_id, field_path, confidence, verification_method, shared_product_observations(id, source, source_reference, observed_at)",
 		)
 		.in("shared_product_id", uniqueProductIds)
 		.eq("selected", true);
+	const { data, error } = await applyDatabaseQueryAbortSignal(
+		databaseQuery,
+		databaseAbortSignal,
+	);
 	if (error) throw error;
 
 	const provenanceByProduct = new Map<
@@ -92,7 +98,8 @@ export const readSelectedCatalogFieldProvenance = async (
 			? row.shared_product_observations[0]
 			: row.shared_product_observations;
 		if (!observation) continue;
-		const productProvenance = provenanceByProduct.get(row.shared_product_id) ?? {};
+		const productProvenance =
+			provenanceByProduct.get(row.shared_product_id) ?? {};
 		productProvenance[row.field_path] = {
 			observationId: observation.id,
 			source: observation.source,
@@ -119,16 +126,15 @@ export const toFoodFieldProvenance = (
 				? [
 						[
 							fieldPath,
-								{
-									source: source.source as FoodFieldSource["source"],
-									sourceReference: source.sourceReference ?? undefined,
-									confidence:
-										source.confidence as FoodFieldSource["confidence"],
-									observationId: source.observationId,
-									observedAt: source.observedAt,
-									verificationMethod: source.verificationMethod ?? undefined,
-									reviewState: source.reviewState,
-								},
+							{
+								source: source.source as FoodFieldSource["source"],
+								sourceReference: source.sourceReference ?? undefined,
+								confidence: source.confidence as FoodFieldSource["confidence"],
+								observationId: source.observationId,
+								observedAt: source.observedAt,
+								verificationMethod: source.verificationMethod ?? undefined,
+								reviewState: source.reviewState,
+							},
 						],
 					]
 				: [],

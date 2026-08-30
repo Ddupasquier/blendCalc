@@ -9,6 +9,7 @@ import type {
 	FoodSafetyAlertCheck,
 } from "$lib/utils/food/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { applyDatabaseQueryAbortSignal } from "$lib/utils/storage/supabase/databaseQueryAbortSignal";
 
 type SafetyAlertMatchRow = {
 	id: string;
@@ -94,14 +95,19 @@ const sortFoodSafetyAlerts = (alerts: FoodSafetyAlert[]) =>
 const readSafetyAlertSources = async (
 	alerts: SafetyAlertRow[],
 	supabase: SupabaseClient<Database>,
+	databaseAbortSignal?: AbortSignal,
 ) => {
 	const sourceKeys = [...new Set(alerts.map((alert) => alert.provider_key))];
 	if (sourceKeys.length === 0) return new Map<string, SafetyAlertSourceRow>();
 
-	const { data, error } = await supabase
+	const databaseQuery = supabase
 		.from("product_data_sources")
 		.select("key, display_name, attribution_text")
 		.in("key", sourceKeys);
+	const { data, error } = await applyDatabaseQueryAbortSignal(
+		databaseQuery,
+		databaseAbortSignal,
+	);
 	if (error) throw error;
 
 	return new Map(
@@ -309,19 +315,22 @@ export const readActiveProductIdsMatchingSafetyAlertMetadata = async (
 export const readActiveProductSafetyAlertsByProduct = async (
 	sharedProductIds: string[],
 	supabase: SupabaseClient<Database> = getSupabaseAdminClient(),
+	databaseAbortSignal?: AbortSignal,
 ) => {
 	const uniqueProductIds = [...new Set(sharedProductIds.filter(Boolean))];
 	if (uniqueProductIds.length === 0) {
 		return new Map<string, FoodSafetyAlert[]>();
 	}
 
-	const { data: matchData, error: matchError } = await supabase
+	const matchQuery = supabase
 		.from("official_food_safety_alert_matches")
 		.select(
 			"id, alert_id, shared_product_id, match_type, requires_package_check, detected_at",
 		)
 		.in("shared_product_id", uniqueProductIds)
 		.in("status", ["active", "confirmed"]);
+	const { data: matchData, error: matchError } =
+		await applyDatabaseQueryAbortSignal(matchQuery, databaseAbortSignal);
 	if (isCatalogSafetyMonitoringSchemaUnavailable(matchError)) {
 		return new Map<string, FoodSafetyAlert[]>();
 	}
@@ -330,17 +339,23 @@ export const readActiveProductSafetyAlertsByProduct = async (
 	if (matches.length === 0) return new Map<string, FoodSafetyAlert[]>();
 
 	const alertIds = [...new Set(matches.map((match) => match.alert_id))];
-	const { data: alertData, error: alertError } = await supabase
+	const alertQuery = supabase
 		.from("official_food_safety_alerts")
 		.select(
 			"id, provider_key, alert_type, classification, status, product_description, reason, recalling_organization, package_description, code_information, source_url, report_date, recall_initiated_at",
 		)
 		.in("id", alertIds)
 		.eq("is_active", true);
+	const { data: alertData, error: alertError } =
+		await applyDatabaseQueryAbortSignal(alertQuery, databaseAbortSignal);
 	if (alertError) throw alertError;
 	const alerts = (alertData ?? []) as SafetyAlertRow[];
 	const alertsById = new Map(alerts.map((alert) => [alert.id, alert]));
-	const sourcesByKey = await readSafetyAlertSources(alerts, supabase);
+	const sourcesByKey = await readSafetyAlertSources(
+		alerts,
+		supabase,
+		databaseAbortSignal,
+	);
 	const alertsByProduct = new Map<string, FoodSafetyAlert[]>();
 	for (const match of matches) {
 		const alert = alertsById.get(match.alert_id);

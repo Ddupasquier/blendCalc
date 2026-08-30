@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { BlendCalcAPIV1RequestError } from "$lib/blendCalcAPI/v1/blendCalcAPIRequest";
 import { BLENDCALC_API_V1 } from "$lib/blendCalcAPI/v1/blendCalcAPITypes";
+import { BLENDCALC_API_V1_REQUEST_TIMEOUT_MILLISECONDS } from "$lib/server/blendCalcAPI/v1/blendCalcAPIRequestBoundary.server";
 import {
 	blendCalcAPIV1CategoryFixture,
 	blendCalcAPIV1PaginationFixture,
@@ -45,6 +46,8 @@ const PRODUCT_PATH = "/api/v1/products/{barcode}";
 const REVISION_PATH = "/api/v1/products/{barcode}/revisions";
 const SEARCH_PATH = "/api/v1/foods/search";
 const CATEGORY_PATH = "/api/v1/categories";
+const createProductUrl = (barcode: string) =>
+	new URL(`http://localhost/api/v1/products/${barcode}`);
 
 const createLocals = (signedIn = true) => ({
 	getVerifiedUser: vi
@@ -73,6 +76,7 @@ describe("blendCalcAPI v1 route responses", () => {
 				getProduct({
 					locals: createLocals(false),
 					params: { barcode: blendCalcAPIV1ProductFixture.barcode },
+					url: createProductUrl(blendCalcAPIV1ProductFixture.barcode),
 				} as never),
 		},
 		{
@@ -126,6 +130,9 @@ describe("blendCalcAPI v1 route responses", () => {
 		const response = await getProduct({
 			locals: createLocals(),
 			params: { barcode: blendCalcAPIV1CompletePackagedProductFixture.barcode },
+			url: createProductUrl(
+				blendCalcAPIV1CompletePackagedProductFixture.barcode,
+			),
 		} as never);
 
 		expect(response.status).toBe(200);
@@ -143,6 +150,7 @@ describe("blendCalcAPI v1 route responses", () => {
 		expect(mocks.readBlendCalcAPIV1ProductByBarcode).toHaveBeenCalledWith(
 			mocks.adminClient,
 			blendCalcAPIV1CompletePackagedProductFixture.barcode,
+			{ databaseAbortSignal: expect.any(AbortSignal) },
 		);
 	});
 
@@ -153,6 +161,7 @@ describe("blendCalcAPI v1 route responses", () => {
 			const response = await getProduct({
 				locals: createLocals(),
 				params: { barcode: product.barcode },
+				url: createProductUrl(product.barcode),
 			} as never);
 
 			expect(response.status).toBe(200);
@@ -172,6 +181,7 @@ describe("blendCalcAPI v1 route responses", () => {
 		const response = await getProduct({
 			locals: createLocals(),
 			params: { barcode: fixture.barcode },
+			url: createProductUrl(fixture.barcode),
 		} as never);
 
 		expect(response.status).toBe(404);
@@ -253,6 +263,7 @@ describe("blendCalcAPI v1 route responses", () => {
 				getProduct({
 					locals: createLocals(),
 					params: { barcode: blendCalcAPIV1ProductFixture.barcode },
+					url: createProductUrl(blendCalcAPIV1ProductFixture.barcode),
 				} as never),
 		},
 		{
@@ -327,6 +338,7 @@ describe("blendCalcAPI v1 route responses", () => {
 				offset: 0,
 				query: "tomato",
 			},
+			{ databaseAbortSignal: expect.any(AbortSignal) },
 		);
 	});
 
@@ -351,6 +363,7 @@ describe("blendCalcAPI v1 route responses", () => {
 				limit: 25,
 				offset: 0,
 			},
+			{ databaseAbortSignal: expect.any(AbortSignal) },
 		);
 	});
 
@@ -378,6 +391,7 @@ describe("blendCalcAPI v1 route responses", () => {
 			getProduct({
 				locals: createLocals(),
 				params: { barcode: blendCalcAPIV1ProductFixture.barcode },
+				url: createProductUrl(blendCalcAPIV1ProductFixture.barcode),
 			} as never),
 			getProductRevisions({
 				locals: createLocals(),
@@ -411,6 +425,7 @@ describe("blendCalcAPI v1 route responses", () => {
 				getProduct({
 					locals: createLocals(),
 					params: { barcode: blendCalcAPIV1ProductFixture.barcode },
+					url: createProductUrl(blendCalcAPIV1ProductFixture.barcode),
 				} as never),
 		},
 		{
@@ -461,6 +476,39 @@ describe("blendCalcAPI v1 route responses", () => {
 		},
 	);
 
+	it("aborts database work and returns the stable unavailable response at the deadline", async () => {
+		vi.useFakeTimers();
+		let databaseAbortSignal: AbortSignal | undefined;
+		mocks.readBlendCalcAPIV1Categories.mockImplementation(
+			(_client, _request, options) => {
+				databaseAbortSignal = options.databaseAbortSignal;
+				return new Promise(() => undefined);
+			},
+		);
+		const responsePromise = getCategories({
+			locals: createLocals(),
+			url: new URL("http://localhost/api/v1/categories"),
+		} as never);
+
+		try {
+			await vi.advanceTimersByTimeAsync(
+				BLENDCALC_API_V1_REQUEST_TIMEOUT_MILLISECONDS,
+			);
+			const response = await responsePromise;
+			expect(databaseAbortSignal?.aborted).toBe(true);
+			expect(response.status).toBe(503);
+			const payload = await expectBlendCalcAPIV1ResponseToMatchOpenAPI({
+				path: CATEGORY_PATH,
+				response,
+			});
+			expect(payload).toMatchObject({
+				error: { code: "service_unavailable" },
+			});
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
 	it("does not expose request-like errors thrown by the catalog service", async () => {
 		mocks.readBlendCalcAPIV1ProductByBarcode.mockRejectedValue(
 			new BlendCalcAPIV1RequestError(
@@ -474,6 +522,7 @@ describe("blendCalcAPI v1 route responses", () => {
 		const response = await getProduct({
 			locals: createLocals(),
 			params: { barcode: blendCalcAPIV1ProductFixture.barcode },
+			url: createProductUrl(blendCalcAPIV1ProductFixture.barcode),
 		} as never);
 		consoleError.mockRestore();
 		expect(response.status).toBe(503);
@@ -493,6 +542,7 @@ describe("blendCalcAPI v1 route responses", () => {
 		const response = await getProduct({
 			locals: createLocals(),
 			params: { barcode: blendCalcAPIV1ProductFixture.barcode },
+			url: createProductUrl(blendCalcAPIV1ProductFixture.barcode),
 		} as never);
 		await expect(
 			expectBlendCalcAPIV1ResponseToMatchOpenAPI({

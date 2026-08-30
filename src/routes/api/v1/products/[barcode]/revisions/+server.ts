@@ -8,6 +8,10 @@ import {
 	blendCalcAPIV1Error,
 	blendCalcAPIV1Success,
 } from "$lib/server/blendCalcAPI/v1/blendCalcAPIHttp.server";
+import {
+	isBlendCalcAPIV1RequestTimeoutError,
+	runBlendCalcAPIV1RequestWithinDeadline,
+} from "$lib/server/blendCalcAPI/v1/blendCalcAPIRequestBoundary.server";
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
 import { normalizeBarcode } from "$lib/utils/barcode/barcode";
 import type { RequestHandler } from "./$types";
@@ -35,10 +39,14 @@ export const GET: RequestHandler = async ({
 		throw error;
 	}
 	try {
-		const result = await readBlendCalcAPIV1ProductRevisionHistory(
-			getSupabaseAdminClient(),
-			barcode,
-			request,
+		const result = await runBlendCalcAPIV1RequestWithinDeadline(
+			(databaseAbortSignal) =>
+				readBlendCalcAPIV1ProductRevisionHistory(
+					getSupabaseAdminClient(),
+					barcode,
+					request,
+					{ databaseAbortSignal },
+				),
 		);
 		if (!result) {
 			return blendCalcAPIV1Error("product_not_found");
@@ -47,6 +55,9 @@ export const GET: RequestHandler = async ({
 			ifNoneMatch: httpRequest?.headers.get("if-none-match"),
 		});
 	} catch (error) {
+		if (isBlendCalcAPIV1RequestTimeoutError(error)) {
+			return blendCalcAPIV1Error("service_unavailable");
+		}
 		console.error("blendCalcAPI v1 revision-history read failed.", error);
 		return blendCalcAPIV1Error("catalog_unavailable");
 	}

@@ -14,7 +14,7 @@ const listTypeScriptFiles = (directory: string): string[] =>
 const serverFiles = [
 	...listTypeScriptFiles(join(root, "src/lib/server")),
 	...listTypeScriptFiles(join(root, "src/routes")).filter((path) =>
-		/(?:\+server|\+page\.server|\+layout\.server)\.ts$/.test(path)
+		/(?:\+server|\+page\.server|\+layout\.server)\.ts$/.test(path),
 	),
 	join(root, "src/hooks.server.ts"),
 ];
@@ -42,5 +42,11 @@ describe("server request boundary", () => {
 
 	it("keeps server database reads limited to named columns", () => {
 		expect(findRuntimeMatches(/\.select\(\s*["']\*["']\s*\)/)).toEqual([]);
+	});
+
+	it("keeps request-body parsing behind byte-limited readers", () => {
+		expect(
+			findMatches(/\brequest\.(?:arrayBuffer|blob|formData|json|text)\s*\(/),
+		).toEqual([]);
 	});
 });
