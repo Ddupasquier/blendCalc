@@ -109,5 +109,7 @@ test("serving choices update the viewing amount and normalized nutrition values"
 		.click();
 	await expect(amountSection.locator("strong")).toHaveText("1 tbsp (20g)");
 	await expect(caloriesRow).toContainText("50");
-	await expect(page.getByText("1 tbsp (20g)", { exact: true })).toBeVisible();
+	await expect(
+		page.locator(".nf-label").getByText("1 tbsp (20g)", { exact: true }),
+	).toBeVisible();
 });
