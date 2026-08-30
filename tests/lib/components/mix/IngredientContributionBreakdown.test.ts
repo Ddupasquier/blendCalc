@@ -38,7 +38,7 @@ describe("IngredientContributionBreakdown", () => {
 							{
 								label: "Trace ingredient",
 								amount: 0.0004,
-								grams: 0.01,
+								servingAmountLabel: "0.01 g",
 								percentOfTotal: 0.004,
 							},
 						],
@@ -49,8 +49,6 @@ describe("IngredientContributionBreakdown", () => {
 
 		expect(screen.getByText("<0.001 kcal")).toBeInTheDocument();
 		expect(screen.getByText("0.004%")).toBeInTheDocument();
-		expect(
-			screen.getByText("<0.001 kcal from 0.01 g"),
-		).toBeInTheDocument();
+		expect(screen.getByText("<0.001 kcal from 0.01 g")).toBeInTheDocument();
 	});
 });

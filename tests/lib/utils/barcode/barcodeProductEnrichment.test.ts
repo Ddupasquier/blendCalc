@@ -296,6 +296,12 @@ describe("barcode product field enrichment", () => {
 		expect(result.nutrients[0]).toMatchObject({
 			value: 2.5,
 			source: "usda",
+			measurementBasis: {
+				kind: "serving",
+				quantity: 1,
+				unitKey: "serving",
+				servingLabel: "1/2 cup (125 g)",
+			},
 		});
 		expect(
 			result.nutrients.find((item) => item.nutrientId === 1003),
@@ -346,6 +352,12 @@ describe("barcode product field enrichment", () => {
 		expect(result.nutrients[0]).toMatchObject({
 			value: 2.5,
 			source: "open-food-facts",
+			measurementBasis: {
+				kind: "serving",
+				quantity: 1,
+				unitKey: "serving",
+				servingLabel: "125 g",
+			},
 		});
 		expect(result.servingWeightGrams).toBe(125);
 		expect(result.fieldProvenance?.nutrition?.source).toBe("open-food-facts");

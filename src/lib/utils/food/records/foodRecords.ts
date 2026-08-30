@@ -221,6 +221,9 @@ export const normalizeFoodForStorage = (food: FoodItem): FoodItem => {
 			nutrientNumber: nutrient.nutrientNumber,
 			unitName: nutrient.unitName,
 			value: nutrient.value,
+			measurementBasis: nutrient.measurementBasis
+				? { ...nutrient.measurementBasis }
+				: undefined,
 			valueOrigin: nutrient.valueOrigin,
 			source: nutrient.source,
 			sourceReference: nutrient.sourceReference,

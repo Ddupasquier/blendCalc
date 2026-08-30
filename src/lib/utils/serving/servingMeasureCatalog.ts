@@ -1,6 +1,6 @@
 export type ServingMeasureUnit = string;
 
-export type ServingMeasureDimension = "weight" | "volume";
+export type ServingMeasureDimension = "weight" | "volume" | "count";
 
 export type ServingMeasureOption = {
 	value: ServingMeasureUnit;
@@ -26,7 +26,10 @@ export const SERVING_MEASURE_ALIAS_ENTRIES: Array<{
 	unit: ServingMeasureUnit;
 }> = [];
 
-export const DEFAULT_GRAMS_PER_WEIGHT_MEASURE: Record<ServingMeasureUnit, number> = {};
+export const DEFAULT_GRAMS_PER_WEIGHT_MEASURE: Record<
+	ServingMeasureUnit,
+	number
+> = {};
 
 export const DEFAULT_MILLILITERS_PER_VOLUME_MEASURE: Record<
 	ServingMeasureUnit,
@@ -40,6 +43,8 @@ const replaceRecord = <Value>(
 	for (const key of Object.keys(target)) delete target[key];
 	Object.assign(target, values);
 };
+
+const DEFAULT_COUNT_MEASURE_KEY = "item";
 
 export const normalizeServingMeasureAlias = (value: string) =>
 	value.trim().toLowerCase().replace(/\s+/g, "");
@@ -59,9 +64,11 @@ export const configureServingMeasureCatalog = (
 	const weightConversions: Record<string, number> = {};
 	const volumeConversions: Record<string, number> = {};
 	for (const option of options) {
-		const target =
-			option.dimension === "weight" ? weightConversions : volumeConversions;
-		target[option.value] = option.conversionToBase;
+		if (option.dimension === "weight") {
+			weightConversions[option.value] = option.conversionToBase;
+		} else if (option.dimension === "volume") {
+			volumeConversions[option.value] = option.conversionToBase;
+		}
 	}
 	replaceRecord(DEFAULT_GRAMS_PER_WEIGHT_MEASURE, weightConversions);
 	replaceRecord(DEFAULT_MILLILITERS_PER_VOLUME_MEASURE, volumeConversions);
@@ -73,8 +80,12 @@ export const getDefaultServingMeasureUnit = (
 	SERVING_MEASURE_OPTIONS.find(
 		(option) => option.dimension === dimension && option.isDefault,
 	)?.value ??
-	SERVING_MEASURE_OPTIONS.find((option) => option.dimension === dimension)?.value ??
+	SERVING_MEASURE_OPTIONS.find((option) => option.dimension === dimension)
+		?.value ??
 	null;
 
 export const getServingMeasureOption = (unit: ServingMeasureUnit) =>
 	SERVING_MEASURE_OPTIONS.find((option) => option.value === unit) ?? null;
+
+export const getDefaultCountMeasureUnit = () =>
+	getDefaultServingMeasureUnit("count") ?? DEFAULT_COUNT_MEASURE_KEY;

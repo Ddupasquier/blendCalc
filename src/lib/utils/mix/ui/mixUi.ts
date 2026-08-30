@@ -7,6 +7,10 @@ import {
 	getMixRuntimeConfiguration,
 } from "$lib/utils/food/reference/appReferenceCatalog";
 import {
+	getFoodServingsInUserDisplayPriority,
+	prioritizeFoodServingsForUserDisplay,
+} from "$lib/utils/food/servings/foodServings";
+import {
 	getFoodNutrientAmount,
 	type NutrientMeta,
 } from "$lib/utils/mix/calculations";
@@ -16,6 +20,7 @@ import {
 	getSourceServingMeasureOptions,
 	type ServingConversion,
 } from "$lib/utils/serving/servingAmount";
+import type { MixServingConversionMap } from "$lib/utils/mix/calculations/nutrientTotals";
 import type { MixWarning } from "$lib/utils/mix/warnings/mixWarnings";
 import type { FoodItem } from "$lib/utils/food/types";
 import { formatMixQuantity } from "$lib/utils/mix/formatting/mixQuantity";
@@ -49,7 +54,7 @@ export type NutrientOverageDetail = {
 	contributors: {
 		label: string;
 		amount: number;
-		grams: number;
+		servingAmountLabel: string;
 	}[];
 };
 
@@ -131,11 +136,17 @@ export const getFoodNutrientChips = (
 	food: FoodItem,
 	selectedNutrients: NutrientMeta[],
 	servingGrams: Record<number, number>,
+	servingConversions?: MixServingConversionMap,
 ): NutrientChip[] => {
 	return selectedNutrients
 		.map((nutrient) => ({
 			label: (nutrient.label ?? "").replace("Total ", ""),
-			amount: getFoodNutrientAmount(food, Number(nutrient.id), servingGrams),
+			amount: getFoodNutrientAmount(
+				food,
+				Number(nutrient.id),
+				servingGrams,
+				servingConversions,
+			),
 			unit: nutrient.unit ?? "",
 		}))
 		.filter(
@@ -156,6 +167,7 @@ export const getFoodNutrientChips = (
 export const normalizeServingUnit = (value: unknown, food?: FoodItem) => {
 	if (typeof value !== "string") return null;
 	const normalizedValue = value.trim();
+	if (normalizedValue === "item") return normalizedValue;
 	if (getSourceServingMeasureOption(normalizedValue, food))
 		return normalizedValue;
 	return (
@@ -174,22 +186,44 @@ export const getDefaultServingAmount = (
 	food?: FoodItem,
 	preferences: MixDefaultServingPreferences = {},
 ) => {
-	const servingUnit = normalizeServingUnit(food?.servingSizeUnit);
-	if (food?.servingSize && servingUnit) {
+	const preferredFoodServing = getFoodServingsInUserDisplayPriority(food)[0];
+	const preferredFoodServingUnit = normalizeServingUnit(
+		preferredFoodServing?.unitKey,
+		food,
+	);
+	if (
+		preferredFoodServing?.amount &&
+		preferredFoodServing.amount > 0 &&
+		preferredFoodServingUnit
+	) {
 		return {
-			quantity: food.servingSize,
-			unit: servingUnit,
+			quantity: preferredFoodServing.amount,
+			unit: preferredFoodServingUnit,
 		};
 	}
 
 	const sourceServingOptions = getSourceServingMeasureOptions(food);
+	const preferredSourceServing = prioritizeFoodServingsForUserDisplay(
+		sourceServingOptions.map((option) => option.serving),
+	)[0];
 	const primarySourceServingOption =
+		sourceServingOptions.find(
+			(option) => option.serving === preferredSourceServing,
+		) ??
 		sourceServingOptions.find((option) => option.serving.isPrimary) ??
 		sourceServingOptions[0];
 	if (primarySourceServingOption) {
 		return {
 			quantity: 1,
 			unit: primarySourceServingOption.value,
+		};
+	}
+
+	const servingUnit = normalizeServingUnit(food?.servingSizeUnit);
+	if (food?.servingSize && servingUnit) {
+		return {
+			quantity: food.servingSize,
+			unit: servingUnit,
 		};
 	}
 
@@ -260,7 +294,7 @@ export const withOverageDetails = (
 				label: `From ${contributor.label}`,
 				value: `${formatMixQuantity(contributor.amount, {
 					unit: overage.unit,
-				})} from ${formatMixQuantity(contributor.grams, { unit: "g" })}`,
+				})} from ${contributor.servingAmountLabel}`,
 			})),
 		],
 	};

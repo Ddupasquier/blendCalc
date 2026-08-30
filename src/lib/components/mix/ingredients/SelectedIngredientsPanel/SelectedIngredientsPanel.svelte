@@ -116,6 +116,7 @@
 							food,
 							selectedNutrients,
 							servingGrams,
+							{ [food.fdcId]: servingConversion },
 						)}
 						{onRemove}
 						{onServingChange}

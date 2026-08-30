@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/svelte";
 import { describe, expect, it } from "vitest";
 import NutritionFactsLabel from "$lib/components/ingredients/nutrition/NutritionFactsLabel/NutritionFactsLabel.svelte";
 import { NUTRIENT_IDS, type FoodItem } from "$lib/utils/food/types";
+import { DEFAULT_NUTRITION_VIEWING_CONVERSION } from "$lib/utils/food/nutrients/nutritionViewingAmount";
 
 const food: FoodItem = {
 	fdcId: 1,
@@ -36,14 +37,16 @@ describe("NutritionFactsLabel", () => {
 		render(NutritionFactsLabel, {
 			props: {
 				food,
-				viewingGrams: 100,
+				viewingConversion: DEFAULT_NUTRITION_VIEWING_CONVERSION,
+				viewingLabel: "100g",
 			},
 		});
 
 		expect(screen.queryByText("SFA 4:0")).not.toBeInTheDocument();
 		expect(screen.getByText("SFA 16:0")).toBeInTheDocument();
-		expect(screen.getByText("Total Sugars").closest("li"))
-			.toHaveTextContent("0");
+		expect(screen.getByText("Total Sugars").closest("li")).toHaveTextContent(
+			"0",
+		);
 	});
 
 	it("prints the canonical food name instead of a personal list name", () => {
@@ -55,7 +58,8 @@ describe("NutritionFactsLabel", () => {
 					canonicalDescription: "Original Test Food",
 					nameProvenance: "user",
 				},
-				viewingGrams: 100,
+				viewingConversion: DEFAULT_NUTRITION_VIEWING_CONVERSION,
+				viewingLabel: "100g",
 			},
 		});
 

@@ -18,8 +18,8 @@ signed-in user without exposing the account that submitted it.
 1. A user scans or enters a valid UPC/EAN barcode.
 2. The ingredient is always saved to that user's private custom-food list first.
 3. For eligible labels, the user can explicitly opt in to catalog review.
-4. The server validates the barcode, serving weight, nutrient values, and basic macro
-   relationships.
+4. The server validates the barcode, exact serving basis, nutrient values, and basic
+   macro relationships.
 5. An exact, legally reusable USDA FoodData Central barcode match may publish or improve
    the blendCalc canonical product; the stored blendCalc record becomes the source used
    by later app and public-API reads while USDA remains recorded as field evidence.
@@ -396,19 +396,26 @@ context and therefore do not serialize this personalized regional evaluation.
 ## Serving Data
 
 Reported serving sizes are normalized into `food_servings` when products are saved,
-submitted, approved, revised, or observed. Each row keeps the readable label, gram
-weight, optional amount/unit pair, primary flag, source reference, confidence, exact
-measure metadata, serving origin, gram-weight method, and any measured calculation
-basis. The product JSON remains a compatibility snapshot, but normalized rows are what
+submitted, approved, revised, or observed. Each row keeps the readable label, optional
+gram weight, optional milliliter volume, amount/unit pair, primary flag, source
+reference, confidence, exact measure metadata, serving origin, gram-weight method, and
+any measured calculation basis. Count/package servings preserve labels such as
+`1 cookie` or `1 bottle` without inventing a weight. Exact nutrient values are stored in
+`food_nutrient_measurements` on their reported mass, volume, or source-serving basis.
+The product JSON remains a compatibility snapshot, but normalized rows are what
 nutrition and Mix consume.
 
-The nutrition view defaults to the primary reported serving when one exists and also
-offers a 100g standard view. Missing source serving data stays missing; a 100g nutrition
-basis is not treated as proof that the package reports a 100g serving. Database triggers
-synchronize future writes, and the serving migration backfills valid serving data from
-existing catalog and user food records only when an exact serving or user-entered value
-supports it. Provider identity, food identity, names, and categories do not establish a
-serving origin or weight-to-volume relationship.
+The nutrition and Mix views default to a verified household, count, or package measure
+when one exists and can represent the stored nutrient basis exactly. A source measure
+such as `2 cups (100g)` remains the user-facing amount while calculations retain the
+100g nutrient basis. A 100g standard view remains secondary and appears only when exact
+mass data supports it. Missing source serving data stays missing; a 100g nutrition basis
+is not treated as proof that the package reports a 100g serving or any household
+equivalent. Database triggers synchronize future writes, and the serving migration
+backfills valid serving and native nutrient data from existing catalog and user food
+records only when an exact serving or user-entered value supports it. Provider identity,
+food identity, names, and categories do not establish a serving origin,
+weight-to-volume relationship, or count-to-weight conversion.
 
 ## Runtime Source Boundary
 

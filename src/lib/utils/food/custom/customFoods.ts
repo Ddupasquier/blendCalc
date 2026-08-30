@@ -1,6 +1,7 @@
 import {
 	DEFAULT_MILLILITERS_PER_VOLUME_MEASURE,
 	SERVING_MEASURE_OPTIONS,
+	getServingMeasureOption,
 	type ServingMeasureUnit,
 } from "$lib/utils/serving/servingMeasureCatalog";
 import { normalizeFoodForStorage } from "$lib/utils/food/records/foodRecords";
@@ -38,9 +39,9 @@ export type CustomFoodInput = {
 	nameProvenance?: NonNullable<FoodItem["nameProvenance"]>;
 	brandOwner?: string;
 	servingLabel?: string;
-	servingWeightGrams: number;
-	volumeQuantity?: number;
-	volumeUnit?: ServingMeasureUnit;
+	servingWeightGrams?: number | null;
+	servingMeasureQuantity?: number;
+	servingMeasureUnit?: ServingMeasureUnit;
 	barcode?: string;
 	barcodeSource?: FoodItem["barcodeSource"];
 	barcodeProvenance?: FoodBarcodeProvenance;
@@ -80,10 +81,7 @@ export type CustomFoodInput = {
 };
 
 export type CustomFoodSaveResult =
-	| "saved"
-	| "duplicate-name"
-	| "duplicate-barcode"
-	| "error";
+	"saved" | "duplicate-name" | "duplicate-barcode" | "error";
 
 const dispatchCustomFoodsChanged = () => {
 	window.dispatchEvent(new CustomEvent(CUSTOM_FOODS_CHANGED_EVENT));
@@ -93,13 +91,19 @@ const createCustomFoodId = () => {
 	return -Math.floor(Date.now() * 1000 + Math.random() * 1000);
 };
 
-const getPer100GramValue = (valuePerServing: number, servingWeightGrams: number) => {
+const getPer100GramValue = (
+	valuePerServing: number,
+	servingWeightGrams: number,
+) => {
 	return (valuePerServing * 100) / servingWeightGrams;
 };
 
 const createNutrients = (
 	nutrients: FoodNutrient[],
-	servingWeightGrams: number,
+	servingWeightGrams: number | null,
+	servingMeasureQuantity: number | null,
+	servingMeasureUnit: ServingMeasureUnit | null,
+	servingLabel: string,
 ): FoodNutrient[] => {
 	const seenIds = new Set<number>();
 	return nutrients.flatMap((nutrient) => {
@@ -114,15 +118,39 @@ const createNutrients = (
 			return [];
 		}
 		seenIds.add(nutrientId);
-		return [{
-			nutrientId,
-			nutrientName: nutrient.nutrientName,
-			nutrientNumber: String(nutrient.nutrientNumber ?? ""),
-			unitName: nutrient.unitName,
-			value: getPer100GramValue(nutrientValue, servingWeightGrams),
-			valueOrigin: nutrient.valueOrigin,
-			source: nutrient.source,
-			sourceReference: nutrient.sourceReference,
+		const measureOption = servingMeasureUnit
+			? getServingMeasureOption(servingMeasureUnit)
+			: null;
+		const measurementBasis = servingWeightGrams
+			? { kind: "mass" as const, quantity: 100, unitKey: "g" }
+			: measureOption?.dimension === "volume" && servingMeasureQuantity
+				? {
+						kind: "volume" as const,
+						quantity: servingMeasureQuantity,
+						unitKey: servingMeasureUnit ?? "ml",
+					}
+				: servingMeasureQuantity
+					? {
+							kind: "serving" as const,
+							quantity: 1,
+							unitKey: "serving",
+							servingLabel,
+						}
+					: null;
+		if (!measurementBasis) return [];
+		return [
+			{
+				nutrientId,
+				nutrientName: nutrient.nutrientName,
+				nutrientNumber: String(nutrient.nutrientNumber ?? ""),
+				unitName: nutrient.unitName,
+				value: servingWeightGrams
+					? getPer100GramValue(nutrientValue, servingWeightGrams)
+					: nutrientValue,
+				measurementBasis,
+				valueOrigin: nutrient.valueOrigin,
+				source: nutrient.source,
+				sourceReference: nutrient.sourceReference,
 				confidence: nutrient.confidence,
 				valueStatus: nutrient.valueStatus,
 				standardError: nutrient.standardError,
@@ -132,7 +160,8 @@ const createNutrients = (
 				mappingMethod: nutrient.mappingMethod,
 				mappingReviewReference: nutrient.mappingReviewReference,
 				derivationMethod: nutrient.derivationMethod,
-			}];
+			},
+		];
 	});
 };
 
@@ -150,7 +179,9 @@ const getVolumeMilliliters = (
 	}
 
 	const conversion = DEFAULT_MILLILITERS_PER_VOLUME_MEASURE[unit];
-	return typeof conversion === "number" && Number.isFinite(conversion) && conversion > 0
+	return typeof conversion === "number" &&
+		Number.isFinite(conversion) &&
+		conversion > 0
 		? Number(quantity) * conversion
 		: null;
 };
@@ -171,20 +202,27 @@ const getServingUnitDisplay = (unit: ServingMeasureUnit) => {
 export const buildCustomServingLabel = ({
 	servingLabel,
 	servingWeightGrams,
-	volumeQuantity,
-	volumeUnit,
+	servingMeasureQuantity,
+	servingMeasureUnit,
 }: {
 	servingLabel?: string;
-	servingWeightGrams: number;
-	volumeQuantity?: number;
-	volumeUnit?: ServingMeasureUnit;
+	servingWeightGrams?: number | null;
+	servingMeasureQuantity?: number;
+	servingMeasureUnit?: ServingMeasureUnit;
 }) => {
 	const trimmedLabel = servingLabel?.trim();
 	if (trimmedLabel) return trimmedLabel;
-	if (volumeQuantity && volumeQuantity > 0 && volumeUnit) {
-		return `${formatServingNumber(volumeQuantity)} ${getServingUnitDisplay(volumeUnit)}`;
+	if (
+		servingMeasureQuantity &&
+		servingMeasureQuantity > 0 &&
+		servingMeasureUnit
+	) {
+		return `${formatServingNumber(servingMeasureQuantity)} ${getServingUnitDisplay(servingMeasureUnit)}`;
 	}
-	return `${formatServingNumber(servingWeightGrams)}g serving`;
+	if (servingWeightGrams && servingWeightGrams > 0) {
+		return `${formatServingNumber(servingWeightGrams)}g serving`;
+	}
+	return "Serving";
 };
 
 const normalizeServingSource = (
@@ -195,9 +233,7 @@ const normalizeServingSource = (
 	return source;
 };
 
-const getDefaultSourceKey = (
-	barcodeSource: FoodItem["barcodeSource"],
-) => {
+const getDefaultSourceKey = (barcodeSource: FoodItem["barcodeSource"]) => {
 	if (barcodeSource === "community") return "shared-catalog";
 	if (
 		barcodeSource === "usda" ||
@@ -210,84 +246,141 @@ const getDefaultSourceKey = (
 };
 
 export const createCustomFood = (input: CustomFoodInput): FoodItem => {
-	const servingWeightGrams = Number(input.servingWeightGrams);
-	if (!Number.isFinite(servingWeightGrams) || servingWeightGrams <= 0) {
+	const inputServing = input.serving;
+	const reportedServingWeightGrams =
+		input.servingWeightGrams ?? inputServing?.gramWeight;
+	const servingWeightGrams = toFiniteNonnegativeNumber(
+		reportedServingWeightGrams,
+	);
+	const normalizedServingWeightGrams =
+		servingWeightGrams !== null && servingWeightGrams > 0
+			? servingWeightGrams
+			: null;
+	if (
+		reportedServingWeightGrams !== undefined &&
+		normalizedServingWeightGrams === null
+	) {
 		throw new TypeError("Serving weight must be a number greater than zero.");
 	}
-	const nameProvenance = input.nameProvenance ??
+	const inputServingAmount = toFiniteNonnegativeNumber(inputServing?.amount);
+	const inputServingMilliliters = toFiniteNonnegativeNumber(
+		inputServing?.milliliterVolume,
+	);
+	const servingMeasureQuantityValue = toFiniteNonnegativeNumber(
+		input.servingMeasureQuantity ??
+			(inputServingAmount && inputServing?.unitKey
+				? inputServingAmount
+				: inputServingMilliliters),
+	);
+	const servingMeasureQuantity =
+		servingMeasureQuantityValue !== null && servingMeasureQuantityValue > 0
+			? servingMeasureQuantityValue
+			: null;
+	const servingMeasureUnit =
+		input.servingMeasureUnit?.trim() ||
+		(inputServingAmount ? inputServing?.unitKey?.trim() : "") ||
+		(inputServingMilliliters ? "ml" : null);
+	if (
+		normalizedServingWeightGrams === null &&
+		(servingMeasureQuantity === null || !servingMeasureUnit)
+	) {
+		throw new TypeError(
+			"Add an exact serving weight or the package's serving amount and unit.",
+		);
+	}
+	const nameProvenance =
+		input.nameProvenance ??
 		(normalizeBarcode(input.barcode ?? "") ? "barcode" : "user");
-	const description = nameProvenance === "user"
-		? input.name.trim().replace(/\s+/g, " ")
-		: formatSourceProductName(input.name);
+	const description =
+		nameProvenance === "user"
+			? input.name.trim().replace(/\s+/g, " ")
+			: formatSourceProductName(input.name);
 	const volumeMilliliters = getVolumeMilliliters(
-		input.volumeQuantity,
-		input.volumeUnit,
+		servingMeasureQuantity ?? undefined,
+		servingMeasureUnit ?? undefined,
 	);
 	const density =
-		volumeMilliliters && volumeMilliliters > 0
-			? servingWeightGrams / volumeMilliliters
+		volumeMilliliters && volumeMilliliters > 0 && normalizedServingWeightGrams
+			? normalizedServingWeightGrams / volumeMilliliters
 			: null;
-
-	const foodNutrients = createNutrients(input.nutrients, servingWeightGrams);
 	const canonicalCategory = input.categories
 		?.map((category) => category.trim())
 		.find(Boolean);
 	const servingLabel = buildCustomServingLabel({
-		servingLabel: input.servingLabel,
-		servingWeightGrams,
-		volumeQuantity: input.volumeQuantity,
-		volumeUnit: input.volumeUnit,
+		servingLabel: input.servingLabel ?? inputServing?.label,
+		servingWeightGrams: normalizedServingWeightGrams,
+		servingMeasureQuantity: servingMeasureQuantity ?? undefined,
+		servingMeasureUnit: servingMeasureUnit ?? undefined,
 	});
-	const hasSourceServing = input.hasSourceServing === true;
+	const foodNutrients = createNutrients(
+		input.nutrients,
+		normalizedServingWeightGrams,
+		servingMeasureQuantity,
+		servingMeasureUnit,
+		servingLabel,
+	);
+	const hasSourceServing =
+		input.hasSourceServing === true ||
+		(servingMeasureQuantity !== null && servingMeasureUnit !== null);
 	const isUserServing = input.barcodeSource === "manual" || !input.barcode;
 	const defaultServingSource = isUserServing ? "user-label" : "unknown";
-	const servingSource = normalizeServingSource(
-		input.fieldProvenance?.serving?.source,
-	) ?? defaultServingSource;
-	const servingConfidence = input.fieldProvenance?.serving?.confidence ??
+	const servingSource =
+		normalizeServingSource(input.fieldProvenance?.serving?.source) ??
+		defaultServingSource;
+	const servingConfidence =
+		input.fieldProvenance?.serving?.confidence ??
 		(isUserServing ? "user-reported" : "unknown");
 	const customFood = input.customFood ?? true;
-	const inputServing = input.serving;
-
 	return {
 		fdcId: createCustomFoodId(),
 		description,
 		nameProvenance,
 		brandOwner: input.brandOwner?.trim() || undefined,
 		foodCategory: canonicalCategory,
-		dataType: input.sourceDataType?.trim() || (customFood ? "Custom" : "Branded"),
-		foodIdentityType: input.foodIdentityType ??
-			(customFood ? "private-custom" : "packaged"),
+		dataType:
+			input.sourceDataType?.trim() || (customFood ? "Custom" : "Branded"),
+		foodIdentityType:
+			input.foodIdentityType ?? (customFood ? "private-custom" : "packaged"),
 		scientificName: input.scientificName,
 		alternateDescription: input.alternateDescription,
 		preparation: input.preparation,
-		servingSize: servingWeightGrams,
-		servingSizeUnit: "g",
+		servingSize:
+			servingMeasureQuantity ?? normalizedServingWeightGrams ?? undefined,
+		servingSizeUnit:
+			servingMeasureUnit ?? (normalizedServingWeightGrams ? "g" : undefined),
 		hasSourceServing,
 		foodServings: hasSourceServing
-			? [{
-				...inputServing,
-				label: servingLabel,
-				gramWeight: servingWeightGrams,
-				amount: input.volumeQuantity ?? inputServing?.amount,
-				unitKey: input.volumeUnit ?? inputServing?.unitKey,
-				isPrimary: true,
-				measureType: inputServing?.measureType ??
-					(isUserServing ? "User serving" : undefined),
-				isHouseholdMeasure: input.volumeQuantity !== undefined
-					? true
-					: inputServing?.isHouseholdMeasure,
-				sourceMeasureKey: inputServing?.sourceMeasureKey,
-				origin: inputServing?.origin ??
-					(isUserServing ? "user-entered" : "unknown"),
-				gramWeightMethod: inputServing?.gramWeightMethod ??
-					(isUserServing ? "user-reported" : "unknown"),
-				calculationBasis: inputServing?.calculationBasis,
-				source: servingSource,
-					sourceReference:
-						input.fieldProvenance?.serving?.sourceReference ?? input.barcode,
-				confidence: servingConfidence,
-			}]
+			? [
+					{
+						...inputServing,
+						label: servingLabel,
+						gramWeight: normalizedServingWeightGrams ?? undefined,
+						milliliterVolume:
+							volumeMilliliters ?? inputServing?.milliliterVolume,
+						amount: servingMeasureQuantity ?? inputServing?.amount,
+						unitKey: servingMeasureUnit ?? inputServing?.unitKey,
+						isPrimary: true,
+						measureType:
+							inputServing?.measureType ??
+							(isUserServing ? "User serving" : undefined),
+						isHouseholdMeasure:
+							servingMeasureQuantity !== null
+								? true
+								: inputServing?.isHouseholdMeasure,
+						sourceMeasureKey: inputServing?.sourceMeasureKey,
+						origin:
+							inputServing?.origin ??
+							(isUserServing ? "user-entered" : "unknown"),
+						gramWeightMethod:
+							inputServing?.gramWeightMethod ??
+							(isUserServing ? "user-reported" : "unknown"),
+						calculationBasis: inputServing?.calculationBasis,
+						source: servingSource,
+						sourceReference:
+							input.fieldProvenance?.serving?.sourceReference ?? input.barcode,
+						confidence: servingConfidence,
+					},
+				]
 			: [],
 		ingredients: input.ingredients?.trim() || undefined,
 		ingredientList: input.ingredientList,
@@ -318,16 +411,19 @@ export const createCustomFood = (input: CustomFoodInput): FoodItem => {
 		sourcePublishedDate: input.sourcePublishedDate,
 		sourceModifiedDate: input.sourceModifiedDate,
 		customServingLabel: servingLabel,
-		customServingWeightGrams: servingWeightGrams,
-		customDensityGramsPerMilliliter: isUserServing ? density ?? undefined : undefined,
-		customDensityLabel: isUserServing && density ? "User-reported serving pair" : undefined,
+		customServingWeightGrams: normalizedServingWeightGrams ?? undefined,
+		customDensityGramsPerMilliliter: isUserServing
+			? (density ?? undefined)
+			: undefined,
+		customDensityLabel:
+			isUserServing && density ? "User-reported serving pair" : undefined,
 		customDensityVariancePercent: isUserServing && density ? 0 : undefined,
 		customDensityConfidence: isUserServing && density ? "known" : undefined,
 		foodNutrients,
 		reportedNutrientIds: input.reportedNutrientIds
 			? [...new Set(input.reportedNutrientIds)].filter((nutrientId) =>
-				foodNutrients.some((nutrient) => nutrient.nutrientId === nutrientId)
-			)
+					foodNutrients.some((nutrient) => nutrient.nutrientId === nutrientId),
+				)
 			: foodNutrients.map((nutrient) => nutrient.nutrientId),
 	};
 };

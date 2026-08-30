@@ -337,19 +337,24 @@ remains independently useful when custom events are unavailable.
 
 ## Serving Provenance And Conversion
 
-Serving labels, gram weights, household measures, and conversion lineage cross the
-provider boundary as one typed record. Source adapters require an explicit recognized
-unit and preserve whether a measure came from a package label, a source household
-measure, a direct reported weight, or unknown evidence. Manual values are explicitly
-user-entered. Bare provider quantities never inherit the interactive form's default
-gram unit.
+Serving labels, gram weights, milliliter volumes, count/package measures, and conversion
+lineage cross the provider boundary as one typed record. Source adapters require an
+explicit recognized unit and preserve whether a measure came from a package label, a
+source household measure, a direct reported weight or volume, or unknown evidence.
+Manual values are explicitly user-entered. Bare provider quantities never inherit the
+interactive form's default gram unit.
 
 Normalized `food_servings` rows retain the exact observation, source measure metadata,
-serving origin, gram-weight method, and measured calculation basis. Nutrition presents
-that information in Product details. Mix performs basic weight math in code and may
-calculate weight from volume only when the food has a source-reported or user-reported
-weight/volume pair. Food names, categories, provider identity, and water-like defaults
-never supply density.
+serving origin, gram-weight method, and measured calculation basis.
+`food_nutrient_measurements` retains nutrients on the exact mass, volume, or
+source-serving basis. Nutrition presents that information in Product details. Mix may
+convert within the same dimension and may cross dimensions only when the food has a
+source-reported or user-reported measured pair. Food names, categories, provider
+identity, serving form, and water-like defaults never supply density or item weight.
+Packaged-food reads default to the primary reported serving. The backward-compatible
+per-100g projection is secondary and is derived from that native value only when exact
+mass evidence exists; its derived status, method, source, and uncertainty remain
+queryable alongside the untouched native measurement.
 
 ## Nutrient Values And Uncertainty
 

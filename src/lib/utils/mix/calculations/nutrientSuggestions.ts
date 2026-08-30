@@ -92,13 +92,13 @@ const getPracticalIncrement = (
 	if (
 		sourceServing &&
 		Number.isFinite(sourceServing.gramWeight) &&
-		sourceServing.gramWeight > 0 &&
+		Number(sourceServing.gramWeight) > 0 &&
 		(sourceServing.gramWeightMethod === "source-reported" ||
 			sourceServing.gramWeightMethod === "exact-unit-conversion" ||
 			sourceServing.gramWeightMethod === "user-reported")
 	) {
 		return {
-			grams: sourceServing.gramWeight,
+			grams: Number(sourceServing.gramWeight),
 			label: sourceServing.label,
 			source: "source-serving",
 		};

@@ -47,8 +47,44 @@ describe("mix serving state", () => {
 		);
 	});
 
-	it("does not save a volume amount without measured conversion data", () => {
-		expect(getStateWithServingAmount(state, food, "1", "cup")).toBe(state);
+	it("stores an exact volume without inventing a gram weight", () => {
+		expect(getStateWithServingAmount(state, food, "1", "cup")).toMatchObject({
+			servingQuantities: { [food.fdcId]: 1 },
+			servingUnits: { [food.fdcId]: "cup" },
+			servingGrams: {},
+		});
+	});
+
+	it("stores a count serving without inventing a gram weight", () => {
+		const cookie: FoodItem = {
+			fdcId: 3,
+			description: "Cookie",
+			foodNutrients: [],
+			hasSourceServing: true,
+			foodServings: [
+				{
+					label: "2 cookies",
+					amount: 2,
+					unitKey: "item",
+					isPrimary: true,
+				},
+			],
+		};
+		const defaultState = getStateWithToggledFood(
+			{
+				...state,
+				selectedFoodIds: [],
+				servingGrams: {},
+				servingQuantities: {},
+				servingUnits: {},
+			},
+			cookie.fdcId,
+			[cookie],
+		);
+
+		expect(defaultState.servingQuantities[cookie.fdcId]).toBe(2);
+		expect(defaultState.servingUnits[cookie.fdcId]).toBe("item");
+		expect(defaultState.servingGrams[cookie.fdcId]).toBeUndefined();
 	});
 
 	it("keeps an explicitly entered zero", () => {

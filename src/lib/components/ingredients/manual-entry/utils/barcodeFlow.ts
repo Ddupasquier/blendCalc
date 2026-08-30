@@ -40,14 +40,14 @@ export type ManualEntryBarcodeDraftState = {
 	categoryOptionId: string;
 	categorySymbolKey: string;
 	servingLabel: string;
-	servingWeightGrams: number;
+	servingWeightGrams: number | null;
 	usesInternal100GramBasis: boolean;
 	serving?: FoodServing;
 	importedNutrients: FoodNutrient[];
 	manualNutrientValues: Record<number, number>;
-	useVolumeEquivalent: boolean;
-	volumeQuantity: number | null;
-	volumeUnit: ServingMeasureUnit;
+	useServingMeasure: boolean;
+	servingMeasureQuantity: number | null;
+	servingMeasureUnit: ServingMeasureUnit;
 	barcode: string;
 	barcodeSource: FoodItem["barcodeSource"];
 	reportedNutrientIds: number[];
@@ -240,19 +240,21 @@ export const getBarcodeDraftState = (
 		categoryOptionId: draft.categoryResolution?.categoryOptionId ?? "",
 		categorySymbolKey: draft.categoryResolution?.symbolKey ?? "generic",
 		servingLabel: usesInternal100GramBasis ? "" : draft.servingLabel,
-		servingWeightGrams: draft.servingWeightGrams,
+		servingWeightGrams:
+			Number.isFinite(draft.servingWeightGrams) &&
+			Number(draft.servingWeightGrams) > 0
+				? Number(draft.servingWeightGrams)
+				: null,
 		usesInternal100GramBasis,
 		serving: usesInternal100GramBasis ? undefined : draft.serving,
 		importedNutrients: validNutrients,
 		manualNutrientValues: Object.fromEntries(
 			validNutrients.map((nutrient) => [nutrient.nutrientId, nutrient.value]),
 		),
-		useVolumeEquivalent: Boolean(draft.volumeEquivalent),
-		volumeQuantity: draft.volumeEquivalent?.quantity ?? null,
-		volumeUnit:
-			draft.volumeEquivalent?.unit ??
-			getDefaultServingMeasureUnit("volume") ??
-			"",
+		useServingMeasure: Boolean(draft.serving?.amount && draft.serving?.unitKey),
+		servingMeasureQuantity: draft.serving?.amount ?? null,
+		servingMeasureUnit:
+			draft.serving?.unitKey ?? getDefaultServingMeasureUnit("volume") ?? "",
 		barcode: draft.barcode,
 		barcodeSource:
 			draft.source === "shared-catalog" ? "community" : draft.source,

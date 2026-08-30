@@ -49,6 +49,7 @@ type GenericFoodSearchRow = {
 	application_food_id: number | string;
 	dataset_key: string;
 	source_food_key: string;
+	measurement_basis: "per_100g" | "per_100ml";
 	description: string;
 	alternate_description: string | null;
 	food_group_name: string | null;
@@ -112,6 +113,7 @@ const mapNutrients = (
 	rows: GenericNutrientRow[],
 	sourceKey: GenericFoodSource,
 	sourceReference: string,
+	measurementBasis: GenericFoodSearchRow["measurement_basis"],
 ): FoodNutrient[] =>
 	rows.flatMap((row) => {
 		if (row.mappingStatus !== "canonical" || row.valueStatus !== "measured") {
@@ -138,6 +140,10 @@ const mapNutrients = (
 				nutrientName: row.nutrientName,
 				unitName: row.unitName,
 				value,
+				measurementBasis:
+					measurementBasis === "per_100ml"
+						? { kind: "volume" as const, quantity: 100, unitKey: "ml" }
+						: { kind: "mass" as const, quantity: 100, unitKey: "g" },
 				valueOrigin:
 					valueQualifier === "source-estimate"
 						? ("estimated" as const)
@@ -300,6 +306,7 @@ export const searchGenericFoods = async (
 			asRecordArray<GenericNutrientRow>(row.nutrients),
 			sourceKey,
 			sourceReference,
+			row.measurement_basis,
 		);
 		const nutrientSourceReview = mapNutrientSourceReview(
 			asRecordArray<GenericNutrientRow>(row.nutrients),
@@ -362,27 +369,15 @@ export const searchGenericFoods = async (
 			hasSourceServing: foodServings.length > 0,
 			fieldProvenance: {
 				productName: sourceField,
-				...(foodNutrients.length > 0
-					? { nutrition: sourceField }
-					: {}),
-				...(row.food_group_name?.trim()
-					? { categories: sourceField }
-					: {}),
-				...(foodServings.length > 0
-					? { serving: sourceField }
-					: {}),
-				...(hasSourceMetadata
-					? { sourceMetadata: sourceField }
-					: {}),
-				...(row.scientific_name?.trim()
-					? { scientificName: sourceField }
-					: {}),
+				...(foodNutrients.length > 0 ? { nutrition: sourceField } : {}),
+				...(row.food_group_name?.trim() ? { categories: sourceField } : {}),
+				...(foodServings.length > 0 ? { serving: sourceField } : {}),
+				...(hasSourceMetadata ? { sourceMetadata: sourceField } : {}),
+				...(row.scientific_name?.trim() ? { scientificName: sourceField } : {}),
 				...(row.alternate_description?.trim()
 					? { alternateDescription: sourceField }
 					: {}),
-				...(row.preparation?.trim()
-					? { preparation: sourceField }
-					: {}),
+				...(row.preparation?.trim() ? { preparation: sourceField } : {}),
 			},
 		};
 	});

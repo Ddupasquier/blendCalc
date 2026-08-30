@@ -4,6 +4,7 @@ import type { NutrientChartMetric, NutrientMeta } from "./nutrientTypes";
 import { getDefaultNutrientGoal, getNutrientTotal } from "./nutrientTotals";
 import type { MixGoalMap } from "$lib/utils/mix/goals/types";
 import type { MixGoalEvaluation } from "$lib/utils/mix/goals/goalEvaluation";
+import type { MixServingConversionMap } from "./nutrientTotals";
 
 const CHART_COLORS = {
 	atGoal: {
@@ -29,6 +30,7 @@ export const getNutrientChartMetrics = (
 	foods: FoodItem[],
 	nutrientGoals: MixGoalMap,
 	servingGrams: Record<number, number>,
+	servingConversions?: MixServingConversionMap,
 ): NutrientChartMetric[] => {
 	return nutrients.flatMap((nutrient) => {
 		const nutrientId = Number(nutrient.id);
@@ -42,20 +44,23 @@ export const getNutrientChartMetrics = (
 					? goal.targetAmount
 					: 1;
 		const hasComparablePositiveTarget =
-			goal.targetAmount > 0 ||
-			(reviewedReferenceGoal?.targetAmount ?? 0) > 0;
-		const total = getNutrientTotal(foods, nutrientId, servingGrams);
+			goal.targetAmount > 0 || (reviewedReferenceGoal?.targetAmount ?? 0) > 0;
+		const total = getNutrientTotal(
+			foods,
+			nutrientId,
+			servingGrams,
+			servingConversions,
+		);
 
 		return [
 			{
 				configuredGoalToReferenceGoalRatio:
 					goal.targetAmount / referenceTargetAmount,
-				actualAmountToReferenceGoalRatio:
-					hasComparablePositiveTarget
-						? total / referenceTargetAmount
-						: total > 0
-							? 1
-							: 0,
+				actualAmountToReferenceGoalRatio: hasComparablePositiveTarget
+					? total / referenceTargetAmount
+					: total > 0
+						? 1
+						: 0,
 			},
 		];
 	});
@@ -66,9 +71,7 @@ const getHighestConfiguredGoalToReferenceGoalRatio = (
 ) => {
 	const highestConfiguredGoalRatio = Math.max(
 		0,
-		...metrics.map(
-			(metric) => metric.configuredGoalToReferenceGoalRatio,
-		),
+		...metrics.map((metric) => metric.configuredGoalToReferenceGoalRatio),
 	);
 
 	return highestConfiguredGoalRatio > 0 ? highestConfiguredGoalRatio : 1;
@@ -77,18 +80,14 @@ const getHighestConfiguredGoalToReferenceGoalRatio = (
 export const getChartValues = (metrics: NutrientChartMetric[]) => {
 	const referenceRatio = getHighestConfiguredGoalToReferenceGoalRatio(metrics);
 	return metrics.map((metric) =>
-		clampChartValue(
-			metric.actualAmountToReferenceGoalRatio / referenceRatio,
-		),
+		clampChartValue(metric.actualAmountToReferenceGoalRatio / referenceRatio),
 	);
 };
 
 export const getGoalValues = (metrics: NutrientChartMetric[]) => {
 	const referenceRatio = getHighestConfiguredGoalToReferenceGoalRatio(metrics);
 	return metrics.map((metric) =>
-		clampChartValue(
-			metric.configuredGoalToReferenceGoalRatio / referenceRatio,
-		),
+		clampChartValue(metric.configuredGoalToReferenceGoalRatio / referenceRatio),
 	);
 };
 

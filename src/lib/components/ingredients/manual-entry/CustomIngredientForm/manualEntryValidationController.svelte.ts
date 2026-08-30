@@ -1,6 +1,6 @@
 import {
 	manualEntrySteps,
-	volumeAmountRequiredMessage,
+	servingMeasureAmountRequiredMessage,
 	type FoodCategoryPickerStatus,
 	type StepValidationItem,
 	type ManualEntryStepId,
@@ -69,11 +69,20 @@ export const createManualEntryValidationController = ({
 	const requiresNutrientRelationshipValidation = $derived(
 		hasUserEnteredNutrients || form.data.importedNutrients.length > 0,
 	);
-	const requiresServingWeight = $derived(
+	const hasExactServingWeight = $derived(
+		Number.isFinite(form.data.servingWeightGrams) &&
+			Number(form.data.servingWeightGrams) > 0,
+	);
+	const hasExactServingMeasure = $derived(
+		form.data.useServingMeasure &&
+			Number.isFinite(form.data.servingMeasureQuantity) &&
+			Number(form.data.servingMeasureQuantity) > 0 &&
+			Boolean(form.data.servingMeasureUnit),
+	);
+	const requiresServingMeasurement = $derived(
 		(!form.data.usesInternal100GramBasis &&
 			disclosurePolicy.requiresStandardNutrition) ||
-			hasUserEnteredNutrients ||
-			form.data.useVolumeEquivalent,
+			hasUserEnteredNutrients,
 	);
 	const nutrientRelationshipValidationItems = $derived<StepValidationItem[]>(
 		validateNutrientRelationshipRules(
@@ -112,15 +121,14 @@ export const createManualEntryValidationController = ({
 	const validationItems = $derived<StepValidationItem[]>(
 		buildManualEntryValidationItems({
 			normalizedName,
-			servingWeightGrams: form.data.usesInternal100GramBasis
-				? null
-				: form.data.servingWeightGrams,
-			requiresServingWeight,
+			requiresServingMeasurement,
+			hasExactServingWeight,
+			hasExactServingMeasure,
 			requiresAlcoholByVolume: disclosurePolicy.requiresAlcoholByVolume,
 			alcoholByVolumePercent: form.data.alcoholByVolume?.percent ?? null,
-			useVolumeEquivalent: form.data.useVolumeEquivalent,
-			volumeQuantity: form.data.volumeQuantity,
-			volumeAmountRequiredMessage,
+			useServingMeasure: form.data.useServingMeasure,
+			servingMeasureQuantity: form.data.servingMeasureQuantity,
+			servingMeasureAmountRequiredMessage,
 			activeCategory: form.data.category,
 			activeCategoryOptionId: form.data.categoryOptionId,
 			loadingCategoryOptions: state.loadingCategoryOptions,
@@ -129,13 +137,11 @@ export const createManualEntryValidationController = ({
 			loadingNutrientRelationshipRules:
 				requiresNutrientRelationshipValidation &&
 				referenceData.state.loadingNutrientRelationshipRules,
-			nutrientRelationshipRuleError:
-				requiresNutrientRelationshipValidation
-					? referenceData.state.nutrientRelationshipRuleError
-					: "",
+			nutrientRelationshipRuleError: requiresNutrientRelationshipValidation
+				? referenceData.state.nutrientRelationshipRuleError
+				: "",
 			manualEntryNutrientAvailabilityItems: nutrientAvailabilityItems,
-			requiredManualNutrientValidationItems:
-				requiredNutrientValidationItems,
+			requiredManualNutrientValidationItems: requiredNutrientValidationItems,
 			nutrientRelationshipValidationItems,
 		}),
 	);
@@ -235,9 +241,7 @@ export const createManualEntryValidationController = ({
 		return applyNavigationResult(result);
 	};
 
-	const goNext = async (
-		beforeIdentityLeave?: () => void | Promise<void>,
-	) => {
+	const goNext = async (beforeIdentityLeave?: () => void | Promise<void>) => {
 		if (form.data.activeStep === "identity" && beforeIdentityLeave) {
 			await beforeIdentityLeave();
 		}
@@ -291,8 +295,8 @@ export const createManualEntryValidationController = ({
 		get disclosurePolicy() {
 			return disclosurePolicy;
 		},
-		get requiresServingWeight() {
-			return requiresServingWeight;
+		get requiresServingMeasurement() {
+			return requiresServingMeasurement;
 		},
 		get normalizedName() {
 			return normalizedName;

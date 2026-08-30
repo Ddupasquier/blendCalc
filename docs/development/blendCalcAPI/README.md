@@ -111,6 +111,16 @@ result set once without page overlap.
 Route tests validate every status against the exact OpenAPI schema. Undeclared response
 fields are rejected rather than silently entering blendCalcAPI v1.
 
+### Nutrient Basis And Provenance
+
+Product nutrients remain normalized to `amountPer100g` for stable API comparisons. A
+package-serving observation is converted only when its exact gram weight or another
+verified mass conversion is available. The normalized value is then labeled `derived`,
+while `quality.sourceValueStatus` continues to describe the untouched source
+observation and `quality.derivationMethod` records
+`exact-native-basis-to-100g`. Missing conversion evidence returns `null`; it never
+creates an estimated mass value.
+
 ## Response Targets
 
 The internal API has measured p95 response budgets for representative authenticated

@@ -4,7 +4,7 @@ import {
 	type ManualEntryCatalogMessageTone,
 } from "$lib/components/ingredients/manual-entry/utils/submitFlow";
 import { getManualEntrySubmitState } from "$lib/components/ingredients/manual-entry/utils/submitValidation";
-import { volumeAmountRequiredMessage } from "$lib/components/ingredients/manual-entry/formTypes";
+import { servingMeasureAmountRequiredMessage } from "$lib/components/ingredients/manual-entry/formTypes";
 import type { ManualEntryFormState } from "./manualEntryFormState.svelte";
 import type { ManualEntryReferenceDataController } from "./manualEntryReferenceDataController.svelte";
 import type { ManualEntryValidationController } from "./manualEntryValidationController.svelte";
@@ -58,9 +58,9 @@ export const createManualEntrySubmissionController = ({
 			loadingNutrientRelationshipRules:
 				referenceData.state.loadingNutrientRelationshipRules,
 			blockingValidation: validation.blockingValidation,
-			useVolumeEquivalent: form.data.useVolumeEquivalent,
-			volumeQuantity: form.data.volumeQuantity,
-			volumeAmountRequiredMessage,
+			useServingMeasure: form.data.useServingMeasure,
+			servingMeasureQuantity: form.data.servingMeasureQuantity,
+			servingMeasureAmountRequiredMessage,
 			barcode: form.data.barcode,
 			requiresCatalogEvidence: barcode.requiresCatalogEvidence,
 			requiresFreshFrontPhoto:
@@ -95,9 +95,9 @@ export const createManualEntrySubmissionController = ({
 				servingLabel: form.getResolvedServingLabel(),
 				servingWeightGrams: form.data.servingWeightGrams,
 				serving: form.data.serving,
-				useVolumeEquivalent: form.data.useVolumeEquivalent,
-				volumeQuantity: form.data.volumeQuantity,
-				volumeUnit: form.data.volumeUnit,
+				useServingMeasure: form.data.useServingMeasure,
+				servingMeasureQuantity: form.data.servingMeasureQuantity,
+				servingMeasureUnit: form.data.servingMeasureUnit,
 				barcode: normalizedBarcode,
 				barcodeSource: form.data.barcodeSource,
 				barcodeProvenance: form.data.barcodeProvenance,
@@ -150,7 +150,9 @@ export const createManualEntrySubmissionController = ({
 				hasSourceServing: form.data.usesInternal100GramBasis
 					? false
 					: form.data.barcodeSource === "manual"
-						? form.data.useVolumeEquivalent
+						? form.data.useServingMeasure ||
+							(Number.isFinite(form.data.servingWeightGrams) &&
+								Number(form.data.servingWeightGrams) > 0)
 						: form.data.barcodeReferenceSourceDraft?.hasSourceServing,
 				importedNutrients: form.data.importedNutrients,
 				manualEntryNutrientFields: validation.nutrientFields,

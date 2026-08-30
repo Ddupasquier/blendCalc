@@ -92,11 +92,20 @@ const formatPackageQuantity = (food: FoodItem) => {
 
 const formatServing = (serving: FoodServing) => {
 	const label = cleanText(serving.label);
-	const grams = `${formatNumber(serving.gramWeight)}g`;
+	const grams = Number.isFinite(serving.gramWeight)
+		? `${formatNumber(Number(serving.gramWeight))}g`
+		: "";
+	const milliliters = Number.isFinite(serving.milliliterVolume)
+		? `${formatNumber(Number(serving.milliliterVolume))}mL`
+		: "";
+	const exactAmount = grams || milliliters;
 	return label &&
-		!label.toLocaleLowerCase("en-US").includes(grams.toLocaleLowerCase("en-US"))
-		? `${label} · ${grams}`
-		: label || grams;
+		exactAmount &&
+		!label
+			.toLocaleLowerCase("en-US")
+			.includes(exactAmount.toLocaleLowerCase("en-US"))
+		? `${label} · ${exactAmount}`
+		: label || exactAmount || "Serving";
 };
 
 const formatDensity = (food: FoodItem) => {
@@ -169,12 +178,13 @@ const getServingRows = (food: FoodItem) => {
 	const normalizedServings = [...(food.foodServings ?? [])]
 		.filter(
 			(serving) =>
-				Number.isFinite(serving.gramWeight) && serving.gramWeight > 0,
+				(Number.isFinite(serving.gramWeight) &&
+					Number(serving.gramWeight) > 0) ||
+				(Number.isFinite(serving.milliliterVolume) &&
+					Number(serving.milliliterVolume) > 0) ||
+				(Number.isFinite(serving.amount) && Number(serving.amount) > 0),
 		)
-		.sort(
-			(left, right) =>
-				Number(right.isPrimary) - Number(left.isPrimary),
-		)
+		.sort((left, right) => Number(right.isPrimary) - Number(left.isPrimary))
 		.flatMap((serving, index) => {
 			const prefix = serving.isPrimary
 				? "Primary serving"
@@ -182,7 +192,9 @@ const getServingRows = (food: FoodItem) => {
 			const sourceMeasure = [
 				cleanText(serving.measureType),
 				cleanText(serving.sourceMeasureKey),
-			].filter(Boolean).join(" · ");
+			]
+				.filter(Boolean)
+				.join(" · ");
 			return [
 				{ label: prefix, value: formatServing(serving) },
 				{ label: `${prefix} origin`, value: formatServingOrigin(serving) },
@@ -191,7 +203,9 @@ const getServingRows = (food: FoodItem) => {
 					value: [
 						formatServingGramWeightMethod(serving),
 						cleanText(serving.calculationBasis),
-					].filter(Boolean).join(" · "),
+					]
+						.filter(Boolean)
+						.join(" · "),
 				},
 				{ label: `${prefix} source measure`, value: sourceMeasure },
 			];
@@ -252,9 +266,7 @@ const getSourceRows = (food: FoodItem) => {
 		},
 		{
 			label: "Available since",
-			value: formatDate(
-				food.sourceMetadata?.availableAt ?? food.availableDate,
-			),
+			value: formatDate(food.sourceMetadata?.availableAt ?? food.availableDate),
 		},
 		{
 			label: "Last updated",
@@ -262,7 +274,7 @@ const getSourceRows = (food: FoodItem) => {
 				food.sourceModifiedDate ??
 					food.sourceMetadata?.updatedAt ??
 					food.sourceMetadata?.modifiedAt ??
-				food.modifiedDate,
+					food.modifiedDate,
 			),
 		},
 		{
@@ -337,18 +349,18 @@ const formatFieldSource = (
 	if (!source?.source?.trim()) return "";
 	const sourceLabel = formatFoodMetadataKey(source.source);
 	const sourceReference = cleanText(source.sourceReference);
-	return sourceReference
-		? `${sourceLabel} · ${sourceReference}`
-		: sourceLabel;
+	return sourceReference ? `${sourceLabel} · ${sourceReference}` : sourceLabel;
 };
 
 const getFieldSourceRows = (food: FoodItem) =>
-	(Object.entries(food.fieldProvenance ?? {}) as Array<
-		[
-			FoodProvenanceField,
-			NonNullable<FoodItem["fieldProvenance"]>[FoodProvenanceField],
-		]
-	>)
+	(
+		Object.entries(food.fieldProvenance ?? {}) as Array<
+			[
+				FoodProvenanceField,
+				NonNullable<FoodItem["fieldProvenance"]>[FoodProvenanceField],
+			]
+		>
+	)
 		.filter(([, source]) => Boolean(source))
 		.map(([field, source]) => ({
 			label: FIELD_LABELS[field],
@@ -374,6 +386,6 @@ export const getProductInformation = (food: FoodItem): ProductInformation => ({
 	].sort((left, right) =>
 		`${left.datasetName}:${left.datasetVersion}:${left.sourceUrl}`.localeCompare(
 			`${right.datasetName}:${right.datasetVersion}:${right.sourceUrl}`,
-		)
+		),
 	),
 });

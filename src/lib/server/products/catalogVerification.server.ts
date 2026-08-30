@@ -8,6 +8,7 @@ import type {
 	FoodFieldSource,
 	FoodTrackedField,
 } from "$lib/utils/food/types";
+import { getPrimaryFoodServing } from "$lib/utils/food/servings/foodServings";
 import {
 	compareNormalizedFoods,
 	normalizeComparisonText,
@@ -128,13 +129,15 @@ const addFoodProvenance = (
 			verificationMethod,
 		});
 	}
-	if (food.customServingWeightGrams || food.servingSize) {
-		const value = food.customServingWeightGrams ?? food.servingSize ?? 100;
+	const primaryServing = getPrimaryFoodServing(food);
+	const servingWeightGrams =
+		primaryServing?.gramWeight ?? food.customServingWeightGrams;
+	if (servingWeightGrams !== undefined) {
 		fields.push({
 			fieldPath: "servingWeightGrams",
 			observationKey,
-			sourceValue: value,
-			normalizedValue: value,
+			sourceValue: servingWeightGrams,
+			normalizedValue: servingWeightGrams,
 			confidence,
 			verificationMethod,
 		});
@@ -161,6 +164,16 @@ const addFoodProvenance = (
 		include: boolean;
 		value: Json;
 	}> = [
+		{
+			fieldPath: "serving",
+			include: Boolean(primaryServing),
+			value: toJson({
+				servingSize: food.servingSize ?? null,
+				servingSizeUnit: food.servingSizeUnit ?? null,
+				householdServingFullText: food.householdServingFullText ?? null,
+				foodServings: food.foodServings ?? [],
+			}),
+		},
 		{
 			fieldPath: "categories",
 			include: Boolean(food.foodCategory?.trim() || food.categories?.length),

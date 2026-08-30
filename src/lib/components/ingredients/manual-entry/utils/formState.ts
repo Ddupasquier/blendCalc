@@ -31,6 +31,8 @@ import { createFullImagePlacement } from "$lib/utils/food/images/imagePlacement"
 import type { ImagePlacementValue } from "$lib/utils/food/images/types";
 import type { CatalogSubmissionIntent } from "$lib/utils/products/catalog";
 import { getPrimaryFoodServing } from "$lib/utils/food/servings/foodServings";
+import { getFoodNutrientAmountForServingConversion } from "$lib/utils/food/nutrients/foodNutrients";
+import { convertFoodServingMultiplier } from "$lib/utils/serving/servingAmount";
 import { resolveFoodIdentityType } from "$lib/utils/food/identity/foodIdentity";
 
 export type ManualEntryFormResetState = {
@@ -45,9 +47,9 @@ export type ManualEntryFormResetState = {
 	servingWeightGrams: number | null;
 	usesInternal100GramBasis: boolean;
 	serving?: FoodServing;
-	volumeQuantity: number | null;
-	volumeUnit: ServingMeasureUnit;
-	useVolumeEquivalent: boolean;
+	servingMeasureQuantity: number | null;
+	servingMeasureUnit: ServingMeasureUnit;
+	useServingMeasure: boolean;
 	manualNutrientValues: NutrientValueState;
 	manualTouchedNutrientIds: Record<number, true>;
 	validationAttemptedSteps: ValidationAttemptState;
@@ -103,9 +105,9 @@ export const getManualEntryFormResetState = (): ManualEntryFormResetState => ({
 	servingWeightGrams: null,
 	usesInternal100GramBasis: false,
 	serving: undefined,
-	volumeQuantity: null,
-	volumeUnit: getDefaultServingMeasureUnit("volume") ?? "",
-	useVolumeEquivalent: false,
+	servingMeasureQuantity: null,
+	servingMeasureUnit: getDefaultServingMeasureUnit("volume") ?? "",
+	useServingMeasure: false,
 	manualNutrientValues: {},
 	manualTouchedNutrientIds: {},
 	validationAttemptedSteps: {},
@@ -158,13 +160,33 @@ export const getManualEntryFormStateFromFood = (
 	const servingWeightGrams =
 		serving?.gramWeight ??
 		food.customServingWeightGrams ??
-		food.servingSize ??
-		100;
+		(food.servingSizeUnit?.toLowerCase() === "g"
+			? food.servingSize
+			: undefined) ??
+		null;
 	const usesInternal100GramBasis = food.hasSourceServing === false;
-	const nutrientsPerServing = food.foodNutrients.map((nutrient) => ({
-		...nutrient,
-		value: (nutrient.value * servingWeightGrams) / 100,
-	}));
+	const servingConversion = serving
+		? convertFoodServingMultiplier(serving, 1)
+		: null;
+	const nutrientsPerServing = food.foodNutrients.flatMap((nutrient) => {
+		if (usesInternal100GramBasis) return [{ ...nutrient }];
+		if (!servingConversion) return [];
+		const value = getFoodNutrientAmountForServingConversion(
+			food,
+			nutrient.nutrientId,
+			servingConversion,
+		);
+		return value === null ? [] : [{ ...nutrient, value }];
+	});
+	const servingMeasureQuantity =
+		serving?.amount ?? serving?.milliliterVolume ?? null;
+	const servingMeasureUnit =
+		serving?.unitKey ??
+		(serving?.milliliterVolume
+			? getDefaultServingMeasureUnit("volume")
+			: null) ??
+		getDefaultServingMeasureUnit("volume") ??
+		"";
 	const primaryCategory =
 		food.foodCategory ??
 		food.categories?.find((category) => category.trim()) ??
@@ -183,10 +205,16 @@ export const getManualEntryFormStateFromFood = (
 			: (serving?.label ??
 				food.customServingLabel ??
 				food.householdServingFullText ??
-				`${servingWeightGrams}g`),
+				(servingWeightGrams ? `${servingWeightGrams}g` : "Serving")),
 		servingWeightGrams,
 		usesInternal100GramBasis,
 		serving: usesInternal100GramBasis ? undefined : (serving ?? undefined),
+		servingMeasureQuantity,
+		servingMeasureUnit,
+		useServingMeasure:
+			Number.isFinite(servingMeasureQuantity) &&
+			Number(servingMeasureQuantity) > 0 &&
+			Boolean(servingMeasureUnit),
 		importedNutrients: nutrientsPerServing,
 		manualNutrientValues: Object.fromEntries(
 			nutrientsPerServing.map((nutrient) => [

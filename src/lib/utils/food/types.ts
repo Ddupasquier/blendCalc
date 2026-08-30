@@ -24,6 +24,24 @@ export type FoodNutrientMappingStatus =
 
 export type FoodNutrientValueQualifier = "source-estimate";
 
+export type FoodNutrientMeasurementBasis =
+	| {
+			kind: "mass";
+			quantity: number;
+			unitKey: string;
+	  }
+	| {
+			kind: "volume";
+			quantity: number;
+			unitKey: string;
+	  }
+	| {
+			kind: "serving";
+			quantity: number;
+			unitKey: string;
+			servingLabel: string;
+	  };
+
 /** A single accepted numeric nutrient value from any supported food source. */
 export interface FoodNutrient {
 	nutrientId: number;
@@ -31,6 +49,8 @@ export interface FoodNutrient {
 	nutrientNumber: string;
 	unitName: string;
 	value: number;
+	/** Omitted for legacy values, which are always normalized per 100 grams. */
+	measurementBasis?: FoodNutrientMeasurementBasis;
 	valueOrigin?: "reported" | "estimated" | "derived";
 	source?:
 		| "usda"
@@ -130,7 +150,8 @@ export type FoodServingGramWeightMethod =
 
 export interface FoodServing {
 	label: string;
-	gramWeight: number;
+	gramWeight?: number;
+	milliliterVolume?: number;
 	amount?: number;
 	unitKey?: string;
 	isPrimary: boolean;

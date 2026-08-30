@@ -445,6 +445,72 @@ describe("blendCalcAPI v1 catalog mapping", () => {
 		);
 	});
 
+	it("derives API per-100-gram values only from exact package-serving mass", () => {
+		const packageServingRecord = structuredClone(record);
+		packageServingRecord.food.foodNutrients = [
+			{
+				nutrientId: 1008,
+				nutrientName: "Energy",
+				nutrientNumber: "208",
+				unitName: "KCAL",
+				value: 80,
+				valueOrigin: "reported",
+				valueStatus: "reported",
+				standardError: 3,
+				measurementBasis: {
+					kind: "serving",
+					quantity: 1,
+					unitKey: "serving",
+					servingLabel: "1 cookie",
+				},
+				source: "usda",
+				sourceReference: "123",
+				confidence: "source-verified",
+			},
+		];
+		packageServingRecord.food.foodServings = [
+			{
+				label: "1 cookie (30g)",
+				gramWeight: 30,
+				amount: 1,
+				unitKey: "item",
+				isPrimary: true,
+				origin: "package-label",
+				gramWeightMethod: "source-reported",
+				source: "usda",
+				sourceReference: "123",
+				confidence: "source-verified",
+			},
+		];
+
+		const product = mapApprovedCatalogRecordToBlendCalcAPIV1Product(
+			packageServingRecord,
+			defaultAttributionCatalog(),
+		);
+
+		expect(product.nutrients[0]?.amountPer100g).toBeCloseTo(266.6667, 4);
+		expect(product.nutrients[0]?.valueStatus).toBe("derived");
+		expect(product.nutrients[0]?.quality).toMatchObject({
+			sourceValueStatus: "reported",
+			standardError: 10,
+			derivationMethod: "exact-native-basis-to-100g",
+		});
+		expect(product.servings[0]).toMatchObject({
+			label: "1 cookie (30g)",
+			grams: 30,
+			gramWeightMethod: "source-reported",
+		});
+
+		packageServingRecord.food.foodServings[0]!.gramWeightMethod = "unknown";
+		const productWithoutExactMass =
+			mapApprovedCatalogRecordToBlendCalcAPIV1Product(
+				packageServingRecord,
+				defaultAttributionCatalog(),
+			);
+
+		expect(productWithoutExactMass.nutrients[0]?.amountPer100g).toBeNull();
+	});
+
 	it("returns field sources, revision dates, and licensed images without private paths", () => {
 		const product = mapApprovedCatalogRecordToBlendCalcAPIV1Product(
 			record,

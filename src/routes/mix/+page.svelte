@@ -55,6 +55,7 @@
 		getEmptyServingState,
 		getMixStateSnapshot,
 		getServingConversion as getServingConversionFromState,
+		getServingConversions as getServingConversionsFromState,
 		getServingQuantity as getServingQuantityFromState,
 		getServingUnit as getServingUnitFromState,
 		getStateWithGramServing,
@@ -259,6 +260,13 @@
 	const selectedFoods = $derived(
 		allIngredientItems.filter((item) => selectedFoodIds.includes(item.fdcId)),
 	);
+	const servingConversions = $derived(
+		getServingConversionsFromState(
+			selectedFoods,
+			servingQuantities,
+			servingUnits,
+		),
+	);
 	let recipeSavedDelightMessage = $state<string | null>(null);
 	const handleRecipeSaved = () => {
 		recipeSavedDelightMessage =
@@ -327,6 +335,7 @@
 			foods: selectedFoods,
 			goals: goalConfiguration.state.goals,
 			servingGrams,
+			servingConversions,
 		}),
 	);
 	const mixDelightMessage = $derived(
@@ -342,7 +351,12 @@
 	);
 
 	const getNutrientTotal = (nutrientId: number) => {
-		return calculateNutrientTotal(selectedFoods, nutrientId, servingGrams);
+		return calculateNutrientTotal(
+			selectedFoods,
+			nutrientId,
+			servingGrams,
+			servingConversions,
+		);
 	};
 
 	const loadCloudBackedIngredientLists = async () => {
