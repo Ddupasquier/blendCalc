@@ -54,6 +54,9 @@ describe("ingredient warning card architecture", () => {
 		expect(warningFrame).toContain("data-tone={tone}");
 		expect(warningFrameStyles).toContain("border: 3px solid transparent");
 		expect(warningFrameStyles).toContain(
+			"--card-warning-frame-fade-angle: 45deg",
+		);
+		expect(warningFrameStyles).toContain(
 			"--card-warning-frame-solid-stop: 16%",
 		);
 		expect(warningFrameStyles).toContain("--card-warning-frame-fade-end: 55%");
