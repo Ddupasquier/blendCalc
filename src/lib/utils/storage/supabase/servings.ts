@@ -1,6 +1,7 @@
 import type { Database } from "$lib/types/database.types";
 import type { NormalizedServingRow } from "$lib/utils/food/servings/normalizedServings";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { applyDatabaseQueryAbortSignal } from "./databaseQueryAbortSignal";
 
 export type FoodServingParentColumn =
 	"user_food_list_item_id" | "custom_food_id" | "shared_product_id";
@@ -47,6 +48,7 @@ export const readFoodServingsByParent = async (
 	supabase: SupabaseClient<Database>,
 	parentColumn: FoodServingParentColumn,
 	parentIds: string[],
+	databaseAbortSignal?: AbortSignal,
 ): Promise<Map<string, NormalizedServingRow[]>> => {
 	const uniqueParentIds = [...new Set(parentIds.filter(Boolean))];
 	if (uniqueParentIds.length === 0) return new Map();
@@ -58,12 +60,16 @@ export const readFoodServingsByParent = async (
 			.select(
 				"user_food_list_item_id, custom_food_id, shared_product_id, serving_order, label, gram_weight, milliliter_volume, amount, unit_key, is_primary, measure_type, is_household_measure, source_measure_key, origin, gram_weight_method, calculation_basis, source, source_reference, confidence",
 			);
-		const response =
+		const databaseQuery =
 			parentColumn === "user_food_list_item_id"
-				? await baseQuery.in("user_food_list_item_id", parentIdChunk)
+				? baseQuery.in("user_food_list_item_id", parentIdChunk)
 				: parentColumn === "custom_food_id"
-					? await baseQuery.in("custom_food_id", parentIdChunk)
-					: await baseQuery.in("shared_product_id", parentIdChunk);
+					? baseQuery.in("custom_food_id", parentIdChunk)
+					: baseQuery.in("shared_product_id", parentIdChunk);
+		const response = await applyDatabaseQueryAbortSignal(
+			databaseQuery,
+			databaseAbortSignal,
+		);
 		if (response.error) {
 			if (
 				response.error.code !== "42703" &&
@@ -76,12 +82,16 @@ export const readFoodServingsByParent = async (
 				.select(
 					"user_food_list_item_id, custom_food_id, shared_product_id, serving_order, label, gram_weight, amount, unit_key, is_primary, measure_type, is_household_measure, source_measure_key, origin, gram_weight_method, calculation_basis, source, source_reference, confidence",
 				);
-			const legacyResponse =
+			const legacyDatabaseQuery =
 				parentColumn === "user_food_list_item_id"
-					? await legacyQuery.in("user_food_list_item_id", parentIdChunk)
+					? legacyQuery.in("user_food_list_item_id", parentIdChunk)
 					: parentColumn === "custom_food_id"
-						? await legacyQuery.in("custom_food_id", parentIdChunk)
-						: await legacyQuery.in("shared_product_id", parentIdChunk);
+						? legacyQuery.in("custom_food_id", parentIdChunk)
+						: legacyQuery.in("shared_product_id", parentIdChunk);
+			const legacyResponse = await applyDatabaseQueryAbortSignal(
+				legacyDatabaseQuery,
+				databaseAbortSignal,
+			);
 			if (legacyResponse.error) throw legacyResponse.error;
 			rows.push(
 				...(legacyResponse.data.map((row) => ({

@@ -17,6 +17,11 @@ const sourceRows = [
 	},
 ];
 
+const createAbortableDatabaseResult = <Result>(result: Result) => {
+	const promise = Promise.resolve(result);
+	return Object.assign(promise, { abortSignal: () => promise });
+};
+
 const createSupabase = () => {
 	let sourceReads = 0;
 	let datasetReads = 0;
@@ -25,7 +30,7 @@ const createSupabase = () => {
 			select: () => {
 				if (table === "generic_food_datasets") {
 					datasetReads += 1;
-					return Promise.resolve(
+					return createAbortableDatabaseResult(
 						datasetReads === 1
 							? { data: [], error: null }
 							: { data: null, error: new Error("dataset outage") },
@@ -34,7 +39,7 @@ const createSupabase = () => {
 				return {
 					eq: () => {
 						sourceReads += 1;
-						return Promise.resolve(
+						return createAbortableDatabaseResult(
 							sourceReads === 1
 								? { data: sourceRows, error: null }
 								: { data: null, error: new Error("source outage") },
@@ -69,10 +74,16 @@ describe("blendCalcAPI attribution resilience", () => {
 			from: (table: string) => ({
 				select: () =>
 					table === "generic_food_datasets"
-						? Promise.resolve({ data: null, error: new Error("outage") })
+						? createAbortableDatabaseResult({
+								data: null,
+								error: new Error("outage"),
+							})
 						: {
 								eq: () =>
-									Promise.resolve({ data: null, error: new Error("outage") }),
+									createAbortableDatabaseResult({
+										data: null,
+										error: new Error("outage"),
+									}),
 							},
 			}),
 		} as unknown as SupabaseClient<Database>;
