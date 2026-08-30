@@ -1380,18 +1380,26 @@ test("nutrition details separate personalized warnings from source allergen disc
 				exact: true,
 			}),
 		).toBeVisible();
+		const dietaryConsiderationsHeading = nutritionDetails.getByRole("heading", {
+			name: "Dietary considerations",
+		});
+		await expect(dietaryConsiderationsHeading).toBeVisible();
 		await expect(
-			nutritionDetails.getByRole("heading", {
-				name: "Dietary considerations",
-			}),
-		).toHaveCount(0);
+			dietaryConsiderationsHeading
+				.locator("xpath=..")
+				.getByText("Alcohol", { exact: true }),
+		).toBeVisible();
 
 		const summaryOrder = await nutritionDetails.evaluate((element) => {
-			const headingOrder = ["Ingredients", "Contains", "Dietary labels"].map(
-				(name) =>
-					Array.from(element.querySelectorAll("h2")).find(
-						(heading) => heading.textContent?.trim() === name,
-					),
+			const headingOrder = [
+				"Ingredients",
+				"Contains",
+				"Dietary labels",
+				"Dietary considerations",
+			].map((name) =>
+				Array.from(element.querySelectorAll("h2")).find(
+					(heading) => heading.textContent?.trim() === name,
+				),
 			);
 			return headingOrder.every((heading, index) => {
 				if (!heading) return false;
