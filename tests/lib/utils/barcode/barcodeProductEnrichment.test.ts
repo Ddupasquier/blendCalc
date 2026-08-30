@@ -9,6 +9,41 @@ import {
 } from "$lib/utils/barcode/barcodeProductEnrichment";
 import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
 import type { FoodNutrient, FoodImageAsset } from "$lib/utils/food/types";
+import type { NutrientRelationshipRule } from "$lib/utils/food/nutrients/nutrientRelationshipRules";
+
+const addedSugarRelationshipRule: NutrientRelationshipRule = {
+	id: "added-sugars-not-above-total-sugars",
+	parentNutrientId: 2000,
+	childNutrientId: 1235,
+	parentLabel: "total sugars",
+	childLabel: "added sugars",
+	relationship: "child_must_not_exceed_parent",
+	severity: "error",
+	issueCode: "NUTRIENT_CHILD_EXCEEDS_PARENT",
+	requiresParent: true,
+	tolerance: 0.01,
+};
+
+const reportedNutrient = (
+	nutrientId: number,
+	value: number,
+	source: NonNullable<FoodNutrient["source"]>,
+): FoodNutrient => ({
+	nutrientId,
+	nutrientName:
+		nutrientId === 2000
+			? "Sugars, total including NLEA"
+			: nutrientId === 1235
+				? "Sugars, added"
+				: `Nutrient ${nutrientId}`,
+	nutrientNumber: String(nutrientId),
+	unitName: "G",
+	value,
+	valueOrigin: "reported",
+	source,
+	sourceReference: source === "usda" ? "2040099" : "8801005523455",
+	confidence: "unknown",
+});
 
 const nutrient = (
 	value: number,
@@ -40,8 +75,7 @@ const makeDraft = (
 	reportedNutrientIds: [1079],
 	categories: [],
 	source,
-	sourceLabel:
-		source === "usda" ? "USDA FoodData Central" : "Open Food Facts",
+	sourceLabel: source === "usda" ? "USDA FoodData Central" : "Open Food Facts",
 	sourceReference: source === "usda" ? "2658692" : "00021130493609",
 	fieldProvenance: {
 		nutrition: {
@@ -87,9 +121,9 @@ describe("barcode product field enrichment", () => {
 				["reviewed-alcohol-profile"],
 			),
 		).toBe(true);
-		expect(needsAlcoholBarcodeProductSupplement(makeDraft("open-food-facts"))).toBe(
-			false,
-		);
+		expect(
+			needsAlcoholBarcodeProductSupplement(makeDraft("open-food-facts")),
+		).toBe(false);
 	});
 
 	it("tracks missing nutrition, image, category, and serving independently", () => {
@@ -102,8 +136,8 @@ describe("barcode product field enrichment", () => {
 			serving: true,
 			ingredients: true,
 			allergens: true,
-				traces: true,
-				precautionaryStatements: true,
+			traces: true,
+			precautionaryStatements: true,
 			dietaryTags: true,
 			labels: true,
 			structuredIngredients: true,
@@ -136,8 +170,8 @@ describe("barcode product field enrichment", () => {
 			ingredients: true,
 			ingredientList: true,
 			allergens: true,
-				traces: true,
-				precautionaryStatements: true,
+			traces: true,
+			precautionaryStatements: true,
 			dietaryTags: true,
 			labels: true,
 			structuredIngredients: true,
@@ -193,12 +227,14 @@ describe("barcode product field enrichment", () => {
 		expect(getSupplementedBarcodeProductFields(primary, supplement)).toContain(
 			"brandOwner",
 		);
-		expect(mergeMissingBarcodeProductFields(primary, supplement)).toMatchObject({
-			brandOwner: "Signature Select",
-			fieldProvenance: {
-				brandOwner: { source: "open-food-facts" },
+		expect(mergeMissingBarcodeProductFields(primary, supplement)).toMatchObject(
+			{
+				brandOwner: "Signature Select",
+				fieldProvenance: {
+					brandOwner: { source: "open-food-facts" },
+				},
 			},
-		});
+		);
 	});
 
 	it("keeps USDA nutrition while filling image, category, and serving fields", () => {
@@ -261,7 +297,9 @@ describe("barcode product field enrichment", () => {
 			value: 2.5,
 			source: "usda",
 		});
-		expect(result.nutrients.find((item) => item.nutrientId === 1003)).toMatchObject({
+		expect(
+			result.nutrients.find((item) => item.nutrientId === 1003),
+		).toMatchObject({
 			value: 1,
 			source: "open-food-facts",
 		});
@@ -313,6 +351,122 @@ describe("barcode product field enrichment", () => {
 		expect(result.fieldProvenance?.nutrition?.source).toBe("open-food-facts");
 	});
 
+	it("keeps an exact label's serving and related nutrients together", () => {
+		const staleUsda = makeDraft("usda", {
+			barcode: "08801005523455",
+			servingLabel: "1 Tbsp (30 g)",
+			servingWeightGrams: 30,
+			hasSourceServing: true,
+			nutrients: [reportedNutrient(2000, 2.001, "usda")],
+			reportedNutrientIds: [2000],
+			fieldProvenance: {
+				nutrition: {
+					source: "usda",
+					sourceReference: "2040099",
+					confidence: "imported",
+				},
+				serving: {
+					source: "usda",
+					sourceReference: "2040099",
+					confidence: "imported",
+				},
+			},
+		});
+		const currentLabel = makeDraft("open-food-facts", {
+			barcode: "08801005523455",
+			servingLabel: "1 Tbsp (18 g)",
+			servingWeightGrams: 18,
+			hasSourceServing: true,
+			nutrients: [
+				reportedNutrient(2000, 5, "open-food-facts"),
+				reportedNutrient(1235, 5, "open-food-facts"),
+			],
+			reportedNutrientIds: [2000, 1235],
+			fieldProvenance: {
+				nutrition: {
+					source: "open-food-facts",
+					sourceReference: "8801005523455",
+					confidence: "imported",
+				},
+				serving: {
+					source: "open-food-facts",
+					sourceReference: "8801005523455",
+					confidence: "imported",
+				},
+			},
+		});
+
+		expect(
+			getSupplementedBarcodeProductFields(staleUsda, currentLabel, [
+				addedSugarRelationshipRule,
+			]),
+		).not.toContain("nutrition");
+		const result = mergeMissingBarcodeProductFields(staleUsda, currentLabel, [
+			addedSugarRelationshipRule,
+		]);
+
+		expect(result).toMatchObject({
+			servingLabel: "1 Tbsp (18 g)",
+			servingWeightGrams: 18,
+			fieldProvenance: {
+				nutrition: { source: "open-food-facts" },
+				serving: { source: "open-food-facts" },
+			},
+		});
+		expect(result.nutrients).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({ nutrientId: 2000, value: 5 }),
+				expect.objectContaining({ nutrientId: 1235, value: 5 }),
+			]),
+		);
+	});
+
+	it("rejects an orphaned child nutrient instead of creating invalid autofill", () => {
+		const primary = makeDraft("usda", {
+			nutrients: [reportedNutrient(2000, 2, "usda")],
+			reportedNutrientIds: [2000],
+		});
+		const invalidSupplement = makeDraft("open-food-facts", {
+			nutrients: [reportedNutrient(1235, 5, "open-food-facts")],
+			reportedNutrientIds: [1235],
+		});
+
+		const result = mergeMissingBarcodeProductFields(
+			primary,
+			invalidSupplement,
+			[addedSugarRelationshipRule],
+		);
+
+		expect(result.nutrients).toHaveLength(1);
+		expect(result.nutrients[0]).toMatchObject({ nutrientId: 2000, value: 2 });
+		expect(result.reportedNutrientIds).toEqual([2000]);
+	});
+
+	it("still adds a relationship-safe missing nutrient", () => {
+		const primary = makeDraft("usda", {
+			nutrients: [reportedNutrient(2000, 10, "usda")],
+			reportedNutrientIds: [2000],
+		});
+		const supplement = makeDraft("open-food-facts", {
+			nutrients: [
+				reportedNutrient(2000, 10, "open-food-facts"),
+				reportedNutrient(1235, 2, "open-food-facts"),
+			],
+			reportedNutrientIds: [2000, 1235],
+		});
+
+		const result = mergeMissingBarcodeProductFields(primary, supplement, [
+			addedSugarRelationshipRule,
+		]);
+
+		expect(result.nutrients).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({ nutrientId: 2000, value: 10 }),
+				expect.objectContaining({ nutrientId: 1235, value: 2 }),
+			]),
+		);
+	});
+
 	it("fills missing metadata fields without combining differently sourced fields", () => {
 		const usda = makeDraft("usda", {
 			ingredients: "Peanuts, sugar",
@@ -336,13 +490,15 @@ describe("barcode product field enrichment", () => {
 			ingredients: "Peanuts, sugar, milk",
 			ingredientList: ["peanuts", "Sugar", "milk"],
 			allergens: ["Peanuts", "milk"],
-				traces: ["tree nuts"],
-				precautionaryStatements: [{
+			traces: ["tree nuts"],
+			precautionaryStatements: [
+				{
 					type: "may_contain",
 					text: "May contain tree nuts",
 					allergens: ["tree nuts"],
 					sourceField: "traces",
-				}],
+				},
+			],
 			dietaryTags: ["vegetarian"],
 			labels: ["Rainforest Alliance"],
 			structuredIngredients: [{ id: "milk", text: "milk" }],
@@ -384,16 +540,20 @@ describe("barcode product field enrichment", () => {
 		expect(result.ingredients).toBe("Peanuts, sugar");
 		expect(result.ingredientList).toEqual(["Peanuts", "sugar"]);
 		expect(result.allergens).toEqual(["peanuts"]);
-			expect(result.traces).toEqual(["tree nuts"]);
-			expect(result.precautionaryStatements).toEqual([{
+		expect(result.traces).toEqual(["tree nuts"]);
+		expect(result.precautionaryStatements).toEqual([
+			{
 				type: "may_contain",
 				text: "May contain tree nuts",
 				allergens: ["tree nuts"],
 				sourceField: "traces",
-			}]);
+			},
+		]);
 		expect(result.dietaryTags).toEqual(["vegetarian"]);
 		expect(result.labels).toEqual(["Rainforest Alliance"]);
-		expect(result.structuredIngredients).toEqual([{ id: "milk", text: "milk" }]);
+		expect(result.structuredIngredients).toEqual([
+			{ id: "milk", text: "milk" },
+		]);
 		expect(result.ingredientAnalysis).toEqual({
 			ingredientTags: ["milk"],
 			analysisTags: ["non vegan"],

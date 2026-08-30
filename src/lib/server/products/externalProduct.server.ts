@@ -94,6 +94,8 @@ export const lookupExternalBarcodeProduct = async (
 				lookups.resolutionPolicy ?? getDefaultProductResolutionPolicy(),
 			).catch(() => null)
 		: null;
+	const getNutrientRelationshipRules = async () =>
+		(await resolutionPolicyPromise)?.nutrientRelationshipRules ?? [];
 
 	const productReferenceCatalogPromise = (
 		lookups.getProductReferenceCatalog ?? getProductReferenceCatalog
@@ -205,6 +207,7 @@ export const lookupExternalBarcodeProduct = async (
 					requestedFieldPaths,
 					() => lookupColaCloud(barcode, productReferenceCatalog),
 				),
+				await getNutrientRelationshipRules(),
 			);
 		} catch {
 			return draft;
@@ -240,7 +243,11 @@ export const lookupExternalBarcodeProduct = async (
 					() => lookupOpenFoodFacts(barcode, productReferenceCatalog),
 				);
 				return applyAlcoholSupplement(
-					mergeMissingBarcodeProductFields(primaryDraft, supplement),
+					mergeMissingBarcodeProductFields(
+						primaryDraft,
+						supplement,
+						await getNutrientRelationshipRules(),
+					),
 				);
 			} catch {
 				return applyAlcoholSupplement(primaryDraft);

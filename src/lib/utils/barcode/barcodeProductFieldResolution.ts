@@ -5,6 +5,7 @@ import type {
 	FoodFieldSource,
 	FoodTrackedField,
 } from "$lib/utils/food/types";
+import { validateNutrientRelationshipRules } from "$lib/utils/food/nutrients/nutrientRelationshipRules";
 import {
 	getProductResolutionRank,
 	getProductResolutionScoringWeight,
@@ -353,6 +354,37 @@ const compareNutrientCandidates = (
 	);
 };
 
+const removeNutrientsThatViolateRelationships = (
+	nutrients: FoodNutrient[],
+	policy: ProductResolutionPolicy,
+) => {
+	let remainingNutrients = nutrients;
+
+	while (remainingNutrients.length > 0) {
+		const issues = validateNutrientRelationshipRules(
+			new Map(
+				remainingNutrients.map((nutrient) => [
+					nutrient.nutrientId,
+					nutrient.value,
+				]),
+			),
+			[...policy.nutrientRelationshipRules],
+		);
+		if (issues.length === 0) break;
+
+		const invalidChildNutrientIds = new Set(
+			issues.map((issue) => issue.childNutrientId),
+		);
+		const nextNutrients = remainingNutrients.filter(
+			(nutrient) => !invalidChildNutrientIds.has(nutrient.nutrientId),
+		);
+		if (nextNutrients.length === remainingNutrients.length) break;
+		remainingNutrients = nextNutrients;
+	}
+
+	return remainingNutrients;
+};
+
 const resolveNutrients = (
 	drafts: BarcodeProductDraft[],
 	servingWeightGrams: number,
@@ -394,22 +426,88 @@ const resolveNutrients = (
 		.sort(
 			(left, right) => left.nutrient.nutrientId - right.nutrient.nutrientId,
 		);
-	const nutrients = selected.map(({ draft, nutrient, source }) => ({
-		...scaleNutrient(nutrient, draft.servingWeightGrams, servingWeightGrams),
-		source: source.source,
-		sourceReference: source.sourceReference,
-		confidence: source.confidence ?? "unknown",
-	}));
-	const reportedNutrientIds = selected
+	let nutrients: FoodNutrient[] = selected.map(
+		({ draft, nutrient, source }) => ({
+			...scaleNutrient(nutrient, draft.servingWeightGrams, servingWeightGrams),
+			source: source.source,
+			sourceReference: source.sourceReference,
+			confidence: source.confidence ?? "unknown",
+		}),
+	);
+	let reportedNutrientIds = selected
 		.filter(({ draft, nutrient }) =>
 			draft.reportedNutrientIds.includes(nutrient.nutrientId),
 		)
 		.map(({ nutrient }) => nutrient.nutrientId);
-	const nutrientSources = new Map(
-		selected.map(({ source }) => [
-			`${source.source}:${source.sourceReference ?? ""}:${source.confidence ?? "unknown"}`,
-			source,
-		]),
+	const resolvedValues = new Map(
+		nutrients.map((nutrient) => [nutrient.nutrientId, nutrient.value]),
+	);
+	if (
+		validateNutrientRelationshipRules(resolvedValues, [
+			...policy.nutrientRelationshipRules,
+		]).length > 0
+	) {
+		const coherentDrafts = drafts.filter((draft) => {
+			const values = new Map(
+				draft.nutrients
+					.filter(isValidNutrient)
+					.map((nutrient) => [nutrient.nutrientId, nutrient.value]),
+			);
+			return (
+				values.size > 0 &&
+				validateNutrientRelationshipRules(values, [
+					...policy.nutrientRelationshipRules,
+				]).length === 0
+			);
+		});
+		const coherentCandidate = selectFieldCandidate(
+			coherentDrafts,
+			"nutrition",
+			policy,
+		);
+		if (coherentCandidate) {
+			const coherentSource = coherentCandidate.source;
+			nutrients = coherentCandidate.draft.nutrients
+				.filter(isValidNutrient)
+				.map((nutrient) => ({
+					...scaleNutrient(
+						nutrient,
+						coherentCandidate.draft.servingWeightGrams,
+						servingWeightGrams,
+					),
+					source: isNutrientSource(coherentSource.source)
+						? coherentSource.source
+						: nutrient.source,
+					sourceReference:
+						coherentSource.sourceReference ?? nutrient.sourceReference,
+					confidence: coherentSource.confidence ?? nutrient.confidence,
+				}));
+			reportedNutrientIds = coherentCandidate.draft.reportedNutrientIds.filter(
+				(nutrientId) =>
+					nutrients.some((nutrient) => nutrient.nutrientId === nutrientId),
+			);
+		}
+	}
+
+	nutrients = removeNutrientsThatViolateRelationships(nutrients, policy);
+	reportedNutrientIds = reportedNutrientIds.filter((nutrientId) =>
+		nutrients.some((nutrient) => nutrient.nutrientId === nutrientId),
+	);
+	const nutrientSources: Map<string, FoodFieldSource> = new Map(
+		nutrients.flatMap((nutrient) =>
+			nutrient.source && isNutrientSource(nutrient.source)
+				? [
+						[
+							`${nutrient.source}:${nutrient.sourceReference ?? ""}:${nutrient.confidence ?? "unknown"}`,
+							{
+								source: nutrient.source,
+								sourceReference: nutrient.sourceReference,
+								confidence: nutrient.confidence ?? "unknown",
+							} satisfies FoodFieldSource,
+						] as const,
+					]
+				: [],
+		),
 	);
 
 	return {

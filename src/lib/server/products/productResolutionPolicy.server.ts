@@ -1,6 +1,7 @@
 import { createServerCachedLoader } from "$lib/server/cache/serverCachedLoader";
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
 import type { Database } from "$lib/types/database.types";
+import { readNutrientRelationshipRules } from "$lib/utils/food/nutrients/nutrientRelationshipRules";
 import type {
 	ProductDifferenceSeverity,
 	ProductDifferenceThreshold,
@@ -18,6 +19,7 @@ const PRODUCT_RESOLUTION_SCHEMA_OBJECTS = [
 	"product_resolution_difference_thresholds",
 	"product_resolution_ignored_terms",
 	"product_source_field_coverage_policies",
+	"nutrient_relationship_rules",
 	"assessment_policy_key",
 	"exact_source_score",
 	"mapped_source_score",
@@ -84,6 +86,7 @@ export const readDefaultProductResolutionPolicy = async (
 		thresholdResult,
 		ignoredTermResult,
 		coverageResult,
+		nutrientRelationshipRules,
 	] = await Promise.all([
 		supabase
 			.from("product_resolution_rank_values")
@@ -111,6 +114,7 @@ export const readDefaultProductResolutionPolicy = async (
 				"provider_key, reported_coverage_ttl_seconds, not_reported_coverage_ttl_seconds, not_found_coverage_ttl_seconds",
 			)
 			.eq("policy_key", policyRow.key),
+		readNutrientRelationshipRules(supabase),
 	]);
 
 	for (const result of [
@@ -185,7 +189,8 @@ export const readDefaultProductResolutionPolicy = async (
 		scoringWeights.size === 0 ||
 		differenceThresholds.size === 0 ||
 		ignoredTerms.size === 0 ||
-		sourceFieldCoveragePolicies.size === 0
+		sourceFieldCoveragePolicies.size === 0 ||
+		!nutrientRelationshipRules?.length
 	) {
 		throw new Error(
 			`Product resolution policy ${policyRow.key} is incomplete.`,
@@ -208,6 +213,7 @@ export const readDefaultProductResolutionPolicy = async (
 		differenceThresholds,
 		ignoredTerms,
 		sourceFieldCoveragePolicies,
+		nutrientRelationshipRules,
 	};
 };
 

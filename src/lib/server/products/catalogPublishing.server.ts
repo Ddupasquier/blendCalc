@@ -7,13 +7,11 @@ import type {
 	CatalogFieldProvenance,
 	CatalogObservation,
 } from "./catalogVerification.server";
+import { assertSharedProductFoodCanBePublished } from "./catalogFoodValidation.server";
 
 type CatalogSource = "usda" | "open-food-facts" | "community-reviewed";
 type CatalogConfidence =
-	| "source-verified"
-	| "moderator-reviewed"
-	| "corroborated"
-	| "imported";
+	"source-verified" | "moderator-reviewed" | "corroborated" | "imported";
 
 export const publishCatalogSubmission = async (input: {
 	submissionId: string;
@@ -33,6 +31,7 @@ export const publishCatalogSubmission = async (input: {
 		...input.food,
 		description: input.productName,
 	});
+	await assertSharedProductFoodCanBePublished(admin, normalizedFood);
 	const { data, error } = await admin.rpc("publish_shared_product_submission", {
 		p_submission_id: input.submissionId,
 		p_food: toJson(normalizedFood),

@@ -40,7 +40,7 @@ export const GET: RequestHandler = async ({ locals, params }) => {
 	await completeServerBackgroundTask(
 		persistFoodImageAsset({
 			image: draft.image,
-			barcode,
+			barcode: draft.barcode,
 			productName: draft.name,
 			brandName: draft.brandOwner,
 			sharedProductId:

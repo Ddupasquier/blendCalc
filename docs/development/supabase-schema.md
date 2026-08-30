@@ -435,6 +435,20 @@ Notes:
 
 - Used by client and server paths so canonical nutrient validation is not browser-only.
 - Current rule type is `child_must_not_exceed_parent`.
+- Active shared catalog products are checked again inside PostgreSQL before insert or
+  update. The canonical snapshot must contain known, unique nutrient IDs, valid
+  non-negative values, canonical units, and no enabled parent-child relationship
+  violation. Source observations remain immutable evidence and may retain conflicting
+  provider claims, but those claims cannot become active canonical data until resolved.
+  An explicit empty nutrient array remains valid identity-only data: it preserves
+  “nutrition not reported” as unknown and is withheld by blendCalcAPI completeness
+  policy rather than inventing zeroes.
+- Gram-based parent-child rules allow only a `0.1 g/100 g` normalization tolerance.
+  This absorbs source measurement and normalization precision such as `3.60` versus
+  `3.57`, while still rejecting material conflicts such as `14.4 g` added sugar inside
+  `10 g` total sugar. The migration also removes one proven corrupt added-sugar value
+  from existing private snapshots for GTIN `00058449771807`; the retained total-sugar
+  value remains sourced from USDA and the raw provider cache remains unchanged.
 - `issue_code → app_issue_codes.code`; the client message catalog combines that code
   with the joined nutrient labels to produce friendly wording.
 

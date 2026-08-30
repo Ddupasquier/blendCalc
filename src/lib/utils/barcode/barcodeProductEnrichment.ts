@@ -7,6 +7,10 @@ import type {
 	FoodIngredientAnalysis,
 	FoodTrackedField,
 } from "$lib/utils/food/types";
+import {
+	type NutrientRelationshipRule,
+	validateNutrientRelationshipRules,
+} from "$lib/utils/food/nutrients/nutrientRelationshipRules";
 
 export type MissingBarcodeProductFields = Record<FoodTrackedField, boolean>;
 
@@ -235,6 +239,7 @@ export const needsAlcoholBarcodeProductSupplement = (
 export const getSupplementedBarcodeProductFields = (
 	primary: BarcodeProductDraft,
 	supplement: BarcodeProductDraft | null | undefined,
+	nutrientRelationshipRules: readonly NutrientRelationshipRule[] = [],
 ): FoodTrackedField[] => {
 	if (!supplement) return [];
 	const missing = getMissingBarcodeProductFields(primary);
@@ -244,10 +249,17 @@ export const getSupplementedBarcodeProductFields = (
 			.filter(isValidNutrient)
 			.map((nutrient) => nutrient.nutrientId),
 	);
-	const addsNutrition = supplement.nutrients.some(
-		(nutrient) =>
-			isValidNutrient(nutrient) && !primaryNutrientIds.has(nutrient.nutrientId),
-	);
+	const addsNutrition =
+		supplement.nutrients.some(
+			(nutrient) =>
+				isValidNutrient(nutrient) &&
+				!primaryNutrientIds.has(nutrient.nutrientId),
+		) &&
+		canAddSupplementNutrientsWithoutConflict(
+			primary,
+			supplement,
+			nutrientRelationshipRules,
+		);
 	return (Object.keys(missing) as FoodTrackedField[]).filter(
 		(field) =>
 			Boolean(
@@ -314,6 +326,68 @@ const scaleNutrients = (
 	}));
 };
 
+const getNutrientValueMap = (nutrients: FoodNutrient[]) =>
+	new Map(
+		nutrients
+			.filter(isValidNutrient)
+			.map((nutrient) => [nutrient.nutrientId, nutrient.value]),
+	);
+
+const hasNutrientRelationshipConflict = (
+	nutrients: FoodNutrient[],
+	rules: readonly NutrientRelationshipRule[],
+) =>
+	rules.length > 0 &&
+	validateNutrientRelationshipRules(getNutrientValueMap(nutrients), [...rules])
+		.length > 0;
+
+const getAdditiveNutrientMerge = (
+	primary: BarcodeProductDraft,
+	supplement: BarcodeProductDraft,
+) => {
+	const targetServingWeight = hasServing(primary)
+		? primary.servingWeightGrams
+		: supplement.servingWeightGrams;
+	const primaryNutrients = scaleNutrients(
+		primary.nutrients,
+		primary.servingWeightGrams,
+		targetServingWeight,
+	);
+	const primaryNutrientIds = new Set(
+		primaryNutrients.map((nutrient) => nutrient.nutrientId),
+	);
+	const addedNutrients = scaleNutrients(
+		supplement.nutrients,
+		supplement.servingWeightGrams,
+		targetServingWeight,
+	).filter((nutrient) => !primaryNutrientIds.has(nutrient.nutrientId));
+
+	return [...primaryNutrients, ...addedNutrients];
+};
+
+const canAddSupplementNutrientsWithoutConflict = (
+	primary: BarcodeProductDraft,
+	supplement: BarcodeProductDraft,
+	rules: readonly NutrientRelationshipRule[],
+) =>
+	!hasNutrientRelationshipConflict(
+		getAdditiveNutrientMerge(primary, supplement),
+		rules,
+	);
+
+const shouldUseCoherentSupplementNutrition = (
+	primary: BarcodeProductDraft,
+	supplement: BarcodeProductDraft,
+	rules: readonly NutrientRelationshipRule[],
+) =>
+	hasNutrition(primary) &&
+	hasServing(supplement) &&
+	hasNutrientRelationshipConflict(
+		getAdditiveNutrientMerge(primary, supplement),
+		rules,
+	) &&
+	!hasNutrientRelationshipConflict(supplement.nutrients, rules);
+
 const withFieldSource = (
 	provenance: FoodFieldProvenance,
 	field: FoodTrackedField,
@@ -350,16 +424,28 @@ export const applyCachedImageToBarcodeDraft = (
 export const mergeMissingBarcodeProductFields = (
 	primary: BarcodeProductDraft,
 	supplement: BarcodeProductDraft | null | undefined,
+	nutrientRelationshipRules: readonly NutrientRelationshipRule[] = [],
 ): BarcodeProductDraft => {
 	if (!supplement) return primary;
 
-	const supplementedFields = new Set(
-		getSupplementedBarcodeProductFields(primary, supplement),
+	const useCoherentSupplementNutrition = shouldUseCoherentSupplementNutrition(
+		primary,
+		supplement,
+		nutrientRelationshipRules,
 	);
-	const useSupplementServing = supplementedFields.has("serving");
+	const supplementedFields = new Set(
+		getSupplementedBarcodeProductFields(
+			primary,
+			supplement,
+			nutrientRelationshipRules,
+		),
+	);
+	const useSupplementServing =
+		supplementedFields.has("serving") || useCoherentSupplementNutrition;
 	const useSupplementProductName = supplementedFields.has("productName");
 	const useSupplementBrandOwner = supplementedFields.has("brandOwner");
-	const useSupplementNutrition = supplementedFields.has("nutrition");
+	const useSupplementNutrition =
+		supplementedFields.has("nutrition") || useCoherentSupplementNutrition;
 	const useSupplementImage = supplementedFields.has("image");
 	const useSupplementCategories = supplementedFields.has("categories");
 	const useSupplementIngredients = supplementedFields.has("ingredients");
@@ -429,19 +515,27 @@ export const mergeMissingBarcodeProductFields = (
 			supplement.servingWeightGrams,
 			nextServingWeight,
 		);
-		const nutrientIds = new Set(
-			nutrients.map((nutrient) => nutrient.nutrientId),
-		);
-		const addedNutrients = supplementNutrients.filter(
-			(nutrient) => !nutrientIds.has(nutrient.nutrientId),
-		);
-		nutrients = [...nutrients, ...addedNutrients];
-		reportedNutrientIds = [
-			...new Set([...reportedNutrientIds, ...supplement.reportedNutrientIds]),
-		].filter((nutrientId) =>
-			nutrients.some((nutrient) => nutrient.nutrientId === nutrientId),
-		);
-		if (!hasNutrition(primary)) {
+		if (useCoherentSupplementNutrition) {
+			nutrients = supplementNutrients;
+			reportedNutrientIds = supplement.reportedNutrientIds.filter(
+				(nutrientId) =>
+					nutrients.some((nutrient) => nutrient.nutrientId === nutrientId),
+			);
+		} else {
+			const nutrientIds = new Set(
+				nutrients.map((nutrient) => nutrient.nutrientId),
+			);
+			const addedNutrients = supplementNutrients.filter(
+				(nutrient) => !nutrientIds.has(nutrient.nutrientId),
+			);
+			nutrients = [...nutrients, ...addedNutrients];
+			reportedNutrientIds = [
+				...new Set([...reportedNutrientIds, ...supplement.reportedNutrientIds]),
+			].filter((nutrientId) =>
+				nutrients.some((nutrient) => nutrient.nutrientId === nutrientId),
+			);
+		}
+		if (!hasNutrition(primary) || useCoherentSupplementNutrition) {
 			provenance = withFieldSource(provenance, "nutrition", supplement);
 		}
 	}
