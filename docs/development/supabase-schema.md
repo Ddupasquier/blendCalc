@@ -467,6 +467,9 @@ Notes:
   non-negative values, canonical units, and no enabled parent-child relationship
   violation. Source observations remain immutable evidence and may retain conflicting
   provider claims, but those claims cannot become active canonical data until resolved.
+  Before this enforcement was enabled, recognized microgram spellings such as Unicode
+  `ΜG` and provider `MCG` were normalized to the canonical `UG` unit in active product
+  snapshots; unknown or dimensionally different units were not rewritten.
   An explicit empty nutrient array remains valid identity-only data: it preserves
   “nutrition not reported” as unknown and is withheld by blendCalcAPI completeness
   policy rather than inventing zeroes.
