@@ -504,7 +504,9 @@ const resolveNutrients = (
 					),
 				}))
 				.filter(
-					(candidate): candidate is {
+					(
+						candidate,
+					): candidate is {
 						nutrient: FoodNutrient;
 						resolvedValue: number;
 					} => candidate.resolvedValue !== null,
