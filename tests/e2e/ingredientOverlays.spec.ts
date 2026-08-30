@@ -1369,34 +1369,33 @@ test("nutrition details separate personalized warnings from source allergen disc
 		});
 		await expect(ingredientsHeading).toBeVisible();
 		await expect(
-			nutritionDetails.getByText(/red pepper paste \(wheat flour/i),
+			nutritionDetails.getByText(/red pepper powder/i),
 		).toBeVisible();
 		await expect(containsHeading).toBeVisible();
 		await expect(nutritionDetails.getByText("Soy, Wheat")).toBeVisible();
-		await expect(mayContainHeading).toBeVisible();
-		await expect(
-			mayContainHeading
-				.locator("xpath=..")
-				.getByText("Peanut", { exact: true }),
-		).toBeVisible();
+		await expect(mayContainHeading).toHaveCount(0);
 		await expect(dietaryLabelsHeading).toBeVisible();
 		await expect(
 			dietaryLabelsHeading.locator("xpath=..").getByText("Vegetarian", {
 				exact: true,
 			}),
 		).toBeVisible();
+		const dietaryConsiderationsHeading = nutritionDetails.getByRole("heading", {
+			name: "Dietary considerations",
+		});
+		await expect(dietaryConsiderationsHeading).toBeVisible();
 		await expect(
-			nutritionDetails.getByRole("heading", {
-				name: "Dietary considerations",
-			}),
-		).toHaveCount(0);
+			dietaryConsiderationsHeading
+				.locator("xpath=..")
+				.getByText("Alcohol", { exact: true }),
+		).toBeVisible();
 
 		const summaryOrder = await nutritionDetails.evaluate((element) => {
 			const headingOrder = [
 				"Ingredients",
 				"Contains",
-				"May contain",
 				"Dietary labels",
+				"Dietary considerations",
 			].map((name) =>
 				Array.from(element.querySelectorAll("h2")).find(
 					(heading) => heading.textContent?.trim() === name,
@@ -1599,7 +1598,7 @@ test("nutrition details preserve the complete source-backed food record", async 
 			gochuDetails.getByRole("heading", { name: "Ingredients" }),
 		).toBeVisible();
 		await expect(
-			gochuDetails.getByText(/red pepper paste \(wheat flour/i),
+			gochuDetails.getByText(/rice, water, corn syrup, red pepper powder/i),
 		).toBeVisible();
 		await expect(
 			gochuDetails.getByRole("heading", { name: "Contains" }),
@@ -1609,10 +1608,10 @@ test("nutrition details preserve the complete source-backed food record", async 
 		).toBeVisible();
 		await expect(
 			gochuDetails.getByRole("heading", { name: "May contain" }),
-		).toBeVisible();
-		await expect(
-			gochuDetails.getByText("Peanut", { exact: true }),
-		).toBeVisible();
+		).toHaveCount(0);
+		await expect(gochuDetails.getByText("Peanut", { exact: true })).toHaveCount(
+			0,
+		);
 		await expect(
 			gochuDetails.getByRole("heading", { name: "Dietary labels" }),
 		).toBeVisible();
@@ -1649,7 +1648,7 @@ test("nutrition details preserve the complete source-backed food record", async 
 			"Dips and Salsa",
 			"500 g",
 			"Packaged product",
-			"2 tbsp (30 g)",
+			"1 Tbsp (18 g)",
 		]) {
 			await expect(
 				productDetails.getByText(expectedText, { exact: true }).first(),

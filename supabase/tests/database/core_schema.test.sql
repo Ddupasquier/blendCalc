@@ -1,6 +1,6 @@
 begin;
 
-select plan(51);
+select plan(59);
 
 select has_table('public', 'profiles', 'profiles table exists');
 select ok(
@@ -31,6 +31,92 @@ select ok(
 		where enabled
 	),
 	'local QA validation rules are enabled'
+);
+select ok(
+	not exists (
+		select 1
+		from public.nutrient_relationship_rules rule
+		join public.nutrient_definitions parent_definition
+			on parent_definition.nutrient_id = rule.parent_nutrient_id
+		join public.nutrient_definitions child_definition
+			on child_definition.nutrient_id = rule.child_nutrient_id
+		where rule.enabled
+			and rule.relationship = 'child_must_not_exceed_parent'
+			and upper(parent_definition.default_unit_name) = 'G'
+			and upper(child_definition.default_unit_name) = 'G'
+			and rule.tolerance < 0.1
+	),
+	'gram-based nutrient relationships preserve reviewed normalization tolerance'
+);
+select ok(
+	not exists (
+		select 1
+		from public.user_food_list_items item
+		cross join public.nutrient_relationship_rules rule
+		join lateral (
+			select (nutrient.value ->> 'value')::numeric as amount
+			from jsonb_array_elements(item.food -> 'foodNutrients') nutrient(value)
+			where (nutrient.value ->> 'nutrientId')::bigint = rule.child_nutrient_id
+		) child_value on true
+		left join lateral (
+			select (nutrient.value ->> 'value')::numeric as amount
+			from jsonb_array_elements(item.food -> 'foodNutrients') nutrient(value)
+			where (nutrient.value ->> 'nutrientId')::bigint = rule.parent_nutrient_id
+		) parent_value on true
+		where rule.enabled
+			and rule.relationship = 'child_must_not_exceed_parent'
+			and child_value.amount > 0
+			and (
+				(rule.requires_parent and parent_value.amount is null)
+				or child_value.amount > parent_value.amount + rule.tolerance
+			)
+	),
+	'stored user-list snapshots contain no impossible parent-child nutrient values'
+);
+select has_function(
+	'private',
+	'canonical_food_nutrient_snapshot_issue',
+	array['jsonb'],
+	'canonical nutrient snapshots have a database validation function'
+);
+select has_trigger(
+	'public',
+	'shared_products',
+	'enforce_active_shared_product_nutrients',
+	'active shared products enforce canonical nutrient validity'
+);
+select ok(
+	not exists (
+		select 1
+		from public.shared_products product
+		where product.status = 'active'
+			and private.canonical_food_nutrient_snapshot_issue(product.food) is not null
+	),
+	'all active shared products pass canonical nutrient validation'
+);
+select is(
+	private.canonical_food_nutrient_snapshot_issue(
+		jsonb_build_object(
+			'foodNutrients', jsonb_build_array(
+				jsonb_build_object('nutrientId', 1005, 'nutrientName', 'Total Carbohydrate', 'unitName', 'G', 'value', 10),
+				jsonb_build_object('nutrientId', 2000, 'nutrientName', 'Total Sugars', 'unitName', 'G', 'value', 12)
+			)
+		)
+	),
+	'NUTRIENT_CHILD_EXCEEDS_PARENT:total-sugars-lte-carbs:1005:2000',
+	'canonical validation identifies impossible nutrient relationships'
+);
+select is(
+	private.canonical_food_nutrient_snapshot_issue(
+		jsonb_build_object(
+			'foodNutrients', jsonb_build_array(
+				jsonb_build_object('nutrientId', 1005, 'nutrientName', 'Total Carbohydrate', 'unitName', 'G', 'value', 12),
+				jsonb_build_object('nutrientId', 2000, 'nutrientName', 'Total Sugars', 'unitName', 'G', 'value', 10)
+			)
+		)
+	),
+	null,
+	'canonical validation accepts coherent nutrient relationships'
 );
 select ok(
 	(select count(*) from public.nutrient_manual_entry_fields where enabled) >= 68
@@ -139,8 +225,8 @@ select is(
 		)
 			and publishable
 	),
-	1,
-	'only the fully evidenced local QA catalog fixture is publishable through blendCalc API v1'
+	2,
+	'the fully evidenced local QA catalog fixtures are publishable through blendCalc API v1'
 );
 select is(
 	(
@@ -148,7 +234,7 @@ select is(
 		from public.blendcalc_api_v1_product_readiness
 		where publishable
 	),
-	1,
+	2,
 	'the strict publication profile withholds incomplete local QA catalog fixtures'
 );
 select ok(
@@ -258,11 +344,32 @@ select ok(
 		select 1
 		from public.shared_products product
 		where product.barcode = '08801005523455'
-			and product.food ->> 'ingredients' like '%wheat flour%'
+			and product.food ->> 'ingredients' like '%Wheat Gluten%'
 			and product.food -> 'allergens' ?& array['wheat', 'soy']
-			and product.food -> 'traces' ? 'peanuts'
+			and product.food -> 'traces' = '[]'::jsonb
 	),
-	'local QA catalog fixtures include ingredient, allergen, and trace evidence'
+	'local QA catalog fixtures preserve exact package ingredient and allergen evidence'
+);
+select ok(
+	exists (
+		select 1
+		from public.shared_products product
+		where product.barcode = '08801005523455'
+			and product.food ->> 'householdServingFullText' = '1 Tbsp (18 g)'
+			and exists (
+				select 1
+				from jsonb_array_elements(product.food -> 'foodNutrients') nutrient(value)
+				where (nutrient.value ->> 'nutrientId')::integer = 2000
+					and abs((nutrient.value ->> 'value')::numeric - 27.7777777777778) < 0.000001
+			)
+			and exists (
+				select 1
+				from jsonb_array_elements(product.food -> 'foodNutrients') nutrient(value)
+				where (nutrient.value ->> 'nutrientId')::integer = 1235
+					and abs((nutrient.value ->> 'value')::numeric - 27.7777777777778) < 0.000001
+			)
+	),
+	'Sempio QA data keeps total and added sugars equal on the reviewed 18 g label serving'
 );
 select ok(
 	has_table_privilege(

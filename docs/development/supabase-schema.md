@@ -343,6 +343,7 @@ Notes:
 | ------------------------------------------ | ------------- | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
 | `nutrient_definitions`                     | `nutrient_id` | Shared reference                         | Canonical nutrient names, numbers, and default units                                                                        | Referenced by every nutrient table                                              |
 | `food_nutrients`                           | `id`          | Shared or user-owned depending on parent | Normalized nutrient values per 100g for list items, custom foods, shared products, submissions, revisions, and observations | Exactly one parent id; `nutrient_id → nutrient_definitions.nutrient_id`         |
+| `food_nutrient_measurements`               | `id`          | Shared or user-owned depending on parent | Exact nutrient values on a mass, volume, or source-serving basis without inventing a gram conversion                        | Exactly one parent id; `nutrient_id → nutrient_definitions.nutrient_id`         |
 | `nutrient_manual_entry_groups`             | `id`          | Shared reference                         | Versioned DB-owned manual-entry UI groups and hidden review queues                                                          | Summarizes observation evidence without surrendering UI policy                  |
 | `nutrient_manual_entry_fields`             | `nutrient_id` | Shared reference                         | Versioned DB-owned nutrient placement, labels, order, visibility, aliases, and review state                                 | `nutrient_id → nutrient_definitions`, `group_id → nutrient_manual_entry_groups` |
 | `nutrient_manual_entry_required_nutrients` | `nutrient_id` | Shared validation reference              | DB-backed list of required manual-entry nutrients such as calories, macros, and sodium                                      | `nutrient_id → nutrient_definitions`, `group_id → nutrient_manual_entry_groups` |
@@ -388,6 +389,32 @@ Notes:
 - `apply_food_nutrient_uncertainty` populates these columns only from the exact parent
   food snapshot. It does not infer uncertainty from provider identity or a similar
   nutrient.
+
+### `food_nutrient_measurements`
+
+Stores the authoritative nutrient amount and the exact basis reported by the label or
+source. This table prevents volume-only and count-based labels from being converted to
+grams without measured evidence.
+
+| Table                        | Documented columns                                                                                                                                                                                                                                                                                                                |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `food_nutrient_measurements` | `id`, food-parent and ownership ids, `nutrient_id`, `amount`, `unit_name`, `basis_kind`, `basis_quantity`, `basis_unit_key`, optional `basis_serving_label`, `value_origin`, `value_status`, `value_qualifier`, `source`, `source_reference`, source nutrient identity, mapping and derivation metadata, `confidence`, timestamps |
+
+Notes:
+
+- `basis_kind` is `mass`, `volume`, or `serving`.
+- Mass values may project into `food_nutrients.amount_per_100g`. Volume and serving
+  values remain native unless an exact measured conversion supports a mass projection.
+- A source serving such as `1 cookie`, `2 crackers`, or `1 bottle` uses the `serving`
+  basis and references the matching `food_servings` row. The readable source label is
+  preserved rather than replaced by a guessed mass.
+- `sync_native_food_measurements_from_parent` rebuilds exact rows from a parent food
+  snapshot. It creates a secondary `food_nutrients` projection only from exact mass
+  evidence and marks the row `derived` with `exact-native-basis-to-100g`.
+  `skip_non_mass_food_nutrient_projection` prevents native-only nutrient values from
+  being forced into the legacy per-100g projection.
+- Application reads prefer this table. `food_nutrients` remains the backward-compatible
+  per-100g projection for consumers that explicitly require mass-normalized data.
 
 ### `nutrient_manual_entry_*`
 
@@ -435,6 +462,20 @@ Notes:
 
 - Used by client and server paths so canonical nutrient validation is not browser-only.
 - Current rule type is `child_must_not_exceed_parent`.
+- Active shared catalog products are checked again inside PostgreSQL before insert or
+  update. The canonical snapshot must contain known, unique nutrient IDs, valid
+  non-negative values, canonical units, and no enabled parent-child relationship
+  violation. Source observations remain immutable evidence and may retain conflicting
+  provider claims, but those claims cannot become active canonical data until resolved.
+  An explicit empty nutrient array remains valid identity-only data: it preserves
+  “nutrition not reported” as unknown and is withheld by blendCalcAPI completeness
+  policy rather than inventing zeroes.
+- Gram-based parent-child rules allow only a `0.1 g/100 g` normalization tolerance.
+  This absorbs source measurement and normalization precision such as `3.60` versus
+  `3.57`, while still rejecting material conflicts such as `14.4 g` added sugar inside
+  `10 g` total sugar. The migration also removes one proven corrupt added-sugar value
+  from existing private snapshots for GTIN `00058449771807`; the retained total-sugar
+  value remains sourced from USDA and the raw provider cache remains unchanged.
 - `issue_code → app_issue_codes.code`; the client message catalog combines that code
   with the joined nutrient labels to produce friendly wording.
 
@@ -449,16 +490,17 @@ These tables replace runtime nutrient, source, serving-unit, alias, and unit-con
 constants. The app loads them from Supabase and uses them when it interprets USDA
 FoodData Central and Open Food Facts products.
 
-| Table                               | Primary Key                                                               | Purpose                                                                                                                          | Key Relationships                                                                                                     |
-| ----------------------------------- | ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `product_data_sources`              | `key`                                                                     | Canonical identity, display name, URLs, terms, and observation history for each external API, standards API, or internal catalog | Referenced by all source-specific mapping and serving tables                                                          |
-| `product_source_daily_metrics`      | `(metric_date, source_key, source_data_type, lookup_kind, lookup_origin)` | Privacy-safe daily API usage, reliability, match, nutrient-depth, metadata-coverage, cache, and timing counters                  | `source_key → product_data_sources.key`                                                                               |
-| `nutrient_source_mappings`          | `(source_key, source_nutrient_key, source_unit_name)`                     | Maps a source API nutrient key and unit to the app's canonical nutrient; immutable UUID `id` identifies review work              | `source_key → product_data_sources.key`, `nutrient_id → nutrient_definitions.nutrient_id`                             |
-| `nutrient_mapping_review_decisions` | `id`                                                                      | Records immutable evidence-backed approval or exclusion decisions for ambiguous nutrient mappings                                | `mapping_id → nutrient_source_mappings.id`, selected and previous nutrient definitions, `reviewed_by → auth.users.id` |
-| `nutrient_unit_conversions`         | `(source_key, nutrient_id, from_unit_name, to_unit_name)`                 | Stores source- and nutrient-specific conversion multipliers                                                                      | `source_key → product_data_sources.key`, `nutrient_id → nutrient_definitions.nutrient_id`                             |
-| `serving_measure_units`             | `key`                                                                     | App-ready serving units, labels, dimensions, order, defaults, and conversion to grams or milliliters                             | `source_key → product_data_sources.key`                                                                               |
-| `serving_measure_aliases`           | `(unit_key, normalized_alias)`                                            | Recognizes API and label spellings such as `tbsp`, `tablespoon`, and `tablespoons`                                               | `unit_key → serving_measure_units.key`, `source_key → product_data_sources.key`                                       |
-| `food_servings`                     | `id`                                                                      | Normalized reported serving sizes used by nutrition views and future mix conversions                                             | Exactly one food parent; optional `unit_key → serving_measure_units.key`                                              |
+| Table                                | Primary Key                                                               | Purpose                                                                                                                          | Key Relationships                                                                                                     |
+| ------------------------------------ | ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `product_data_sources`               | `key`                                                                     | Canonical identity, display name, URLs, terms, and observation history for each external API, standards API, or internal catalog | Referenced by all source-specific mapping and serving tables                                                          |
+| `product_source_daily_metrics`       | `(metric_date, source_key, source_data_type, lookup_kind, lookup_origin)` | Privacy-safe daily API usage, reliability, match, nutrient-depth, metadata-coverage, cache, and timing counters                  | `source_key → product_data_sources.key`                                                                               |
+| `product_source_field_daily_metrics` | `(metric_date, source_key, field_path, evaluation_origin)`                | Privacy-safe field selection, validity, disagreement, and confirmed-correction counters                                          | `source_key → product_data_sources.key`                                                                               |
+| `nutrient_source_mappings`           | `(source_key, source_nutrient_key, source_unit_name)`                     | Maps a source API nutrient key and unit to the app's canonical nutrient; immutable UUID `id` identifies review work              | `source_key → product_data_sources.key`, `nutrient_id → nutrient_definitions.nutrient_id`                             |
+| `nutrient_mapping_review_decisions`  | `id`                                                                      | Records immutable evidence-backed approval or exclusion decisions for ambiguous nutrient mappings                                | `mapping_id → nutrient_source_mappings.id`, selected and previous nutrient definitions, `reviewed_by → auth.users.id` |
+| `nutrient_unit_conversions`          | `(source_key, nutrient_id, from_unit_name, to_unit_name)`                 | Stores source- and nutrient-specific conversion multipliers                                                                      | `source_key → product_data_sources.key`, `nutrient_id → nutrient_definitions.nutrient_id`                             |
+| `serving_measure_units`              | `key`                                                                     | App-ready weight, volume, and count units, labels, dimensions, ordering, and same-dimension conversions                          | `source_key → product_data_sources.key`                                                                               |
+| `serving_measure_aliases`            | `(unit_key, normalized_alias)`                                            | Recognizes API and label spellings such as `tbsp`, `tablespoon`, and `tablespoons`                                               | `unit_key → serving_measure_units.key`, `source_key → product_data_sources.key`                                       |
+| `food_servings`                      | `id`                                                                      | Exact reported weight, volume, or count/package serving sizes used by nutrition and Mix                                          | Exactly one food parent; optional `unit_key → serving_measure_units.key`                                              |
 
 ### `product_data_sources`
 
@@ -519,6 +561,27 @@ Notes:
   not replace the source-authority policy.
 - The report includes outbound calls per logical lookup and flags controlled benchmark
   averages above `2.5` for request-fan-out review.
+
+### `product_source_field_daily_metrics`
+
+| Table                                | Documented columns                                                                                                                                                                                                    |
+| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `product_source_field_daily_metrics` | `metric_date`, `source_key`, `field_path`, `evaluation_origin`, evaluated, selected, internally invalid, cross-source disagreement, submitted-label disagreement, confirmed-label correction counters, and timestamps |
+
+Notes:
+
+- Catalog intake records batches through the service-role-only
+  `record_product_source_field_daily_metrics` function. No barcode, product name,
+  search text, user id, label payload, or private evidence path is retained here.
+- A cross-source or submitted-label disagreement is not called a provider error. It
+  becomes a confirmed label correction only after a moderator approves complete current
+  package-label evidence.
+- Metrics are field-specific, including `nutrient:<id>`, so one bad nutrient does not
+  lower an unrelated field or assign a blanket trust score to the whole provider.
+- Impossible DB-defined nutrient relationships are counted and excluded from canonical
+  field selection. Other valid fields from the same source remain usable.
+- Application roles cannot read or write this operational telemetry; access remains
+  service-role only.
 
 ### `nutrient_source_mappings`
 
@@ -597,6 +660,8 @@ Notes:
 
 - `serving_measure_units` has one enabled default per dimension and indexed display
   ordering.
+- Count uses the generic `item` unit while the source label preserves the actual food
+  form, such as `1 cookie`, `2 crackers`, `3 dumplings`, or `1 package`.
 - Basic multiplication remains application code; available units, aliases, labels,
   enabled state, and conversion factors are database-owned.
 - Authenticated users can read all five reference tables. Only service-role scripts can
@@ -615,20 +680,29 @@ only in nutrient-conversion provenance as `previousServiceReference`.
 Stores source-reported and user-entered serving sizes separately from each food's JSON
 snapshot.
 
-| Table           | Documented columns                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `food_servings` | `id`, `owner_user_id`, `user_food_list_item_id`, `custom_food_id`, `shared_product_submission_id`, `shared_product_id`, `shared_product_revision_id`, `shared_product_observation_id`, `source_observation_id`, `serving_order`, `label`, `gram_weight`, optional `amount` and `unit_key`, `is_primary`, `measure_type`, `is_household_measure`, `source_measure_key`, `origin`, `gram_weight_method`, `calculation_basis`, `source`, `source_reference`, `confidence`, and timestamps |
+| Table           | Documented columns                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `food_servings` | `id`, `owner_user_id`, `user_food_list_item_id`, `custom_food_id`, `shared_product_submission_id`, `shared_product_id`, `shared_product_revision_id`, `shared_product_observation_id`, `source_observation_id`, `serving_order`, `label`, optional `gram_weight`, optional `milliliter_volume`, optional `amount` and `unit_key`, `is_primary`, `measure_type`, `is_household_measure`, `source_measure_key`, `origin`, `gram_weight_method`, `calculation_basis`, `source`, `source_reference`, `confidence`, and timestamps |
 
 Notes:
 
 - A row points to exactly one food parent. Partial unique indexes enforce stable order
   and no more than one primary serving per parent.
+- Every row must contain at least one exact basis: positive grams, positive milliliters,
+  or a positive amount with a recognized unit. A gram value is not required for a
+  volume-only or count/package serving.
 - Parent-table triggers rebuild serving rows whenever food/source data changes. This
   keeps list items, custom foods, submissions, products, revisions, and observations
   synchronized without relying on browser writes.
 - `source_observation_id` identifies the exact observation supporting the serving.
   A provider name, FDC ID, or product-level source is not sufficient field evidence;
   rows without an observation remain explicitly `unknown`.
+- Canonical products retain both complete `serving` provenance and the normalized
+  `servingWeightGrams` provenance used for nutrient math. The serving-lineage trigger
+  accepts either path when linking an existing normalized row, preferring complete
+  serving evidence. The August 2026 corrective backfill restored complete serving
+  provenance and exact observation links where older catalog rows had only the weight
+  path.
 - `origin` distinguishes a package-label serving, source household measure, direct
   source weight, user-entered serving, calculated conversion, or unknown lineage.
   `gram_weight_method` separately records whether the gram value was reported,
@@ -643,9 +717,10 @@ Notes:
 - The initial migration checks every existing parent row and backfills all valid serving
   data already present. Foods without a trustworthy serving stay empty; the migration
   does not invent a 100g package serving.
-- The nutrition view loads these rows, defaults to the primary source serving, and still
-  offers the normalized 100g basis. Mix may calculate another unit only from an exact
-  weight conversion or a measured serving pair and preserves that calculation basis.
+- The nutrition view loads these rows and defaults to the primary source serving. It
+  offers a 100g view only when a mass basis or exact measured conversion exists. Mix may
+  convert within weight, within volume, or between exact source servings; it crosses
+  dimensions only through a measured relationship and preserves that calculation basis.
 - Authenticated users may read their own serving rows and servings attached to active
   shared products. Only server/service-role paths may write them.
 

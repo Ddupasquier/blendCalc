@@ -410,8 +410,8 @@ select ok(
 
 select is(
 	(select count(*) from public.blendcalc_api_v1_product_readiness where publishable),
-	1::bigint,
-	'only the fully evidenced QA product is searchable through public blendCalc API v1'
+	2::bigint,
+	'only the fully evidenced QA products are searchable through public blendCalc API v1'
 );
 
 select ok(
