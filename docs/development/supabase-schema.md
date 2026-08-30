@@ -791,6 +791,8 @@ generated key once and persists only its SHA-256 hash plus a short display prefi
 Browser roles have no table privileges. Rotation inserts the replacement and revokes
 the prior key in one service-role-only database transaction; expiry, last use, explicit
 revocation, and rotation lineage remain auditable.
+Key expiry is optional at the database function boundary. Omitting it stores `NULL`;
+the server never invents an expiry timestamp solely to satisfy transport typing.
 
 ### `shared_product_submissions`
 
