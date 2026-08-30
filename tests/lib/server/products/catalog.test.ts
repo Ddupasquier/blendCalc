@@ -142,6 +142,18 @@ describe("shared product validation", () => {
 		);
 	});
 
+	it("forces material provider disagreements into current-label review", () => {
+		expect(
+			buildProductSubmissionReviewFlags({
+				sourceAccuracyFlags: [
+					"Trusted source records materially disagree about nutrient:2000. Review the current package label before sharing this product.",
+				],
+			}),
+		).toContain(
+			"Trusted source records materially disagree about nutrient:2000. Review the current package label before sharing this product.",
+		);
+	});
+
 	it("routes every changed same-barcode product through catalog correction review", () => {
 		const existingComparison = {
 			matchesExisting: false,

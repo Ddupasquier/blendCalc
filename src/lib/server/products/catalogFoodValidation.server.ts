@@ -109,5 +109,5 @@ export const assertSharedProductFoodCanBePublished = async (
 		throw new Error(validation.issues.join(" "));
 	}
 	await assertKnownCatalogNutrients(food);
-	return validation;
+	return { ...validation, nutrientRelationshipRules };
 };

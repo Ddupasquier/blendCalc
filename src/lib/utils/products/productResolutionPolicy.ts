@@ -80,6 +80,30 @@ export const getProductDifferenceThresholds = (
 	return thresholds;
 };
 
+export const getNumericProductDifferenceSeverity = (
+	policy: ProductResolutionPolicy,
+	comparisonContext: string,
+	leftValue: number,
+	rightValue: number,
+) => {
+	const absoluteDifference = Math.abs(leftValue - rightValue);
+	const differenceRatio =
+		absoluteDifference /
+		Math.max(
+			Math.abs(leftValue),
+			Math.abs(rightValue),
+			policy.numericDifferenceRatioFloor,
+		);
+
+	return (
+		getProductDifferenceThresholds(policy, comparisonContext).find(
+			(threshold) =>
+				differenceRatio >= threshold.minimumDifferenceRatio &&
+				absoluteDifference >= threshold.minimumAbsoluteDifference,
+		)?.severity ?? null
+	);
+};
+
 export const getProductResolutionIgnoredTerms = (
 	policy: ProductResolutionPolicy,
 	termContext: string,

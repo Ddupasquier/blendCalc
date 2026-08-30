@@ -1,9 +1,21 @@
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
 import { completeServerBackgroundTask } from "$lib/server/runtime/backgroundTask.server";
+import type { Json } from "$lib/types/database.types";
 import type { ProductSourceQualitySummary } from "$lib/utils/food/sources/sourceQuality";
 
 export type ProductSourceLookupKind = "barcode" | "generic-search";
 export type ProductSourceLookupOutcome = "matched" | "not-found" | "error";
+
+export type ProductSourceFieldMetricIncrement = {
+	sourceKey: "usda" | "open-food-facts";
+	fieldPath: string;
+	evaluatedCount?: number;
+	selectedCount?: number;
+	internallyInvalidCount?: number;
+	crossSourceDisagreementCount?: number;
+	submittedLabelDisagreementCount?: number;
+	confirmedLabelCorrectionCount?: number;
+};
 
 export type ProductSourceRequestTrace = {
 	apiRequestCount: number;
@@ -71,6 +83,76 @@ export const recordProductSourceLookup = async (input: {
 	exactBarcodeMatch?: boolean;
 }) => {
 	await completeServerBackgroundTask(writeProductSourceLookup(input));
+};
+
+export const recordProductSourceFieldMetrics = async (
+	increments: readonly ProductSourceFieldMetricIncrement[],
+) => {
+	const combined = new Map<
+		string,
+		Required<ProductSourceFieldMetricIncrement>
+	>();
+	for (const increment of increments) {
+		const fieldPath = increment.fieldPath.trim();
+		if (!fieldPath) continue;
+		const key = `${increment.sourceKey}:${fieldPath}`;
+		const current = combined.get(key) ?? {
+			sourceKey: increment.sourceKey,
+			fieldPath,
+			evaluatedCount: 0,
+			selectedCount: 0,
+			internallyInvalidCount: 0,
+			crossSourceDisagreementCount: 0,
+			submittedLabelDisagreementCount: 0,
+			confirmedLabelCorrectionCount: 0,
+		};
+		current.evaluatedCount += increment.evaluatedCount ?? 0;
+		current.selectedCount += increment.selectedCount ?? 0;
+		current.internallyInvalidCount += increment.internallyInvalidCount ?? 0;
+		current.crossSourceDisagreementCount +=
+			increment.crossSourceDisagreementCount ?? 0;
+		current.submittedLabelDisagreementCount +=
+			increment.submittedLabelDisagreementCount ?? 0;
+		current.confirmedLabelCorrectionCount +=
+			increment.confirmedLabelCorrectionCount ?? 0;
+		combined.set(key, current);
+	}
+	if (combined.size === 0) return;
+
+	await completeServerBackgroundTask(
+		writeProductSourceFieldMetrics([...combined.values()]),
+	);
+};
+
+const writeProductSourceFieldMetrics = async (
+	increments: readonly Required<ProductSourceFieldMetricIncrement>[],
+) => {
+	try {
+		const { error } = await getSupabaseAdminClient().rpc(
+			"record_product_source_field_daily_metrics",
+			{
+				p_metric_increments: increments.map((increment) => ({
+					source_key: increment.sourceKey,
+					field_path: increment.fieldPath,
+					evaluated_count: increment.evaluatedCount,
+					selected_count: increment.selectedCount,
+					internally_invalid_count: increment.internallyInvalidCount,
+					cross_source_disagreement_count:
+						increment.crossSourceDisagreementCount,
+					submitted_label_disagreement_count:
+						increment.submittedLabelDisagreementCount,
+					confirmed_label_correction_count:
+						increment.confirmedLabelCorrectionCount,
+				})) as Json,
+			},
+		);
+		if (error) throw error;
+	} catch (error) {
+		console.warn(
+			"Unable to record product source field metrics:",
+			error instanceof Error ? error.message : error,
+		);
+	}
 };
 
 const writeProductSourceLookup = async (input: {

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
 	buildSourceContributionReport,
+	buildSourceFieldAccuracyRows,
 	buildSourceOperationalRows,
 } from "../../scripts/lib/catalog/productSourceContributionReport.mjs";
 
@@ -10,6 +11,34 @@ const sourceNames = new Map([
 ]);
 
 describe("product source contribution report", () => {
+	it("aggregates field accuracy without calling disagreements provider errors", () => {
+		expect(
+			buildSourceFieldAccuracyRows(
+				[
+					{
+						source_key: "usda",
+						field_path: "nutrient:2000",
+						evaluated_count: 10,
+						selected_count: 6,
+						internally_invalid_count: 1,
+						cross_source_disagreement_count: 2,
+						submitted_label_disagreement_count: 2,
+						confirmed_label_correction_count: 1,
+					},
+				],
+				new Map([["usda", "USDA FoodData Central"]]),
+			),
+		).toEqual([
+			expect.objectContaining({
+				source: "USDA FoodData Central",
+				fieldPath: "nutrient:2000",
+				internallyInvalidPercent: 10,
+				crossSourceDisagreementPercent: 20,
+				confirmedLabelCorrectionPercent: 10,
+			}),
+		]);
+	});
+
 	it("aggregates request, cache, coverage, and response metrics by source", () => {
 		const rows = buildSourceOperationalRows(
 			[

@@ -23,6 +23,9 @@ import type { CatalogSourceAssessment } from "./catalogSourceAssessment.server";
 import type { ProductEvidencePaths } from "./productEvidence.server";
 import { hasCompleteProductEvidence } from "./productEvidence.server";
 import type { FoodImagePlacementValues } from "./foodImages.server";
+import type { ProductSourceFieldMetricIncrement } from "./sourceMetrics.server";
+import { findSubmittedLabelDisagreementMetrics } from "./catalogSourceAccuracy.server";
+import type { CatalogSourceAccuracyConflict } from "./catalogSourceAccuracy.server";
 
 export type CatalogSubmissionValidationReport = {
 	valid: boolean;
@@ -36,6 +39,8 @@ export type CatalogSubmissionValidationReport = {
 	existingCatalogAction?: "already_available" | "update_review";
 	existingCatalogComparison?: CatalogSubmissionComparison;
 	imageCrop?: FoodImagePlacementValues | null;
+	sourceLabelDisagreementMetrics?: ProductSourceFieldMetricIncrement[];
+	sourceAccuracyConflicts?: CatalogSourceAccuracyConflict[];
 };
 
 const sanitizeReviewFlags = (reviewFlags: string[] = []) =>
@@ -52,10 +57,12 @@ export const buildProductSubmissionReviewFlags = ({
 	requestedFlags = [],
 	existingComparison,
 	sourceComparison,
+	sourceAccuracyFlags = [],
 }: {
 	requestedFlags?: string[];
 	existingComparison?: CatalogSubmissionComparison | null;
 	sourceComparison?: CatalogSubmissionComparison | null;
+	sourceAccuracyFlags?: string[];
 }) =>
 	sanitizeReviewFlags([
 		...requestedFlags,
@@ -66,6 +73,7 @@ export const buildProductSubmissionReviewFlags = ({
 				]
 			: []),
 		...(sourceComparison?.issues ?? []),
+		...sourceAccuracyFlags,
 	]);
 
 export type PreparedCatalogSubmissionReview = {
@@ -132,6 +140,7 @@ export const prepareCatalogSubmissionReview = (input: {
 		requestedFlags: input.requestedReviewFlags,
 		existingComparison: input.existingComparison,
 		sourceComparison,
+		sourceAccuracyFlags: input.sourceAssessment.sourceAccuracy.reviewFlags,
 	});
 	const needsSourceComparisonReview = reviewFlags.length > 0;
 	const catalogUpdateSummary =
@@ -196,6 +205,17 @@ export const prepareCatalogSubmissionReview = (input: {
 			"Source comparison reviews need front package, nutrition label, and barcode photos for verification.",
 		);
 	}
+	const sourceLabelDisagreementMetrics = evidenceComplete
+		? [usdaDraft, openFoodFactsDraft].flatMap((sourceDraft) =>
+				sourceDraft
+					? findSubmittedLabelDisagreementMetrics(
+							canonicalSubmissionFood,
+							sourceDraft,
+							resolutionPolicy,
+						)
+					: [],
+			)
+		: [];
 	const sourceDrafts = [usdaDraft, openFoodFactsDraft].filter(
 		(draft): draft is NonNullable<typeof draft> => Boolean(draft),
 	);
@@ -206,6 +226,7 @@ export const prepareCatalogSubmissionReview = (input: {
 				sourceDrafts,
 				canonicalCategory,
 				resolutionPolicy,
+				input.sourceAssessment.sourceAccuracy.conflicts,
 			)
 		: null;
 	const report: CatalogSubmissionValidationReport = {
@@ -222,6 +243,8 @@ export const prepareCatalogSubmissionReview = (input: {
 			: undefined,
 		existingCatalogComparison: input.existingComparison ?? undefined,
 		imageCrop: input.frontImageCrop ?? null,
+		sourceLabelDisagreementMetrics,
+		sourceAccuracyConflicts: input.sourceAssessment.sourceAccuracy.conflicts,
 	};
 
 	return {

@@ -1,8 +1,8 @@
 import { createServerCachedLoader } from "$lib/server/cache/serverCachedLoader";
+import { getNutrientRelationshipRuleCatalog } from "$lib/server/nutrition/nutrientRelationshipCatalog.server";
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
 import { readManualEntryNutrientGroups } from "$lib/utils/food/nutrients/nutrientDefinitions";
 import type { ManualEntryReferenceData } from "$lib/utils/food/nutrients/manualEntryReferenceData";
-import { readNutrientRelationshipRules } from "$lib/utils/food/nutrients/nutrientRelationshipRules";
 import { readNutritionLabelOcrMappings } from "$lib/utils/food/ocr/nutritionLabelOcrMappings";
 import { readProductRegulatoryDisclosureProfiles } from "$lib/utils/food/quality/productRegulatoryDisclosureProfiles";
 
@@ -18,7 +18,7 @@ export const getManualEntryReferenceData = createServerCachedLoader({
 			regulatoryDisclosureProfiles,
 		] = await Promise.all([
 			readManualEntryNutrientGroups(supabase),
-			readNutrientRelationshipRules(supabase),
+			getNutrientRelationshipRuleCatalog(),
 			readNutritionLabelOcrMappings(supabase),
 			readProductRegulatoryDisclosureProfiles(supabase),
 		]);

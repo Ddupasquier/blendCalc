@@ -124,6 +124,68 @@ export const buildSourceOperationalRows = (metricRows, sourceNames) => {
 		.sort((left, right) => right.coverageIndex - left.coverageIndex);
 };
 
+const sourceFieldMetricNames = [
+	"evaluated_count",
+	"selected_count",
+	"internally_invalid_count",
+	"cross_source_disagreement_count",
+	"submitted_label_disagreement_count",
+	"confirmed_label_correction_count",
+];
+
+/**
+ * @param {Array<Record<string, unknown>>} metricRows
+ * @param {Map<string, string>} sourceNames
+ */
+export const buildSourceFieldAccuracyRows = (metricRows, sourceNames) => {
+	const totals = new Map();
+	for (const metric of metricRows) {
+		const sourceKey = String(metric.source_key);
+		const fieldPath = String(metric.field_path);
+		const key = getContributionKey(sourceKey, fieldPath);
+		const total =
+			totals.get(key) ??
+			Object.fromEntries(sourceFieldMetricNames.map((field) => [field, 0]));
+		for (const field of sourceFieldMetricNames) {
+			total[field] += Number(metric[field] ?? 0);
+		}
+		totals.set(key, { ...total, sourceKey, fieldPath });
+	}
+
+	return [...totals.values()]
+		.map((total) => ({
+			sourceKey: total.sourceKey,
+			source: getSourceDisplayName(sourceNames, total.sourceKey),
+			fieldPath: total.fieldPath,
+			evaluatedCount: total.evaluated_count,
+			selectedCount: total.selected_count,
+			internallyInvalidCount: total.internally_invalid_count,
+			crossSourceDisagreementCount: total.cross_source_disagreement_count,
+			submittedLabelDisagreementCount: total.submitted_label_disagreement_count,
+			confirmedLabelCorrectionCount: total.confirmed_label_correction_count,
+			internallyInvalidPercent: rounded(
+				percentage(total.internally_invalid_count, total.evaluated_count),
+			),
+			crossSourceDisagreementPercent: rounded(
+				percentage(
+					total.cross_source_disagreement_count,
+					total.evaluated_count,
+				),
+			),
+			confirmedLabelCorrectionPercent: rounded(
+				percentage(
+					total.confirmed_label_correction_count,
+					total.evaluated_count,
+				),
+			),
+		}))
+		.sort(
+			(left, right) =>
+				left.source.localeCompare(right.source) ||
+				left.fieldPath.localeCompare(right.fieldPath),
+		);
+};
+
 /**
  * @param {object} input
  * @param {Array<{id: string, source: string}>} input.observationRows

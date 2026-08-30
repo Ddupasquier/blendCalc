@@ -4,6 +4,7 @@ import { areExternalProductLookupsEnabled } from "$lib/server/products/externalP
 import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
 import type { ProductReferenceCatalog } from "$lib/utils/food/reference/productReferenceCatalog";
 import { PRODUCT_RESOLUTION_POLICY_FIXTURE } from "../../../fixtures/productResolutionPolicy";
+import type { NutrientRelationshipRule } from "$lib/utils/food/nutrients/nutrientRelationshipRules";
 
 const makeDraft = (
 	source: BarcodeProductDraft["source"],
@@ -78,6 +79,19 @@ const cachedCommunityImage = {
 	confidence: "moderator-reviewed" as const,
 };
 
+const totalSugarsRelationshipRule: NutrientRelationshipRule = {
+	id: "added-sugars-lte-total-sugars",
+	parentNutrientId: 2000,
+	childNutrientId: 1235,
+	parentLabel: "Total Sugars",
+	childLabel: "Added Sugars",
+	relationship: "child_must_not_exceed_parent",
+	severity: "error",
+	issueCode: "NUTRIENT_CHILD_EXCEEDS_PARENT",
+	requiresParent: true,
+	tolerance: 0,
+};
+
 describe("external barcode product lookup", () => {
 	const getProductReferenceCatalog = vi
 		.fn<() => Promise<ProductReferenceCatalog>>()
@@ -95,6 +109,64 @@ describe("external barcode product lookup", () => {
 		expect(getDisabledProductReferenceCatalog).not.toHaveBeenCalled();
 		expect(areExternalProductLookupsEnabled("test")).toBe(false);
 		expect(areExternalProductLookupsEnabled("production")).toBe(true);
+	});
+
+	it("removes impossible provider nutrients before manual-entry autofill sees them", async () => {
+		const usdaDraft = makeDraft("usda", undefined, {
+			nutrients: [
+				{
+					nutrientId: 2000,
+					nutrientName: "Total Sugars",
+					nutrientNumber: "269",
+					unitName: "G",
+					value: 2,
+					source: "usda",
+				},
+				{
+					nutrientId: 1235,
+					nutrientName: "Added Sugars",
+					nutrientNumber: "539",
+					unitName: "G",
+					value: 8.33,
+					source: "usda",
+				},
+			],
+			reportedNutrientIds: [2000, 1235],
+		});
+
+		const result = await lookupExternalBarcodeProduct(usdaDraft.barcode, {
+			usda: vi.fn().mockResolvedValue(usdaDraft),
+			openFoodFacts: vi.fn().mockResolvedValue(null),
+			getProductReferenceCatalog,
+			requiredNutrientIds: [],
+			nutrientRelationshipRules: [totalSugarsRelationshipRule],
+		});
+
+		expect(result?.reportedNutrientIds).toEqual([2000]);
+		expect(result?.nutrients).toEqual([
+			expect.objectContaining({ nutrientId: 2000, value: 2 }),
+		]);
+	});
+
+	it("keeps provider identity but withholds unchecked nutrition when validation rules are unavailable", async () => {
+		const usdaDraft = makeDraft("usda");
+
+		const result = await lookupExternalBarcodeProduct(usdaDraft.barcode, {
+			usda: vi.fn().mockResolvedValue(usdaDraft),
+			openFoodFacts: vi.fn().mockResolvedValue(null),
+			getProductReferenceCatalog,
+			requiredNutrientIds: [],
+			nutrientRelationshipRules: Promise.reject(
+				new Error("Reference data unavailable"),
+			),
+		});
+
+		expect(result).toMatchObject({
+			name: usdaDraft.name,
+			nutrients: [],
+			reportedNutrientIds: [],
+		});
+		expect(result?.fieldProvenance?.nutrition).toBeUndefined();
 	});
 
 	it("starts provider lookup without waiting on unrelated completeness metadata", async () => {

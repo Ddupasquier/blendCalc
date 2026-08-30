@@ -358,10 +358,14 @@ const getAdditiveNutrientMerge = (
 	const targetServingWeight = hasServing(primary)
 		? primary.servingWeightGrams
 		: supplement.servingWeightGrams;
+	const targetServingLabel = hasServing(primary)
+		? primary.servingLabel
+		: supplement.servingLabel;
 	const primaryNutrients = scaleNutrients(
 		primary.nutrients,
 		primary.servingWeightGrams,
 		targetServingWeight,
+		targetServingLabel,
 	);
 	const primaryNutrientIds = new Set(
 		primaryNutrients.map((nutrient) => nutrient.nutrientId),
@@ -370,6 +374,7 @@ const getAdditiveNutrientMerge = (
 		supplement.nutrients,
 		supplement.servingWeightGrams,
 		targetServingWeight,
+		targetServingLabel,
 	).filter((nutrient) => !primaryNutrientIds.has(nutrient.nutrientId));
 
 	return [...primaryNutrients, ...addedNutrients];

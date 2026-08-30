@@ -124,6 +124,13 @@ observations remain in their licensed cache/evidence boundary, while accepted ca
 fields retain their own provenance. Existing records receive the same applicable
 backfill as future writes.
 
+Database-backed nutrient relationship validation runs before external barcode nutrition
+reaches manual-entry autofill or legally permitted exact-source observation storage.
+Invalid child values are withheld without discarding valid identity fields. If the
+validation catalog is unavailable, provider identity may still identify the package,
+but unchecked provider nutrition is withheld rather than displayed or stored as trusted
+nutrition.
+
 Product-resolution decisions use the active server-only database policy. That reviewed
 version owns name-overlap boundaries, numeric comparison thresholds, serving tolerance,
 field-selection weights, provider subtype ranks, category scoring, and nutrition-
@@ -186,6 +193,14 @@ provider/request-kind distribution, and reviewed request budgets. Cleanup remove
 bounded expired batch at a time. Daily metrics distinguish fresh hits, misses,
 stale-on-error fallbacks, coalesced requests, and real outbound requests without storing
 queries, barcodes, or user identifiers.
+
+Catalog intake also records privacy-safe field-level outcomes. Each exact provider
+record is checked independently against DB-owned nutrient relationships before field
+resolution. Shared identity, explicit source servings, and commonly reported nutrients
+are compared without treating omitted data as zero. Material disagreement routes the
+submission to current-label review while the existing canonical revision remains
+available. Operational counts distinguish disagreement from a moderator-confirmed
+label correction and never become a blanket provider trust score.
 
 blendCalcAPI reads do not depend on optional analytics, provider traffic, or intake
 processing. Source attribution remains legally required, but the server retains the
