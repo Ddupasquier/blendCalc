@@ -6381,6 +6381,59 @@ export type Database = {
           },
         ]
       }
+      product_source_field_daily_metrics: {
+        Row: {
+          confirmed_label_correction_count: number
+          created_at: string
+          cross_source_disagreement_count: number
+          evaluated_count: number
+          evaluation_origin: string
+          field_path: string
+          internally_invalid_count: number
+          metric_date: string
+          selected_count: number
+          source_key: string
+          submitted_label_disagreement_count: number
+          updated_at: string
+        }
+        Insert: {
+          confirmed_label_correction_count?: number
+          created_at?: string
+          cross_source_disagreement_count?: number
+          evaluated_count?: number
+          evaluation_origin?: string
+          field_path: string
+          internally_invalid_count?: number
+          metric_date: string
+          selected_count?: number
+          source_key: string
+          submitted_label_disagreement_count?: number
+          updated_at?: string
+        }
+        Update: {
+          confirmed_label_correction_count?: number
+          created_at?: string
+          cross_source_disagreement_count?: number
+          evaluated_count?: number
+          evaluation_origin?: string
+          field_path?: string
+          internally_invalid_count?: number
+          metric_date?: string
+          selected_count?: number
+          source_key?: string
+          submitted_label_disagreement_count?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_source_field_daily_metrics_source_key_fkey"
+            columns: ["source_key"]
+            isOneToOne: false
+            referencedRelation: "product_data_sources"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
       product_source_request_budgets: {
         Row: {
           created_at: string
@@ -8886,6 +8939,10 @@ export type Database = {
           p_source_data_type: string
           p_source_key: string
         }
+        Returns: undefined
+      }
+      record_product_source_field_daily_metrics: {
+        Args: { p_metric_increments: Json }
         Returns: undefined
       }
       cleanup_expired_product_api_cache: {

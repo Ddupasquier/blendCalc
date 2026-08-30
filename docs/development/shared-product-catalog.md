@@ -639,8 +639,9 @@ outcomes:
 3. **Catalog update request:** barcode exists, but the user’s data has meaningful
    differences. Let the user submit evidence, send it to moderation, and keep their
    private ingredient unchanged.
-4. **Trusted source auto-accept:** barcode has a trusted source match and submitted data
-   matches closely enough. Publish without human review and keep source provenance.
+4. **Trusted source auto-accept:** barcode has an exact source match, each source record
+   passes DB-backed internal validation, and submitted data matches closely enough.
+   Publish without human review and keep field provenance.
 5. **Human review:** unknown label, same-product source disagreement, or missing
    confidence. Require package, nutrition label, and barcode evidence.
 6. **Evidence-aware divergence:** an exact-GTIN submission that materially differs from
@@ -659,6 +660,9 @@ outcomes:
 - **Nutrients:** required nutrients present, typed `0` accepted as real data, no
   negative values, child nutrients not greater than parent nutrients, and extreme values
   flagged.
+- **Source agreement:** compare identity, explicitly reported source servings, and
+  commonly reported nutrients independently. Missing fields remain unknown rather than
+  becoming zero or a conflict.
 - **Evidence:** front package, nutrition label, and barcode photos required for unknown
   labels, catalog update requests, and source disagreement.
 - **User history:** repeated human rejections pause sharing, but silent machine blocks
@@ -670,6 +674,28 @@ outcomes:
 - Existing shared product match with no changes.
 - Missing optional nutrients filled from a trusted source without changing user-entered
   required label data.
+
+Provider records are observations, not whole-product winners. A field that violates a
+DB-backed nutrient relationship is excluded without discarding unrelated valid fields
+from that source. Material USDA/Open Food Facts disagreements require current package
+evidence; low differences remain measurable without manufacturing moderator work.
+Source publication and modification dates stay attached to the values under review.
+The existing canonical revision remains available while a correction waits.
+
+Canonical serving publication stores both the complete package serving and its exact
+gram-weight field as provenance from the same observation. This keeps household labels,
+normalized serving rows, and blendCalcAPI publication readiness aligned instead of
+blocking a valid product because only the numeric serving path was recorded.
+
+The same relationship validation runs before external barcode nutrition reaches
+manual-entry autofill or legally permitted exact-source observation storage. Invalid
+child values are omitted. If validation rules are unavailable, nutrition fails closed
+while usable non-nutrition identity fields remain available.
+
+Privacy-safe operational metrics distinguish field selection, internal invalidity,
+cross-source disagreement, submitted-label disagreement, and moderator-confirmed label
+correction. They never assign one blanket accuracy score to an entire provider, and a
+disagreement alone does not declare which source is wrong.
 
 ### Auto-Block Candidates
 

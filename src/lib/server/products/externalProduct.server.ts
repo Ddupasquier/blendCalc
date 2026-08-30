@@ -29,6 +29,10 @@ import {
 	sourceCoverageConfirmsProductNotFound,
 } from "./productSourceFieldCoverage.server";
 import { persistLegallyStorableExactProductObservation } from "./productSourceObservation.server";
+import type { NutrientRelationshipRule } from "$lib/utils/food/nutrients/nutrientRelationshipRules";
+import { getNutrientRelationshipRuleCatalog } from "$lib/server/nutrition/nutrientRelationshipCatalog.server";
+import { assessProviderDraftNutrientAccuracy } from "./catalogSourceAccuracy.server";
+import { recordProductSourceFieldMetrics } from "./sourceMetrics.server";
 
 export {
 	lookupUsdaBarcodeProduct,
@@ -74,6 +78,9 @@ export const lookupExternalBarcodeProduct = async (
 		externalLookupsEnabled?: boolean;
 		resolutionPolicy?:
 			ProductResolutionPolicy | PromiseLike<ProductResolutionPolicy>;
+		nutrientRelationshipRules?:
+			| readonly NutrientRelationshipRule[]
+			| PromiseLike<readonly NutrientRelationshipRule[]>;
 		sourceCoverageSupabase?: SupabaseClient<Database>;
 	} = {},
 ): Promise<BarcodeProductDraft | null> => {
@@ -94,6 +101,10 @@ export const lookupExternalBarcodeProduct = async (
 				lookups.resolutionPolicy ?? getDefaultProductResolutionPolicy(),
 			).catch(() => null)
 		: null;
+	const nutrientRelationshipRulesPromise = Promise.resolve(
+		lookups.nutrientRelationshipRules ??
+			(hasInjectedProvider ? [] : getNutrientRelationshipRuleCatalog()),
+	).catch(() => null);
 
 	const productReferenceCatalogPromise = (
 		lookups.getProductReferenceCatalog ?? getProductReferenceCatalog
@@ -151,7 +162,13 @@ export const lookupExternalBarcodeProduct = async (
 			}
 		}
 
-		const draft = await lookup();
+		const sourceDraft = await lookup();
+		const nutrientAccuracy = assessProviderDraftNutrientAccuracy(
+			sourceDraft,
+			await nutrientRelationshipRulesPromise,
+		);
+		const draft = nutrientAccuracy.draft;
+		await recordProductSourceFieldMetrics(nutrientAccuracy.metricIncrements);
 		if (draft && !hasInjectedProvider) {
 			await persistLegallyStorableExactProductObservation({
 				draft,

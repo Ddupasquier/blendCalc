@@ -52,6 +52,7 @@ import {
 	searchApprovedCatalogRecords,
 } from "./catalogRead.server";
 import { getDefaultProductResolutionPolicy } from "./productResolutionPolicy.server";
+import { recordProductSourceFieldMetrics } from "./sourceMetrics.server";
 
 type ProductSubmissionContext = {
 	reviewFlags?: string[];
@@ -314,7 +315,13 @@ export const submitProductForCatalog = async (
 	const sourceAssessment = await assessCatalogProductSources(
 		admin,
 		validation.barcode,
-		{ policy: resolutionPolicy },
+		{
+			policy: resolutionPolicy,
+			nutrientRelationshipRules,
+		},
+	);
+	await recordProductSourceFieldMetrics(
+		sourceAssessment.sourceAccuracy.metricIncrements,
 	);
 	const preparedReview = prepareCatalogSubmissionReview({
 		submissionFood,
@@ -328,6 +335,9 @@ export const submitProductForCatalog = async (
 		frontImageCrop: context.frontImageCrop,
 		labelObservedAt,
 	});
+	await recordProductSourceFieldMetrics(
+		preparedReview.report.sourceLabelDisagreementMetrics ?? [],
+	);
 	if (
 		preparedReview.sourceMismatchName &&
 		submissionIntent !== "catalog_correction"
@@ -542,6 +552,14 @@ export const approveCommunityProductSubmission = async (
 	const evidencePaths = submission.evidence_paths as ProductEvidencePaths;
 	const validationReport =
 		submission.validation_report as CatalogSubmissionValidationReport;
+	await recordProductSourceFieldMetrics(
+		(validationReport.sourceLabelDisagreementMetrics ?? []).map((metric) => ({
+			sourceKey: metric.sourceKey,
+			fieldPath: metric.fieldPath,
+			confirmedLabelCorrectionCount:
+				metric.submittedLabelDisagreementCount ?? 0,
+		})),
+	);
 	if (evidencePaths.front) {
 		await publishModeratedFoodImageAsset({
 			barcode: submission.barcode,

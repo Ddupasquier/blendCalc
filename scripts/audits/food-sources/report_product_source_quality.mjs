@@ -13,6 +13,7 @@ import { createClient } from "@supabase/supabase-js";
 import WebSocket from "ws";
 import {
 	buildSourceContributionReport,
+	buildSourceFieldAccuracyRows,
 	buildSourceOperationalRows,
 } from "../../lib/catalog/productSourceContributionReport.mjs";
 
@@ -77,6 +78,7 @@ const sinceDate = since.toISOString().slice(0, 10);
 const now = new Date().toISOString();
 const [
 	metricRows,
+	fieldMetricRows,
 	sources,
 	selectedProvenanceRows,
 	observationRows,
@@ -91,6 +93,17 @@ const [
 			.order("source_key")
 			.order("lookup_kind")
 			.order("source_data_type"),
+	),
+	queryAllRows("product_source_field_daily_metrics", "*", (query) =>
+		query
+			.gte("metric_date", sinceDate)
+			.eq(
+				"evaluation_origin",
+				origin === "benchmark" ? "benchmark" : "runtime-catalog",
+			)
+			.order("metric_date")
+			.order("source_key")
+			.order("field_path"),
 	),
 	queryAllRows("product_data_sources", "key, display_name", (query) =>
 		query.order("key"),
@@ -134,6 +147,10 @@ const contributionReport = buildSourceContributionReport({
 	openConflictRows: openConflictRows ?? [],
 	sourceNames,
 });
+const fieldAccuracyRows = buildSourceFieldAccuracyRows(
+	fieldMetricRows ?? [],
+	sourceNames,
+);
 
 if (outputJson) {
 	console.log(
@@ -141,6 +158,7 @@ if (outputJson) {
 			{
 				period: { sinceDate, through: now.slice(0, 10), origin },
 				operationalRows,
+				fieldAccuracyRows,
 				...contributionReport,
 			},
 			null,
@@ -179,6 +197,25 @@ if (operationalRows.length === 0) {
 		);
 	}
 }
+console.log("\nField-level source outcomes");
+if (fieldAccuracyRows.length === 0) {
+	console.log(
+		"No field-level source outcomes have been recorded in this period.",
+	);
+} else {
+	console.table(
+		fieldAccuracyRows.map((row) => ({
+			Source: row.source,
+			Field: row.fieldPath,
+			Evaluated: row.evaluatedCount,
+			Selected: row.selectedCount,
+			"Internally invalid": row.internallyInvalidCount,
+			"Cross-source disagreement": row.crossSourceDisagreementCount,
+			"Submitted-label disagreement": row.submittedLabelDisagreementCount,
+			"Confirmed label correction": row.confirmedLabelCorrectionCount,
+		})),
+	);
+}
 console.log("\nCurrent canonical contributions and source outcomes");
 if (contributionReport.sourceRows.length === 0) {
 	console.log(
@@ -201,5 +238,5 @@ console.log(
 	"Coverage index measures observed match/fullness/reliability, not authority. Runtime fallback sources receive harder requests, so use benchmark-origin rows for direct source comparisons.",
 );
 console.log(
-	"Selected fields are accepted canonical contributions. Coverage describes current lookup outcomes only; it is not provenance. Open disagreements are unresolved evidence conflicts, not provider error scores. Use --json for field-level counts.",
+	"Selected fields are accepted canonical contributions. Coverage describes current lookup outcomes only; it is not provenance. Disagreements remain unresolved evidence conflicts until reviewed current-label evidence confirms a correction. Use --json for field-level counts.",
 );

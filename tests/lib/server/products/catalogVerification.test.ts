@@ -67,6 +67,11 @@ const createUsdaDraft = (): BarcodeProductDraft => ({
 	ingredients: "Whole grain oats, sugar, salt",
 	ingredientList: ["Whole grain oats", "sugar", "salt"],
 	fieldProvenance: {
+		serving: {
+			source: "usda",
+			sourceReference: "12345",
+			confidence: "unknown",
+		},
 		categories: {
 			source: "usda",
 			sourceReference: "12345",
@@ -113,6 +118,16 @@ describe("catalog verification", () => {
 		);
 		expect(bundle.provenance).toEqual(
 			expect.arrayContaining([
+				expect.objectContaining({
+					fieldPath: "serving",
+					observationKey: "usda",
+					verificationMethod: "exact-barcode",
+				}),
+				expect.objectContaining({
+					fieldPath: "servingWeightGrams",
+					observationKey: "usda",
+					verificationMethod: "exact-barcode",
+				}),
 				expect.objectContaining({
 					fieldPath: "categories",
 					observationKey: "usda",
