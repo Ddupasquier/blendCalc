@@ -52,7 +52,7 @@ export type ManualEntryStep = {
 	label: string;
 };
 
-export type ManualEntryVolumeOption = {
+export type ManualEntryServingMeasureOption = {
 	value: ServingMeasureUnit;
 	label: string;
 };
@@ -82,5 +82,5 @@ export const emptyManualEntryNutrientGroups: ManualEntryNutrientGroupsByStep = {
 	extended: [],
 };
 
-export const volumeAmountRequiredMessage =
-	"Enter a volume amount or turn off Label includes volume.";
+export const servingMeasureAmountRequiredMessage =
+	"Enter the amount printed on the package or turn off Package measure.";

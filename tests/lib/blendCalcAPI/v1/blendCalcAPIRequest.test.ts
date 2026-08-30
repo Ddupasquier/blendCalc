@@ -3,6 +3,7 @@ import {
 	BLENDCALC_API_V1_PAGINATION_LIMITS,
 	BlendCalcAPIV1RequestError,
 	readBlendCalcAPIV1CategoryRequest,
+	readBlendCalcAPIV1ProductRequest,
 	readBlendCalcAPIV1RevisionHistoryRequest,
 	readBlendCalcAPIV1SearchRequest,
 } from "$lib/blendCalcAPI/v1/blendCalcAPIRequest";
@@ -105,6 +106,28 @@ describe("blendCalcAPI v1 request validation", () => {
 	])("rejects invalid %s pagination %s", (_, readRequest, search) => {
 		expect(() =>
 			readRequest(new URL(`https://blendcalc.test/api/v1/example${search}`)),
+		).toThrow(BlendCalcAPIV1RequestError);
+	});
+
+	it.each([
+		new URL("https://blendcalc.test/api/v1/foods/search?q=tomato&q=potato"),
+		new URL("https://blendcalc.test/api/v1/foods/search?q=tomato&private=true"),
+		new URL(
+			`https://blendcalc.test/api/v1/foods/search?q=${"a".repeat(2_100)}`,
+		),
+	])("rejects an unbounded or ambiguous query shape", (url) => {
+		expect(() => readBlendCalcAPIV1SearchRequest(url)).toThrow(
+			BlendCalcAPIV1RequestError,
+		);
+	});
+
+	it("rejects query parameters on exact-product reads", () => {
+		expect(() =>
+			readBlendCalcAPIV1ProductRequest(
+				new URL(
+					"https://blendcalc.test/api/v1/products/00021130493609?include=private",
+				),
+			),
 		).toThrow(BlendCalcAPIV1RequestError);
 	});
 });

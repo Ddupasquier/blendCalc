@@ -2,6 +2,7 @@
 
 .card-warning-frame {
 	--card-warning-frame-color: #{$app-highlight};
+	--card-warning-frame-fade-angle: 45deg;
 	--card-warning-frame-solid-stop: 16%;
 	--card-warning-frame-fade-midpoint: 32%;
 	--card-warning-frame-fade-end: 55%;
@@ -15,7 +16,7 @@
 	border: 3px solid transparent;
 	border-radius: inherit;
 	background: linear-gradient(
-			90deg,
+			var(--card-warning-frame-fade-angle),
 			var(--card-warning-frame-color) 0%,
 			var(--card-warning-frame-color) var(--card-warning-frame-solid-stop),
 			color-mix(in srgb, var(--card-warning-frame-color) 48%, transparent)

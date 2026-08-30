@@ -1,5 +1,6 @@
 import type { Database } from "$lib/types/database.types";
 import type { FoodItem } from "$lib/utils/food/types";
+import { getComparableFoodNutrientAmount } from "$lib/utils/food/nutrients/foodNutrients";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
 	getAppIssueMessage,
@@ -45,16 +46,27 @@ type NutrientRelationshipRuleRow = {
 	child_definition: { nutrient_name: string } | null;
 };
 
-export type NutrientValueMap = Map<number, number> | Record<number, number | undefined>;
-
-const getNutrientValue = (values: NutrientValueMap, nutrientId: number) => {
-	const rawValue = values instanceof Map ? values.get(nutrientId) : values[nutrientId];
-	return typeof rawValue === "number" && Number.isFinite(rawValue)
-		? rawValue
-		: undefined;
+type NutrientRelationshipValue = {
+	value: number;
+	basisKey?: string;
 };
 
-const toRule = (row: NutrientRelationshipRuleRow): NutrientRelationshipRule => ({
+export type NutrientValueMap =
+	| Map<number, number | NutrientRelationshipValue>
+	| Record<number, number | NutrientRelationshipValue | undefined>;
+
+const getNutrientValue = (values: NutrientValueMap, nutrientId: number) => {
+	const rawValue =
+		values instanceof Map ? values.get(nutrientId) : values[nutrientId];
+	if (typeof rawValue === "number") {
+		return Number.isFinite(rawValue) ? { value: rawValue } : undefined;
+	}
+	return rawValue && Number.isFinite(rawValue.value) ? rawValue : undefined;
+};
+
+const toRule = (
+	row: NutrientRelationshipRuleRow,
+): NutrientRelationshipRule => ({
 	id: row.id,
 	parentNutrientId: row.parent_nutrient_id,
 	childNutrientId: row.child_nutrient_id,
@@ -92,12 +104,17 @@ export const readNutrientRelationshipRules = async (
 };
 
 export const createNutrientValueMapFromFood = (food: FoodItem) => {
-	const values = new Map<number, number>();
+	const values = new Map<number, NutrientRelationshipValue>();
 	for (const nutrient of food.foodNutrients ?? []) {
-		if (!Number.isFinite(nutrient.nutrientId) || !Number.isFinite(nutrient.value)) {
+		if (
+			!Number.isFinite(nutrient.nutrientId) ||
+			!Number.isFinite(nutrient.value)
+		) {
 			continue;
 		}
-		values.set(nutrient.nutrientId, nutrient.value);
+		const comparable = getComparableFoodNutrientAmount(nutrient);
+		if (!comparable) continue;
+		values.set(nutrient.nutrientId, comparable);
 	}
 	return values;
 };
@@ -114,7 +131,7 @@ export const validateNutrientRelationshipRules = (
 			childLabel: rule.childLabel,
 		};
 		const childValue = getNutrientValue(values, rule.childNutrientId);
-		if (childValue === undefined || childValue <= 0) continue;
+		if (childValue === undefined || childValue.value <= 0) continue;
 
 		const parentValue = getNutrientValue(values, rule.parentNutrientId);
 		if (parentValue === undefined) {
@@ -131,10 +148,17 @@ export const validateNutrientRelationshipRules = (
 			}
 			continue;
 		}
+		if (
+			childValue.basisKey &&
+			parentValue.basisKey &&
+			childValue.basisKey !== parentValue.basisKey
+		) {
+			continue;
+		}
 
 		if (rule.relationship === "child_must_not_exceed_parent") {
-			const allowedMaximum = parentValue + rule.tolerance;
-			if (childValue > allowedMaximum) {
+			const allowedMaximum = parentValue.value + rule.tolerance;
+			if (childValue.value > allowedMaximum) {
 				issues.push({
 					ruleId: rule.id,
 					parentNutrientId: rule.parentNutrientId,

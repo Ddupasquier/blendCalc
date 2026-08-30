@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from "svelte";
 	import Link from "$lib/assets/icons/Link/Link.svelte";
 	import Minus from "$lib/assets/icons/Minus/Minus.svelte";
 	import Plus from "$lib/assets/icons/Plus/Plus.svelte";
@@ -8,20 +9,16 @@
 	import ViewFrame from "$lib/components/common/view/ViewFrame/ViewFrame.svelte";
 	import ViewTop from "$lib/components/common/view/ViewTop/ViewTop.svelte";
 	import {
-		DEFAULT_NUTRITION_VIEWING_GRAMS,
-		formatViewingGrams,
-		MAX_NUTRITION_VIEWING_GRAMS,
-		MIN_NUTRITION_VIEWING_GRAMS,
-		NUTRITION_VIEWING_GRAM_STEP,
-		stepNutritionViewingGrams,
-	} from "$lib/utils/food/nutrients/nutritionDisplay";
+		formatNutritionViewingSelection,
+		getInitialNutritionViewingSelection,
+		getNutritionViewingConversion,
+		getNutritionViewingServing,
+		stepNutritionViewingSelection,
+		type NutritionViewingSelection,
+	} from "$lib/utils/food/nutrients/nutritionViewingAmount";
 	import NutritionPanel from "../NutritionPanel/NutritionPanel.svelte";
 	import NutritionServingSelect from "../NutritionServingSelect/NutritionServingSelect.svelte";
 	import type { NutritionDetailViewProps } from "./types";
-	import {
-		getFoodServingByGrams,
-		getPrimaryFoodServing,
-	} from "$lib/utils/food/servings/foodServings";
 	import { getCanonicalFoodDescription } from "$lib/utils/food/records/foodRecords";
 
 	let {
@@ -35,32 +32,52 @@
 		onReportIncorrectInformation,
 	}: NutritionDetailViewProps = $props();
 
-	let viewingGrams = $state(DEFAULT_NUTRITION_VIEWING_GRAMS);
-	let currentFoodId = $state<number | null>(null);
+	let viewingSelection = $state<NutritionViewingSelection>(
+		untrack(() => getInitialNutritionViewingSelection(food)),
+	);
+	let currentFoodId = $state(untrack(() => food.fdcId));
 	const foodName = $derived(getCanonicalFoodDescription(food));
-	const viewingServing = $derived(getFoodServingByGrams(food, viewingGrams));
+	const viewingServing = $derived(
+		getNutritionViewingServing(food, viewingSelection),
+	);
+	const viewingConversion = $derived(
+		getNutritionViewingConversion(food, viewingSelection),
+	);
+	const viewingLabel = $derived(
+		formatNutritionViewingSelection(food, viewingSelection),
+	);
 
 	$effect(() => {
-		if (currentFoodId === null) {
-			currentFoodId = food.fdcId;
-			viewingGrams =
-				getPrimaryFoodServing(food)?.gramWeight ??
-				DEFAULT_NUTRITION_VIEWING_GRAMS;
-			return;
-		}
 		if (food.fdcId === currentFoodId) return;
 		currentFoodId = food.fdcId;
-		viewingGrams =
-			getPrimaryFoodServing(food)?.gramWeight ??
-			DEFAULT_NUTRITION_VIEWING_GRAMS;
+		viewingSelection = getInitialNutritionViewingSelection(food);
 	});
 
+	const decreaseViewingAmountLabel = $derived(
+		viewingSelection.kind === "mass"
+			? "Decrease viewing amount by 1g; press and hold to accelerate"
+			: "Decrease viewing amount by 1 serving; press and hold to accelerate",
+	);
+	const increaseViewingAmountLabel = $derived(
+		viewingSelection.kind === "mass"
+			? "Increase viewing amount by 1g; press and hold to accelerate"
+			: "Increase viewing amount by 1 serving; press and hold to accelerate",
+	);
+
 	const decreaseViewingAmount = (step: number) => {
-		viewingGrams = stepNutritionViewingGrams(viewingGrams, "decrease", step);
+		viewingSelection = stepNutritionViewingSelection(
+			viewingSelection,
+			"decrease",
+			step,
+		);
 	};
 
 	const increaseViewingAmount = (step: number) => {
-		viewingGrams = stepNutritionViewingGrams(viewingGrams, "increase", step);
+		viewingSelection = stepNutritionViewingSelection(
+			viewingSelection,
+			"increase",
+			step,
+		);
 	};
 </script>
 
@@ -93,20 +110,22 @@
 				<h2>Viewing Amount</h2>
 				<div class="nutrition-detail-view__amount-controls">
 					<AcceleratingStepButton
-						label={`Decrease viewing amount by ${NUTRITION_VIEWING_GRAM_STEP}g; press and hold to accelerate`}
+						label={decreaseViewingAmountLabel}
 						variant="soft"
 						size="small"
-						disabled={viewingGrams <= MIN_NUTRITION_VIEWING_GRAMS}
+						disabled={viewingSelection.kind === "mass"
+							? viewingSelection.grams <= 1
+							: viewingSelection.multiplier <= 1}
 						onStep={decreaseViewingAmount}
 					>
 						<Minus size={18} strokeWidth={2.6} />
 					</AcceleratingStepButton>
-					<strong aria-live="polite">{formatViewingGrams(viewingGrams)}</strong>
+					<strong aria-live="polite">{viewingLabel}</strong>
 					<AcceleratingStepButton
-						label={`Increase viewing amount by ${NUTRITION_VIEWING_GRAM_STEP}g; press and hold to accelerate`}
+						label={increaseViewingAmountLabel}
 						variant="primary"
 						size="small"
-						disabled={viewingGrams >= MAX_NUTRITION_VIEWING_GRAMS}
+						disabled={false}
 						onStep={increaseViewingAmount}
 					>
 						<Plus size={18} strokeWidth={2.6} />
@@ -115,8 +134,8 @@
 			</section>
 			<NutritionServingSelect
 				{food}
-				{viewingGrams}
-				onSelect={(gramWeight) => (viewingGrams = gramWeight)}
+				selection={viewingSelection}
+				onSelect={(selection) => (viewingSelection = selection)}
 			/>
 		</div>
 	</ViewTop>
@@ -126,7 +145,8 @@
 			<NutritionPanel
 				{food}
 				{showListActions}
-				{viewingGrams}
+				{viewingConversion}
+				{viewingLabel}
 				{viewingServing}
 				{listMembership}
 				{canAdjustImagePlacement}

@@ -111,6 +111,16 @@ result set once without page overlap.
 Route tests validate every status against the exact OpenAPI schema. Undeclared response
 fields are rejected rather than silently entering blendCalcAPI v1.
 
+### Nutrient Basis And Provenance
+
+Product nutrients remain normalized to `amountPer100g` for stable API comparisons. A
+package-serving observation is converted only when its exact gram weight or another
+verified mass conversion is available. The normalized value is then labeled `derived`,
+while `quality.sourceValueStatus` continues to describe the untouched source
+observation and `quality.derivationMethod` records
+`exact-native-basis-to-100g`. Missing conversion evidence returns `null`; it never
+creates an estimated mass value.
+
 ## Response Targets
 
 The internal API has measured p95 response budgets for representative authenticated
@@ -170,6 +180,25 @@ The request boundary applies endpoint-specific burst and sustained quotas to eac
 available client identity: network address, authenticated account, and presented API
 key. The private database consumes every applicable layer in one call; exceeding any
 layer returns the documented `429 rate_limited` response and retry delay.
+
+## Request Bounds
+
+Every blendCalcAPI v1 read is bounded on the server:
+
+- Each endpoint accepts only its documented query parameters. Unknown and repeated
+  parameters are rejected, search text is limited to 120 characters, and the complete
+  encoded query string is limited to 2,048 characters.
+- Search, category, and revision pages enforce their documented maximum page sizes and
+  a maximum offset of 1,000 before the database is queried.
+- Catalog work has a 10-second deadline. The same abort signal is passed into the
+  underlying database reads so timed-out work is stopped rather than merely hidden from
+  the caller. A deadline returns the existing safe `503 service_unavailable` response.
+- The v1 contract is read-only and exposes no request payload or upload endpoint.
+  Mutable application routes must use the shared byte-limited JSON or form-data readers;
+  an architecture test rejects direct request-body parsing elsewhere.
+- Collection responses are bounded by pagination. Exact-product responses remain
+  complete rather than being silently truncated; the read-only payload audit measures
+  those responses before a new detail level or production response-size gate is added.
 
 ## Payload Measurement
 

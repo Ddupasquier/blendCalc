@@ -575,7 +575,9 @@ Current card rules:
   always-present checkboxes outside selection mode.
 - Compact food-card conflicts use a shared `3px` rounded semantic frame with full amber or
   danger color through the left `16%`, just beyond the `28cqw` media lane's midpoint,
-  then fade completely into the card surface by `55%` of the card width.
+  then fade completely into the card surface by `55%` of the card width. Its shared
+  gradient axis tips downward so the color ends sooner along the top edge and
+  extends farther along the bottom edge.
   They do not add a separate left fill, compact warning icon, or warning text. The
   card's accessible label includes the warning.
 

@@ -18,8 +18,8 @@ signed-in user without exposing the account that submitted it.
 1. A user scans or enters a valid UPC/EAN barcode.
 2. The ingredient is always saved to that user's private custom-food list first.
 3. For eligible labels, the user can explicitly opt in to catalog review.
-4. The server validates the barcode, serving weight, nutrient values, and basic macro
-   relationships.
+4. The server validates the barcode, exact serving basis, nutrient values, and basic
+   macro relationships.
 5. An exact, legally reusable USDA FoodData Central barcode match may publish or improve
    the blendCalc canonical product; the stored blendCalc record becomes the source used
    by later app and public-API reads while USDA remains recorded as field evidence.
@@ -396,19 +396,26 @@ context and therefore do not serialize this personalized regional evaluation.
 ## Serving Data
 
 Reported serving sizes are normalized into `food_servings` when products are saved,
-submitted, approved, revised, or observed. Each row keeps the readable label, gram
-weight, optional amount/unit pair, primary flag, source reference, confidence, exact
-measure metadata, serving origin, gram-weight method, and any measured calculation
-basis. The product JSON remains a compatibility snapshot, but normalized rows are what
+submitted, approved, revised, or observed. Each row keeps the readable label, optional
+gram weight, optional milliliter volume, amount/unit pair, primary flag, source
+reference, confidence, exact measure metadata, serving origin, gram-weight method, and
+any measured calculation basis. Count/package servings preserve labels such as
+`1 cookie` or `1 bottle` without inventing a weight. Exact nutrient values are stored in
+`food_nutrient_measurements` on their reported mass, volume, or source-serving basis.
+The product JSON remains a compatibility snapshot, but normalized rows are what
 nutrition and Mix consume.
 
-The nutrition view defaults to the primary reported serving when one exists and also
-offers a 100g standard view. Missing source serving data stays missing; a 100g nutrition
-basis is not treated as proof that the package reports a 100g serving. Database triggers
-synchronize future writes, and the serving migration backfills valid serving data from
-existing catalog and user food records only when an exact serving or user-entered value
-supports it. Provider identity, food identity, names, and categories do not establish a
-serving origin or weight-to-volume relationship.
+The nutrition and Mix views default to a verified household, count, or package measure
+when one exists and can represent the stored nutrient basis exactly. A source measure
+such as `2 cups (100g)` remains the user-facing amount while calculations retain the
+100g nutrient basis. A 100g standard view remains secondary and appears only when exact
+mass data supports it. Missing source serving data stays missing; a 100g nutrition basis
+is not treated as proof that the package reports a 100g serving or any household
+equivalent. Database triggers synchronize future writes, and the serving migration
+backfills valid serving and native nutrient data from existing catalog and user food
+records only when an exact serving or user-entered value supports it. Provider identity,
+food identity, names, and categories do not establish a serving origin,
+weight-to-volume relationship, or count-to-weight conversion.
 
 ## Runtime Source Boundary
 
@@ -639,8 +646,9 @@ outcomes:
 3. **Catalog update request:** barcode exists, but the user’s data has meaningful
    differences. Let the user submit evidence, send it to moderation, and keep their
    private ingredient unchanged.
-4. **Trusted source auto-accept:** barcode has a trusted source match and submitted data
-   matches closely enough. Publish without human review and keep source provenance.
+4. **Trusted source auto-accept:** barcode has an exact source match, each source record
+   passes DB-backed internal validation, and submitted data matches closely enough.
+   Publish without human review and keep field provenance.
 5. **Human review:** unknown label, same-product source disagreement, or missing
    confidence. Require package, nutrition label, and barcode evidence.
 6. **Evidence-aware divergence:** an exact-GTIN submission that materially differs from
@@ -659,6 +667,9 @@ outcomes:
 - **Nutrients:** required nutrients present, typed `0` accepted as real data, no
   negative values, child nutrients not greater than parent nutrients, and extreme values
   flagged.
+- **Source agreement:** compare identity, explicitly reported source servings, and
+  commonly reported nutrients independently. Missing fields remain unknown rather than
+  becoming zero or a conflict.
 - **Evidence:** front package, nutrition label, and barcode photos required for unknown
   labels, catalog update requests, and source disagreement.
 - **User history:** repeated human rejections pause sharing, but silent machine blocks
@@ -670,6 +681,28 @@ outcomes:
 - Existing shared product match with no changes.
 - Missing optional nutrients filled from a trusted source without changing user-entered
   required label data.
+
+Provider records are observations, not whole-product winners. A field that violates a
+DB-backed nutrient relationship is excluded without discarding unrelated valid fields
+from that source. Material USDA/Open Food Facts disagreements require current package
+evidence; low differences remain measurable without manufacturing moderator work.
+Source publication and modification dates stay attached to the values under review.
+The existing canonical revision remains available while a correction waits.
+
+Canonical serving publication stores both the complete package serving and its exact
+gram-weight field as provenance from the same observation. This keeps household labels,
+normalized serving rows, and blendCalcAPI publication readiness aligned instead of
+blocking a valid product because only the numeric serving path was recorded.
+
+The same relationship validation runs before external barcode nutrition reaches
+manual-entry autofill or legally permitted exact-source observation storage. Invalid
+child values are omitted. If validation rules are unavailable, nutrition fails closed
+while usable non-nutrition identity fields remain available.
+
+Privacy-safe operational metrics distinguish field selection, internal invalidity,
+cross-source disagreement, submitted-label disagreement, and moderator-confirmed label
+correction. They never assign one blanket accuracy score to an entire provider, and a
+disagreement alone does not declare which source is wrong.
 
 ### Auto-Block Candidates
 

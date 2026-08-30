@@ -3,6 +3,7 @@ import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
 import { normalizeFoodCategoryValue } from "$lib/utils/food/categories/categoryNormalization.js";
 import type { FoodItem } from "$lib/utils/food/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { applyDatabaseQueryAbortSignal } from "$lib/utils/storage/supabase/databaseQueryAbortSignal";
 
 export type ResolvedFoodCategory = {
 	categoryOptionId: string;
@@ -88,11 +89,11 @@ const resolveExactFoodCategoryOption = async (
 		return {
 			categoryOptionId: option.id,
 			label: option.label,
-				sourceValue: option.normalized_value,
-				confidence: "exact",
-				symbolKey: option.symbol_key,
-				updatedAt: option.updated_at,
-			};
+			sourceValue: option.normalized_value,
+			confidence: "exact",
+			symbolKey: option.symbol_key,
+			updatedAt: option.updated_at,
+		};
 	}
 	return null;
 };
@@ -135,14 +136,21 @@ export const readFoodCategoryOption = async (
 export const readFoodCategoryOptions = async (
 	supabase: SupabaseClient<Database>,
 	categoryOptionIds: Array<string | null | undefined>,
+	databaseAbortSignal?: AbortSignal,
 ) => {
-	const ids = [...new Set(categoryOptionIds.filter((id): id is string => Boolean(id)))];
+	const ids = [
+		...new Set(categoryOptionIds.filter((id): id is string => Boolean(id))),
+	];
 	if (!ids.length) return new Map<string, ResolvedFoodCategory>();
-	const { data, error } = await supabase
+	const databaseQuery = supabase
 		.from("custom_food_category_options")
 		.select("id, label, normalized_value, symbol_key, updated_at")
 		.in("id", ids)
 		.eq("enabled", true);
+	const { data, error } = await applyDatabaseQueryAbortSignal(
+		databaseQuery,
+		databaseAbortSignal,
+	);
 	if (error) throw error;
 	return new Map(
 		(data ?? []).map((row) => [
@@ -166,8 +174,8 @@ export const resolveBarcodeDraftCategory = async (
 	if (draft.categoryResolution) return draft;
 	const sourceValues = draft.categories ?? [];
 	const resolved =
-		await resolveSourceFoodCategoryOption(supabase, sourceValues)
-		?? await resolveExactFoodCategoryOption(supabase, sourceValues);
+		(await resolveSourceFoodCategoryOption(supabase, sourceValues)) ??
+		(await resolveExactFoodCategoryOption(supabase, sourceValues));
 	if (!resolved) return draft;
 
 	return {

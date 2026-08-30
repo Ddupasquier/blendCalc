@@ -16,7 +16,11 @@ import {
 	saveCustomFood,
 } from "$lib/utils/food/custom/customFoods";
 import { NUTRIENT_IDS, type FoodNutrient } from "$lib/utils/food/types";
-import { getFoodNutrientValue } from "$lib/utils/food/nutrients/foodNutrients";
+import {
+	getFoodNutrientAmountForServingConversion,
+	getFoodNutrientValue,
+} from "$lib/utils/food/nutrients/foodNutrients";
+import { convertServingAmount } from "$lib/utils/serving/servingAmount";
 
 type TestNutrition = {
 	calories: number;
@@ -154,22 +158,25 @@ describe("custom foods", () => {
 			servingLabel: "3 cookies",
 			servingWeightGrams: 34,
 			hasSourceServing: true,
-			nutrients: makeTestNutrients({
-				calories: 160,
-				fat: 7,
-				carbs: 25,
-				fiber: 1,
-				sugar: 14,
-				protein: 1,
-			}, [
+			nutrients: makeTestNutrients(
 				{
-					nutrientId: NUTRIENT_IDS.SODIUM,
-					nutrientName: "Sodium, Na",
-					nutrientNumber: "307",
-					unitName: "MG",
-					value: 135,
+					calories: 160,
+					fat: 7,
+					carbs: 25,
+					fiber: 1,
+					sugar: 14,
+					protein: 1,
 				},
-			]),
+				[
+					{
+						nutrientId: NUTRIENT_IDS.SODIUM,
+						nutrientName: "Sodium, Na",
+						nutrientNumber: "307",
+						unitName: "MG",
+						value: 135,
+					},
+				],
+			),
 		});
 
 		expect(food.customFood).toBe(true);
@@ -188,6 +195,121 @@ describe("custom foods", () => {
 		);
 		expect(getFoodNutrientValue(food, NUTRIENT_IDS.SUGAR)).toBeCloseTo(41.18);
 		expect(getFoodNutrientValue(food, NUTRIENT_IDS.SODIUM)).toBeCloseTo(397.06);
+	});
+
+	it("preserves volume-label nutrition without inventing grams", () => {
+		const food = createCustomFood({
+			name: "Volume-only sauce",
+			servingLabel: "1 tbsp",
+			servingMeasureQuantity: 1,
+			servingMeasureUnit: "tbsp",
+			nutrients: makeTestNutrients({
+				calories: 40,
+				fat: 0,
+				carbs: 8,
+				fiber: 1,
+				sugar: 5,
+				protein: 1,
+			}),
+		});
+
+		expect(food.customServingWeightGrams).toBeUndefined();
+		expect(food.foodServings?.[0]).toMatchObject({
+			label: "1 tbsp",
+			amount: 1,
+			unitKey: "tbsp",
+		});
+		expect(food.foodNutrients[0].measurementBasis).toEqual({
+			kind: "volume",
+			quantity: 1,
+			unitKey: "tbsp",
+		});
+		expect(
+			getFoodNutrientAmountForServingConversion(
+				food,
+				NUTRIENT_IDS.CALORIES,
+				convertServingAmount(0.5, "tbsp", food),
+			),
+		).toBeCloseTo(20);
+	});
+
+	it("preserves count-label nutrition and scales individual items", () => {
+		const food = createCustomFood({
+			name: "Two-cookie serving",
+			servingLabel: "2 cookies",
+			servingMeasureQuantity: 2,
+			servingMeasureUnit: "item",
+			nutrients: makeTestNutrients({
+				calories: 160,
+				fat: 7,
+				carbs: 25,
+				fiber: 1,
+				sugar: 14,
+				protein: 1,
+			}),
+		});
+
+		expect(food.customServingWeightGrams).toBeUndefined();
+		expect(food.foodServings?.[0]).toMatchObject({
+			label: "2 cookies",
+			amount: 2,
+			unitKey: "item",
+		});
+		expect(food.foodNutrients[0].measurementBasis).toEqual({
+			kind: "serving",
+			quantity: 1,
+			unitKey: "serving",
+			servingLabel: "2 cookies",
+		});
+		expect(
+			getFoodNutrientAmountForServingConversion(
+				food,
+				NUTRIENT_IDS.CALORIES,
+				convertServingAmount(1, "item", food),
+			),
+		).toBeCloseTo(80);
+	});
+
+	it("accepts a provider count serving without requiring duplicate form fields", () => {
+		const food = createCustomFood({
+			name: "Provider cookie",
+			barcode: "00012345678905",
+			barcodeSource: "open-food-facts",
+			serving: {
+				label: "1 cookie",
+				amount: 1,
+				unitKey: "item",
+				isPrimary: true,
+				origin: "package-label",
+				source: "open-food-facts",
+				confidence: "imported",
+			},
+			hasSourceServing: true,
+			nutrients: makeTestNutrients({
+				calories: 80,
+				fat: 3,
+				carbs: 12,
+				fiber: 1,
+				sugar: 6,
+				protein: 1,
+			}),
+		});
+
+		expect(food.foodServings?.[0]).toMatchObject({
+			label: "1 cookie",
+			amount: 1,
+			unitKey: "item",
+			gramWeight: undefined,
+		});
+		expect(food.foodNutrients[0]).toMatchObject({
+			value: 80,
+			measurementBasis: {
+				kind: "serving",
+				quantity: 1,
+				unitKey: "serving",
+				servingLabel: "1 cookie",
+			},
+		});
 	});
 
 	it("preserves source-backed personal records without marking them custom", () => {
@@ -219,8 +341,8 @@ describe("custom foods", () => {
 			name: "Custom yogurt",
 			servingWeightGrams: 245,
 			hasSourceServing: true,
-			volumeQuantity: 1,
-			volumeUnit: "cup",
+			servingMeasureQuantity: 1,
+			servingMeasureUnit: "cup",
 			nutrients: makeTestNutrients({
 				calories: 140,
 				fat: 4,
@@ -260,24 +382,28 @@ describe("custom foods", () => {
 	});
 
 	it("rejects an invalid serving weight instead of replacing it", () => {
-		expect(() => createCustomFood({
-			name: "Invalid serving",
-			servingWeightGrams: Number.NaN,
-			nutrients: [],
-		})).toThrow("Serving weight must be a number greater than zero.");
+		expect(() =>
+			createCustomFood({
+				name: "Invalid serving",
+				servingWeightGrams: Number.NaN,
+				nutrients: [],
+			}),
+		).toThrow("Serving weight must be a number greater than zero.");
 	});
 
 	it("drops invalid nutrients instead of converting them to zero", () => {
 		const food = createCustomFood({
 			name: "Invalid nutrient",
 			servingWeightGrams: 100,
-			nutrients: [{
-				nutrientId: NUTRIENT_IDS.PROTEIN,
-				nutrientName: "Protein",
-				nutrientNumber: "203",
-				unitName: "G",
-				value: null as unknown as number,
-			}],
+			nutrients: [
+				{
+					nutrientId: NUTRIENT_IDS.PROTEIN,
+					nutrientName: "Protein",
+					nutrientNumber: "203",
+					unitName: "G",
+					value: null as unknown as number,
+				},
+			],
 		});
 
 		expect(food.foodNutrients).toEqual([]);
@@ -319,8 +445,8 @@ describe("custom foods", () => {
 		expect(
 			buildCustomServingLabel({
 				servingWeightGrams: 245,
-				volumeQuantity: 1.5,
-				volumeUnit: "cup",
+				servingMeasureQuantity: 1.5,
+				servingMeasureUnit: "cup",
 			}),
 		).toBe("1.5 cup");
 	});
@@ -345,8 +471,9 @@ describe("custom foods", () => {
 		);
 
 		await expect(findCustomFoodByName("protein crunch")).resolves.toBeNull();
-		await expect(findCustomFoodByName("homemade protein crunch")).resolves
-			.toMatchObject({ fdcId: food.fdcId });
+		await expect(
+			findCustomFoodByName("homemade protein crunch"),
+		).resolves.toMatchObject({ fdcId: food.fdcId });
 		expect(cloudData.readCloudCustomFoodByNameKey).toHaveBeenCalledWith(
 			"homemade protein crunch",
 		);
@@ -377,12 +504,26 @@ describe("custom foods", () => {
 		const firstFood = createCustomFood({
 			name: "Homemade granola",
 			servingWeightGrams: 40,
-			nutrients: makeTestNutrients({ calories: 160, fat: 4, carbs: 28, fiber: 3, sugar: 8, protein: 5 }),
+			nutrients: makeTestNutrients({
+				calories: 160,
+				fat: 4,
+				carbs: 28,
+				fiber: 3,
+				sugar: 8,
+				protein: 5,
+			}),
 		});
 		const duplicateFood = createCustomFood({
 			name: "  homemade   GRANOLA ",
 			servingWeightGrams: 50,
-			nutrients: makeTestNutrients({ calories: 190, fat: 5, carbs: 30, fiber: 4, sugar: 9, protein: 6 }),
+			nutrients: makeTestNutrients({
+				calories: 190,
+				fat: 5,
+				carbs: 30,
+				fiber: 4,
+				sugar: 9,
+				protein: 6,
+			}),
 		});
 
 		cloudData.saveCloudCustomFood
@@ -397,13 +538,21 @@ describe("custom foods", () => {
 		const food = createCustomFood({
 			name: "Honey Greek Yogurt",
 			servingWeightGrams: 170,
-			nutrients: makeTestNutrients({ calories: 140, fat: 2, carbs: 18, fiber: 0, sugar: 14, protein: 15 }),
+			nutrients: makeTestNutrients({
+				calories: 140,
+				fat: 2,
+				carbs: 18,
+				fiber: 0,
+				sugar: 14,
+				protein: 15,
+			}),
 		});
 
 		cloudData.readCloudCustomFoodByNameKey.mockResolvedValue(food);
 
-		await expect(findCustomFoodByName("  honey   greek   yogurt ")).resolves
-			.toMatchObject({ fdcId: food.fdcId });
+		await expect(
+			findCustomFoodByName("  honey   greek   yogurt "),
+		).resolves.toMatchObject({ fdcId: food.fdcId });
 		expect(cloudData.readCloudCustomFoodByNameKey).toHaveBeenCalledWith(
 			"honey greek yogurt",
 		);
@@ -415,14 +564,28 @@ describe("custom foods", () => {
 			servingWeightGrams: 30,
 			barcode: "4006381333931",
 			barcodeSource: "open-food-facts",
-			nutrients: makeTestNutrients({ calories: 100, fat: 2, carbs: 18, fiber: 1, sugar: 6, protein: 3 }),
+			nutrients: makeTestNutrients({
+				calories: 100,
+				fat: 2,
+				carbs: 18,
+				fiber: 1,
+				sugar: 6,
+				protein: 3,
+			}),
 		});
 		const duplicateFood = createCustomFood({
 			name: "Same package, different name",
 			servingWeightGrams: 30,
 			barcode: "4006381333931",
 			barcodeSource: "manual",
-			nutrients: makeTestNutrients({ calories: 100, fat: 2, carbs: 18, fiber: 1, sugar: 6, protein: 3 }),
+			nutrients: makeTestNutrients({
+				calories: 100,
+				fat: 2,
+				carbs: 18,
+				fiber: 1,
+				sugar: 6,
+				protein: 3,
+			}),
 		});
 
 		cloudData.saveCloudCustomFood
@@ -431,8 +594,9 @@ describe("custom foods", () => {
 		expect(await saveCustomFood(firstFood)).toBe("saved");
 		expect(await saveCustomFood(duplicateFood)).toBe("duplicate-barcode");
 		cloudData.readCloudCustomFoodByBarcode.mockResolvedValue(firstFood);
-		await expect(findCustomFoodByBarcode("4006381333931")).resolves
-			.toMatchObject({ description: "First Scanned Food" });
+		await expect(
+			findCustomFoodByBarcode("4006381333931"),
+		).resolves.toMatchObject({ description: "First Scanned Food" });
 		expect(cloudData.readCloudCustomFoodByBarcode).toHaveBeenCalledWith(
 			"04006381333931",
 		);
@@ -444,7 +608,14 @@ describe("custom foods", () => {
 		const food = createCustomFood({
 			name: "Unavailable custom food",
 			servingWeightGrams: 30,
-			nutrients: makeTestNutrients({ calories: 80, fat: 1, carbs: 15, fiber: 1, sugar: 4, protein: 3 }),
+			nutrients: makeTestNutrients({
+				calories: 80,
+				fat: 1,
+				carbs: 15,
+				fiber: 1,
+				sugar: 4,
+				protein: 3,
+			}),
 		});
 
 		expect(await saveCustomFood(food)).toBe("error");

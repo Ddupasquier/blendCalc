@@ -8,6 +8,7 @@ import type {
 	FoodFieldSource,
 	FoodTrackedField,
 } from "$lib/utils/food/types";
+import { getPrimaryFoodServing } from "$lib/utils/food/servings/foodServings";
 import {
 	compareNormalizedFoods,
 	normalizeComparisonText,
@@ -18,10 +19,11 @@ import {
 } from "$lib/utils/products/catalogUpdateMerge";
 import type { CatalogSubmissionFieldChange } from "$lib/utils/products/catalogSubmissionComparison";
 import {
-	getProductDifferenceThresholds,
+	getNumericProductDifferenceSeverity,
 	type ProductResolutionPolicy,
 } from "$lib/utils/products/productResolutionPolicy";
 import { createCatalogFoodFromDraft } from "./catalogFood.server";
+import type { CatalogSourceAccuracyConflict } from "./catalogSourceAccuracy.server";
 import type { ResolvedFoodCategory } from "./categoryMapping.server";
 
 export type CatalogObservationSource =
@@ -49,11 +51,7 @@ export type CatalogFieldProvenance = {
 	verificationMethod: "exact-barcode" | "label-review" | "cross-source";
 };
 
-export type CatalogConflict = {
-	fieldPath: string;
-	observedValues: Json[];
-	severity: "low" | "medium" | "high";
-};
+export type CatalogConflict = CatalogSourceAccuracyConflict;
 
 export type CatalogVerificationBundle = {
 	canonicalFood: FoodItem;
@@ -128,13 +126,25 @@ const addFoodProvenance = (
 			verificationMethod,
 		});
 	}
-	if (food.customServingWeightGrams || food.servingSize) {
-		const value = food.customServingWeightGrams ?? food.servingSize ?? 100;
+	const primaryServing =
+		getPrimaryFoodServing(food) ??
+		(food.customServingWeightGrams !== undefined
+			? {
+					label:
+						food.customServingLabel ??
+						food.householdServingFullText ??
+						`${food.customServingWeightGrams} g`,
+					gramWeight: food.customServingWeightGrams,
+				}
+			: null);
+	const servingWeightGrams =
+		primaryServing?.gramWeight ?? food.customServingWeightGrams;
+	if (servingWeightGrams !== undefined) {
 		fields.push({
 			fieldPath: "servingWeightGrams",
 			observationKey,
-			sourceValue: value,
-			normalizedValue: value,
+			sourceValue: servingWeightGrams,
+			normalizedValue: servingWeightGrams,
 			confidence,
 			verificationMethod,
 		});
@@ -161,6 +171,16 @@ const addFoodProvenance = (
 		include: boolean;
 		value: Json;
 	}> = [
+		{
+			fieldPath: "serving",
+			include: Boolean(primaryServing),
+			value: toJson({
+				servingSize: food.servingSize ?? null,
+				servingSizeUnit: food.servingSizeUnit ?? null,
+				householdServingFullText: food.householdServingFullText ?? null,
+				foodServings: food.foodServings ?? [],
+			}),
+		},
 		{
 			fieldPath: "categories",
 			include: Boolean(food.foodCategory?.trim() || food.categories?.length),
@@ -243,27 +263,6 @@ const addFoodProvenance = (
 	return fields;
 };
 
-const getNumericConflictSeverity = (
-	left: number,
-	right: number,
-	policy: ProductResolutionPolicy,
-) => {
-	const largest = Math.max(
-		Math.abs(left),
-		Math.abs(right),
-		policy.numericDifferenceRatioFloor,
-	);
-	const differenceRatio = Math.abs(left - right) / largest;
-	const absoluteDifference = Math.abs(left - right);
-	return (
-		getProductDifferenceThresholds(policy, "catalog-verification-numeric").find(
-			(threshold) =>
-				differenceRatio >= threshold.minimumDifferenceRatio &&
-				absoluteDifference >= threshold.minimumAbsoluteDifference,
-		)?.severity ?? null
-	);
-};
-
 const findFoodConflicts = (
 	userFood: FoodItem,
 	sourceFood: FoodItem,
@@ -291,16 +290,18 @@ const findFoodConflicts = (
 					? "high"
 					: typeof difference.submittedValue === "number" &&
 						  typeof difference.previousValue === "number"
-						? getNumericConflictSeverity(
+						? getNumericProductDifferenceSeverity(
+								policy,
+								"catalog-verification-numeric",
 								difference.submittedValue,
 								difference.previousValue,
-								policy,
 							)
 						: difference.submittedNutrient && difference.previousNutrient
-							? getNumericConflictSeverity(
+							? getNumericProductDifferenceSeverity(
+									policy,
+									"catalog-verification-numeric",
 									difference.submittedNutrient.value,
 									difference.previousNutrient.value,
-									policy,
 								)
 							: null;
 		if (!severity) return [];
@@ -374,6 +375,7 @@ export const buildCombinedSourceCatalogBundle = (
 	sourceDrafts: BarcodeProductDraft[],
 	category: ResolvedFoodCategory,
 	policy: ProductResolutionPolicy,
+	sourceConflicts: readonly CatalogSourceAccuracyConflict[] = [],
 ): CatalogVerificationBundle => {
 	const canonicalFood = preserveFoodMetadata(
 		createCatalogFoodFromDraft(canonicalDraft, category),
@@ -466,12 +468,15 @@ export const buildCombinedSourceCatalogBundle = (
 		canonicalFood,
 		observations: [userObservation, ...sourceObservations],
 		provenance: canonicalProvenance,
-		conflicts: findFoodConflicts(
-			userFood,
-			canonicalFood,
-			primaryObservationKey,
-			policy,
-		),
+		conflicts: [
+			...sourceConflicts,
+			...findFoodConflicts(
+				userFood,
+				canonicalFood,
+				primaryObservationKey,
+				policy,
+			),
+		],
 	};
 };
 

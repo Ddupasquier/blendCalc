@@ -24,6 +24,7 @@ import {
 	getNutrientContributors,
 	getNutrientGoalEvaluations,
 	getNutrientTotal,
+	type MixServingConversionMap,
 } from "./nutrientTotals";
 import type { NutrientMeta } from "./nutrientTypes";
 
@@ -32,6 +33,7 @@ type MixAnalysisInput = {
 	foods: FoodItem[];
 	goals: MixGoalMap;
 	servingGrams: Record<number, number>;
+	servingConversions?: MixServingConversionMap;
 };
 
 export const getMixAnalysis = ({
@@ -39,23 +41,26 @@ export const getMixAnalysis = ({
 	foods,
 	goals,
 	servingGrams,
+	servingConversions,
 }: MixAnalysisInput) => {
 	const goalNutrients = nutrients.filter(
 		(nutrient) => goals[Number(nutrient.id)] !== undefined,
 	);
 	const totalFor = (nutrientId: number) =>
-		getNutrientTotal(foods, nutrientId, servingGrams);
+		getNutrientTotal(foods, nutrientId, servingGrams, servingConversions);
 	const evaluations = getNutrientGoalEvaluations(
 		goalNutrients,
 		foods,
 		goals,
 		servingGrams,
+		servingConversions,
 	);
 	const chartMetrics = getNutrientChartMetrics(
 		goalNutrients,
 		foods,
 		goals,
 		servingGrams,
+		servingConversions,
 	);
 	const diffs: SaveGoalDiff[] = goalNutrients.flatMap((nutrient) => {
 		const nutrientId = Number(nutrient.id);
@@ -63,50 +68,61 @@ export const getMixAnalysis = ({
 		const goal = goals[nutrientId];
 		if (!goal) return [];
 		const evaluation = evaluateMixGoal(goal, total);
-		return [{
-			nutrientId,
-			label: nutrient.label ?? String(nutrient.id),
-			unit: nutrient.unit ?? "",
-			total,
-			goal: goal.targetAmount,
-			upperGoal: goal.upperAmount,
-			goalType: goal.goalType,
-			difference: evaluation.difference,
-			percentOfGoal: evaluation.percent,
-			status: evaluation.status,
-		}];
-	});
-	const overages: NutrientOverageDetail[] = goalNutrients.flatMap((nutrient) => {
-		const nutrientId = Number(nutrient.id);
-		const total = totalFor(nutrientId);
-		const goal = goals[nutrientId];
-		if (!goal) return [];
-		const evaluation = evaluateMixGoal(goal, total);
-		if (evaluation.status !== "over") return [];
 		return [
 			{
 				nutrientId,
 				label: nutrient.label ?? String(nutrient.id),
 				unit: nutrient.unit ?? "",
 				total,
-				goal: goal.upperAmount ?? goal.targetAmount,
-				overage: evaluation.difference,
-				contributors: getNutrientContributors(foods, nutrientId, servingGrams),
+				goal: goal.targetAmount,
+				upperGoal: goal.upperAmount,
+				goalType: goal.goalType,
+				difference: evaluation.difference,
+				percentOfGoal: evaluation.percent,
+				status: evaluation.status,
 			},
 		];
 	});
+	const overages: NutrientOverageDetail[] = goalNutrients.flatMap(
+		(nutrient) => {
+			const nutrientId = Number(nutrient.id);
+			const total = totalFor(nutrientId);
+			const goal = goals[nutrientId];
+			if (!goal) return [];
+			const evaluation = evaluateMixGoal(goal, total);
+			if (evaluation.status !== "over") return [];
+			return [
+				{
+					nutrientId,
+					label: nutrient.label ?? String(nutrient.id),
+					unit: nutrient.unit ?? "",
+					total,
+					goal: goal.upperAmount ?? goal.targetAmount,
+					overage: evaluation.difference,
+					contributors: getNutrientContributors(
+						foods,
+						nutrientId,
+						servingGrams,
+						servingConversions,
+					),
+				},
+			];
+		},
+	);
 	const warnings = [
 		...getNutrientGoalWarnings(
 			goalNutrients.flatMap((nutrient) => {
 				const goal = goals[Number(nutrient.id)];
 				return goal
-					? [{
-							id: nutrient.id,
-							label: nutrient.label ?? String(nutrient.id),
-							unit: nutrient.unit ?? "",
-							total: totalFor(Number(nutrient.id)),
-							goal,
-						}]
+					? [
+							{
+								id: nutrient.id,
+								label: nutrient.label ?? String(nutrient.id),
+								unit: nutrient.unit ?? "",
+								total: totalFor(Number(nutrient.id)),
+								goal,
+							},
+						]
 					: [];
 			}),
 			{ includeUnderTargets: foods.length > 0 },
@@ -127,11 +143,7 @@ export const getMixAnalysis = ({
 			if (!goal) return [];
 			const unit = nutrient.unit ?? "";
 			return [
-				formatMixGoalValueComparison(
-					totalFor(Number(nutrient.id)),
-					goal,
-					unit,
-				),
+				formatMixGoalValueComparison(totalFor(Number(nutrient.id)), goal, unit),
 			];
 		}),
 		diffs,
@@ -139,13 +151,19 @@ export const getMixAnalysis = ({
 			goalNutrients,
 			foods,
 			servingGrams,
+			2,
+			servingConversions,
 		),
-		adjustmentSuggestions: getNutrientAdjustmentSuggestions({
-			nutrients: goalNutrients,
-			selectedFoods: foods,
-			nutrientGoals: goals,
-			servingGrams,
-		}),
+		adjustmentSuggestions: Object.values(servingConversions ?? {}).some(
+			(conversion) => conversion.grams === null,
+		)
+			? []
+			: getNutrientAdjustmentSuggestions({
+					nutrients: goalNutrients,
+					selectedFoods: foods,
+					nutrientGoals: goals,
+					servingGrams,
+				}),
 		warnings,
 	};
 };

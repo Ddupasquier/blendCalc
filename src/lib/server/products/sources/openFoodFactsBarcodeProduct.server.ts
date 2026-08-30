@@ -99,31 +99,36 @@ export const lookupOpenFoodFactsBarcodeProduct = async (
 					`${OPEN_FOOD_FACTS_URL}/${encodeURIComponent(candidate)}.json`,
 				);
 				url.searchParams.set("fields", OPEN_FOOD_FACTS_FIELDS);
-				const data = await fetchCachedProductApiJson<OpenFoodFactsResponse | null>({
-					provider: "open-food-facts",
-					requestKind: "barcode-product",
-					cacheValue: { candidate, fields: OPEN_FOOD_FACTS_FIELDS },
-					url,
-					headers: {
-						accept: "application/json",
-						"user-agent": APP_USER_AGENT,
-					},
-					ttlMilliseconds: OPEN_FOOD_FACTS_CACHE_MILLISECONDS,
-					notFoundTtlMilliseconds: OPEN_FOOD_FACTS_NOT_FOUND_CACHE_MILLISECONDS,
-					staleIfErrorMilliseconds: OPEN_FOOD_FACTS_STALE_FALLBACK_MILLISECONDS,
-					notFoundStatusCodes: [404],
-					notFoundValue: null,
-					trace,
-				});
+				const data =
+					await fetchCachedProductApiJson<OpenFoodFactsResponse | null>({
+						provider: "open-food-facts",
+						requestKind: "barcode-product",
+						cacheValue: { candidate, fields: OPEN_FOOD_FACTS_FIELDS },
+						url,
+						headers: {
+							accept: "application/json",
+							"user-agent": APP_USER_AGENT,
+						},
+						ttlMilliseconds: OPEN_FOOD_FACTS_CACHE_MILLISECONDS,
+						notFoundTtlMilliseconds:
+							OPEN_FOOD_FACTS_NOT_FOUND_CACHE_MILLISECONDS,
+						staleIfErrorMilliseconds:
+							OPEN_FOOD_FACTS_STALE_FALLBACK_MILLISECONDS,
+						notFoundStatusCodes: [404],
+						notFoundValue: null,
+						trace,
+					});
 				if (!data || data.status !== 1 || !data.product) return null;
-				if (normalizeBarcode(data.product.code ?? candidate) !== canonicalBarcode) {
+				const candidateBarcode = normalizeBarcode(candidate);
+				const matchedBarcode = normalizeBarcode(data.product.code ?? candidate);
+				if (!candidateBarcode || matchedBarcode !== candidateBarcode) {
 					return null;
 				}
 				return {
 					draft: mapOpenFoodFactsProduct(
 						data.product,
-						canonicalBarcode,
-						productReferenceCatalog ?? await getProductReferenceCatalog(),
+						matchedBarcode,
+						productReferenceCatalog ?? (await getProductReferenceCatalog()),
 					),
 				};
 			},

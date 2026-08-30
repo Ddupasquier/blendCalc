@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
 	cleanBarcode,
+	expandUpcEBarcode,
 	getBarcodeInputValidationMessage,
 	getBarcodeLookupCandidates,
 	hasValidGtinCheckDigit,
@@ -31,6 +32,13 @@ describe("barcode normalization", () => {
 			"0021130493609",
 			"00021130493609",
 		]);
+	});
+
+	it("expands UPC-E aliases without confusing their check digits", () => {
+		expect(expandUpcEBarcode("03431209")).toBe("034000003129");
+		expect(getBarcodeLookupCandidates("03431209")).toEqual(
+			expect.arrayContaining(["03431209", "034000003129", "00034000003129"]),
+		);
 	});
 
 	it("explains incomplete and invalid manually typed barcodes", () => {

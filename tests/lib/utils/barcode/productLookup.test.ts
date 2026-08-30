@@ -339,8 +339,20 @@ describe("barcode product mapping", () => {
 			productReferenceCatalogFixture,
 		);
 
-		expect(draft?.servingWeightGrams).toBe(100);
-		expect(draft?.servingLabel).toBe("100 g");
+		expect(draft?.servingWeightGrams).toBeNull();
+		expect(draft?.servingLabel).toBe("355 ml");
+		expect(draft?.serving).toMatchObject({
+			label: "355 ml",
+			milliliterVolume: 355,
+			amount: 355,
+			unitKey: "ml",
+		});
+		expect(draft?.nutrients).toEqual([
+			expect.objectContaining({
+				value: 1,
+				measurementBasis: { kind: "mass", quantity: 100, unitKey: "g" },
+			}),
+		]);
 		expect(draft?.volumeEquivalent).toBeUndefined();
 	});
 

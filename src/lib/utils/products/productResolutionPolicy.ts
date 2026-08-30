@@ -1,3 +1,5 @@
+import type { NutrientRelationshipRule } from "$lib/utils/food/nutrients/nutrientRelationshipRules";
+
 export type ProductDifferenceSeverity = "low" | "medium" | "high";
 
 export type ProductDifferenceThreshold = {
@@ -35,6 +37,7 @@ export type ProductResolutionPolicy = {
 		string,
 		ProductSourceFieldCoveragePolicy
 	>;
+	nutrientRelationshipRules: readonly NutrientRelationshipRule[];
 };
 
 const readNestedPolicyValue = (
@@ -75,6 +78,30 @@ export const getProductDifferenceThresholds = (
 		);
 	}
 	return thresholds;
+};
+
+export const getNumericProductDifferenceSeverity = (
+	policy: ProductResolutionPolicy,
+	comparisonContext: string,
+	leftValue: number,
+	rightValue: number,
+) => {
+	const absoluteDifference = Math.abs(leftValue - rightValue);
+	const differenceRatio =
+		absoluteDifference /
+		Math.max(
+			Math.abs(leftValue),
+			Math.abs(rightValue),
+			policy.numericDifferenceRatioFloor,
+		);
+
+	return (
+		getProductDifferenceThresholds(policy, comparisonContext).find(
+			(threshold) =>
+				differenceRatio >= threshold.minimumDifferenceRatio &&
+				absoluteDifference >= threshold.minimumAbsoluteDifference,
+		)?.severity ?? null
+	);
 };
 
 export const getProductResolutionIgnoredTerms = (

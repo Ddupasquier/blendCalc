@@ -50,8 +50,8 @@
 		catalogSubmissionOnly = false,
 	}: CustomIngredientFormProps = $props();
 
-	const volumeOptions = SERVING_MEASURE_OPTIONS.filter(
-		(option) => option.dimension === "volume",
+	const servingMeasureOptions = SERVING_MEASURE_OPTIONS.filter(
+		(option) => option.dimension === "volume" || option.dimension === "count",
 	).map((option) => ({
 		value: option.value,
 		label: option.label,
@@ -165,22 +165,27 @@
 		form.markFieldAsUserEntered("serving");
 	};
 
-	const handleUseVolumeChange = (value: boolean) => {
+	const handleUseServingMeasureChange = (value: boolean) => {
 		if (value && form.data.usesInternal100GramBasis) {
 			form.data.servingWeightGrams = null;
 			form.data.servingLabel = "";
 		}
-		form.data.useVolumeEquivalent = value;
+		form.data.useServingMeasure = value;
 		form.markFieldAsUserEntered("serving");
 	};
 
-	const handleVolumeQuantityChange = (value: number | null) => {
-		form.data.volumeQuantity = value;
+	const handleServingMeasureQuantityChange = (value: number | null) => {
+		form.data.servingMeasureQuantity = value;
 		form.markFieldAsUserEntered("serving");
 	};
 
-	const handleVolumeUnitChange = (value: ServingMeasureUnit) => {
-		form.data.volumeUnit = value;
+	const handleServingMeasureUnitChange = (value: ServingMeasureUnit) => {
+		form.data.servingMeasureUnit = value;
+		form.markFieldAsUserEntered("serving");
+	};
+
+	const handleServingLabelChange = (value: string) => {
+		form.data.servingLabel = value;
 		form.markFieldAsUserEntered("serving");
 	};
 
@@ -225,8 +230,8 @@
 			form.data.servingWeightGrams = 100;
 			form.data.servingLabel = "";
 			form.data.serving = undefined;
-			form.data.useVolumeEquivalent = false;
-			form.data.volumeQuantity = null;
+			form.data.useServingMeasure = false;
+			form.data.servingMeasureQuantity = null;
 			form.data.usesInternal100GramBasis = true;
 		}
 	};
@@ -275,11 +280,12 @@
 	const servingsStep = $derived<ServingsStepProps>({
 		servingWeightGrams: form.data.servingWeightGrams,
 		usesInternal100GramBasis: form.data.usesInternal100GramBasis,
-		requiresServingWeight: validation.requiresServingWeight,
-		useVolumeEquivalent: form.data.useVolumeEquivalent,
-		volumeQuantity: form.data.volumeQuantity,
-		volumeUnit: form.data.volumeUnit,
-		volumeOptions,
+		requiresServingMeasurement: validation.requiresServingMeasurement,
+		useServingMeasure: form.data.useServingMeasure,
+		servingLabel: form.data.servingLabel,
+		servingMeasureQuantity: form.data.servingMeasureQuantity,
+		servingMeasureUnit: form.data.servingMeasureUnit,
+		servingMeasureOptions,
 		regulatoryDisclosureProfiles:
 			referenceData.state.regulatoryDisclosureProfiles,
 		regulatoryDisclosureProfileError:
@@ -290,9 +296,10 @@
 		requiresAlcoholByVolume:
 			validation.disclosurePolicy.requiresAlcoholByVolume,
 		onServingWeightChange: handleServingWeightChange,
-		onUseVolumeChange: handleUseVolumeChange,
-		onVolumeQuantityChange: handleVolumeQuantityChange,
-		onVolumeUnitChange: handleVolumeUnitChange,
+		onServingLabelChange: handleServingLabelChange,
+		onUseServingMeasureChange: handleUseServingMeasureChange,
+		onServingMeasureQuantityChange: handleServingMeasureQuantityChange,
+		onServingMeasureUnitChange: handleServingMeasureUnitChange,
 		onRegulatoryDisclosureChange: handleRegulatoryDisclosureChange,
 		onAlcoholByVolumeChange: handleAlcoholByVolumeChange,
 		onBack: validation.goBack,
@@ -304,7 +311,7 @@
 		loading: referenceData.state.loadingNutrients,
 		error: referenceData.state.nutrientError,
 		helper: validation.disclosurePolicy.requiresStandardNutrition
-			? "Enter values from the nutrition label for the serving above. The app stores normalized per-100g values. Fields marked * are required."
+			? "Enter values from the nutrition label for the serving above. blendCalc keeps the package's exact weight, volume, or item basis. Fields marked * are required."
 			: form.data.usesInternal100GramBasis
 				? "This label may legally omit standard nutrition. Imported values stay on their reported per-100g basis. Add package values only after entering the package's exact gram serving; everything else stays unknown."
 				: "This label may legally omit standard nutrition. Enter only values the package actually reports; everything else stays unknown.",

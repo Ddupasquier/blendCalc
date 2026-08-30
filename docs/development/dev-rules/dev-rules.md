@@ -1834,8 +1834,16 @@ the API → DB → UI path and remain usable as conversion data. When a trusted 
 manual label provides a serving, store its display label, gram weight, optional
 structured amount/unit, primary status, source, source reference, and confidence in
 normalized `food_servings` rows. Nutrition views must load these rows and let users view
-the source serving or the 100g standard; future mix conversions must consume the same
-normalized gram weights instead of reparsing display text. When a stored serving is
+the source serving or the 100g standard. User-facing Nutrition and Mix views must prefer
+an exact household, count, or package measure over a weight-only basis, including when a
+verified measure maps the underlying 100g nutrition to a label such as `2 cups (100g)`.
+The 100g standard is secondary and is available only when an exact mass basis, exact
+serving gram weight, or verified volume/weight pair supports it. Never synthesize a cup,
+spoon, count, or package label from 100g alone. The original source amount remains
+reported, while its per-100g projection is marked
+derived with the exact method and provenance. Count or volume labels without that
+evidence must not expose a 100g value. Future Mix conversions must consume the same
+normalized measurements instead of reparsing display text. When a stored serving is
 selected, the nutrition sticker must show the household label first with grams in
 trailing parentheses, such as `Serving Size 1/2 cup (125g)`, followed by
 `Amount per serving`; omit the household

@@ -26,9 +26,9 @@ export type ManualEntryCustomFoodPayload = {
 	servingLabel: string;
 	servingWeightGrams: number | null;
 	serving?: FoodServing;
-	useVolumeEquivalent: boolean;
-	volumeQuantity: number | null;
-	volumeUnit: ServingMeasureUnit;
+	useServingMeasure: boolean;
+	servingMeasureQuantity: number | null;
+	servingMeasureUnit: ServingMeasureUnit;
 	barcode: string | null;
 	barcodeSource: FoodItem["barcodeSource"];
 	barcodeProvenance?: FoodBarcodeProvenance;
@@ -97,12 +97,18 @@ export const buildManualEntrySaveCategories = ({
 export const createManualEntryCustomFood = (
 	payload: ManualEntryCustomFoodPayload,
 ) => {
-	if (
-		payload.servingWeightGrams === null ||
-		!Number.isFinite(payload.servingWeightGrams) ||
-		payload.servingWeightGrams <= 0
-	) {
-		throw new TypeError("Serving weight is required before saving an ingredient.");
+	const hasServingWeight =
+		Number.isFinite(payload.servingWeightGrams) &&
+		Number(payload.servingWeightGrams) > 0;
+	const hasServingMeasure =
+		payload.useServingMeasure &&
+		Number.isFinite(payload.servingMeasureQuantity) &&
+		Number(payload.servingMeasureQuantity) > 0 &&
+		Boolean(payload.servingMeasureUnit);
+	if (!hasServingWeight && !hasServingMeasure) {
+		throw new TypeError(
+			"Add an exact serving weight or the package's serving amount and unit before saving.",
+		);
 	}
 	const saveNutrients = buildManualEntrySaveNutrients(payload);
 	const fieldProvenance = payload.customFood
@@ -118,12 +124,16 @@ export const createManualEntryCustomFood = (
 		nameProvenance: payload.nameProvenance,
 		brandOwner: payload.brandOwner,
 		servingLabel: payload.servingLabel,
-		servingWeightGrams: payload.servingWeightGrams,
+		servingWeightGrams: hasServingWeight
+			? Number(payload.servingWeightGrams)
+			: null,
 		serving: payload.serving,
-		volumeQuantity: payload.useVolumeEquivalent
-			? payload.volumeQuantity ?? undefined
+		servingMeasureQuantity: hasServingMeasure
+			? (payload.servingMeasureQuantity ?? undefined)
 			: undefined,
-		volumeUnit: payload.useVolumeEquivalent ? payload.volumeUnit : undefined,
+		servingMeasureUnit: hasServingMeasure
+			? payload.servingMeasureUnit
+			: undefined,
 		barcode: payload.barcode ?? undefined,
 		barcodeSource: payload.barcode ? payload.barcodeSource : undefined,
 		barcodeProvenance: payload.barcode ? payload.barcodeProvenance : undefined,
@@ -155,8 +165,8 @@ export const createManualEntryCustomFood = (
 			payload.barcode && !payload.customFood
 				? payload.sourceMetadata
 				: undefined,
-			categories: buildManualEntrySaveCategories(payload),
-			categoryOptionId: payload.categoryOptionId,
+		categories: buildManualEntrySaveCategories(payload),
+		categoryOptionId: payload.categoryOptionId,
 		symbolKey: payload.categorySymbolKey,
 		image: payload.image,
 		fieldProvenance:

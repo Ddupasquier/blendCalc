@@ -16,7 +16,9 @@ const openIngredientNutrition = async (
 			exact: true,
 		});
 		await expect(loadMoreButton).toBeVisible();
-		const visibleCardCount = await page.locator(".saved-ingredient-card").count();
+		const visibleCardCount = await page
+			.locator(".saved-ingredient-card")
+			.count();
 		await loadMoreButton.click();
 		await expect
 			.poll(() => page.locator(".saved-ingredient-card").count())
@@ -35,10 +37,10 @@ test("nutrition amount controls support ordinary and held browser input", async 
 	const amountValue = amount.locator("strong");
 	const originalValue = await amountValue.innerText();
 	const increase = amount.getByRole("button", {
-		name: /Increase viewing amount by 1g/,
+		name: /Increase viewing amount by 1(?:g| serving)/,
 	});
 	const decrease = amount.getByRole("button", {
-		name: /Decrease viewing amount by 1g/,
+		name: /Decrease viewing amount by 1(?:g| serving)/,
 	});
 
 	await increase.click();

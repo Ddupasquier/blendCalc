@@ -22,12 +22,36 @@ import { normalizeBarcode } from "$lib/utils/barcode/barcode";
 import type { FoodCompatibilityFact } from "$lib/utils/food/quality/compatibility";
 import { getFoodCompatibilityEvaluation } from "$lib/utils/food/quality/foodCompatibilityEvaluation";
 import type { FoodImageAsset } from "$lib/utils/food/types";
+import {
+	getFoodNutrientMeasurementBasis,
+	getNutrientAmountForServingConversion,
+	getNutrientStandardErrorForServingConversion,
+} from "$lib/utils/food/nutrients/foodNutrients";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createServerCachedLoader } from "$lib/server/cache/serverCachedLoader";
+import { BLENDCALC_API_V1_REQUEST_TIMEOUT_MILLISECONDS } from "$lib/server/blendCalcAPI/v1/blendCalcAPIRequestBoundary.server";
+import { applyDatabaseQueryAbortSignal } from "$lib/utils/storage/supabase/databaseQueryAbortSignal";
+
+type BlendCalcAPIV1CatalogReadOptions = {
+	databaseAbortSignal?: AbortSignal;
+};
 
 const uniqueStrings = (values: Array<string | null | undefined>) => [
 	...new Set(values.map((value) => value?.trim()).filter(Boolean) as string[]),
 ];
+
+const HUNDRED_GRAM_API_BASIS = {
+	grams: 100,
+	milliliters: null,
+	servings: null,
+	servingLabel: null,
+	dimension: "weight" as const,
+	density: null,
+	available: true,
+	warning: null,
+	method: "exact-unit-conversion" as const,
+	basis: "100g",
+};
 
 export type SourceAttributionRow = {
 	key: string;
@@ -252,19 +276,28 @@ export const mapBlendCalcAPIV1SourceAttributionCatalog = (
 
 const readBlendCalcAPIV1SourceAttributionCatalogFromDatabase = async (
 	supabase: SupabaseClient<Database>,
+	databaseAbortSignal?: AbortSignal,
 ): Promise<BlendCalcAPIV1SourceAttributionCatalog> => {
-	const [sourceResult, datasetResult] = await Promise.all([
+	const sourceQuery = applyDatabaseQueryAbortSignal(
 		supabase
 			.from("product_data_sources")
 			.select(
 				"key, display_name, homepage_url, terms_url, attribution_text, canonical_license_name, canonical_policy_reviewed_at, canonical_storage_allowed, api_redistribution_allowed",
 			)
 			.eq("enabled", true),
+		databaseAbortSignal,
+	);
+	const datasetQuery = applyDatabaseQueryAbortSignal(
 		supabase
 			.from("generic_food_datasets")
 			.select(
 				"key, source_key, display_name, version, source_url, license_name, license_url, attribution_text, imported_at, active, import_enabled, license_review_status",
 			),
+		databaseAbortSignal,
+	);
+	const [sourceResult, datasetResult] = await Promise.all([
+		sourceQuery,
+		datasetQuery,
 	]);
 	if (sourceResult.error) throw sourceResult.error;
 	if (datasetResult.error) throw datasetResult.error;
@@ -287,7 +320,10 @@ export const readBlendCalcAPIV1SourceAttributionCatalog = (
 	if (!loader) {
 		loader = createServerCachedLoader({
 			load: () =>
-				readBlendCalcAPIV1SourceAttributionCatalogFromDatabase(supabase),
+				readBlendCalcAPIV1SourceAttributionCatalogFromDatabase(
+					supabase,
+					AbortSignal.timeout(BLENDCALC_API_V1_REQUEST_TIMEOUT_MILLISECONDS),
+				),
 			ttlMilliseconds: 5 * 60 * 1_000,
 			useStaleValueOnError: true,
 		});
@@ -644,49 +680,72 @@ export const mapApprovedCatalogRecordToBlendCalcAPIV1Product = (
 			: null,
 		nutrients: [...record.food.foodNutrients]
 			.sort((left, right) => left.nutrientId - right.nutrientId)
-			.map((nutrient) => ({
-				id: nutrient.nutrientId,
-				name: nutrient.nutrientName,
-				number: nutrient.nutrientNumber?.trim() || null,
-				unit: nutrient.unitName,
-				amountPer100g: Number.isFinite(nutrient.value) ? nutrient.value : null,
-				valueStatus: nutrient.valueOrigin ?? "unknown",
-				source: nutrient.source
-					? toSource(
-							nutrient.source,
-							nutrient.sourceReference,
-							nutrient.confidence,
-						)
-					: null,
-				quality: {
-					sourceValueStatus:
-						nutrient.valueStatus ??
-						(nutrient.valueOrigin === "derived"
-							? "derived"
-							: nutrient.value === 0
-								? "reported-zero"
-								: (nutrient.valueOrigin ?? "unknown")),
-					standardError:
-						Number.isFinite(nutrient.standardError) &&
-						Number(nutrient.standardError) >= 0
-							? Number(nutrient.standardError)
+			.map((nutrient) => {
+				const amountPer100g = getNutrientAmountForServingConversion(
+					nutrient,
+					HUNDRED_GRAM_API_BASIS,
+					record.food,
+				);
+				const basis = getFoodNutrientMeasurementBasis(nutrient);
+				const isDerivedPer100GramProjection =
+					amountPer100g !== null &&
+					!(
+						basis.kind === "mass" &&
+						basis.quantity === 100 &&
+						basis.unitKey === "g"
+					);
+
+				return {
+					id: nutrient.nutrientId,
+					name: nutrient.nutrientName,
+					number: nutrient.nutrientNumber?.trim() || null,
+					unit: nutrient.unitName,
+					amountPer100g:
+						amountPer100g !== null && Number.isFinite(amountPer100g)
+							? amountPer100g
 							: null,
-					sourceNutrientKey: nutrient.sourceNutrientKey?.trim() || null,
-					sourceNutrientCode: nutrient.sourceNutrientCode?.trim() || null,
-					mappingStatus: nutrient.mappingStatus ?? "unknown",
-					mappingMethod: nutrient.mappingMethod?.trim() || null,
-					derivationMethod: nutrient.derivationMethod?.trim() || null,
-					valueQualifier: nutrient.valueQualifier ?? null,
-				},
-			})),
+					valueStatus: isDerivedPer100GramProjection
+						? "derived"
+						: (nutrient.valueOrigin ?? "unknown"),
+					source: nutrient.source
+						? toSource(
+								nutrient.source,
+								nutrient.sourceReference,
+								nutrient.confidence,
+							)
+						: null,
+					quality: {
+						sourceValueStatus:
+							nutrient.valueStatus ??
+							(nutrient.valueOrigin === "derived"
+								? "derived"
+								: nutrient.value === 0
+									? "reported-zero"
+									: (nutrient.valueOrigin ?? "unknown")),
+						standardError: getNutrientStandardErrorForServingConversion(
+							nutrient,
+							HUNDRED_GRAM_API_BASIS,
+							record.food,
+						),
+						sourceNutrientKey: nutrient.sourceNutrientKey?.trim() || null,
+						sourceNutrientCode: nutrient.sourceNutrientCode?.trim() || null,
+						mappingStatus: nutrient.mappingStatus ?? "unknown",
+						mappingMethod: nutrient.mappingMethod?.trim() || null,
+						derivationMethod: isDerivedPer100GramProjection
+							? "exact-native-basis-to-100g"
+							: (nutrient.derivationMethod?.trim() ?? null),
+						valueQualifier: nutrient.valueQualifier ?? null,
+					},
+				};
+			}),
 		servings: (record.food.foodServings ?? []).map((serving) => {
 			const quantity =
 				Number.isFinite(serving.amount) && Number(serving.amount) > 0
 					? Number(serving.amount)
 					: null;
 			const grams =
-				Number.isFinite(serving.gramWeight) && serving.gramWeight > 0
-					? serving.gramWeight
+				Number.isFinite(serving.gramWeight) && Number(serving.gramWeight) > 0
+					? Number(serving.gramWeight)
 					: null;
 			return {
 				label: serving.label,
@@ -885,15 +944,19 @@ export const readBlendCalcAPIV1ProductRevisionHistory = async (
 	supabase: SupabaseClient<Database>,
 	barcodeValue: string,
 	input: { limit: number; offset: number },
+	options: BlendCalcAPIV1CatalogReadOptions = {},
 ) => {
 	const barcode = normalizeBarcode(barcodeValue);
 	if (!barcode) return null;
 	const readRows = (limit: number, offset: number) =>
-		supabase.rpc("get_blendcalc_api_product_revision_history_v1", {
-			p_barcode: barcode,
-			p_limit: limit,
-			p_offset: offset,
-		});
+		applyDatabaseQueryAbortSignal(
+			supabase.rpc("get_blendcalc_api_product_revision_history_v1", {
+				p_barcode: barcode,
+				p_limit: limit,
+				p_offset: offset,
+			}),
+			options.databaseAbortSignal,
+		);
 	const { data, error } = await readRows(input.limit, input.offset);
 	if (error) throw error;
 	const rows = (data ?? []) as RevisionHistoryRow[];
@@ -924,10 +987,12 @@ export const readBlendCalcAPIV1ProductRevisionHistory = async (
 export const readBlendCalcAPIV1ProductByBarcode = async (
 	supabase: SupabaseClient<Database>,
 	barcode: string,
+	options: BlendCalcAPIV1CatalogReadOptions = {},
 ) => {
 	const [record, sourceAttributionCatalog] = await Promise.all([
 		getApprovedCatalogRecordByBarcode(supabase, barcode, {
 			imageAssociationScope: "canonical-product-only",
+			databaseAbortSignal: options.databaseAbortSignal,
 		}),
 		readBlendCalcAPIV1SourceAttributionCatalog(supabase),
 	]);
@@ -942,11 +1007,13 @@ export const readBlendCalcAPIV1ProductByBarcode = async (
 export const searchBlendCalcAPIV1Products = async (
 	supabase: SupabaseClient<Database>,
 	input: { query: string; limit: number; offset: number },
+	options: BlendCalcAPIV1CatalogReadOptions = {},
 ) => {
 	const [page, sourceAttributionCatalog] = await Promise.all([
 		searchApprovedCatalogRecordsPage(supabase, input.query, {
 			...input,
 			imageAssociationScope: "canonical-product-only",
+			databaseAbortSignal: options.databaseAbortSignal,
 		}),
 		readBlendCalcAPIV1SourceAttributionCatalog(supabase),
 	]);
@@ -964,14 +1031,19 @@ export const searchBlendCalcAPIV1Products = async (
 export const readBlendCalcAPIV1Categories = async (
 	supabase: SupabaseClient<Database>,
 	input: { limit: number; offset: number },
+	options: BlendCalcAPIV1CatalogReadOptions = {},
 ) => {
-	const { data, error, count } = await supabase
+	const databaseQuery = supabase
 		.from("custom_food_category_options")
 		.select("id, label, normalized_value, updated_at", { count: "exact" })
 		.eq("enabled", true)
 		.order("label", { ascending: true })
 		.order("id", { ascending: true })
 		.range(input.offset, input.offset + input.limit - 1);
+	const { data, error, count } = await applyDatabaseQueryAbortSignal(
+		databaseQuery,
+		options.databaseAbortSignal,
+	);
 	if (error) throw error;
 	return {
 		categories: (data ?? []).map((row): BlendCalcAPIV1Category => ({

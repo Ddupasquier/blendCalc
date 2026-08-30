@@ -69,10 +69,12 @@ export const createManualEntryBarcodeController = ({
 		servingLabel: form.data.servingLabel,
 		servingWeightGrams: form.data.servingWeightGrams,
 		volumeEquivalent:
-			form.data.useVolumeEquivalent && form.data.volumeQuantity
+			form.data.useServingMeasure &&
+			form.data.servingMeasureQuantity &&
+			form.data.servingMeasureUnit
 				? {
-						quantity: form.data.volumeQuantity,
-						unit: form.data.volumeUnit,
+						quantity: form.data.servingMeasureQuantity,
+						unit: form.data.servingMeasureUnit,
 					}
 				: null,
 		nutrients: form.getSaveNutrients(validation.nutrientFields),

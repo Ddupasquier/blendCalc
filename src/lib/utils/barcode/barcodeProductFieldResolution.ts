@@ -1,10 +1,18 @@
 import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
 import type {
 	FoodNutrient,
+	FoodNutrientMeasurementBasis,
 	FoodFieldProvenance,
 	FoodFieldSource,
 	FoodTrackedField,
 } from "$lib/utils/food/types";
+import { validateNutrientRelationshipRules } from "$lib/utils/food/nutrients/nutrientRelationshipRules";
+import { getNutrientAmountForServingConversion } from "$lib/utils/food/nutrients/foodNutrients";
+import {
+	convertFoodServingMultiplier,
+	convertServingAmount,
+	type ServingConversion,
+} from "$lib/utils/serving/servingAmount";
 import {
 	getProductResolutionRank,
 	getProductResolutionScoringWeight,
@@ -75,7 +83,8 @@ const getFieldCompleteness = (
 		case "serving":
 			return (
 				Number(draft.hasSourceServing === true) * weight("source-serving") +
-				Number(draft.servingWeightGrams > 0) * weight("positive-weight") +
+				Number(Number(draft.servingWeightGrams) > 0) *
+					weight("positive-weight") +
 				Number(Boolean(draft.servingLabel.trim())) * weight("display-label") +
 				Number(Boolean(draft.volumeEquivalent)) * weight("volume-equivalent") +
 				Number(
@@ -288,23 +297,26 @@ const applySelectedField = (
 	}
 };
 
-const scaleNutrient = (
-	nutrient: FoodNutrient,
-	fromGrams: number,
-	toGrams: number,
-) => {
-	if (
-		!Number.isFinite(fromGrams) ||
-		fromGrams <= 0 ||
-		!Number.isFinite(toGrams) ||
-		toGrams <= 0 ||
-		fromGrams === toGrams
-	) {
-		return { ...nutrient };
+const getDraftNutrientTarget = (
+	draft: BarcodeProductDraft,
+): {
+	conversion: ServingConversion;
+	basis: FoodNutrientMeasurementBasis;
+} => {
+	if (draft.hasSourceServing && draft.serving) {
+		return {
+			conversion: convertFoodServingMultiplier(draft.serving, 1),
+			basis: {
+				kind: "serving",
+				quantity: 1,
+				unitKey: "serving",
+				servingLabel: draft.serving.label,
+			},
+		};
 	}
 	return {
-		...nutrient,
-		value: nutrient.value * (toGrams / fromGrams),
+		conversion: convertServingAmount(100, "g"),
+		basis: { kind: "mass", quantity: 100, unitKey: "g" },
 	};
 };
 
@@ -315,6 +327,10 @@ type NutrientCandidate = {
 		source: NonNullable<FoodNutrient["source"]>;
 	};
 	timestamp: number;
+};
+
+type ResolvedNutrientCandidate = NutrientCandidate & {
+	resolvedValue: number;
 };
 
 const isNutrientSource = (
@@ -353,11 +369,43 @@ const compareNutrientCandidates = (
 	);
 };
 
-const resolveNutrients = (
-	drafts: BarcodeProductDraft[],
-	servingWeightGrams: number,
+const removeNutrientsThatViolateRelationships = (
+	nutrients: FoodNutrient[],
 	policy: ProductResolutionPolicy,
 ) => {
+	let remainingNutrients = nutrients;
+
+	while (remainingNutrients.length > 0) {
+		const issues = validateNutrientRelationshipRules(
+			new Map(
+				remainingNutrients.map((nutrient) => [
+					nutrient.nutrientId,
+					nutrient.value,
+				]),
+			),
+			[...policy.nutrientRelationshipRules],
+		);
+		if (issues.length === 0) break;
+
+		const invalidChildNutrientIds = new Set(
+			issues.map((issue) => issue.childNutrientId),
+		);
+		const nextNutrients = remainingNutrients.filter(
+			(nutrient) => !invalidChildNutrientIds.has(nutrient.nutrientId),
+		);
+		if (nextNutrients.length === remainingNutrients.length) break;
+		remainingNutrients = nextNutrients;
+	}
+
+	return remainingNutrients;
+};
+
+const resolveNutrients = (
+	drafts: BarcodeProductDraft[],
+	targetDraft: BarcodeProductDraft,
+	policy: ProductResolutionPolicy,
+) => {
+	const target = getDraftNutrientTarget(targetDraft);
 	const candidatesById = new Map<number, NutrientCandidate[]>();
 	for (const draft of drafts) {
 		for (const nutrient of draft.nutrients.filter(isValidNutrient)) {
@@ -384,32 +432,122 @@ const resolveNutrients = (
 	}
 
 	const selected = [...candidatesById.values()]
-		.map(
-			(candidates) =>
-				candidates.sort((left, right) =>
-					compareNutrientCandidates(left, right, policy),
-				)[0],
+		.map((candidates) =>
+			candidates
+				.sort((left, right) => compareNutrientCandidates(left, right, policy))
+				.map((candidate) => ({
+					...candidate,
+					resolvedValue: getNutrientAmountForServingConversion(
+						candidate.nutrient,
+						target.conversion,
+					),
+				}))
+				.find((candidate) => candidate.resolvedValue !== null),
 		)
-		.filter((candidate): candidate is NutrientCandidate => Boolean(candidate))
+		.filter(
+			(candidate): candidate is ResolvedNutrientCandidate =>
+				candidate?.resolvedValue !== null && candidate !== undefined,
+		)
 		.sort(
 			(left, right) => left.nutrient.nutrientId - right.nutrient.nutrientId,
 		);
-	const nutrients = selected.map(({ draft, nutrient, source }) => ({
-		...scaleNutrient(nutrient, draft.servingWeightGrams, servingWeightGrams),
-		source: source.source,
-		sourceReference: source.sourceReference,
-		confidence: source.confidence ?? "unknown",
-	}));
-	const reportedNutrientIds = selected
+	let nutrients: FoodNutrient[] = selected.map(
+		({ nutrient, source, resolvedValue }) => ({
+			...nutrient,
+			value: Number(resolvedValue),
+			measurementBasis: target.basis,
+			source: source.source,
+			sourceReference: source.sourceReference,
+			confidence: source.confidence ?? "unknown",
+		}),
+	);
+	let reportedNutrientIds = selected
 		.filter(({ draft, nutrient }) =>
 			draft.reportedNutrientIds.includes(nutrient.nutrientId),
 		)
 		.map(({ nutrient }) => nutrient.nutrientId);
-	const nutrientSources = new Map(
-		selected.map(({ source }) => [
-			`${source.source}:${source.sourceReference ?? ""}:${source.confidence ?? "unknown"}`,
-			source,
-		]),
+	const resolvedValues = new Map(
+		nutrients.map((nutrient) => [nutrient.nutrientId, nutrient.value]),
+	);
+	if (
+		validateNutrientRelationshipRules(resolvedValues, [
+			...policy.nutrientRelationshipRules,
+		]).length > 0
+	) {
+		const coherentDrafts = drafts.filter((draft) => {
+			const values = new Map(
+				draft.nutrients
+					.filter(isValidNutrient)
+					.map((nutrient) => [nutrient.nutrientId, nutrient.value]),
+			);
+			return (
+				values.size > 0 &&
+				validateNutrientRelationshipRules(values, [
+					...policy.nutrientRelationshipRules,
+				]).length === 0
+			);
+		});
+		const coherentCandidate = selectFieldCandidate(
+			coherentDrafts,
+			"nutrition",
+			policy,
+		);
+		if (coherentCandidate) {
+			const coherentSource = coherentCandidate.source;
+			nutrients = coherentCandidate.draft.nutrients
+				.filter(isValidNutrient)
+				.map((nutrient) => ({
+					nutrient,
+					resolvedValue: getNutrientAmountForServingConversion(
+						nutrient,
+						target.conversion,
+					),
+				}))
+				.filter(
+					(
+						candidate,
+					): candidate is {
+						nutrient: FoodNutrient;
+						resolvedValue: number;
+					} => candidate.resolvedValue !== null,
+				)
+				.map(({ nutrient, resolvedValue }) => ({
+					...nutrient,
+					value: resolvedValue,
+					measurementBasis: target.basis,
+					source: isNutrientSource(coherentSource.source)
+						? coherentSource.source
+						: nutrient.source,
+					sourceReference:
+						coherentSource.sourceReference ?? nutrient.sourceReference,
+					confidence: coherentSource.confidence ?? nutrient.confidence,
+				}));
+			reportedNutrientIds = coherentCandidate.draft.reportedNutrientIds.filter(
+				(nutrientId) =>
+					nutrients.some((nutrient) => nutrient.nutrientId === nutrientId),
+			);
+		}
+	}
+
+	nutrients = removeNutrientsThatViolateRelationships(nutrients, policy);
+	reportedNutrientIds = reportedNutrientIds.filter((nutrientId) =>
+		nutrients.some((nutrient) => nutrient.nutrientId === nutrientId),
+	);
+	const nutrientSources: Map<string, FoodFieldSource> = new Map(
+		nutrients.flatMap((nutrient) =>
+			nutrient.source && isNutrientSource(nutrient.source)
+				? [
+						[
+							`${nutrient.source}:${nutrient.sourceReference ?? ""}:${nutrient.confidence ?? "unknown"}`,
+							{
+								source: nutrient.source,
+								sourceReference: nutrient.sourceReference,
+								confidence: nutrient.confidence ?? "unknown",
+							} satisfies FoodFieldSource,
+						] as const,
+					]
+				: [],
+		),
 	);
 
 	return {
@@ -474,11 +612,7 @@ export const resolveBarcodeProductFields = (
 		fieldProvenance[field] = candidate.source;
 	}
 
-	const resolvedNutrients = resolveNutrients(
-		drafts,
-		result.servingWeightGrams,
-		policy,
-	);
+	const resolvedNutrients = resolveNutrients(drafts, result, policy);
 	if (resolvedNutrients.nutrients.length > 0) {
 		result = {
 			...result,

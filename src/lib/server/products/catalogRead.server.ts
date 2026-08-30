@@ -12,6 +12,7 @@ import type { IngredientProvenanceFilters } from "$lib/utils/ingredients/ingredi
 import { tokenizeIngredientSearchText } from "$lib/utils/ingredients/ingredientSearchRelevance";
 import { normalizeFoodProductName } from "$lib/utils/products/productNameFormatting.js";
 import { selectPreferredFoodImageAsset } from "$lib/utils/storage/supabase/foodImages";
+import { applyDatabaseQueryAbortSignal } from "$lib/utils/storage/supabase/databaseQueryAbortSignal";
 import { readNormalizedNutrientsByParent } from "$lib/utils/storage/supabase/normalizedNutrients";
 import { readFoodServingsByParent } from "$lib/utils/storage/supabase/servings";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -105,6 +106,7 @@ export type CatalogImageAssociationScope =
 
 type CatalogReadOptions = {
 	imageAssociationScope?: CatalogImageAssociationScope;
+	databaseAbortSignal?: AbortSignal;
 };
 
 type PrecautionaryStatementRow = Pick<
@@ -193,19 +195,27 @@ const readActiveFoodImages = async (
 	const barcodes = rows.map((row) => row.barcode);
 	const includeBarcodeFallbacks =
 		options.imageAssociationScope !== "canonical-product-only";
-	const [byProductResponse, byBarcodeResponse] = await Promise.all([
+	const byProductQuery = applyDatabaseQueryAbortSignal(
 		supabase
 			.from("food_image_assets")
 			.select(FOOD_IMAGE_COLUMNS)
 			.eq("status", "active")
 			.in("shared_product_id", ids),
-		!includeBarcodeFallbacks
-			? Promise.resolve({ data: [], error: null })
-			: supabase
+		options.databaseAbortSignal,
+	);
+	const byBarcodeQuery = includeBarcodeFallbacks
+		? applyDatabaseQueryAbortSignal(
+				supabase
 					.from("food_image_assets")
 					.select(FOOD_IMAGE_COLUMNS)
 					.eq("status", "active")
 					.in("barcode", barcodes),
+				options.databaseAbortSignal,
+			)
+		: Promise.resolve({ data: [], error: null });
+	const [byProductResponse, byBarcodeResponse] = await Promise.all([
+		byProductQuery,
+		byBarcodeQuery,
 	]);
 	if (byProductResponse.error) throw byProductResponse.error;
 	if (byBarcodeResponse.error) throw byBarcodeResponse.error;
@@ -221,11 +231,16 @@ const readActiveFoodImages = async (
 		options.imageAssociationScope === "canonical-product-only" &&
 		imageRows.size > 0
 	) {
-		const { data: activeHolds, error: holdError } = await supabase
+		const holdQuery = supabase
 			.from("blendcalc_api_publication_holds")
 			.select("food_image_asset_id")
 			.is("released_at", null)
 			.in("food_image_asset_id", [...imageRows.keys()]);
+		const { data: activeHolds, error: holdError } =
+			await applyDatabaseQueryAbortSignal(
+				holdQuery,
+				options.databaseAbortSignal,
+			);
 		if (holdError) throw holdError;
 		removeHeldImagesFromPublicCatalog(
 			imageRows,
@@ -306,14 +321,19 @@ export const associateCatalogImagesWithProducts = (
 const readPrecautionaryStatements = async (
 	supabase: SupabaseClient<Database>,
 	productIds: string[],
+	databaseAbortSignal?: AbortSignal,
 ) => {
-	const { data, error } = await supabase
+	const databaseQuery = supabase
 		.from("product_precautionary_statements")
 		.select(
 			"shared_product_id, statement_type, statement_text, normalized_allergens, language_code, source_field, source_reference, source_observation_id, shared_product_revision_id, label_observed_at, created_at",
 		)
 		.in("shared_product_id", productIds)
 		.order("created_at", { ascending: true });
+	const { data, error } = await applyDatabaseQueryAbortSignal(
+		databaseQuery,
+		databaseAbortSignal,
+	);
 	if (error) throw error;
 
 	const statementsByProduct = new Map<string, FoodPrecautionaryStatement[]>();
@@ -352,16 +372,35 @@ const hydrateCatalogRows = async (
 		precautionaryStatementsByProduct,
 		safetyAlertsByProduct,
 	] = await Promise.all([
-		readNormalizedNutrientsByParent(supabase, "shared_product_id", ids),
-		readFoodServingsByParent(supabase, "shared_product_id", ids),
+		readNormalizedNutrientsByParent(
+			supabase,
+			"shared_product_id",
+			ids,
+			options.databaseAbortSignal,
+		),
+		readFoodServingsByParent(
+			supabase,
+			"shared_product_id",
+			ids,
+			options.databaseAbortSignal,
+		),
 		readFoodCategoryOptions(
 			supabase,
 			rows.map((row) => row.category_option_id),
+			options.databaseAbortSignal,
 		),
 		readActiveFoodImages(supabase, rows, options),
-		readSelectedCatalogFieldProvenance(supabase, ids),
-		readPrecautionaryStatements(supabase, ids),
-		readActiveProductSafetyAlertsByProduct(ids),
+		readSelectedCatalogFieldProvenance(
+			supabase,
+			ids,
+			options.databaseAbortSignal,
+		),
+		readPrecautionaryStatements(supabase, ids, options.databaseAbortSignal),
+		readActiveProductSafetyAlertsByProduct(
+			ids,
+			supabase,
+			options.databaseAbortSignal,
+		),
 	]);
 	return rows.map((row) => {
 		const fieldProvenance = fieldProvenanceByProduct.get(row.id) ?? {};
@@ -432,9 +471,13 @@ export const getApprovedCatalogRecordByBarcode = async (
 ) => {
 	const barcode = normalizeBarcode(barcodeValue);
 	if (!barcode) return null;
-	const { data, error } = await supabase.rpc("get_blendcalc_api_product_v1", {
+	const databaseQuery = supabase.rpc("get_blendcalc_api_product_v1", {
 		p_barcode: barcode,
 	});
+	const { data, error } = await applyDatabaseQueryAbortSignal(
+		databaseQuery,
+		options.databaseAbortSignal,
+	);
 	if (error) throw error;
 	const row = data?.[0] as CatalogProductRow | undefined;
 	if (!row) return null;
@@ -487,18 +530,20 @@ export const searchApprovedCatalogRecordsPage = async (
 		limit: number;
 		offset: number;
 		imageAssociationScope?: CatalogImageAssociationScope;
+		databaseAbortSignal?: AbortSignal;
 	},
 ): Promise<ApprovedCatalogPage> => {
 	const terms = tokenizeIngredientSearchText(query).slice(0, 6);
 	if (terms.length === 0) return { records: [], total: 0 };
-	const { data, error } = await supabase.rpc(
-		"search_blendcalc_api_products_v1",
-		{
-			p_query: query,
-			p_terms: terms,
-			p_limit: options.limit,
-			p_offset: options.offset,
-		},
+	const databaseQuery = supabase.rpc("search_blendcalc_api_products_v1", {
+		p_query: query,
+		p_terms: terms,
+		p_limit: options.limit,
+		p_offset: options.offset,
+	});
+	const { data, error } = await applyDatabaseQueryAbortSignal(
+		databaseQuery,
+		options.databaseAbortSignal,
 	);
 	if (error) throw error;
 	const rows = (data ?? []) as CatalogProductRow[];

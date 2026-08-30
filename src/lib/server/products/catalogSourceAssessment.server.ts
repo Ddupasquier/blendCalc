@@ -3,6 +3,7 @@ import { getBarcodeProductDesiredSourceFieldPaths } from "$lib/utils/barcode/bar
 import { resolveBarcodeProductFields } from "$lib/utils/barcode/barcodeProductFieldResolution";
 import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
 import type { ProductResolutionPolicy } from "$lib/utils/products/productResolutionPolicy";
+import type { NutrientRelationshipRule } from "$lib/utils/food/nutrients/nutrientRelationshipRules";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { resolveBarcodeDraftCategory } from "./categoryMapping.server";
 import {
@@ -15,6 +16,11 @@ import {
 	recordProductSourceFieldCoverage,
 	sourceCoverageConfirmsProductNotFound,
 } from "./productSourceFieldCoverage.server";
+import {
+	addSelectedSourceFieldMetrics,
+	assessCatalogSourceAccuracy,
+	type CatalogSourceAccuracyAssessment,
+} from "./catalogSourceAccuracy.server";
 
 export type CatalogSourceLookupStatus = "exact-match" | "not-found" | "error";
 
@@ -26,6 +32,7 @@ export type CatalogSourceAssessment = {
 	usdaLookupStatus: CatalogSourceLookupStatus;
 	openFoodFactsLookupStatus: CatalogSourceLookupStatus;
 	externalLookupFailed: boolean;
+	sourceAccuracy: CatalogSourceAccuracyAssessment;
 };
 
 type CatalogSourceLookupDependencies = {
@@ -33,6 +40,7 @@ type CatalogSourceLookupDependencies = {
 	openFoodFacts?: typeof lookupOpenFoodFactsBarcodeProduct;
 	resolveCategory?: typeof resolveBarcodeDraftCategory;
 	policy?: ProductResolutionPolicy;
+	nutrientRelationshipRules?: readonly NutrientRelationshipRule[];
 };
 
 const hasFreshProductNotFoundCoverage = async (
@@ -122,18 +130,32 @@ export const assessCatalogProductSources = async (
 			policy,
 		),
 	]);
+	const sourceAccuracy = assessCatalogSourceAccuracy({
+		usdaDraft: usda.draft,
+		openFoodFactsDraft: openFoodFacts.draft,
+		nutrientRelationshipRules: dependencies.nutrientRelationshipRules ?? [],
+		policy,
+	});
+	const mergedDraft = resolveBarcodeProductFields(
+		[sourceAccuracy.usdaDraft, sourceAccuracy.openFoodFactsDraft],
+		policy,
+	);
 
 	return {
 		resolutionPolicy: policy,
-		usdaDraft: usda.draft,
-		openFoodFactsDraft: openFoodFacts.draft,
-		mergedDraft: resolveBarcodeProductFields(
-			[usda.draft, openFoodFacts.draft],
-			policy,
-		),
+		usdaDraft: sourceAccuracy.usdaDraft,
+		openFoodFactsDraft: sourceAccuracy.openFoodFactsDraft,
+		mergedDraft,
 		usdaLookupStatus: usda.status,
 		openFoodFactsLookupStatus: openFoodFacts.status,
 		externalLookupFailed:
 			usda.status === "error" || openFoodFacts.status === "error",
+		sourceAccuracy: {
+			...sourceAccuracy,
+			metricIncrements: addSelectedSourceFieldMetrics(
+				sourceAccuracy.metricIncrements,
+				mergedDraft,
+			),
+		},
 	};
 };

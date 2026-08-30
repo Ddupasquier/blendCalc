@@ -9,7 +9,7 @@ export type NutrientMeta = {
 export type NutrientContributor = {
 	label: string;
 	amount: number;
-	grams: number;
+	servingAmountLabel: string;
 };
 
 export type NutrientContribution = NutrientContributor & {
@@ -38,7 +38,7 @@ export type NutrientAdjustmentImpact = {
 	nextTotal: number;
 	goal: number;
 	distanceImprovement: number;
-  weightedDistanceImprovement: number;
+	weightedDistanceImprovement: number;
 };
 
 export type NutrientAdjustmentSuggestion = {

@@ -10,13 +10,14 @@
 	import ProductInformationPanel from "$lib/components/ingredients/nutrition/ProductInformationPanel/ProductInformationPanel.svelte";
 	import ProductIngredientsPanel from "$lib/components/ingredients/nutrition/ProductIngredientsPanel/ProductIngredientsPanel.svelte";
 	import ProductSafetyAlerts from "$lib/components/ingredients/nutrition/ProductSafetyAlerts/ProductSafetyAlerts.svelte";
-	import { DEFAULT_NUTRITION_VIEWING_GRAMS } from "$lib/utils/food/nutrients/nutritionDisplay";
+	import { DEFAULT_NUTRITION_VIEWING_CONVERSION } from "$lib/utils/food/nutrients/nutritionViewingAmount";
 	import type { NutritionPanelProps } from "./types";
 
 	let {
 		food,
 		showListActions = true,
-		viewingGrams = DEFAULT_NUTRITION_VIEWING_GRAMS,
+		viewingConversion = DEFAULT_NUTRITION_VIEWING_CONVERSION,
+		viewingLabel = "100g",
 		viewingServing,
 		listMembership = { inFridge: false, inShoppingList: false },
 		canAdjustImagePlacement = false,
@@ -34,7 +35,8 @@
 	<NutritionPreferenceConflict {food} mode="summary" />
 	<NutritionFactsLabel
 		{food}
-		{viewingGrams}
+		{viewingConversion}
+		{viewingLabel}
 		{viewingServing}
 		{provenanceOptions}
 	/>

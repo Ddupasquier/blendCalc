@@ -57,6 +57,68 @@ describe("mix UI utilities", () => {
 		expect(normalizeServingUnit(serving.unit)).toBeNull();
 	});
 
+	it("prefers an exact household measure over a legacy 100g default", () => {
+		const serving = getDefaultServingAmount(
+			{
+				...banana,
+				servingSize: 100,
+				servingSizeUnit: "g",
+				foodServings: [
+					{
+						label: "100g",
+						gramWeight: 100,
+						amount: 100,
+						unitKey: "g",
+						isPrimary: true,
+						origin: "source-weight",
+						gramWeightMethod: "source-reported",
+					},
+					{
+						label: "2 cups (100g)",
+						gramWeight: 100,
+						amount: 2,
+						unitKey: "cup",
+						isPrimary: false,
+						isHouseholdMeasure: true,
+						origin: "source-household-measure",
+						gramWeightMethod: "source-reported",
+					},
+				],
+			},
+			{ preferredServingGrams: 250 },
+		);
+
+		expect(serving).toEqual({ quantity: 2, unit: "cup" });
+	});
+
+	it("prefers a source-defined household count over a primary weight serving", () => {
+		const serving = getDefaultServingAmount({
+			...banana,
+			foodServings: [
+				{
+					label: "100g",
+					gramWeight: 100,
+					amount: 100,
+					unitKey: "g",
+					isPrimary: true,
+					origin: "source-weight",
+					gramWeightMethod: "source-reported",
+				},
+				{
+					label: "1 medium banana (118 g)",
+					gramWeight: 118,
+					isPrimary: false,
+					isHouseholdMeasure: true,
+					origin: "source-household-measure",
+					gramWeightMethod: "source-reported",
+				},
+			],
+		});
+
+		expect(serving.quantity).toBe(1);
+		expect(serving.unit).toMatch(/^source-serving:/);
+	});
+
 	it("uses the account starting amount only when no exact serving exists", () => {
 		const serving = getDefaultServingAmount(undefined, {
 			preferredServingGrams: 56.69904625,

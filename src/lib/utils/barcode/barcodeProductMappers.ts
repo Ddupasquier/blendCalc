@@ -34,9 +34,13 @@ import {
 	type ProductReferenceCatalog,
 } from "$lib/utils/food/reference/productReferenceCatalog";
 import {
+	convertServingAmount,
+	convertFoodServingMultiplier,
 	convertServingToGrams,
+	parseSourceServingMeasure,
 	parseSourceWeightMeasure,
 } from "$lib/utils/serving/servingAmount";
+import { getNutrientAmountForServingConversion } from "$lib/utils/food/nutrients/foodNutrients";
 import { formatSourceProductName } from "$lib/utils/products/productNameFormatting.js";
 import { toFiniteNonnegativeNumber } from "$lib/utils/numbers/finiteNumbers";
 
@@ -128,7 +132,7 @@ export type BarcodeProductDraft = {
 	nameProvenance: NonNullable<FoodItem["nameProvenance"]>;
 	brandOwner: string;
 	servingLabel: string;
-	servingWeightGrams: number;
+	servingWeightGrams: number | null;
 	hasSourceServing?: boolean;
 	serving?: FoodServing;
 	nutrients: FoodNutrient[];
@@ -857,11 +861,32 @@ const parseServingBasis = (product: OpenFoodFactsProduct) => {
 			parsedServing: parsedQuantity,
 		};
 	}
+	const parsedMeasure =
+		parseSourceServingMeasure(product.serving_size ?? "") ??
+		(servingQuantity !== null && servingQuantity > 0
+			? parseSourceServingMeasure(
+					`${servingQuantity} ${product.serving_quantity_unit ?? ""}`,
+				)
+			: null);
+	if (parsedMeasure) {
+		const conversion = convertServingAmount(
+			parsedMeasure.quantity,
+			parsedMeasure.unit,
+		);
+		return {
+			servingWeightGrams: conversion.grams,
+			useServingValues: true,
+			hasExactGramWeight: conversion.grams !== null,
+			parsedServing: parsedMeasure,
+			milliliterVolume: conversion.milliliters,
+		};
+	}
 	return {
-		servingWeightGrams: 100,
+		servingWeightGrams: null,
 		useServingValues: false,
 		hasExactGramWeight: false,
 		parsedServing: null,
+		milliliterVolume: null,
 	};
 };
 
@@ -881,19 +906,34 @@ export const mapOpenFoodFactsProduct = (
 		useServingValues,
 		hasExactGramWeight,
 		parsedServing,
+		milliliterVolume,
 	} = parseServingBasis(product);
 	const nutrients = mapOpenFoodFactsNutrients(
 		product.nutriments ?? {},
 		servingWeightGrams,
 		useServingValues,
 		productReferenceCatalog,
+		useServingValues
+			? milliliterVolume !== null
+				? {
+						kind: "volume" as const,
+						quantity: parsedServing?.quantity ?? milliliterVolume,
+						unitKey: parsedServing?.unit ?? "ml",
+					}
+				: {
+						kind: "serving" as const,
+						quantity: 1,
+						unitKey: "serving",
+						servingLabel: product.serving_size?.trim() || "Serving",
+					}
+			: { kind: "mass" as const, quantity: 100, unitKey: "g" },
 	).map((nutrient) => ({ ...nutrient, sourceReference: canonicalBarcode }));
 	const metadata = parseOpenFoodFactsMetadata(product);
 	const image = parseOpenFoodFactsImage(product, canonicalBarcode);
 	const alcoholByVolume = parseOpenFoodFactsAlcoholByVolume(product.nutriments);
 	const servingLabel =
 		(useServingValues && product.serving_size?.trim()) ||
-		`${servingWeightGrams} g`;
+		(servingWeightGrams ? `${servingWeightGrams} g` : "100 g reference");
 	const volumeEquivalent = hasExactGramWeight
 		? (parseVolumeEquivalent(product.serving_size) ?? undefined)
 		: undefined;
@@ -910,11 +950,12 @@ export const mapOpenFoodFactsProduct = (
 		brandOwner: product.brands?.trim() ?? "",
 		servingLabel,
 		servingWeightGrams,
-		hasSourceServing: hasExactGramWeight,
-		serving: hasExactGramWeight
+		hasSourceServing: useServingValues,
+		serving: useServingValues
 			? {
 					label: servingLabel,
-					gramWeight: servingWeightGrams,
+					gramWeight: servingWeightGrams ?? undefined,
+					milliliterVolume: milliliterVolume ?? undefined,
 					amount: volumeEquivalent?.quantity ?? parsedServing?.quantity,
 					unitKey: volumeEquivalent?.unit ?? parsedServing?.unit,
 					isPrimary: true,
@@ -922,7 +963,7 @@ export const mapOpenFoodFactsProduct = (
 					isHouseholdMeasure: Boolean(volumeEquivalent),
 					sourceMeasureKey: "serving_size",
 					origin: "package-label",
-					gramWeightMethod: "source-reported",
+					gramWeightMethod: hasExactGramWeight ? "source-reported" : "unknown",
 					source: "open-food-facts",
 					sourceReference: canonicalBarcode,
 					confidence: "unknown",
@@ -941,7 +982,7 @@ export const mapOpenFoodFactsProduct = (
 			nutrients,
 			image,
 			metadata,
-			hasSourceServing: hasExactGramWeight,
+			hasSourceServing: useServingValues,
 			hasBrandOwner: Boolean(product.brands?.trim()),
 			alcoholByVolume,
 		}),
@@ -969,20 +1010,53 @@ export const mapFdcBarcodeFood = (
 	const parsedServing = parseSourceWeight(
 		`${food.servingSize ?? ""} ${food.servingSizeUnit ?? ""}`,
 	);
-	const hasExactGramWeight = Boolean(normalizedServing || parsedServing);
+	const hasSourceServing = Boolean(normalizedServing || parsedServing);
 	const servingWeightGrams =
-		normalizedServing?.gramWeight ?? parsedServing?.grams ?? 100;
-	const servingScale = servingWeightGrams / 100;
+		normalizedServing?.gramWeight ?? parsedServing?.grams ?? null;
+	const resolvedServing: FoodServing | undefined =
+		normalizedServing ??
+		(parsedServing
+			? {
+					label:
+						food.householdServingFullText?.trim() || `${servingWeightGrams} g`,
+					gramWeight: servingWeightGrams ?? undefined,
+					amount: parsedServing.quantity,
+					unitKey: parsedServing.unit,
+					isPrimary: true,
+					measureType: "Reported weight",
+					isHouseholdMeasure: false,
+					sourceMeasureKey: "servingSize",
+					origin: "source-weight",
+					gramWeightMethod: "source-reported",
+					source: "usda",
+					sourceReference: String(food.fdcId),
+					confidence: "unknown",
+				}
+			: undefined);
+	const servingConversion = resolvedServing
+		? convertFoodServingMultiplier(resolvedServing, 1)
+		: null;
 	const metadata = parseFdcMetadata(food);
 	const nutrients = canonicalizeProductNutrients(
 		food.foodNutrients.flatMap((nutrient) => {
 			const value = toNumber(nutrient.value);
-			return value === null
+			const servingValue = servingConversion
+				? getNutrientAmountForServingConversion(nutrient, servingConversion)
+				: value;
+			return value === null || servingValue === null
 				? []
 				: [
 						{
 							...nutrient,
-							value: value * servingScale,
+							value: servingValue,
+							measurementBasis: resolvedServing
+								? {
+										kind: "serving" as const,
+										quantity: 1,
+										unitKey: "serving",
+										servingLabel: resolvedServing.label,
+									}
+								: { kind: "mass" as const, quantity: 100, unitKey: "g" },
 						},
 					];
 		}),
@@ -1008,31 +1082,11 @@ export const mapFdcBarcodeFood = (
 		brandOwner: food.brandOwner ?? "",
 		servingLabel:
 			normalizedServing?.label ||
-			(hasExactGramWeight && food.householdServingFullText) ||
-			`${servingWeightGrams} g`,
+			(hasSourceServing && food.householdServingFullText) ||
+			(servingWeightGrams ? `${servingWeightGrams} g` : "100 g reference"),
 		servingWeightGrams,
-		hasSourceServing: hasExactGramWeight,
-		serving:
-			normalizedServing ??
-			(parsedServing
-				? {
-						label:
-							food.householdServingFullText?.trim() ||
-							`${servingWeightGrams} g`,
-						gramWeight: servingWeightGrams,
-						amount: parsedServing.quantity,
-						unitKey: parsedServing.unit,
-						isPrimary: true,
-						measureType: "Reported weight",
-						isHouseholdMeasure: false,
-						sourceMeasureKey: "servingSize",
-						origin: "source-weight",
-						gramWeightMethod: "source-reported",
-						source: "usda",
-						sourceReference: String(food.fdcId),
-						confidence: "unknown",
-					}
-				: undefined),
+		hasSourceServing,
+		serving: resolvedServing,
 		nutrients,
 		reportedNutrientIds: [...new Set(reportedNutrientIds)].filter(
 			(nutrientId) => nutrientIds.has(nutrientId),
@@ -1051,12 +1105,12 @@ export const mapFdcBarcodeFood = (
 			nutrients,
 			image: food.image,
 			metadata,
-			hasSourceServing: hasExactGramWeight,
+			hasSourceServing,
 			adapterSource: attributeMappedFields
 				? createFieldSource("usda", String(food.fdcId), "unknown")
 				: undefined,
 		}),
-		volumeEquivalent: hasExactGramWeight
+		volumeEquivalent: hasSourceServing
 			? (parseVolumeEquivalent(food.householdServingFullText) ?? undefined)
 			: undefined,
 		source: "usda",

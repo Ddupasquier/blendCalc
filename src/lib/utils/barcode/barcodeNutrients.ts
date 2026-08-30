@@ -1,4 +1,7 @@
-import type { FoodNutrient } from "$lib/utils/food/types";
+import type {
+	FoodNutrient,
+	FoodNutrientMeasurementBasis,
+} from "$lib/utils/food/types";
 import type {
 	NutrientSourceMapping,
 	ProductReferenceCatalog,
@@ -22,20 +25,27 @@ const toOptionalNumber = (value: unknown) => {
 export const getOpenFoodFactsValue = (
 	nutriments: OpenFoodFactsNutriments,
 	keys: string[],
-	servingWeightGrams: number,
+	servingWeightGrams: number | null,
 	useServingValues: boolean,
 ) => {
 	for (const key of keys) {
 		const servingValue = toOptionalNumber(nutriments[`${key}_serving`]);
 		if (useServingValues && servingValue !== null) {
-			return { key, value: servingValue };
+			return { key, value: servingValue, basis: "serving" as const };
 		}
 
 		const per100GramValue = toOptionalNumber(nutriments[`${key}_100g`]);
 		if (per100GramValue !== null) {
 			return {
 				key,
-				value: (per100GramValue * servingWeightGrams) / 100,
+				value:
+					useServingValues && servingWeightGrams !== null
+						? (per100GramValue * servingWeightGrams) / 100
+						: per100GramValue,
+				basis:
+					useServingValues && servingWeightGrams !== null
+						? ("serving" as const)
+						: ("mass-100g" as const),
 			};
 		}
 	}
@@ -70,9 +80,14 @@ const convertMappedValue = ({
 
 export const mapOpenFoodFactsNutrients = (
 	nutriments: OpenFoodFactsNutriments,
-	servingWeightGrams: number,
+	servingWeightGrams: number | null,
 	useServingValues: boolean,
 	productReferenceCatalog: ProductReferenceCatalog,
+	measurementBasis: FoodNutrientMeasurementBasis = {
+		kind: "mass",
+		quantity: 100,
+		unitKey: "g",
+	},
 ): FoodNutrient[] => {
 	const mappings = productReferenceCatalog.nutrientMappings
 		.filter((mapping) => mapping.sourceKey === "open-food-facts")
@@ -90,9 +105,7 @@ export const mapOpenFoodFactsNutrients = (
 		);
 		if (!source) continue;
 
-		const reportedSourceUnit = String(
-			nutriments[`${source.key}_unit`] ?? "",
-		);
+		const reportedSourceUnit = String(nutriments[`${source.key}_unit`] ?? "");
 		if (
 			reportedSourceUnit.trim() &&
 			normalizeNutrientUnit(reportedSourceUnit) !==
@@ -110,22 +123,26 @@ export const mapOpenFoodFactsNutrients = (
 		if (value === null) continue;
 
 		mappedNutrientIds.add(mapping.nutrientId);
-			nutrients.push({
+		nutrients.push({
 			nutrientId: mapping.nutrientId,
 			nutrientName: mapping.nutrientName,
 			nutrientNumber: mapping.nutrientNumber,
 			unitName: mapping.unitName,
 			value,
-				valueOrigin: "reported",
-				valueStatus: value === 0 ? "reported-zero" : "reported",
-				source: "open-food-facts",
-				confidence: "unknown",
-				sourceNutrientKey: source.key,
-				sourceNutrientCode: source.key,
-				mappingStatus: "canonical",
-				mappingMethod: mapping.mappingMethod,
-				mappingReviewReference: mapping.mappingReviewReference,
-			});
+			measurementBasis:
+				source.basis === "serving"
+					? measurementBasis
+					: { kind: "mass", quantity: 100, unitKey: "g" },
+			valueOrigin: "reported",
+			valueStatus: value === 0 ? "reported-zero" : "reported",
+			source: "open-food-facts",
+			confidence: "unknown",
+			sourceNutrientKey: source.key,
+			sourceNutrientCode: source.key,
+			mappingStatus: "canonical",
+			mappingMethod: mapping.mappingMethod,
+			mappingReviewReference: mapping.mappingReviewReference,
+		});
 	}
 
 	return canonicalizeProductNutrients(nutrients, productReferenceCatalog);

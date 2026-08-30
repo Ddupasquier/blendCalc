@@ -101,8 +101,8 @@ describe("catalog submission comparison", () => {
 		expect(comparison.changes).toContainEqual(
 			expect.objectContaining({
 				field: `nutrient:${NUTRIENT_IDS.CARBS}`,
-				previousValue: { value: 13, unit: "G" },
-				submittedValue: { value: 10, unit: "G" },
+				previousValue: { value: 13, unit: "G", basis: "mass" },
+				submittedValue: { value: 10, unit: "G", basis: "mass" },
 			}),
 		);
 	});
@@ -158,8 +158,68 @@ describe("catalog submission comparison", () => {
 				field: `nutrient:${NUTRIENT_IDS.CALCIUM}`,
 				changeType: "added",
 				previousValue: null,
-				submittedValue: { value: 15, unit: "MG" },
+				submittedValue: { value: 15, unit: "MG", basis: "mass" },
 			}),
+		);
+	});
+
+	it("does not treat equivalent values on different mass quantities as changes", () => {
+		const submitted = createFood({
+			foodNutrients: createFood().foodNutrients.map((nutrient) => ({
+				...nutrient,
+				value: nutrient.value / 2,
+				measurementBasis: { kind: "mass", quantity: 50, unitKey: "g" },
+			})),
+		});
+		const comparison = compareCatalogSubmissionToExistingProduct(
+			submitted,
+			createFood(),
+		);
+
+		expect(
+			comparison.changedFields.filter((field) => field.startsWith("nutrient:")),
+		).toEqual([]);
+	});
+
+	it("never interprets count or volume serving quantities as gram weights", () => {
+		const existing = createFood({
+			customServingWeightGrams: undefined,
+			servingSize: 30,
+			servingSizeUnit: "ml",
+			foodServings: [
+				{
+					label: "2 tbsp",
+					milliliterVolume: 30,
+					amount: 2,
+					unitKey: "tbsp",
+					isPrimary: true,
+				},
+			],
+			householdServingFullText: "2 tbsp",
+		});
+		const submitted = createFood({
+			customServingWeightGrams: undefined,
+			servingSize: 1,
+			servingSizeUnit: "item",
+			foodServings: [
+				{
+					label: "1 cookie",
+					amount: 1,
+					unitKey: "item",
+					isPrimary: true,
+				},
+			],
+			householdServingFullText: "1 cookie",
+		});
+
+		const comparison = compareCatalogSubmissionToExistingProduct(
+			submitted,
+			existing,
+		);
+
+		expect(comparison.changedFields).not.toContain("servingWeightGrams");
+		expect(comparison.changes).toContainEqual(
+			expect.objectContaining({ field: "householdServing" }),
 		);
 	});
 

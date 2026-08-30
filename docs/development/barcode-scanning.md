@@ -17,10 +17,16 @@ boundaries belong in the
 3. A GS1 product QR is parsed locally. Its valid `01` GTIN is sent through the same
    lookup as a linear barcode; the scanned URL is never requested.
 4. The normalized GTIN enters the shared product-lookup flow.
+
 5. The form moves to Share and shows one announced product-lookup state in place of the
    unfinished summary and validation content. Community sharing remains disabled until
    lookup finishes.
 6. Imported values stay in the form until the user reviews and saves them.
+
+UPC-E scans are expanded to their UPC-A equivalent before canonical GTIN-14 storage.
+Manual eight-digit lookups retain the original EAN-8 candidate and also try a valid
+UPC-E expansion, so ambiguous printed codes can be resolved by exact provider identity
+without treating unrelated products as equivalent.
 
 The scan itself never waits for scheduled catalog maintenance. Once a canonical product
 exists, its exact Open Food Facts and known USDA identifiers can enter the independent

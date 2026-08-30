@@ -13,7 +13,10 @@ const getHouseholdServingLabel = (serving: FoodServing): string | null => {
 		.replace(/\s+/g, " ")
 		.trim();
 
-	if (!withoutGramWeight || GENERIC_SERVING_LABEL_PATTERN.test(withoutGramWeight)) {
+	if (
+		!withoutGramWeight ||
+		GENERIC_SERVING_LABEL_PATTERN.test(withoutGramWeight)
+	) {
 		return null;
 	}
 
@@ -21,9 +24,15 @@ const getHouseholdServingLabel = (serving: FoodServing): string | null => {
 };
 
 export const formatNutritionServingSize = (serving: FoodServing): string => {
-	const gramWeight = formatGramWeight(serving.gramWeight);
+	const gramWeight = serving.gramWeight
+		? formatGramWeight(serving.gramWeight)
+		: null;
 	const householdLabel = getHouseholdServingLabel(serving);
-	return householdLabel ? `${householdLabel} (${gramWeight})` : gramWeight;
+	if (householdLabel && gramWeight) return `${householdLabel} (${gramWeight})`;
+	if (householdLabel) return householdLabel;
+	if (gramWeight) return gramWeight;
+	if (serving.milliliterVolume) return `${serving.milliliterVolume}mL`;
+	return serving.label;
 };
 
 export const formatServingOrigin = (serving: FoodServing): string => {

@@ -618,7 +618,9 @@ test("manual entry renders every approved DB nutrient group and field", async ({
 		.click();
 	await dialog.getByRole("button", { name: "Continue" }).click();
 	await dialog.getByLabel("Weight (g)").fill("100");
-	await expect(dialog.getByLabel("Label includes volume")).not.toBeChecked();
+	await expect(
+		dialog.getByRole("switch", { name: "Package measure" }),
+	).not.toBeChecked();
 	await dialog.getByRole("button", { name: "Continue" }).click();
 
 	await expectManualEntryNutrientGroupOpenStates(

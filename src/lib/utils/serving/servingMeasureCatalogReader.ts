@@ -26,15 +26,22 @@ export const readServingMeasureCatalog = async (
 	if (aliasesResult.error) throw aliasesResult.error;
 
 	const options = (unitsResult.data ?? []).flatMap((row) => {
-		if (row.dimension !== "weight" && row.dimension !== "volume") return [];
-		return [{
-			value: row.key,
-			label: row.display_label,
-			shortLabel: row.short_label,
-			dimension: row.dimension as ServingMeasureDimension,
-			conversionToBase: Number(row.conversion_to_base),
-			isDefault: row.is_default,
-		}];
+		if (
+			row.dimension !== "weight" &&
+			row.dimension !== "volume" &&
+			row.dimension !== "count"
+		)
+			return [];
+		return [
+			{
+				value: row.key,
+				label: row.display_label,
+				shortLabel: row.short_label,
+				dimension: row.dimension as ServingMeasureDimension,
+				conversionToBase: Number(row.conversion_to_base),
+				isDefault: row.is_default,
+			},
+		];
 	});
 
 	const enabledUnits = new Set(options.map((option) => option.value));

@@ -60,7 +60,13 @@ describe("Mix warnings", () => {
 				total: 33,
 				goal: 25,
 				overage: 8,
-				contributors: [{ label: "Banana, Raw", amount: 12, grams: 120 }],
+				contributors: [
+					{
+						label: "Banana, Raw",
+						amount: 12,
+						servingAmountLabel: "120 g",
+					},
+				],
 			},
 		]);
 

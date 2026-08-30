@@ -6,7 +6,9 @@ import type {
 import type { ManualEntryNutrientDefinition } from "$lib/utils/food/nutrients/nutrientDefinitions";
 import { stripUnitFromNutrientLabel } from "$lib/components/ingredients/manual-entry/utils/nutrientValues";
 
-export type ValidationAttemptState = Partial<Record<ManualEntryStepId, boolean>>;
+export type ValidationAttemptState = Partial<
+	Record<ManualEntryStepId, boolean>
+>;
 
 export const buildRequiredManualNutrientValidationItems = ({
 	requiredFields,
@@ -70,13 +72,14 @@ export const buildManualEntryNutrientAvailabilityItems = ({
 
 export const buildManualEntryValidationItems = ({
 	normalizedName,
-	servingWeightGrams,
-	requiresServingWeight,
+	requiresServingMeasurement,
+	hasExactServingWeight,
+	hasExactServingMeasure,
 	requiresAlcoholByVolume,
 	alcoholByVolumePercent,
-	useVolumeEquivalent,
-	volumeQuantity,
-	volumeAmountRequiredMessage,
+	useServingMeasure,
+	servingMeasureQuantity,
+	servingMeasureAmountRequiredMessage,
 	activeCategory,
 	activeCategoryOptionId,
 	loadingCategoryOptions,
@@ -89,13 +92,14 @@ export const buildManualEntryValidationItems = ({
 	nutrientRelationshipValidationItems,
 }: {
 	normalizedName: string;
-	servingWeightGrams: number | null;
-	requiresServingWeight: boolean;
+	requiresServingMeasurement: boolean;
+	hasExactServingWeight: boolean;
+	hasExactServingMeasure: boolean;
 	requiresAlcoholByVolume: boolean;
 	alcoholByVolumePercent: number | null;
-	useVolumeEquivalent: boolean;
-	volumeQuantity: number | null;
-	volumeAmountRequiredMessage: string;
+	useServingMeasure: boolean;
+	servingMeasureQuantity: number | null;
+	servingMeasureAmountRequiredMessage: string;
 	activeCategory: string;
 	activeCategoryOptionId: string;
 	loadingCategoryOptions: boolean;
@@ -115,10 +119,12 @@ export const buildManualEntryValidationItems = ({
 					step: "identity",
 				}
 			: null,
-		requiresServingWeight &&
-		(!Number.isFinite(servingWeightGrams) || (servingWeightGrams ?? 0) <= 0)
+		requiresServingMeasurement &&
+		!hasExactServingWeight &&
+		!hasExactServingMeasure
 			? {
-					message: "Serving weight is required",
+					message:
+						"Add the package's exact serving weight, volume, or item amount",
 					tone: "error",
 					step: "servings",
 				}
@@ -134,12 +140,12 @@ export const buildManualEntryValidationItems = ({
 					step: "servings",
 				}
 			: null,
-		useVolumeEquivalent &&
-		(volumeQuantity === null ||
-			!Number.isFinite(volumeQuantity) ||
-			volumeQuantity <= 0)
+		useServingMeasure &&
+		(servingMeasureQuantity === null ||
+			!Number.isFinite(servingMeasureQuantity) ||
+			servingMeasureQuantity <= 0)
 			? {
-					message: volumeAmountRequiredMessage,
+					message: servingMeasureAmountRequiredMessage,
 					tone: "error",
 					step: "servings",
 				}
@@ -263,8 +269,9 @@ export const getFirstBlockingValidationThroughStep = ({
 	);
 
 	return (
-		items.find((item) => item.tone === "error" && stepsToValidate.has(item.step)) ??
-		null
+		items.find(
+			(item) => item.tone === "error" && stepsToValidate.has(item.step),
+		) ?? null
 	);
 };
 
@@ -279,9 +286,9 @@ export const warningStillApplies = ({
 }) =>
 	Boolean(
 		stepWarningMessage &&
-			stepWarningStep &&
-			items.some(
-				(item) =>
-					item.step === stepWarningStep && item.message === stepWarningMessage,
-			),
+		stepWarningStep &&
+		items.some(
+			(item) =>
+				item.step === stepWarningStep && item.message === stepWarningMessage,
+		),
 	);

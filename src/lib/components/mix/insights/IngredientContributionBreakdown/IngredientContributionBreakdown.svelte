@@ -8,7 +8,6 @@
 		open = false,
 		onOpenChange,
 	}: IngredientContributionBreakdownProps = $props();
-
 </script>
 
 {#if breakdowns.length > 0}
@@ -54,7 +53,7 @@
 									{formatMixQuantity(contributor.amount, {
 										unit: breakdown.unit,
 									})}
-									from {formatMixQuantity(contributor.grams, { unit: "g" })}
+									from {contributor.servingAmountLabel}
 								</small>
 							</li>
 						{/each}

@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import NutritionPanel from "$lib/components/ingredients/nutrition/NutritionPanel/NutritionPanel.svelte";
 import type { FoodItem } from "$lib/utils/food/types";
+import { DEFAULT_NUTRITION_VIEWING_CONVERSION } from "$lib/utils/food/nutrients/nutritionViewingAmount";
 
 const peanutButter: FoodItem = {
 	fdcId: 172470,
@@ -39,7 +40,8 @@ describe("NutritionPanel", () => {
 		render(NutritionPanel, {
 			props: {
 				food: peanutButter,
-				viewingGrams: 100,
+				viewingConversion: DEFAULT_NUTRITION_VIEWING_CONVERSION,
+				viewingLabel: "100g",
 				showListActions: false,
 			},
 		});
@@ -101,7 +103,8 @@ describe("NutritionPanel", () => {
 					sourceKey: "usda",
 					barcode: "00000000119993",
 				},
-				viewingGrams: 100,
+				viewingConversion: DEFAULT_NUTRITION_VIEWING_CONVERSION,
+				viewingLabel: "100g",
 				showListActions: false,
 			},
 		});
@@ -178,7 +181,8 @@ describe("NutritionPanel", () => {
 						},
 					},
 				},
-				viewingGrams: 100,
+				viewingConversion: DEFAULT_NUTRITION_VIEWING_CONVERSION,
+				viewingLabel: "100g",
 				showListActions: false,
 			},
 		});
@@ -215,7 +219,8 @@ describe("NutritionPanel", () => {
 		render(NutritionPanel, {
 			props: {
 				food: { ...peanutButter, ingredients },
-				viewingGrams: 100,
+				viewingConversion: DEFAULT_NUTRITION_VIEWING_CONVERSION,
+				viewingLabel: "100g",
 				showListActions: false,
 			},
 		});
@@ -243,7 +248,8 @@ describe("NutritionPanel", () => {
 						mayContain: ["Tree nuts"],
 					},
 				},
-				viewingGrams: 100,
+				viewingConversion: DEFAULT_NUTRITION_VIEWING_CONVERSION,
+				viewingLabel: "100g",
 				showListActions: false,
 			},
 		});
@@ -290,7 +296,8 @@ describe("NutritionPanel", () => {
 						},
 					],
 				},
-				viewingGrams: 100,
+				viewingConversion: DEFAULT_NUTRITION_VIEWING_CONVERSION,
+				viewingLabel: "100g",
 				showListActions: false,
 			},
 		});
@@ -374,7 +381,8 @@ describe("NutritionPanel", () => {
 						confidence: "moderator-reviewed",
 					},
 				},
-				viewingGrams: 100,
+				viewingConversion: DEFAULT_NUTRITION_VIEWING_CONVERSION,
+				viewingLabel: "100g",
 				canAdjustImagePlacement: true,
 				onImagePlacementSave: vi.fn(),
 			},
@@ -557,7 +565,8 @@ describe("NutritionPanel", () => {
 						},
 					],
 				},
-				viewingGrams: 100,
+				viewingConversion: DEFAULT_NUTRITION_VIEWING_CONVERSION,
+				viewingLabel: "100g",
 				showListActions: false,
 			},
 		});
@@ -660,7 +669,8 @@ describe("NutritionPanel", () => {
 		render(NutritionPanel, {
 			props: {
 				food: peanutButter,
-				viewingGrams: 100,
+				viewingConversion: DEFAULT_NUTRITION_VIEWING_CONVERSION,
+				viewingLabel: "100g",
 				showListActions: false,
 			},
 		});

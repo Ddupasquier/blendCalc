@@ -3,7 +3,10 @@ import {
 	createProductSourceRequestTrace,
 	recordProductSourceLookup,
 } from "$lib/server/products/sourceMetrics.server";
-import { getUsdaFoodById, searchUsdaBrandedFoods } from "$lib/server/products/usdaCache.server";
+import {
+	getUsdaFoodById,
+	searchUsdaBrandedFoods,
+} from "$lib/server/products/usdaCache.server";
 import { selectPreferredUsdaBarcodeFood } from "$lib/server/products/usdaFoodSelection";
 import { findFirstBarcodeCandidateMatch } from "$lib/server/products/barcodeCandidateLookup";
 import { normalizeBarcode } from "$lib/utils/barcode/barcode";
@@ -54,11 +57,15 @@ export const lookupUsdaBarcodeProduct = async (
 		} catch {
 			food = match;
 		}
+		const matchedBarcode = normalizeBarcode(
+			food.gtinUpc ?? candidateMatch?.candidate ?? canonicalBarcode,
+		);
+		if (!matchedBarcode) return null;
 
 		const draft = mapFdcBarcodeFood(
 			food,
-			canonicalBarcode,
-			productReferenceCatalog ?? await getProductReferenceCatalog(),
+			matchedBarcode,
+			productReferenceCatalog ?? (await getProductReferenceCatalog()),
 		);
 		await recordProductSourceLookup({
 			sourceKey: "usda",

@@ -124,6 +124,13 @@ observations remain in their licensed cache/evidence boundary, while accepted ca
 fields retain their own provenance. Existing records receive the same applicable
 backfill as future writes.
 
+Database-backed nutrient relationship validation runs before external barcode nutrition
+reaches manual-entry autofill or legally permitted exact-source observation storage.
+Invalid child values are withheld without discarding valid identity fields. If the
+validation catalog is unavailable, provider identity may still identify the package,
+but unchecked provider nutrition is withheld rather than displayed or stored as trusted
+nutrition.
+
 Product-resolution decisions use the active server-only database policy. That reviewed
 version owns name-overlap boundaries, numeric comparison thresholds, serving tolerance,
 field-selection weights, provider subtype ranks, category scoring, and nutrition-
@@ -186,6 +193,14 @@ provider/request-kind distribution, and reviewed request budgets. Cleanup remove
 bounded expired batch at a time. Daily metrics distinguish fresh hits, misses,
 stale-on-error fallbacks, coalesced requests, and real outbound requests without storing
 queries, barcodes, or user identifiers.
+
+Catalog intake also records privacy-safe field-level outcomes. Each exact provider
+record is checked independently against DB-owned nutrient relationships before field
+resolution. Shared identity, explicit source servings, and commonly reported nutrients
+are compared without treating omitted data as zero. Material disagreement routes the
+submission to current-label review while the existing canonical revision remains
+available. Operational counts distinguish disagreement from a moderator-confirmed
+label correction and never become a blanket provider trust score.
 
 blendCalcAPI reads do not depend on optional analytics, provider traffic, or intake
 processing. Source attribution remains legally required, but the server retains the
@@ -337,19 +352,24 @@ remains independently useful when custom events are unavailable.
 
 ## Serving Provenance And Conversion
 
-Serving labels, gram weights, household measures, and conversion lineage cross the
-provider boundary as one typed record. Source adapters require an explicit recognized
-unit and preserve whether a measure came from a package label, a source household
-measure, a direct reported weight, or unknown evidence. Manual values are explicitly
-user-entered. Bare provider quantities never inherit the interactive form's default
-gram unit.
+Serving labels, gram weights, milliliter volumes, count/package measures, and conversion
+lineage cross the provider boundary as one typed record. Source adapters require an
+explicit recognized unit and preserve whether a measure came from a package label, a
+source household measure, a direct reported weight or volume, or unknown evidence.
+Manual values are explicitly user-entered. Bare provider quantities never inherit the
+interactive form's default gram unit.
 
 Normalized `food_servings` rows retain the exact observation, source measure metadata,
-serving origin, gram-weight method, and measured calculation basis. Nutrition presents
-that information in Product details. Mix performs basic weight math in code and may
-calculate weight from volume only when the food has a source-reported or user-reported
-weight/volume pair. Food names, categories, provider identity, and water-like defaults
-never supply density.
+serving origin, gram-weight method, and measured calculation basis.
+`food_nutrient_measurements` retains nutrients on the exact mass, volume, or
+source-serving basis. Nutrition presents that information in Product details. Mix may
+convert within the same dimension and may cross dimensions only when the food has a
+source-reported or user-reported measured pair. Food names, categories, provider
+identity, serving form, and water-like defaults never supply density or item weight.
+Packaged-food reads default to the primary reported serving. The backward-compatible
+per-100g projection is secondary and is derived from that native value only when exact
+mass evidence exists; its derived status, method, source, and uncertainty remain
+queryable alongside the untouched native measurement.
 
 ## Nutrient Values And Uncertainty
 
