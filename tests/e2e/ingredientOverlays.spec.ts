@@ -1369,7 +1369,7 @@ test("nutrition details separate personalized warnings from source allergen disc
 		});
 		await expect(ingredientsHeading).toBeVisible();
 		await expect(
-			nutritionDetails.getByText(/red pepper paste \(wheat flour/i),
+			nutritionDetails.getByText(/red pepper powder/i),
 		).toBeVisible();
 		await expect(containsHeading).toBeVisible();
 		await expect(nutritionDetails.getByText("Soy, Wheat")).toBeVisible();
