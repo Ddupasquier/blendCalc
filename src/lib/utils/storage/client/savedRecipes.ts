@@ -8,23 +8,24 @@ import {
 	readCloudIngredientListIndex,
 	readCloudSavedRecipeById,
 	saveCloudSavedRecipeWithResult,
-  saveCloudMixGoalConfiguration,
+	saveCloudMixGoalConfiguration,
 	saveCloudMixPreferences,
 } from "$lib/utils/storage/supabase";
 import { NUTRIENT_IDS, type FoodItem } from "$lib/utils/food/types";
 import { getScopedStorageKey } from "$lib/utils/storage/client/storageScope";
 import { writeStoredMixState } from "$lib/utils/mix/state/mixState";
+import { getDefaultServingAmount } from "$lib/utils/mix/ui/mixUi";
 import {
 	hasLegacySodiumOption,
-  LEGACY_SODIUM_NUTRIENT_ID,
+	LEGACY_SODIUM_NUTRIENT_ID,
 	migrateLegacyNutrientIds,
 	migrateLegacyNutrientOptions,
 } from "$lib/utils/mix/nutrients/nutrientMappings";
 import {
-  isMixGoalBasis,
-  normalizeMixGoalMap,
-  type MixGoalBasis,
-  type MixGoalMap,
+	isMixGoalBasis,
+	normalizeMixGoalMap,
+	type MixGoalBasis,
+	type MixGoalMap,
 } from "$lib/utils/mix/goals/types";
 
 export const SAVED_RECIPES_CHANGED_EVENT = "blendcalc-saved-recipes-changed";
@@ -42,8 +43,8 @@ export type SavedRecipe = {
 	foods: FoodItem[];
 	selected: (string | number)[];
 	options: SavedRecipeNutrientOption[];
-  nutrientGoals: MixGoalMap;
-  goalBasis: MixGoalBasis;
+	nutrientGoals: MixGoalMap;
+	goalBasis: MixGoalBasis;
 	servingGrams: Record<number, number>;
 	servingQuantities: Record<number, number>;
 	servingUnits: Record<number, ServingMeasureUnit>;
@@ -73,19 +74,19 @@ const dispatchSavedRecipesChanged = () => {
 export const normalizeSavedRecipe = (value: SavedRecipe): SavedRecipe => {
 	const rawOptions = Array.isArray(value.options) ? value.options : [];
 	const shouldMigrateLegacySodium = hasLegacySodiumOption(rawOptions);
-  const normalizedGoals = normalizeMixGoalMap(
-    value.nutrientGoals,
-    getMixRuntimeConfiguration().pointGoalTolerance,
-  );
+	const normalizedGoals = normalizeMixGoalMap(
+		value.nutrientGoals,
+		getMixRuntimeConfiguration().pointGoalTolerance,
+	);
 	if (
-    shouldMigrateLegacySodium &&
-    normalizedGoals[LEGACY_SODIUM_NUTRIENT_ID] &&
-    !normalizedGoals[NUTRIENT_IDS.SODIUM]
-  ) {
-    normalizedGoals[NUTRIENT_IDS.SODIUM] = {
-      ...normalizedGoals[LEGACY_SODIUM_NUTRIENT_ID],
-      nutrientId: NUTRIENT_IDS.SODIUM,
-    };
+		shouldMigrateLegacySodium &&
+		normalizedGoals[LEGACY_SODIUM_NUTRIENT_ID] &&
+		!normalizedGoals[NUTRIENT_IDS.SODIUM]
+	) {
+		normalizedGoals[NUTRIENT_IDS.SODIUM] = {
+			...normalizedGoals[LEGACY_SODIUM_NUTRIENT_ID],
+			nutrientId: NUTRIENT_IDS.SODIUM,
+		};
 		delete normalizedGoals[LEGACY_SODIUM_NUTRIENT_ID];
 	}
 	const goalIds = new Set(Object.keys(normalizedGoals).map(Number));
@@ -101,8 +102,8 @@ export const normalizeSavedRecipe = (value: SavedRecipe): SavedRecipe => {
 		options: migrateLegacyNutrientOptions(rawOptions).filter((option) =>
 			goalIds.has(Number(option.id)),
 		),
-    nutrientGoals: normalizedGoals,
-    goalBasis: isMixGoalBasis(value.goalBasis) ? value.goalBasis : "per_mix",
+		nutrientGoals: normalizedGoals,
+		goalBasis: isMixGoalBasis(value.goalBasis) ? value.goalBasis : "per_mix",
 		servingGrams: value.servingGrams ?? {},
 		servingQuantities: value.servingQuantities ?? {},
 		servingUnits: value.servingUnits ?? {},
@@ -139,9 +140,9 @@ export const writeLoadedSavedRecipe = (recipe: LoadedSavedRecipe) => {
 };
 
 export const clearLoadedSavedRecipe = () => {
-  sessionStorage.removeItem(
-    getScopedStorageKey(LOADED_SAVED_RECIPE_STORAGE_KEY),
-  );
+	sessionStorage.removeItem(
+		getScopedStorageKey(LOADED_SAVED_RECIPE_STORAGE_KEY),
+	);
 };
 
 const createSavedRecipe = (input: SavedRecipeInput): SavedRecipe => {
@@ -213,10 +214,10 @@ export const restoreSavedRecipeToMix = async (recipe: SavedRecipe) => {
 	const listIndex = await readCloudIngredientListIndex();
 	if (!listIndex) return false;
 
-  const fridgeIds = new Set(listIndex[MIX_STORAGE_KEYS.fridge].foodIds);
-  const shoppingIds = new Set(listIndex[MIX_STORAGE_KEYS.shoppingList].foodIds);
+	const fridgeIds = new Set(listIndex[MIX_STORAGE_KEYS.fridge].foodIds);
+	const shoppingIds = new Set(listIndex[MIX_STORAGE_KEYS.shoppingList].foodIds);
 	const foodsMissingFromBothLists = normalizedRecipe.foods.filter(
-    (food) => !fridgeIds.has(food.fdcId) && !shoppingIds.has(food.fdcId),
+		(food) => !fridgeIds.has(food.fdcId) && !shoppingIds.has(food.fdcId),
 	);
 
 	if (foodsMissingFromBothLists.length > 0) {
@@ -227,39 +228,46 @@ export const restoreSavedRecipeToMix = async (recipe: SavedRecipe) => {
 		if (result === "error") return false;
 	}
 
+	const servingAmounts = normalizedRecipe.foods.map((food) => {
+		const defaultServing = getDefaultServingAmount(food);
+		return {
+			foodId: food.fdcId,
+			quantity:
+				normalizedRecipe.servingQuantities[food.fdcId] ??
+				normalizedRecipe.servingGrams[food.fdcId] ??
+				defaultServing.quantity,
+			unit:
+				normalizedRecipe.servingUnits[food.fdcId] ??
+				(normalizedRecipe.servingGrams[food.fdcId] !== undefined
+					? "g"
+					: defaultServing.unit),
+		};
+	});
 	const mixState = {
 		selected: normalizedRecipe.selected,
 		options: normalizedRecipe.options,
 		selectedFoodIds: normalizedRecipe.foods.map((food) => food.fdcId),
 		servingGrams: normalizedRecipe.servingGrams,
 		servingQuantities: Object.fromEntries(
-			normalizedRecipe.foods.map((food) => [
-				food.fdcId,
-				normalizedRecipe.servingQuantities[food.fdcId] ??
-					normalizedRecipe.servingGrams[food.fdcId] ??
-					getMixRuntimeConfiguration().defaultServingGrams,
-			]),
+			servingAmounts.map(({ foodId, quantity }) => [foodId, quantity]),
 		),
 		servingUnits: Object.fromEntries(
-			normalizedRecipe.foods.map((food) => [
-				food.fdcId,
-				normalizedRecipe.servingUnits[food.fdcId] ?? "g",
-			]),
+			servingAmounts.map(({ foodId, unit }) => [foodId, unit]),
 		),
 	};
 
 	const persistedMixState = writeStoredMixState(mixState);
-  const [mixSaved, goalsSaved] = await Promise.all([
-    saveCloudMixPreferences({ mixState: persistedMixState }),
-    saveCloudMixGoalConfiguration({
-      goals: normalizedRecipe.nutrientGoals,
-      goalBasis: normalizedRecipe.goalBasis,
-      sourceTemplateVersionId: null,
-      sourceUserTemplateId: null,
-      templateCustomized: true,
-    }),
-  ]);
-  if (!mixSaved || !goalsSaved) return false;
+	const [mixSaved, goalsSaved] = await Promise.all([
+		saveCloudMixPreferences({ mixState: persistedMixState }),
+		saveCloudMixGoalConfiguration({
+			goals: normalizedRecipe.nutrientGoals,
+			goalBasis: normalizedRecipe.goalBasis,
+			sourceTemplateVersionId: null,
+			sourceUserTemplateId: null,
+			templateCustomized: true,
+		}),
+	]);
+	if (!mixSaved || !goalsSaved) return false;
 	writeLoadedSavedRecipe({
 		id: normalizedRecipe.id,
 		name: normalizedRecipe.name,

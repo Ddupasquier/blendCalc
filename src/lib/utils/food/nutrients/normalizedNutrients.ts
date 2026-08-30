@@ -1,5 +1,9 @@
 import { normalizeFoodForStorage } from "$lib/utils/food/records/foodRecords";
-import type { FoodItem, FoodNutrient } from "$lib/utils/food/types";
+import type {
+	FoodItem,
+	FoodNutrient,
+	FoodNutrientMeasurementBasis,
+} from "$lib/utils/food/types";
 import { toFiniteNonnegativeNumber } from "$lib/utils/numbers/finiteNumbers";
 
 export type NormalizedNutrientRow = {
@@ -8,6 +12,7 @@ export type NormalizedNutrientRow = {
 	nutrientNumber: string | null;
 	unitName: string;
 	value: number;
+	measurementBasis?: FoodNutrientMeasurementBasis;
 	valueOrigin: NonNullable<FoodNutrient["valueOrigin"]>;
 	source: NonNullable<FoodNutrient["source"]>;
 	sourceReference: string | null;
@@ -49,6 +54,9 @@ export const normalizedRowsToNutrients = (
 			nutrientNumber: row.nutrientNumber?.trim() || String(row.nutrientId),
 			unitName,
 			value,
+			measurementBasis: row.measurementBasis
+				? { ...row.measurementBasis }
+				: undefined,
 			valueOrigin: row.valueOrigin,
 			source: row.source,
 			sourceReference: row.sourceReference?.trim() || undefined,

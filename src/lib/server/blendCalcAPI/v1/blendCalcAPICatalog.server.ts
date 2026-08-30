@@ -22,12 +22,30 @@ import { normalizeBarcode } from "$lib/utils/barcode/barcode";
 import type { FoodCompatibilityFact } from "$lib/utils/food/quality/compatibility";
 import { getFoodCompatibilityEvaluation } from "$lib/utils/food/quality/foodCompatibilityEvaluation";
 import type { FoodImageAsset } from "$lib/utils/food/types";
+import {
+	getFoodNutrientMeasurementBasis,
+	getNutrientAmountForServingConversion,
+	getNutrientStandardErrorForServingConversion,
+} from "$lib/utils/food/nutrients/foodNutrients";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createServerCachedLoader } from "$lib/server/cache/serverCachedLoader";
 
 const uniqueStrings = (values: Array<string | null | undefined>) => [
 	...new Set(values.map((value) => value?.trim()).filter(Boolean) as string[]),
 ];
+
+const HUNDRED_GRAM_API_BASIS = {
+	grams: 100,
+	milliliters: null,
+	servings: null,
+	servingLabel: null,
+	dimension: "weight" as const,
+	density: null,
+	available: true,
+	warning: null,
+	method: "exact-unit-conversion" as const,
+	basis: "100g",
+};
 
 export type SourceAttributionRow = {
 	key: string;
@@ -644,49 +662,72 @@ export const mapApprovedCatalogRecordToBlendCalcAPIV1Product = (
 			: null,
 		nutrients: [...record.food.foodNutrients]
 			.sort((left, right) => left.nutrientId - right.nutrientId)
-			.map((nutrient) => ({
-				id: nutrient.nutrientId,
-				name: nutrient.nutrientName,
-				number: nutrient.nutrientNumber?.trim() || null,
-				unit: nutrient.unitName,
-				amountPer100g: Number.isFinite(nutrient.value) ? nutrient.value : null,
-				valueStatus: nutrient.valueOrigin ?? "unknown",
-				source: nutrient.source
-					? toSource(
-							nutrient.source,
-							nutrient.sourceReference,
-							nutrient.confidence,
-						)
-					: null,
-				quality: {
-					sourceValueStatus:
-						nutrient.valueStatus ??
-						(nutrient.valueOrigin === "derived"
-							? "derived"
-							: nutrient.value === 0
-								? "reported-zero"
-								: (nutrient.valueOrigin ?? "unknown")),
-					standardError:
-						Number.isFinite(nutrient.standardError) &&
-						Number(nutrient.standardError) >= 0
-							? Number(nutrient.standardError)
+			.map((nutrient) => {
+				const amountPer100g = getNutrientAmountForServingConversion(
+					nutrient,
+					HUNDRED_GRAM_API_BASIS,
+					record.food,
+				);
+				const basis = getFoodNutrientMeasurementBasis(nutrient);
+				const isDerivedPer100GramProjection =
+					amountPer100g !== null &&
+					!(
+						basis.kind === "mass" &&
+						basis.quantity === 100 &&
+						basis.unitKey === "g"
+					);
+
+				return {
+					id: nutrient.nutrientId,
+					name: nutrient.nutrientName,
+					number: nutrient.nutrientNumber?.trim() || null,
+					unit: nutrient.unitName,
+					amountPer100g:
+						amountPer100g !== null && Number.isFinite(amountPer100g)
+							? amountPer100g
 							: null,
-					sourceNutrientKey: nutrient.sourceNutrientKey?.trim() || null,
-					sourceNutrientCode: nutrient.sourceNutrientCode?.trim() || null,
-					mappingStatus: nutrient.mappingStatus ?? "unknown",
-					mappingMethod: nutrient.mappingMethod?.trim() || null,
-					derivationMethod: nutrient.derivationMethod?.trim() || null,
-					valueQualifier: nutrient.valueQualifier ?? null,
-				},
-			})),
+					valueStatus: isDerivedPer100GramProjection
+						? "derived"
+						: (nutrient.valueOrigin ?? "unknown"),
+					source: nutrient.source
+						? toSource(
+								nutrient.source,
+								nutrient.sourceReference,
+								nutrient.confidence,
+							)
+						: null,
+					quality: {
+						sourceValueStatus:
+							nutrient.valueStatus ??
+							(nutrient.valueOrigin === "derived"
+								? "derived"
+								: nutrient.value === 0
+									? "reported-zero"
+									: (nutrient.valueOrigin ?? "unknown")),
+						standardError: getNutrientStandardErrorForServingConversion(
+							nutrient,
+							HUNDRED_GRAM_API_BASIS,
+							record.food,
+						),
+						sourceNutrientKey: nutrient.sourceNutrientKey?.trim() || null,
+						sourceNutrientCode: nutrient.sourceNutrientCode?.trim() || null,
+						mappingStatus: nutrient.mappingStatus ?? "unknown",
+						mappingMethod: nutrient.mappingMethod?.trim() || null,
+						derivationMethod: isDerivedPer100GramProjection
+							? "exact-native-basis-to-100g"
+							: (nutrient.derivationMethod?.trim() ?? null),
+						valueQualifier: nutrient.valueQualifier ?? null,
+					},
+				};
+			}),
 		servings: (record.food.foodServings ?? []).map((serving) => {
 			const quantity =
 				Number.isFinite(serving.amount) && Number(serving.amount) > 0
 					? Number(serving.amount)
 					: null;
 			const grams =
-				Number.isFinite(serving.gramWeight) && serving.gramWeight > 0
-					? serving.gramWeight
+				Number.isFinite(serving.gramWeight) && Number(serving.gramWeight) > 0
+					? Number(serving.gramWeight)
 					: null;
 			return {
 				label: serving.label,

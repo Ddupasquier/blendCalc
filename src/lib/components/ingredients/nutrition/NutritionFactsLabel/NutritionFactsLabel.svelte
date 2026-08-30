@@ -4,28 +4,28 @@
 	import IngredientProvenanceBadges from "$lib/components/ingredients/provenance/IngredientProvenanceBadges/IngredientProvenanceBadges.svelte";
 	import NutritionServingStatement from "$lib/components/ingredients/nutrition/NutritionServingStatement/NutritionServingStatement.svelte";
 	import {
-		getFoodNutrientValue,
+		getNutrientAmountForServingConversion,
 		isMatchingFoodNutrient,
+		resolveFoodNutrient,
 	} from "$lib/utils/food/nutrients/foodNutrients";
-	import {
-		formatNutritionAmount,
-		getNutritionBasisLabel,
-		scalePer100gValue,
-	} from "$lib/utils/food/nutrients/nutritionDisplay";
+	import { formatNutritionAmount } from "$lib/utils/food/nutrients/nutritionDisplay";
 	import { getNutritionFactsFields } from "$lib/utils/food/reference/appReferenceCatalog";
 	import { getCanonicalFoodDescription } from "$lib/utils/food/records/foodRecords";
 	import type { NutritionFactsLabelProps } from "./types";
 
 	let {
 		food,
-		viewingGrams,
+		viewingConversion,
+		viewingLabel,
 		viewingServing,
 		provenanceOptions = [],
 	}: NutritionFactsLabelProps = $props();
 	const nutritionBasis = $derived(
 		viewingServing
 			? "Amount per serving"
-			: getNutritionBasisLabel(viewingGrams),
+			: viewingLabel === "100g"
+				? "Per 100g food data"
+				: `Amount for ${viewingLabel}`,
 	);
 	const foodName = $derived(food ? getCanonicalFoodDescription(food) : "");
 
@@ -34,11 +34,18 @@
 	const vitalRows = $derived(
 		food
 			? nutritionFactsFields.map((field) => {
-					const value = getFoodNutrientValue(food, field.id);
-					const scaledValue = scalePer100gValue(value ?? 0, viewingGrams) ?? 0;
+					const nutrient = resolveFoodNutrient(food, field.id).nutrient;
+					const scaledValue = nutrient
+						? getNutrientAmountForServingConversion(
+								nutrient,
+								viewingConversion,
+								food,
+							)
+						: 0;
 					return {
 						label: field.label,
-						value: formatNutritionAmount(scaledValue),
+						value:
+							scaledValue === null ? "—" : formatNutritionAmount(scaledValue),
 						unit: field.unit,
 						highlight: field.highlight,
 					};
@@ -50,7 +57,11 @@
 			? food.foodNutrients
 					.filter((n) => !vitalIds.some((id) => isMatchingFoodNutrient(n, id)))
 					.flatMap((n) => {
-						const scaledValue = scalePer100gValue(n.value, viewingGrams);
+						const scaledValue = getNutrientAmountForServingConversion(
+							n,
+							viewingConversion,
+							food,
+						);
 						return scaledValue === null || scaledValue === 0
 							? []
 							: [

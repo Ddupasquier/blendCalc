@@ -1541,9 +1541,20 @@ describe("CustomIngredientForm", () => {
 		expect(savedFood).toMatchObject({
 			customFood: true,
 			foodIdentityType: "private-custom",
-			hasSourceServing: false,
+			hasSourceServing: true,
 			ingredients: "Tomatoes",
 		});
+		expect(savedFood.foodServings).toEqual([
+			expect.objectContaining({
+				label: "100g serving",
+				gramWeight: 100,
+				isPrimary: true,
+				origin: "user-entered",
+				gramWeightMethod: "user-reported",
+				source: "user-label",
+				confidence: "user-reported",
+			}),
+		]);
 		expect(savedFood.barcode).toBeUndefined();
 		expect(savedFood.sourceKey).toBeUndefined();
 		expect(savedFood.sourceMetadata).toBeUndefined();
@@ -2140,47 +2151,47 @@ describe("CustomIngredientForm", () => {
 		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
 
 		await openManualForm();
-		expect(
-			screen.queryByLabelText(/volume in this serving/i),
-		).not.toBeInTheDocument();
+		expect(screen.queryByLabelText(/^amount/i)).not.toBeInTheDocument();
 
 		await fillIdentityStep("Volume test food");
 		await continueToNextStep();
-		expect(
-			screen.queryByLabelText(/volume in this serving/i),
-		).not.toBeInTheDocument();
+		expect(screen.queryByLabelText(/^amount/i)).not.toBeInTheDocument();
 
-		await fireEvent.click(screen.getByLabelText(/label includes volume/i));
+		await fireEvent.click(
+			screen.getByRole("switch", { name: "Package measure" }),
+		);
+		expect(screen.getByLabelText("Serving label")).toBeInTheDocument();
+		expect(screen.getByLabelText(/^amount/i)).toBeInTheDocument();
+		expect(screen.getByRole("combobox", { name: "Unit" })).toBeInTheDocument();
 		expect(
-			screen.getByLabelText(/volume in this serving/i),
-		).toBeInTheDocument();
-		expect(
-			screen.getByText(/records the entered volume as weighing/i),
+			screen.getByText(
+				/without grams, nutrition stays on this package measure/i,
+			),
 		).toBeInTheDocument();
 	});
 
-	it("requires volume amount before leaving servings when label includes volume", async () => {
+	it("requires a package amount before leaving servings when package measure is enabled", async () => {
 		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
 
 		await openManualForm();
 		await fillIdentityStep("Liquid yogurt");
 		await continueToNextStep();
-		await fireEvent.click(screen.getByLabelText(/label includes volume/i));
+		await fireEvent.click(
+			screen.getByRole("switch", { name: "Package measure" }),
+		);
 		await fireEvent.input(screen.getByLabelText(/weight \(g\)/i), {
 			target: { value: "245" },
 		});
 		await continueToNextStep();
 
 		const warning = screen.getByText(
-			/enter a volume amount or turn off label includes volume/i,
+			/enter the amount printed on the package or turn off package measure/i,
 		);
 		expect(warning).toBeInTheDocument();
 		expect(warning.closest(".warning-popup")).toHaveClass(
 			"warning-popup--error",
 		);
-		expect(
-			screen.getByLabelText(/volume in this serving/i),
-		).toBeInTheDocument();
+		expect(screen.getByLabelText(/^amount/i)).toBeInTheDocument();
 	});
 
 	it("saves an explicit weight and volume pair as one user-reported serving", async () => {
@@ -2193,14 +2204,19 @@ describe("CustomIngredientForm", () => {
 		await fireEvent.input(screen.getByLabelText(/weight \(g\)/i), {
 			target: { value: "32" },
 		});
-		await fireEvent.click(screen.getByLabelText(/label includes volume/i));
-		await fireEvent.input(screen.getByLabelText(/volume in this serving/i), {
+		await fireEvent.click(
+			screen.getByRole("switch", { name: "Package measure" }),
+		);
+		await fireEvent.input(screen.getByLabelText(/^amount/i), {
 			target: { value: "2" },
 		});
-		await fireEvent.change(screen.getByLabelText(/volume unit/i), {
-			target: { value: "tbsp" },
+		await fireEvent.click(screen.getByRole("combobox", { name: "Unit" }));
+		await fireEvent.click(
+			screen.getByRole("option", { name: "tablespoons (tbsp)" }),
+		);
+		await fireEvent.input(screen.getByLabelText("Serving label"), {
+			target: { value: "2 tbsp" },
 		});
-		expect(screen.queryByLabelText(/serving label/i)).not.toBeInTheDocument();
 
 		await continueToNextStep();
 		await fireEvent.input(screen.getByLabelText(/calories/i), {
@@ -2332,7 +2348,11 @@ describe("CustomIngredientForm", () => {
 		});
 		await continueToNextStep();
 
-		expect(screen.getByText("Serving weight is required")).toBeInTheDocument();
+		expect(
+			screen.getByText(
+				"Add the package's exact serving weight, volume, or item amount",
+			),
+		).toBeInTheDocument();
 		expect(screen.getByLabelText(/weight \(g\)/i)).toBeInTheDocument();
 
 		await fireEvent.click(

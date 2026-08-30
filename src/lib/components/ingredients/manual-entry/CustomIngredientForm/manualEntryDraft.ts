@@ -24,7 +24,7 @@ const hasMeaningfulDraft = (form: ManualEntryFormResetState) =>
 		form.barcode.trim() ||
 		form.servingLabel.trim() ||
 		form.servingWeightGrams !== null ||
-		form.volumeQuantity !== null ||
+		form.servingMeasureQuantity !== null ||
 		Object.keys(form.manualNutrientValues).length > 0 ||
 		form.importedNutrients.length > 0 ||
 		form.ingredients.trim() ||

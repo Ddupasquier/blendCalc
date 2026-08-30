@@ -1,4 +1,6 @@
 import type { FoodItem, FoodNutrient } from "$lib/utils/food/types";
+import { getComparableFoodNutrientAmount } from "$lib/utils/food/nutrients/foodNutrients";
+import { getPrimaryFoodServing } from "$lib/utils/food/servings/foodServings";
 import {
 	productNamesAreUnrelated,
 	productNamesDiffer,
@@ -17,6 +19,7 @@ export type NormalizedProductDifference = {
 	absoluteDifference?: number;
 	differenceRatio?: number;
 	unitMismatch?: boolean;
+	measurementBasisMismatch?: boolean;
 	previousNutrient?: FoodNutrient;
 	submittedNutrient?: FoodNutrient;
 };
@@ -66,7 +69,9 @@ const getComparableCategoryText = (food: FoodItem) =>
 		.join(" ");
 
 const getServingWeight = (food: FoodItem) =>
-	food.customServingWeightGrams ?? food.servingSize ?? null;
+	getPrimaryFoodServing(food)?.gramWeight ??
+	food.customServingWeightGrams ??
+	null;
 
 const normalizeTextList = (values?: string[]) =>
 	[
@@ -126,7 +131,11 @@ const getNutrientMap = (food: FoodItem, includedIds?: ReadonlySet<number>) =>
 
 const getNutrientValue = (nutrient?: FoodNutrient) =>
 	nutrient
-		? { value: nutrient.value, unit: nutrient.unitName.toLocaleUpperCase() }
+		? {
+				value: nutrient.value,
+				unit: nutrient.unitName.toLocaleUpperCase(),
+				basis: getComparableFoodNutrientAmount(nutrient)?.basisKey ?? "unknown",
+			}
 		: null;
 
 export const compareNormalizedFoods = (
@@ -241,19 +250,36 @@ export const compareNormalizedFoods = (
 		const submittedUnit = submittedNutrient.unitName.toLocaleUpperCase();
 		const previousUnit = previousNutrient.unitName.toLocaleUpperCase();
 		const unitMismatch = submittedUnit !== previousUnit;
-		const numericDifference = getRelativeDifference(
-			submittedNutrient.value,
-			previousNutrient.value,
-			options.resolutionPolicy.numericDifferenceRatioFloor,
-		);
-		if (!unitMismatch && numericDifference.absoluteDifference === 0) continue;
+		const submittedComparable =
+			getComparableFoodNutrientAmount(submittedNutrient);
+		const previousComparable =
+			getComparableFoodNutrientAmount(previousNutrient);
+		const measurementBasisMismatch =
+			!submittedComparable ||
+			!previousComparable ||
+			submittedComparable.basisKey !== previousComparable.basisKey;
+		const numericDifference = measurementBasisMismatch
+			? null
+			: getRelativeDifference(
+					submittedComparable.value,
+					previousComparable.value,
+					options.resolutionPolicy.numericDifferenceRatioFloor,
+				);
+		if (
+			!unitMismatch &&
+			!measurementBasisMismatch &&
+			numericDifference?.absoluteDifference === 0
+		) {
+			continue;
+		}
 		differences.push({
 			field: `nutrient:${nutrientId}`,
 			changeType: "changed",
 			previousValue: getNutrientValue(previousNutrient),
 			submittedValue: getNutrientValue(submittedNutrient),
 			unitMismatch,
-			...numericDifference,
+			measurementBasisMismatch,
+			...(numericDifference ?? {}),
 			previousNutrient,
 			submittedNutrient,
 		});

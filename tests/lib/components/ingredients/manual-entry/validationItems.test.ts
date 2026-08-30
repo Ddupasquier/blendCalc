@@ -12,13 +12,14 @@ const buildItems = ({
 } = {}) =>
 	buildManualEntryValidationItems({
 		normalizedName: "QA Missing Reference Data",
-		servingWeightGrams: 100,
-		requiresServingWeight: true,
+		requiresServingMeasurement: true,
+		hasExactServingWeight: true,
+		hasExactServingMeasure: false,
 		requiresAlcoholByVolume: false,
 		alcoholByVolumePercent: null,
-		useVolumeEquivalent: false,
-		volumeQuantity: null,
-		volumeAmountRequiredMessage: "Volume is required",
+		useServingMeasure: false,
+		servingMeasureQuantity: null,
+		servingMeasureAmountRequiredMessage: "Serving amount is required",
 		activeCategory: "Jams and Preserves",
 		activeCategoryOptionId: "category-jams",
 		loadingCategoryOptions,
@@ -34,7 +35,8 @@ const buildItems = ({
 describe("manual-entry category availability validation", () => {
 	it("blocks a previously selected category while the catalog is unavailable", () => {
 		expect(buildItems({ categoryOptionsAvailable: false })).toContainEqual({
-			message: "Food categories are unavailable. Try again after categories finish syncing.",
+			message:
+				"Food categories are unavailable. Try again after categories finish syncing.",
 			tone: "error",
 			step: "identity",
 		});

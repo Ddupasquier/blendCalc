@@ -40,8 +40,7 @@ const makeDraft = (
 	reportedNutrientIds: [1079],
 	categories: [],
 	source,
-	sourceLabel:
-		source === "usda" ? "USDA FoodData Central" : "Open Food Facts",
+	sourceLabel: source === "usda" ? "USDA FoodData Central" : "Open Food Facts",
 	sourceReference: source === "usda" ? "2658692" : "00021130493609",
 	fieldProvenance: {
 		nutrition: {
@@ -87,9 +86,9 @@ describe("barcode product field enrichment", () => {
 				["reviewed-alcohol-profile"],
 			),
 		).toBe(true);
-		expect(needsAlcoholBarcodeProductSupplement(makeDraft("open-food-facts"))).toBe(
-			false,
-		);
+		expect(
+			needsAlcoholBarcodeProductSupplement(makeDraft("open-food-facts")),
+		).toBe(false);
 	});
 
 	it("tracks missing nutrition, image, category, and serving independently", () => {
@@ -102,8 +101,8 @@ describe("barcode product field enrichment", () => {
 			serving: true,
 			ingredients: true,
 			allergens: true,
-				traces: true,
-				precautionaryStatements: true,
+			traces: true,
+			precautionaryStatements: true,
 			dietaryTags: true,
 			labels: true,
 			structuredIngredients: true,
@@ -136,8 +135,8 @@ describe("barcode product field enrichment", () => {
 			ingredients: true,
 			ingredientList: true,
 			allergens: true,
-				traces: true,
-				precautionaryStatements: true,
+			traces: true,
+			precautionaryStatements: true,
 			dietaryTags: true,
 			labels: true,
 			structuredIngredients: true,
@@ -193,12 +192,14 @@ describe("barcode product field enrichment", () => {
 		expect(getSupplementedBarcodeProductFields(primary, supplement)).toContain(
 			"brandOwner",
 		);
-		expect(mergeMissingBarcodeProductFields(primary, supplement)).toMatchObject({
-			brandOwner: "Signature Select",
-			fieldProvenance: {
-				brandOwner: { source: "open-food-facts" },
+		expect(mergeMissingBarcodeProductFields(primary, supplement)).toMatchObject(
+			{
+				brandOwner: "Signature Select",
+				fieldProvenance: {
+					brandOwner: { source: "open-food-facts" },
+				},
 			},
-		});
+		);
 	});
 
 	it("keeps USDA nutrition while filling image, category, and serving fields", () => {
@@ -260,8 +261,16 @@ describe("barcode product field enrichment", () => {
 		expect(result.nutrients[0]).toMatchObject({
 			value: 2.5,
 			source: "usda",
+			measurementBasis: {
+				kind: "serving",
+				quantity: 1,
+				unitKey: "serving",
+				servingLabel: "1/2 cup (125 g)",
+			},
 		});
-		expect(result.nutrients.find((item) => item.nutrientId === 1003)).toMatchObject({
+		expect(
+			result.nutrients.find((item) => item.nutrientId === 1003),
+		).toMatchObject({
 			value: 1,
 			source: "open-food-facts",
 		});
@@ -308,6 +317,12 @@ describe("barcode product field enrichment", () => {
 		expect(result.nutrients[0]).toMatchObject({
 			value: 2.5,
 			source: "open-food-facts",
+			measurementBasis: {
+				kind: "serving",
+				quantity: 1,
+				unitKey: "serving",
+				servingLabel: "125 g",
+			},
 		});
 		expect(result.servingWeightGrams).toBe(125);
 		expect(result.fieldProvenance?.nutrition?.source).toBe("open-food-facts");
@@ -336,13 +351,15 @@ describe("barcode product field enrichment", () => {
 			ingredients: "Peanuts, sugar, milk",
 			ingredientList: ["peanuts", "Sugar", "milk"],
 			allergens: ["Peanuts", "milk"],
-				traces: ["tree nuts"],
-				precautionaryStatements: [{
+			traces: ["tree nuts"],
+			precautionaryStatements: [
+				{
 					type: "may_contain",
 					text: "May contain tree nuts",
 					allergens: ["tree nuts"],
 					sourceField: "traces",
-				}],
+				},
+			],
 			dietaryTags: ["vegetarian"],
 			labels: ["Rainforest Alliance"],
 			structuredIngredients: [{ id: "milk", text: "milk" }],
@@ -384,16 +401,20 @@ describe("barcode product field enrichment", () => {
 		expect(result.ingredients).toBe("Peanuts, sugar");
 		expect(result.ingredientList).toEqual(["Peanuts", "sugar"]);
 		expect(result.allergens).toEqual(["peanuts"]);
-			expect(result.traces).toEqual(["tree nuts"]);
-			expect(result.precautionaryStatements).toEqual([{
+		expect(result.traces).toEqual(["tree nuts"]);
+		expect(result.precautionaryStatements).toEqual([
+			{
 				type: "may_contain",
 				text: "May contain tree nuts",
 				allergens: ["tree nuts"],
 				sourceField: "traces",
-			}]);
+			},
+		]);
 		expect(result.dietaryTags).toEqual(["vegetarian"]);
 		expect(result.labels).toEqual(["Rainforest Alliance"]);
-		expect(result.structuredIngredients).toEqual([{ id: "milk", text: "milk" }]);
+		expect(result.structuredIngredients).toEqual([
+			{ id: "milk", text: "milk" },
+		]);
 		expect(result.ingredientAnalysis).toEqual({
 			ingredientTags: ["milk"],
 			analysisTags: ["non vegan"],

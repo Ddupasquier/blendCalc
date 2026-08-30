@@ -7,11 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.17"
-  }
   graphql_public: {
     Tables: {
       [_ in never]: never
@@ -338,83 +333,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      blendcalc_api_scope_policies: {
-        Row: {
-          created_at: string
-          description: string
-          enabled: boolean
-          operation_key: string
-          required_scope: string
-          reviewed_at: string
-          source_reference: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          description: string
-          enabled?: boolean
-          operation_key: string
-          required_scope: string
-          reviewed_at: string
-          source_reference: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          description?: string
-          enabled?: boolean
-          operation_key?: string
-          required_scope?: string
-          reviewed_at?: string
-          source_reference?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "blendcalc_api_scope_policies_required_scope_fkey"
-            columns: ["required_scope"]
-            isOneToOne: false
-            referencedRelation: "blendcalc_api_scopes"
-            referencedColumns: ["key"]
-          },
-        ]
-      }
-      blendcalc_api_scopes: {
-        Row: {
-          created_at: string
-          description: string
-          display_name: string
-          enabled: boolean
-          key: string
-          reviewed_at: string
-          risk_level: string
-          source_reference: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          description: string
-          display_name: string
-          enabled?: boolean
-          key: string
-          reviewed_at: string
-          risk_level: string
-          source_reference: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          description?: string
-          display_name?: string
-          enabled?: boolean
-          key?: string
-          reviewed_at?: string
-          risk_level?: string
-          source_reference?: string
-          updated_at?: string
-        }
-        Relationships: []
       }
       blendcalc_api_publication_concerns: {
         Row: {
@@ -753,6 +671,83 @@ export type Database = {
             referencedColumns: ["key"]
           },
         ]
+      }
+      blendcalc_api_scope_policies: {
+        Row: {
+          created_at: string
+          description: string
+          enabled: boolean
+          operation_key: string
+          required_scope: string
+          reviewed_at: string
+          source_reference: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          enabled?: boolean
+          operation_key: string
+          required_scope: string
+          reviewed_at: string
+          source_reference: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          enabled?: boolean
+          operation_key?: string
+          required_scope?: string
+          reviewed_at?: string
+          source_reference?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blendcalc_api_scope_policies_required_scope_fkey"
+            columns: ["required_scope"]
+            isOneToOne: false
+            referencedRelation: "blendcalc_api_scopes"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      blendcalc_api_scopes: {
+        Row: {
+          created_at: string
+          description: string
+          display_name: string
+          enabled: boolean
+          key: string
+          reviewed_at: string
+          risk_level: string
+          source_reference: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          display_name: string
+          enabled?: boolean
+          key: string
+          reviewed_at: string
+          risk_level: string
+          source_reference: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          display_name?: string
+          enabled?: boolean
+          key?: string
+          reviewed_at?: string
+          risk_level?: string
+          source_reference?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       blocked_signup_emails: {
         Row: {
@@ -2709,6 +2704,190 @@ export type Database = {
           },
         ]
       }
+      food_nutrient_measurements: {
+        Row: {
+          amount: number
+          basis_kind: string
+          basis_quantity: number
+          basis_serving_label: string | null
+          basis_unit_key: string
+          confidence: string
+          created_at: string
+          custom_food_id: string | null
+          derivation_method: string | null
+          id: number
+          mapping_method: string | null
+          mapping_review_reference: string | null
+          mapping_status: string
+          nutrient_id: number
+          owner_user_id: string | null
+          shared_product_id: string | null
+          shared_product_observation_id: string | null
+          shared_product_revision_id: string | null
+          shared_product_submission_id: string | null
+          source: string
+          source_nutrient_code: string | null
+          source_nutrient_key: string | null
+          source_reference: string | null
+          standard_error: number | null
+          unit_name: string
+          updated_at: string
+          user_food_list_item_id: string | null
+          value_origin: string
+          value_qualifier: string | null
+          value_status: string
+        }
+        Insert: {
+          amount: number
+          basis_kind: string
+          basis_quantity: number
+          basis_serving_label?: string | null
+          basis_unit_key: string
+          confidence: string
+          created_at?: string
+          custom_food_id?: string | null
+          derivation_method?: string | null
+          id?: never
+          mapping_method?: string | null
+          mapping_review_reference?: string | null
+          mapping_status?: string
+          nutrient_id: number
+          owner_user_id?: string | null
+          shared_product_id?: string | null
+          shared_product_observation_id?: string | null
+          shared_product_revision_id?: string | null
+          shared_product_submission_id?: string | null
+          source: string
+          source_nutrient_code?: string | null
+          source_nutrient_key?: string | null
+          source_reference?: string | null
+          standard_error?: number | null
+          unit_name: string
+          updated_at?: string
+          user_food_list_item_id?: string | null
+          value_origin: string
+          value_qualifier?: string | null
+          value_status?: string
+        }
+        Update: {
+          amount?: number
+          basis_kind?: string
+          basis_quantity?: number
+          basis_serving_label?: string | null
+          basis_unit_key?: string
+          confidence?: string
+          created_at?: string
+          custom_food_id?: string | null
+          derivation_method?: string | null
+          id?: never
+          mapping_method?: string | null
+          mapping_review_reference?: string | null
+          mapping_status?: string
+          nutrient_id?: number
+          owner_user_id?: string | null
+          shared_product_id?: string | null
+          shared_product_observation_id?: string | null
+          shared_product_revision_id?: string | null
+          shared_product_submission_id?: string | null
+          source?: string
+          source_nutrient_code?: string | null
+          source_nutrient_key?: string | null
+          source_reference?: string | null
+          standard_error?: number | null
+          unit_name?: string
+          updated_at?: string
+          user_food_list_item_id?: string | null
+          value_origin?: string
+          value_qualifier?: string | null
+          value_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "food_nutrient_measurements_custom_food_id_fkey"
+            columns: ["custom_food_id"]
+            isOneToOne: false
+            referencedRelation: "custom_foods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_nutrient_measurements_nutrient_id_fkey"
+            columns: ["nutrient_id"]
+            isOneToOne: false
+            referencedRelation: "nutrient_definitions"
+            referencedColumns: ["nutrient_id"]
+          },
+          {
+            foreignKeyName: "food_nutrient_measurements_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "blendcalc_api_catalog_product_readiness"
+            referencedColumns: ["shared_product_id"]
+          },
+          {
+            foreignKeyName: "food_nutrient_measurements_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "blendcalc_api_v1_product_readiness"
+            referencedColumns: ["shared_product_id"]
+          },
+          {
+            foreignKeyName: "food_nutrient_measurements_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_product_readiness"
+            referencedColumns: ["shared_product_id"]
+          },
+          {
+            foreignKeyName: "food_nutrient_measurements_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "shared_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_nutrient_measurements_shared_product_observation_id_fkey"
+            columns: ["shared_product_observation_id"]
+            isOneToOne: false
+            referencedRelation: "shared_product_observations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_nutrient_measurements_shared_product_revision_id_fkey"
+            columns: ["shared_product_revision_id"]
+            isOneToOne: false
+            referencedRelation: "blendcalc_api_catalog_product_readiness"
+            referencedColumns: ["current_revision_id"]
+          },
+          {
+            foreignKeyName: "food_nutrient_measurements_shared_product_revision_id_fkey"
+            columns: ["shared_product_revision_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_product_readiness"
+            referencedColumns: ["current_revision_id"]
+          },
+          {
+            foreignKeyName: "food_nutrient_measurements_shared_product_revision_id_fkey"
+            columns: ["shared_product_revision_id"]
+            isOneToOne: false
+            referencedRelation: "shared_product_revisions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_nutrient_measurements_shared_product_submission_id_fkey"
+            columns: ["shared_product_submission_id"]
+            isOneToOne: false
+            referencedRelation: "shared_product_submissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_nutrient_measurements_user_food_list_item_id_fkey"
+            columns: ["user_food_list_item_id"]
+            isOneToOne: false
+            referencedRelation: "user_food_list_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       food_nutrients: {
         Row: {
           amount_per_100g: number
@@ -3102,13 +3281,14 @@ export type Database = {
           confidence: string
           created_at: string
           custom_food_id: string | null
-          gram_weight: number
+          gram_weight: number | null
           gram_weight_method: string
           id: number
           is_household_measure: boolean
           is_primary: boolean
           label: string
           measure_type: string | null
+          milliliter_volume: number | null
           origin: string
           owner_user_id: string | null
           serving_order: number
@@ -3130,13 +3310,14 @@ export type Database = {
           confidence: string
           created_at?: string
           custom_food_id?: string | null
-          gram_weight: number
+          gram_weight?: number | null
           gram_weight_method?: string
           id?: never
           is_household_measure?: boolean
           is_primary?: boolean
           label: string
           measure_type?: string | null
+          milliliter_volume?: number | null
           origin?: string
           owner_user_id?: string | null
           serving_order: number
@@ -3158,13 +3339,14 @@ export type Database = {
           confidence?: string
           created_at?: string
           custom_food_id?: string | null
-          gram_weight?: number
+          gram_weight?: number | null
           gram_weight_method?: string
           id?: never
           is_household_measure?: boolean
           is_primary?: boolean
           label?: string
           measure_type?: string | null
+          milliliter_volume?: number | null
           origin?: string
           owner_user_id?: string | null
           serving_order?: number
@@ -4505,7 +4687,7 @@ export type Database = {
           {
             foreignKeyName: "nutrient_manual_entry_fields_nutrient_id_fkey"
             columns: ["nutrient_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "nutrient_definitions"
             referencedColumns: ["nutrient_id"]
           },
@@ -6310,9 +6492,9 @@ export type Database = {
           reported_nutrient_total: number
           response_milliseconds_total: number
           serving_present_count: number
-          stale_fallback_count: number
           source_data_type: string
           source_key: string
+          stale_fallback_count: number
           updated_at: string
         }
         Insert: {
@@ -6338,9 +6520,9 @@ export type Database = {
           reported_nutrient_total?: number
           response_milliseconds_total?: number
           serving_present_count?: number
-          stale_fallback_count?: number
           source_data_type?: string
           source_key: string
+          stale_fallback_count?: number
           updated_at?: string
         }
         Update: {
@@ -6366,59 +6548,15 @@ export type Database = {
           reported_nutrient_total?: number
           response_milliseconds_total?: number
           serving_present_count?: number
-          stale_fallback_count?: number
           source_data_type?: string
           source_key?: string
+          stale_fallback_count?: number
           updated_at?: string
         }
         Relationships: [
           {
             foreignKeyName: "product_source_daily_metrics_source_key_fkey"
             columns: ["source_key"]
-            isOneToOne: false
-            referencedRelation: "product_data_sources"
-            referencedColumns: ["key"]
-          },
-        ]
-      }
-      product_source_request_budgets: {
-        Row: {
-          created_at: string
-          enabled: boolean
-          max_requests: number
-          notes: string
-          provider_key: string
-          request_kind: string
-          updated_at: string
-          warning_threshold_percent: number
-          window_seconds: number
-        }
-        Insert: {
-          created_at?: string
-          enabled?: boolean
-          max_requests: number
-          notes?: string
-          provider_key: string
-          request_kind: string
-          updated_at?: string
-          warning_threshold_percent?: number
-          window_seconds: number
-        }
-        Update: {
-          created_at?: string
-          enabled?: boolean
-          max_requests?: number
-          notes?: string
-          provider_key?: string
-          request_kind?: string
-          updated_at?: string
-          warning_threshold_percent?: number
-          window_seconds?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "product_source_request_budgets_provider_key_fkey"
-            columns: ["provider_key"]
             isOneToOne: false
             referencedRelation: "product_data_sources"
             referencedColumns: ["key"]
@@ -6580,6 +6718,50 @@ export type Database = {
           },
           {
             foreignKeyName: "product_source_field_coverage_policies_provider_key_fkey"
+            columns: ["provider_key"]
+            isOneToOne: false
+            referencedRelation: "product_data_sources"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      product_source_request_budgets: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          max_requests: number
+          notes: string
+          provider_key: string
+          request_kind: string
+          updated_at: string
+          warning_threshold_percent: number
+          window_seconds: number
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          max_requests: number
+          notes?: string
+          provider_key: string
+          request_kind: string
+          updated_at?: string
+          warning_threshold_percent?: number
+          window_seconds: number
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          max_requests?: number
+          notes?: string
+          provider_key?: string
+          request_kind?: string
+          updated_at?: string
+          warning_threshold_percent?: number
+          window_seconds?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_source_request_budgets_provider_key_fkey"
             columns: ["provider_key"]
             isOneToOne: false
             referencedRelation: "product_data_sources"
@@ -8470,10 +8652,6 @@ export type Database = {
       }
     }
     Functions: {
-      blendcalc_api_key_scopes_are_well_formed: {
-        Args: { p_scopes: string[] }
-        Returns: boolean
-      }
       activate_food_compatibility_policy_version: {
         Args: { p_policy_version_id: string }
         Returns: number
@@ -8517,6 +8695,10 @@ export type Database = {
         Args: {
           requested_permission: Database["public"]["Enums"]["app_permission"]
         }
+        Returns: boolean
+      }
+      blendcalc_api_key_scopes_are_well_formed: {
+        Args: { p_scopes: string[] }
         Returns: boolean
       }
       blendcalc_api_publication_concern_evidence_urls_are_valid: {
@@ -8586,6 +8768,10 @@ export type Database = {
           last_successful_at: string
           provider_key: string
         }[]
+      }
+      cleanup_expired_product_api_cache: {
+        Args: { p_before?: string; p_limit?: number }
+        Returns: number
       }
       clear_current_user_profile_image: {
         Args: { p_expected_avatar_path: string }
@@ -8759,6 +8945,7 @@ export type Database = {
         Returns: Json
       }
       get_pending_profile_image_review_count: { Args: never; Returns: number }
+      get_product_api_cache_health: { Args: never; Returns: Json }
       is_valid_gtin: { Args: { p_value: string }; Returns: boolean }
       jsonb_text_array_search_text: { Args: { p_value: Json }; Returns: string }
       mark_product_safety_alert_notification_read: {
@@ -8847,19 +9034,6 @@ export type Database = {
           probable_matches_queued: number
         }[]
       }
-      rotate_blendcalc_api_key: {
-        Args: {
-          p_created_by?: string
-          p_current_key_id: string
-          p_expires_at: string | null
-          p_key_hash: string
-          p_key_prefix: string
-          p_name: string
-          p_new_key_id: string
-          p_scopes: string[]
-        }
-        Returns: string
-      }
       record_product_source_daily_metric: {
         Args: {
           p_api_error_count: number
@@ -8882,17 +9056,12 @@ export type Database = {
           p_reported_nutrient_total: number
           p_response_milliseconds_total: number
           p_serving_present_count: number
-          p_stale_fallback_count: number
           p_source_data_type: string
           p_source_key: string
+          p_stale_fallback_count: number
         }
         Returns: undefined
       }
-      cleanup_expired_product_api_cache: {
-        Args: { p_before?: string; p_limit?: number }
-        Returns: number
-      }
-      get_product_api_cache_health: { Args: never; Returns: Json }
       refresh_canonical_food_image: {
         Args: { p_shared_product_id: string }
         Returns: string
@@ -9017,6 +9186,19 @@ export type Database = {
       review_official_food_safety_alert_match: {
         Args: { p_match_id: string; p_outcome: string; p_review_note: string }
         Returns: undefined
+      }
+      rotate_blendcalc_api_key: {
+        Args: {
+          p_created_by?: string
+          p_current_key_id: string
+          p_expires_at: string
+          p_key_hash: string
+          p_key_prefix: string
+          p_name: string
+          p_new_key_id: string
+          p_scopes: string[]
+        }
+        Returns: string
       }
       run_catalog_health_repair: {
         Args: {

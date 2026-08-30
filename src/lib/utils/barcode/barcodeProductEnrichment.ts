@@ -60,8 +60,12 @@ const hasCategories = (draft: BarcodeProductDraft) =>
 
 const hasServing = (draft: BarcodeProductDraft) =>
 	draft.hasSourceServing === true &&
-	Number.isFinite(draft.servingWeightGrams) &&
-	draft.servingWeightGrams > 0;
+	Boolean(
+		(Number.isFinite(draft.servingWeightGrams) &&
+			Number(draft.servingWeightGrams) > 0) ||
+		draft.serving?.milliliterVolume ||
+		(draft.serving?.amount && draft.serving?.unitKey),
+	);
 
 const hasValues = (values?: string[]) =>
 	Boolean(values?.some((value) => value.trim()));
@@ -293,24 +297,30 @@ const getFieldSource = (draft: BarcodeProductDraft, field: FoodTrackedField) =>
 
 const scaleNutrients = (
 	nutrients: FoodNutrient[],
-	fromGrams: number,
-	toGrams: number,
-) => {
+	fromGrams: number | null,
+	toGrams: number | null,
+	targetServingLabel: string,
+): FoodNutrient[] => {
 	const validNutrients = nutrients.filter(isValidNutrient);
 	if (
 		!Number.isFinite(fromGrams) ||
-		fromGrams <= 0 ||
+		Number(fromGrams) <= 0 ||
 		!Number.isFinite(toGrams) ||
-		toGrams <= 0 ||
-		fromGrams === toGrams
+		Number(toGrams) <= 0
 	) {
 		return validNutrients.map((nutrient) => ({ ...nutrient }));
 	}
 
-	const scale = toGrams / fromGrams;
+	const scale = Number(toGrams) / Number(fromGrams);
 	return validNutrients.map((nutrient) => ({
 		...nutrient,
 		value: nutrient.value * scale,
+		measurementBasis: {
+			kind: "serving",
+			quantity: 1,
+			unitKey: "serving",
+			servingLabel: targetServingLabel,
+		},
 	}));
 };
 
@@ -409,11 +419,15 @@ export const mergeMissingBarcodeProductFields = (
 	const nextServingWeight = useSupplementServing
 		? supplement.servingWeightGrams
 		: primary.servingWeightGrams;
+	const nextServingLabel = useSupplementServing
+		? supplement.servingLabel
+		: primary.servingLabel;
 	let provenance = { ...primary.fieldProvenance };
 	let nutrients = scaleNutrients(
 		primary.nutrients,
 		primary.servingWeightGrams,
 		nextServingWeight,
+		nextServingLabel,
 	);
 	let reportedNutrientIds = [...primary.reportedNutrientIds];
 	if (useSupplementProductName) {
@@ -428,6 +442,7 @@ export const mergeMissingBarcodeProductFields = (
 			supplement.nutrients,
 			supplement.servingWeightGrams,
 			nextServingWeight,
+			nextServingLabel,
 		);
 		const nutrientIds = new Set(
 			nutrients.map((nutrient) => nutrient.nutrientId),

@@ -86,6 +86,7 @@ describe("catalog update review", () => {
 		expect(summary.changes[0]?.previousValue).toEqual({
 			value: 40,
 			unit: "KCAL",
+			basis: "mass",
 		});
 		expect(
 			formatCatalogChangeValue(summary.changes[0]?.submittedValue ?? null),

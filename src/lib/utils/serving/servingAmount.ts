@@ -2,6 +2,7 @@ import {
 	DEFAULT_GRAMS_PER_WEIGHT_MEASURE,
 	DEFAULT_MILLILITERS_PER_VOLUME_MEASURE,
 	SERVING_MEASURE_ALIASES,
+	getDefaultCountMeasureUnit,
 	getDefaultServingMeasureUnit,
 	getServingMeasureOption,
 	normalizeServingMeasureAlias,
@@ -35,6 +36,8 @@ export type DensityConversion = {
 export type ServingConversion = {
 	grams: number | null;
 	milliliters: number | null;
+	servings: number | null;
+	servingLabel: string | null;
 	dimension: ServingMeasureDimension;
 	density: DensityConversion | null;
 	available: boolean;
@@ -46,7 +49,7 @@ export type ServingConversion = {
 export type SourceServingMeasureOption = {
 	value: ServingMeasureUnit;
 	label: string;
-	gramWeight: number;
+	gramWeight: number | null;
 	serving: FoodServing;
 };
 
@@ -61,7 +64,8 @@ const getSourceServingIdentity = (serving: FoodServing) =>
 	JSON.stringify([
 		serving.sourceMeasureKey?.trim() ?? "",
 		serving.label.trim(),
-		serving.gramWeight,
+		serving.gramWeight ?? null,
+		serving.milliliterVolume ?? null,
 	]);
 
 const getSourceServingMeasureValue = (serving: FoodServing) =>
@@ -89,14 +93,14 @@ export const getSourceServingMeasureOptions = (
 	(food?.foodServings ?? [])
 		.filter(
 			(serving) =>
-				serving.label.trim().length > 0 &&
-				isPositiveNumber(serving.gramWeight) &&
-				!hasCatalogMeasure(serving),
+				serving.label.trim().length > 0 && !hasCatalogMeasure(serving),
 		)
 		.map((serving) => ({
 			value: getSourceServingMeasureValue(serving),
 			label: getSourceServingMeasureLabel(serving),
-			gramWeight: serving.gramWeight,
+			gramWeight: isPositiveNumber(serving.gramWeight)
+				? serving.gramWeight
+				: null,
 			serving,
 		}));
 
@@ -149,11 +153,61 @@ export const convertServingQuantityToUnit = (
 	nextUnit: ServingMeasureUnit,
 	food?: FoodItem,
 ) => {
-	const currentGrams = convertServingToGrams(quantity, currentUnit, food);
-	const nextUnitGrams = convertServingToGrams(1, nextUnit, food);
-	if (currentGrams === null || nextUnitGrams === null || nextUnitGrams <= 0)
-		return null;
-	return currentGrams / nextUnitGrams;
+	const current = convertServingAmount(quantity, currentUnit, food);
+	const nextUnitConversion = convertServingAmount(1, nextUnit, food);
+	const exactPair = [
+		[current.grams, nextUnitConversion.grams],
+		[current.milliliters, nextUnitConversion.milliliters],
+		[current.servings, nextUnitConversion.servings],
+	].find(
+		(pair): pair is [number, number] =>
+			pair[0] !== null && pair[1] !== null && pair[1] > 0,
+	);
+	return exactPair ? exactPair[0] / exactPair[1] : null;
+};
+
+const getMatchingFoodServingMultiplier = (
+	food: FoodItem | undefined,
+	measurement: {
+		quantity: number;
+		unit: ServingMeasureUnit;
+		grams: number | null;
+		milliliters: number | null;
+	},
+) => {
+	for (const serving of food?.foodServings ?? []) {
+		if (
+			isPositiveNumber(serving.amount) &&
+			serving.unitKey === measurement.unit
+		) {
+			return {
+				multiplier: normalizeCalculatedAmount(
+					measurement.quantity / serving.amount,
+				),
+				servingLabel: serving.label,
+			};
+		}
+		if (measurement.grams !== null && isPositiveNumber(serving.gramWeight)) {
+			return {
+				multiplier: normalizeCalculatedAmount(
+					measurement.grams / serving.gramWeight,
+				),
+				servingLabel: serving.label,
+			};
+		}
+		if (
+			measurement.milliliters !== null &&
+			isPositiveNumber(serving.milliliterVolume)
+		) {
+			return {
+				multiplier: normalizeCalculatedAmount(
+					measurement.milliliters / serving.milliliterVolume,
+				),
+				servingLabel: serving.label,
+			};
+		}
+	}
+	return null;
 };
 
 export const convertServingAmount = (
@@ -165,34 +219,64 @@ export const convertServingAmount = (
 		Number.isFinite(quantity) && quantity >= 0 ? quantity : null;
 	const sourceServingOption = getSourceServingMeasureOption(unit, food);
 	if (sourceServingOption) {
+		const hasReportedVolume = isPositiveNumber(
+			sourceServingOption.serving.milliliterVolume,
+		);
 		const grams =
-			safeQuantity === null
+			safeQuantity === null || sourceServingOption.gramWeight === null
 				? null
 				: normalizeCalculatedAmount(
 						safeQuantity * sourceServingOption.gramWeight,
 					);
 		return {
 			grams,
-			milliliters: null,
-			dimension: "weight",
+			milliliters:
+				safeQuantity === null ||
+				!isPositiveNumber(sourceServingOption.serving.milliliterVolume)
+					? null
+					: normalizeCalculatedAmount(
+							safeQuantity * sourceServingOption.serving.milliliterVolume,
+						),
+			servings: safeQuantity,
+			servingLabel: sourceServingOption.serving.label,
+			dimension:
+				sourceServingOption.gramWeight !== null
+					? "weight"
+					: hasReportedVolume
+						? "volume"
+						: "count",
 			density: null,
-			available: grams !== null,
+			available: safeQuantity !== null,
 			warning: null,
 			method: sourceServingOption.serving.gramWeightMethod ?? "source-reported",
 			basis:
-				grams === null
+				safeQuantity === null
 					? null
-					: `${safeQuantity} × ${sourceServingOption.serving.label} at ${sourceServingOption.gramWeight}g per serving`,
+					: sourceServingOption.gramWeight === null
+						? `${safeQuantity} × ${sourceServingOption.serving.label}`
+						: `${safeQuantity} × ${sourceServingOption.serving.label} at ${sourceServingOption.gramWeight}g per serving`,
 		};
 	}
 	if (isWeightServingMeasureUnit(unit)) {
 		const conversion = DEFAULT_GRAMS_PER_WEIGHT_MEASURE[unit];
+		const grams =
+			safeQuantity !== null && typeof conversion === "number"
+				? normalizeCalculatedAmount(safeQuantity * conversion)
+				: null;
+		const matchingServing =
+			safeQuantity === null
+				? null
+				: getMatchingFoodServingMultiplier(food, {
+						quantity: safeQuantity,
+						unit,
+						grams,
+						milliliters: null,
+					});
 		return {
-			grams:
-				safeQuantity !== null && typeof conversion === "number"
-					? normalizeCalculatedAmount(safeQuantity * conversion)
-					: null,
+			grams,
 			milliliters: null,
+			servings: matchingServing?.multiplier ?? null,
+			servingLabel: matchingServing?.servingLabel ?? null,
 			dimension: "weight",
 			density: null,
 			available: safeQuantity !== null && typeof conversion === "number",
@@ -207,10 +291,44 @@ export const convertServingAmount = (
 
 	const volumeConversion = DEFAULT_MILLILITERS_PER_VOLUME_MEASURE[unit];
 	if (typeof volumeConversion !== "number") {
+		const dimension =
+			getServingMeasureOption(unit)?.dimension ??
+			(unit === getDefaultCountMeasureUnit() ? "count" : "volume");
+		if (dimension === "count") {
+			const matchingServing = food?.foodServings?.find(
+				(serving) =>
+					serving.unitKey === unit && isPositiveNumber(serving.amount),
+			);
+			const servings =
+				safeQuantity === null
+					? null
+					: matchingServing && isPositiveNumber(matchingServing.amount)
+						? normalizeCalculatedAmount(safeQuantity / matchingServing.amount)
+						: safeQuantity;
+			return {
+				grams: null,
+				milliliters: null,
+				servings,
+				servingLabel: matchingServing?.label ?? null,
+				dimension,
+				density: null,
+				available: safeQuantity !== null,
+				warning: null,
+				method: "unknown",
+				basis:
+					safeQuantity === null
+						? null
+						: matchingServing
+							? `${safeQuantity} ${unit}; ${matchingServing.label} per serving`
+							: `${safeQuantity} ${unit}`,
+			};
+		}
 		return {
 			grams: null,
 			milliliters: null,
-			dimension: getServingMeasureOption(unit)?.dimension ?? "volume",
+			servings: null,
+			servingLabel: null,
+			dimension,
 			density: null,
 			available: false,
 			warning: "This serving unit is not available right now.",
@@ -223,17 +341,30 @@ export const convertServingAmount = (
 			? null
 			: normalizeCalculatedAmount(safeQuantity * volumeConversion);
 	const density = getDensityConversion(food);
+	const matchingServing =
+		safeQuantity === null
+			? null
+			: getMatchingFoodServingMultiplier(food, {
+					quantity: safeQuantity,
+					unit,
+					grams: null,
+					milliliters,
+				});
 	if (milliliters === null || !density) {
 		return {
 			grams: null,
 			milliliters,
+			servings: matchingServing?.multiplier ?? null,
+			servingLabel: matchingServing?.servingLabel ?? null,
 			dimension: "volume",
 			density: null,
-			available: false,
-			warning:
-				"A measured weight-to-volume conversion is not available for this ingredient. Use a weight unit instead.",
-			method: "unknown",
-			basis: null,
+			available: milliliters !== null,
+			warning: null,
+			method: "exact-unit-conversion",
+			basis:
+				safeQuantity === null
+					? null
+					: `${safeQuantity} ${unit} × ${volumeConversion} milliliters per ${unit}`,
 		};
 	}
 	const grams = normalizeCalculatedAmount(
@@ -243,6 +374,24 @@ export const convertServingAmount = (
 	return {
 		grams,
 		milliliters,
+		servings:
+			matchingServing?.multiplier ??
+			getMatchingFoodServingMultiplier(food, {
+				quantity: safeQuantity ?? 0,
+				unit,
+				grams,
+				milliliters,
+			})?.multiplier ??
+			null,
+		servingLabel:
+			matchingServing?.servingLabel ??
+			getMatchingFoodServingMultiplier(food, {
+				quantity: safeQuantity ?? 0,
+				unit,
+				grams,
+				milliliters,
+			})?.servingLabel ??
+			null,
 		dimension: "volume",
 		density,
 		available: true,
@@ -252,10 +401,44 @@ export const convertServingAmount = (
 	};
 };
 
+export const convertFoodServingMultiplier = (
+	serving: FoodServing,
+	multiplier: number,
+): ServingConversion => {
+	const safeMultiplier = isPositiveNumber(multiplier) ? multiplier : null;
+	const grams =
+		safeMultiplier !== null && isPositiveNumber(serving.gramWeight)
+			? normalizeCalculatedAmount(safeMultiplier * serving.gramWeight)
+			: null;
+	const milliliters =
+		safeMultiplier !== null && isPositiveNumber(serving.milliliterVolume)
+			? normalizeCalculatedAmount(safeMultiplier * serving.milliliterVolume)
+			: null;
+	const dimension: ServingMeasureDimension =
+		grams !== null ? "weight" : milliliters !== null ? "volume" : "count";
+
+	return {
+		grams,
+		milliliters,
+		servings: safeMultiplier,
+		servingLabel: serving.label,
+		dimension,
+		density: null,
+		available: safeMultiplier !== null,
+		warning: null,
+		method: serving.gramWeightMethod ?? "unknown",
+		basis:
+			safeMultiplier === null ? null : `${safeMultiplier} × ${serving.label}`,
+	};
+};
+
 export const getServingMeasureDimension = (
 	unit: ServingMeasureUnit,
 ): ServingMeasureDimension | null => {
-	return getServingMeasureOption(unit)?.dimension ?? null;
+	return (
+		getServingMeasureOption(unit)?.dimension ??
+		(unit === getDefaultCountMeasureUnit() ? "count" : null)
+	);
 };
 
 export const getDensityConversion = (
@@ -304,11 +487,19 @@ export const getDensityConversion = (
 export const canConvertServingUnit = (
 	unit: ServingMeasureUnit,
 	food?: FoodItem,
-) =>
-	Boolean(getSourceServingMeasureOption(unit, food)) ||
-	isWeightServingMeasureUnit(unit) ||
-	(getServingMeasureOption(unit)?.dimension === "volume" &&
-		Boolean(getDensityConversion(food)));
+) => {
+	const conversion = convertServingAmount(1, unit, food);
+	if (!conversion.available) return false;
+	if (!food?.foodNutrients.length) return true;
+	return food.foodNutrients.every((nutrient) => {
+		const basisKind = nutrient.measurementBasis?.kind ?? "mass";
+		return basisKind === "mass"
+			? conversion.grams !== null
+			: basisKind === "volume"
+				? conversion.milliliters !== null
+				: conversion.servings !== null;
+	});
+};
 
 const parseServingMeasure = (
 	input: string,
@@ -336,7 +527,19 @@ const parseServingMeasure = (
 
 export const parseSourceServingMeasure = (
 	input: string,
-): ParsedServingMeasure | null => parseServingMeasure(input, null);
+): ParsedServingMeasure | null => {
+	const knownMeasure = parseServingMeasure(input, null);
+	if (knownMeasure) return knownMeasure;
+
+	const sourceDefinedCount = input
+		.trim()
+		.toLowerCase()
+		.match(/^(\d+(?:\.\d+)?(?:\s+\d+\/\d+)?|\d+\/\d+)\s+([a-z][a-z.' -]*)$/);
+	if (!sourceDefinedCount) return null;
+	const quantity = parseQuantity(sourceDefinedCount[1]);
+	if (quantity === null || quantity <= 0) return null;
+	return { quantity, unit: getDefaultCountMeasureUnit() };
+};
 
 export const parseSourceWeightMeasure = (
 	input: string,

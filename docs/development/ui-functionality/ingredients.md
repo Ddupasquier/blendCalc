@@ -196,10 +196,13 @@ Display all useful accepted data without guessing or showing empty sections:
 
 Serving behavior:
 
-- Default to a primary reported serving when one exists; always keep the honest 100g
-  basis available.
+- Default to an exact household, count, or package measure when one can display every
+  nutrient without guessing. A verified `2 cups (100g)` measure therefore appears as
+  `2 cups (100g)`, while 100g alone never creates an invented cup conversion. Offer a
+  100g basis only when exact mass data or a measured conversion supports it.
 - When a serving has a household label and weight, display the household label first
-  and grams in trailing parentheses.
+  and grams in trailing parentheses. Preserve native volume and count labels such as
+  `30mL`, `1 cookie`, `2 crackers`, or `1 bottle` when no gram weight is reported.
 - Never present 100g as a package serving unless the source reports it.
 - Never infer density from food name, category, provider, or a water-like default.
 
@@ -208,8 +211,9 @@ Nutrition Facts behavior:
 - Keep the main label readable on compact screens.
 - Preserve primary calories, fat, carbohydrate, fiber, sugars, and protein rows.
 - Hide zero-valued secondary nutrients while retaining meaningful primary zeroes.
-- Scale values from normalized per-100g data with the selected gram amount; presentation
-  rounding never changes the calculation.
+- Scale values from the exact nutrient basis that matches the selected weight, volume,
+  or source serving. Cross-dimension scaling requires a measured relationship;
+  presentation rounding never changes the calculation.
 - Keep source and basis visible without exposing provider errors or internal mapping
   terminology.
 

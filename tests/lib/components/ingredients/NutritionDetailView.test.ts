@@ -145,6 +145,10 @@ describe("NutritionDetailView", () => {
 			},
 		});
 
+		await fireEvent.click(screen.getByRole("combobox", { name: "Serving" }));
+		await fireEvent.click(
+			screen.getByRole("option", { name: "100g standard" }),
+		);
 		const decrease = screen.getByRole("button", {
 			name: /decrease viewing amount by 1g/i,
 		});
@@ -153,7 +157,7 @@ describe("NutritionDetailView", () => {
 			pointerId: 2,
 			pointerType: "mouse",
 		});
-		expect(screen.getByText("29g")).toBeInTheDocument();
+		expect(screen.getByText("99g")).toBeInTheDocument();
 
 		await vi.advanceTimersByTimeAsync(4000);
 		expect(screen.getByText("1g")).toBeInTheDocument();
@@ -192,9 +196,8 @@ describe("NutritionDetailView", () => {
 			},
 		});
 
-		expect(screen.getByText("32g")).toBeInTheDocument();
+		expect(screen.getAllByText("2 tbsp (32g)")).not.toHaveLength(0);
 		expect(screen.getByText("Serving Size")).toBeInTheDocument();
-		expect(screen.getByText("2 tbsp (32g)")).toBeInTheDocument();
 		expect(screen.getByText("Amount per serving")).toBeInTheDocument();
 		await fireEvent.click(screen.getByRole("combobox", { name: "Serving" }));
 		await fireEvent.click(
@@ -203,6 +206,119 @@ describe("NutritionDetailView", () => {
 		expect(screen.getByText("100g")).toBeInTheDocument();
 		expect(screen.getByText("Per 100g food data")).toBeInTheDocument();
 		expect(screen.queryByText("Serving Size")).not.toBeInTheDocument();
+	});
+
+	it("defaults to an exact package count serving and keeps derived 100g secondary", async () => {
+		render(NutritionDetailView, {
+			props: {
+				food: {
+					...spinach,
+					description: "Package Cookie",
+					foodNutrients: [
+						{
+							nutrientId: 1008,
+							nutrientName: "Energy",
+							nutrientNumber: "208",
+							unitName: "KCAL",
+							value: 80,
+							measurementBasis: {
+								kind: "serving",
+								quantity: 1,
+								unitKey: "serving",
+								servingLabel: "1 cookie",
+							},
+						},
+					],
+					foodServings: [
+						{
+							label: "1 cookie (30 g)",
+							gramWeight: 30,
+							amount: 1,
+							unitKey: "item",
+							isPrimary: true,
+							origin: "package-label",
+							gramWeightMethod: "source-reported",
+						},
+					],
+				},
+				onClose: vi.fn(),
+				showListActions: false,
+			},
+		});
+
+		expect(screen.getAllByText("1 cookie (30g)")).not.toHaveLength(0);
+		expect(screen.getByText("Amount per serving")).toBeInTheDocument();
+		expect(screen.getByText("80")).toBeInTheDocument();
+
+		await fireEvent.click(screen.getByRole("combobox", { name: "Serving" }));
+		await fireEvent.click(
+			screen.getByRole("option", { name: "100g standard" }),
+		);
+		expect(screen.getByText("Per 100g food data")).toBeInTheDocument();
+		expect(screen.getByText("267")).toBeInTheDocument();
+	});
+
+	it("prefers a verified household measure over a primary 100g source row", () => {
+		render(NutritionDetailView, {
+			props: {
+				food: {
+					...spinach,
+					foodServings: [
+						{
+							label: "100g",
+							gramWeight: 100,
+							amount: 100,
+							unitKey: "g",
+							isPrimary: true,
+							origin: "source-weight",
+							gramWeightMethod: "source-reported",
+						},
+						{
+							label: "2 cups (100g)",
+							gramWeight: 100,
+							amount: 2,
+							unitKey: "cup",
+							isPrimary: false,
+							isHouseholdMeasure: true,
+							origin: "source-household-measure",
+							gramWeightMethod: "source-reported",
+						},
+					],
+				},
+				onClose: vi.fn(),
+				showListActions: false,
+			},
+		});
+
+		expect(screen.getAllByText("2 cups (100g)")).not.toHaveLength(0);
+		expect(screen.getByText("Amount per serving")).toBeInTheDocument();
+		expect(screen.getByText("23")).toBeInTheDocument();
+	});
+
+	it("keeps 100g primary when a household label has no exact conversion", () => {
+		render(NutritionDetailView, {
+			props: {
+				food: {
+					...spinach,
+					foodServings: [
+						{
+							label: "2 cups",
+							amount: 2,
+							unitKey: "cup",
+							isPrimary: false,
+							isHouseholdMeasure: true,
+							origin: "source-household-measure",
+							gramWeightMethod: "unknown",
+						},
+					],
+				},
+				onClose: vi.fn(),
+				showListActions: false,
+			},
+		});
+
+		expect(screen.getByText("100g")).toBeInTheDocument();
+		expect(screen.getByText("Per 100g food data")).toBeInTheDocument();
 	});
 
 	it("switches an exact 125g package serving back to the same per-100g values", async () => {
@@ -283,7 +399,7 @@ describe("NutritionDetailView", () => {
 		});
 
 		expect(screen.getByText("1/2 cup · 125g")).toBeInTheDocument();
-		expect(screen.getByText("1/2 cup (125g)")).toBeInTheDocument();
+		expect(screen.getAllByText("1/2 cup (125g)")).not.toHaveLength(0);
 		expect(screen.getByText("Amount per serving")).toBeInTheDocument();
 		expect(screen.getByText("75")).toBeInTheDocument();
 		expect(screen.getByText("2")).toBeInTheDocument();

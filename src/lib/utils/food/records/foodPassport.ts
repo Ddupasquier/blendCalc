@@ -123,7 +123,11 @@ const getReportedNutrientCount = (food: FoodItem) => {
 
 const getServingCount = (food: FoodItem) =>
 	(food.foodServings ?? []).filter(
-		(serving) => Number.isFinite(serving.gramWeight) && serving.gramWeight > 0,
+		(serving) =>
+			(Number.isFinite(serving.gramWeight) && Number(serving.gramWeight) > 0) ||
+			(Number.isFinite(serving.milliliterVolume) &&
+				Number(serving.milliliterVolume) > 0) ||
+			(Number.isFinite(serving.amount) && Number(serving.amount) > 0),
 	).length;
 
 const hasIngredientInformation = (food: FoodItem) =>

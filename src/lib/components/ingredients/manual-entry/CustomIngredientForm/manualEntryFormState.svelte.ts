@@ -41,14 +41,14 @@ export const createManualEntryFormState = () => {
 			data.usesInternal100GramBasis = false;
 			data.serving = {
 				label: data.servingLabel.trim() || "Serving",
-				gramWeight: data.servingWeightGrams ?? 0,
-				amount: data.useVolumeEquivalent
-					? data.volumeQuantity ?? undefined
+				gramWeight: data.servingWeightGrams ?? undefined,
+				amount: data.useServingMeasure
+					? (data.servingMeasureQuantity ?? undefined)
 					: undefined,
-				unitKey: data.useVolumeEquivalent ? data.volumeUnit : undefined,
+				unitKey: data.useServingMeasure ? data.servingMeasureUnit : undefined,
 				isPrimary: true,
 				measureType: "User serving",
-				isHouseholdMeasure: data.useVolumeEquivalent,
+				isHouseholdMeasure: data.useServingMeasure,
 				origin: "user-entered",
 				gramWeightMethod: "user-reported",
 				source: "user-label",
@@ -93,9 +93,7 @@ export const createManualEntryFormState = () => {
 		markFieldAsUserEntered("serving");
 	};
 
-	const getSaveNutrients = (
-		nutrientFields: ManualEntryNutrientDefinition[],
-	) =>
+	const getSaveNutrients = (nutrientFields: ManualEntryNutrientDefinition[]) =>
 		buildManualEntrySaveNutrients({
 			importedNutrients: data.importedNutrients,
 			manualEntryNutrientFields: nutrientFields,
@@ -107,10 +105,7 @@ export const createManualEntryFormState = () => {
 		nutrientFields: ManualEntryNutrientDefinition[],
 		requiredFields: ManualEntryNutrientDefinition[],
 	) =>
-		getOptionalNutrientCount(
-			getSaveNutrients(nutrientFields),
-			requiredFields,
-		);
+		getOptionalNutrientCount(getSaveNutrients(nutrientFields), requiredFields);
 
 	const getSummaryNutrients = (
 		requiredFields: ManualEntryNutrientDefinition[],
@@ -124,17 +119,15 @@ export const createManualEntryFormState = () => {
 		data.usesInternal100GramBasis
 			? "100g nutrition basis"
 			: buildCustomServingLabel({
-			servingLabel: data.servingLabel,
-			servingWeightGrams:
-				Number.isFinite(data.servingWeightGrams) &&
-				(data.servingWeightGrams ?? 0) > 0
-					? data.servingWeightGrams ?? 0
-					: 0,
-			volumeQuantity: data.useVolumeEquivalent
-				? data.volumeQuantity ?? undefined
-				: undefined,
-			volumeUnit: data.useVolumeEquivalent ? data.volumeUnit : undefined,
-			});
+					servingLabel: data.servingLabel,
+					servingWeightGrams: data.servingWeightGrams,
+					servingMeasureQuantity: data.useServingMeasure
+						? (data.servingMeasureQuantity ?? undefined)
+						: undefined,
+					servingMeasureUnit: data.useServingMeasure
+						? data.servingMeasureUnit
+						: undefined,
+				});
 
 	return {
 		data,

@@ -12,9 +12,9 @@ export type ManualEntrySubmitBlock = {
 export const getManualEntrySubmitState = ({
 	loadingNutrientRelationshipRules,
 	blockingValidation,
-	useVolumeEquivalent,
-	volumeQuantity,
-	volumeAmountRequiredMessage,
+	useServingMeasure,
+	servingMeasureQuantity,
+	servingMeasureAmountRequiredMessage,
 	barcode,
 	requiresCatalogEvidence,
 	requiresFreshFrontPhoto,
@@ -25,9 +25,9 @@ export const getManualEntrySubmitState = ({
 }: {
 	loadingNutrientRelationshipRules: boolean;
 	blockingValidation: StepValidationItem | null;
-	useVolumeEquivalent: boolean;
-	volumeQuantity: number | null;
-	volumeAmountRequiredMessage: string;
+	useServingMeasure: boolean;
+	servingMeasureQuantity: number | null;
+	servingMeasureAmountRequiredMessage: string;
 	barcode: string;
 	requiresCatalogEvidence: boolean;
 	requiresFreshFrontPhoto: boolean;
@@ -45,7 +45,8 @@ export const getManualEntrySubmitState = ({
 		return {
 			normalizedBarcode,
 			block: {
-				message: "Nutrition validation rules are still loading. Try again in a moment.",
+				message:
+					"Nutrition validation rules are still loading. Try again in a moment.",
 				step: "macros",
 			},
 		};
@@ -62,13 +63,13 @@ export const getManualEntrySubmitState = ({
 	}
 
 	if (
-		useVolumeEquivalent &&
-		(volumeQuantity === null || volumeQuantity <= 0)
+		useServingMeasure &&
+		(servingMeasureQuantity === null || servingMeasureQuantity <= 0)
 	) {
 		return {
 			normalizedBarcode,
 			block: {
-				message: volumeAmountRequiredMessage,
+				message: servingMeasureAmountRequiredMessage,
 				step: "servings",
 			},
 		};
@@ -93,9 +94,10 @@ export const getManualEntrySubmitState = ({
 		return {
 			normalizedBarcode,
 			block: {
-				message: hasTrustedProductImage && !requiresFreshFrontPhoto
-					? "Add nutrition label and barcode photos before sharing this product."
-					: "Add front package, nutrition label, and barcode photos before sharing this product.",
+				message:
+					hasTrustedProductImage && !requiresFreshFrontPhoto
+						? "Add nutrition label and barcode photos before sharing this product."
+						: "Add front package, nutrition label, and barcode photos before sharing this product.",
 				step: "share",
 			},
 		};

@@ -29,16 +29,17 @@ export const createCatalogFoodFromDraft = (
 		brandOwner: draft.brandOwner,
 		servingLabel: draft.servingLabel,
 		servingWeightGrams: draft.servingWeightGrams,
-		volumeQuantity: draft.volumeEquivalent?.quantity,
-		volumeUnit: draft.volumeEquivalent?.unit,
+		servingMeasureQuantity: draft.volumeEquivalent?.quantity,
+		servingMeasureUnit: draft.volumeEquivalent?.unit,
 		barcode: draft.barcode,
-		barcodeSource: draft.source === "open-food-facts"
-			? "open-food-facts"
-			: draft.source === "cola-cloud"
-				? "cola-cloud"
-			: draft.source === "usda"
-				? "usda"
-				: "community",
+		barcodeSource:
+			draft.source === "open-food-facts"
+				? "open-food-facts"
+				: draft.source === "cola-cloud"
+					? "cola-cloud"
+					: draft.source === "usda"
+						? "usda"
+						: "community",
 		foodIdentityType: "packaged",
 		ingredients: draft.ingredients,
 		ingredientList: draft.ingredientList,
@@ -46,8 +47,8 @@ export const createCatalogFoodFromDraft = (
 		ingredientAnalysis: draft.ingredientAnalysis,
 		additives: draft.additives,
 		allergens: draft.allergens,
-			traces: draft.traces,
-			precautionaryStatements: draft.precautionaryStatements,
+		traces: draft.traces,
+		precautionaryStatements: draft.precautionaryStatements,
 		dietaryTags: draft.dietaryTags,
 		labels: draft.labels,
 		packageQuantity: draft.packageQuantity,

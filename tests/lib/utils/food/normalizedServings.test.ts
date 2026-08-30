@@ -14,15 +14,17 @@ const legacyFood = {
 	servingSize: 99,
 	servingSizeUnit: "g",
 	householdServingFullText: "Legacy cup",
-	foodServings: [{
-		label: "Legacy cup",
-		gramWeight: 99,
-		amount: 1,
-		unitKey: "cup",
-		isPrimary: true,
-		source: "unknown",
-		confidence: "unknown",
-	}],
+	foodServings: [
+		{
+			label: "Legacy cup",
+			gramWeight: 99,
+			amount: 1,
+			unitKey: "cup",
+			isPrimary: true,
+			source: "unknown",
+			confidence: "unknown",
+		},
+	],
 } satisfies FoodItem;
 
 const normalizedServing = {
@@ -52,7 +54,8 @@ describe("normalized food servings", () => {
 		expect(hydrated.foodServings).toEqual([
 			expect.objectContaining({ label: "1 cup", gramWeight: 245 }),
 		]);
-		expect(hydrated.servingSize).toBe(245);
+		expect(hydrated.servingSize).toBe(1);
+		expect(hydrated.servingSizeUnit).toBe("cup");
 		expect(hydrated.householdServingFullText).toBe("1 cup");
 	});
 
@@ -66,8 +69,16 @@ describe("normalized food servings", () => {
 	});
 
 	it("drops invalid normalized serving rows", () => {
-		expect(normalizedRowsToServings([
-			{ ...normalizedServing, gramWeight: Number.NaN },
-		])).toEqual([]);
+		expect(
+			normalizedRowsToServings([
+				{
+					...normalizedServing,
+					label: " ",
+					gramWeight: Number.NaN,
+					amount: null,
+					unitKey: null,
+				},
+			]),
+		).toEqual([]);
 	});
 });

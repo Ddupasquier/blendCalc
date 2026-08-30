@@ -5,7 +5,8 @@ import { toFinitePositiveNumber } from "$lib/utils/numbers/finiteNumbers";
 export type NormalizedServingRow = {
 	servingOrder: number;
 	label: string;
-	gramWeight: number;
+	gramWeight: number | null;
+	milliliterVolume?: number | null;
 	amount: number | null;
 	unitKey: string | null;
 	isPrimary: boolean;
@@ -27,29 +28,40 @@ export const normalizedRowsToServings = (
 		.flatMap((row) => {
 			const label = row.label.trim();
 			const gramWeight = toFinitePositiveNumber(row.gramWeight);
+			const milliliterVolume = toFinitePositiveNumber(row.milliliterVolume);
 			const amount = toFinitePositiveNumber(row.amount);
-			if (!label || gramWeight === null) return [];
-			return [{
-				label,
-				gramWeight,
-				amount: amount ?? undefined,
-				unitKey: row.unitKey?.trim() || undefined,
-				isPrimary: row.isPrimary,
-				measureType: row.measureType?.trim() || undefined,
-				isHouseholdMeasure: row.isHouseholdMeasure,
-				sourceMeasureKey: row.sourceMeasureKey?.trim() || undefined,
-				origin: row.origin,
-				gramWeightMethod: row.gramWeightMethod,
-				calculationBasis: row.calculationBasis?.trim() || undefined,
-				source: row.source,
-				sourceReference: row.sourceReference?.trim() || undefined,
-				confidence: row.confidence,
-			}];
+			if (
+				!label ||
+				(gramWeight === null && milliliterVolume === null && amount === null)
+			) {
+				return [];
+			}
+			return [
+				{
+					label,
+					gramWeight: gramWeight ?? undefined,
+					milliliterVolume: milliliterVolume ?? undefined,
+					amount: amount ?? undefined,
+					unitKey: row.unitKey?.trim() || undefined,
+					isPrimary: row.isPrimary,
+					measureType: row.measureType?.trim() || undefined,
+					isHouseholdMeasure: row.isHouseholdMeasure,
+					sourceMeasureKey: row.sourceMeasureKey?.trim() || undefined,
+					origin: row.origin,
+					gramWeightMethod: row.gramWeightMethod,
+					calculationBasis: row.calculationBasis?.trim() || undefined,
+					source: row.source,
+					sourceReference: row.sourceReference?.trim() || undefined,
+					confidence: row.confidence,
+				},
+			];
 		})
-		.sort((left, right) =>
-			Number(right.isPrimary) - Number(left.isPrimary) ||
-			left.gramWeight - right.gramWeight ||
-			left.label.localeCompare(right.label),
+		.sort(
+			(left, right) =>
+				Number(right.isPrimary) - Number(left.isPrimary) ||
+				(left.gramWeight ?? Number.POSITIVE_INFINITY) -
+					(right.gramWeight ?? Number.POSITIVE_INFINITY) ||
+				left.label.localeCompare(right.label),
 		);
 
 export const hydrateFoodWithNormalizedServings = (
@@ -73,14 +85,19 @@ export const hydrateFoodWithNormalizedServings = (
 			customDensityConfidence: undefined,
 		});
 	}
-	const primaryServing = foodServings.find((serving) => serving.isPrimary) ?? foodServings[0];
+	const primaryServing =
+		foodServings.find((serving) => serving.isPrimary) ?? foodServings[0];
 
 	return normalizeFoodForStorage({
 		...food,
 		hasSourceServing: true,
 		foodServings,
-		servingSize: primaryServing.gramWeight,
-		servingSizeUnit: "g",
+		servingSize:
+			primaryServing.amount ??
+			primaryServing.gramWeight ??
+			primaryServing.milliliterVolume,
+		servingSizeUnit:
+			primaryServing.unitKey ?? (primaryServing.gramWeight ? "g" : "ml"),
 		householdServingFullText: primaryServing.label,
 	});
 };
