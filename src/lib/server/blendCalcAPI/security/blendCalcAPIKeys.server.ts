@@ -155,7 +155,7 @@ export const rotateBlendCalcAPIKey = async (input: {
 		p_key_prefix: secret.keyPrefix,
 		p_key_hash: secret.keyHash,
 		p_scopes: scopes,
-		p_expires_at: expiresAt,
+		p_expires_at: input.expiresAt ?? undefined,
 		p_created_by: input.createdBy ?? undefined,
 	});
 	if (error) throw error;

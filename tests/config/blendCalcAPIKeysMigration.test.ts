@@ -6,6 +6,12 @@ const migration = readFileSync(
 	resolve("supabase/migrations/20260829092000_blendcalc_api_keys.sql"),
 	"utf8",
 );
+const optionalExpiryMigration = readFileSync(
+	resolve(
+		"supabase/migrations/20260830142000_optional_blendcalc_api_key_expiry.sql",
+	),
+	"utf8",
+);
 
 describe("blendCalcAPI key schema", () => {
 	it("stores hashes and lifecycle metadata without plaintext secrets", () => {
@@ -27,6 +33,16 @@ describe("blendCalcAPI key schema", () => {
 		expect(migration).toContain("revocation_reason = 'rotated'");
 		expect(migration).not.toContain(
 			"grant select on table public.blendcalc_api_keys to authenticated",
+		);
+	});
+
+	it("allows a rotated key to omit an expiry without inventing a date", () => {
+		expect(optionalExpiryMigration).toContain(
+			"p_expires_at timestamptz default null",
+		);
+		expect(optionalExpiryMigration).toContain("p_created_by uuid default null");
+		expect(optionalExpiryMigration).toContain(
+			"p_scopes, p_expires_at, v_current.id, p_created_by",
 		);
 	});
 });
