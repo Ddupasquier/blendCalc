@@ -1373,12 +1373,7 @@ test("nutrition details separate personalized warnings from source allergen disc
 		).toBeVisible();
 		await expect(containsHeading).toBeVisible();
 		await expect(nutritionDetails.getByText("Soy, Wheat")).toBeVisible();
-		await expect(mayContainHeading).toBeVisible();
-		await expect(
-			mayContainHeading
-				.locator("xpath=..")
-				.getByText("Peanut", { exact: true }),
-		).toBeVisible();
+		await expect(mayContainHeading).toHaveCount(0);
 		await expect(dietaryLabelsHeading).toBeVisible();
 		await expect(
 			dietaryLabelsHeading.locator("xpath=..").getByText("Vegetarian", {
@@ -1392,15 +1387,11 @@ test("nutrition details separate personalized warnings from source allergen disc
 		).toHaveCount(0);
 
 		const summaryOrder = await nutritionDetails.evaluate((element) => {
-			const headingOrder = [
-				"Ingredients",
-				"Contains",
-				"May contain",
-				"Dietary labels",
-			].map((name) =>
-				Array.from(element.querySelectorAll("h2")).find(
-					(heading) => heading.textContent?.trim() === name,
-				),
+			const headingOrder = ["Ingredients", "Contains", "Dietary labels"].map(
+				(name) =>
+					Array.from(element.querySelectorAll("h2")).find(
+						(heading) => heading.textContent?.trim() === name,
+					),
 			);
 			return headingOrder.every((heading, index) => {
 				if (!heading) return false;
