@@ -95,6 +95,9 @@ const expectRoundedGradientFrame = async (
 				cardStyles?.borderLeftWidth ?? "0",
 			),
 			borderRadiusPixels: Number.parseFloat(frameStyles.borderTopLeftRadius),
+			fadeAngle: frameStyles
+				.getPropertyValue("--card-warning-frame-fade-angle")
+				.trim(),
 			solidColorStop: frameStyles
 				.getPropertyValue("--card-warning-frame-solid-stop")
 				.trim(),
@@ -117,6 +120,7 @@ const expectRoundedGradientFrame = async (
 	expect(treatment.borderWidthPixels).toBe(3);
 	expect(treatment.cardBorderWidthPixels).toBe(3);
 	expect(treatment.borderRadiusPixels).toBeGreaterThan(0);
+	expect(treatment.fadeAngle).toBe("45deg");
 	expect(treatment.solidColorStop).toBe("16%");
 	expect(treatment.fadeMidpoint).toBe("32%");
 	expect(treatment.fadeEnd).toBe("55%");
