@@ -94,7 +94,7 @@ test("serving choices update the viewing amount and normalized nutrition values"
 		.first();
 
 	await expect(amountSection.locator("strong")).toHaveText("1 tbsp (20g)");
-	await expect(servingTrigger).toContainText("1 tbsp (20 g) · 20g");
+	await expect(servingTrigger).toContainText("1 tbsp (20g) · Package label");
 	await expect(caloriesRow).toContainText("50");
 
 	await servingTrigger.click();
@@ -104,7 +104,9 @@ test("serving choices update the viewing amount and normalized nutrition values"
 	await expect(page.getByText("Per 100g food data")).toBeVisible();
 
 	await servingTrigger.click();
-	await page.getByRole("option", { name: /^1 tbsp \(20 g\) · 20g/ }).click();
+	await page
+		.getByRole("option", { name: "1 tbsp (20g) · Package label" })
+		.click();
 	await expect(amountSection.locator("strong")).toHaveText("1 tbsp (20g)");
 	await expect(caloriesRow).toContainText("50");
 	await expect(page.getByText("1 tbsp (20g)", { exact: true })).toBeVisible();
