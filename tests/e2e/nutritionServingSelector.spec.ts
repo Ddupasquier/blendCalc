@@ -22,11 +22,13 @@ const expectServingSelectorSpacing = async (
 	const amountSection = page.getByRole("region", { name: "Viewing amount" });
 	const servingContainer = page.locator(".nutrition-serving-select");
 	const servingTrigger = page.getByRole("combobox", { name: "Serving" });
-	const [amountBox, servingContainerBox, servingTriggerBox] = await Promise.all([
-		readElementBox(amountSection),
-		readElementBox(servingContainer),
-		readElementBox(servingTrigger),
-	]);
+	const [amountBox, servingContainerBox, servingTriggerBox] = await Promise.all(
+		[
+			readElementBox(amountSection),
+			readElementBox(servingContainer),
+			readElementBox(servingTrigger),
+		],
+	);
 	const spacing = await servingContainer.evaluate((element) => {
 		const styles = window.getComputedStyle(element);
 		return {
@@ -48,8 +50,7 @@ const expectServingSelectorSpacing = async (
 	expect(spacing.borderBottomPixels).toBe(2);
 	expect(
 		Math.abs(
-			servingTriggerBox.y -
-				(servingContainerBox.y + spacing.paddingTopPixels),
+			servingTriggerBox.y - (servingContainerBox.y + spacing.paddingTopPixels),
 		),
 	).toBeLessThanOrEqual(1);
 	expect(
@@ -87,9 +88,12 @@ test("serving choices update the viewing amount and normalized nutrition values"
 
 	const amountSection = page.getByRole("region", { name: "Viewing amount" });
 	const servingTrigger = page.getByRole("combobox", { name: "Serving" });
-	const caloriesRow = page.locator(".nf-row").filter({ hasText: "CALORIES" }).first();
+	const caloriesRow = page
+		.locator(".nf-row")
+		.filter({ hasText: "CALORIES" })
+		.first();
 
-	await expect(amountSection.locator("strong")).toHaveText("20g");
+	await expect(amountSection.locator("strong")).toHaveText("1 tbsp (20g)");
 	await expect(servingTrigger).toContainText("1 tbsp (20 g) · 20g");
 	await expect(caloriesRow).toContainText("50");
 
@@ -100,10 +104,8 @@ test("serving choices update the viewing amount and normalized nutrition values"
 	await expect(page.getByText("Per 100g food data")).toBeVisible();
 
 	await servingTrigger.click();
-	await page
-		.getByRole("option", { name: /^1 tbsp \(20 g\) · 20g/ })
-		.click();
-	await expect(amountSection.locator("strong")).toHaveText("20g");
+	await page.getByRole("option", { name: /^1 tbsp \(20 g\) · 20g/ }).click();
+	await expect(amountSection.locator("strong")).toHaveText("1 tbsp (20g)");
 	await expect(caloriesRow).toContainText("50");
 	await expect(page.getByText("1 tbsp (20g)", { exact: true })).toBeVisible();
 });
