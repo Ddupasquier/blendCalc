@@ -1,4 +1,4 @@
-import { normalizeBarcode } from "$lib/utils/barcode/barcode";
+import { normalizeBarcodeForFormat } from "$lib/utils/barcode/barcode";
 import { parseGs1DigitalLink } from "$lib/utils/barcode/gs1DigitalLink";
 import type {
 	BarcodeScanResult,
@@ -11,9 +11,7 @@ type DetectedBarcode = {
 	format?: string;
 };
 
-type BarcodeDetectorConstructor = new (options?: {
-	formats?: string[];
-}) => {
+type BarcodeDetectorConstructor = new (options?: { formats?: string[] }) => {
 	detect: (source: ImageBitmapSource) => Promise<DetectedBarcode[]>;
 };
 
@@ -36,7 +34,7 @@ export const createBarcodeScanResult = (
 		};
 	}
 
-	const canonicalValue = normalizeBarcode(value);
+	const canonicalValue = normalizeBarcodeForFormat(value, format);
 	if (!canonicalValue) return null;
 
 	return {
@@ -85,27 +83,33 @@ export const isNativeBarcodePlatform = async () => {
 	return Capacitor.isNativePlatform();
 };
 
-export const scanNativeBarcode = async (): Promise<BarcodeScanResult | null> => {
-	const {
-		CapacitorBarcodeScanner,
-		CapacitorBarcodeScannerCameraDirection,
-		CapacitorBarcodeScannerTypeHint,
-	} = await import("@capacitor/barcode-scanner");
-	const scan = await CapacitorBarcodeScanner.scanBarcode({
-		hint: CapacitorBarcodeScannerTypeHint.ALL,
-		cameraDirection: CapacitorBarcodeScannerCameraDirection.BACK,
-		scanInstructions: "Place the product barcode inside the frame.",
-	});
+export const scanNativeBarcode =
+	async (): Promise<BarcodeScanResult | null> => {
+		const {
+			CapacitorBarcodeScanner,
+			CapacitorBarcodeScannerCameraDirection,
+			CapacitorBarcodeScannerTypeHint,
+		} = await import("@capacitor/barcode-scanner");
+		const scan = await CapacitorBarcodeScanner.scanBarcode({
+			hint: CapacitorBarcodeScannerTypeHint.ALL,
+			cameraDirection: CapacitorBarcodeScannerCameraDirection.BACK,
+			scanInstructions: "Place the product barcode inside the frame.",
+		});
 
-	return createBarcodeScanResult(scan.ScanResult, String(scan.format), "capacitor");
-};
+		return createBarcodeScanResult(
+			scan.ScanResult,
+			String(scan.format),
+			"capacitor",
+		);
+	};
 
 const startNativeWebScanner = async (
 	video: HTMLVideoElement,
 	callbacks: BarcodeScannerCallbacks,
 ): Promise<BarcodeScannerStop | null> => {
-	const Detector = (window as typeof window & { BarcodeDetector?: BarcodeDetectorConstructor })
-		.BarcodeDetector;
+	const Detector = (
+		window as typeof window & { BarcodeDetector?: BarcodeDetectorConstructor }
+	).BarcodeDetector;
 	if (!Detector) return null;
 
 	const stream = await navigator.mediaDevices.getUserMedia({
@@ -187,7 +191,9 @@ const startZxingScanner = async (
 			if (!result) return;
 			const scanResult = createBarcodeScanResult(
 				result.getText(),
-				String(result.getBarcodeFormat()),
+				String(
+					BarcodeFormat[result.getBarcodeFormat()] ?? result.getBarcodeFormat(),
+				),
 				"web-zxing",
 			);
 			if (!scanResult) return;

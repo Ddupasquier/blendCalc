@@ -6,6 +6,7 @@ import {
 	lookupExternalBarcodeProduct,
 } from "$lib/server/products/externalProduct.server";
 import { getProductReferenceCatalog } from "$lib/server/products/productReferenceCatalog.server";
+import { getDefaultProductResolutionPolicy } from "$lib/server/products/productResolutionPolicy.server";
 import type { Database } from "$lib/types/database.types";
 import { normalizeBarcode } from "$lib/utils/barcode/barcode";
 import {
@@ -27,24 +28,30 @@ export const lookupBarcodeProductDraft = async (
 ): Promise<BarcodeProductDraft | null> => {
 	const barcode = normalizeBarcode(barcodeValue);
 	if (!barcode) return null;
-	const cachedImagePromise = getCachedFoodImageByBarcode(supabase, barcode).catch(
-		() => null,
-	);
+	const cachedImagePromise = getCachedFoodImageByBarcode(
+		supabase,
+		barcode,
+	).catch(() => null);
 
 	const sharedFood = await getSharedProductByBarcode(supabase, barcode);
 	if (sharedFood) {
+		const resolvedBarcode =
+			normalizeBarcode(sharedFood.barcode ?? sharedFood.gtinUpc ?? "") ??
+			barcode;
 		const [
 			productReferenceCatalog,
 			cachedImage,
 			requiredNutrientIds,
+			resolutionPolicy,
 		] = await Promise.all([
 			getProductReferenceCatalog(),
 			cachedImagePromise,
 			getRequiredPackagedNutrientIds(sharedFood),
+			getDefaultProductResolutionPolicy().catch(() => null),
 		]);
 		const mappedDraft = mapSharedCatalogFood(
 			sharedFood,
-			barcode,
+			resolvedBarcode,
 			productReferenceCatalog,
 		);
 		if (mappedDraft) {
@@ -58,16 +65,24 @@ export const lookupBarcodeProductDraft = async (
 			>;
 			if (needsBarcodeProductSupplement(cachedDraft, requiredNutrientIds)) {
 				try {
-					const supplement = await lookupExternalBarcodeProduct(barcode, {
-						cachedImage,
-						getProductReferenceCatalog: async () => productReferenceCatalog,
-						requiredNutrientIds,
-					});
+					const supplement = await lookupExternalBarcodeProduct(
+						resolvedBarcode,
+						{
+							cachedImage,
+							getProductReferenceCatalog: async () => productReferenceCatalog,
+							requiredNutrientIds,
+						},
+					);
 					supplementedFields = getSupplementedBarcodeProductFields(
 						cachedDraft,
 						supplement,
+						resolutionPolicy?.nutrientRelationshipRules,
 					);
-					draft = mergeMissingBarcodeProductFields(cachedDraft, supplement);
+					draft = mergeMissingBarcodeProductFields(
+						cachedDraft,
+						supplement,
+						resolutionPolicy?.nutrientRelationshipRules,
+					);
 				} catch {
 					draft = cachedDraft;
 				}
@@ -76,7 +91,7 @@ export const lookupBarcodeProductDraft = async (
 			if (supplementedFields.length > 0 && mappedDraft.sourceReference) {
 				await persistSharedProductExternalEnrichment({
 					sharedProductId: mappedDraft.sourceReference,
-					barcode,
+					barcode: resolvedBarcode,
 					currentFood: sharedFood,
 					enrichedDraft: resolvedDraft,
 					fields: supplementedFields,
@@ -90,7 +105,5 @@ export const lookupBarcodeProductDraft = async (
 	const draft = await lookupExternalBarcodeProduct(barcode, {
 		cachedImage: cachedImagePromise,
 	});
-	return draft
-		? await resolveBarcodeDraftCategory(supabase, draft)
-		: null;
+	return draft ? await resolveBarcodeDraftCategory(supabase, draft) : null;
 };

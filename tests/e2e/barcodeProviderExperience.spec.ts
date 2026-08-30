@@ -56,6 +56,20 @@ const representativeBarcodeExperiences = [
 		minimumNutrientCount: 5,
 	},
 	{
+		barcode: "08801005523455",
+		name: "Gochu Jang Hot & Sweet Chili Sauce",
+		brand: "Sempio Foods Company",
+		expectedAlcoholByVolume: null,
+		expectedAllergen: "wheat",
+		expectedAutofillStep: "Share",
+		expectedSourceServing: true,
+		expectedNutrients: [
+			{ nutrientId: 2000, value: 5 },
+			{ nutrientId: 1235, value: 5 },
+		],
+		minimumNutrientCount: 11,
+	},
+	{
 		barcode: "09000000000209",
 		name: "QA Federal Label Mystery Beer",
 		brand: "blendCalc QA Beverage Lab",
@@ -128,6 +142,15 @@ test("representative DB-first barcode results produce consistent manual-entry ex
 			expect(body.draft.nutrients.length).toBeGreaterThanOrEqual(
 				expectedProduct.minimumNutrientCount,
 			);
+			if ("expectedNutrients" in expectedProduct) {
+				for (const expectedNutrient of expectedProduct.expectedNutrients) {
+					expect(
+						body.draft.nutrients.find(
+							(nutrient) => nutrient.nutrientId === expectedNutrient.nutrientId,
+						)?.value,
+					).toBeCloseTo(expectedNutrient.value, 6);
+				}
+			}
 
 			if (expectedProduct.expectedAlcoholByVolume === null) {
 				expect(body.draft.alcoholByVolume).toBeUndefined();
@@ -148,6 +171,9 @@ test("representative DB-first barcode results produce consistent manual-entry ex
 				}),
 			).toBeVisible();
 			await dialog.getByRole("button", { name: "Autofill" }).click();
+			await expect(
+				dialog.getByText("Sugars, added cannot exceed total sugars."),
+			).toBeHidden();
 			await expect(
 				dialog.getByRole("tab", { name: expectedProduct.expectedAutofillStep }),
 			).toHaveAttribute("aria-selected", "true");
@@ -215,6 +241,37 @@ test("representative DB-first barcode results produce consistent manual-entry ex
 			"No source match found for this barcode yet. You can still save it; shared submissions will rely on label photos.",
 		),
 	).toBeVisible();
+});
+
+test("manual entry expands a printed UPC-E before provider lookup", async ({
+	page,
+}) => {
+	const printedUpcE = "03431209";
+	const canonicalUpcA = "00034000003129";
+	await page.route(
+		`**/api/products/barcode/${canonicalUpcA}`,
+		async (route) => {
+			await route.fulfill({
+				status: 200,
+				contentType: "application/json",
+				body: JSON.stringify({
+					status: "not-found",
+					barcode: canonicalUpcA,
+				}),
+			});
+		},
+	);
+
+	await page.goto("/ingredients/fridge/manual-entry");
+	await waitForAppReady(page);
+	const dialog = page.getByRole("dialog", { name: "Enter Manually" });
+	const responsePromise = page.waitForResponse((response) =>
+		response.url().endsWith(`/api/products/barcode/${canonicalUpcA}`),
+	);
+	await dialog.getByLabel("UPC / Barcode").fill(printedUpcE);
+	await dialog.getByLabel("UPC / Barcode").press("Tab");
+
+	expect((await responsePromise).status()).toBe(200);
 });
 
 test("manual entry shows an exact recall when product details are unavailable", async ({

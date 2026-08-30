@@ -1,3 +1,5 @@
+import type { NutrientRelationshipRule } from "$lib/utils/food/nutrients/nutrientRelationshipRules";
+
 export type ProductDifferenceSeverity = "low" | "medium" | "high";
 
 export type ProductDifferenceThreshold = {
@@ -35,6 +37,7 @@ export type ProductResolutionPolicy = {
 		string,
 		ProductSourceFieldCoveragePolicy
 	>;
+	nutrientRelationshipRules: readonly NutrientRelationshipRule[];
 };
 
 const readNestedPolicyValue = (

@@ -1599,7 +1599,7 @@ test("nutrition details preserve the complete source-backed food record", async 
 			gochuDetails.getByRole("heading", { name: "Ingredients" }),
 		).toBeVisible();
 		await expect(
-			gochuDetails.getByText(/red pepper paste \(wheat flour/i),
+			gochuDetails.getByText(/rice, water, corn syrup, red pepper powder/i),
 		).toBeVisible();
 		await expect(
 			gochuDetails.getByRole("heading", { name: "Contains" }),
@@ -1609,10 +1609,10 @@ test("nutrition details preserve the complete source-backed food record", async 
 		).toBeVisible();
 		await expect(
 			gochuDetails.getByRole("heading", { name: "May contain" }),
-		).toBeVisible();
-		await expect(
-			gochuDetails.getByText("Peanut", { exact: true }),
-		).toBeVisible();
+		).toHaveCount(0);
+		await expect(gochuDetails.getByText("Peanut", { exact: true })).toHaveCount(
+			0,
+		);
 		await expect(
 			gochuDetails.getByRole("heading", { name: "Dietary labels" }),
 		).toBeVisible();
@@ -1649,7 +1649,7 @@ test("nutrition details preserve the complete source-backed food record", async 
 			"Dips and Salsa",
 			"500 g",
 			"Packaged product",
-			"2 tbsp (30 g)",
+			"1 Tbsp (18 g)",
 		]) {
 			await expect(
 				productDetails.getByText(expectedText, { exact: true }).first(),
