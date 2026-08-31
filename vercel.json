@@ -6,7 +6,7 @@
 		},
 		{
 			"path": "/api/internal/blendCalcAPI/publication/sync",
-			"schedule": "*/15 * * * *"
+			"schedule": "30 5 * * *"
 		}
 	]
 }
