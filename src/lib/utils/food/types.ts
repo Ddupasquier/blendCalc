@@ -24,6 +24,9 @@ export type FoodNutrientMappingStatus =
 
 export type FoodNutrientValueQualifier = "source-estimate";
 
+export type FoodNutrientQualitativeStatus =
+	"below-reporting-threshold" | "present-unquantified";
+
 export type FoodNutrientMeasurementBasis =
 	| {
 			kind: "mass";
@@ -82,6 +85,32 @@ export interface FoodNutrient {
 	mappingMethod?: string;
 	mappingReviewReference?: string;
 	derivationMethod?: string;
+}
+
+/**
+ * Source-reported nutrient evidence that is meaningful but not an exact amount.
+ * These facts are display and publication evidence only; nutrition math must not
+ * silently treat them as zero or as their optional upper bound.
+ */
+export interface FoodNutrientQualitativeFact {
+	nutrientId: number;
+	nutrientName: string;
+	nutrientNumber: string;
+	unitName: string;
+	status: FoodNutrientQualitativeStatus;
+	statement: string;
+	maximumAmount?: number;
+	measurementBasis: FoodNutrientMeasurementBasis;
+	source: NonNullable<FoodNutrient["source"]>;
+	sourceReference?: string;
+	confidence: NonNullable<FoodNutrient["confidence"]>;
+	sourceNutrientKey?: string;
+	sourceNutrientCode?: string;
+	mappingStatus?: FoodNutrientMappingStatus;
+	mappingMethod?: string;
+	mappingReviewReference?: string;
+	policyKey?: string;
+	policyReference?: string;
 }
 
 export type FoodNutrientSourceReview = {
@@ -440,6 +469,8 @@ export interface FoodItem {
 	foodCategory?: string;
 	brandedFoodCategory?: string;
 	foodNutrients: FoodNutrient[];
+	/** Bounded or unquantified label evidence that is excluded from exact math. */
+	nutrientQualitativeFacts?: FoodNutrientQualitativeFact[];
 	/** Source rows retained for uncertainty and mapping review, never for nutrition math. */
 	nutrientSourceReview?: FoodNutrientSourceReview[];
 	/** Nutrient IDs explicitly reported by the source. Missing IDs are unknown, not zero. */

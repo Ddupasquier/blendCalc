@@ -35,7 +35,7 @@ const messages: Record<
 		tone: "warning",
 		title: "Some food details could not be checked",
 		message:
-			"No conflict was found in the information available, but required ingredient or allergen details are missing. Check the current package label when this food is packaged.",
+			"No conflict was found in the information available, but required ingredient, allergen, or cross-contact details are missing. Check the current package label when this food is packaged.",
 	},
 	not_checked: {
 		tone: "info",
@@ -55,7 +55,8 @@ export const getRegulatedAlcoholMissingSafetyDetailsMessage = (
 	const disclosureProfile = getRegulatedAlcoholDisclosureProfileForFood(food);
 	if (!disclosureProfile) return null;
 
-	const coverage = food.compatibilityEvaluation?.coverage ??
+	const coverage =
+		food.compatibilityEvaluation?.coverage ??
 		getFoodCompatibilityEvidenceCoverage(food);
 	const isSafetyDetailMissing = [
 		coverage.ingredients,

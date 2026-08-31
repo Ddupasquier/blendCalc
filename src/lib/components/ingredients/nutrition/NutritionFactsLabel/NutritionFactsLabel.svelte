@@ -12,6 +12,7 @@
 	import { getNutritionFactsFields } from "$lib/utils/food/reference/appReferenceCatalog";
 	import { getCanonicalFoodDescription } from "$lib/utils/food/records/foodRecords";
 	import type { NutritionFactsLabelProps } from "./types";
+	import type { FoodNutrientQualitativeFact } from "$lib/utils/food/types";
 
 	let {
 		food,
@@ -31,22 +32,65 @@
 
 	const nutritionFactsFields = getNutritionFactsFields();
 	const vitalIds = nutritionFactsFields.map((field) => field.id);
+	const formatQualitativeFact = (fact: FoodNutrientQualitativeFact) => {
+		if (
+			fact.status === "below-reporting-threshold" &&
+			fact.maximumAmount !== undefined
+		) {
+			const scaledMaximum = getNutrientAmountForServingConversion(
+				{
+					nutrientId: fact.nutrientId,
+					nutrientName: fact.nutrientName,
+					nutrientNumber: fact.nutrientNumber,
+					unitName: fact.unitName,
+					value: fact.maximumAmount,
+					measurementBasis: fact.measurementBasis,
+				},
+				viewingConversion,
+				food,
+			);
+			if (scaledMaximum !== null) {
+				return {
+					value: `<${formatNutritionAmount(scaledMaximum)}`,
+					unit: fact.unitName,
+				};
+			}
+		}
+		return {
+			value:
+				fact.status === "below-reporting-threshold"
+					? fact.statement
+					: "Present",
+			unit: "",
+		};
+	};
 	const vitalRows = $derived(
 		food
 			? nutritionFactsFields.map((field) => {
 					const nutrient = resolveFoodNutrient(food, field.id).nutrient;
+					const qualitativeFact = food.nutrientQualitativeFacts?.find(
+						(fact) => fact.nutrientId === field.id,
+					);
 					const scaledValue = nutrient
 						? getNutrientAmountForServingConversion(
 								nutrient,
 								viewingConversion,
 								food,
 							)
-						: 0;
+						: null;
+					const qualitativeDisplay = qualitativeFact
+						? formatQualitativeFact(qualitativeFact)
+						: null;
 					return {
 						label: field.label,
 						value:
-							scaledValue === null ? "—" : formatNutritionAmount(scaledValue),
-						unit: field.unit,
+							scaledValue === null
+								? (qualitativeDisplay?.value ?? "—")
+								: formatNutritionAmount(scaledValue),
+						unit:
+							scaledValue === null
+								? (qualitativeDisplay?.unit ?? "")
+								: field.unit,
 						highlight: field.highlight,
 					};
 				})
@@ -54,24 +98,46 @@
 	);
 	const extraRows = $derived(
 		food
-			? food.foodNutrients
-					.filter((n) => !vitalIds.some((id) => isMatchingFoodNutrient(n, id)))
-					.flatMap((n) => {
-						const scaledValue = getNutrientAmountForServingConversion(
-							n,
-							viewingConversion,
-							food,
-						);
-						return scaledValue === null || scaledValue === 0
-							? []
-							: [
-									{
-										label: n.nutrientName,
-										value: formatNutritionAmount(scaledValue),
-										unit: n.unitName,
-									},
-								];
-					})
+			? [
+					...food.foodNutrients
+						.filter(
+							(n) => !vitalIds.some((id) => isMatchingFoodNutrient(n, id)),
+						)
+						.flatMap((n) => {
+							const scaledValue = getNutrientAmountForServingConversion(
+								n,
+								viewingConversion,
+								food,
+							);
+							return scaledValue === null || scaledValue === 0
+								? []
+								: [
+										{
+											label: n.nutrientName,
+											value: formatNutritionAmount(scaledValue),
+											unit: n.unitName,
+										},
+									];
+						}),
+					...(food.nutrientQualitativeFacts ?? []).flatMap((fact) => {
+						if (
+							vitalIds.includes(fact.nutrientId) ||
+							food.foodNutrients.some(
+								(nutrient) => nutrient.nutrientId === fact.nutrientId,
+							)
+						) {
+							return [];
+						}
+						const display = formatQualitativeFact(fact);
+						return [
+							{
+								label: fact.nutrientName,
+								value: display.value,
+								unit: display.unit,
+							},
+						];
+					}),
+				]
 			: [],
 	);
 

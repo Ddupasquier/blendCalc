@@ -7,6 +7,7 @@ import type { IngredientListKey } from "$lib/utils/storage/client/ingredientList
 import type {
 	FoodItem,
 	FoodNutrient,
+	FoodNutrientQualitativeFact,
 	FoodFieldProvenance,
 	FoodImageAsset,
 	FoodBarcodeProvenance,
@@ -54,6 +55,7 @@ export type ManualEntryFormResetState = {
 	manualTouchedNutrientIds: Record<number, true>;
 	validationAttemptedSteps: ValidationAttemptState;
 	importedNutrients: FoodNutrient[];
+	nutrientQualitativeFacts: FoodNutrientQualitativeFact[];
 	barcode: string;
 	barcodeSource: FoodItem["barcodeSource"];
 	barcodeProvenance?: FoodBarcodeProvenance;
@@ -112,6 +114,7 @@ export const getManualEntryFormResetState = (): ManualEntryFormResetState => ({
 	manualTouchedNutrientIds: {},
 	validationAttemptedSteps: {},
 	importedNutrients: [],
+	nutrientQualitativeFacts: [],
 	barcode: "",
 	barcodeSource: "manual",
 	barcodeProvenance: undefined,
@@ -216,6 +219,7 @@ export const getManualEntryFormStateFromFood = (
 			Number(servingMeasureQuantity) > 0 &&
 			Boolean(servingMeasureUnit),
 		importedNutrients: nutrientsPerServing,
+		nutrientQualitativeFacts: [...(food.nutrientQualitativeFacts ?? [])],
 		manualNutrientValues: Object.fromEntries(
 			nutrientsPerServing.map((nutrient) => [
 				nutrient.nutrientId,

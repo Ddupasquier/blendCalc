@@ -78,6 +78,7 @@ export const createManualEntryBarcodeController = ({
 					}
 				: null,
 		nutrients: form.getSaveNutrients(validation.nutrientFields),
+		nutrientQualitativeFacts: form.data.nutrientQualitativeFacts,
 		ingredients: form.data.ingredients,
 		ingredientList: form.data.ingredientList,
 		allergens: form.data.allergens,

@@ -65,6 +65,7 @@ describe("NutritionLabelOcrInput", () => {
 				expect.objectContaining({ nutrientId: 1008, value: 120 }),
 				expect.objectContaining({ nutrientId: 1004, value: 2 }),
 			],
+			qualitativeFacts: [],
 			serving: { label: "1 cup", gramWeight: 240 },
 		});
 	});

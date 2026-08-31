@@ -14,6 +14,7 @@ import { cleanBarcode, normalizeBarcode } from "$lib/utils/barcode/barcode";
 import type {
 	FoodItem,
 	FoodNutrient,
+	FoodNutrientQualitativeFact,
 	FoodFieldProvenance,
 	FoodFieldSource,
 	FoodImageAsset,
@@ -74,6 +75,7 @@ export type CustomFoodInput = {
 	image?: FoodImageAsset;
 	fieldProvenance?: FoodFieldProvenance;
 	nutrients: FoodNutrient[];
+	nutrientQualitativeFacts?: FoodNutrientQualitativeFact[];
 	reportedNutrientIds?: number[];
 	hasSourceServing?: boolean;
 	serving?: FoodServing;
@@ -420,6 +422,7 @@ export const createCustomFood = (input: CustomFoodInput): FoodItem => {
 		customDensityVariancePercent: isUserServing && density ? 0 : undefined,
 		customDensityConfidence: isUserServing && density ? "known" : undefined,
 		foodNutrients,
+		nutrientQualitativeFacts: input.nutrientQualitativeFacts,
 		reportedNutrientIds: input.reportedNutrientIds
 			? [...new Set(input.reportedNutrientIds)].filter((nutrientId) =>
 					foodNutrients.some((nutrient) => nutrient.nutrientId === nutrientId),

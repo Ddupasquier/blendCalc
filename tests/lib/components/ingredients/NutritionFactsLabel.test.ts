@@ -66,4 +66,43 @@ describe("NutritionFactsLabel", () => {
 		expect(screen.getByText("Original Test Food")).toBeInTheDocument();
 		expect(screen.queryByText("My Test Food")).not.toBeInTheDocument();
 	});
+
+	it("distinguishes unavailable nutrients from reported zero and bounded label evidence", () => {
+		render(NutritionFactsLabel, {
+			props: {
+				food: {
+					fdcId: 2,
+					description: "Threshold food",
+					foodNutrients: [],
+					nutrientQualitativeFacts: [
+						{
+							nutrientId: NUTRIENT_IDS.FIBER,
+							nutrientName: "Fiber, total dietary",
+							nutrientNumber: "291",
+							unitName: "G",
+							status: "below-reporting-threshold",
+							statement: "<1 g",
+							maximumAmount: 1,
+							measurementBasis: {
+								kind: "mass",
+								quantity: 100,
+								unitKey: "g",
+							},
+							source: "user-label",
+							confidence: "moderator-reviewed",
+						},
+					],
+				},
+				viewingConversion: DEFAULT_NUTRITION_VIEWING_CONVERSION,
+				viewingLabel: "100g",
+			},
+		});
+
+		expect(screen.getByText("Dietary Fiber").closest("li")).toHaveTextContent(
+			"<1 G",
+		);
+		expect(screen.getByText("Total Sugars").closest("li")).toHaveTextContent(
+			"—",
+		);
+	});
 });

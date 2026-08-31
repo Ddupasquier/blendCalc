@@ -1,6 +1,7 @@
 import { normalizeBarcode } from "$lib/utils/barcode/barcode";
 import {
 	mapOpenFoodFactsNutrients,
+	mapOpenFoodFactsQualitativeNutrients,
 	type OpenFoodFactsNutriments,
 } from "$lib/utils/barcode/barcodeNutrients";
 import {
@@ -12,6 +13,7 @@ import {
 	type FoodFieldProvenance,
 	type FoodFieldSource,
 	type FoodNutrient,
+	type FoodNutrientQualitativeFact,
 	type FoodImageAsset,
 	type FoodIdentityType,
 	type FoodIngredientAnalysis,
@@ -87,6 +89,7 @@ export type OpenFoodFactsProduct = {
 	serving_size?: string;
 	serving_quantity?: number | string;
 	serving_quantity_unit?: string;
+	nutrition_data_per?: string;
 	quantity?: string;
 	product_quantity?: number | string;
 	product_quantity_unit?: string;
@@ -136,6 +139,7 @@ export type BarcodeProductDraft = {
 	hasSourceServing?: boolean;
 	serving?: FoodServing;
 	nutrients: FoodNutrient[];
+	nutrientQualitativeFacts?: FoodNutrientQualitativeFact[];
 	reportedNutrientIds: number[];
 	foodIdentityType?: FoodIdentityType;
 	ingredients?: string;
@@ -319,6 +323,47 @@ const parseOpenFoodFactsPackageQuantity = (
 		...(label ? { label } : {}),
 		...(amount !== undefined ? { amount } : {}),
 		...(unit ? { unit } : {}),
+	};
+};
+
+const createExactPackageVolumeServing = (
+	packageQuantity: FoodPackageQuantity | undefined,
+	barcode: string,
+): FoodServing | undefined => {
+	if (!packageQuantity) return undefined;
+	const parsedMeasure =
+		(packageQuantity.label
+			? parseSourceServingMeasure(packageQuantity.label)
+			: null) ??
+		(packageQuantity.amount !== undefined && packageQuantity.unit
+			? parseSourceServingMeasure(
+					`${packageQuantity.amount} ${packageQuantity.unit}`,
+				)
+			: null);
+	if (!parsedMeasure) return undefined;
+	const conversion = convertServingAmount(
+		parsedMeasure.quantity,
+		parsedMeasure.unit,
+	);
+	if (conversion.milliliters === null) return undefined;
+	const packageLabel =
+		packageQuantity.label?.trim() ||
+		`${parsedMeasure.quantity} ${parsedMeasure.unit}`;
+
+	return {
+		label: `${packageLabel} package`,
+		milliliterVolume: conversion.milliliters,
+		amount: parsedMeasure.quantity,
+		unitKey: parsedMeasure.unit,
+		isPrimary: true,
+		measureType: "Package amount",
+		isHouseholdMeasure: false,
+		sourceMeasureKey: "product_quantity",
+		origin: "package-label",
+		gramWeightMethod: "unknown",
+		source: "open-food-facts",
+		sourceReference: barcode,
+		confidence: "unknown",
 	};
 };
 
@@ -630,6 +675,7 @@ const createFieldSource = (
 const createOpenFoodFactsFieldProvenance = ({
 	barcode,
 	nutrients,
+	nutrientQualitativeFacts,
 	image,
 	metadata,
 	hasSourceServing,
@@ -638,6 +684,7 @@ const createOpenFoodFactsFieldProvenance = ({
 }: {
 	barcode: string;
 	nutrients: FoodNutrient[];
+	nutrientQualitativeFacts: FoodNutrientQualitativeFact[];
 	image?: FoodImageAsset;
 	metadata: ReturnType<typeof parseOpenFoodFactsMetadata>;
 	hasSourceServing: boolean;
@@ -648,7 +695,9 @@ const createOpenFoodFactsFieldProvenance = ({
 	return {
 		productName: source,
 		...(hasBrandOwner ? { brandOwner: source } : {}),
-		...(nutrients.length > 0 ? { nutrition: source } : {}),
+		...(nutrients.length > 0 || nutrientQualitativeFacts.length > 0
+			? { nutrition: source }
+			: {}),
 		...(image
 			? {
 					image: createFieldSource(
@@ -723,7 +772,7 @@ const createFdcFieldProvenance = ({
 		!food.fieldProvenance?.brandOwner
 			? { brandOwner: mappedSource }
 			: {}),
-		...(nutrients.length > 0 &&
+		...((nutrients.length > 0 || food.nutrientQualitativeFacts?.length) &&
 		(nutrientSource || mappedSource) &&
 		!food.fieldProvenance?.nutrition
 			? {
@@ -845,6 +894,7 @@ const parseServingBasis = (product: OpenFoodFactsProduct) => {
 			useServingValues: true,
 			hasExactGramWeight: true,
 			parsedServing,
+			milliliterVolume: null,
 		};
 	}
 	const parsedQuantity =
@@ -859,6 +909,7 @@ const parseServingBasis = (product: OpenFoodFactsProduct) => {
 			useServingValues: true,
 			hasExactGramWeight: true,
 			parsedServing: parsedQuantity,
+			milliliterVolume: null,
 		};
 	}
 	const parsedMeasure =
@@ -928,16 +979,61 @@ export const mapOpenFoodFactsProduct = (
 					}
 			: { kind: "mass" as const, quantity: 100, unitKey: "g" },
 	).map((nutrient) => ({ ...nutrient, sourceReference: canonicalBarcode }));
+	const qualitativeFacts = mapOpenFoodFactsQualitativeNutrients(
+		product.nutriments ?? {},
+		product.nutrition_data_per,
+		productReferenceCatalog,
+		useServingValues
+			? milliliterVolume !== null
+				? {
+						kind: "volume" as const,
+						quantity: parsedServing?.quantity ?? milliliterVolume,
+						unitKey: parsedServing?.unit ?? "ml",
+					}
+				: {
+						kind: "serving" as const,
+						quantity: 1,
+						unitKey: "serving",
+						servingLabel: product.serving_size?.trim() || "Serving",
+					}
+			: { kind: "mass" as const, quantity: 100, unitKey: "g" },
+	).map((fact) => ({ ...fact, sourceReference: canonicalBarcode }));
 	const metadata = parseOpenFoodFactsMetadata(product);
 	const image = parseOpenFoodFactsImage(product, canonicalBarcode);
 	const alcoholByVolume = parseOpenFoodFactsAlcoholByVolume(product.nutriments);
-	const servingLabel =
-		(useServingValues && product.serving_size?.trim()) ||
-		(servingWeightGrams ? `${servingWeightGrams} g` : "100 g reference");
 	const volumeEquivalent = hasExactGramWeight
 		? (parseVolumeEquivalent(product.serving_size) ?? undefined)
 		: undefined;
-
+	const packageVolumeServing = useServingValues
+		? undefined
+		: createExactPackageVolumeServing(
+				metadata.packageQuantity,
+				canonicalBarcode,
+			);
+	const exactServing: FoodServing | undefined = useServingValues
+		? {
+				label:
+					product.serving_size?.trim() ||
+					(servingWeightGrams ? `${servingWeightGrams} g` : "Package serving"),
+				gramWeight: servingWeightGrams ?? undefined,
+				milliliterVolume: milliliterVolume ?? undefined,
+				amount: volumeEquivalent?.quantity ?? parsedServing?.quantity,
+				unitKey: volumeEquivalent?.unit ?? parsedServing?.unit,
+				isPrimary: true,
+				measureType: "Package serving",
+				isHouseholdMeasure:
+					Boolean(volumeEquivalent) || milliliterVolume !== null,
+				sourceMeasureKey: "serving_size",
+				origin: "package-label",
+				gramWeightMethod: hasExactGramWeight ? "source-reported" : "unknown",
+				source: "open-food-facts",
+				sourceReference: canonicalBarcode,
+				confidence: "unknown",
+			}
+		: packageVolumeServing;
+	const servingLabel =
+		exactServing?.label ||
+		(servingWeightGrams ? `${servingWeightGrams} g` : "100 g reference");
 	const source = getProductDataSource(
 		productReferenceCatalog,
 		"open-food-facts",
@@ -950,26 +1046,10 @@ export const mapOpenFoodFactsProduct = (
 		brandOwner: product.brands?.trim() ?? "",
 		servingLabel,
 		servingWeightGrams,
-		hasSourceServing: useServingValues,
-		serving: useServingValues
-			? {
-					label: servingLabel,
-					gramWeight: servingWeightGrams ?? undefined,
-					milliliterVolume: milliliterVolume ?? undefined,
-					amount: volumeEquivalent?.quantity ?? parsedServing?.quantity,
-					unitKey: volumeEquivalent?.unit ?? parsedServing?.unit,
-					isPrimary: true,
-					measureType: "Package serving",
-					isHouseholdMeasure: Boolean(volumeEquivalent),
-					sourceMeasureKey: "serving_size",
-					origin: "package-label",
-					gramWeightMethod: hasExactGramWeight ? "source-reported" : "unknown",
-					source: "open-food-facts",
-					sourceReference: canonicalBarcode,
-					confidence: "unknown",
-				}
-			: undefined,
+		hasSourceServing: Boolean(exactServing),
+		serving: exactServing,
 		nutrients,
+		nutrientQualitativeFacts: qualitativeFacts,
 		reportedNutrientIds: [
 			...new Set(nutrients.map((nutrient) => nutrient.nutrientId)),
 		],
@@ -980,9 +1060,10 @@ export const mapOpenFoodFactsProduct = (
 		fieldProvenance: createOpenFoodFactsFieldProvenance({
 			barcode: canonicalBarcode,
 			nutrients,
+			nutrientQualitativeFacts: qualitativeFacts,
 			image,
 			metadata,
-			hasSourceServing: useServingValues,
+			hasSourceServing: Boolean(exactServing),
 			hasBrandOwner: Boolean(product.brands?.trim()),
 			alcoholByVolume,
 		}),
@@ -1088,6 +1169,7 @@ export const mapFdcBarcodeFood = (
 		hasSourceServing,
 		serving: resolvedServing,
 		nutrients,
+		nutrientQualitativeFacts: food.nutrientQualitativeFacts,
 		reportedNutrientIds: [...new Set(reportedNutrientIds)].filter(
 			(nutrientId) => nutrientIds.has(nutrientId),
 		),

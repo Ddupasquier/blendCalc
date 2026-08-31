@@ -14,6 +14,8 @@ import {
 	buildCatalogReadinessSummary,
 	classifyCatalogReadinessIssue,
 	isCatalogReadinessContractUnavailable,
+	separateCatalogReadinessIssues,
+	separateCatalogReadinessReasons,
 } from "../../lib/catalog/blendCalcAPICatalogReadiness.mjs";
 
 config({ path: ".env.moderation.local", quiet: true });
@@ -266,30 +268,63 @@ const report = products.map((product) => {
 			};
 		},
 	);
+	const reasonClassification = separateCatalogReadinessReasons(
+		status?.reasons ?? ["readiness_not_evaluated"],
+	);
+	const issueClassification = separateCatalogReadinessIssues(productIssues);
+	const publicationDisposition = status?.publishable
+		? "included"
+		: reasonClassification.repairReasons.length > 0
+			? reasonClassification.redistributionPolicyReasons.length > 0
+				? "needs_remediation_and_policy_clearance"
+				: "needs_remediation"
+			: reasonClassification.redistributionPolicyReasons.length > 0
+				? "redistribution_policy_ineligible"
+				: "needs_investigation";
 	return {
 		barcode: product.barcode,
 		product: product.product_name,
 		catalogSource: product.source,
 		api: status?.publishable ? "included" : "withheld",
+		publicationDisposition,
 		publicationStatus: status?.publication_status ?? "not_evaluated",
 		profile: status?.profile_key ?? "none",
-		reasons: status?.reasons ?? ["readiness_not_evaluated"],
+		reasons: [
+			...reasonClassification.repairReasons,
+			...reasonClassification.redistributionPolicyReasons,
+		],
+		repairReasons: reasonClassification.repairReasons,
+		redistributionPolicyReasons:
+			reasonClassification.redistributionPolicyReasons,
 		issues: productIssues,
-		automatedRepairCandidates: productIssues.filter(
+		repairIssues: issueClassification.repairIssues,
+		redistributionPolicyIssues: issueClassification.redistributionPolicyIssues,
+		automatedRepairCandidates: issueClassification.repairIssues.filter(
 			(issue) => issue.owner === "safe_automated_repair",
 		).length,
-		humanReviewCandidates: productIssues.filter((issue) =>
+		humanReviewCandidates: issueClassification.repairIssues.filter((issue) =>
 			[
 				"catalog_review",
 				"data_operations_review",
 				"food_policy_review",
 			].includes(issue.owner),
 		).length,
-		externalReviewCandidates: productIssues.filter(
+		externalReviewCandidates: issueClassification.repairIssues.filter(
 			(issue) => issue.owner === "external_review",
 		).length,
-		resolutionActions: [
-			...new Set(productIssues.map((issue) => issue.resolutionAction)),
+		redistributionPolicyReviewCandidates:
+			issueClassification.redistributionPolicyIssues.length,
+		repairResolutionActions: [
+			...new Set(
+				issueClassification.repairIssues.map((issue) => issue.resolutionAction),
+			),
+		].sort(),
+		redistributionPolicyResolutionActions: [
+			...new Set(
+				issueClassification.redistributionPolicyIssues.map(
+					(issue) => issue.resolutionAction,
+				),
+			),
 		].sort(),
 		category: product.category_option_id ? "yes" : "no",
 		fieldSources: provenanceCounts.get(product.id) ?? 0,
@@ -338,15 +373,40 @@ const report = products.map((product) => {
 
 const summary = buildCatalogReadinessSummary(report);
 if (jsonOutput) {
-	console.log(JSON.stringify({ summary, products: report }, null, 2));
+	console.log(
+		JSON.stringify(
+			{
+				summary,
+				products: report.map(
+					({ reasons: _reasons, issues: _issues, ...row }) => row,
+				),
+			},
+			null,
+			2,
+		),
+	);
 } else {
 	console.table(
-		report.map((row) => ({
-			...row,
-			reasons: row.reasons.join(", "),
-			issues: row.issues.map((issue) => issue.issueCode).join(", "),
-			resolutionActions: row.resolutionActions.join(", "),
-		})),
+		report.map(
+			({
+				reasons: _reasons,
+				issues: _issues,
+				repairIssues,
+				redistributionPolicyIssues,
+				...row
+			}) => ({
+				...row,
+				repairReasons: row.repairReasons.join(", "),
+				redistributionPolicyReasons: row.redistributionPolicyReasons.join(", "),
+				repairIssues: repairIssues.map((issue) => issue.issueCode).join(", "),
+				redistributionPolicyIssues: redistributionPolicyIssues
+					.map((issue) => issue.issueCode)
+					.join(", "),
+				repairResolutionActions: row.repairResolutionActions.join(", "),
+				redistributionPolicyResolutionActions:
+					row.redistributionPolicyResolutionActions.join(", "),
+			}),
+		),
 	);
 	console.log(JSON.stringify(summary, null, 2));
 }
