@@ -1922,8 +1922,10 @@ Notes:
 ### blendCalcAPI access scopes
 
 Reviewed scope and operation definitions prepare public API access without enabling it.
-Both tables are service-role-readable only; browser roles cannot inspect or alter access
-policy.
+Both tables use forced row level security and are service-role-readable only; browser
+roles cannot inspect or alter access policy. Runtime database tests also verify that
+browser roles cannot execute the service-only catalog read or credential-management
+functions and cannot query publication-readiness diagnostics directly.
 
 | Table                          | Primary key     | Purpose                                                                    |
 | ------------------------------ | --------------- | -------------------------------------------------------------------------- |
