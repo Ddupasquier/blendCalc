@@ -7,8 +7,9 @@ welcome, and guided tutorial. Auth configuration and security details remain in
 ## Signed-Out Landing Page
 
 - Present one focused marketing and sign-in surface; hide authenticated navigation.
-- Explain that users can build recipes, track nutrients, adjust ingredients, and save
-  reusable combinations.
+- Explain that users can organize food, build recipes, compare nutrients, and review
+  available recall, allergen, and dietary information without implying that an
+  unflagged food is guaranteed safe.
 - Keep the decorative floating-food animation subtle, noninteractive, and marked as
   decoration. Use fewer and smaller items on mobile.
 - Offer one clear sign-in or get-started action.

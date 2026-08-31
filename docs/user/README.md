@@ -1,8 +1,10 @@
 # blendCalc User Guide
 
-blendCalc helps you organize food, understand available nutrition information, and
-compare food combinations with goals you choose. It does not replace the current
-package label or professional medical advice.
+blendCalc helps you organize food, understand available nutrition information, monitor
+recall notices, and surface allergen or dietary concerns based on preferences you
+choose. You can also compare food combinations with your nutrition goals. It does not
+replace the current package label, an official recall notice, or professional medical
+advice.
 
 ## Quick Navigation
 

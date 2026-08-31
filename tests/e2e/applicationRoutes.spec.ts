@@ -5,6 +5,8 @@ const authenticatedRoutes = [
 		path: "/ingredients/fridge",
 		heading: "Ingredients",
 		title: /Fridge · blendCalc$/,
+		supportingCopy:
+			"Find foods, organize what you have, and review nutrition, recalls, allergens, and dietary details.",
 	},
 	{
 		path: "/mix",
@@ -35,6 +37,9 @@ for (const route of authenticatedRoutes) {
 				page.getByRole("heading", { name: route.heading, exact: true }),
 			).toBeVisible();
 			await expect(page).toHaveTitle(route.title);
+			if ("supportingCopy" in route) {
+				await expect(page.getByText(route.supportingCopy)).toBeVisible();
+			}
 		},
 	);
 }
@@ -76,7 +81,14 @@ test(
 
 		await expect(page).toHaveURL(/\/\?next=%2Fingredients%2Ffridge$/);
 		await expect(
-			page.getByRole("heading", { name: "See how your food adds up." }),
+			page.getByRole("heading", {
+				name: "Know more about the food you use.",
+			}),
+		).toBeVisible();
+		await expect(
+			page.getByText(
+				"Organize food, compare nutrition, and review available recall, allergen, and dietary information in one place.",
+			),
 		).toBeVisible();
 		await expect(
 			page.getByRole("link", { name: /Sign in to start building/ }),

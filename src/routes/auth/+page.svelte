@@ -68,14 +68,14 @@
 	<div class="auth-content">
 		<div class="auth-content__header">
 			<a class="auth-brand" href="/">{APP_NAME}</a>
-			<p class="auth-eyebrow">Your nutrition workspace</p>
+			<p class="auth-eyebrow">Your food awareness workspace</p>
 			<h1>
 				{authMode === "signUp" ? "Create your account." : "Welcome back."}
 			</h1>
 			<p>
 				{authMode === "signUp"
-					? "Save your ingredients, food combinations, and nutrition goals securely to your account."
-					: "Sign in to access your ingredients, saved combinations, and nutrition goals."}
+					? "Save your ingredients, recipes, food preferences, and nutrition goals securely to your account."
+					: "Sign in to access your ingredients, recipes, food preferences, and nutrition goals."}
 			</p>
 		</div>
 

@@ -1,6 +1,6 @@
 <svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
 	<title>blendCalc social preview</title>
-	<desc>blendCalc branding beside ingredient, nutrition goal, and nutrient shape visuals.</desc>
+	<desc>blendCalc food organization, nutrition, recall, allergen, and dietary-awareness preview.</desc>
 	<defs>
 		<linearGradient id="canvas" x1="94" y1="44" x2="1112" y2="630" gradientUnits="userSpaceOnUse">
 			<stop stop-color="#F8F8FB"/>
@@ -29,11 +29,11 @@
 	</g>
 	<text x="154" y="106" fill="#1A1A2E" font-family="Arial, Helvetica, sans-serif" font-size="42" font-weight="800" letter-spacing="-1.6">blendCalc</text>
 
-	<text x="80" y="182" fill="#57A773" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="800" letter-spacing="2.4">FOOD &amp; NUTRITION AWARENESS</text>
-	<text x="78" y="258" fill="#1A1A2E" font-family="Arial, Helvetica, sans-serif" font-size="58" font-weight="800" letter-spacing="-2.2">Understand ingredients.</text>
+	<text x="80" y="182" fill="#57A773" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="800" letter-spacing="2.4">FOOD, NUTRITION &amp; SAFETY AWARENESS</text>
+	<text x="78" y="258" fill="#1A1A2E" font-family="Arial, Helvetica, sans-serif" font-size="58" font-weight="800" letter-spacing="-2.2">Know your food.</text>
 	<text x="78" y="325" fill="#1A1A2E" font-family="Arial, Helvetica, sans-serif" font-size="58" font-weight="800" letter-spacing="-2.2">Build with your goals.</text>
-	<text x="80" y="378" fill="#70758D" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="600">Explore detailed nutrition, shape recipes, and keep</text>
-	<text x="80" y="412" fill="#70758D" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="600">the foods that work for you.</text>
+	<text x="80" y="378" fill="#70758D" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="600">Review recalls, allergens, and dietary details.</text>
+	<text x="80" y="412" fill="#70758D" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="600">Organize foods and build recipes in one place.</text>
 
 	<g transform="translate(80 464)">
 		<rect width="156" height="48" rx="24" fill="#E8F5EE"/>
@@ -45,7 +45,7 @@
 		<rect width="190" height="48" rx="24" fill="#EEF1F6"/>
 		<circle cx="25" cy="24" r="9" fill="#347B99"/>
 		<path d="M21 27L24 22L27 25L31 18" stroke="#F8F8FB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-		<text x="45" y="31" fill="#1A1A2E" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="800">Nutrition goals</text>
+		<text x="45" y="31" fill="#1A1A2E" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="800">Food warnings</text>
 	</g>
 	<g transform="translate(446 464)">
 		<rect width="166" height="48" rx="24" fill="#FFF2D9"/>
@@ -64,13 +64,6 @@
 		<path d="M11 21C14 12 22 11 27 10C26 19 21 25 12 26M18 18L13 26" stroke="#57A773" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
 		<text x="48" y="17" fill="#1A1A2E" font-family="Arial, Helvetica, sans-serif" font-size="19" font-weight="800">Nutrient shape</text>
 		<text x="48" y="38" fill="#70758D" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="600">Compare your recipe with your goals</text>
-	</g>
-
-	<g transform="translate(724 142)">
-		<line x1="0" y1="16" x2="24" y2="16" stroke="#8396B5" stroke-width="2.5" stroke-dasharray="4 5"/>
-		<text x="31" y="21" fill="#70758D" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="700">Goal</text>
-		<line x1="91" y1="16" x2="115" y2="16" stroke="#57A773" stroke-width="3"/>
-		<text x="122" y="21" fill="#70758D" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="700">Current</text>
 	</g>
 
 	<g>
