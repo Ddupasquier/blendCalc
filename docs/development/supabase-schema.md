@@ -864,6 +864,10 @@ publication generations, public product and revision payloads, categories, attri
 and generation transition events. The application project's canonical tables remain
 authoritative and are never duplicated as writable catalog structures.
 
+The isolated generated schema contract is
+`infrastructure/blendCalcAPI/supabase/database.types.ts`; it does not belong in
+application source until a runtime consumer imports it.
+
 Only `service_role` has schema usage or table/function privileges. `anon` and
 `authenticated` cannot access this project through the Data API. A generation becomes
 ready only when its stored product, revision, category, and attribution counts match the
