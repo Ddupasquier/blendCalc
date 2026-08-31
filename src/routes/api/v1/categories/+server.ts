@@ -2,7 +2,7 @@ import {
 	BlendCalcAPIV1RequestError,
 	readBlendCalcAPIV1CategoryRequest,
 } from "$lib/blendCalcAPI/v1/blendCalcAPIRequest";
-import { readBlendCalcAPIV1Categories } from "$lib/server/blendCalcAPI/v1/blendCalcAPICatalog.server";
+import { readBlendCalcAPIV1Categories } from "$lib/server/blendCalcAPI/v1/blendCalcAPIReadModel.server";
 import { hasBlendCalcAPIV1CatalogReadAccess } from "$lib/server/blendCalcAPI/v1/blendCalcAPIAccessPolicy.server";
 import {
 	blendCalcAPIV1Error,

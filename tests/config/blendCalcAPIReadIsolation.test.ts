@@ -4,6 +4,8 @@ import { describe, expect, it } from "vitest";
 
 const readSources = [
 	"src/lib/server/blendCalcAPI/v1/blendCalcAPICatalog.server.ts",
+	"src/lib/server/blendCalcAPI/v1/blendCalcAPIReadModel.server.ts",
+	"src/lib/server/blendCalcAPI/v1/blendCalcAPIIsolatedCatalog.server.ts",
 	"src/routes/api/v1/products/[barcode]/+server.ts",
 	"src/routes/api/v1/products/[barcode]/revisions/+server.ts",
 	"src/routes/api/v1/foods/search/+server.ts",

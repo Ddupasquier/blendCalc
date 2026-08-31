@@ -2,7 +2,7 @@ import {
 	BlendCalcAPIV1RequestError,
 	readBlendCalcAPIV1SearchRequest,
 } from "$lib/blendCalcAPI/v1/blendCalcAPIRequest";
-import { searchBlendCalcAPIV1Products } from "$lib/server/blendCalcAPI/v1/blendCalcAPICatalog.server";
+import { searchBlendCalcAPIV1Products } from "$lib/server/blendCalcAPI/v1/blendCalcAPIReadModel.server";
 import { hasBlendCalcAPIV1CatalogReadAccess } from "$lib/server/blendCalcAPI/v1/blendCalcAPIAccessPolicy.server";
 import {
 	blendCalcAPIV1Error,

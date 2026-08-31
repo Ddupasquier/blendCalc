@@ -871,8 +871,13 @@ application source until a runtime consumer imports it.
 Only `service_role` has schema usage or table/function privileges. `anon` and
 `authenticated` cannot access this project through the Data API. A generation becomes
 ready only when its stored product, revision, category, and attribution counts match the
-source declaration. Activation atomically replaces the complete visible generation;
-the previous generation becomes retired and remains available for bounded rollback.
+source declaration. Stored payload hashes and representative source-equivalent search
+results must also pass parity before activation. `category_search_text` preserves the
+canonical source category ranking input without exposing private source records, while
+`search_publication_generation_products` verifies a candidate and
+`search_active_publication_products` reads only the active generation. Activation
+atomically replaces the complete visible generation; the previous generation becomes
+retired and remains available for bounded rollback.
 See [Publication Database Isolation](blendCalcAPI/database-isolation.md).
 
 ### `shared_product_submissions`

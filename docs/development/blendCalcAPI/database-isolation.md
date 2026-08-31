@@ -79,6 +79,8 @@ Production reads remain on the application database until all of these pass:
 8. Response, payload, query-plan, and bounded-load audits meet the existing v1 budgets.
 9. Backup, restore, monitoring, alerts, and credential rotation are verified.
 
-The server first shadow-reads the isolated project and records only safe parity metrics.
-The read switch remains reversible until post-cutover checks pass. Removing the old read
-path is a later contract phase, not part of the initial switch.
+The scheduled server synchronization builds and atomically activates a complete target
+generation. `BLENDCALC_API_READ_MODE=shadow` continues returning canonical source reads
+while recording only hashes and match state from isolated reads. After parity passes,
+`isolated` selects the publication database; `source` remains the immediate rollback.
+Removing the old read path is a later contract phase, not part of the initial switch.

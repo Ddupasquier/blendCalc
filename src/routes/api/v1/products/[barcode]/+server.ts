@@ -12,7 +12,7 @@ import {
 	runBlendCalcAPIV1RequestWithinDeadline,
 } from "$lib/server/blendCalcAPI/v1/blendCalcAPIRequestBoundary.server";
 import { hasBlendCalcAPIV1CatalogReadAccess } from "$lib/server/blendCalcAPI/v1/blendCalcAPIAccessPolicy.server";
-import { readBlendCalcAPIV1ProductByBarcode } from "$lib/server/blendCalcAPI/v1/blendCalcAPICatalog.server";
+import { readBlendCalcAPIV1ProductByBarcode } from "$lib/server/blendCalcAPI/v1/blendCalcAPIReadModel.server";
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
 import type { RequestHandler } from "./$types";
 

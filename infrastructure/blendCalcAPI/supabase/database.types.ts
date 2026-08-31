@@ -193,6 +193,7 @@ export type Database = {
 				Row: {
 					brand_owner: string | null;
 					category_key: string | null;
+					category_search_text: string;
 					content_sha256: string;
 					detail_payload: Json;
 					generation_id: string;
@@ -207,6 +208,7 @@ export type Database = {
 				Insert: {
 					brand_owner?: string | null;
 					category_key?: string | null;
+					category_search_text?: string;
 					content_sha256: string;
 					detail_payload: Json;
 					generation_id: string;
@@ -221,6 +223,7 @@ export type Database = {
 				Update: {
 					brand_owner?: string | null;
 					category_key?: string | null;
+					category_search_text?: string;
 					content_sha256?: string;
 					detail_payload?: Json;
 					generation_id?: string;
@@ -330,6 +333,7 @@ export type Database = {
 				Row: {
 					brand_owner: string | null;
 					category_key: string | null;
+					category_search_text: string | null;
 					content_sha256: string | null;
 					detail_payload: Json | null;
 					generation_id: string | null;
@@ -381,6 +385,31 @@ export type Database = {
 			mark_publication_generation_ready: {
 				Args: { p_generation_id: string };
 				Returns: undefined;
+			};
+			search_active_publication_products: {
+				Args: {
+					p_limit?: number;
+					p_offset?: number;
+					p_query: string;
+					p_terms: string[];
+				};
+				Returns: {
+					search_payload: Json;
+					total_count: number;
+				}[];
+			};
+			search_publication_generation_products: {
+				Args: {
+					p_generation_id: string;
+					p_limit?: number;
+					p_offset?: number;
+					p_query: string;
+					p_terms: string[];
+				};
+				Returns: {
+					search_payload: Json;
+					total_count: number;
+				}[];
 			};
 		};
 		Enums: {

@@ -11,6 +11,7 @@ import {
 } from "$lib/blendCalcAPI/v1/blendCalcAPIErrors";
 import { createHash } from "node:crypto";
 import { json } from "@sveltejs/kit";
+import { stringifyCanonicalJson } from "./blendCalcAPIJson.server";
 
 const BLENDCALC_API_V1_HEADERS = {
 	"x-blendcalc-api-version": BLENDCALC_API_V1,
@@ -32,7 +33,7 @@ export const blendCalcAPIV1Success = <Data>(
 		...(pagination ? { meta: { pagination } } : {}),
 	} satisfies BlendCalcAPIV1Success<Data>;
 	const etag = `"${createHash("sha256")
-		.update(JSON.stringify(payload))
+		.update(stringifyCanonicalJson(payload))
 		.digest("base64url")}"`;
 	const isPublic = options.cacheVisibility === "public";
 	const headers = {
