@@ -13,8 +13,7 @@ $facts-label-tight-gap: 0.13rem;
 
 	width: 100%;
 	max-width: 100%;
-	padding: $app-gap-md $facts-label-inset
-		$facts-label-inset;
+	padding: $app-gap-md $facts-label-inset $facts-label-inset;
 	margin: 0 auto;
 	overflow: hidden;
 	color: $nutrition-ink;
@@ -141,8 +140,7 @@ $facts-label-tight-gap: 0.13rem;
 	align-items: baseline;
 	justify-content: space-between;
 	gap: $app-gap-sm;
-	padding: $facts-label-tight-gap
-		0.1rem;
+	padding: $facts-label-tight-gap 0.1rem;
 	color: $nutrition-ink;
 	font-size: $app-font-size-md;
 	font-weight: $app-font-weight-medium;
@@ -189,11 +187,25 @@ $facts-label-tight-gap: 0.13rem;
 	text-transform: uppercase;
 }
 
+.nf-qualitative-notes {
+	display: grid;
+	gap: $app-gap-2xs;
+	padding-top: $app-gap-xs;
+	margin-top: $app-gap-xs;
+	overflow-wrap: anywhere;
+	border-top: $facts-label-heavy-rule solid $nutrition-ink;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-medium;
+	line-height: $app-line-height-body;
+}
+
+.nf-qualitative-notes p {
+	margin: 0;
+}
+
 @media (max-width: $app-breakpoint-sm) {
 	.nf-label {
-		padding: 0.65rem
-			0.85rem
-			0.95rem;
+		padding: 0.65rem 0.85rem 0.95rem;
 	}
 
 	.nf-heading {
@@ -241,6 +253,10 @@ $facts-label-tight-gap: 0.13rem;
 	.nf-label-text,
 	.nf-value {
 		font-size: $app-font-size-md;
+	}
+
+	.nf-qualitative-notes {
+		font-size: $app-font-size-xs;
 	}
 
 	.nf-highlight,

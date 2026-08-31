@@ -105,4 +105,60 @@ describe("NutritionFactsLabel", () => {
 			"—",
 		);
 	});
+
+	it("keeps deduplicated unquantified label evidence out of nutrient rows", () => {
+		const statement =
+			"Not a significant source of dietary fiber, total sugars or added sugars.";
+		const { container } = render(NutritionFactsLabel, {
+			props: {
+				food: {
+					fdcId: 3,
+					description: "Qualitative label food",
+					foodNutrients: [],
+					nutrientQualitativeFacts: [
+						{
+							nutrientId: NUTRIENT_IDS.FIBER,
+							nutrientName: "Fiber, total dietary",
+							nutrientNumber: "291",
+							unitName: "G",
+							status: "below-reporting-threshold",
+							statement,
+							measurementBasis: { kind: "mass", quantity: 100, unitKey: "g" },
+							source: "user-label",
+							confidence: "moderator-reviewed",
+						},
+						{
+							nutrientId: NUTRIENT_IDS.SUGAR,
+							nutrientName: "Total Sugars",
+							nutrientNumber: "269",
+							unitName: "G",
+							status: "below-reporting-threshold",
+							statement,
+							measurementBasis: { kind: "mass", quantity: 100, unitKey: "g" },
+							source: "user-label",
+							confidence: "moderator-reviewed",
+						},
+					],
+				},
+				viewingConversion: DEFAULT_NUTRITION_VIEWING_CONVERSION,
+				viewingLabel: "100g",
+			},
+		});
+
+		expect(screen.getByText("Dietary Fiber").closest("li")).toHaveTextContent(
+			"—",
+		);
+		expect(screen.getByText("Total Sugars").closest("li")).toHaveTextContent(
+			"—",
+		);
+		expect(screen.getAllByText(`* ${statement}`)).toHaveLength(1);
+		expect(
+			Array.from(container.querySelectorAll(".nf-row")).every(
+				(row) => !row.textContent?.includes(statement),
+			),
+		).toBe(true);
+		expect(container.querySelector(".nf-qualitative-notes")).toHaveTextContent(
+			statement,
+		);
+	});
 });

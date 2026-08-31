@@ -32,7 +32,7 @@
 
 	const nutritionFactsFields = getNutritionFactsFields();
 	const vitalIds = nutritionFactsFields.map((field) => field.id);
-	const formatQualitativeFact = (fact: FoodNutrientQualitativeFact) => {
+	const formatBoundedQualitativeFact = (fact: FoodNutrientQualitativeFact) => {
 		if (
 			fact.status === "below-reporting-threshold" &&
 			fact.maximumAmount !== undefined
@@ -56,13 +56,7 @@
 				};
 			}
 		}
-		return {
-			value:
-				fact.status === "below-reporting-threshold"
-					? fact.statement
-					: "Present",
-			unit: "",
-		};
+		return null;
 	};
 	const vitalRows = $derived(
 		food
@@ -79,7 +73,7 @@
 							)
 						: null;
 					const qualitativeDisplay = qualitativeFact
-						? formatQualitativeFact(qualitativeFact)
+						? formatBoundedQualitativeFact(qualitativeFact)
 						: null;
 					return {
 						label: field.label,
@@ -128,7 +122,8 @@
 						) {
 							return [];
 						}
-						const display = formatQualitativeFact(fact);
+						const display = formatBoundedQualitativeFact(fact);
+						if (!display) return [];
 						return [
 							{
 								label: fact.nutrientName,
@@ -138,6 +133,28 @@
 						];
 					}),
 				]
+			: [],
+	);
+	const qualitativeStatements = $derived(
+		food
+			? Array.from(
+					new Map(
+						(food.nutrientQualitativeFacts ?? []).flatMap((fact) => {
+							const hasNumericValue = food.foodNutrients.some((nutrient) =>
+								isMatchingFoodNutrient(nutrient, fact.nutrientId),
+							);
+							const statement = fact.statement.trim().replace(/\s+/g, " ");
+							if (
+								hasNumericValue ||
+								formatBoundedQualitativeFact(fact) ||
+								!statement
+							) {
+								return [];
+							}
+							return [[statement.toLocaleLowerCase(), statement] as const];
+						}),
+					).values(),
+				)
 			: [],
 	);
 
@@ -225,6 +242,13 @@
 			</ul>
 		</div>
 	</div>
+	{#if qualitativeStatements.length > 0}
+		<div class="nf-qualitative-notes" aria-label="Package label notes">
+			{#each qualitativeStatements as statement}
+				<p>* {statement}</p>
+			{/each}
+		</div>
+	{/if}
 </div>
 
 <style lang="scss">
