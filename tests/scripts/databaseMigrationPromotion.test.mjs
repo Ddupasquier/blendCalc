@@ -11,20 +11,26 @@ import {
 const temporaryDirectories = [];
 
 const createMigrationRepository = async (migrations) => {
-	const repositoryRoot = await mkdtemp(path.join(os.tmpdir(), "blendcalc-migrations-"));
+	const repositoryRoot = await mkdtemp(
+		path.join(os.tmpdir(), "blendcalc-migrations-"),
+	);
 	temporaryDirectories.push(repositoryRoot);
 	const migrationsDirectory = path.join(repositoryRoot, "supabase/migrations");
 	await mkdir(migrationsDirectory, { recursive: true });
-	await Promise.all(Object.entries(migrations).map(([fileName, contents]) =>
-		writeFile(path.join(migrationsDirectory, fileName), contents, "utf8")
-	));
+	await Promise.all(
+		Object.entries(migrations).map(([fileName, contents]) =>
+			writeFile(path.join(migrationsDirectory, fileName), contents, "utf8"),
+		),
+	);
 	return repositoryRoot;
 };
 
 afterEach(async () => {
-	await Promise.all(temporaryDirectories.splice(0).map((directory) =>
-		rm(directory, { recursive: true, force: true })
-	));
+	await Promise.all(
+		temporaryDirectories
+			.splice(0)
+			.map((directory) => rm(directory, { recursive: true, force: true })),
+	);
 });
 
 describe("linked migration promotion guard", () => {
@@ -41,20 +47,27 @@ describe("linked migration promotion guard", () => {
 		expect(packageMetadata.scripts["db:push:auto"]).toBe(
 			"node scripts/operations/database/push_supabase_db.mjs --yes",
 		);
-		expect(pushWorkflowSource).toContain("findMigrationsNotIdenticalToRemoteMain");
-		expect(pushWorkflowSource.indexOf("findMigrationsNotIdenticalToRemoteMain()"))
-			.toBeLessThan(pushWorkflowSource.indexOf("const dbPassword"));
+		expect(pushWorkflowSource).toContain(
+			"findMigrationsNotIdenticalToRemoteMain",
+		);
+		expect(
+			pushWorkflowSource.indexOf("findMigrationsNotIdenticalToRemoteMain()"),
+		).toBeLessThan(pushWorkflowSource.indexOf("const dbPassword"));
 	});
 
 	it("accepts migrations whose exact contents are already on remote main", async () => {
 		const repositoryRoot = await createMigrationRepository({
-			"20260812000000_safe_expansion.sql": "alter table foods add column note text;\n",
+			"20260812000000_safe_expansion.sql":
+				"alter table foods add column note text;\n",
 		});
 
-		expect(findMigrationsNotIdenticalToRemoteMain({
-			repositoryRoot,
-			readPromotedMigration: () => "alter table foods add column note text;\n",
-		})).toEqual([]);
+		expect(
+			findMigrationsNotIdenticalToRemoteMain({
+				repositoryRoot,
+				readPromotedMigration: () =>
+					"alter table foods add column note text;\n",
+			}),
+		).toEqual([]);
 	});
 
 	it("rejects branch-only and modified migration source", async () => {
@@ -84,6 +97,34 @@ describe("linked migration promotion guard", () => {
 		expect(formatMigrationPromotionFailure(failures)).toContain(
 			"Do not include application code that requires the new schema",
 		);
+	});
+
+	it("supports an isolated migration directory without weakening main parity", async () => {
+		const repositoryRoot = await mkdtemp(
+			path.join(os.tmpdir(), "blendcalc-api-migrations-"),
+		);
+		temporaryDirectories.push(repositoryRoot);
+		const migrationsDirectory =
+			"infrastructure/blendCalcAPI/supabase/migrations";
+		await mkdir(path.join(repositoryRoot, migrationsDirectory), {
+			recursive: true,
+		});
+		await writeFile(
+			path.join(repositoryRoot, migrationsDirectory, "20260831000000_api.sql"),
+			"create schema blendcalc_api;\n",
+			"utf8",
+		);
+
+		expect(
+			findMigrationsNotIdenticalToRemoteMain({
+				repositoryRoot,
+				migrationsDirectory,
+				readPromotedMigration: (relativePath) =>
+					relativePath === `${migrationsDirectory}/20260831000000_api.sql`
+						? "create schema blendcalc_api;\n"
+						: null,
+			}),
+		).toEqual([]);
 	});
 
 	it("refreshes and verifies the remote main reference before inspection", () => {

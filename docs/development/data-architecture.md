@@ -230,6 +230,14 @@ blendCalcAPI v1. Publication fails closed on incomplete identity, nutrition, ser
 source policy, recency, or unresolved material conflicts. Withholding never deletes the
 underlying evidence or revision history.
 
+The separately operated blendCalcAPI Supabase project is a publication read model, not
+a second catalog. The application project computes readiness and serializes only public,
+redistributable projections into complete immutable generations. The target project
+atomically activates a generation only after counts, hashes, and parity checks pass.
+Private application, Auth, moderation, evidence, cache, and provider data never cross
+that boundary. [Publication Database Isolation](blendCalcAPI/database-isolation.md)
+owns synchronization, cutover, and rollback requirements.
+
 The reusable `catalog_product_readiness` record makes that separation explicit. Shared
 catalog state controls whether blendCalc can search and use a canonical product; blendCalcAPI v1
 readiness independently controls whether that product may be redistributed publicly.

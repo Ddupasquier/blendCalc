@@ -856,6 +856,21 @@ revocation, and rotation lineage remain auditable.
 Key expiry is optional at the database function boundary. Omitting it stores `NULL`;
 the server never invents an expiry timestamp solely to satisfy transport typing.
 
+### Isolated blendCalcAPI Publication Project
+
+`infrastructure/blendCalcAPI/supabase/migrations/` owns a separate migration history
+for the publication read model. Its `blendcalc_api` schema contains complete immutable
+publication generations, public product and revision payloads, categories, attribution,
+and generation transition events. The application project's canonical tables remain
+authoritative and are never duplicated as writable catalog structures.
+
+Only `service_role` has schema usage or table/function privileges. `anon` and
+`authenticated` cannot access this project through the Data API. A generation becomes
+ready only when its stored product, revision, category, and attribution counts match the
+source declaration. Activation atomically replaces the complete visible generation;
+the previous generation becomes retired and remains available for bounded rollback.
+See [Publication Database Isolation](blendCalcAPI/database-isolation.md).
+
 ### `shared_product_submissions`
 
 Stores user-submitted products before/after moderation.
