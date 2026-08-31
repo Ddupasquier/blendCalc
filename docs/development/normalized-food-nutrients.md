@@ -57,6 +57,15 @@ through foreign-key cascades.
 
 The migration also backfills all existing food snapshots.
 
+Qualitative statements synchronize independently from numeric measurements. An exact
+numeric value for a nutrient takes display and calculation priority. A bounded statement
+retains its upper limit and native basis, while an unquantified statement retains only
+the source wording. Removing the statement returns that nutrient to unknown; it does not
+create a zero. Only attributed, canonically mapped, reviewed qualitative evidence may
+satisfy blendCalcAPI publication completeness, and only while its source policy
+explicitly permits API redistribution. Reviewed package-label evidence can complete the
+app's safety and nutrition context while remaining withheld from blendCalcAPI.
+
 blendCalcAPI v1 keeps its mass-normalized `amountPer100g` contract. When that value is
 calculated from an exact native serving, the response marks the normalized value as
 `derived`, retains the package observation's reported status under

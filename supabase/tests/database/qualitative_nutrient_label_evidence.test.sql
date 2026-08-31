@@ -1,6 +1,6 @@
 begin;
 
-select plan(15);
+select plan(16);
 
 select has_table(
 	'public',
@@ -145,6 +145,23 @@ select ok(
 	)),
 	'the publication-readiness view uses qualitative evidence instead of its superseded numeric-only dependency'
 );
+
+update public.product_data_sources
+set api_redistribution_allowed = false
+where key = 'shared-catalog';
+
+select ok(
+	'missing_required_nutrient:1079' = any(
+		public.blendcalc_api_v1_product_readiness_reasons(
+			(select id from public.shared_products where barcode = '00011110904416')
+		)
+	),
+	'reviewed label evidence stays internal while community redistribution rights are disabled'
+);
+
+update public.product_data_sources
+set api_redistribution_allowed = true
+where key = 'shared-catalog';
 
 update public.shared_products product
 set food = product.food - 'nutrientQualitativeFacts'
