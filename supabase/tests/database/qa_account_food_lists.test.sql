@@ -370,6 +370,7 @@ select is(
 		select count(*) from public.shared_products product
 		where product.source_reference like 'local-qa-%'
 			or product.source_reference like 'local-qa:%'
+			or product.source_reference like 'package-label:%:local-qa-fixture'
 			or product.source = 'usda'
 	),
 	119::bigint,

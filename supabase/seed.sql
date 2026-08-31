@@ -466,7 +466,7 @@ values
 		'Strawberry Jelly, Strawberry',
 		'QA Pantry',
 		'jams',
-		'local-qa-label:00021130462506',
+		'package-label:00021130462506:local-qa-fixture',
 		'{
 			"fdcId": 9100001,
 			"description": "Strawberry Jelly, Strawberry",
@@ -517,7 +517,7 @@ values
 		'Roasted Onion & Garlic Pasta Sauce',
 		'Safeway, Inc.',
 		'qa-dips',
-		'local-qa-label:00021130493609',
+		'package-label:00021130493609:local-qa-fixture',
 		'{
 			"fdcId": 2032704,
 			"description": "Roasted Onion & Garlic Pasta Sauce",
@@ -574,7 +574,7 @@ values
 		'Gochu Jang Hot & Sweet Chili Sauce',
 		'Sempio Foods Company',
 		'qa-dips',
-		'local-qa-label:08801005523455',
+		'package-label:08801005523455:local-qa-fixture',
 		'{
 			"fdcId": 9100003,
 			"description": "Gochu Jang Hot & Sweet Chili Sauce",
@@ -629,7 +629,7 @@ values
 		'Peanut Butter',
 		'QA Pantry',
 		'qa-nut-seed-butters',
-		'local-qa-label:00869759000149',
+		'package-label:00869759000149:local-qa-fixture',
 		'{
 			"fdcId": 9100004,
 			"description": "Peanut Butter",
@@ -680,7 +680,7 @@ values
 		'Blue Agave Light Golden Syrup',
 		'QA Pantry',
 		'qa-sweets',
-		'local-qa-label:00011110904416',
+		'package-label:00011110904416:local-qa-fixture',
 		'{
 			"fdcId": 9100005,
 			"description": "Blue Agave Light Golden Syrup",

@@ -1,6 +1,6 @@
 begin;
 
-select plan(12);
+select plan(15);
 
 select has_table(
 	'public',
@@ -38,6 +38,28 @@ select ok(
 		'insert'
 	),
 	'authenticated users cannot bypass parent-table writes'
+);
+
+select ok(
+	public.blendcalc_api_v1_source_is_eligible('user-label'),
+	'accepted user label data uses the reviewed shared-catalog publication policy'
+);
+
+select ok(
+	public.blendcalc_api_v1_source_attribution_is_complete(
+		'user-label',
+		'catalog-submission:test-reviewed-label'
+	),
+	'accepted user label data requires a durable reviewed source reference'
+);
+
+select isnt(
+	public.blendcalc_api_v1_source_attribution_is_complete(
+		'user-label',
+		'unreviewed-browser-value'
+	),
+	true,
+	'unreviewed user label references cannot inherit shared-catalog publication rights'
 );
 
 select ok(
