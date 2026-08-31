@@ -678,9 +678,67 @@ export const mapApprovedCatalogRecordToBlendCalcAPIV1Product = (
 					),
 				}
 			: null,
-		nutrients: [...record.food.foodNutrients]
-			.sort((left, right) => left.nutrientId - right.nutrientId)
+		nutrients: [
+			...record.food.foodNutrients,
+			...(record.food.nutrientQualitativeFacts ?? [])
+				.filter(
+					(fact) =>
+						!record.food.foodNutrients.some(
+							(nutrient) => nutrient.nutrientId === fact.nutrientId,
+						),
+				)
+				.map((fact) => ({ qualitativeFact: fact })),
+		]
+			.sort(
+				(left, right) =>
+					("qualitativeFact" in left
+						? left.qualitativeFact.nutrientId
+						: left.nutrientId) -
+					("qualitativeFact" in right
+						? right.qualitativeFact.nutrientId
+						: right.nutrientId),
+			)
 			.map((nutrient) => {
+				if ("qualitativeFact" in nutrient) {
+					const fact = nutrient.qualitativeFact;
+					return {
+						id: fact.nutrientId,
+						name: fact.nutrientName,
+						number: fact.nutrientNumber?.trim() || null,
+						unit: fact.unitName,
+						amountPer100g: null,
+						valueStatus: fact.status,
+						source: toSource(
+							fact.source,
+							fact.sourceReference,
+							fact.confidence,
+						),
+						quality: {
+							sourceValueStatus: fact.status,
+							standardError: null,
+							sourceNutrientKey: fact.sourceNutrientKey?.trim() || null,
+							sourceNutrientCode: fact.sourceNutrientCode?.trim() || null,
+							mappingStatus: fact.mappingStatus ?? "unknown",
+							mappingMethod: fact.mappingMethod?.trim() || null,
+							derivationMethod: null,
+							valueQualifier: null,
+							reportedLimit: {
+								maximumAmount: fact.maximumAmount ?? null,
+								unit: fact.unitName,
+								basisKind: fact.measurementBasis.kind,
+								basisQuantity: fact.measurementBasis.quantity,
+								basisUnit: fact.measurementBasis.unitKey,
+								servingLabel:
+									fact.measurementBasis.kind === "serving"
+										? fact.measurementBasis.servingLabel
+										: null,
+								statement: fact.statement,
+								policyKey: fact.policyKey?.trim() || null,
+								policyReference: fact.policyReference?.trim() || null,
+							},
+						},
+					};
+				}
 				const amountPer100g = getNutrientAmountForServingConversion(
 					nutrient,
 					HUNDRED_GRAM_API_BASIS,
@@ -735,6 +793,7 @@ export const mapApprovedCatalogRecordToBlendCalcAPIV1Product = (
 							? "exact-native-basis-to-100g"
 							: (nutrient.derivationMethod?.trim() ?? null),
 						valueQualifier: nutrient.valueQualifier ?? null,
+						reportedLimit: null,
 					},
 				};
 			}),

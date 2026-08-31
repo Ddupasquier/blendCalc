@@ -3,6 +3,8 @@ import {
 	buildCatalogReadinessSummary,
 	classifyCatalogReadinessIssue,
 	isCatalogReadinessContractUnavailable,
+	separateCatalogReadinessIssues,
+	separateCatalogReadinessReasons,
 } from "../../scripts/lib/catalog/blendCalcAPICatalogReadiness.mjs";
 
 describe("API catalog readiness audit helpers", () => {
@@ -68,19 +70,69 @@ describe("API catalog readiness audit helpers", () => {
 			activeSharedProducts: 4,
 			apiIncluded: 1,
 			apiWithheld: 3,
+			withheldNeedingRemediation: 2,
+			withheldByRedistributionPolicy: 1,
+			withheldOnlyByRedistributionPolicy: 1,
 			withheldWithSafeAutomatedRepairs: 1,
 			withheldNeedingCatalogReview: 1,
-			withheldNeedingExternalReview: 1,
+			withheldNeedingExternalReview: 0,
 			withheldWithoutIssueContract: 0,
 			allIncludedRowsPassedPolicyGate: true,
 		});
 		expect(summary.withholdingReasonCounts).toEqual({
-			field_source_not_redistributable: 1,
 			"missing_field_provenance:brandOwner": 1,
 			missing_current_revision: 1,
 			"missing_required_field:ingredients": 1,
 		});
+		expect(summary.redistributionPolicyReasonCounts).toEqual({
+			field_source_not_redistributable: 1,
+		});
 		expect(summary.issueCodeCounts.CATALOG_REVISION_MISSING).toBe(1);
+		expect(summary.redistributionPolicyIssueCodeCounts).toEqual({
+			API_REDISTRIBUTION_REVIEW_REQUIRED: 1,
+		});
+	});
+
+	it("keeps redistribution policy exclusions out of repairable rejection details", () => {
+		expect(
+			separateCatalogReadinessReasons([
+				"field_source_not_redistributable",
+				"missing_required_field:ingredients",
+				"nutrient_source_not_redistributable",
+			]),
+		).toEqual({
+			repairReasons: ["missing_required_field:ingredients"],
+			redistributionPolicyReasons: [
+				"field_source_not_redistributable",
+				"nutrient_source_not_redistributable",
+			],
+		});
+
+		expect(
+			separateCatalogReadinessIssues([
+				{
+					issueCode: "API_REDISTRIBUTION_REVIEW_REQUIRED",
+					reason: "field_source_not_redistributable",
+				},
+				{
+					issueCode: "CATALOG_REQUIRED_FIELD_MISSING",
+					reason: "missing_required_field:ingredients",
+				},
+			]),
+		).toEqual({
+			repairIssues: [
+				{
+					issueCode: "CATALOG_REQUIRED_FIELD_MISSING",
+					reason: "missing_required_field:ingredients",
+				},
+			],
+			redistributionPolicyIssues: [
+				{
+					issueCode: "API_REDISTRIBUTION_REVIEW_REQUIRED",
+					reason: "field_source_not_redistributable",
+				},
+			],
+		});
 	});
 
 	it("flags withheld products whose blocker has no operational contract", () => {

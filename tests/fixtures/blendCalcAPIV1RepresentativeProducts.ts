@@ -153,6 +153,7 @@ blendCalcAPIV1CompletePackagedProductFixture.nutrients = [
 			mappingMethod: "exact-source-key",
 			derivationMethod: null,
 			valueQualifier: null,
+			reportedLimit: null,
 		},
 	},
 ];

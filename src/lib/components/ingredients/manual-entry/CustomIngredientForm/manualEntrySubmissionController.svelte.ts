@@ -147,6 +147,7 @@ export const createManualEntrySubmissionController = ({
 					: undefined,
 				fieldProvenance: form.data.fieldProvenance,
 				reportedNutrientIds: form.data.reportedNutrientIds,
+				nutrientQualitativeFacts: form.data.nutrientQualitativeFacts,
 				hasSourceServing: form.data.usesInternal100GramBasis
 					? false
 					: form.data.barcodeSource === "manual"

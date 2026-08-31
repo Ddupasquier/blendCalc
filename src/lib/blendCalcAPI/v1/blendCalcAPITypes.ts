@@ -49,7 +49,14 @@ export type BlendCalcAPIV1Nutrient = {
 	number: string | null;
 	unit: string;
 	amountPer100g: number | null;
-	valueStatus: "reported" | "estimated" | "derived" | "missing" | "unknown";
+	valueStatus:
+		| "reported"
+		| "estimated"
+		| "derived"
+		| "below-reporting-threshold"
+		| "present-unquantified"
+		| "missing"
+		| "unknown";
 	source: BlendCalcAPIV1Source | null;
 	quality: {
 		sourceValueStatus:
@@ -58,6 +65,7 @@ export type BlendCalcAPIV1Nutrient = {
 			| "estimated"
 			| "derived"
 			| "trace"
+			| "below-reporting-threshold"
 			| "present-unquantified"
 			| "missing"
 			| "invalid"
@@ -69,6 +77,17 @@ export type BlendCalcAPIV1Nutrient = {
 		mappingMethod: string | null;
 		derivationMethod: string | null;
 		valueQualifier: "source-estimate" | null;
+		reportedLimit: {
+			maximumAmount: number | null;
+			unit: string;
+			basisKind: "mass" | "volume" | "serving";
+			basisQuantity: number;
+			basisUnit: string;
+			servingLabel: string | null;
+			statement: string;
+			policyKey: string | null;
+			policyReference: string | null;
+		} | null;
 	};
 };
 

@@ -22,6 +22,43 @@ const ROLLOUT_MISSING_CONTRACT_CODES = new Set([
 	"PGRST205",
 ]);
 
+const REDISTRIBUTION_POLICY_REASONS = new Set([
+	"api_redistribution_not_approved",
+	"field_source_not_redistributable",
+	"nutrient_source_not_redistributable",
+	"serving_source_not_redistributable",
+]);
+
+const REDISTRIBUTION_POLICY_ISSUE_CODES = new Set([
+	"API_REDISTRIBUTION_REVIEW_REQUIRED",
+]);
+
+/** @param {string} reason */
+export const isRedistributionPolicyReason = (reason) =>
+	REDISTRIBUTION_POLICY_REASONS.has(reason.split(":", 1)[0]);
+
+/** @param {string[]} reasons */
+export const separateCatalogReadinessReasons = (reasons) => ({
+	repairReasons: reasons.filter(
+		(reason) => !isRedistributionPolicyReason(reason),
+	),
+	redistributionPolicyReasons: reasons.filter(isRedistributionPolicyReason),
+});
+
+/** @param {{ issueCode: string; reason?: string; owner?: string }[]} issues */
+export const separateCatalogReadinessIssues = (issues) => ({
+	repairIssues: issues.filter(
+		(issue) =>
+			!REDISTRIBUTION_POLICY_ISSUE_CODES.has(issue.issueCode) &&
+			!(issue.reason && isRedistributionPolicyReason(issue.reason)),
+	),
+	redistributionPolicyIssues: issues.filter(
+		(issue) =>
+			REDISTRIBUTION_POLICY_ISSUE_CODES.has(issue.issueCode) ||
+			Boolean(issue.reason && isRedistributionPolicyReason(issue.reason)),
+	),
+});
+
 /** @param {unknown} error */
 export const isCatalogReadinessContractUnavailable = (error) => {
 	if (!error || typeof error !== "object") return false;
@@ -74,16 +111,36 @@ const countValues = (values) =>
  */
 export const buildCatalogReadinessSummary = (report) => {
 	const withheldRows = report.filter((row) => row.api === "withheld");
+	const classifiedRows = withheldRows.map((row) => ({
+		...row,
+		...separateCatalogReadinessReasons(row.reasons),
+		...separateCatalogReadinessIssues(row.issues),
+	}));
+	const repairRows = classifiedRows.filter(
+		(row) =>
+			row.repairReasons.length > 0 ||
+			(row.repairReasons.length === 0 &&
+				row.redistributionPolicyReasons.length === 0),
+	);
+	const redistributionPolicyRows = classifiedRows.filter(
+		(row) => row.redistributionPolicyReasons.length > 0,
+	);
+	const redistributionPolicyOnlyRows = redistributionPolicyRows.filter(
+		(row) => row.repairReasons.length === 0,
+	);
 	/** @param {string} owner */
 	const countWithOwner = (owner) =>
-		withheldRows.filter((row) =>
-			row.issues.some((issue) => issue.owner === owner),
+		repairRows.filter((row) =>
+			row.repairIssues.some((issue) => issue.owner === owner),
 		).length;
 
 	return {
 		activeSharedProducts: report.length,
 		apiIncluded: report.length - withheldRows.length,
 		apiWithheld: withheldRows.length,
+		withheldNeedingRemediation: repairRows.length,
+		withheldByRedistributionPolicy: redistributionPolicyRows.length,
+		withheldOnlyByRedistributionPolicy: redistributionPolicyOnlyRows.length,
 		withheldWithSafeAutomatedRepairs: countWithOwner("safe_automated_repair"),
 		withheldNeedingCatalogReview: countWithOwner("catalog_review"),
 		withheldNeedingDataOperationsReview: countWithOwner(
@@ -92,16 +149,28 @@ export const buildCatalogReadinessSummary = (report) => {
 		withheldNeedingFoodPolicyReview: countWithOwner("food_policy_review"),
 		withheldNeedingExternalReview: countWithOwner("external_review"),
 		withheldNeedingSystemInvestigation: countWithOwner("system_investigation"),
-		withheldWithoutIssueContract: withheldRows.filter(
+		withheldWithoutIssueContract: repairRows.filter(
 			(row) =>
-				row.issues.length === 0 ||
-				row.issues.some((issue) => issue.owner === "unclassified"),
+				row.repairIssues.length === 0 ||
+				row.repairIssues.some((issue) => issue.owner === "unclassified"),
 		).length,
 		withholdingReasonCounts: countValues(
-			withheldRows.flatMap((row) => row.reasons),
+			repairRows.flatMap((row) => row.repairReasons),
+		),
+		redistributionPolicyReasonCounts: countValues(
+			redistributionPolicyRows.flatMap(
+				(row) => row.redistributionPolicyReasons,
+			),
 		),
 		issueCodeCounts: countValues(
-			withheldRows.flatMap((row) => row.issues.map((issue) => issue.issueCode)),
+			repairRows.flatMap((row) =>
+				row.repairIssues.map((issue) => issue.issueCode),
+			),
+		),
+		redistributionPolicyIssueCodeCounts: countValues(
+			redistributionPolicyRows.flatMap((row) =>
+				row.redistributionPolicyIssues.map((issue) => issue.issueCode),
+			),
 		),
 		allIncludedRowsPassedPolicyGate: report
 			.filter((row) => row.api === "included")

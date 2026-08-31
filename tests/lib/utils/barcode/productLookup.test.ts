@@ -304,6 +304,45 @@ describe("barcode product mapping", () => {
 		expect(draft?.reportedNutrientIds).toEqual([NUTRIENT_IDS.PROTEIN]);
 	});
 
+	it("preserves Open Food Facts less-than modifiers without treating limits as exact values", () => {
+		const draft = mapOpenFoodFactsProduct(
+			{
+				product_name: "Threshold cereal",
+				serving_size: "30 g",
+				nutrition_data_per: "serving",
+				nutriments: {
+					fiber: 1,
+					fiber_value: 1,
+					fiber_unit: "g",
+					fiber_modifier: "<",
+					fiber_serving: 1,
+					fiber_100g: 3.33,
+				},
+			},
+			"4006381333931",
+			productReferenceCatalogFixture,
+		);
+
+		expect(draft?.nutrients).not.toContainEqual(
+			expect.objectContaining({ nutrientId: NUTRIENT_IDS.FIBER }),
+		);
+		expect(draft?.reportedNutrientIds).not.toContain(NUTRIENT_IDS.FIBER);
+		expect(draft?.nutrientQualitativeFacts).toContainEqual(
+			expect.objectContaining({
+				nutrientId: NUTRIENT_IDS.FIBER,
+				status: "below-reporting-threshold",
+				maximumAmount: 1,
+				measurementBasis: {
+					kind: "serving",
+					quantity: 1,
+					unitKey: "serving",
+					servingLabel: "30 g",
+				},
+				source: "open-food-facts",
+			}),
+		);
+	});
+
 	it("uses the DB-provided conversion for source-specific nutrient units", () => {
 		const draft = mapOpenFoodFactsProduct(
 			{
@@ -354,6 +393,49 @@ describe("barcode product mapping", () => {
 			}),
 		]);
 		expect(draft?.volumeEquivalent).toBeUndefined();
+	});
+
+	it("uses exact package volume when no package serving is reported", () => {
+		const draft = mapOpenFoodFactsProduct(
+			{
+				product_name: "Mineral-enhanced drinking water",
+				quantity: "500 mL",
+				product_quantity: 500,
+				product_quantity_unit: "ml",
+				nutriments: {
+					"energy-kcal_100g": 0,
+					sodium_100g: 0.2,
+				},
+			},
+			"096619756803",
+			productReferenceCatalogFixture,
+		);
+
+		expect(draft?.hasSourceServing).toBe(true);
+		expect(draft?.servingWeightGrams).toBeNull();
+		expect(draft?.servingLabel).toBe("500 mL package");
+		expect(draft?.serving).toEqual({
+			label: "500 mL package",
+			milliliterVolume: 500,
+			amount: 500,
+			unitKey: "ml",
+			isPrimary: true,
+			measureType: "Package amount",
+			isHouseholdMeasure: false,
+			sourceMeasureKey: "product_quantity",
+			origin: "package-label",
+			gramWeightMethod: "unknown",
+			source: "open-food-facts",
+			sourceReference: "00096619756803",
+			confidence: "unknown",
+		});
+		expect(draft?.nutrients).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					measurementBasis: { kind: "mass", quantity: 100, unitKey: "g" },
+				}),
+			]),
+		);
 	});
 
 	it("keeps Open Food Facts ingredient and allergen metadata", () => {

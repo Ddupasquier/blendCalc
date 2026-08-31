@@ -17,6 +17,16 @@ export type NutritionLabelOcrCandidate = {
 	alias: string;
 };
 
+export type NutritionLabelOcrQualitativeFact = {
+	nutrientId: number;
+	nutrientName: string;
+	nutrientNumber: string;
+	unitName: string;
+	status: "below-reporting-threshold" | "present-unquantified";
+	statement: string;
+	maximumAmount?: number;
+};
+
 export type NutritionLabelServingCandidate = {
 	label: string;
 	gramWeight: number;
@@ -24,6 +34,7 @@ export type NutritionLabelServingCandidate = {
 
 export type NutritionLabelOcrResult = {
 	candidates: NutritionLabelOcrCandidate[];
+	qualitativeFacts: NutritionLabelOcrQualitativeFact[];
 	serving: NutritionLabelServingCandidate | null;
 	rawText: string;
 	confidence: number;
@@ -151,6 +162,10 @@ const readAmounts = (value: string) =>
 			value: Number(match[1].replace(",", ".")),
 			unit: match[2] ?? "",
 			index: match.index ?? 0,
+			isUpperBound: value
+				.slice(0, match.index ?? 0)
+				.trimEnd()
+				.endsWith("<"),
 		}))
 		.filter((amount) => Number.isFinite(amount.value) && amount.value >= 0);
 
@@ -170,7 +185,7 @@ const findCandidateForMatch = ({
 	const afterAmounts = readAmounts(after);
 	const beforeAmounts = readAmounts(before);
 	const amount = afterAmounts[0] ?? beforeAmounts.at(-1);
-	if (!amount) return null;
+	if (!amount || amount.isUpperBound) return null;
 
 	const parsedUnit = amount.unit
 		? normalizeUnit(amount.unit)
@@ -194,6 +209,67 @@ const findCandidateForMatch = ({
 		sourceLine: line,
 		alias: match.mapping.alias,
 	};
+};
+
+const findUpperBoundFactForMatch = ({
+	line,
+	match,
+	nextStart,
+}: {
+	line: string;
+	match: AliasMatch;
+	nextStart: number;
+}): NutritionLabelOcrQualitativeFact | null => {
+	const amount = readAmounts(line.slice(match.end, nextStart)).find(
+		(candidate) => candidate.isUpperBound,
+	);
+	if (!amount) return null;
+	const parsedUnit = amount.unit
+		? normalizeUnit(amount.unit)
+		: normalizeUnit(match.mapping.sourceUnitName);
+	const expectedSourceUnit = normalizeUnit(match.mapping.sourceUnitName);
+	if (amount.unit && parsedUnit !== expectedSourceUnit) return null;
+	const maximumAmount = convertAmount({
+		value: amount.value,
+		fromUnit: expectedSourceUnit,
+		toUnit: match.mapping.targetUnitName,
+		conversionMultiplier: match.mapping.conversionMultiplier,
+	});
+	if (maximumAmount === null || !Number.isFinite(maximumAmount)) return null;
+	return {
+		nutrientId: match.mapping.nutrientId,
+		nutrientName: match.mapping.nutrientName,
+		nutrientNumber: "",
+		unitName: match.mapping.targetUnitName,
+		status: "below-reporting-threshold",
+		statement: line,
+		maximumAmount,
+	};
+};
+
+const parseNotSignificantSourceFacts = (
+	lines: string[],
+	mappings: NutritionLabelOcrMapping[],
+) => {
+	const combinedText = lines.join(" ");
+	const facts = new Map<number, NutritionLabelOcrQualitativeFact>();
+	for (const match of combinedText.matchAll(
+		/\bnot\s+(?:a\s+)?significant\s+source\s+of\s+(.+?)(?:[.;]|$)/giu,
+	)) {
+		const statement = normalizeLine(match[0]);
+		const listedNutrients = normalizeLine(match[1]);
+		for (const aliasMatch of findAliasMatches(listedNutrients, mappings)) {
+			facts.set(aliasMatch.mapping.nutrientId, {
+				nutrientId: aliasMatch.mapping.nutrientId,
+				nutrientName: aliasMatch.mapping.nutrientName,
+				nutrientNumber: "",
+				unitName: aliasMatch.mapping.targetUnitName,
+				status: "below-reporting-threshold",
+				statement,
+			});
+		}
+	}
+	return facts;
 };
 
 const parseServingCandidate = (
@@ -231,10 +307,25 @@ export const parseNutritionLabelText = ({
 }): NutritionLabelOcrResult => {
 	const lines = text.split(/\r?\n/gu).map(normalizeLine).filter(Boolean);
 	const candidatesByNutrient = new Map<number, NutritionLabelOcrCandidate>();
+	const qualitativeFactsByNutrient = parseNotSignificantSourceFacts(
+		lines,
+		mappings,
+	);
 
 	for (const line of lines) {
 		const matches = findAliasMatches(line, mappings);
 		for (const [index, match] of matches.entries()) {
+			const upperBoundFact = findUpperBoundFactForMatch({
+				line,
+				match,
+				nextStart: matches[index + 1]?.start ?? line.length,
+			});
+			if (upperBoundFact) {
+				qualitativeFactsByNutrient.set(
+					upperBoundFact.nutrientId,
+					upperBoundFact,
+				);
+			}
 			const candidate = findCandidateForMatch({
 				line,
 				match,
@@ -242,6 +333,7 @@ export const parseNutritionLabelText = ({
 				nextStart: matches[index + 1]?.start ?? line.length,
 			});
 			if (!candidate) continue;
+			qualitativeFactsByNutrient.delete(candidate.nutrientId);
 			const existing = candidatesByNutrient.get(candidate.nutrientId);
 			if (!existing || candidate.alias.length > existing.alias.length) {
 				candidatesByNutrient.set(candidate.nutrientId, candidate);
@@ -251,6 +343,7 @@ export const parseNutritionLabelText = ({
 
 	return {
 		candidates: [...candidatesByNutrient.values()],
+		qualitativeFacts: [...qualitativeFactsByNutrient.values()],
 		serving: parseServingCandidate(lines),
 		rawText: text,
 		confidence,

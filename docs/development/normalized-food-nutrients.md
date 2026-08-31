@@ -28,6 +28,9 @@ it from legacy embedded JSON or invent a mass conversion.
   shared product, shared-product revision, or source observation.
 - `food_nutrients` owns the compatible per-100g projection for those same parents when
   the source value is already per 100g or has an exact reported gram basis.
+- `food_nutrient_qualitative_evidence` owns explicit source statements such as `<1 g`
+  or `not a significant source`. These rows are evidence, not exact nutrient amounts,
+  and never enter nutrition calculations.
 
 An exact nutrient basis is one of:
 
@@ -35,8 +38,10 @@ An exact nutrient basis is one of:
 - volume, such as `100 mL` or `1 tbsp`;
 - one source-defined serving, such as `2 cookies` or `1 bottle`.
 
-Volume and source-defined servings are never projected into grams without a verified
-weight/volume pair or an exact serving weight.
+Volume and source-defined servings are never projected into grams without an exact
+serving weight or an active, reviewed, product-specific mass-volume conversion policy
+linked to the same source observation. Product names, categories, and assumptions such
+as “water equals 1 g/mL” are not conversion evidence.
 
 Each value retains reported-versus-derived status, source/reference, confidence, and an
 exact selected source observation when canonical provenance supports one. The schema
@@ -49,11 +54,11 @@ Database triggers rebuild a parent's exact-basis rows whenever its nutrition JSO
 relevant provenance metadata changes. The per-100g synchronization keeps an
 independently reported 100g value as reported. For any other native basis, it creates a
 secondary projection only when an exact mass conversion exists: a mass unit, a verified
-volume/weight pair, or the matching source serving's exact gram weight. The projection
-is marked `derived` with `exact-native-basis-to-100g`; the original package measurement
-remains unchanged and authoritative. This covers browser writes, moderation approval,
-catalog revisions, and future server-side imports. Deleting a parent deletes both forms
-through foreign-key cascades.
+product-specific mass-volume policy, or the matching source serving's exact gram
+weight. The projection is marked `derived` with `exact-native-basis-to-100g`; the
+original package measurement remains unchanged and authoritative. This covers browser
+writes, moderation approval, catalog revisions, and future server-side imports.
+Deleting a parent deletes both forms through foreign-key cascades.
 
 The migration also backfills all existing food snapshots.
 
@@ -72,6 +77,11 @@ calculated from an exact native serving, the response marks the normalized value
 `quality.sourceValueStatus`, scales any retained standard error by the same exact
 factor, and exposes `exact-native-basis-to-100g` as the derivation method. A native
 serving without exact mass evidence returns no per-100g amount.
+
+blendCalcAPI exposes accepted qualitative evidence with `amountPer100g: null`, its
+explicit value status, and `quality.reportedLimit`. This lets consumers distinguish
+`<1 g`, present-but-unquantified, reported zero, and genuinely missing data without
+using a bound as an exact value.
 
 Barcode imports canonicalize enabled nutrient aliases before persistence. The
 `20260727120000_canonical_barcode_nutrient_mappings.sql` corrective migration applies
@@ -110,7 +120,9 @@ Nutrition details and Mix scale each value only through a compatible exact basis
 grams for mass, milliliters for volume, or serving multipliers for source-defined
 servings. Packaged foods open on their primary reported serving. A secondary 100g view
 is available only when every displayed nutrient has an exact path to mass. A count such
-as one cookie is not treated as one gram.
+as one cookie is not treated as one gram. An exact package volume may be the primary
+serving without any gram value; Mix uses that native volume only when the nutrient basis
+is compatible.
 
 An empty normalized result is an empty nutrient set, not permission to substitute an
 embedded snapshot, invent zeroes, or copy values from a similar food. Migration and
