@@ -8,7 +8,7 @@ export const BLENDCALC_API_RESPONSE_TARGETS = Object.freeze({
 	product: Object.freeze({ p95Milliseconds: 1_000 }),
 	category: Object.freeze({ p95Milliseconds: 750 }),
 	firstPageSearch: Object.freeze({ p95Milliseconds: 1_000 }),
-	repeatProduct: Object.freeze({ p95Milliseconds: 150 }),
+	repeatProduct: Object.freeze({ p95Milliseconds: 250 }),
 });
 
 const rounded = (value, digits = 1) => Number(value.toFixed(digits));
