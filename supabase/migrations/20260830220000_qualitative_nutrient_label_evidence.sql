@@ -436,7 +436,7 @@ with corrected_food as (
 							then 'reported-zero' else 'reported' end,
 						'mappingStatus', 'canonical',
 						'mappingMethod', 'reviewed-label-alias',
-						'source', 'user-label',
+						'source', 'community-reviewed',
 						'sourceReference', 'package-label:00011110863065:2026-08-30',
 						'confidence', 'moderator-reviewed'
 					)
@@ -458,7 +458,7 @@ with corrected_food as (
 						'measurementBasis', jsonb_build_object(
 							'kind', 'mass', 'quantity', 14, 'unitKey', 'g'
 						),
-						'source', 'user-label',
+						'source', 'community-reviewed',
 						'sourceReference', 'package-label:00011110863065:2026-08-30',
 						'confidence', 'moderator-reviewed',
 						'mappingStatus', 'canonical',
@@ -491,7 +491,7 @@ with corrected_food as (
 				'sourceMeasureKey', 'package-label:00011110863065:serving',
 				'origin', 'package-label',
 				'gramWeightMethod', 'source-reported',
-				'source', 'user-label',
+				'source', 'community-reviewed',
 				'sourceReference', 'package-label:00011110863065:2026-08-30',
 				'confidence', 'moderator-reviewed'
 			)),
@@ -502,19 +502,19 @@ with corrected_food as (
 			'fieldProvenance', coalesce(product.food -> 'fieldProvenance', '{}'::jsonb)
 				|| jsonb_build_object(
 					'ingredients', jsonb_build_object(
-						'source', 'user-label',
+						'source', 'community-reviewed',
 						'sourceReference', 'package-label:00011110863065:2026-08-30',
 						'confidence', 'moderator-reviewed',
 						'verificationMethod', 'package-label'
 					),
 					'allergens', jsonb_build_object(
-						'source', 'user-label',
+						'source', 'community-reviewed',
 						'sourceReference', 'package-label:00011110863065:2026-08-30',
 						'confidence', 'moderator-reviewed',
 						'verificationMethod', 'package-label'
 					),
 					'traces', jsonb_build_object(
-						'source', 'user-label',
+						'source', 'community-reviewed',
 						'sourceReference', 'package-label:00011110863065:2026-08-30',
 						'confidence', 'moderator-reviewed',
 						'verificationMethod', 'package-label'
@@ -543,7 +543,7 @@ with corrected_food as (
 	)
 	select
 		corrected_food.barcode,
-		'user-label',
+		'community-reviewed',
 		'package-label:00011110863065:2026-08-30',
 		'User-provided package label; factual data retained without redistributing the image',
 		jsonb_build_object(
@@ -686,35 +686,35 @@ set
 	canonical_provenance = coalesce(product.canonical_provenance, '{}'::jsonb)
 		|| jsonb_build_object(
 			'nutrition', jsonb_build_object(
-				'source', 'user-label',
+				'source', 'community-reviewed',
 				'sourceReference', 'package-label:00011110863065:2026-08-30',
 				'observationId', observation.observation_id,
 				'confidence', 'moderator-reviewed',
 				'verificationMethod', 'package-label'
 			),
 			'serving', jsonb_build_object(
-				'source', 'user-label',
+				'source', 'community-reviewed',
 				'sourceReference', 'package-label:00011110863065:2026-08-30',
 				'observationId', observation.observation_id,
 				'confidence', 'moderator-reviewed',
 				'verificationMethod', 'package-label'
 			),
 			'ingredients', jsonb_build_object(
-				'source', 'user-label',
+				'source', 'community-reviewed',
 				'sourceReference', 'package-label:00011110863065:2026-08-30',
 				'observationId', observation.observation_id,
 				'confidence', 'moderator-reviewed',
 				'verificationMethod', 'package-label'
 			),
 			'allergens', jsonb_build_object(
-				'source', 'user-label',
+				'source', 'community-reviewed',
 				'sourceReference', 'package-label:00011110863065:2026-08-30',
 				'observationId', observation.observation_id,
 				'confidence', 'moderator-reviewed',
 				'verificationMethod', 'package-label'
 			),
 			'traces', jsonb_build_object(
-				'source', 'user-label',
+				'source', 'community-reviewed',
 				'sourceReference', 'package-label:00011110863065:2026-08-30',
 				'observationId', observation.observation_id,
 				'confidence', 'moderator-reviewed',
