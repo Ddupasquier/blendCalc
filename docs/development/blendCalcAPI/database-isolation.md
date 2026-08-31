@@ -55,6 +55,11 @@ serializer boundary. Browser code receives no URL or key for the isolated projec
 server validates the existing blendCalc session or future blendCalcAPI credential, then
 uses a separate server-only client to read the active publication generation.
 
+Hosted Supabase keeps its required `public` and `graphql_public` Data API schemas in the
+exposure list and appends `blendcalc_api`. The isolated migration grants no browser-role
+access to the publication schema, so schema exposure does not bypass the server-only
+privilege boundary.
+
 The root Supabase CLI link must remain attached to the application project. Local API
 database work uses `infrastructure/blendCalcAPI`, distinct ports, a distinct project ref,
 and distinct credentials. No generic linked migration command may target both projects.

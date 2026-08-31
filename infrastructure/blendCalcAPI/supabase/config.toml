@@ -3,8 +3,8 @@ project_id = "blendCalcAPI"
 [api]
 enabled = true
 port = 55321
-schemas = ["blendcalc_api"]
-extra_search_path = ["blendcalc_api", "extensions"]
+schemas = ["public", "graphql_public", "blendcalc_api"]
+extra_search_path = ["public", "extensions", "blendcalc_api"]
 max_rows = 1000
 auto_expose_new_tables = false
 
