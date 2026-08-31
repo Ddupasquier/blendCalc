@@ -29,7 +29,7 @@ vi.mock("$lib/supabase/admin.server", () => ({
 	getSupabaseAdminClient: mocks.getSupabaseAdminClient,
 }));
 
-vi.mock("$lib/server/blendCalcAPI/v1/blendCalcAPICatalog.server", () => ({
+vi.mock("$lib/server/blendCalcAPI/v1/blendCalcAPIReadModel.server", () => ({
 	readBlendCalcAPIV1Categories: mocks.readBlendCalcAPIV1Categories,
 	readBlendCalcAPIV1ProductByBarcode: mocks.readBlendCalcAPIV1ProductByBarcode,
 	readBlendCalcAPIV1ProductRevisionHistory:

@@ -34,6 +34,18 @@ describe("blendCalcAPI v1 success responses", () => {
 		);
 		expect(response.headers.get("vary")).not.toContain("authorization");
 	});
+
+	it("keeps ETags stable when PostgreSQL JSONB returns object keys in another order", () => {
+		const source = blendCalcAPIV1Success({
+			name: "Product",
+			category: { id: "sauces", name: "Sauces" },
+		});
+		const isolated = blendCalcAPIV1Success({
+			category: { name: "Sauces", id: "sauces" },
+			name: "Product",
+		});
+		expect(isolated.headers.get("etag")).toBe(source.headers.get("etag"));
+	});
 });
 
 describe("blendCalcAPI v1 error responses", () => {

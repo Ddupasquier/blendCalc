@@ -12,23 +12,15 @@ const cronRoute = readFileSync(
 	"src/routes/api/internal/analytics/sync/+server.ts",
 	"utf8",
 );
-const vercelConfiguration = JSON.parse(
-	readFileSync("vercel.json", "utf8"),
-) as {
+const vercelConfiguration = JSON.parse(readFileSync("vercel.json", "utf8")) as {
 	crons?: Array<{ path?: string; schedule?: string }>;
 };
 
 describe("app interaction analytics", () => {
 	it("records only explicit successful auth boundaries", () => {
-		expect(authAction).toContain(
-			"APP_INTERACTION_METRICS.LOGIN_SUCCESS",
-		);
-		expect(authCallback).toContain(
-			"APP_INTERACTION_METRICS.LOGIN_SUCCESS",
-		);
-		expect(logout).toContain(
-			"APP_INTERACTION_METRICS.LOGOUT_SUCCESS",
-		);
+		expect(authAction).toContain("APP_INTERACTION_METRICS.LOGIN_SUCCESS");
+		expect(authCallback).toContain("APP_INTERACTION_METRICS.LOGIN_SUCCESS");
+		expect(logout).toContain("APP_INTERACTION_METRICS.LOGOUT_SUCCESS");
 		expect(authAction).not.toContain("track(email");
 		expect(authCallback).not.toContain("track(flowId");
 		expect(logout).not.toContain("track(user");
@@ -51,6 +43,10 @@ describe("app interaction analytics", () => {
 			{
 				path: "/api/internal/analytics/sync",
 				schedule: "15 5 * * *",
+			},
+			{
+				path: "/api/internal/blendCalcAPI/publication/sync",
+				schedule: "*/15 * * * *",
 			},
 		]);
 	});

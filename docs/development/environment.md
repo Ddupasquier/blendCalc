@@ -44,8 +44,10 @@ cp .env.example .env
 ```
 
 Only variables beginning with `PUBLIC_` may be read by browser code. `FDC_API_KEY`,
-`COLA_CLOUD_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, email credentials, and relay secrets
-must remain server-only.
+`COLA_CLOUD_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `CRON_SECRET`, isolated blendCalcAPI
+credentials, email credentials, and relay secrets must remain server-only. Set
+`BLENDCALC_API_READ_MODE` to `source`, `shadow`, or `isolated`; local development uses
+`source` unless the isolated read path is under direct test.
 
 ## Privileged Local Operations
 
@@ -92,6 +94,9 @@ Vercel-owned operations. Configure each value in the narrowest required environm
 
 - Production credentials belong in Production only unless a Preview genuinely needs
   the same server capability.
+- `BLENDCALC_API_SUPABASE_URL`, `BLENDCALC_API_SUPABASE_SERVICE_ROLE_KEY`, and
+  `BLENDCALC_API_READ_MODE` belong only in deployments that run the isolated catalog
+  reader or publication synchronization job.
 - Preview uses its own `PUBLIC_SITE_URL` and must not receive privileged production
   credentials by default.
 - Vercel automatically supplies system values such as `VERCEL_PROJECT_ID` when System

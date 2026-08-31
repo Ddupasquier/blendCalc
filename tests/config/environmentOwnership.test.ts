@@ -9,7 +9,11 @@ const readEnvironmentKeys = (path: string): string[] =>
 
 const expectedEnvironmentKeys = {
 	".env.example": [
+		"BLENDCALC_API_READ_MODE",
+		"BLENDCALC_API_SUPABASE_SERVICE_ROLE_KEY",
+		"BLENDCALC_API_SUPABASE_URL",
 		"COLA_CLOUD_API_KEY",
+		"CRON_SECRET",
 		"FDC_API_KEY",
 		"FDA_RECALL_PROXY_SECRET",
 		"MODERATION_EMAIL_FROM",
@@ -38,6 +42,9 @@ const expectedEnvironmentKeys = {
 		"PUBLIC_SUPABASE_URL",
 	],
 	".env.vercel.example": [
+		"BLENDCALC_API_READ_MODE",
+		"BLENDCALC_API_SUPABASE_SERVICE_ROLE_KEY",
+		"BLENDCALC_API_SUPABASE_URL",
 		"COLA_CLOUD_API_KEY",
 		"CRON_SECRET",
 		"FDC_API_KEY",
