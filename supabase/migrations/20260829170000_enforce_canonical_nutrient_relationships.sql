@@ -16,6 +16,52 @@ where rule.parent_nutrient_id = parent_definition.nutrient_id
 	and upper(parent_definition.default_unit_name) = 'G'
 	and upper(child_definition.default_unit_name) = 'G';
 
+with normalized_product_food as (
+	select
+		product.id,
+		jsonb_set(
+			product.food,
+			'{foodNutrients}',
+			coalesce(
+				(
+					select jsonb_agg(
+						case
+							when definition.nutrient_id is not null
+								and case
+									when replace(upper(btrim(nutrient.value ->> 'unitName')), 'Μ', 'U') = 'MCG'
+									then 'UG'
+									else replace(upper(btrim(nutrient.value ->> 'unitName')), 'Μ', 'U')
+								end = upper(definition.default_unit_name)
+							then jsonb_set(
+								nutrient.value,
+								'{unitName}',
+								to_jsonb(upper(definition.default_unit_name)),
+								false
+							)
+							else nutrient.value
+						end
+						order by nutrient.ordinality
+					)
+					from jsonb_array_elements(product.food -> 'foodNutrients')
+						with ordinality nutrient(value, ordinality)
+					left join public.nutrient_definitions definition
+						on definition.nutrient_id = (nutrient.value ->> 'nutrientId')::bigint
+				),
+				'[]'::jsonb
+			),
+			false
+		) as food
+	from public.shared_products product
+	where jsonb_typeof(product.food -> 'foodNutrients') = 'array'
+)
+update public.shared_products product
+set
+	food = normalized.food,
+	updated_at = now()
+from normalized_product_food normalized
+where product.id = normalized.id
+	and product.food is distinct from normalized.food;
+
 with corrected_user_list_food as (
 	select
 		item.id,

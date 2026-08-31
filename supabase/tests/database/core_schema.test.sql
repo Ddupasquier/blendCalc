@@ -1,6 +1,6 @@
 begin;
 
-select plan(59);
+select plan(61);
 
 select has_table('public', 'profiles', 'profiles table exists');
 select ok(
@@ -93,6 +93,28 @@ select ok(
 			and private.canonical_food_nutrient_snapshot_issue(product.food) is not null
 	),
 	'all active shared products pass canonical nutrient validation'
+);
+select ok(
+	not exists (
+		select 1
+		from public.shared_products product
+		cross join lateral jsonb_array_elements(product.food -> 'foodNutrients') nutrient(value)
+		where product.status = 'active'
+			and (nutrient.value ->> 'nutrientId')::bigint = 1114
+			and nutrient.value ->> 'unitName' <> 'UG'
+	),
+	'active shared products store vitamin D with the canonical microgram unit'
+);
+select is(
+	private.canonical_food_nutrient_snapshot_issue(
+		jsonb_build_object(
+			'foodNutrients', jsonb_build_array(
+				jsonb_build_object('nutrientId', 1114, 'nutrientName', 'Total Vitamin D', 'unitName', 'ΜG', 'value', 8)
+			)
+		)
+	),
+	'unit_mismatch:1114',
+	'canonical validation rejects a noncanonical Unicode microgram alias after backfill'
 );
 select is(
 	private.canonical_food_nutrient_snapshot_issue(
