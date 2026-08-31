@@ -196,6 +196,11 @@ describe("blendCalcAPI v1 route responses", () => {
 
 	it.each([
 		{ barcode: "not-a-barcode", path: PRODUCT_PATH, request: getProduct },
+		{
+			barcode: "00211-30493609",
+			path: PRODUCT_PATH,
+			request: getProduct,
+		},
 		{ barcode: "123", path: REVISION_PATH, request: getProductRevisions },
 	])(
 		"matches the documented 400 response for $path",
@@ -211,6 +216,7 @@ describe("blendCalcAPI v1 route responses", () => {
 				response,
 			});
 			expect(payload).toMatchObject({ error: { code: "invalid_barcode" } });
+			expect(mocks.getSupabaseAdminClient).not.toHaveBeenCalled();
 		},
 	);
 

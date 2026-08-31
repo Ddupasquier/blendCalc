@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
 	BLENDCALC_API_V1_PAGINATION_LIMITS,
 	BlendCalcAPIV1RequestError,
+	readBlendCalcAPIV1BarcodePathParameter,
 	readBlendCalcAPIV1CategoryRequest,
 	readBlendCalcAPIV1ProductRequest,
 	readBlendCalcAPIV1RevisionHistoryRequest,
@@ -70,6 +71,9 @@ describe("blendCalcAPI v1 request validation", () => {
 		"?q=t",
 		"?q=tomato&limit=51",
 		"?q=tomato&limit=1.5",
+		"?q=tomato&limit=1e1",
+		"?q=tomato&limit=01",
+		"?q=tomato&offset=+1",
 		"?q=tomato&offset=1001",
 	])("rejects invalid search input %s", (search) => {
 		expect(() =>
@@ -129,5 +133,23 @@ describe("blendCalcAPI v1 request validation", () => {
 				),
 			),
 		).toThrow(BlendCalcAPIV1RequestError);
+	});
+
+	it("normalizes only a strict valid GTIN path value", () => {
+		expect(readBlendCalcAPIV1BarcodePathParameter("0021130493609")).toBe(
+			"00021130493609",
+		);
+	});
+
+	it.each([
+		"00211-30493609",
+		" 0021130493609",
+		"0021130493609 ",
+		"product-0021130493609",
+		"0021130493600",
+	])("rejects a malformed or invalid GTIN path value %s", (barcode) => {
+		expect(() => readBlendCalcAPIV1BarcodePathParameter(barcode)).toThrow(
+			BlendCalcAPIV1RequestError,
+		);
 	});
 });

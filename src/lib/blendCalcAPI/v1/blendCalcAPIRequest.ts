@@ -2,12 +2,15 @@ import {
 	readBlendCalcAPIV1ErrorDefinition,
 	type BlendCalcAPIV1ErrorCode,
 } from "$lib/blendCalcAPI/v1/blendCalcAPIErrors";
+import { normalizeBarcode } from "$lib/utils/barcode/barcode";
 
 const MAX_QUERY_LENGTH = 120;
 const MAXIMUM_QUERY_STRING_LENGTH = 2_048;
 const SEARCH_QUERY_PARAMETERS = new Set(["q", "limit", "offset"]);
 const PAGINATED_QUERY_PARAMETERS = new Set(["limit", "offset"]);
 const NO_QUERY_PARAMETERS = new Set<string>();
+const CANONICAL_WHOLE_NUMBER_PATTERN = /^(?:0|[1-9]\d*)$/;
+const STRICT_GTIN_PATTERN = /^(?:\d{8}|\d{12}|\d{13}|\d{14})$/;
 
 export const BLENDCALC_API_V1_PAGINATION_LIMITS = Object.freeze({
 	search: Object.freeze({ defaultLimit: 15, maximumLimit: 50 }),
@@ -65,6 +68,12 @@ const readWholeNumber = (
 ) => {
 	const rawValue = url.searchParams.get(key);
 	if (rawValue === null) return fallback;
+	if (!CANONICAL_WHOLE_NUMBER_PATTERN.test(rawValue)) {
+		throw new BlendCalcAPIV1RequestError(
+			"invalid_pagination",
+			`${key} must be a whole number between ${minimum} and ${maximum}.`,
+		);
+	}
 	const value = Number(rawValue);
 	if (!Number.isInteger(value) || value < minimum || value > maximum) {
 		throw new BlendCalcAPIV1RequestError(
@@ -73,6 +82,17 @@ const readWholeNumber = (
 		);
 	}
 	return value;
+};
+
+export const readBlendCalcAPIV1BarcodePathParameter = (value: string) => {
+	if (!STRICT_GTIN_PATTERN.test(value)) {
+		throw new BlendCalcAPIV1RequestError("invalid_barcode");
+	}
+	const barcode = normalizeBarcode(value);
+	if (!barcode) {
+		throw new BlendCalcAPIV1RequestError("invalid_barcode");
+	}
+	return barcode;
 };
 
 export const readBlendCalcAPIV1SearchRequest = (url: URL) => {
