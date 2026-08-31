@@ -215,9 +215,16 @@ layer returns the documented `429 rate_limited` response and retry delay.
 
 Every blendCalcAPI v1 read is bounded on the server:
 
+- Authentication and account-block authorization use the verified server session. API
+  routes do not accept an account, owner, role, or authorization decision from query,
+  path, or browser state.
+- Barcode path values must be exact digit-only GTINs with a valid check digit. The API
+  does not apply the browser input sanitizer to punctuation, labels, or surrounding
+  whitespace.
 - Each endpoint accepts only its documented query parameters. Unknown and repeated
-  parameters are rejected, search text is limited to 120 characters, and the complete
-  encoded query string is limited to 2,048 characters.
+  parameters are rejected, pagination uses canonical base-10 whole numbers only, search
+  text is limited to 120 characters, and the complete encoded query string is limited
+  to 2,048 characters.
 - Search, category, and revision pages enforce their documented maximum page sizes and
   a maximum offset of 1,000 before the database is queried.
 - Catalog work has a 10-second deadline. The same abort signal is passed into the

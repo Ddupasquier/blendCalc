@@ -1,5 +1,6 @@
 import {
 	BlendCalcAPIV1RequestError,
+	readBlendCalcAPIV1BarcodePathParameter,
 	readBlendCalcAPIV1RevisionHistoryRequest,
 } from "$lib/blendCalcAPI/v1/blendCalcAPIRequest";
 import { readBlendCalcAPIV1ProductRevisionHistory } from "$lib/server/blendCalcAPI/v1/blendCalcAPICatalog.server";
@@ -13,7 +14,6 @@ import {
 	runBlendCalcAPIV1RequestWithinDeadline,
 } from "$lib/server/blendCalcAPI/v1/blendCalcAPIRequestBoundary.server";
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
-import { normalizeBarcode } from "$lib/utils/barcode/barcode";
 import type { RequestHandler } from "./$types";
 
 export const GET: RequestHandler = async ({
@@ -25,12 +25,10 @@ export const GET: RequestHandler = async ({
 	if (!(await hasBlendCalcAPIV1CatalogReadAccess(locals))) {
 		return blendCalcAPIV1Error("authentication_required");
 	}
-	const barcode = normalizeBarcode(params.barcode);
-	if (!barcode) {
-		return blendCalcAPIV1Error("invalid_barcode");
-	}
+	let barcode: string;
 	let request: ReturnType<typeof readBlendCalcAPIV1RevisionHistoryRequest>;
 	try {
+		barcode = readBlendCalcAPIV1BarcodePathParameter(params.barcode);
 		request = readBlendCalcAPIV1RevisionHistoryRequest(url);
 	} catch (error) {
 		if (error instanceof BlendCalcAPIV1RequestError) {
