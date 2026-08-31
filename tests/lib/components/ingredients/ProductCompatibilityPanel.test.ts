@@ -58,11 +58,13 @@ describe("ProductCompatibilityPanel", () => {
 			},
 		});
 
-		expect(screen.getByRole("heading", { name: "Contains" }))
-			.toBeInTheDocument();
+		expect(
+			screen.getByRole("heading", { name: "Contains" }),
+		).toBeInTheDocument();
 		expect(screen.getByText("Milk, Soybeans")).toBeInTheDocument();
-		expect(screen.getByRole("heading", { name: "May contain" }))
-			.toBeInTheDocument();
+		expect(
+			screen.getByRole("heading", { name: "May contain" }),
+		).toBeInTheDocument();
 		expect(screen.getByText("Tree nuts")).toBeInTheDocument();
 	});
 
@@ -71,10 +73,12 @@ describe("ProductCompatibilityPanel", () => {
 			props: { food: createFood() },
 		});
 
-		expect(screen.queryByRole("heading", { name: "Contains" }))
-			.not.toBeInTheDocument();
-		expect(screen.queryByRole("heading", { name: "May contain" }))
-			.not.toBeInTheDocument();
+		expect(
+			screen.queryByRole("heading", { name: "Contains" }),
+		).not.toBeInTheDocument();
+		expect(
+			screen.queryByRole("heading", { name: "May contain" }),
+		).not.toBeInTheDocument();
 	});
 
 	it("shows reviewed dietary labels and considerations without policy jargon", () => {
@@ -107,26 +111,30 @@ describe("ProductCompatibilityPanel", () => {
 						],
 						contains: [],
 						mayContain: [],
-						dietaryClaims: [{
-							slug: "vegan",
-							label: "Vegan",
-							category: "dietary",
-							factType: "dietary_claim",
-							sourceType: "label_dietary_field",
-							sourceText: "en:vegan",
-							confidence: "confirmed",
-						}],
+						dietaryClaims: [
+							{
+								slug: "vegan",
+								label: "Vegan",
+								category: "dietary",
+								factType: "dietary_claim",
+								sourceType: "label_dietary_field",
+								sourceText: "en:vegan",
+								confidence: "confirmed",
+							},
+						],
 						ingredientSignals: [],
 					},
 				}),
 			},
 		});
 
-		expect(screen.getByRole("heading", { name: "Dietary labels" }))
-			.toBeInTheDocument();
+		expect(
+			screen.getByRole("heading", { name: "Dietary labels" }),
+		).toBeInTheDocument();
 		expect(screen.getByText("Vegan")).toBeInTheDocument();
-		expect(screen.getByRole("heading", { name: "Dietary considerations" }))
-			.toBeInTheDocument();
+		expect(
+			screen.getByRole("heading", { name: "Dietary considerations" }),
+		).toBeInTheDocument();
 		expect(screen.getByText("Meat")).toBeInTheDocument();
 	});
 
@@ -158,8 +166,9 @@ describe("ProductCompatibilityPanel", () => {
 		expect(
 			screen.getByText("No conflict found in available information"),
 		).toBeInTheDocument();
-		expect(screen.getByText(/ingredients and labels can change/i))
-			.toBeInTheDocument();
+		expect(
+			screen.getByText(/ingredients and labels can change/i),
+		).toBeInTheDocument();
 		expect(screen.getByText(/current package label/i)).toBeInTheDocument();
 	});
 
@@ -187,10 +196,14 @@ describe("ProductCompatibilityPanel", () => {
 			props: { food: incomplete },
 		});
 
-		expect(screen.getByText("Some food details could not be checked"))
-			.toBeInTheDocument();
-		expect(screen.getByText(/required ingredient or allergen details are missing/i))
-			.toBeInTheDocument();
+		expect(
+			screen.getByText("Some food details could not be checked"),
+		).toBeInTheDocument();
+		expect(
+			screen.getByText(
+				/required ingredient, allergen, or cross-contact details are missing/i,
+			),
+		).toBeInTheDocument();
 		unmount();
 
 		render(ProductCompatibilityPanel, {
@@ -209,8 +222,9 @@ describe("ProductCompatibilityPanel", () => {
 				}),
 			},
 		});
-		expect(screen.getByText("Not checked against food settings"))
-			.toBeInTheDocument();
+		expect(
+			screen.getByText("Not checked against food settings"),
+		).toBeInTheDocument();
 	});
 
 	it("warns when regulated alcohol is missing ingredient or allergen evidence", () => {
@@ -248,12 +262,15 @@ describe("ProductCompatibilityPanel", () => {
 			},
 		});
 
-		expect(screen.getByText("Federal alcohol labels leave gaps"))
-			.toBeInTheDocument();
-		expect(screen.getByText(/skip major-allergen disclosure/i))
-			.toBeInTheDocument();
-		expect(screen.queryByText("Not checked against food settings"))
-			.not.toBeInTheDocument();
+		expect(
+			screen.getByText("Federal alcohol labels leave gaps"),
+		).toBeInTheDocument();
+		expect(
+			screen.getByText(/skip major-allergen disclosure/i),
+		).toBeInTheDocument();
+		expect(
+			screen.queryByText("Not checked against food settings"),
+		).not.toBeInTheDocument();
 	});
 
 	it("uses explicit positive ABV to cover older alcohol records without a saved profile", () => {
@@ -276,8 +293,9 @@ describe("ProductCompatibilityPanel", () => {
 			},
 		});
 
-		expect(screen.getByText("Federal alcohol labels leave gaps"))
-			.toBeInTheDocument();
+		expect(
+			screen.getByText("Federal alcohol labels leave gaps"),
+		).toBeInTheDocument();
 	});
 
 	it("does not invent a missing-data warning when alcohol safety fields are covered", () => {
@@ -310,10 +328,12 @@ describe("ProductCompatibilityPanel", () => {
 			},
 		});
 
-		expect(screen.queryByText("Federal alcohol labels leave gaps"))
-			.not.toBeInTheDocument();
-		expect(screen.getByRole("heading", { name: "Contains" }))
-			.toBeInTheDocument();
+		expect(
+			screen.queryByText("Federal alcohol labels leave gaps"),
+		).not.toBeInTheDocument();
+		expect(
+			screen.getByRole("heading", { name: "Contains" }),
+		).toBeInTheDocument();
 	});
 
 	it("keeps regional label context in a closed supporting section", async () => {
@@ -347,11 +367,13 @@ describe("ProductCompatibilityPanel", () => {
 								sourceUrl: "https://example.com/us",
 								reviewedAt: "2026-07-31T00:00:00.000Z",
 							},
-							coveredPreferences: [{
-								preference: "Peanut",
-								regulatedLabel: "Peanuts",
-								classification: "major_allergen",
-							}],
+							coveredPreferences: [
+								{
+									preference: "Peanut",
+									regulatedLabel: "Peanuts",
+									classification: "major_allergen",
+								},
+							],
 							uncoveredPreferences: ["Banana"],
 						},
 						preferenceResolution: resolvedPreferenceContext,
@@ -365,13 +387,16 @@ describe("ProductCompatibilityPanel", () => {
 		expect(details).not.toHaveAttribute("open");
 		await fireEvent.click(detailsTitle.closest("summary") as HTMLElement);
 		expect(details).toHaveAttribute("open");
-		expect(screen.getByRole("heading", { name: "Regional label context" }))
-			.toBeInTheDocument();
-		expect(screen.getByText(/all of your personal warnings stay active/i))
-			.toBeInTheDocument();
+		expect(
+			screen.getByRole("heading", { name: "Regional label context" }),
+		).toBeInTheDocument();
+		expect(
+			screen.getByText(/all of your personal warnings stay active/i),
+		).toBeInTheDocument();
 		expect(screen.getByText(/Peanut \(Peanuts\)/)).toBeInTheDocument();
-		expect(screen.getByText(/Not defined by this regional profile: Banana/))
-			.toBeInTheDocument();
+		expect(
+			screen.getByText(/Not defined by this regional profile: Banana/),
+		).toBeInTheDocument();
 	});
 
 	it("keeps unresolved-setting guidance in supporting details", async () => {
@@ -396,10 +421,12 @@ describe("ProductCompatibilityPanel", () => {
 						preferenceResolution: {
 							resolvedCount: 0,
 							resolvedPreferences: [],
-							unresolvedPreferences: [{
-								label: "Banana sensitivity",
-								type: "allergen",
-							}],
+							unresolvedPreferences: [
+								{
+									label: "Banana sensitivity",
+									type: "allergen",
+								},
+							],
 						},
 					},
 				}),
@@ -411,9 +438,11 @@ describe("ProductCompatibilityPanel", () => {
 		expect(details).not.toHaveAttribute("open");
 		await fireEvent.click(detailsTitle.closest("summary") as HTMLElement);
 		expect(details).toHaveAttribute("open");
-		expect(screen.getByText("Some settings are waiting for review"))
-			.toBeInTheDocument();
-		expect(screen.getByText(/Banana sensitivity is saved/i))
-			.toBeInTheDocument();
+		expect(
+			screen.getByText("Some settings are waiting for review"),
+		).toBeInTheDocument();
+		expect(
+			screen.getByText(/Banana sensitivity is saved/i),
+		).toBeInTheDocument();
 	});
 });

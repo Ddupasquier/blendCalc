@@ -4,6 +4,7 @@ import type { ManualEntryNutrientGroupsByStep } from "$lib/utils/food/nutrients/
 import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
 import type {
 	NutritionLabelOcrCandidate,
+	NutritionLabelOcrQualitativeFact,
 	NutritionLabelServingCandidate,
 } from "$lib/utils/food/ocr/nutritionLabelOcr";
 
@@ -66,6 +67,7 @@ export type ManualEntryListMovePromptState = {
 
 export type NutritionLabelOcrApplyPayload = {
 	candidates: NutritionLabelOcrCandidate[];
+	qualitativeFacts: NutritionLabelOcrQualitativeFact[];
 	serving: NutritionLabelServingCandidate | null;
 };
 

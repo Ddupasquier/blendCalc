@@ -238,6 +238,10 @@ export const normalizeFoodForStorage = (food: FoodItem): FoodItem => {
 			mappingReviewReference: nutrient.mappingReviewReference,
 			derivationMethod: nutrient.derivationMethod,
 		})),
+		nutrientQualitativeFacts: food.nutrientQualitativeFacts?.map((fact) => ({
+			...fact,
+			measurementBasis: { ...fact.measurementBasis },
+		})),
 		nutrientSourceReview: food.nutrientSourceReview?.map((entry) => ({
 			...entry,
 		})),

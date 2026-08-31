@@ -57,6 +57,7 @@ const OPEN_FOOD_FACTS_FIELDS = [
 	"serving_size",
 	"serving_quantity",
 	"serving_quantity_unit",
+	"nutrition_data_per",
 	"quantity",
 	"product_quantity",
 	"product_quantity_unit",

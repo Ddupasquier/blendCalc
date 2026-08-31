@@ -396,7 +396,15 @@
 					"amountPer100g": { "type": ["number", "null"], "minimum": 0 },
 					"valueStatus": {
 						"type": "string",
-						"enum": ["reported", "estimated", "derived", "missing", "unknown"]
+						"enum": [
+							"reported",
+							"estimated",
+							"derived",
+							"below-reporting-threshold",
+							"present-unquantified",
+							"missing",
+							"unknown"
+						]
 					},
 					"source": {
 						"oneOf": [
@@ -415,7 +423,8 @@
 							"mappingStatus",
 							"mappingMethod",
 							"derivationMethod",
-							"valueQualifier"
+							"valueQualifier",
+							"reportedLimit"
 						],
 						"properties": {
 							"sourceValueStatus": {
@@ -426,6 +435,7 @@
 									"estimated",
 									"derived",
 									"trace",
+									"below-reporting-threshold",
 									"present-unquantified",
 									"missing",
 									"invalid",
@@ -444,6 +454,46 @@
 							"valueQualifier": {
 								"type": ["string", "null"],
 								"enum": ["source-estimate", null]
+							},
+							"reportedLimit": {
+								"oneOf": [
+									{
+										"type": "object",
+										"additionalProperties": false,
+										"required": [
+											"maximumAmount",
+											"unit",
+											"basisKind",
+											"basisQuantity",
+											"basisUnit",
+											"servingLabel",
+											"statement",
+											"policyKey",
+											"policyReference"
+										],
+										"properties": {
+											"maximumAmount": {
+												"type": ["number", "null"],
+												"minimum": 0
+											},
+											"unit": { "type": "string" },
+											"basisKind": {
+												"type": "string",
+												"enum": ["mass", "volume", "serving"]
+											},
+											"basisQuantity": {
+												"type": "number",
+												"exclusiveMinimum": 0
+											},
+											"basisUnit": { "type": "string" },
+											"servingLabel": { "type": ["string", "null"] },
+											"statement": { "type": "string" },
+											"policyKey": { "type": ["string", "null"] },
+											"policyReference": { "type": ["string", "null"] }
+										}
+									},
+									{ "type": "null" }
+								]
 							}
 						}
 					}

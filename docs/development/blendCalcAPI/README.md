@@ -45,6 +45,19 @@ Open the OpenAPI document at `/api/v1/openapi.json`. To inspect raw API JSON in 
 browser, sign in to blendCalc first and then open one of the endpoints below in the same
 browser session. Public bearer keys and anonymous catalog access do not exist yet.
 
+### Inspect The Published Catalog In Supabase
+
+Open **Table Editor → Views → `blendcalc_api_v1_published_products`** to see every
+canonical product currently exposed by blendCalcAPI v1. The view includes the product's
+identity, catalog lineage, current revision, verification dates, publication profile,
+quality dimensions, and exact API detail path. It is service-only and does not let app
+clients bypass the versioned HTTP contract.
+
+`shared_product_submissions` is community intake and review history. It is not the list
+of products accepted for API publication. Accepted canonical records live in
+`shared_products`; the published-products view contains only the subset that currently
+passes `blendcalc_api_v1_product_readiness`.
+
 The server can issue, expire, revoke, and atomically rotate high-entropy API keys while
 storing only hashes and short display prefixes. This credential foundation does not by
 itself expose any endpoint: keyed route access remains disabled until the reviewed
@@ -115,7 +128,8 @@ fields are rejected rather than silently entering blendCalcAPI v1.
 
 Product nutrients remain normalized to `amountPer100g` for stable API comparisons. A
 package-serving observation is converted only when its exact gram weight or another
-verified mass conversion is available. The normalized value is then labeled `derived`,
+reviewed, product-specific mass conversion is available. The normalized value is then
+labeled `derived`,
 while `quality.sourceValueStatus` continues to describe the untouched source
 observation and `quality.derivationMethod` records
 `exact-native-basis-to-100g`. Missing conversion evidence returns `null`; it never
@@ -241,6 +255,9 @@ Important semantics:
 - Missing information remains `null` or absent; it never becomes numeric zero.
 - Zero is publishable only when its state is explicitly `reported-zero`.
 - Derived values require their exact derivation evidence.
+- Exact USDA nutrient identifiers can satisfy canonical mapping automatically only when
+  the canonical unit and exact source reference also agree. Semantic nutrient matching
+  never satisfies the publication gate automatically.
 - Alcohol-by-volume and package-disclosure fields are included only when approved,
   redistributable field provenance exists.
 - `safetyAlerts` contains only current exact or moderator-confirmed official notices
@@ -249,6 +266,9 @@ Important semantics:
   it never means the product is guaranteed safe.
 - Restricted provider evidence may support internal review without entering blendCalcAPI v1.
 - A record can remain useful in the catalog while being withheld from public reads.
+- Readiness reports classify source-licensing and redistribution exclusions separately
+  from repairable catalog failures. A provider policy restriction is not a claim that
+  the product data itself is inaccurate.
 
 [Catalog Field Lineage](catalog-field-lineage.md) owns the field-by-field read path,
 publication gate, missing-value semantics, revisions, and moderator evidence boundary.

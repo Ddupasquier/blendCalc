@@ -76,9 +76,14 @@ export const createManualEntryFormState = () => {
 		data.manualNutrientValues[field.nutrientId] ?? null;
 
 	const applyNutritionLabelOcr = (
-		{ candidates, serving }: NutritionLabelOcrApplyPayload,
+		{ candidates, qualitativeFacts, serving }: NutritionLabelOcrApplyPayload,
 		nutrientFields: ManualEntryNutrientDefinition[],
 	) => {
+		if (serving) {
+			data.servingWeightGrams = serving.gramWeight;
+			data.servingLabel = serving.label;
+			markFieldAsUserEntered("serving");
+		}
 		for (const candidate of candidates) {
 			const field = nutrientFields.find(
 				(item) => item.nutrientId === candidate.nutrientId,
@@ -86,11 +91,35 @@ export const createManualEntryFormState = () => {
 			if (!field) continue;
 			setNutrientValue(field, String(candidate.value));
 		}
-		if (!serving) return;
-
-		data.servingWeightGrams = serving.gramWeight;
-		data.servingLabel = serving.label;
-		markFieldAsUserEntered("serving");
+		const selectedNutrientIds = new Set(
+			qualitativeFacts.map((fact) => fact.nutrientId),
+		);
+		data.nutrientQualitativeFacts = [
+			...data.nutrientQualitativeFacts.filter(
+				(fact) => !selectedNutrientIds.has(fact.nutrientId),
+			),
+			...qualitativeFacts.map((fact) => ({
+				...fact,
+				measurementBasis: data.servingWeightGrams
+					? ({
+							kind: "mass",
+							quantity: data.servingWeightGrams,
+							unitKey: "g",
+						} as const)
+					: ({
+							kind: "serving",
+							quantity: 1,
+							unitKey: "serving",
+							servingLabel: data.servingLabel.trim() || "Package serving",
+						} as const),
+				source: "user-label" as const,
+				confidence: "user-reported" as const,
+				mappingStatus: "canonical" as const,
+				mappingMethod: "reviewed-label-alias",
+				policyKey: "us-fda-nutrition-facts",
+				policyReference: "https://www.fda.gov/media/134505/download",
+			})),
+		];
 	};
 
 	const getSaveNutrients = (nutrientFields: ManualEntryNutrientDefinition[]) =>

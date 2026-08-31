@@ -43,6 +43,7 @@ const entry = {
 	servingWeightGrams: 100,
 	volumeEquivalent: null,
 	nutrients: [zeroProtein],
+	nutrientQualitativeFacts: [],
 	ingredients: "",
 	ingredientList: [],
 	allergens: [],
@@ -58,10 +59,15 @@ describe("barcode draft comparison", () => {
 	});
 
 	it("matches when both records explicitly report zero", () => {
-		expect(barcodeDraftMatchesEntry({
-			...draft,
-			nutrients: [zeroProtein],
-			reportedNutrientIds: [zeroProtein.nutrientId],
-		}, entry)).toBe(true);
+		expect(
+			barcodeDraftMatchesEntry(
+				{
+					...draft,
+					nutrients: [zeroProtein],
+					reportedNutrientIds: [zeroProtein.nutrientId],
+				},
+				entry,
+			),
+		).toBe(true);
 	});
 });

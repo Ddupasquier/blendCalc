@@ -2,6 +2,7 @@ import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
 import type {
 	FoodNutrient,
 	FoodNutrientMeasurementBasis,
+	FoodNutrientQualitativeFact,
 	FoodFieldProvenance,
 	FoodFieldSource,
 	FoodTrackedField,
@@ -145,9 +146,11 @@ const getFieldCompleteness = (
 					).length * weight("populated-property")
 				: 0;
 		case "nutrition":
-			return getArrayScore(
-				draft.nutrients.filter(isValidNutrient),
-				weight("source-item"),
+			return (
+				getArrayScore(
+					draft.nutrients.filter(isValidNutrient),
+					weight("source-item"),
+				) + getArrayScore(draft.nutrientQualitativeFacts, weight("source-item"))
 			);
 	}
 };
@@ -331,6 +334,61 @@ type NutrientCandidate = {
 
 type ResolvedNutrientCandidate = NutrientCandidate & {
 	resolvedValue: number;
+};
+
+const resolveQualitativeNutrientFacts = (
+	drafts: BarcodeProductDraft[],
+	nutrients: readonly FoodNutrient[],
+	policy: ProductResolutionPolicy,
+) => {
+	const numericNutrientIds = new Set(
+		nutrients.map((nutrient) => nutrient.nutrientId),
+	);
+	const candidatesByNutrientId = new Map<
+		number,
+		Array<{ fact: FoodNutrientQualitativeFact; timestamp: number }>
+	>();
+	for (const draft of drafts) {
+		for (const fact of draft.nutrientQualitativeFacts ?? []) {
+			if (
+				!Number.isSafeInteger(fact.nutrientId) ||
+				fact.nutrientId <= 0 ||
+				numericNutrientIds.has(fact.nutrientId)
+			) {
+				continue;
+			}
+			const candidates = candidatesByNutrientId.get(fact.nutrientId) ?? [];
+			candidates.push({ fact, timestamp: getDraftTimestamp(draft) });
+			candidatesByNutrientId.set(fact.nutrientId, candidates);
+		}
+	}
+
+	return [...candidatesByNutrientId.values()]
+		.map(
+			(candidates) =>
+				candidates.sort((left, right) => {
+					const confidenceDifference =
+						getProductResolutionRank(
+							policy,
+							"field-confidence",
+							right.fact.confidence,
+						) -
+						getProductResolutionRank(
+							policy,
+							"field-confidence",
+							left.fact.confidence,
+						);
+					if (confidenceDifference !== 0) return confidenceDifference;
+					if (right.timestamp !== left.timestamp) {
+						return right.timestamp - left.timestamp;
+					}
+					return `${left.fact.source}:${left.fact.sourceReference ?? ""}`.localeCompare(
+						`${right.fact.source}:${right.fact.sourceReference ?? ""}`,
+					);
+				})[0]?.fact,
+		)
+		.filter((fact): fact is FoodNutrientQualitativeFact => fact !== undefined)
+		.map((fact) => ({ ...fact }));
 };
 
 const isNutrientSource = (
@@ -533,8 +591,13 @@ const resolveNutrients = (
 	reportedNutrientIds = reportedNutrientIds.filter((nutrientId) =>
 		nutrients.some((nutrient) => nutrient.nutrientId === nutrientId),
 	);
+	const nutrientQualitativeFacts = resolveQualitativeNutrientFacts(
+		drafts,
+		nutrients,
+		policy,
+	);
 	const nutrientSources: Map<string, FoodFieldSource> = new Map(
-		nutrients.flatMap((nutrient) =>
+		[...nutrients, ...nutrientQualitativeFacts].flatMap((nutrient) =>
 			nutrient.source && isNutrientSource(nutrient.source)
 				? [
 						[
@@ -552,6 +615,7 @@ const resolveNutrients = (
 
 	return {
 		nutrients,
+		nutrientQualitativeFacts,
 		reportedNutrientIds,
 		fieldSource:
 			nutrientSources.size === 1
@@ -613,10 +677,14 @@ export const resolveBarcodeProductFields = (
 	}
 
 	const resolvedNutrients = resolveNutrients(drafts, result, policy);
-	if (resolvedNutrients.nutrients.length > 0) {
+	if (
+		resolvedNutrients.nutrients.length > 0 ||
+		resolvedNutrients.nutrientQualitativeFacts.length > 0
+	) {
 		result = {
 			...result,
 			nutrients: resolvedNutrients.nutrients,
+			nutrientQualitativeFacts: resolvedNutrients.nutrientQualitativeFacts,
 			reportedNutrientIds: resolvedNutrients.reportedNutrientIds,
 		};
 		if (resolvedNutrients.fieldSource) {

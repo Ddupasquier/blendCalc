@@ -424,9 +424,7 @@ describe("NutritionDetailView", () => {
 		);
 		expect(imageLicense).toHaveAttribute("target", "_blank");
 		expect(imageLicense).toHaveAttribute("rel", "noopener noreferrer");
-		expect(screen.getByText("Total Fat").closest("li")).toHaveTextContent(
-			"0 g",
-		);
+		expect(screen.getByText("Total Fat").closest("li")).toHaveTextContent("—");
 		expect(
 			screen.queryByText(/partial nutrition data/i),
 		).not.toBeInTheDocument();

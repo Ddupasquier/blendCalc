@@ -50,7 +50,12 @@ Protein 3g`,
 
 		expect(result.serving).toEqual({ label: "2/3 cup", gramWeight: 55 });
 		expect(
-			Object.fromEntries(result.candidates.map((candidate) => [candidate.nutrientId, candidate.value])),
+			Object.fromEntries(
+				result.candidates.map((candidate) => [
+					candidate.nutrientId,
+					candidate.value,
+				]),
+			),
 		).toMatchObject({
 			1008: 230,
 			1004: 8,
@@ -79,5 +84,37 @@ Protein 3g`,
 			text: "Sodium 2g",
 		});
 		expect(result.candidates).toEqual([]);
+	});
+
+	it("preserves less-than and not-significant-source statements without inventing zeroes", () => {
+		const result = parseNutritionLabelText({
+			mappings,
+			text: `Nutrition Facts
+Serving size 1 Tbsp (14g)
+Total Carbohydrate 0g
+Dietary Fiber <1g
+Not a significant source of total sugars or added sugars.`,
+		});
+
+		expect(result.candidates).toEqual([
+			expect.objectContaining({ nutrientId: 1005, value: 0 }),
+		]);
+		expect(result.qualitativeFacts).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					nutrientId: 1079,
+					status: "below-reporting-threshold",
+					maximumAmount: 1,
+				}),
+				expect.objectContaining({
+					nutrientId: 2000,
+					status: "below-reporting-threshold",
+				}),
+				expect.objectContaining({
+					nutrientId: 1235,
+					status: "below-reporting-threshold",
+				}),
+			]),
+		);
 	});
 });
