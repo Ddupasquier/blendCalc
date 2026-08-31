@@ -12,10 +12,10 @@
 	<div class="landing-content">
 		<div class="landing-copy">
 			<p class="landing-eyebrow">{APP_NAME}</p>
-			<h1>See how your food adds up.</h1>
+			<h1>Know more about the food you use.</h1>
 			<p class="landing-intro">
-				Combine foods, explore nutrition details, and make more informed choices
-				around your personal goals.
+				Organize food, compare nutrition, and review available recall, allergen,
+				and dietary information in one place.
 			</p>
 		</div>
 
@@ -23,17 +23,17 @@
 			<li>
 				<CircularIconFrame class="landing-benefit-icon" decorative
 					><Check size="1em" /></CircularIconFrame
-				> Track the nutrients you care about
+				> Review nutrition and serving details
 			</li>
 			<li>
 				<CircularIconFrame class="landing-benefit-icon" decorative
 					><Check size="1em" /></CircularIconFrame
-				> Adjust amounts with live feedback
+				> See recall and food-preference warnings
 			</li>
 			<li>
 				<CircularIconFrame class="landing-benefit-icon" decorative
 					><Check size="1em" /></CircularIconFrame
-				> Save combinations for next time
+				> Build and save food combinations
 			</li>
 		</ul>
 

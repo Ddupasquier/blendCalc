@@ -1,7 +1,8 @@
 # blendCalc
 
-blendCalc helps people understand food, organize what they have, build food
-combinations, and compare those combinations with personal nutrition goals.
+blendCalc helps people organize food, understand nutrition, monitor available recall
+information, and surface allergen or dietary concerns that matter to them. It also
+turns saved foods into combinations that can be compared with personal nutrition goals.
 
 The project is a pre-MVP SvelteKit application. Its shared catalog and
 internal API are designed around evidence-backed food data: missing information stays
@@ -25,7 +26,7 @@ without becoming blanket authorities.
 | Find food              | Search generic foods, packaged products, and the approved blendCalc catalog; scan barcodes; and combine complementary source data field by field.                      |
 | Organize food          | Keep account-backed Fridge and Shopping List items mutually exclusive and easy to move.                                                                                |
 | Build and save         | Create a Mix with serving controls, explicit nutrition goals, warnings, and suggestions, then save reusable Recipes without overwriting the original unless requested. |
-| Understand food        | Review ingredients, allergens, package disclosures, source history, images, and detailed nutrition when that evidence exists.                                          |
+| Understand food        | Review nutrition, ingredients, allergens, dietary details, package disclosures, source history, images, and active recall information when that evidence exists.       |
 | Personalize and review | Save profile and food-preference settings, submit image or label evidence, and expose permission-scoped review and operations tools to elevated roles.                 |
 
 ## Technology

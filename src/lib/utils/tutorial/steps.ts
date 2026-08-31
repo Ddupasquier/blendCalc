@@ -31,7 +31,7 @@ export const tutorialSteps: TutorialStep[] = [
 		description:
 			"Each card represents one food in your Fridge or Shopping List.",
 		points: [
-			"Open the card for ingredients, allergens, servings, and complete nutrition details.",
+			"Open the card for nutrition, ingredients, allergens, servings, and available recall details.",
 			"An amber edge means the food may conflict with a dietary setting.",
 		],
 		icon: "ingredients",
@@ -102,11 +102,12 @@ export const tutorialSteps: TutorialStep[] = [
 		targetLabel: "one saved recipe",
 	},
 	{
-		title: "Make warnings relevant to you",
-		description: "Profile lets you save optional food-safety preferences.",
+		title: "Make food warnings relevant to you",
+		description:
+			"Profile lets you save optional allergen and dietary preferences.",
 		points: [
-			"Allergens and dietary restrictions can add warning frames and detailed notices.",
-			"Warnings depend on available data; they are helpful prompts, not medical guarantees.",
+			"Your preferences can add warning frames and detailed notices throughout the app.",
+			"Recall and preference warnings depend on available data; they are helpful prompts, not safety guarantees.",
 		],
 		icon: "goals",
 		route: "/profile/food-preferences",

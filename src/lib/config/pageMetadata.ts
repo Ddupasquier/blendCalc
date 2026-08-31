@@ -13,7 +13,7 @@ export const getAppDocumentTitle = (
 	const { pathname } = url;
 
 	if (pathname === "/") {
-		return formatDocumentTitle("Food & Nutrition Calculator");
+		return formatDocumentTitle("Food Awareness, Nutrition & Recalls");
 	}
 	if (pathname === "/auth") return formatDocumentTitle("Sign In");
 	if (pathname === "/auth/update-password") {
@@ -25,9 +25,7 @@ export const getAppDocumentTitle = (
 		pathname === "/ingredients/shopping" ||
 		pathname.startsWith("/ingredients/shopping/")
 	) {
-		return formatDocumentTitle(
-			getIngredientRouteTitle(url, ingredientName),
-		);
+		return formatDocumentTitle(getIngredientRouteTitle(url, ingredientName));
 	}
 	if (pathname === "/mix" || pathname.startsWith("/mix/")) {
 		return formatDocumentTitle(getMixRouteTitle(url));
