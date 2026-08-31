@@ -18,6 +18,7 @@ const publicationSyncWorkflow = readFileSync(
 );
 const vercelConfiguration = JSON.parse(readFileSync("vercel.json", "utf8")) as {
 	crons?: Array<{ path?: string; schedule?: string }>;
+	regions?: string[];
 };
 
 describe("app interaction analytics", () => {
@@ -39,6 +40,7 @@ describe("app interaction analytics", () => {
 	});
 
 	it("protects and schedules the aggregate synchronization route", () => {
+		expect(vercelConfiguration.regions).toEqual(["pdx1"]);
 		expect(cronRoute).toContain("env.CRON_SECRET");
 		expect(cronRoute).toContain(
 			'request.headers.get("authorization") !== `Bearer ${cronSecret}`',
