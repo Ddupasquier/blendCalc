@@ -11,20 +11,23 @@ const socialPreviewImagePath = "static/social-preview.png";
 describe("social link preview", () => {
 	it("uses an absolute, cache-versioned production image URL", () => {
 		expect(APP_SOCIAL_PREVIEW_URL).toBe(
-			"https://blendcalc.vercel.app/social-preview.png?v=20260814",
+			"https://blendcalc.vercel.app/social-preview.png?v=20260831",
 		);
-		expect(APP_SOCIAL_PREVIEW_ALT).toContain("ingredient tools");
-		expect(APP_SOCIAL_PREVIEW_ALT).toContain("nutrition goal chart");
-		expect(APP_SOCIAL_PREVIEW_ALT).toContain("saved recipes");
+		expect(APP_SOCIAL_PREVIEW_ALT).toContain("nutrition");
+		expect(APP_SOCIAL_PREVIEW_ALT).toContain("recalls");
+		expect(APP_SOCIAL_PREVIEW_ALT).toContain("allergens");
+		expect(APP_SOCIAL_PREVIEW_ALT).toContain("recipes");
 	});
 
 	it("keeps the editable source aligned with the current product", () => {
 		const source = readFileSync(socialPreviewSourcePath, "utf8");
 
 		expect(source).toContain("blendCalc");
-		expect(source).toContain("Understand ingredients.");
-		expect(source).toContain("Nutrition goals");
+		expect(source).toContain("Know your food.");
+		expect(source).toContain("Food warnings");
 		expect(source).toContain("Saved recipes");
+		expect(source).not.toContain(">Goal<");
+		expect(source).not.toContain(">Current<");
 		expect(source).not.toMatch(/Smoothie Mixer|Saved mixes|Save blends/i);
 	});
 
@@ -45,6 +48,8 @@ describe("social link preview", () => {
 		expect(layout).toContain(
 			'<meta name="twitter:image" content={APP_SOCIAL_PREVIEW_URL} />',
 		);
-		expect(layout).toContain('name="twitter:card" content="summary_large_image"');
+		expect(layout).toContain(
+			'name="twitter:card" content="summary_large_image"',
+		);
 	});
 });
