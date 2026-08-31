@@ -193,6 +193,13 @@ If a flat trace field and an exact package statement identify the same allergen,
 statement-linked fact replaces the duplicate flat fact so one disclosure cannot create
 two warnings.
 
+A reviewed current label may also provide explicit negative coverage: an empty trace
+array with selected `traces` field provenance means the reviewer checked the applicable
+package disclosure area and found no precautionary statement. The empty value is not a
+promise of zero cross-contact risk and never becomes an allergen-free claim; it only
+prevents the app from incorrectly describing that label field as unchecked. An empty
+array without selected field provenance remains unknown.
+
 Source/API product names are normalized to readable title-style capitalization and use
 `&` instead of the standalone word `and` before publication so inconsistent vendor
 naming does not become app display names. Canonical food JSON stores `nameProvenance` as
@@ -337,7 +344,10 @@ non-private values.
 Run `npm run audit:blendCalcAPI-catalog -- --json` for a fresh product-by-product publication
 reassessment. It reads the live readiness gate and DB-owned issue contracts, separates
 safe automated repairs from catalog, data-operations, food-policy, external, and system
-work, and reports any blocker whose operational contract is not yet deployed. The audit
+work, and reports any blocker whose operational contract is not yet deployed. Source
+licensing and redistribution exclusions remain hard publication gates, but the report
+lists them separately from repairable catalog failures so legally restricted provider
+records do not inflate the remediation queue. The audit
 is read-only: it never repairs, publishes, or removes a product merely to improve its
 result.
 
@@ -405,6 +415,14 @@ any measured calculation basis. Count/package servings preserve labels such as
 The product JSON remains a compatibility snapshot, but normalized rows are what
 nutrition and Mix consume.
 
+When a provider supplies an exact package volume but no separate serving, the package
+volume can become the primary native serving with evidence from that exact observation.
+It remains volume-only. A gram value may be calculated only through an enabled,
+reviewed, product-specific row in
+`shared_product_mass_volume_conversion_policies`; the serving records that policy and
+its calculation basis. Product names, categories, and generic density assumptions never
+create that policy.
+
 The nutrition and Mix views default to a verified household, count, or package measure
 when one exists and can represent the stored nutrient basis exactly. A source measure
 such as `2 cups (100g)` remains the user-facing amount while calculations retain the
@@ -415,7 +433,9 @@ equivalent. Database triggers synchronize future writes, and the serving migrati
 backfills valid serving and native nutrient data from existing catalog and user food
 records only when an exact serving or user-entered value supports it. Provider identity,
 food identity, names, and categories do not establish a serving origin,
-weight-to-volume relationship, or count-to-weight conversion.
+weight-to-volume relationship, or count-to-weight conversion. A product with zero
+serving rows is reported as missing a primary serving; it is not mislabeled as a simple
+provenance repair until a real serving row and exact observation exist.
 
 ## Runtime Source Boundary
 
@@ -689,10 +709,24 @@ evidence; low differences remain measurable without manufacturing moderator work
 Source publication and modification dates stay attached to the values under review.
 The existing canonical revision remains available while a correction waits.
 
+Exact USDA nutrient IDs are promoted automatically because FoodData Central and the
+canonical nutrient catalog share those identifiers. The database also requires the
+canonical unit and an exact USDA source reference before restoring missing legacy
+lineage. This automation does not approve semantic name matches, conflicting values,
+incomplete required nutrition, or a provider whose redistribution policy is unresolved.
+
+Explicit nutrient qualifiers follow a separate path from numeric nutrition. Statements
+such as `<1 g` and `not a significant source` retain their exact source, native serving
+basis, mapping decision, and observation. They may satisfy a required-field publication
+check only after attribution and canonical review, but they never become zero, their
+upper bound, or an estimated per-100g value. Provider omission alone remains unknown.
+
 Canonical serving publication stores both the complete package serving and its exact
 gram-weight field as provenance from the same observation. This keeps household labels,
 normalized serving rows, and blendCalcAPI publication readiness aligned instead of
 blocking a valid product because only the numeric serving path was recorded.
+Exact package-volume servings follow the same provenance rule without requiring or
+inventing grams.
 
 The same relationship validation runs before external barcode nutrition reaches
 manual-entry autofill or legally permitted exact-source observation storage. Invalid

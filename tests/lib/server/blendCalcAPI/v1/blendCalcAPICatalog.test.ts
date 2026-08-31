@@ -445,6 +445,57 @@ describe("blendCalcAPI v1 catalog mapping", () => {
 		);
 	});
 
+	it("publishes bounded nutrient statements without inventing per-100g amounts", () => {
+		const product = mapApprovedCatalogRecordToBlendCalcAPIV1Product(
+			{
+				...record,
+				food: {
+					...record.food,
+					nutrientQualitativeFacts: [
+						{
+							nutrientId: 1079,
+							nutrientName: "Fiber, total dietary",
+							nutrientNumber: "291",
+							unitName: "G",
+							status: "below-reporting-threshold",
+							statement: "<1 g dietary fiber per serving",
+							maximumAmount: 1,
+							measurementBasis: {
+								kind: "serving",
+								quantity: 1,
+								unitKey: "serving",
+								servingLabel: "1 cookie (30 g)",
+							},
+							source: "usda",
+							sourceReference: "123",
+							confidence: "source-verified",
+							mappingStatus: "canonical",
+							mappingMethod: "source-identifier",
+							policyKey: "us-fda-nutrition-facts",
+							policyReference: "https://www.fda.gov/media/134505/download",
+						},
+					],
+				},
+			},
+			defaultAttributionCatalog(),
+		);
+
+		expect(product.nutrients.find((nutrient) => nutrient.id === 1079)).toEqual(
+			expect.objectContaining({
+				amountPer100g: null,
+				valueStatus: "below-reporting-threshold",
+				quality: expect.objectContaining({
+					reportedLimit: expect.objectContaining({
+						maximumAmount: 1,
+						basisKind: "serving",
+						servingLabel: "1 cookie (30 g)",
+						statement: "<1 g dietary fiber per serving",
+					}),
+				}),
+			}),
+		);
+	});
+
 	it("derives API per-100-gram values only from exact package-serving mass", () => {
 		const packageServingRecord = structuredClone(record);
 		packageServingRecord.food.foodNutrients = [
