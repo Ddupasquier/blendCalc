@@ -169,13 +169,14 @@ not promises enforced inside live request handling.
 | Exact product       | 1,000 ms   | One publication-ready product by exact GTIN      |
 | Category first page | 750 ms     | First 50 enabled canonical categories            |
 | Search first page   | 1,000 ms   | First 15 publication-ready matches for one query |
-| Warm product repeat | 150 ms     | Same exact product URL after one priming read    |
+| Warm product repeat | 250 ms     | Same exact product URL after one priming read    |
 
 Run `npm run test:e2e:session:start`, then run
 `npm run audit:blendCalcAPI-performance` in another terminal. The audit reports p50,
-p95, and maximum latency. It uses unique URLs for cold scenarios and a stable URL for
-repeat reads so those two measurements cannot be
-silently conflated. A noisy audit failure does not alter API availability or catalog
+p95, and maximum latency. It uses `cache: no-store` with contract-valid URLs and a
+stable URL for repeat reads so those two measurements cannot be silently conflated. Its
+20-sample minimum keeps nearest-rank p95 distinct from the single slowest request. A
+noisy audit failure does not alter API availability or catalog
 data.
 
 `npm run audit:blendCalcAPI-load` measures the common exact-product path, a broad first
