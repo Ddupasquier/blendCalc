@@ -31,8 +31,12 @@
 	let abortController = $state<AbortController | null>(null);
 
 	const servingOptionId = "serving";
+	const qualitativeOptionId = (nutrientId: number) =>
+		`qualitative:${nutrientId}`;
 	const formatValue = (value: number) =>
-		new Intl.NumberFormat(undefined, { maximumFractionDigits: 3 }).format(value);
+		new Intl.NumberFormat(undefined, { maximumFractionDigits: 3 }).format(
+			value,
+		);
 	const options = $derived([
 		...(result?.serving
 			? [
@@ -45,6 +49,10 @@
 		...(result?.candidates.map((candidate) => ({
 			id: candidate.nutrientId,
 			label: `${candidate.nutrientName}: ${formatValue(candidate.value)} ${candidate.unitName.toLowerCase()}`,
+		})) ?? []),
+		...(result?.qualitativeFacts.map((fact) => ({
+			id: qualitativeOptionId(fact.nutrientId),
+			label: `${fact.nutrientName}: ${fact.maximumAmount === undefined ? "Not a significant source" : `<${formatValue(fact.maximumAmount)} ${fact.unitName.toLowerCase()}`}`,
 		})) ?? []),
 	]);
 
@@ -86,13 +94,20 @@
 			selected = [
 				...(result.serving ? [servingOptionId] : []),
 				...result.candidates.map((candidate) => candidate.nutrientId),
+				...result.qualitativeFacts.map((fact) =>
+					qualitativeOptionId(fact.nutrientId),
+				),
 			];
 			if (selected.length === 0) {
-				error = "No safe nutrition values were found. Enter the label values manually.";
+				error =
+					"No safe nutrition values were found. Enter the label values manually.";
 			}
 		} catch (scanError) {
-			if (!(scanError instanceof DOMException && scanError.name === "AbortError")) {
-				error = "The label could not be read. Try a clearer, straight-on photo or enter the values manually.";
+			if (!(
+				scanError instanceof DOMException && scanError.name === "AbortError"
+			)) {
+				error =
+					"The label could not be read. Try a clearer, straight-on photo or enter the values manually.";
 			}
 		} finally {
 			scanning = false;
@@ -109,9 +124,13 @@
 			candidates: result.candidates.filter((candidate) =>
 				selectedNutrientIds.has(candidate.nutrientId),
 			),
+			qualitativeFacts: result.qualitativeFacts.filter((fact) =>
+				selected.includes(qualitativeOptionId(fact.nutrientId)),
+			),
 			serving: selected.includes(servingOptionId) ? result.serving : null,
 		});
-		appliedMessage = "Selected label values were added. Review them before continuing.";
+		appliedMessage =
+			"Selected label values were added. Review them before continuing.";
 	};
 
 	onDestroy(() => {
@@ -119,7 +138,10 @@
 	});
 </script>
 
-<section class="nutrition-label-ocr" aria-labelledby="nutrition-label-ocr-title">
+<section
+	class="nutrition-label-ocr"
+	aria-labelledby="nutrition-label-ocr-title"
+>
 	<div class="nutrition-label-ocr__heading">
 		<strong id="nutrition-label-ocr-title">Scan nutrition label</strong>
 		<span>optional</span>
@@ -154,9 +176,16 @@
 		<fieldset class="nutrition-label-ocr__review">
 			<legend>Review suggestions</legend>
 			<p>Uncheck anything that does not match the package label.</p>
-			<CheckboxGroup {options} {selected} onChange={(values) => (selected = values)} />
+			<CheckboxGroup
+				{options}
+				{selected}
+				onChange={(values) => (selected = values)}
+			/>
 		</fieldset>
-		<RoundedActionButton onclick={applySelected} disabled={selected.length === 0}>
+		<RoundedActionButton
+			onclick={applySelected}
+			disabled={selected.length === 0}
+		>
 			Use selected values
 		</RoundedActionButton>
 		<details class="nutrition-label-ocr__raw-text" use:animatedDetails>
@@ -169,10 +198,14 @@
 	{/if}
 
 	{#if error}
-		<StatusMessage tone="danger" title="Label scan needs attention">{error}</StatusMessage>
+		<StatusMessage tone="danger" title="Label scan needs attention"
+			>{error}</StatusMessage
+		>
 	{/if}
 	{#if appliedMessage}
-		<StatusMessage tone="success" title="Suggestions applied">{appliedMessage}</StatusMessage>
+		<StatusMessage tone="success" title="Suggestions applied"
+			>{appliedMessage}</StatusMessage
+		>
 	{/if}
 </section>
 

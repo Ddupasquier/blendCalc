@@ -5,6 +5,7 @@ import type {
 	FoodFieldSource,
 	FoodImageAsset,
 	FoodIngredientAnalysis,
+	FoodNutrientQualitativeFact,
 	FoodTrackedField,
 } from "$lib/utils/food/types";
 import {
@@ -51,7 +52,8 @@ const isValidNutrient = (nutrient: FoodNutrient) =>
 	nutrient.value >= 0;
 
 const hasNutrition = (draft: BarcodeProductDraft) =>
-	draft.nutrients.some(isValidNutrient);
+	draft.nutrients.some(isValidNutrient) ||
+	Boolean(draft.nutrientQualitativeFacts?.length);
 
 const hasImage = (draft: BarcodeProductDraft) => Boolean(draft.image?.imageUrl);
 
@@ -137,11 +139,12 @@ export const getBarcodeProductSupplementPlan = (
 	draft: BarcodeProductDraft,
 	requiredNutrientIds: Iterable<number> = [],
 ): BarcodeProductSupplementPlan => {
-	const availableIds = new Set(
-		draft.nutrients
+	const availableIds = new Set([
+		...draft.nutrients
 			.filter(isValidNutrient)
 			.map((nutrient) => nutrient.nutrientId),
-	);
+		...(draft.nutrientQualitativeFacts ?? []).map((fact) => fact.nutrientId),
+	]);
 	return {
 		...getMissingBarcodeProductFields(draft),
 		ingredientList: !hasValues(draft.ingredientList),
@@ -192,9 +195,16 @@ export const barcodeProductDraftReportsSourceField = (
 	if (fieldPath === "productIdentity") return Boolean(draft.name.trim());
 	if (fieldPath.startsWith("nutrient:")) {
 		const nutrientId = Number(fieldPath.slice("nutrient:".length));
-		return draft.nutrients.some(
-			(nutrient) =>
-				nutrient.nutrientId === nutrientId && isValidNutrient(nutrient),
+		return (
+			draft.nutrients.some(
+				(nutrient) =>
+					nutrient.nutrientId === nutrientId && isValidNutrient(nutrient),
+			) ||
+			Boolean(
+				draft.nutrientQualitativeFacts?.some(
+					(fact) => fact.nutrientId === nutrientId,
+				),
+			)
 		);
 	}
 	return !getMissingBarcodeProductFields(draft)[fieldPath as FoodTrackedField];
@@ -254,11 +264,20 @@ export const getSupplementedBarcodeProductFields = (
 			.map((nutrient) => nutrient.nutrientId),
 	);
 	const addsNutrition =
-		supplement.nutrients.some(
+		(supplement.nutrients.some(
 			(nutrient) =>
 				isValidNutrient(nutrient) &&
 				!primaryNutrientIds.has(nutrient.nutrientId),
-		) &&
+		) ||
+			Boolean(
+				supplement.nutrientQualitativeFacts?.some(
+					(fact) =>
+						!primaryNutrientIds.has(fact.nutrientId) &&
+						!primary.nutrientQualitativeFacts?.some(
+							(existing) => existing.nutrientId === fact.nutrientId,
+						),
+				),
+			)) &&
 		canAddSupplementNutrientsWithoutConflict(
 			primary,
 			supplement,
@@ -270,7 +289,8 @@ export const getSupplementedBarcodeProductFields = (
 				supplement.fieldProvenance?.[field] ||
 				(field === "image" && supplement.image?.source) ||
 				(field === "nutrition" &&
-					supplement.nutrients.some((item) => item.source)),
+					(supplement.nutrients.some((item) => item.source) ||
+						supplement.nutrientQualitativeFacts?.some((item) => item.source))),
 			) &&
 			(field === "nutrition"
 				? addsNutrition
@@ -297,6 +317,16 @@ const inferFieldSource = (
 				source: nutrient.source,
 				sourceReference: nutrient.sourceReference,
 				confidence: nutrient.confidence ?? "unknown",
+			};
+		}
+		const qualitativeFact = draft.nutrientQualitativeFacts?.find(
+			(item) => item.source,
+		);
+		if (qualitativeFact) {
+			return {
+				source: qualitativeFact.source,
+				sourceReference: qualitativeFact.sourceReference,
+				confidence: qualitativeFact.confidence,
 			};
 		}
 	}
@@ -378,6 +408,27 @@ const getAdditiveNutrientMerge = (
 	).filter((nutrient) => !primaryNutrientIds.has(nutrient.nutrientId));
 
 	return [...primaryNutrients, ...addedNutrients];
+};
+
+const mergeQualitativeNutrientFacts = (
+	primaryFacts: readonly FoodNutrientQualitativeFact[] | undefined,
+	supplementFacts: readonly FoodNutrientQualitativeFact[] | undefined,
+	nutrients: readonly FoodNutrient[],
+) => {
+	const numericNutrientIds = new Set(
+		nutrients.map((nutrient) => nutrient.nutrientId),
+	);
+	const factsByNutrientId = new Map<number, FoodNutrientQualitativeFact>();
+	for (const fact of [...(primaryFacts ?? []), ...(supplementFacts ?? [])]) {
+		if (
+			numericNutrientIds.has(fact.nutrientId) ||
+			factsByNutrientId.has(fact.nutrientId)
+		) {
+			continue;
+		}
+		factsByNutrientId.set(fact.nutrientId, { ...fact });
+	}
+	return [...factsByNutrientId.values()];
 };
 
 const canAddSupplementNutrientsWithoutConflict = (
@@ -521,6 +572,11 @@ export const mergeMissingBarcodeProductFields = (
 		nextServingLabel,
 	);
 	let reportedNutrientIds = [...primary.reportedNutrientIds];
+	let nutrientQualitativeFacts = mergeQualitativeNutrientFacts(
+		primary.nutrientQualitativeFacts,
+		[],
+		nutrients,
+	);
 	if (useSupplementProductName) {
 		provenance = withFieldSource(provenance, "productName", supplement);
 	}
@@ -537,6 +593,11 @@ export const mergeMissingBarcodeProductFields = (
 		);
 		if (useCoherentSupplementNutrition) {
 			nutrients = supplementNutrients;
+			nutrientQualitativeFacts = mergeQualitativeNutrientFacts(
+				[],
+				supplement.nutrientQualitativeFacts,
+				nutrients,
+			);
 			reportedNutrientIds = supplement.reportedNutrientIds.filter(
 				(nutrientId) =>
 					nutrients.some((nutrient) => nutrient.nutrientId === nutrientId),
@@ -549,6 +610,11 @@ export const mergeMissingBarcodeProductFields = (
 				(nutrient) => !nutrientIds.has(nutrient.nutrientId),
 			);
 			nutrients = [...nutrients, ...addedNutrients];
+			nutrientQualitativeFacts = mergeQualitativeNutrientFacts(
+				nutrientQualitativeFacts,
+				supplement.nutrientQualitativeFacts,
+				nutrients,
+			);
 			reportedNutrientIds = [
 				...new Set([...reportedNutrientIds, ...supplement.reportedNutrientIds]),
 			].filter((nutrientId) =>
@@ -642,6 +708,7 @@ export const mergeMissingBarcodeProductFields = (
 			? supplement.volumeEquivalent
 			: primary.volumeEquivalent,
 		nutrients,
+		nutrientQualitativeFacts,
 		reportedNutrientIds,
 		ingredients: useSupplementIngredients
 			? supplement.ingredients

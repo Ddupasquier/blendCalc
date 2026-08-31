@@ -61,6 +61,7 @@ export const createCatalogFoodFromDraft = (
 		image: draft.image,
 		fieldProvenance: draft.fieldProvenance,
 		nutrients: draft.nutrients,
+		nutrientQualitativeFacts: draft.nutrientQualitativeFacts,
 		reportedNutrientIds: draft.reportedNutrientIds,
 		hasSourceServing: draft.hasSourceServing,
 		serving: draft.serving,

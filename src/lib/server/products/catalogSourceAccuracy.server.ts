@@ -82,6 +82,7 @@ export const assessProviderDraftNutrientAccuracy = (
 			draft: {
 				...draft,
 				nutrients: [],
+				nutrientQualitativeFacts: [],
 				reportedNutrientIds: [],
 				fieldProvenance,
 			},

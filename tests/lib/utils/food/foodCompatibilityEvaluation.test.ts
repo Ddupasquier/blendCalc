@@ -3,9 +3,7 @@ import {
 	getFoodCompatibilityEvaluation,
 	getFoodCompatibilityEvidenceCoverage,
 } from "$lib/utils/food/quality/foodCompatibilityEvaluation";
-import {
-	getFoodCompatibilityEvaluationMessage,
-} from "$lib/utils/food/quality/foodCompatibilityEvaluationMessages";
+import { getFoodCompatibilityEvaluationMessage } from "$lib/utils/food/quality/foodCompatibilityEvaluationMessages";
 import type { FoodItem } from "$lib/utils/food/types";
 
 const makeFood = (overrides: Partial<FoodItem> = {}): FoodItem => ({
@@ -27,13 +25,15 @@ const completePackagedFood = makeFood({
 
 describe("food compatibility evaluation", () => {
 	it("does not check a food when no personal preference is active", () => {
-		expect(getFoodCompatibilityEvaluation({
-			food: completePackagedFood,
-			policyVersion: 4,
-			hasActivePreferences: false,
-			policyCoversPreferences: true,
-			conflictCount: 0,
-		})).toMatchObject({
+		expect(
+			getFoodCompatibilityEvaluation({
+				food: completePackagedFood,
+				policyVersion: 4,
+				hasActivePreferences: false,
+				policyCoversPreferences: true,
+				conflictCount: 0,
+			}),
+		).toMatchObject({
 			status: "not_checked",
 			profileApplied: false,
 			policyVersion: 4,
@@ -73,18 +73,49 @@ describe("food compatibility evaluation", () => {
 		expect(getFoodCompatibilityEvaluationMessage(evaluation)).toMatchObject({
 			title: "No conflict found in available information",
 		});
-		expect(getFoodCompatibilityEvaluationMessage(evaluation).message)
-			.not.toMatch(/\bsafe\b|allergen-free/i);
+		expect(
+			getFoodCompatibilityEvaluationMessage(evaluation).message,
+		).not.toMatch(/\bsafe\b|allergen-free/i);
+	});
+
+	it("accepts reviewed empty trace evidence without inventing a cross-contact claim", () => {
+		const food = makeFood({
+			ingredients: "Virgin coconut oil",
+			allergens: ["coconut"],
+			traces: [],
+			fieldProvenance: {
+				ingredients: { source: "user-label" },
+				allergens: { source: "user-label" },
+				traces: { source: "user-label" },
+			},
+		});
+
+		expect(getFoodCompatibilityEvidenceCoverage(food)).toMatchObject({
+			ingredients: "available",
+			allergens: "available",
+			traces: "available",
+		});
+		expect(
+			getFoodCompatibilityEvaluation({
+				food,
+				policyVersion: 4,
+				hasActivePreferences: true,
+				policyCoversPreferences: true,
+				conflictCount: 0,
+			}).status,
+		).toBe("checked");
 	});
 
 	it("prioritizes a detected conflict over incomplete evidence", () => {
-		expect(getFoodCompatibilityEvaluation({
-			food: makeFood({ ingredients: "Milk" }),
-			policyVersion: 4,
-			hasActivePreferences: true,
-			policyCoversPreferences: true,
-			conflictCount: 1,
-		})).toMatchObject({
+		expect(
+			getFoodCompatibilityEvaluation({
+				food: makeFood({ ingredients: "Milk" }),
+				policyVersion: 4,
+				hasActivePreferences: true,
+				policyCoversPreferences: true,
+				conflictCount: 1,
+			}),
+		).toMatchObject({
 			status: "conflict",
 			conflictCount: 1,
 		});
@@ -104,13 +135,15 @@ describe("food compatibility evaluation", () => {
 			allergens: "not_required",
 			traces: "not_required",
 		});
-		expect(getFoodCompatibilityEvaluation({
-			food,
-			policyVersion: 4,
-			hasActivePreferences: true,
-			policyCoversPreferences: true,
-			conflictCount: 0,
-		}).status).toBe("checked");
+		expect(
+			getFoodCompatibilityEvaluation({
+				food,
+				policyVersion: 4,
+				hasActivePreferences: true,
+				policyCoversPreferences: true,
+				conflictCount: 0,
+			}).status,
+		).toBe("checked");
 	});
 
 	it("keeps an unknown identity incomplete instead of treating it as packaged", () => {
@@ -134,23 +167,27 @@ describe("food compatibility evaluation", () => {
 			allergens: "available",
 			traces: "available",
 		});
-		expect(getFoodCompatibilityEvaluation({
-			food,
-			policyVersion: 4,
-			hasActivePreferences: true,
-			policyCoversPreferences: true,
-			conflictCount: 0,
-		}).status).toBe("incomplete");
+		expect(
+			getFoodCompatibilityEvaluation({
+				food,
+				policyVersion: 4,
+				hasActivePreferences: true,
+				policyCoversPreferences: true,
+				conflictCount: 0,
+			}).status,
+		).toBe("incomplete");
 	});
 
 	it("keeps uncovered custom preferences incomplete", () => {
-		expect(getFoodCompatibilityEvaluation({
-			food: completePackagedFood,
-			policyVersion: 4,
-			hasActivePreferences: true,
-			policyCoversPreferences: false,
-			conflictCount: 0,
-		})).toMatchObject({
+		expect(
+			getFoodCompatibilityEvaluation({
+				food: completePackagedFood,
+				policyVersion: 4,
+				hasActivePreferences: true,
+				policyCoversPreferences: false,
+				conflictCount: 0,
+			}),
+		).toMatchObject({
 			status: "incomplete",
 			coverage: { policy: "missing" },
 		});

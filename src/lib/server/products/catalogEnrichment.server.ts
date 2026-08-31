@@ -49,6 +49,7 @@ const getFieldValue = (
 		case "nutrition":
 			return {
 				nutrients: draft.nutrients,
+				nutrientQualitativeFacts: draft.nutrientQualitativeFacts ?? [],
 				reportedNutrientIds: draft.reportedNutrientIds,
 			} as unknown as Json;
 		case "image":

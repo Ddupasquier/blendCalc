@@ -665,7 +665,7 @@ describe("NutritionPanel", () => {
 		).toHaveAttribute("href", "https://example.com/second-license");
 	});
 
-	it("shows zero instead of a partial-data warning for missing ingredient nutrients", () => {
+	it("keeps missing ingredient nutrients unavailable instead of inventing zeroes", () => {
 		render(NutritionPanel, {
 			props: {
 				food: peanutButter,
@@ -676,6 +676,6 @@ describe("NutritionPanel", () => {
 		});
 
 		expect(screen.queryByText(/nutrition data/i)).not.toBeInTheDocument();
-		expect(screen.getAllByText("0").length).toBeGreaterThan(0);
+		expect(screen.getAllByText("—").length).toBeGreaterThan(0);
 	});
 });

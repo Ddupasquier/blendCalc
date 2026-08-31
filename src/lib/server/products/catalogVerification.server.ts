@@ -5,6 +5,7 @@ import { normalizeFoodForStorage } from "$lib/utils/food/records/foodRecords";
 import type {
 	FoodItem,
 	FoodNutrient,
+	FoodNutrientQualitativeFact,
 	FoodFieldSource,
 	FoodTrackedField,
 } from "$lib/utils/food/types";
@@ -160,6 +161,23 @@ const addFoodProvenance = (
 			normalizedValue: toJson({
 				value: nutrient.value,
 				unitName: nutrient.unitName.toUpperCase(),
+			}),
+			confidence,
+			verificationMethod,
+		});
+	}
+	for (const fact of food.nutrientQualitativeFacts ?? []) {
+		if (reportedIds.has(fact.nutrientId)) continue;
+		fields.push({
+			fieldPath: `nutrient:${fact.nutrientId}`,
+			observationKey,
+			sourceValue: toJson(fact),
+			normalizedValue: toJson({
+				status: fact.status,
+				statement: fact.statement,
+				maximumAmount: fact.maximumAmount ?? null,
+				unitName: fact.unitName.toUpperCase(),
+				measurementBasis: fact.measurementBasis,
 			}),
 			confidence,
 			verificationMethod,
@@ -440,12 +458,16 @@ export const buildCombinedSourceCatalogBundle = (
 			const nutrient = canonicalFood.foodNutrients.find(
 				(item) => item.nutrientId === nutrientId,
 			);
-			return nutrient?.source && supportedObservationKeys.has(nutrient.source)
+			const qualitativeFact = canonicalFood.nutrientQualitativeFacts?.find(
+				(item) => item.nutrientId === nutrientId,
+			);
+			const evidence = nutrient ?? qualitativeFact;
+			return evidence?.source && supportedObservationKeys.has(evidence.source)
 				? [
 						{
 							...entry,
-							observationKey: nutrient.source,
-							confidence: getCanonicalFieldConfidence(nutrient.confidence),
+							observationKey: evidence.source,
+							confidence: getCanonicalFieldConfidence(evidence.confidence),
 						},
 					]
 				: [];
@@ -540,9 +562,28 @@ export const mergeMissingNutrients = (
 	const additions: FoodNutrient[] = supplement.foodNutrients.filter(
 		(nutrient) => !primaryReported.has(nutrient.nutrientId),
 	);
+	const exactNutrientIds = new Set([
+		...primary.foodNutrients.map((nutrient) => nutrient.nutrientId),
+		...additions.map((nutrient) => nutrient.nutrientId),
+	]);
+	const qualitativeFacts = new Map<number, FoodNutrientQualitativeFact>();
+	for (const fact of primary.nutrientQualitativeFacts ?? []) {
+		if (!exactNutrientIds.has(fact.nutrientId)) {
+			qualitativeFacts.set(fact.nutrientId, fact);
+		}
+	}
+	for (const fact of supplement.nutrientQualitativeFacts ?? []) {
+		if (
+			!exactNutrientIds.has(fact.nutrientId) &&
+			!qualitativeFacts.has(fact.nutrientId)
+		) {
+			qualitativeFacts.set(fact.nutrientId, fact);
+		}
+	}
 	return {
 		...primary,
 		foodNutrients: [...primary.foodNutrients, ...additions],
+		nutrientQualitativeFacts: [...qualitativeFacts.values()],
 		reportedNutrientIds: [
 			...new Set([
 				...primaryReported,
