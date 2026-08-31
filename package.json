@@ -93,7 +93,7 @@
 		"blendCalcAPI:db:push": "node scripts/operations/database/push_blendcalc_api_db.mjs",
 		"blendCalcAPI:db:push:auto": "node scripts/operations/database/push_blendcalc_api_db.mjs --yes",
 		"blendCalcAPI:db:push:dry": "node scripts/operations/database/push_blendcalc_api_db.mjs --dry-run",
-		"blendCalcAPI:db:types": "mkdir -p src/lib/types && supabase gen types typescript --local --workdir infrastructure/blendCalcAPI | prettier --parser typescript > src/lib/types/blendCalcAPIDatabase.types.ts",
+		"blendCalcAPI:db:types": "supabase gen types typescript --local --workdir infrastructure/blendCalcAPI | prettier --parser typescript > infrastructure/blendCalcAPI/supabase/database.types.ts",
 		"db:test:start": "node scripts/operations/database/manage_test_database.mjs start",
 		"db:test:reset": "node scripts/operations/database/manage_test_database.mjs reset",
 		"db:test:verify": "node scripts/operations/database/manage_test_database.mjs verify",

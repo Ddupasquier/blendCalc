@@ -204,7 +204,8 @@ not duplicate the same assertion across runners.
 
 `infrastructure/blendCalcAPI/supabase/` owns the separate publication-read-model
 project, its immutable migration history, database policy tests, and project-specific
-Supabase configuration. It is deliberately outside the application project's root
+Supabase configuration. Its generated `database.types.ts` remains beside that isolated
+schema until application runtime code consumes it. It is deliberately outside the application project's root
 `supabase/` directory so one CLI link or migration command cannot silently target both
 projects. Every command for this project must pass the explicit
 `infrastructure/blendCalcAPI` workdir.
