@@ -158,7 +158,7 @@ describe("catalog verification", () => {
 
 		expect(bundle.observations).toHaveLength(1);
 		expect(bundle.observations[0]).toMatchObject({
-			source: "community-reviewed",
+			source: "user-label",
 			sourceReference: "catalog-submission:test-new-product",
 		});
 		expect(
@@ -205,7 +205,7 @@ describe("catalog verification", () => {
 		);
 
 		expect(bundle.observations[0]).toMatchObject({
-			source: "community-reviewed",
+			source: "user-label",
 			sourceReference: "catalog-submission:test-product-update",
 		});
 		expect(bundle.provenance.map((item) => item.fieldPath).sort()).toEqual(
