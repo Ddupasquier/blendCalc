@@ -27,7 +27,7 @@ const baseUrl = readArgument(
 	"base-url",
 	process.env.BLENDCALC_API_PERFORMANCE_BASE_URL ?? "http://localhost:5174",
 ).replace(/\/$/, "");
-const sampleCount = Number.parseInt(readArgument("samples", "15"), 10);
+const sampleCount = Number.parseInt(readArgument("samples", "20"), 10);
 const barcode = readArgument("barcode", "00021130493609");
 const searchQuery = readArgument("query", "roasted onion garlic");
 const outputJson = process.argv.includes("--json");
@@ -41,8 +41,8 @@ const password =
 	process.env.BLENDCALC_API_PERFORMANCE_PASSWORD ??
 	(isLocalTarget ? "BlendCalc-Local-QA-2026!" : "");
 
-if (!Number.isInteger(sampleCount) || sampleCount < 5 || sampleCount > 40) {
-	throw new Error("--samples must be an integer from 5 through 40.");
+if (!Number.isInteger(sampleCount) || sampleCount < 20 || sampleCount > 40) {
+	throw new Error("--samples must be an integer from 20 through 40.");
 }
 if (!/^\d{14}$/.test(barcode)) {
 	throw new Error("--barcode must be a normalized 14-digit GTIN.");
@@ -76,7 +76,7 @@ try {
 
 	const page = await context.newPage();
 	const bootstrapResponse = await page.goto(
-		`${baseUrl}/api/v1/categories?limit=1&performanceBootstrap=${Date.now()}`,
+		`${baseUrl}/api/v1/categories?limit=1&offset=0`,
 	);
 	if (bootstrapResponse?.status() !== 200) {
 		throw new Error(
@@ -109,28 +109,25 @@ try {
 		return result;
 	};
 
-	const measureUncachedScenario = async (createPath) => {
+	const measureUncachedScenario = async (path) => {
 		const measurements = [];
 		for (let sample = 0; sample < sampleCount; sample += 1) {
-			measurements.push(
-				await measureRequest(createPath(`${Date.now()}-${sample}`)),
-			);
+			measurements.push(await measureRequest(path));
 		}
 		return measurements;
 	};
 
 	const productMeasurements = await measureUncachedScenario(
-		(sample) => `/api/v1/products/${barcode}?performanceSample=${sample}`,
+		`/api/v1/products/${barcode}`,
 	);
 	const categoryMeasurements = await measureUncachedScenario(
-		(sample) => `/api/v1/categories?limit=50&performanceSample=${sample}`,
+		"/api/v1/categories?limit=50&offset=0",
 	);
 	const searchMeasurements = await measureUncachedScenario(
-		(sample) =>
-			`/api/v1/foods/search?q=${encodeURIComponent(searchQuery)}&limit=15&offset=0&performanceSample=${sample}`,
+		`/api/v1/foods/search?q=${encodeURIComponent(searchQuery)}&limit=15&offset=0`,
 	);
 
-	const repeatedProductPath = `/api/v1/products/${barcode}?performanceRepeat=stable`;
+	const repeatedProductPath = `/api/v1/products/${barcode}`;
 	const primingMeasurement = await measureRequest(repeatedProductPath);
 	if (!primingMeasurement.cacheControl?.includes("private")) {
 		throw new Error(

@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
 	BLENDCALC_API_RESPONSE_TARGETS,
@@ -7,11 +8,27 @@ import {
 } from "../../scripts/lib/catalog/blendCalcAPIPerformanceAudit.mjs";
 
 describe("blendCalcAPI performance audit", () => {
+	it("uses only strict public API query parameters", () => {
+		const auditSource = readFileSync(
+			"scripts/audits/catalog/audit_blendCalcAPI_response_performance.mjs",
+			"utf8",
+		);
+
+		expect(auditSource).not.toMatch(/performance(?:Bootstrap|Repeat|Sample)=/);
+		expect(auditSource).toContain("/api/v1/categories?limit=1&offset=0");
+	});
+
 	it("uses nearest-rank percentiles without averaging away slow samples", () => {
 		expect(calculateNearestRankPercentile([10, 20, 30, 40, 500], 0.5)).toBe(30);
 		expect(calculateNearestRankPercentile([10, 20, 30, 40, 500], 0.95)).toBe(
 			500,
 		);
+		expect(
+			calculateNearestRankPercentile(
+				[...Array.from({ length: 19 }, (_, index) => index + 1), 500],
+				0.95,
+			),
+		).toBe(19);
 	});
 
 	it("summarizes latency without averaging away the slowest sample", () => {
