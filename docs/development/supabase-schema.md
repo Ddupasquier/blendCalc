@@ -386,6 +386,11 @@ Notes:
   `amount_per_100g`. Source nutrient keys/codes and mapping/derivation metadata retain
   the exact normalization decision; `mapping_review_reference` is internal moderation
   evidence and is not serialized by the public API.
+- USDA FoodData Central nutrient identifiers are the canonical nutrient identifiers
+  stored by blendCalc. When the identifier, canonical unit, USDA source, and exact
+  source reference agree, the database records `source-identifier` lineage
+  automatically. This is identifier matching, not nutrient-name inference. Semantic
+  taxonomy and observation candidates remain noncanonical until reviewed.
 - `apply_food_nutrient_uncertainty` populates these columns only from the exact parent
   food snapshot. It does not infer uncertainty from provider identity or a similar
   nutrient.
@@ -403,6 +408,9 @@ grams without measured evidence.
 Notes:
 
 - `basis_kind` is `mass`, `volume`, or `serving`.
+- Exact USDA identifier lineage follows the same database enforcement and backfill as
+  `food_nutrients`, so native serving measurements and their derived per-100g projection
+  cannot disagree about mapping status.
 - Mass values may project into `food_nutrients.amount_per_100g`. Volume and serving
   values remain native unless an exact measured conversion supports a mass projection.
 - A source serving such as `1 cookie`, `2 crackers`, or `1 bottle` uses the `serving`
@@ -415,6 +423,32 @@ Notes:
   being forced into the legacy per-100g projection.
 - Application reads prefer this table. `food_nutrients` remains the backward-compatible
   per-100g projection for consumers that explicitly require mass-normalized data.
+
+### `food_nutrient_qualitative_evidence`
+
+Stores source-reported nutrient statements that are meaningful but are not exact
+numeric amounts.
+
+| Table                                | Documented columns                                                                                                                                                                                                                                                                                                                                                 |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `food_nutrient_qualitative_evidence` | `id`, food-parent and ownership ids, `source_observation_id`, `nutrient_id`, `qualitative_status`, `statement_text`, optional `maximum_amount`, `unit_name`, `basis_kind`, `basis_quantity`, `basis_unit_key`, optional `basis_serving_label`, `source`, `source_reference`, `confidence`, source nutrient identity, mapping metadata, policy evidence, timestamps |
+
+Notes:
+
+- `qualitative_status` is `below-reporting-threshold` or
+  `present-unquantified`. Missing provider data never creates a row.
+- `maximum_amount` is an exclusive source-reported upper bound, not a nutrient amount.
+  It is never copied into `food_nutrients`, `food_nutrient_measurements`, or Mix math.
+- One row points to exactly one list item, custom food, submission, product, revision,
+  or source observation. Parent-food triggers rebuild these rows from
+  `nutrientQualitativeFacts` and remove stale rows when the facts disappear.
+- Exact numeric evidence takes precedence over a qualitative fact for the same
+  nutrient in app and blendCalcAPI output.
+- Only canonically mapped, attributed evidence with an accepted reviewed confidence
+  may satisfy a required nutrient in blendCalcAPI publication readiness. The original
+  statement and basis remain public; `amountPer100g` remains `null`.
+- Authenticated clients can read their own rows and rows for active shared products.
+  Parent-table permissions own writes; direct client mutation is blocked.
 
 ### `nutrient_manual_entry_*`
 
@@ -467,6 +501,9 @@ Notes:
   non-negative values, canonical units, and no enabled parent-child relationship
   violation. Source observations remain immutable evidence and may retain conflicting
   provider claims, but those claims cannot become active canonical data until resolved.
+  Before this enforcement was enabled, recognized microgram spellings such as Unicode
+  `ΜG` and provider `MCG` were normalized to the canonical `UG` unit in active product
+  snapshots; unknown or dimensionally different units were not rewritten.
   An explicit empty nutrient array remains valid identity-only data: it preserves
   “nutrition not reported” as unknown and is withheld by blendCalcAPI completeness
   policy rather than inventing zeroes.
@@ -680,9 +717,9 @@ only in nutrient-conversion provenance as `previousServiceReference`.
 Stores source-reported and user-entered serving sizes separately from each food's JSON
 snapshot.
 
-| Table           | Documented columns                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `food_servings` | `id`, `owner_user_id`, `user_food_list_item_id`, `custom_food_id`, `shared_product_submission_id`, `shared_product_id`, `shared_product_revision_id`, `shared_product_observation_id`, `source_observation_id`, `serving_order`, `label`, optional `gram_weight`, optional `milliliter_volume`, optional `amount` and `unit_key`, `is_primary`, `measure_type`, `is_household_measure`, `source_measure_key`, `origin`, `gram_weight_method`, `calculation_basis`, `source`, `source_reference`, `confidence`, and timestamps |
+| Table           | Documented columns                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `food_servings` | `id`, `owner_user_id`, `user_food_list_item_id`, `custom_food_id`, `shared_product_submission_id`, `shared_product_id`, `shared_product_revision_id`, `shared_product_observation_id`, `source_observation_id`, optional `mass_volume_conversion_policy_id`, `serving_order`, `label`, optional `gram_weight`, optional `milliliter_volume`, optional `amount` and `unit_key`, `is_primary`, `measure_type`, `is_household_measure`, `source_measure_key`, `origin`, `gram_weight_method`, `calculation_basis`, `source`, `source_reference`, `confidence`, and timestamps |
 
 Notes:
 
@@ -691,6 +728,13 @@ Notes:
 - Every row must contain at least one exact basis: positive grams, positive milliliters,
   or a positive amount with a recognized unit. A gram value is not required for a
   volume-only or count/package serving.
+- An exact package-volume observation may supply a primary volume-only serving when no
+  separate package serving exists. The corrective backfill requires selected exact
+  package provenance and does not inspect product names or categories.
+- A calculated shared-product serving containing both grams and milliliters must link
+  an enabled `shared_product_mass_volume_conversion_policies` row for the same product
+  and observation. The trigger validates the ratio and copies the reviewed calculation
+  basis; a generic density assumption cannot satisfy it.
 - Parent-table triggers rebuild serving rows whenever food/source data changes. This
   keeps list items, custom foods, submissions, products, revisions, and observations
   synchronized without relying on browser writes.
@@ -723,6 +767,24 @@ Notes:
   dimensions only through a measured relationship and preserves that calculation basis.
 - Authenticated users may read their own serving rows and servings attached to active
   shared products. Only server/service-role paths may write them.
+
+### `shared_product_mass_volume_conversion_policies`
+
+Stores reviewed, product-specific mass-volume evidence used only when an exact label or
+measurement supports converting a native package volume to grams.
+
+| Table                                            | Documented columns                                                                                                                                                                             |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `shared_product_mass_volume_conversion_policies` | `id`, `shared_product_id`, `source_observation_id`, `grams_per_milliliter`, `calculation_basis`, `evidence_reference`, `reviewed_by`, `reviewed_at`, `enabled`, `created_at`, and `updated_at` |
+
+RLS is forced and only the service role may manage rows. A partial unique index permits
+one enabled policy per product. A trigger requires the evidence observation to carry the
+same barcode as the product. The policy is not inferred from a title, category,
+ingredient list, or broad food type. Volume-only products remain volume-only when no
+reviewed conversion exists. The
+`shared_product_primary_serving_has_complete_provenance` helper separately confirms
+that the selected serving and any reported gram weight retain exact observation
+evidence.
 
 ## Shared Product Catalog And Barcode Flow
 
@@ -788,6 +850,8 @@ generated key once and persists only its SHA-256 hash plus a short display prefi
 Browser roles have no table privileges. Rotation inserts the replacement and revokes
 the prior key in one service-role-only database transaction; expiry, last use, explicit
 revocation, and rotation lineage remain auditable.
+Key expiry is optional at the database function boundary. Omitting it stores `NULL`;
+the server never invents an expiry timestamp solely to satisfy transport typing.
 
 ### `shared_product_submissions`
 
@@ -935,6 +999,12 @@ Notes:
   for identity, required nutrition, servings, ingredient/allergen evidence, provenance,
   conflicts, recency, and redistribution without exposing private evidence to API
   consumers.
+- `blendcalc_api_v1_published_products` is the service-only, read-only inventory of the
+  canonical products currently exposed by blendCalcAPI v1. It filters the readiness
+  contract to publishable rows and includes catalog lineage, current revision,
+  verification timestamps, quality dimensions, and the exact product endpoint path.
+  `shared_product_submissions` remains community intake and is never treated as API
+  acceptance.
 - `catalog_product_readiness` is the service-only reusable status record for canonical
   products. It reports `Active`, `Waiting for review`, or `Blocked` for the shared
   catalog; `Ready` or `Withheld` for blendCalcAPI v1; and explicit
@@ -1979,6 +2049,9 @@ category, or serving fields.
 | `replace_food_servings`                                | Replaces normalized serving rows for exactly one food parent; parent triggers call it after relevant writes                                                                                            |
 | `normalize_food_nutrient_lineage`                      | Links normalized nutrients to exact selected observations and leaves unsupported provider-derived lineage unknown                                                                                      |
 | `normalize_food_serving_lineage`                       | Links normalized servings to exact selected observations and leaves unsupported provider-derived lineage unknown                                                                                       |
+| `enforce_shared_product_mass_volume_policy_evidence`   | Rejects a reviewed mass-volume policy when its source observation belongs to another product barcode                                                                                                   |
+| `enforce_shared_product_serving_mass_volume_policy`    | Rejects calculated shared-product mass-volume conversions unless one active reviewed product/observation policy supports the exact ratio                                                               |
+| `shared_product_has_exact_primary_serving`             | Reports whether a shared product has a primary serving on an exact positive mass, volume, or recognized amount basis                                                                                   |
 | `food_list_item_identity_key`                          | Produces the canonical barcode-or-FDC identity used to prevent cross-list duplicates                                                                                                                   |
 | `place_user_food_list_item`                            | Atomically adds an ingredient, reports a required cross-list move, or completes a confirmed move                                                                                                       |
 | `move_user_food_list_items`                            | Atomically moves a checked ingredient set between Fridge and Shopping List, rejecting stale or partial sets                                                                                            |
