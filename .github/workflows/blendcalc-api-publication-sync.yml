@@ -39,5 +39,5 @@ jobs:
             "$SYNC_URL")"
           test "$status_code" = "200"
           jq --exit-status \
-            '(.status == "created" or .status == "unchanged") and (.catalogHash | type == "string")' \
+            '(.action == "created" or .action == "unchanged") and (.catalogHash | type == "string")' \
             "$response_file"
