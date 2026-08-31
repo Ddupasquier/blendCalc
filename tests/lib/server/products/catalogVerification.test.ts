@@ -151,9 +151,16 @@ describe("catalog verification", () => {
 	});
 
 	it("marks moderator-reviewed label data without inventing another source", () => {
-		const bundle = buildModeratorReviewedCatalogBundle(createUserFood());
+		const bundle = buildModeratorReviewedCatalogBundle(
+			createUserFood(),
+			"catalog-submission:test-new-product",
+		);
 
 		expect(bundle.observations).toHaveLength(1);
+		expect(bundle.observations[0]).toMatchObject({
+			source: "community-reviewed",
+			sourceReference: "catalog-submission:test-new-product",
+		});
 		expect(
 			bundle.provenance.every(
 				(item) => item.confidence === "moderator-reviewed",
@@ -194,8 +201,13 @@ describe("catalog verification", () => {
 					submittedValue: { value: 25, unit: "G" },
 				},
 			],
+			"catalog-submission:test-product-update",
 		);
 
+		expect(bundle.observations[0]).toMatchObject({
+			source: "community-reviewed",
+			sourceReference: "catalog-submission:test-product-update",
+		});
 		expect(bundle.provenance.map((item) => item.fieldPath).sort()).toEqual(
 			["brandOwner", `nutrient:${NUTRIENT_IDS.SUGAR}`].sort(),
 		);

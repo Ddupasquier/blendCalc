@@ -456,8 +456,12 @@ export const approveCommunityProductSubmission = async (
 					currentFood,
 					categorizedFood,
 					changes,
+					`catalog-submission:${submissionId}`,
 				)
-			: buildModeratorReviewedCatalogBundle(categorizedFood);
+			: buildModeratorReviewedCatalogBundle(
+					categorizedFood,
+					`catalog-submission:${submissionId}`,
+				);
 	const sharedProductId = await publishCatalogSubmission({
 		submissionId,
 		food: verificationBundle.canonicalFood,

@@ -28,7 +28,12 @@ import type { CatalogSourceAccuracyConflict } from "./catalogSourceAccuracy.serv
 import type { ResolvedFoodCategory } from "./categoryMapping.server";
 
 export type CatalogObservationSource =
-	"usda" | "open-food-facts" | "user-label" | "manufacturer" | "gs1";
+	| "usda"
+	| "open-food-facts"
+	| "user-label"
+	| "community-reviewed"
+	| "manufacturer"
+	| "gs1";
 
 export type CatalogObservation = {
 	key: string;
@@ -504,11 +509,13 @@ export const buildCombinedSourceCatalogBundle = (
 
 export const buildModeratorReviewedCatalogBundle = (
 	userFood: FoodItem,
+	sourceReference: string,
 ): CatalogVerificationBundle => {
 	const canonicalFood = preserveFoodMetadata(userFood);
 	const observation = createObservation({
 		key: "user-label",
-		source: "user-label",
+		source: "community-reviewed",
+		sourceReference,
 		sourceLicense: "submitted-with-consent",
 		food: canonicalFood,
 	});
@@ -529,6 +536,7 @@ export const buildModeratorReviewedCatalogUpdateBundle = (
 	currentFood: FoodItem,
 	submittedFood: FoodItem,
 	changes: readonly CatalogSubmissionFieldChange[],
+	sourceReference: string,
 ): CatalogVerificationBundle => {
 	const canonicalFood = preserveFoodMetadata(
 		mergeCatalogUpdateFood(currentFood, submittedFood, changes),
@@ -536,7 +544,8 @@ export const buildModeratorReviewedCatalogUpdateBundle = (
 	const submittedObservationFood = preserveFoodMetadata(submittedFood);
 	const observation = createObservation({
 		key: "user-label",
-		source: "user-label",
+		source: "community-reviewed",
+		sourceReference,
 		sourceLicense: "submitted-with-consent",
 		food: submittedObservationFood,
 	});
