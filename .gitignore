@@ -30,9 +30,14 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+!.env.blendCalcAPI.example
 !.env.moderation.example
 !.env.test
 !.env.vercel.example
+
+# Isolated Supabase workdir state
+infrastructure/blendCalcAPI/supabase/.branches/
+infrastructure/blendCalcAPI/supabase/.temp/
 !supabase/functions/.env.example
 
 # Logs and local caches

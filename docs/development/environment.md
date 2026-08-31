@@ -13,6 +13,7 @@ the variables consumed by that environment. Secrets never belong in tracked file
 | Choose an example file      | [Environment Files](#environment-files)                     |
 | Configure local development | [Local Application](#local-application)                     |
 | Run privileged scripts      | [Privileged Local Operations](#privileged-local-operations) |
+| Operate the API database    | [blendCalcAPI Database](#blendcalcapi-database)             |
 | Run tests                   | [Test Environment](#test-environment)                       |
 | Configure Vercel            | [Vercel](#vercel)                                           |
 | Configure Edge Functions    | [Supabase Edge Functions](#supabase-edge-functions)         |
@@ -23,6 +24,7 @@ the variables consumed by that environment. Secrets never belong in tracked file
 | Tracked contract                  | Ignored values                                                 | Consumer                                          |
 | --------------------------------- | -------------------------------------------------------------- | ------------------------------------------------- |
 | `.env.example`                    | `.env` and `.env.local`                                        | Local SvelteKit application and server routes     |
+| `.env.blendCalcAPI.example`       | `.env.blendCalcAPI.local`                                      | Isolated blendCalcAPI database operations         |
 | `.env.moderation.example`         | `.env.moderation.local`                                        | Privileged scripts and linked Supabase operations |
 | `.env.test`                       | `.env.test.local`                                              | Disposable local database and Playwright          |
 | `.env.vercel.example`             | `.env.vercel.production.local` and `.env.vercel.preview.local` | Vercel Production and Preview deployments         |
@@ -57,6 +59,22 @@ cp .env.moderation.example .env.moderation.local
 
 Confirm the target project before every write. Local test-database commands do not use
 these hosted credentials.
+
+## blendCalcAPI Database
+
+Copy `.env.blendCalcAPI.example` to `.env.blendCalcAPI.local`. This file belongs only to
+the isolated publication database and must never replace the app project's public or
+service-role variables.
+
+```bash
+cp .env.blendCalcAPI.example .env.blendCalcAPI.local
+```
+
+The root Supabase link remains attached to the blendCalc application project. Every
+blendCalcAPI database command must use `infrastructure/blendCalcAPI` as its explicit
+workdir and verify `BLENDCALC_API_SUPABASE_PROJECT_ID` before a hosted write. The
+database password may instead use the dedicated `blendCalcAPI-supabase-db-password`
+macOS Keychain item. Do not reuse the application database password or Keychain name.
 
 ## Test Environment
 

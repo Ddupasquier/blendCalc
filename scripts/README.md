@@ -137,6 +137,16 @@ reviewed remote source before credentials are loaded or Supabase is called.
 | `npm run db:lint`      | Run linked database linting.                                |
 | `npm run db:types`     | Regenerate linked TypeScript database types.                |
 
+The isolated API publication database uses a different Supabase workdir and credential
+set. `npm run blendCalcAPI:db:start`, `blendCalcAPI:db:reset`,
+`blendCalcAPI:db:test`, and `blendCalcAPI:db:stop` operate only its local stack. Hosted
+delivery uses the dedicated `npm run blendCalcAPI:db:push:dry`,
+`npm run blendCalcAPI:db:push`, and `npm run blendCalcAPI:db:push:auto` promotion guard,
+which verifies the isolated link and exact
+remote-main migration source before reading credentials or writing. Generate the local
+isolated contract with `npm run blendCalcAPI:db:types`; never repoint the root
+application link.
+
 Use schema-first delivery: release one backward-compatible expansion, apply and verify
 it, then release dependent application code. Renames, removals, restrictive constraints,
 and changed write semantics require a later contract migration.

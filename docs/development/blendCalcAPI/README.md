@@ -18,6 +18,7 @@ fields retain their stable versioned names.
 | Inspect available reads             | [Read Endpoints](#read-endpoints)                                                                                           |
 | Review response budgets             | [Response Targets](#response-targets)                                                                                       |
 | Understand publication rules        | [What Can Be Published](#what-can-be-published) and [Corrections And Rapid Removal](#corrections-and-rapid-removal)         |
+| Understand database isolation       | [Publication Database Isolation](database-isolation.md)                                                                     |
 | Inspect upstream provider samples   | [External API Structure References](../api-structures/README.md)                                                            |
 
 ## blendCalcAPI v1 Status
@@ -44,6 +45,12 @@ The executable contract is split between:
 Open the OpenAPI document at `/api/v1/openapi.json`. To inspect raw API JSON in a
 browser, sign in to blendCalc first and then open one of the endpoints below in the same
 browser session. Public bearer keys and anonymous catalog access do not exist yet.
+
+The application database remains the canonical source of truth. The separate
+blendCalcAPI Supabase project is an isolated publication read model and receives only
+complete, redistributable API snapshots. See
+[Publication Database Isolation](database-isolation.md) for ownership, synchronization,
+cutover, and rollback rules.
 
 ### Inspect The Published Catalog In Supabase
 

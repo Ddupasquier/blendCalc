@@ -151,6 +151,13 @@ and personas live in [Database Testing](docs/development/database-testing.md).
 | `npm run db:test:status`                          | Show local Supabase service status.                             |
 | `npm run db:test:stop`                            | Stop local Supabase.                                            |
 | `npm run supabase -- <args>`                      | Run the repository-installed Supabase CLI.                      |
+| `npm run blendCalcAPI:db:start`                   | Start the isolated local API publication database.              |
+| `npm run blendCalcAPI:db:reset`                   | Replay the isolated API publication migrations locally.         |
+| `npm run blendCalcAPI:db:test`                    | Run isolated API publication database policy tests.             |
+| `npm run blendCalcAPI:db:stop`                    | Stop the isolated local API publication database.               |
+| `npm run blendCalcAPI:db:push:dry`                | Preview isolated hosted API-database migrations.                |
+| `npm run blendCalcAPI:db:push`                    | Apply reviewed isolated migrations with confirmation.           |
+| `npm run blendCalcAPI:db:types`                   | Generate isolated publication-database TypeScript types.        |
 | `npm run db:link`                                 | Link the CLI to the configured blendCalc Supabase project.      |
 | `npm run db:new -- <name>`                        | Create a forward-only migration.                                |
 | `npm run db:push:dry`                             | Preview linked migrations without applying them.                |

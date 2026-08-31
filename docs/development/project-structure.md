@@ -15,7 +15,7 @@ Visual implementation and token selection follow the Ingredients-derived system 
 | Change isolation        | [Feature Branches](#feature-branches)                                                                                      |
 | Application placement   | [Application Source](#application-source), [Components](#components), [Routes](#routes), and [Domain Logic](#domain-logic) |
 | Naming and verification | [Naming](#naming) and [Tests](#tests)                                                                                      |
-| Supporting material     | [Scripts](#scripts) and [Documentation](#documentation)                                                                    |
+| Supporting material     | [Infrastructure](#infrastructure), [Scripts](#scripts), and [Documentation](#documentation)                                |
 | Final placement check   | [Ownership Check](#ownership-check)                                                                                        |
 
 ## Feature Branches
@@ -201,6 +201,15 @@ not duplicate the same assertion across runners.
   repository-local output or cache directories.
 - Remove obsolete scripts instead of keeping undocumented alternatives.
 - Keep the directory map and maintenance requirements in `scripts/README.md` current.
+
+## Infrastructure
+
+`infrastructure/blendCalcAPI/supabase/` owns the separate publication-read-model
+project, its immutable migration history, database policy tests, and project-specific
+Supabase configuration. It is deliberately outside the application project's root
+`supabase/` directory so one CLI link or migration command cannot silently target both
+projects. Every command for this project must pass the explicit
+`infrastructure/blendCalcAPI` workdir.
 
 ## Documentation
 
