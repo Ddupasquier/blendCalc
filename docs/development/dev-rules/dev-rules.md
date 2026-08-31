@@ -967,6 +967,12 @@ Never make content changes directly on `staging` or `main`. Read-only investigat
 the explicitly authorized merge or release operation itself do not require another
 branch.
 
+When a branch implements or verifies a private Project ticket, include the exact ticket
+ID in every new branch name using `<type>/<TICKET-ID>-<short-description>`, for example
+`fix/QA-032-012-browser-title`. This applies prospectively; do not rename active branches
+solely to satisfy the convention, and do not invent ticket IDs for genuinely unticketed
+maintenance work.
+
 **18.** Treat bypassing staging as a process problem. If a change is headed to `main`
 without going through `staging`, stop and call that out before merging.
 
@@ -979,8 +985,11 @@ pushing changes.
 **20a.** Every commit must represent one coherent responsibility and use a meaningful,
 specific message that states the delivered outcome. Prefer the established
 `type(scope): imperative outcome` format; do not use vague messages such as `updates`,
-`fix stuff`, or `work in progress`. Split unrelated features, fixes, dependency updates,
-schema changes, and cleanup into separate commits. Keep the implementation, tests,
+`fix stuff`, or `work in progress`. For ticket-owned work, include the exact ticket ID
+immediately after the colon: `type(scope): TICKET-ID imperative outcome`, for example
+`fix(auth): QA-064-001 require Google account chooser`. Do not invent an ID for
+unticketed maintenance. Split unrelated features, fixes, dependency updates, schema
+changes, and cleanup into separate commits. Keep the implementation, tests,
 documentation, generated artifacts, and lockfile changes required to make one
 responsibility complete in that responsibility's commit rather than separating files by
 type. Stage by path or hunk when the working tree contains unrelated work, and never

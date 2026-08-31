@@ -31,7 +31,9 @@ where any file belongs:
    tracked files. If remote publication fails, report the blocker and pause tracked
    changes unless the user explicitly approves local-only work.
 3. Give the branch one plain-English responsibility and a matching prefix such as
-   `feat/`, `fix/`, `refactor/`, `docs/`, `test/`, or `chore/`.
+   `feat/`, `fix/`, `refactor/`, `docs/`, `test/`, or `chore/`. When a private Project
+   ticket owns the work, use `<type>/<TICKET-ID>-<short-description>`, such as
+   `fix/QA-032-012-browser-title`. Do not invent an ID for unticketed maintenance.
 4. Before acting on another prompt, verify that its outcome belongs to the active
    branch. If it does not, create a separate branch before editing.
 5. When the current working tree contains uncommitted work for another responsibility,
