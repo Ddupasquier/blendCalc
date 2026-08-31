@@ -1,11 +1,23 @@
 begin;
 
-select plan(21);
+select plan(24);
 
 select has_schema('blendcalc_api', 'the isolated blendCalcAPI schema exists');
 select has_table('blendcalc_api', 'publication_generations', 'publication generations are durable');
 select has_table('blendcalc_api', 'publication_products', 'public product snapshots are durable');
 select has_view('blendcalc_api', 'active_publication_products', 'only the active generation is readable');
+select has_function(
+	'blendcalc_api',
+	'search_active_publication_products',
+	array['text', 'text[]', 'integer', 'integer'],
+	'the isolated catalog owns its server-only search contract'
+);
+select has_function(
+	'blendcalc_api',
+	'search_publication_generation_products',
+	array['uuid', 'text', 'text[]', 'integer', 'integer'],
+	'candidate generations can be checked before activation'
+);
 
 select ok(
 	not has_schema_privilege('anon', 'blendcalc_api', 'usage')
@@ -120,6 +132,20 @@ select is(
 	(select count(*)::integer from blendcalc_api.active_publication_products),
 	1,
 	'the active generation exposes its product'
+);
+
+select is(
+	(
+		select count(*)::integer
+		from blendcalc_api.search_active_publication_products(
+			'first',
+			array['first'],
+			15,
+			0
+		)
+	),
+	1,
+	'search reads only the active complete generation'
 );
 
 with inserted_generation as (

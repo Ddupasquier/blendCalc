@@ -3,7 +3,7 @@ import {
 	readBlendCalcAPIV1BarcodePathParameter,
 	readBlendCalcAPIV1RevisionHistoryRequest,
 } from "$lib/blendCalcAPI/v1/blendCalcAPIRequest";
-import { readBlendCalcAPIV1ProductRevisionHistory } from "$lib/server/blendCalcAPI/v1/blendCalcAPICatalog.server";
+import { readBlendCalcAPIV1ProductRevisionHistory } from "$lib/server/blendCalcAPI/v1/blendCalcAPIReadModel.server";
 import { hasBlendCalcAPIV1CatalogReadAccess } from "$lib/server/blendCalcAPI/v1/blendCalcAPIAccessPolicy.server";
 import {
 	blendCalcAPIV1Error,

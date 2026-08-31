@@ -3,6 +3,10 @@
 		{
 			"path": "/api/internal/analytics/sync",
 			"schedule": "15 5 * * *"
+		},
+		{
+			"path": "/api/internal/blendCalcAPI/publication/sync",
+			"schedule": "*/15 * * * *"
 		}
 	]
 }
