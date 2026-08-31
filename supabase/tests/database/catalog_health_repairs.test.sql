@@ -107,15 +107,34 @@ insert into public.food_servings (
 	source,
 	confidence
 )
-values (
-	'81000000-0000-4000-8000-000000000041',
-	1,
-	'1 bottle',
-	355,
-	true,
-	'unknown',
-	'unknown'
-);
+values
+	(
+		'81000000-0000-4000-8000-000000000041',
+		1,
+		'1 bottle',
+		355,
+		true,
+		'unknown',
+		'unknown'
+	),
+	(
+		'82500000-0000-4000-8000-000000000001',
+		1,
+		'1 can',
+		355,
+		true,
+		'unknown',
+		'unknown'
+	),
+	(
+		'82500000-0000-4000-8000-000000000011',
+		1,
+		'1 can',
+		355,
+		true,
+		'unknown',
+		'unknown'
+	);
 
 delete from public.shared_product_field_provenance provenance
 where provenance.shared_product_id = '81000000-0000-4000-8000-000000000001'
@@ -566,8 +585,8 @@ select is(
 			null
 		) -> 'items' -> 0 ->> 'reasonCode'
 	),
-	'primary_serving_missing',
-	'unresolved audit output explains why automation stopped'
+	'no_exact_redistributable_observation',
+	'unresolved audit output explains that no matching serving evidence exists'
 );
 
 select * from finish();
