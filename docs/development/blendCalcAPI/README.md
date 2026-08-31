@@ -121,6 +121,22 @@ observation and `quality.derivationMethod` records
 `exact-native-basis-to-100g`. Missing conversion evidence returns `null`; it never
 creates an estimated mass value.
 
+An exact package volume can satisfy the internal primary-serving requirement while
+remaining volume-only. It does not make `amountPer100g` available by itself. Any
+volume-to-mass conversion requires an active DB policy linked to the same product and
+source observation. Serving completeness and provider redistribution eligibility are
+independent gates, so repairing a serving does not publish restricted Open Food Facts
+fields or nutrients.
+
+An explicit bounded or unquantified label statement is published separately from exact
+math. Its nutrient row uses `amountPer100g: null`, a qualitative `valueStatus`, and
+`quality.reportedLimit` with the original statement and native basis. A limit such as
+`<1 g per serving` is never serialized as exactly `1 g`, and a missing nutrient remains
+missing rather than inheriting a qualitative state from its product category. Reviewed
+package-label evidence may complete the app's internal food record without becoming API
+output; it clears publication completeness only when its source policy independently
+permits redistribution.
+
 ## Response Targets
 
 The internal API has measured p95 response budgets for representative authenticated
