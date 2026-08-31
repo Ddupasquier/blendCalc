@@ -62,7 +62,7 @@ describe("app interaction analytics", () => {
 		);
 		expect(publicationSyncWorkflow).toContain('test "$status_code" = "200"');
 		expect(publicationSyncWorkflow).toContain(
-			'.status == "created" or .status == "unchanged"',
+			'.action == "created" or .action == "unchanged"',
 		);
 	});
 });
