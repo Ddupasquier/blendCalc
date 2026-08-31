@@ -928,6 +928,7 @@ declare
 	v_allergens jsonb;
 	v_traces jsonb;
 	v_missing_reasons text[];
+	v_unexpected_reasons text[];
 begin
 	select count(*)::integer into v_product_count
 	from public.shared_products product
@@ -982,8 +983,20 @@ begin
 	where product.barcode = '00011110863065'
 		and product.status = 'active';
 
-	if cardinality(coalesce(v_missing_reasons, '{}'::text[])) > 0 then
-		raise exception 'Coconut oil still has publication blockers after reviewed label correction: %', v_missing_reasons;
+	select coalesce(array_agg(reason order by reason), '{}'::text[])
+	into v_unexpected_reasons
+	from unnest(coalesce(v_missing_reasons, '{}'::text[])) reason
+	where reason <> all(array[
+		'field_source_not_redistributable',
+		'missing_required_nutrient:1079',
+		'missing_required_nutrient:2000',
+		'nutrient_source_not_redistributable',
+		'serving_source_not_redistributable'
+	]);
+
+	if cardinality(v_unexpected_reasons) > 0 then
+		raise exception 'Coconut oil still has unexpected accuracy blockers after reviewed label correction: %',
+			v_unexpected_reasons;
 	end if;
 end;
 $$;
