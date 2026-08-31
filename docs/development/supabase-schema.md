@@ -445,8 +445,11 @@ Notes:
 - Exact numeric evidence takes precedence over a qualitative fact for the same
   nutrient in app and blendCalcAPI output.
 - Only canonically mapped, attributed evidence with an accepted reviewed confidence
-  may satisfy a required nutrient in blendCalcAPI publication readiness. The original
-  statement and basis remain public; `amountPer100g` remains `null`.
+  may satisfy a required nutrient in blendCalcAPI publication readiness when the source
+  policy also permits API redistribution. Reviewed evidence remains usable by the app
+  when redistribution is disabled, but it does not clear the public API gate. The
+  original statement and basis remain public only after that gate passes;
+  `amountPer100g` remains `null`.
 - Authenticated clients can read their own rows and rows for active shared products.
   Parent-table permissions own writes; direct client mutation is blocked.
 

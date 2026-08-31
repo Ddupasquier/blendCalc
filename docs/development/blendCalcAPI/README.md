@@ -146,7 +146,10 @@ An explicit bounded or unquantified label statement is published separately from
 math. Its nutrient row uses `amountPer100g: null`, a qualitative `valueStatus`, and
 `quality.reportedLimit` with the original statement and native basis. A limit such as
 `<1 g per serving` is never serialized as exactly `1 g`, and a missing nutrient remains
-missing rather than inheriting a qualitative state from its product category.
+missing rather than inheriting a qualitative state from its product category. Reviewed
+package-label evidence may complete the app's internal food record without becoming API
+output; it clears publication completeness only when its source policy independently
+permits redistribution.
 
 ## Response Targets
 
