@@ -107,6 +107,13 @@ Vercel-owned operations. Configure each value in the narrowest required environm
   writes a `[SENSITIVE]` marker for those entries; replace that marker only from an
   existing trusted local copy or by intentionally rotating the secret.
 
+The blendCalcAPI publication scheduler also uses GitHub Actions. Store the same
+production `CRON_SECRET` as the repository Actions secret `CRON_SECRET`, and store the
+public production synchronization endpoint as the Actions variable
+`BLENDCALC_API_SYNC_URL`. The URL is configuration rather than a secret. Keep Vercel's
+daily cron as an independent fallback; GitHub owns the 15-minute cadence because Vercel
+Hobby supports only daily cron schedules.
+
 ## Supabase Edge Functions
 
 `supabase/functions/.env.example` lists custom secrets consumed by deployed Edge

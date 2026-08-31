@@ -12,6 +12,10 @@ const cronRoute = readFileSync(
 	"src/routes/api/internal/analytics/sync/+server.ts",
 	"utf8",
 );
+const publicationSyncWorkflow = readFileSync(
+	".github/workflows/blendcalc-api-publication-sync.yml",
+	"utf8",
+);
 const vercelConfiguration = JSON.parse(readFileSync("vercel.json", "utf8")) as {
 	crons?: Array<{ path?: string; schedule?: string }>;
 };
@@ -46,8 +50,19 @@ describe("app interaction analytics", () => {
 			},
 			{
 				path: "/api/internal/blendCalcAPI/publication/sync",
-				schedule: "*/15 * * * *",
+				schedule: "30 5 * * *",
 			},
 		]);
+		expect(publicationSyncWorkflow).toContain('cron: "*/15 * * * *"');
+		expect(publicationSyncWorkflow).toContain(
+			"CRON_SECRET: ${{ secrets.CRON_SECRET }}",
+		);
+		expect(publicationSyncWorkflow).toContain(
+			"SYNC_URL: ${{ vars.BLENDCALC_API_SYNC_URL }}",
+		);
+		expect(publicationSyncWorkflow).toContain('test "$status_code" = "200"');
+		expect(publicationSyncWorkflow).toContain(
+			'.status == "created" or .status == "unchanged"',
+		);
 	});
 });

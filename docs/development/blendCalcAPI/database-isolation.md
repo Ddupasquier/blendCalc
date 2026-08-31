@@ -80,7 +80,11 @@ Production reads remain on the application database until all of these pass:
 9. Backup, restore, monitoring, alerts, and credential rotation are verified.
 
 The scheduled server synchronization builds and atomically activates a complete target
-generation. `BLENDCALC_API_READ_MODE=shadow` continues returning canonical source reads
+generation. A protected GitHub workflow calls the production synchronization route
+every 15 minutes. Vercel also calls it once daily as an independent Hobby-compatible
+fallback. Both schedulers use the same `CRON_SECRET` authorization boundary, and the
+GitHub workflow requires the public route URL in the `BLENDCALC_API_SYNC_URL` repository
+variable. `BLENDCALC_API_READ_MODE=shadow` continues returning canonical source reads
 while recording only hashes and match state from isolated reads. After parity passes,
 `isolated` selects the publication database; `source` remains the immediate rollback.
 Removing the old read path is a later contract phase, not part of the initial switch.

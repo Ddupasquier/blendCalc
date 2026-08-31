@@ -1,0 +1,43 @@
+name: blendCalcAPI Publication Sync
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: blendcalc-api-publication-sync
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  synchronize:
+    name: Synchronize publication database
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Synchronize complete publication generation
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          SYNC_URL: ${{ vars.BLENDCALC_API_SYNC_URL }}
+        run: |
+          test -n "$CRON_SECRET"
+          test -n "$SYNC_URL"
+          response_file="$(mktemp)"
+          status_code="$(curl \
+            --silent \
+            --show-error \
+            --retry 3 \
+            --retry-all-errors \
+            --connect-timeout 10 \
+            --max-time 240 \
+            --output "$response_file" \
+            --write-out "%{http_code}" \
+            --header "Authorization: Bearer $CRON_SECRET" \
+            "$SYNC_URL")"
+          test "$status_code" = "200"
+          jq --exit-status \
+            '(.status == "created" or .status == "unchanged") and (.catalogHash | type == "string")' \
+            "$response_file"
