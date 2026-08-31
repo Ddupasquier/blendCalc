@@ -54,6 +54,9 @@ Vercel remains the versioned HTTP, authentication, request-bound, rate-limit, an
 serializer boundary. Browser code receives no URL or key for the isolated project. The
 server validates the existing blendCalc session or future blendCalcAPI credential, then
 uses a separate server-only client to read the active publication generation.
+Vercel Functions run in `pdx1` so server-side reads stay beside the `us-west-2`
+application and publication databases instead of crossing the country from the default
+`iad1` region. Static assets remain globally distributed by Vercel.
 
 Hosted Supabase keeps its required `public` and `graphql_public` Data API schemas in the
 exposure list and appends `blendcalc_api`. The isolated migration grants no browser-role
