@@ -11,7 +11,7 @@ const socialPreviewImagePath = "static/social-preview.png";
 describe("social link preview", () => {
 	it("uses an absolute, cache-versioned production image URL", () => {
 		expect(APP_SOCIAL_PREVIEW_URL).toBe(
-			"https://blendcalc.vercel.app/social-preview.png?v=20260831",
+			"https://www.blendcalc.food/social-preview.png?v=20260831",
 		);
 		expect(APP_SOCIAL_PREVIEW_ALT).toContain("nutrition");
 		expect(APP_SOCIAL_PREVIEW_ALT).toContain("recalls");

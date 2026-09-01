@@ -44,7 +44,7 @@ Vercel Production and Preview environments:
 ```text
 PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
 PUBLIC_SUPABASE_PUBLISHABLE_KEY=YOUR_PUBLISHABLE_KEY
-PUBLIC_SITE_URL=https://blendcalc.vercel.app
+PUBLIC_SITE_URL=https://www.blendcalc.food
 PUBLIC_TURNSTILE_SITE_KEY=YOUR_TURNSTILE_SITE_KEY
 ```
 
@@ -60,21 +60,24 @@ event names. Their storage and privacy boundary is documented in
 
 In **Authentication → URL Configuration**:
 
-- Site URL: `https://blendcalc.vercel.app`
-- Redirect URL: `https://blendcalc.vercel.app/auth/callback`
+- Site URL: `https://www.blendcalc.food`
+- Redirect URL: `https://www.blendcalc.food/auth/callback`
 - Redirect URL: `http://localhost:5173/auth/callback`
 - Test Redirect URL: `http://localhost:5174/auth/callback`
 - Preview Redirect URL: `https://*-<vercel-account-slug>.vercel.app/auth/callback`
 
 Keep exact callback URLs for production and localhost. Restrict the Preview wildcard to
 this project's Vercel account suffix rather than allowing every `vercel.app` deployment.
+The legacy `https://blendcalc.vercel.app` production alias remains reachable for shared
+links, while authentication requests from it move to the canonical custom domain before
+provider handoff. It is a compatibility entry point, not a second canonical origin.
 
 In **Authentication → Sign In / Providers → Google**, use the Google client ID and
 secret. In Google Cloud, configure:
 
 - JavaScript origin: `http://localhost:5173`
 - Test JavaScript origin: `http://localhost:5174`
-- JavaScript origin: `https://blendcalc.vercel.app`
+- JavaScript origin: `https://www.blendcalc.food`
 - Redirect URI: the Supabase callback displayed in the Google provider panel, such as
   `https://YOUR_PROJECT.supabase.co/auth/v1/callback`
 

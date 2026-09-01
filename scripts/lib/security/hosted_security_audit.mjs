@@ -4,7 +4,7 @@
  * `node scripts/audits/security/audit_hosted_security.mjs`.
  */
 
-const PRODUCTION_ORIGIN = "https://blendcalc.vercel.app";
+const PRODUCTION_ORIGIN = "https://www.blendcalc.food";
 const REQUIRED_REDIRECT_URLS = [
 	`${PRODUCTION_ORIGIN}/auth/callback`,
 	"http://localhost:5173/auth/callback",
