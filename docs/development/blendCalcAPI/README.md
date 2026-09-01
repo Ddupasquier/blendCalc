@@ -158,6 +158,13 @@ Missing unit or basis never implies a conversion, and intake cannot label a prop
 canonically verified. These rows are private moderation evidence; approval still
 selects canonical lineage through `shared_product_field_provenance`.
 
+App-only intake validates normalized product and brand identity before moderation can
+accept proposed fields. The submitted identity is checked against the active canonical
+record and every exact-barcode source record independently. Ordinary submissions fail
+closed when canonical identity conflicts or every exact source is unrelated; mixed
+source evidence, brand conflicts, unknown products, and explicit corrections require
+complete package-evidence review. Exact identity never verifies unrelated fields.
+
 ## Read Endpoints
 
 | Method and path                            | Returns                                                              |
