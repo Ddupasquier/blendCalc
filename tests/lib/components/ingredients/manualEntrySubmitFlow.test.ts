@@ -73,6 +73,38 @@ describe("manual entry catalog submission", () => {
 		expect(mocks.notifyIngredientListsChanged).not.toHaveBeenCalled();
 	});
 
+	it("keeps optional image evidence private without explicit sharing", async () => {
+		const useIngredient = vi.fn().mockResolvedValue(true);
+		const frontPhoto = new File(
+			[new Uint8Array([0xff, 0xd8, 0xff])],
+			"front.jpg",
+			{
+				type: "image/jpeg",
+			},
+		);
+		const imageEvidence = { ...photos, frontPhoto };
+		const result = await saveManualEntryCustomFood({
+			food,
+			name: food.description,
+			normalizedBarcode: food.barcode ?? null,
+			shareWithCatalog: false,
+			photos: imageEvidence,
+			reviewFlags: ["Review this optional product image."],
+			useIngredient,
+		});
+
+		expect(result).toEqual({
+			status: "complete",
+			catalogMessage: "",
+			catalogMessageTone: "success",
+			resetForm: true,
+		});
+		expect(mocks.saveCustomFood).toHaveBeenCalledOnce();
+		expect(useIngredient).toHaveBeenCalledWith(food);
+		expect(mocks.submitSharedProduct).not.toHaveBeenCalled();
+		expect(mocks.notifyIngredientListsChanged).not.toHaveBeenCalled();
+	});
+
 	it("submits only after the user explicitly enables sharing", async () => {
 		const useIngredient = vi.fn().mockResolvedValue(true);
 		const result = await saveManualEntryCustomFood({
@@ -95,6 +127,7 @@ describe("manual entry catalog submission", () => {
 		expect(useIngredient).toHaveBeenCalledOnce();
 		expect(mocks.submitSharedProduct).toHaveBeenCalledOnce();
 		expect(mocks.submitSharedProduct).toHaveBeenCalledWith(food, photos, {
+			consentToShare: true,
 			reviewFlags: [],
 			intent: "catalog_share",
 		});

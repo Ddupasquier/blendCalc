@@ -13,9 +13,11 @@ export type ValidationAttemptState = Partial<
 export const buildRequiredManualNutrientValidationItems = ({
 	requiredFields,
 	getValue,
+	tone = "error",
 }: {
 	requiredFields: ManualEntryNutrientDefinition[];
 	getValue: (field: ManualEntryNutrientDefinition) => number | null;
+	tone?: StepValidationItem["tone"];
 }): StepValidationItem[] =>
 	requiredFields
 		.filter((field) => {
@@ -24,7 +26,7 @@ export const buildRequiredManualNutrientValidationItems = ({
 		})
 		.map((field) => ({
 			message: `${stripUnitFromNutrientLabel(field.label)} is required`,
-			tone: "error",
+			tone,
 			step: field.step,
 		}));
 

@@ -92,6 +92,7 @@ describe("catalog submission route", () => {
 		).rejects.toMatchObject({ status: 400 });
 
 		expect(mocks.uploadProductEvidence).not.toHaveBeenCalled();
+		expect(mocks.assertCanSubmitSharedProduct).not.toHaveBeenCalled();
 		expect(mocks.submitCatalogIntake).not.toHaveBeenCalled();
 	});
 

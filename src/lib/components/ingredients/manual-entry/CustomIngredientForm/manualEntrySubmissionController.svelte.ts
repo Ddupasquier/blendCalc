@@ -168,7 +168,6 @@ export const createManualEntrySubmissionController = ({
 				name: form.data.name,
 				normalizedBarcode,
 				shareWithCatalog: form.data.shareWithCatalog,
-				submitForCatalog: barcode.shouldSubmitOptionalProductImageReview,
 				photos: {
 					frontPhoto: form.data.frontPhoto,
 					frontImageCrop: form.data.frontPhoto

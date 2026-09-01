@@ -17,7 +17,9 @@ signed-in user without exposing the account that submitted it.
 
 1. A user scans or enters a valid UPC/EAN barcode.
 2. The ingredient is always saved to that user's private custom-food list first.
-3. For eligible labels, the user can explicitly opt in to catalog review.
+3. Complete, unchanged exact-source data defaults to sharing only when every represented
+   product-data source is approved for canonical storage. User-entered values, edits,
+   corrections, and photos still require an explicit opt-in.
 4. The server validates the barcode, exact serving basis, nutrient values, and basic
    macro relationships.
 5. An exact, legally reusable USDA FoodData Central barcode match may publish or improve
@@ -40,6 +42,17 @@ from reviewed prepared-food overrides.
 Submitting is optional. A failed catalog submission never rolls back the user's private
 ingredient. Submission pauses only affect shared catalog submissions. Users can still
 save private custom foods, use their fridge, and build mixes.
+Private saves may omit catalog-required nutrient values and product evidence; those
+unknowns remain absent rather than becoming zero. Enabling community sharing makes the
+catalog nutrient and evidence requirements blocking, and the server independently
+rejects incomplete submissions.
+Private saves and user-authored values or photos never create catalog intake by
+themselves. When an exact provider-backed product is complete, unchanged, and uses only
+sources approved for canonical storage, the Share step enables sharing by default and
+clearly allows the user to turn it off. Any user edit or selected evidence file clears
+that automatic default; sharing those values requires the user to enable it again.
+The trusted route and database reject every submission without recorded sharing
+consent.
 
 ## Source Policy
 

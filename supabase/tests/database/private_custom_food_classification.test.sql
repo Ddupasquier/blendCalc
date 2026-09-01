@@ -1,6 +1,6 @@
 begin;
 
-select plan(8);
+select plan(9);
 
 insert into auth.users (id, aud, role, email)
 values (
@@ -8,6 +8,28 @@ values (
 	'authenticated',
 	'authenticated',
 	'private-classification@blendcalc.local'
+);
+
+select throws_ok(
+	$$
+		insert into public.shared_product_submissions (
+			submitted_by,
+			barcode,
+			product_name,
+			food,
+			consent_to_share
+		)
+		values (
+			'74300000-0000-4000-8000-000000000001',
+			'04006381333955',
+			'Private Save Must Stay Private',
+			'{"description":"Private Save Must Stay Private","foodNutrients":[]}'::jsonb,
+			false
+		)
+	$$,
+	'23514',
+	'new row for relation "shared_product_submissions" violates check constraint "shared_product_submissions_consent_to_share_check"',
+	'catalog intake rejects data without explicit sharing consent'
 );
 
 insert into public.shared_product_submissions (
