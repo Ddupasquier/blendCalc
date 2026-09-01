@@ -67,6 +67,16 @@ export const getRequestRateLimitPolicy = (
 			windowSeconds: 3600,
 		};
 	}
+	if (
+		requestMethod === "GET" &&
+		/^\/api\/intake\/v1\/submissions\/[^/]+$/.test(pathname)
+	) {
+		return {
+			scope: "catalog:intake-status",
+			limit: 60,
+			windowSeconds: 60,
+		};
+	}
 	if (pathname === "/api/publication-concerns" && requestMethod === "POST") {
 		return {
 			scope: "blendCalcAPI:publication-concern",

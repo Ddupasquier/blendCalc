@@ -29,6 +29,19 @@ describe("request rate-limit policies", () => {
 		});
 	});
 
+	it("bounds authenticated intake status polling", () => {
+		expect(
+			getRequestRateLimitPolicy(
+				"GET",
+				"/api/intake/v1/submissions/11111111-1111-4111-8111-111111111111",
+			),
+		).toEqual({
+			scope: "catalog:intake-status",
+			limit: 60,
+			windowSeconds: 60,
+		});
+	});
+
 	it("allows normal search traffic without leaving it unbounded", () => {
 		expect(getRequestRateLimitPolicy("GET", "/api/foods/search")).toMatchObject(
 			{
