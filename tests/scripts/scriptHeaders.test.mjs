@@ -45,6 +45,7 @@ const sharedLibraryDomains = [
 	"images",
 	"nutrition",
 	"qa",
+	"quality",
 	"reference-data",
 	"releases",
 	"security",

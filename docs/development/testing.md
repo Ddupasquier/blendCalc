@@ -119,14 +119,15 @@ npx playwright test --last-failed
 Use the visible terminal dashboard when a complete progress view is more useful than
 compact output:
 
-| Profile       | Command                  | Target       | Ownership                                                                                          |
-| ------------- | ------------------------ | ------------ | -------------------------------------------------------------------------------------------------- |
-| Quick Check   | `npm run verify:quick`   | Under 4 min  | Formatting, lint, Svelte/TypeScript, and Vitest selected from changed ownership                    |
-| Feature Check | `npm run verify:feature` | Under 8 min  | Source gates, every Vitest project, and browser specs selected from changed ownership              |
-| Release Check | `npm run verify:release` | Under 15 min | Dependency audit, source gates, disposable database, build, and the bounded blocking browser tiers |
-| Nightly Check | `npm run verify:nightly` | Nonblocking  | Release confidence plus every scenario in every maintained browser and device-emulation project    |
+| Profile         | Command                    | Target       | Ownership                                                                                          |
+| --------------- | -------------------------- | ------------ | -------------------------------------------------------------------------------------------------- |
+| Quick Check     | `npm run verify:quick`     | Under 4 min  | Formatting, lint, Svelte/TypeScript, and Vitest selected from changed ownership                    |
+| Feature Check   | `npm run verify:feature`   | Under 8 min  | Source gates, every Vitest project, and browser specs selected from changed ownership              |
+| Release Check   | `npm run verify:release`   | Under 15 min | Dependency audit, source gates, disposable database, build, and the bounded blocking browser tiers |
+| Promotion Check | `npm run verify:promotion` | Under 1 min  | Proves the clean staging or main tree exactly matches a fresh successful Release Check receipt     |
+| Nightly Check   | `npm run verify:nightly`   | Nonblocking  | Release confidence plus every scenario in every maintained browser and device-emulation project    |
 
-VS Code exposes the same four profiles through **Terminal → Run Task**. Each task opens
+VS Code exposes the same checks through **Terminal → Run Task**. Each task opens
 one dedicated terminal and shows stage progress, elapsed time, an estimate based on
 ignored local duration history, the current test when the runner reports it, and the
 failure-log path when a stage fails. This is a presentation layer over the maintained
@@ -149,6 +150,21 @@ expand browser verification to the bounded blocking matrix. Do not rerun browser
 after documentation, comments, or unrelated source-only edits.
 
 ### Release Confidence
+
+Run the complete `npm run verify:release` once on the exact clean release candidate. Use
+`mock-staging` first when a large, risky, or conflict-prone batch needs a disposable
+integration checkpoint; otherwise `staging` is the release candidate. A successful run
+records an ignored, content-addressed receipt in the shared Git directory. After an
+unchanged promotion, run `npm run verify:promotion`; it finishes quickly and fails
+closed when the tree is dirty, changed, stale, missing a receipt, or uses a different
+runtime. Use `npm run verify:promotion -- --force-full` whenever a fresh full run is
+desired.
+
+GitHub follows the same boundary: feature branches run source/unit checks plus affected
+browser flows. `mock-staging` runs the complete matrix when used. Otherwise `staging`
+runs the complete checks, while `main` must match the verified `staging` tree exactly.
+Hosted checks that depend on the deployed environment still run for each applicable
+branch.
 
 #### Work-Quota Closeout
 

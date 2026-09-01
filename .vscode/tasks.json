@@ -41,6 +41,19 @@
 			}
 		},
 		{
+			"label": "blendCalc: Promotion Check",
+			"type": "shell",
+			"command": "npm run verify:promotion",
+			"group": "test",
+			"problemMatcher": [],
+			"presentation": {
+				"reveal": "always",
+				"panel": "dedicated",
+				"clear": true,
+				"focus": true
+			}
+		},
+		{
 			"label": "blendCalc: Nightly Check",
 			"type": "shell",
 			"command": "npm run verify:nightly",

@@ -12,6 +12,10 @@ import { spawn } from "node:child_process";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+	invalidateReleaseReceipt,
+	recordReleaseReceipt,
+} from "../../lib/quality/release_verification_receipt.mjs";
 
 const repositoryRoot = fileURLToPath(new URL("../../..", import.meta.url));
 const historyPath = fileURLToPath(
@@ -451,6 +455,9 @@ const main = async () => {
 		process.exitCode = 2;
 		return;
 	}
+	if (profileKey === "release") {
+		await invalidateReleaseReceipt(repositoryRoot);
+	}
 
 	const history = await readHistory();
 	const states = profile.stages.map((verificationStage) => ({
@@ -507,6 +514,14 @@ const main = async () => {
 	console.log(
 		`\n${profile.label} passed in ${formatDuration(Date.now() - startedAt)}.`,
 	);
+	if (profileKey === "release") {
+		const result = await recordReleaseReceipt(repositoryRoot);
+		console.log(
+			result.recorded
+				? `Reusable promotion receipt recorded for tree ${result.receipt.tree}.`
+				: `Promotion receipt not recorded: ${result.reason}`,
+		);
+	}
 };
 
 const isMainModule = process.argv[1]

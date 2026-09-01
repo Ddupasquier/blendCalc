@@ -73,6 +73,7 @@
 		"verify:quick": "node scripts/operations/quality/run_verification_dashboard.mjs quick",
 		"verify:feature": "node scripts/operations/quality/run_verification_dashboard.mjs feature",
 		"verify:release": "node scripts/operations/quality/run_verification_dashboard.mjs release",
+		"verify:promotion": "node scripts/operations/quality/verify_release_promotion.mjs",
 		"verify:nightly": "node scripts/operations/quality/run_verification_dashboard.mjs nightly",
 		"kill:vite": "pkill -f \"node .*node_modules/.bin/vite dev\" 2>/dev/null || true",
 		"free:dev-port": "pids=$(lsof -ti :5173 2>/dev/null); if [ -n \"$pids\" ]; then kill -9 $pids; fi",
