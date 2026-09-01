@@ -11,9 +11,6 @@ const canonicalCategoryDisplayTestNameKey =
 	canonicalCategoryDisplayTestName.toLocaleLowerCase("en-US");
 const expectedManualEntryReferenceDataUnavailableMessage =
 	"Nutrition tools couldn’t load. Refresh and try again before continuing.";
-const escapeRegularExpression = (value: string) =>
-	value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
 const cleanUpCanonicalCategoryDisplayTestFood = async (
 	parallelWorkerIndex: number,
 ) => {
