@@ -47,6 +47,7 @@ const { submitSharedProduct, validateBarcodeProductForSharing } = vi.hoisted(
 		validateBarcodeProductForSharing: vi.fn().mockResolvedValue({
 			status: "not-found",
 			barcode: "04006381333931",
+			requiresCatalogEvidence: true,
 		}),
 	}),
 );
@@ -602,6 +603,7 @@ describe("CustomIngredientForm", () => {
 		validateBarcodeProductForSharing.mockResolvedValue({
 			status: "not-found",
 			barcode: "04006381333931",
+			requiresCatalogEvidence: true,
 		});
 		barcodeLookupMocks.lookupBarcodeProduct.mockResolvedValue({
 			status: "not-found",
@@ -1480,6 +1482,70 @@ describe("CustomIngredientForm", () => {
 		expect(
 			screen.getByText(/all fields on this step are optional/i),
 		).toBeInTheDocument();
+	});
+
+	it("requires complete image evidence before sharing an Open Food Facts-only match", async () => {
+		const nutrients = makeTestNutrients({
+			calories: 200,
+			fat: 20,
+			carbs: 6.7,
+			fiber: 0,
+			sugar: 3.3,
+			protein: 0,
+			sodium: 733,
+		}).map((nutrient) => ({
+			...nutrient,
+			source: "open-food-facts" as const,
+			sourceReference: "00051497279929",
+			confidence: "unknown" as const,
+		}));
+		const draft = {
+			barcode: "00051497279929",
+			name: "Alabama White Sauce",
+			nameProvenance: "source" as const,
+			brandOwner: "OMC",
+			servingLabel: "2 tbsp (30 g)",
+			servingWeightGrams: 30,
+			nutrients,
+			reportedNutrientIds: nutrients.map((nutrient) => nutrient.nutrientId),
+			categories: ["Sauces"],
+			resolvedCategory: "Sauces",
+			categoryResolution: createTestCategoryResolution("sauces", "Sauces"),
+			source: "open-food-facts" as const,
+			sourceKey: "open-food-facts",
+			sourceLabel: "Open Food Facts",
+			sourceReference: "00051497279929",
+		};
+		barcodeLookupMocks.lookupBarcodeProduct.mockResolvedValue({
+			status: "found",
+			draft,
+		});
+		validateBarcodeProductForSharing.mockResolvedValue({
+			status: "matched",
+			barcode: draft.barcode,
+			draft,
+			requiresCatalogEvidence: true,
+		});
+
+		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
+		await openManualForm();
+		await fireEvent.input(screen.getByLabelText(/upc \/ barcode/i), {
+			target: { value: "00051497279929" },
+		});
+		await fireEvent.click(
+			await screen.findByRole("button", { name: /autofill/i }),
+		);
+		await goToStep(/^share$/i);
+		await fireEvent.click(screen.getByLabelText(/share with community/i));
+
+		await waitFor(() =>
+			expect(
+				screen.getByText(/photos for catalog review/i),
+			).toBeInTheDocument(),
+		);
+		expect(screen.getByLabelText(/front of package/i)).toBeRequired();
+		expect(screen.getByLabelText(/nutrition facts label/i)).toBeRequired();
+		expect(screen.getByLabelText(/^barcode$/i)).toBeRequired();
 	});
 
 	it("uses an exact catalog category and advances autofill directly to Share", async () => {

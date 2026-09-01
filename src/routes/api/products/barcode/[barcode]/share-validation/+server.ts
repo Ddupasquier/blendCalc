@@ -39,8 +39,16 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
 		barcode,
 	);
 	if (!draft) {
-		return json({ status: "not-found", barcode });
+		return json({
+			status: "not-found",
+			barcode,
+			requiresCatalogEvidence: true,
+		});
 	}
+	const requiresCatalogEvidence = !barcodeDraftUsesOnlyCanonicalSources(
+		draft,
+		await getProductReferenceCatalog(),
+	);
 
 	if (productNamesDiffer(productName, draft.name)) {
 		return json({
@@ -51,6 +59,7 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
 				code: "PRODUCT_NAME_CONFLICT",
 				params: { productName: draft.name },
 			},
+			requiresCatalogEvidence,
 		});
 	}
 
@@ -58,9 +67,7 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
 		status: "matched",
 		barcode,
 		draft,
-		defaultSharingAllowed: barcodeDraftUsesOnlyCanonicalSources(
-			draft,
-			await getProductReferenceCatalog(),
-		),
+		defaultSharingAllowed: !requiresCatalogEvidence,
+		requiresCatalogEvidence,
 	});
 };

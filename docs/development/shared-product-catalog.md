@@ -25,7 +25,8 @@ signed-in user without exposing the account that submitted it.
 5. An exact, legally reusable USDA FoodData Central barcode match may publish or improve
    the blendCalc canonical product; the stored blendCalc record becomes the source used
    by later app and public-API reads while USDA remains recorded as field evidence.
-6. Unknown labels require front-package, nutrition-label, and barcode photos.
+6. Unknown labels and exact matches from sources that cannot populate the canonical
+   catalog require front-package, nutrition-label, and barcode photos.
 7. Unknown labels stay pending until a moderator approves or rejects them.
 8. Approved products appear in ingredient text search and are checked before outside
    barcode services.

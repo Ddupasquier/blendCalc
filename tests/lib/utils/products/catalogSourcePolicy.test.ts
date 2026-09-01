@@ -60,6 +60,18 @@ describe("catalog source policy", () => {
 		).toBe(false);
 	});
 
+	it("requires review evidence for a noncanonical primary source", () => {
+		expect(
+			barcodeDraftUsesOnlyCanonicalSources(
+				createDraft({
+					source: "open-food-facts",
+					sourceKey: "open-food-facts",
+				}),
+				catalog,
+			),
+		).toBe(false);
+	});
+
 	it("keeps separately licensed image provenance out of product-data policy", () => {
 		expect(
 			barcodeDraftUsesOnlyCanonicalSources(

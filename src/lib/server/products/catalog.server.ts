@@ -57,6 +57,8 @@ import {
 	validateSharedProductFood,
 } from "./catalogFoodValidation.server";
 import { recordProductSourceFieldMetrics } from "./sourceMetrics.server";
+import { getProductReferenceCatalog } from "./productReferenceCatalog.server";
+import { barcodeDraftUsesOnlyCanonicalSources } from "$lib/utils/products/catalogSourcePolicy";
 
 type ProductSubmissionContext = {
 	reviewFlags?: string[];
@@ -193,10 +195,12 @@ export const submitProductForCatalog = async (
 	const submissionFood = applyCanonicalFoodCategory(food, selectedCategory);
 	const submissionIntent = context.intent ?? "catalog_share";
 
-	const [existingCatalogFood, resolutionPolicy] = await Promise.all([
-		getSharedProductByBarcode(admin, validation.barcode),
-		getDefaultProductResolutionPolicy(),
-	]);
+	const [existingCatalogFood, resolutionPolicy, productReferenceCatalog] =
+		await Promise.all([
+			getSharedProductByBarcode(admin, validation.barcode),
+			getDefaultProductResolutionPolicy(),
+			getProductReferenceCatalog(),
+		]);
 	const existingCatalogComparison = existingCatalogFood
 		? compareCatalogSubmissionToExistingProduct(
 				submissionFood,
@@ -300,6 +304,13 @@ export const submitProductForCatalog = async (
 		requestedReviewFlags: context.reviewFlags,
 		frontImageCrop: context.frontImageCrop,
 		labelObservedAt,
+		sourceCanAutoPublish: Boolean(
+			sourceAssessment.mergedDraft &&
+			barcodeDraftUsesOnlyCanonicalSources(
+				sourceAssessment.mergedDraft,
+				productReferenceCatalog,
+			),
+		),
 	});
 	await recordProductSourceFieldMetrics(
 		preparedReview.report.sourceLabelDisagreementMetrics ?? [],
@@ -312,6 +323,7 @@ export const submitProductForCatalog = async (
 		hasSourceMatchedImageEvidence,
 		matchedDraft,
 		needsSourceComparisonReview,
+		sourceCanAutoPublish,
 		report,
 		verificationBundle,
 	} = preparedReview;
@@ -347,6 +359,7 @@ export const submitProductForCatalog = async (
 
 	if (
 		matchedDraft &&
+		sourceCanAutoPublish &&
 		!needsSourceComparisonReview &&
 		!hasSourceMatchedImageEvidence
 	) {

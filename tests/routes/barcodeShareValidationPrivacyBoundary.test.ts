@@ -26,15 +26,29 @@ describe("barcode share-validation privacy boundary", () => {
 		mocks.getProductReferenceCatalog.mockResolvedValue({
 			sources: {
 				usda: {
+					key: "usda",
+					displayName: "USDA FoodData Central",
+					attributionText: "USDA",
 					canonicalStorageAllowed: true,
 					canonicalLicenseName: "CC0-1.0",
 				},
+				"open-food-facts": {
+					key: "open-food-facts",
+					displayName: "Open Food Facts",
+					attributionText: "Open Food Facts",
+					canonicalStorageAllowed: false,
+					canonicalLicenseName: "ODbL-1.0",
+				},
 			},
+			nutrientMappings: [],
+			nutrientConversions: [],
+			nutrientEquivalences: [],
 		});
 		mocks.lookupBarcodeProductDraft.mockResolvedValue({
 			name: "Tomato Sauce",
 			source: "usda",
 			sourceKey: "usda",
+			nutrients: [],
 		});
 	});
 
@@ -57,6 +71,7 @@ describe("barcode share-validation privacy boundary", () => {
 		expect(await response.json()).toMatchObject({
 			status: "matched",
 			defaultSharingAllowed: true,
+			requiresCatalogEvidence: false,
 		});
 		expect(mocks.lookupBarcodeProductDraft).toHaveBeenCalledWith(
 			mocks.adminClient,
@@ -66,6 +81,32 @@ describe("barcode share-validation privacy boundary", () => {
 			locals.supabase,
 			"00021130493609",
 		);
+	});
+
+	it("requires complete evidence for a source that cannot populate the catalog", async () => {
+		mocks.lookupBarcodeProductDraft.mockResolvedValue({
+			name: "Alabama White Sauce",
+			source: "open-food-facts",
+			sourceKey: "open-food-facts",
+			nutrients: [],
+		});
+
+		const response = await POST({
+			locals: {
+				getVerifiedUser: vi.fn().mockResolvedValue({ id: "user-id" }),
+			},
+			params: { barcode: "00051497279929" },
+			request: new Request("http://localhost", {
+				method: "POST",
+				headers: { "content-type": "application/json" },
+				body: JSON.stringify({ productName: "Alabama White Sauce" }),
+			}),
+		} as never);
+
+		expect(await response.json()).toMatchObject({
+			status: "matched",
+			requiresCatalogEvidence: true,
+		});
 	});
 
 	it("does not default sharing on for a restricted or mixed source", async () => {

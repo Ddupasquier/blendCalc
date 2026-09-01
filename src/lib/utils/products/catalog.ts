@@ -36,18 +36,21 @@ export type BarcodeShareValidationResult =
 			barcode: string;
 			draft: BarcodeProductDraft;
 			defaultSharingAllowed: boolean;
+			requiresCatalogEvidence: boolean;
 	  }
 	| {
 			status: "name-mismatch";
 			barcode: string;
 			draft: BarcodeProductDraft;
 			defaultSharingAllowed?: false;
+			requiresCatalogEvidence: boolean;
 			message?: string;
 	  }
 	| {
 			status: "not-found";
 			barcode: string;
 			defaultSharingAllowed?: false;
+			requiresCatalogEvidence: true;
 	  };
 
 export const validateBarcodeProductForSharing = async (
@@ -81,6 +84,7 @@ export const validateBarcodeProductForSharing = async (
 		status: result.status,
 		barcode: result.barcode,
 		draft: result.draft,
+		requiresCatalogEvidence: result.requiresCatalogEvidence,
 		message: issue?.message,
 	};
 };

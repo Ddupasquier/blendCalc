@@ -42,6 +42,7 @@ export type CatalogSubmissionValidationReport = {
 	imageCrop?: FoodImagePlacementValues | null;
 	sourceLabelDisagreementMetrics?: ProductSourceFieldMetricIncrement[];
 	sourceAccuracyConflicts?: CatalogSourceAccuracyConflict[];
+	sourceAutoPublishEligible?: boolean;
 };
 
 const sanitizeReviewFlags = (reviewFlags: string[] = []) =>
@@ -85,8 +86,40 @@ export type PreparedCatalogSubmissionReview = {
 	hasSourceMatchedImageEvidence: boolean;
 	matchedDraft: CatalogSourceAssessment["mergedDraft"];
 	needsSourceComparisonReview: boolean;
+	sourceCanAutoPublish: boolean;
 	report: CatalogSubmissionValidationReport;
 	verificationBundle: CatalogVerificationBundle | null;
+};
+
+export const evaluateCatalogSubmissionEvidence = (input: {
+	hasSourceMatch: boolean;
+	sourceCanAutoPublish: boolean;
+	needsSourceComparisonReview: boolean;
+	hasCanonicalImage: boolean;
+	evidencePaths: ProductEvidencePaths;
+}) => {
+	const requiresSourceEvidenceReview =
+		input.hasSourceMatch && !input.sourceCanAutoPublish;
+	const hasSourceMatchedImageEvidence = Boolean(
+		input.hasSourceMatch &&
+		input.sourceCanAutoPublish &&
+		!input.needsSourceComparisonReview &&
+		!input.hasCanonicalImage &&
+		input.evidencePaths.front,
+	);
+	const evidenceComplete = requiresSourceEvidenceReview
+		? hasCompleteProductEvidence(input.evidencePaths)
+		: hasSourceMatchedImageEvidence
+			? true
+			: input.hasCanonicalImage
+				? Boolean(input.evidencePaths.nutrition && input.evidencePaths.barcode)
+				: hasCompleteProductEvidence(input.evidencePaths);
+
+	return {
+		evidenceComplete,
+		hasSourceMatchedImageEvidence,
+		requiresSourceEvidenceReview,
+	};
 };
 
 export const resolveCatalogSubmissionIntent = ({
@@ -112,6 +145,7 @@ export const prepareCatalogSubmissionReview = (input: {
 	requestedReviewFlags?: string[];
 	frontImageCrop?: FoodImagePlacementValues | null;
 	labelObservedAt: string;
+	sourceCanAutoPublish: boolean;
 }): PreparedCatalogSubmissionReview => {
 	if (input.identityValidation.disposition === "reject") {
 		throw new Error(
@@ -189,17 +223,17 @@ export const prepareCatalogSubmissionReview = (input: {
 					],
 				})
 			: null;
-	const hasSourceMatchedImageEvidence = Boolean(
-		matchedDraft &&
-		!needsSourceComparisonReview &&
-		!canonicalSubmissionFood.image?.imageUrl &&
-		input.evidencePaths.front,
-	);
-	const evidenceComplete = hasSourceMatchedImageEvidence
-		? true
-		: canonicalSubmissionFood.image?.imageUrl
-			? Boolean(input.evidencePaths.nutrition && input.evidencePaths.barcode)
-			: hasCompleteProductEvidence(input.evidencePaths);
+	const {
+		evidenceComplete,
+		hasSourceMatchedImageEvidence,
+		requiresSourceEvidenceReview,
+	} = evaluateCatalogSubmissionEvidence({
+		hasSourceMatch: Boolean(matchedDraft),
+		sourceCanAutoPublish: input.sourceCanAutoPublish,
+		needsSourceComparisonReview,
+		hasCanonicalImage: Boolean(canonicalSubmissionFood.image?.imageUrl),
+		evidencePaths: input.evidencePaths,
+	});
 	if (!matchedDraft && !evidenceComplete) {
 		throw new Error(
 			"Unknown products need front package, nutrition label, and barcode photos for verification.",
@@ -208,6 +242,11 @@ export const prepareCatalogSubmissionReview = (input: {
 	if (needsSourceComparisonReview && !evidenceComplete) {
 		throw new Error(
 			"Source comparison reviews need front package, nutrition label, and barcode photos for verification.",
+		);
+	}
+	if (requiresSourceEvidenceReview && !evidenceComplete) {
+		throw new Error(
+			"Sources that cannot populate the canonical catalog need front package, nutrition label, and barcode photos for verification.",
 		);
 	}
 	const sourceLabelDisagreementMetrics = evidenceComplete
@@ -242,6 +281,7 @@ export const prepareCatalogSubmissionReview = (input: {
 		externalLookupFailed: input.sourceAssessment.externalLookupFailed,
 		evidenceComplete,
 		conflictCount: verificationBundle?.conflicts.length ?? 0,
+		sourceAutoPublishEligible: input.sourceCanAutoPublish,
 		existingCatalogMatch: Boolean(input.existingComparison),
 		existingCatalogAction: input.existingComparison
 			? "update_review"
@@ -260,6 +300,7 @@ export const prepareCatalogSubmissionReview = (input: {
 		hasSourceMatchedImageEvidence,
 		matchedDraft,
 		needsSourceComparisonReview,
+		sourceCanAutoPublish: input.sourceCanAutoPublish,
 		report,
 		verificationBundle,
 	};
