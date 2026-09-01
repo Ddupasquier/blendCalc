@@ -2,19 +2,20 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
 	assertCanSubmitSharedProduct: vi.fn(),
-	deleteProductEvidence: vi.fn(),
-	submitProductForCatalog: vi.fn(),
+	submitCatalogIntake: vi.fn(),
 	uploadProductEvidence: vi.fn(),
 }));
 
 vi.mock("$lib/server/products/catalog.server", () => ({
 	assertCanSubmitSharedProduct: mocks.assertCanSubmitSharedProduct,
 	ProductSubmissionBlockedError: class ProductSubmissionBlockedError extends Error {},
-	submitProductForCatalog: mocks.submitProductForCatalog,
+}));
+
+vi.mock("$lib/server/products/catalogIntake.server", () => ({
+	submitCatalogIntake: mocks.submitCatalogIntake,
 }));
 
 vi.mock("$lib/server/products/productEvidence.server", () => ({
-	deleteProductEvidence: mocks.deleteProductEvidence,
 	uploadProductEvidence: mocks.uploadProductEvidence,
 }));
 
@@ -42,9 +43,9 @@ const createEvent = ({
 
 	return {
 		locals: {
-			getVerifiedUser: vi.fn().mockResolvedValue(
-				userId ? { id: userId } : null,
-			),
+			getVerifiedUser: vi
+				.fn()
+				.mockResolvedValue(userId ? { id: userId } : null),
 		},
 		request: new Request("http://localhost:5173/api/products/submissions", {
 			method: "POST",
@@ -58,8 +59,7 @@ describe("catalog submission route", () => {
 		vi.clearAllMocks();
 		mocks.assertCanSubmitSharedProduct.mockResolvedValue(undefined);
 		mocks.uploadProductEvidence.mockResolvedValue({});
-		mocks.deleteProductEvidence.mockResolvedValue(undefined);
-		mocks.submitProductForCatalog.mockResolvedValue({
+		mocks.submitCatalogIntake.mockResolvedValue({
 			status: "pending",
 			message: "The product is waiting for review.",
 			evidenceAccepted: true,
@@ -75,17 +75,15 @@ describe("catalog submission route", () => {
 			message: "The product is waiting for review.",
 			evidenceAccepted: true,
 		});
-		expect(mocks.submitProductForCatalog).toHaveBeenCalledOnce();
-		expect(mocks.submitProductForCatalog).toHaveBeenCalledWith(
-			"qa-user-id",
+		expect(mocks.submitCatalogIntake).toHaveBeenCalledOnce();
+		expect(mocks.submitCatalogIntake).toHaveBeenCalledWith({
+			actorUserId: "qa-user-id",
 			food,
-			{},
-			{
-				reviewFlags: [],
-				frontImageCrop: null,
-				intent: "catalog_share",
-			},
-		);
+			evidencePaths: {},
+			reviewFlags: [],
+			frontImageCrop: null,
+			intent: "catalog_share",
+		});
 	});
 
 	it("rejects a request without explicit sharing consent", async () => {
@@ -94,7 +92,7 @@ describe("catalog submission route", () => {
 		).rejects.toMatchObject({ status: 400 });
 
 		expect(mocks.uploadProductEvidence).not.toHaveBeenCalled();
-		expect(mocks.submitProductForCatalog).not.toHaveBeenCalled();
+		expect(mocks.submitCatalogIntake).not.toHaveBeenCalled();
 	});
 
 	it("rejects a signed-out submission", async () => {
@@ -102,6 +100,6 @@ describe("catalog submission route", () => {
 			POST(createEvent({ consentToShare: true, userId: null }) as never),
 		).rejects.toMatchObject({ status: 401 });
 
-		expect(mocks.submitProductForCatalog).not.toHaveBeenCalled();
+		expect(mocks.submitCatalogIntake).not.toHaveBeenCalled();
 	});
 });

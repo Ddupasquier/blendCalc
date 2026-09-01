@@ -18,6 +18,7 @@ fields retain their stable versioned names.
 | Inspect available reads             | [Read Endpoints](#read-endpoints)                                                                                           |
 | Review response budgets             | [Response Targets](#response-targets)                                                                                       |
 | Understand publication rules        | [What Can Be Published](#what-can-be-published) and [Corrections And Rapid Removal](#corrections-and-rapid-removal)         |
+| Understand future intake ownership  | [Shared Intake And Moderation](#shared-intake-and-moderation)                                                               |
 | Understand database isolation       | [Publication Database Isolation](database-isolation.md)                                                                     |
 | Inspect upstream provider samples   | [External API Structure References](../api-structures/README.md)                                                            |
 | Review app-only intake observations | [App-Only Intake Contract](#app-only-intake-contract)                                                                       |
@@ -126,6 +127,21 @@ image bytes. The trusted server derives the actor, verifies uploads and identifi
 applies bounded validation, and creates immutable intake/moderation records. Canonical
 selection and API publication continue to happen only after evidence review and the
 existing readiness gates.
+
+## Shared Intake And Moderation
+
+Accepted app intake enters the existing catalog observation, submission, and moderation
+pipeline through `submitCatalogIntake`. The current authenticated product-submission
+route and any future app-only blendCalcAPI intake route share this boundary. It owns
+unclaimed evidence cleanup and delegates validation, source comparison, duplicate
+detection, revision classification, submission persistence, automated approval, and
+moderator review to the established catalog services.
+
+Intake does not write a second API-specific product or submission store. Canonical
+products remain in `shared_products`, review work remains in
+`shared_product_submissions`, and accepted source observations retain their existing
+field-level provenance. The public v1 API remains read-only; this shared server boundary
+does not expose a write endpoint or enable public API keys.
 
 ## Read Endpoints
 

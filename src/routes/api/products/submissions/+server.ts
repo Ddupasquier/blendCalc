@@ -1,13 +1,11 @@
 import {
 	assertCanSubmitSharedProduct,
 	ProductSubmissionBlockedError,
-	submitProductForCatalog,
 } from "$lib/server/products/catalog.server";
+import { submitCatalogIntake } from "$lib/server/products/catalogIntake.server";
 import {
-	deleteProductEvidence,
 	uploadProductEvidence,
 	type ProductEvidenceFiles,
-	type ProductEvidencePaths,
 } from "$lib/server/products/productEvidence.server";
 import type { FoodItem } from "$lib/utils/food/types";
 import type { CatalogSubmissionIntent } from "$lib/utils/products/catalog";
@@ -44,7 +42,10 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 				blockedUntil: submissionError.displayBlockedUntil,
 			});
 		}
-		console.error("[catalog submission] Eligibility check failed", submissionError);
+		console.error(
+			"[catalog submission] Eligibility check failed",
+			submissionError,
+		);
 		return throwAppError(503, "CATALOG_VALIDATION_UNAVAILABLE");
 	}
 
@@ -56,7 +57,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 	const consentToShare = formData.get("consentToShare") === "true";
 	let food: FoodItem | null = null;
 	try {
-		food = foodValue ? JSON.parse(String(foodValue)) as FoodItem : null;
+		food = foodValue ? (JSON.parse(String(foodValue)) as FoodItem) : null;
 	} catch {
 		throwAppError(400, "CATALOG_SUBMISSION_INVALID");
 	}
@@ -112,9 +113,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 				suggestionVersion?: unknown;
 				suggestionConfidence?: unknown;
 			};
-			const placementMethod = isImagePlacementMethod(
-					parsedCrop.placementMethod,
-				)
+			const placementMethod = isImagePlacementMethod(parsedCrop.placementMethod)
 				? parsedCrop.placementMethod
 				: "manual";
 			const usesSmartSuggestion =
@@ -127,14 +126,13 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 					: "";
 			const suggestionConfidence = Number(parsedCrop.suggestionConfidence);
 			if (
-				![parsedCrop.cropX, parsedCrop.cropY, parsedCrop.cropZoom].every((value) =>
-					Number.isFinite(Number(value))) ||
+				![parsedCrop.cropX, parsedCrop.cropY, parsedCrop.cropZoom].every(
+					(value) => Number.isFinite(Number(value)),
+				) ||
 				!isImageRotationDegrees(Number(parsedCrop.rotationDegrees ?? 0)) ||
 				!isImageFitMode(parsedCrop.fitMode) ||
-				(
-					usesSmartSuggestion &&
-					(!suggestionVersion || !Number.isFinite(suggestionConfidence))
-				)
+				(usesSmartSuggestion &&
+					(!suggestionVersion || !Number.isFinite(suggestionConfidence)))
 			) {
 				throw new Error("Invalid image placement");
 			}
@@ -150,36 +148,36 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 				placementMethod,
 				...(usesSmartSuggestion
 					? {
-						suggestionVersion,
-						suggestionConfidence,
-					}
+							suggestionVersion,
+							suggestionConfidence,
+						}
 					: {}),
 			});
 		} catch {
 			throwAppError(400, "IMAGE_PLACEMENT_INVALID");
 		}
 	}
-	let evidencePaths: ProductEvidencePaths = {};
-
 	try {
-		evidencePaths = await uploadProductEvidence(user.id, evidenceFiles);
-		const result = await submitProductForCatalog(user.id, submissionFood, evidencePaths, {
+		const evidencePaths = await uploadProductEvidence(user.id, evidenceFiles);
+		const result = await submitCatalogIntake({
+			actorUserId: user.id,
+			food: submissionFood,
+			evidencePaths,
 			reviewFlags,
 			frontImageCrop,
 			intent: submissionIntent,
 		});
-		if (result.evidenceAccepted !== true) {
-			await deleteProductEvidence(evidencePaths);
-		}
 		return json(result, { status: 201 });
 	} catch (submissionError) {
-		await deleteProductEvidence(evidencePaths);
 		if (submissionError instanceof ProductSubmissionBlockedError) {
 			throwAppError(submissionError.status, "CATALOG_SUBMISSION_BLOCKED", {
 				blockedUntil: submissionError.displayBlockedUntil,
 			});
 		}
-		console.error("[catalog submission] Product submission failed", submissionError);
+		console.error(
+			"[catalog submission] Product submission failed",
+			submissionError,
+		);
 		return throwAppError(500, "CATALOG_SUBMISSION_FAILED");
 	}
 };
