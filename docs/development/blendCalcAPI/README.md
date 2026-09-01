@@ -315,6 +315,16 @@ refresh failure may reuse the last complete verified attribution catalog, while 
 initial failure still fails closed. Core catalog failures continue to return the safe
 documented unavailable response.
 
+Operational monitoring is stored separately in the isolated publication project and
+is never required to complete a public read. In the blendCalcAPI Supabase SQL Editor,
+use `blendcalc_api.api_request_operations_dashboard` for request volume, p50/p95
+latency, database time, result counts, errors, rate limits, and cache effectiveness;
+`blendcalc_api.api_shadow_parity_dashboard` for source/isolated parity failures; and
+`blendcalc_api.publication_operations_dashboard` for active-generation age, count/hash
+parity, synchronization duration and failures, additions/removals, and the database
+currently serving reads. The protected `/api/internal/blendCalcAPI/operations` route
+returns the same bounded operational summary for automation.
+
 The request boundary applies endpoint-specific burst and sustained quotas to each
 available client identity: network address, authenticated account, and presented API
 key. The private database consumes every applicable layer in one call; exceeding any

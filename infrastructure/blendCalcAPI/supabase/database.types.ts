@@ -9,6 +9,81 @@ export type Json =
 export type Database = {
 	blendcalc_api: {
 		Tables: {
+			api_request_observations: {
+				Row: {
+					cache_not_modified: boolean;
+					cache_validation: boolean;
+					database_duration_ms: number | null;
+					id: number;
+					observed_at: string;
+					operation: string;
+					read_mode: string;
+					response_status: number;
+					result_count: number;
+					total_duration_ms: number;
+				};
+				Insert: {
+					cache_not_modified?: boolean;
+					cache_validation?: boolean;
+					database_duration_ms?: number | null;
+					id?: never;
+					observed_at?: string;
+					operation: string;
+					read_mode: string;
+					response_status: number;
+					result_count?: number;
+					total_duration_ms: number;
+				};
+				Update: {
+					cache_not_modified?: boolean;
+					cache_validation?: boolean;
+					database_duration_ms?: number | null;
+					id?: never;
+					observed_at?: string;
+					operation?: string;
+					read_mode?: string;
+					response_status?: number;
+					result_count?: number;
+					total_duration_ms?: number;
+				};
+				Relationships: [];
+			};
+			api_shadow_parity_observations: {
+				Row: {
+					failure_code: string | null;
+					id: number;
+					matches: boolean;
+					observed_at: string;
+					operation: string;
+					source_duration_ms: number;
+					source_hash: string;
+					target_duration_ms: number | null;
+					target_hash: string | null;
+				};
+				Insert: {
+					failure_code?: string | null;
+					id?: never;
+					matches: boolean;
+					observed_at?: string;
+					operation: string;
+					source_duration_ms: number;
+					source_hash: string;
+					target_duration_ms?: number | null;
+					target_hash?: string | null;
+				};
+				Update: {
+					failure_code?: string | null;
+					id?: never;
+					matches?: boolean;
+					observed_at?: string;
+					operation?: string;
+					source_duration_ms?: number;
+					source_hash?: string;
+					target_duration_ms?: number | null;
+					target_hash?: string | null;
+				};
+				Relationships: [];
+			};
 			publication_categories: {
 				Row: {
 					category_key: string;
@@ -39,8 +114,22 @@ export type Database = {
 						foreignKeyName: "publication_categories_generation_id_fkey";
 						columns: ["generation_id"];
 						isOneToOne: false;
+						referencedRelation: "publication_generation_operations_dashboard";
+						referencedColumns: ["generation_id"];
+					},
+					{
+						foreignKeyName: "publication_categories_generation_id_fkey";
+						columns: ["generation_id"];
+						isOneToOne: false;
 						referencedRelation: "publication_generations";
 						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "publication_categories_generation_id_fkey";
+						columns: ["generation_id"];
+						isOneToOne: false;
+						referencedRelation: "publication_operations_dashboard";
+						referencedColumns: ["active_generation_id"];
 					},
 				];
 			};
@@ -71,8 +160,29 @@ export type Database = {
 						foreignKeyName: "publication_generation_events_generation_id_fkey";
 						columns: ["generation_id"];
 						isOneToOne: false;
+						referencedRelation: "publication_generation_operations_dashboard";
+						referencedColumns: ["generation_id"];
+					},
+					{
+						foreignKeyName: "publication_generation_events_generation_id_fkey";
+						columns: ["generation_id"];
+						isOneToOne: false;
 						referencedRelation: "publication_generations";
 						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "publication_generation_events_generation_id_fkey";
+						columns: ["generation_id"];
+						isOneToOne: false;
+						referencedRelation: "publication_operations_dashboard";
+						referencedColumns: ["active_generation_id"];
+					},
+					{
+						foreignKeyName: "publication_generation_events_replaced_generation_id_fkey";
+						columns: ["replaced_generation_id"];
+						isOneToOne: false;
+						referencedRelation: "publication_generation_operations_dashboard";
+						referencedColumns: ["generation_id"];
 					},
 					{
 						foreignKeyName: "publication_generation_events_replaced_generation_id_fkey";
@@ -80,6 +190,13 @@ export type Database = {
 						isOneToOne: false;
 						referencedRelation: "publication_generations";
 						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "publication_generation_events_replaced_generation_id_fkey";
+						columns: ["replaced_generation_id"];
+						isOneToOne: false;
+						referencedRelation: "publication_operations_dashboard";
+						referencedColumns: ["active_generation_id"];
 					},
 				];
 			};
@@ -100,6 +217,7 @@ export type Database = {
 					source_project_ref: string;
 					source_snapshot_at: string;
 					status: string;
+					target_catalog_hash: string | null;
 				};
 				Insert: {
 					activated_at?: string | null;
@@ -117,6 +235,7 @@ export type Database = {
 					source_project_ref: string;
 					source_snapshot_at: string;
 					status?: string;
+					target_catalog_hash?: string | null;
 				};
 				Update: {
 					activated_at?: string | null;
@@ -134,6 +253,7 @@ export type Database = {
 					source_project_ref?: string;
 					source_snapshot_at?: string;
 					status?: string;
+					target_catalog_hash?: string | null;
 				};
 				Relationships: [];
 			};
@@ -170,8 +290,22 @@ export type Database = {
 						foreignKeyName: "publication_product_revisions_generation_id_fkey";
 						columns: ["generation_id"];
 						isOneToOne: false;
+						referencedRelation: "publication_generation_operations_dashboard";
+						referencedColumns: ["generation_id"];
+					},
+					{
+						foreignKeyName: "publication_product_revisions_generation_id_fkey";
+						columns: ["generation_id"];
+						isOneToOne: false;
 						referencedRelation: "publication_generations";
 						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "publication_product_revisions_generation_id_fkey";
+						columns: ["generation_id"];
+						isOneToOne: false;
+						referencedRelation: "publication_operations_dashboard";
+						referencedColumns: ["active_generation_id"];
 					},
 					{
 						foreignKeyName: "publication_product_revisions_generation_id_gtin14_fkey";
@@ -240,8 +374,22 @@ export type Database = {
 						foreignKeyName: "publication_products_generation_id_fkey";
 						columns: ["generation_id"];
 						isOneToOne: false;
+						referencedRelation: "publication_generation_operations_dashboard";
+						referencedColumns: ["generation_id"];
+					},
+					{
+						foreignKeyName: "publication_products_generation_id_fkey";
+						columns: ["generation_id"];
+						isOneToOne: false;
 						referencedRelation: "publication_generations";
 						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "publication_products_generation_id_fkey";
+						columns: ["generation_id"];
+						isOneToOne: false;
+						referencedRelation: "publication_operations_dashboard";
+						referencedColumns: ["active_generation_id"];
 					},
 				];
 			};
@@ -269,8 +417,101 @@ export type Database = {
 						foreignKeyName: "publication_source_attributions_generation_id_fkey";
 						columns: ["generation_id"];
 						isOneToOne: false;
+						referencedRelation: "publication_generation_operations_dashboard";
+						referencedColumns: ["generation_id"];
+					},
+					{
+						foreignKeyName: "publication_source_attributions_generation_id_fkey";
+						columns: ["generation_id"];
+						isOneToOne: false;
 						referencedRelation: "publication_generations";
 						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "publication_source_attributions_generation_id_fkey";
+						columns: ["generation_id"];
+						isOneToOne: false;
+						referencedRelation: "publication_operations_dashboard";
+						referencedColumns: ["active_generation_id"];
+					},
+				];
+			};
+			publication_sync_runs: {
+				Row: {
+					added_product_count: number | null;
+					completed_at: string | null;
+					duration_ms: number | null;
+					failure_code: string | null;
+					generation_id: string | null;
+					id: string;
+					operation: string;
+					outcome: string | null;
+					read_mode: string;
+					removed_product_count: number | null;
+					source_catalog_hash: string | null;
+					source_product_count: number | null;
+					started_at: string;
+					status: string;
+					target_catalog_hash: string | null;
+					target_product_count: number | null;
+				};
+				Insert: {
+					added_product_count?: number | null;
+					completed_at?: string | null;
+					duration_ms?: number | null;
+					failure_code?: string | null;
+					generation_id?: string | null;
+					id?: string;
+					operation: string;
+					outcome?: string | null;
+					read_mode: string;
+					removed_product_count?: number | null;
+					source_catalog_hash?: string | null;
+					source_product_count?: number | null;
+					started_at?: string;
+					status?: string;
+					target_catalog_hash?: string | null;
+					target_product_count?: number | null;
+				};
+				Update: {
+					added_product_count?: number | null;
+					completed_at?: string | null;
+					duration_ms?: number | null;
+					failure_code?: string | null;
+					generation_id?: string | null;
+					id?: string;
+					operation?: string;
+					outcome?: string | null;
+					read_mode?: string;
+					removed_product_count?: number | null;
+					source_catalog_hash?: string | null;
+					source_product_count?: number | null;
+					started_at?: string;
+					status?: string;
+					target_catalog_hash?: string | null;
+					target_product_count?: number | null;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "publication_sync_runs_generation_id_fkey";
+						columns: ["generation_id"];
+						isOneToOne: false;
+						referencedRelation: "publication_generation_operations_dashboard";
+						referencedColumns: ["generation_id"];
+					},
+					{
+						foreignKeyName: "publication_sync_runs_generation_id_fkey";
+						columns: ["generation_id"];
+						isOneToOne: false;
+						referencedRelation: "publication_generations";
+						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "publication_sync_runs_generation_id_fkey";
+						columns: ["generation_id"];
+						isOneToOne: false;
+						referencedRelation: "publication_operations_dashboard";
+						referencedColumns: ["active_generation_id"];
 					},
 				];
 			};
@@ -290,8 +531,22 @@ export type Database = {
 						foreignKeyName: "publication_categories_generation_id_fkey";
 						columns: ["generation_id"];
 						isOneToOne: false;
+						referencedRelation: "publication_generation_operations_dashboard";
+						referencedColumns: ["generation_id"];
+					},
+					{
+						foreignKeyName: "publication_categories_generation_id_fkey";
+						columns: ["generation_id"];
+						isOneToOne: false;
 						referencedRelation: "publication_generations";
 						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "publication_categories_generation_id_fkey";
+						columns: ["generation_id"];
+						isOneToOne: false;
+						referencedRelation: "publication_operations_dashboard";
+						referencedColumns: ["active_generation_id"];
 					},
 				];
 			};
@@ -310,8 +565,22 @@ export type Database = {
 						foreignKeyName: "publication_product_revisions_generation_id_fkey";
 						columns: ["generation_id"];
 						isOneToOne: false;
+						referencedRelation: "publication_generation_operations_dashboard";
+						referencedColumns: ["generation_id"];
+					},
+					{
+						foreignKeyName: "publication_product_revisions_generation_id_fkey";
+						columns: ["generation_id"];
+						isOneToOne: false;
 						referencedRelation: "publication_generations";
 						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "publication_product_revisions_generation_id_fkey";
+						columns: ["generation_id"];
+						isOneToOne: false;
+						referencedRelation: "publication_operations_dashboard";
+						referencedColumns: ["active_generation_id"];
 					},
 					{
 						foreignKeyName: "publication_product_revisions_generation_id_gtin14_fkey";
@@ -350,8 +619,22 @@ export type Database = {
 						foreignKeyName: "publication_products_generation_id_fkey";
 						columns: ["generation_id"];
 						isOneToOne: false;
+						referencedRelation: "publication_generation_operations_dashboard";
+						referencedColumns: ["generation_id"];
+					},
+					{
+						foreignKeyName: "publication_products_generation_id_fkey";
+						columns: ["generation_id"];
+						isOneToOne: false;
 						referencedRelation: "publication_generations";
 						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "publication_products_generation_id_fkey";
+						columns: ["generation_id"];
+						isOneToOne: false;
+						referencedRelation: "publication_operations_dashboard";
+						referencedColumns: ["active_generation_id"];
 					},
 				];
 			};
@@ -367,10 +650,163 @@ export type Database = {
 						foreignKeyName: "publication_source_attributions_generation_id_fkey";
 						columns: ["generation_id"];
 						isOneToOne: false;
+						referencedRelation: "publication_generation_operations_dashboard";
+						referencedColumns: ["generation_id"];
+					},
+					{
+						foreignKeyName: "publication_source_attributions_generation_id_fkey";
+						columns: ["generation_id"];
+						isOneToOne: false;
 						referencedRelation: "publication_generations";
 						referencedColumns: ["id"];
 					},
+					{
+						foreignKeyName: "publication_source_attributions_generation_id_fkey";
+						columns: ["generation_id"];
+						isOneToOne: false;
+						referencedRelation: "publication_operations_dashboard";
+						referencedColumns: ["active_generation_id"];
+					},
 				];
+			};
+			api_request_operations_dashboard: {
+				Row: {
+					average_result_count: number | null;
+					cache_effectiveness: number | null;
+					cache_not_modified_count: number | null;
+					cache_validation_count: number | null;
+					client_error_count: number | null;
+					last_observed_at: string | null;
+					max_database_duration_ms: number | null;
+					max_result_count: number | null;
+					max_total_duration_ms: number | null;
+					operation: string | null;
+					p50_database_duration_ms: number | null;
+					p50_total_duration_ms: number | null;
+					p95_database_duration_ms: number | null;
+					p95_total_duration_ms: number | null;
+					rate_limited_count: number | null;
+					read_mode: string | null;
+					request_count: number | null;
+					server_error_count: number | null;
+					total_result_count: number | null;
+					window_name: string | null;
+				};
+				Relationships: [];
+			};
+			api_shadow_parity_dashboard: {
+				Row: {
+					comparison_count: number | null;
+					failure_count: number | null;
+					last_failure_at: string | null;
+					last_observed_at: string | null;
+					operation: string | null;
+					p95_source_duration_ms: number | null;
+					p95_target_duration_ms: number | null;
+				};
+				Relationships: [];
+			};
+			publication_generation_operations_dashboard: {
+				Row: {
+					activated_at: string | null;
+					activation_duration_ms: number | null;
+					build_duration_ms: number | null;
+					created_at: string | null;
+					expected_attribution_count: number | null;
+					expected_category_count: number | null;
+					expected_product_count: number | null;
+					expected_revision_count: number | null;
+					failed_at: string | null;
+					failure_code: string | null;
+					generation_id: string | null;
+					hashes_match: boolean | null;
+					ready_at: string | null;
+					retired_at: string | null;
+					source_catalog_hash: string | null;
+					source_project_ref: string | null;
+					state_age_seconds: number | null;
+					status: string | null;
+					target_attribution_count: number | null;
+					target_catalog_hash: string | null;
+					target_category_count: number | null;
+					target_product_count: number | null;
+					target_revision_count: number | null;
+				};
+				Insert: {
+					activated_at?: string | null;
+					activation_duration_ms?: never;
+					build_duration_ms?: never;
+					created_at?: string | null;
+					expected_attribution_count?: number | null;
+					expected_category_count?: number | null;
+					expected_product_count?: number | null;
+					expected_revision_count?: number | null;
+					failed_at?: string | null;
+					failure_code?: string | null;
+					generation_id?: string | null;
+					hashes_match?: never;
+					ready_at?: string | null;
+					retired_at?: string | null;
+					source_catalog_hash?: string | null;
+					source_project_ref?: string | null;
+					state_age_seconds?: never;
+					status?: string | null;
+					target_attribution_count?: never;
+					target_catalog_hash?: string | null;
+					target_category_count?: never;
+					target_product_count?: never;
+					target_revision_count?: never;
+				};
+				Update: {
+					activated_at?: string | null;
+					activation_duration_ms?: never;
+					build_duration_ms?: never;
+					created_at?: string | null;
+					expected_attribution_count?: number | null;
+					expected_category_count?: number | null;
+					expected_product_count?: number | null;
+					expected_revision_count?: number | null;
+					failed_at?: string | null;
+					failure_code?: string | null;
+					generation_id?: string | null;
+					hashes_match?: never;
+					ready_at?: string | null;
+					retired_at?: string | null;
+					source_catalog_hash?: string | null;
+					source_project_ref?: string | null;
+					state_age_seconds?: never;
+					status?: string | null;
+					target_attribution_count?: never;
+					target_catalog_hash?: string | null;
+					target_category_count?: never;
+					target_product_count?: never;
+					target_revision_count?: never;
+				};
+				Relationships: [];
+			};
+			publication_operations_dashboard: {
+				Row: {
+					active_generation_age_seconds: number | null;
+					active_generation_id: string | null;
+					counts_match: boolean | null;
+					failed_generation_count: number | null;
+					hashes_match: boolean | null;
+					latest_added_product_count: number | null;
+					latest_production_read_mode: string | null;
+					latest_removed_product_count: number | null;
+					latest_request_observed_at: string | null;
+					latest_sync_duration_ms: number | null;
+					latest_sync_failure_code: string | null;
+					latest_sync_outcome: string | null;
+					latest_sync_run_id: string | null;
+					latest_sync_started_at: string | null;
+					latest_sync_status: string | null;
+					source_catalog_hash: string | null;
+					source_product_count: number | null;
+					target_catalog_hash: string | null;
+					target_product_count: number | null;
+				};
+				Relationships: [];
 			};
 		};
 		Functions: {
@@ -384,6 +820,35 @@ export type Database = {
 			};
 			mark_publication_generation_ready: {
 				Args: { p_generation_id: string };
+				Returns: undefined;
+			};
+			record_api_request_observation: {
+				Args: {
+					p_cache_not_modified?: boolean;
+					p_cache_validation?: boolean;
+					p_database_duration_ms?: number;
+					p_operation: string;
+					p_read_mode: string;
+					p_response_status: number;
+					p_result_count?: number;
+					p_total_duration_ms: number;
+				};
+				Returns: undefined;
+			};
+			record_api_shadow_parity_observation: {
+				Args: {
+					p_failure_code?: string;
+					p_matches: boolean;
+					p_operation: string;
+					p_source_duration_ms: number;
+					p_source_hash: string;
+					p_target_duration_ms?: number;
+					p_target_hash?: string;
+				};
+				Returns: undefined;
+			};
+			record_publication_generation_verification: {
+				Args: { p_generation_id: string; p_target_catalog_hash: string };
 				Returns: undefined;
 			};
 			search_active_publication_products: {
@@ -410,6 +875,31 @@ export type Database = {
 					search_payload: Json;
 					total_count: number;
 				}[];
+			};
+		};
+		Enums: {
+			[_ in never]: never;
+		};
+		CompositeTypes: {
+			[_ in never]: never;
+		};
+	};
+	graphql_public: {
+		Tables: {
+			[_ in never]: never;
+		};
+		Views: {
+			[_ in never]: never;
+		};
+		Functions: {
+			graphql: {
+				Args: {
+					extensions?: Json;
+					operationName?: string;
+					query?: string;
+					variables?: Json;
+				};
+				Returns: Json;
 			};
 		};
 		Enums: {
@@ -557,6 +1047,9 @@ export type CompositeTypes<
 
 export const Constants = {
 	blendcalc_api: {
+		Enums: {},
+	},
+	graphql_public: {
 		Enums: {},
 	},
 	public: {

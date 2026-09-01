@@ -13,10 +13,12 @@ const mocks = vi.hoisted(() => {
 	return {
 		applySecurityHeaders: vi.fn(),
 		consumeRequestRateLimits: vi.fn(),
+		completeServerBackgroundTask: vi.fn(),
 		createSupabaseServerClient: vi.fn(),
 		getRequestRateLimitLayers: vi.fn(),
 		isActiveAccountBlock: vi.fn(),
 		moderationQuery,
+		recordBlendCalcAPIRequestObservation: vi.fn(),
 		readVerifiedAuthUser: vi.fn(),
 		signOut: vi.fn(),
 	};
@@ -36,6 +38,16 @@ vi.mock("$lib/server/auth/verifiedAuthUser.server", () => ({
 vi.mock("$lib/server/security/requestRateLimit.server", () => ({
 	consumeRequestRateLimits: mocks.consumeRequestRateLimits,
 	getRequestRateLimitLayers: mocks.getRequestRateLimitLayers,
+}));
+vi.mock(
+	"$lib/server/blendCalcAPI/operations/blendCalcAPIOperations.server",
+	() => ({
+		recordBlendCalcAPIRequestObservation:
+			mocks.recordBlendCalcAPIRequestObservation,
+	}),
+);
+vi.mock("$lib/server/runtime/backgroundTask.server", () => ({
+	completeServerBackgroundTask: mocks.completeServerBackgroundTask,
 }));
 vi.mock("$lib/utils/http/securityHeaders", () => ({
 	applySecurityHeaders: mocks.applySecurityHeaders,
@@ -63,7 +75,7 @@ const createEvent = (pathname = API_PATH) => {
 			set: vi.fn(),
 		},
 		getClientAddress: vi.fn(() => "127.0.0.1"),
-		locals: {},
+		locals: {} as Partial<App.Locals>,
 		request: new Request(url),
 		url,
 	};
@@ -77,6 +89,10 @@ describe("blendCalcAPI v1 server request boundary", () => {
 			from: vi.fn(() => mocks.moderationQuery),
 		});
 		mocks.readVerifiedAuthUser.mockResolvedValue(null);
+		mocks.recordBlendCalcAPIRequestObservation.mockResolvedValue(undefined);
+		mocks.completeServerBackgroundTask.mockImplementation(
+			async (task: Promise<unknown>) => await task,
+		);
 		mocks.getRequestRateLimitLayers.mockReturnValue([
 			{
 				limit: 180,
@@ -109,6 +125,12 @@ describe("blendCalcAPI v1 server request boundary", () => {
 		} as never);
 		expect(response.status).toBe(429);
 		expect(response.headers.get("retry-after")).toBe("14");
+		expect(mocks.recordBlendCalcAPIRequestObservation).toHaveBeenCalledWith(
+			expect.objectContaining({
+				pathname: API_PATH,
+				responseStatus: 429,
+			}),
+		);
 		const payload = await expectBlendCalcAPIV1ResponseToMatchOpenAPI({
 			path: API_PATH,
 			response,
@@ -157,6 +179,35 @@ describe("blendCalcAPI v1 server request boundary", () => {
 			response,
 		});
 		expect(payload).toMatchObject({ error: { code: "access_denied" } });
+	});
+
+	it("records cache and database observations after a completed API read", async () => {
+		const event = createEvent();
+		event.request = new Request(event.url, {
+			headers: { "if-none-match": '"catalog-hash"' },
+		});
+		const response = await handle({
+			event,
+			resolve: vi.fn().mockImplementation(async () => {
+				event.locals.blendCalcAPIDatabaseObservation = {
+					databaseDurationMs: 12,
+					resultCount: 4,
+				};
+				return new Response(null, { status: 304 });
+			}),
+		} as never);
+		expect(response.status).toBe(304);
+		expect(mocks.recordBlendCalcAPIRequestObservation).toHaveBeenCalledWith(
+			expect.objectContaining({
+				pathname: API_PATH,
+				responseStatus: 304,
+				cacheValidation: true,
+				databaseObservation: {
+					databaseDurationMs: 12,
+					resultCount: 4,
+				},
+			}),
+		);
 	});
 
 	it("replaces a handled server failure with the stable API shape", async () => {

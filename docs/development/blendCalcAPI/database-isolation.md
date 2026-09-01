@@ -23,6 +23,8 @@ The blendCalcAPI project stores only complete public projections:
 - enabled public category payloads;
 - required public source attribution;
 - generation hashes, counts, timestamps, and transition audit records.
+- privacy-safe request, cache-validation, latency, result-count, shadow-parity, and
+  publication-sync observations used by operators.
 
 It never stores application Auth users, private foods, user-list state, submissions,
 moderation notes, provider credentials, raw provider payloads, private evidence paths,
@@ -91,3 +93,25 @@ variable. `BLENDCALC_API_READ_MODE=shadow` continues returning canonical source 
 while recording only hashes and match state from isolated reads. After parity passes,
 `isolated` selects the publication database; `source` remains the immediate rollback.
 Removing the old read path is a later contract phase, not part of the initial switch.
+
+## Operational Visibility
+
+The isolated project owns service-role-only operational views so monitoring cannot
+become a dependency of the public read path. `api_request_operations_dashboard`
+reports request volume, p50/p95 latency, database time, result counts, client/server
+errors, rate limits, and conditional-request cache effectiveness over 24-hour, 7-day,
+and 35-day windows. `api_shadow_parity_dashboard` reports source/target comparison
+volume, failures, and p95 timings. `publication_generation_operations_dashboard` and
+`publication_operations_dashboard` report generation state and age, expected and
+target counts, source and verified-target hashes, sync duration and failures, product
+additions/removals, and the most recently observed production read mode.
+
+Raw request observations expire after 35 days. They never store URLs, query text,
+barcodes, user or network identifiers, credentials, request bodies, or response
+payloads. Recording is fail-open: an observation failure is logged safely and never
+changes a blendCalcAPI response or publication result.
+
+Operators can inspect the views in the blendCalcAPI Supabase SQL Editor or call the
+server-only `GET /api/internal/blendCalcAPI/operations` route with
+`Authorization: Bearer <CRON_SECRET>`. The route returns `private, no-store` JSON and
+uses the same private operations credential as publication synchronization.
