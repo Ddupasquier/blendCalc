@@ -20,6 +20,7 @@ fields retain their stable versioned names.
 | Understand publication rules        | [What Can Be Published](#what-can-be-published) and [Corrections And Rapid Removal](#corrections-and-rapid-removal)         |
 | Understand database isolation       | [Publication Database Isolation](database-isolation.md)                                                                     |
 | Inspect upstream provider samples   | [External API Structure References](../api-structures/README.md)                                                            |
+| Review app-only intake observations | [App-Only Intake Contract](#app-only-intake-contract)                                                                       |
 
 ## blendCalcAPI v1 Status
 
@@ -88,6 +89,43 @@ Scopes grant only their named responsibility. Catalog reads do not grant intake,
 intake does not grant corrections, and neither ordinary write scope grants moderation.
 Unknown scope values fail closed. Route enforcement will be enabled only through the
 deliberate public-release process after API keys and terms are approved.
+
+## App-Only Intake Contract
+
+The versioned app-only intake payload is owned by
+`src/lib/blendCalcAPI/intake/v1/blendCalcAPIIntakeTypes.ts`. It describes one current
+package-label observation; it does not create an accepted product, select canonical
+values, approve evidence, or publish anything through blendCalcAPI. Intake transport,
+idempotency, persistence, moderation, and status routes remain separate implementation
+responsibilities.
+
+Every payload carries `intakeVersion: "1.0"`, its observation time, its catalog-share or
+catalog-correction purpose, declared image evidence, and all nine source-neutral
+observation sections:
+
+1. product identity;
+2. current label-revision context;
+3. exact source servings;
+4. numeric or qualitative nutrient observations;
+5. ingredient statements and optional structure;
+6. allergen and precautionary statements;
+7. submitted category labels and optional validated app category selections;
+8. GTIN and other source identifiers; and
+9. image-evidence roles and intended use.
+
+`reported`, `checked-none`, and `not-observed` remain distinct. An absent nutrient is
+unknown, while an explicit label zero uses `reported-zero`. A count serving such as
+`1 cookie` is valid without grams or milliliters and cannot produce per-100g math until
+separate exact conversion evidence exists. Weight, volume, count, and package servings
+retain their native basis rather than being converted by name.
+
+Evidence descriptors contain a client-local reference, role, media type, byte count,
+SHA-256 digest, and optional capture time. Observation fields reference those IDs; they
+never contain Storage paths, private account identity, moderation decisions, or raw
+image bytes. The trusted server derives the actor, verifies uploads and identifiers,
+applies bounded validation, and creates immutable intake/moderation records. Canonical
+selection and API publication continue to happen only after evidence review and the
+existing readiness gates.
 
 ## Read Endpoints
 
