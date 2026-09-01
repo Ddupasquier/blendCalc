@@ -69,6 +69,7 @@ export type ManualEntryFormResetState = {
 	barcodeShareValidation: BarcodeShareValidationResult | null;
 	validatingBarcodeShare: boolean;
 	shareWithCatalog: boolean;
+	shareSelectionSource: "none" | "automatic" | "declined" | "user";
 	keptUnmatchedPrivate: boolean;
 	frontPhoto: File | null;
 	imagePlacement: ImagePlacementValue;
@@ -128,6 +129,7 @@ export const getManualEntryFormResetState = (): ManualEntryFormResetState => ({
 	barcodeShareValidation: null,
 	validatingBarcodeShare: false,
 	shareWithCatalog: false,
+	shareSelectionSource: "none",
 	keptUnmatchedPrivate: false,
 	frontPhoto: null,
 	imagePlacement: createFullImagePlacement(),
@@ -231,6 +233,7 @@ export const getManualEntryFormStateFromFood = (
 		barcodeProvenance: food.barcodeProvenance,
 		barcodeSafetyAlerts: [...(food.safetyAlerts ?? [])],
 		shareWithCatalog: intent === "catalog_correction",
+		shareSelectionSource: intent === "catalog_correction" ? "user" : "none",
 		reportedNutrientIds: [
 			...(food.reportedNutrientIds ??
 				food.foodNutrients.map((nutrient) => nutrient.nutrientId)),

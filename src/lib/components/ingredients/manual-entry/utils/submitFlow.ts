@@ -39,7 +39,6 @@ export const saveManualEntryCustomFood = async ({
 	name,
 	normalizedBarcode,
 	shareWithCatalog,
-	submitForCatalog = false,
 	photos,
 	reviewFlags,
 	useIngredient,
@@ -50,7 +49,6 @@ export const saveManualEntryCustomFood = async ({
 	name: string;
 	normalizedBarcode: string | null;
 	shareWithCatalog: boolean;
-	submitForCatalog?: boolean;
 	photos: ManualEntrySharedProductPhotos;
 	reviewFlags: string[];
 	useIngredient: (food: FoodItem, alreadySaved?: boolean) => Promise<boolean>;
@@ -67,6 +65,7 @@ export const saveManualEntryCustomFood = async ({
 		}
 		try {
 			const submission = await submitSharedProduct(food, photos, {
+				consentToShare: true,
 				reviewFlags,
 				intent: submissionIntent,
 			});
@@ -142,13 +141,10 @@ export const saveManualEntryCustomFood = async ({
 	let catalogMessage = "";
 	let catalogMessageTone: ManualEntryCatalogMessageTone = "success";
 
-	if (
-		normalizedBarcode &&
-		addedToDestination &&
-		(shareWithCatalog || submitForCatalog)
-	) {
+	if (normalizedBarcode && addedToDestination && shareWithCatalog) {
 		try {
 			const submission = await submitSharedProduct(food, photos, {
+				consentToShare: true,
 				reviewFlags,
 				intent: submissionIntent,
 			});

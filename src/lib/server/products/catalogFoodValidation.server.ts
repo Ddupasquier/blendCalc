@@ -76,14 +76,16 @@ export const validateSharedProductFood = (
 	return { barcode, issues, valid: issues.length === 0 };
 };
 
-const assertKnownCatalogNutrients = async (food: FoodItem) => {
+const assertCatalogNutrientCoverage = async (
+	supabase: SupabaseClient<Database>,
+	food: FoodItem,
+) => {
+	const definitions = await getNutrientDefinitionCatalog();
 	const nutrientIds = [
 		...new Set(food.foodNutrients.map((nutrient) => nutrient.nutrientId)),
 	];
 	const knownIds = new Set(
-		(await getNutrientDefinitionCatalog()).map(
-			(definition) => definition.nutrient_id,
-		),
+		definitions.map((definition) => definition.nutrient_id),
 	);
 	const unknownIds = nutrientIds.filter(
 		(nutrientId) => !knownIds.has(nutrientId),
@@ -91,6 +93,29 @@ const assertKnownCatalogNutrients = async (food: FoodItem) => {
 	if (unknownIds.length > 0) {
 		throw new Error(
 			`Unknown nutrient identifiers cannot be submitted: ${unknownIds.join(", ")}.`,
+		);
+	}
+
+	const { data: requiredRows, error: requiredNutrientError } = await supabase
+		.from("nutrient_manual_entry_required_nutrients")
+		.select("nutrient_id")
+		.eq("enabled", true);
+	if (requiredNutrientError) throw requiredNutrientError;
+	const missingRequiredIds = (requiredRows ?? [])
+		.map((row) => row.nutrient_id)
+		.filter((nutrientId) => !nutrientIds.includes(nutrientId));
+	const definitionNames = new Map(
+		definitions.map((definition) => [
+			definition.nutrient_id,
+			definition.nutrient_name,
+		]),
+	);
+	const missingRequiredNutrients = missingRequiredIds.map(
+		(nutrientId) => definitionNames.get(nutrientId) ?? `Nutrient ${nutrientId}`,
+	);
+	if (missingRequiredNutrients.length > 0) {
+		throw new Error(
+			`Shared products require values for: ${missingRequiredNutrients.join(", ")}.`,
 		);
 	}
 };
@@ -108,6 +133,6 @@ export const assertSharedProductFoodCanBePublished = async (
 	if (!validation.valid) {
 		throw new Error(validation.issues.join(" "));
 	}
-	await assertKnownCatalogNutrients(food);
+	await assertCatalogNutrientCoverage(supabase, food);
 	return { ...validation, nutrientRelationshipRules };
 };

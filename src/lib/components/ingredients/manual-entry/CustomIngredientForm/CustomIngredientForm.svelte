@@ -148,6 +148,11 @@
 		form.markFieldAsUserEntered("categories");
 	};
 
+	const handleBrandChange = (value: string) => {
+		form.data.brandOwner = value;
+		form.markFieldAsUserEntered("brandOwner");
+	};
+
 	const handleServingWeightChange = (value: number) => {
 		if (Number.isFinite(value) && value > 0) {
 			form.data.servingWeightGrams = value;
@@ -265,7 +270,7 @@
 		checkingBarcodeReference: barcode.barcodeReferenceLookupPending,
 		barcodeSuggestion: barcode.barcodeSuggestion,
 		onNameChange: barcode.setManualName,
-		onBrandChange: (value) => (form.data.brandOwner = value),
+		onBrandChange: handleBrandChange,
 		onCategoryChange: handleCategoryChange,
 		onCategoryStatusChange: validation.handleCategoryPickerStatus,
 		onBarcodeChange: barcode.setManualBarcode,
@@ -322,12 +327,16 @@
 		labelOcrMappings: referenceData.state.nutritionLabelOcrMappings,
 		labelOcrMappingError: referenceData.state.nutritionLabelOcrMappingError,
 		nutritionPhoto: form.data.nutritionPhoto,
-		onNutritionPhotoChange: (file) => (form.data.nutritionPhoto = file),
+		onNutritionPhotoChange: (file) => {
+			form.clearAutomaticCatalogSharing();
+			form.data.nutritionPhoto = file;
+		},
 		onApplyNutritionLabelOcr: (payload) =>
 			form.applyNutritionLabelOcr(payload, validation.nutrientFields),
 		getValue: form.getNutrientValue,
 		onValueChange: form.setNutrientValue,
 		isRequired: (field) =>
+			form.data.shareWithCatalog &&
 			validation.disclosurePolicy.requiresStandardNutrition &&
 			field.requiredForManualEntry,
 		onBack: validation.goBack,
@@ -344,6 +353,7 @@
 		getValue: form.getNutrientValue,
 		onValueChange: form.setNutrientValue,
 		isRequired: (field) =>
+			form.data.shareWithCatalog &&
 			validation.disclosurePolicy.requiresStandardNutrition &&
 			field.requiredForManualEntry,
 		onBack: validation.goBack,
@@ -398,15 +408,18 @@
 			barcode.detachMismatchedBarcodeForPrivateSave,
 		onSubmitBarcodeCorrection: barcode.beginBarcodeCorrectionForSharing,
 		onFrontPhotoChange: (file) => {
+			form.clearAutomaticCatalogSharing();
 			form.data.frontPhoto = file;
 		},
 		onImagePlacementChange: (value) => {
 			form.data.imagePlacement = value;
 		},
 		onNutritionPhotoChange: (file) => {
+			form.clearAutomaticCatalogSharing();
 			form.data.nutritionPhoto = file;
 		},
 		onBarcodePhotoChange: (file) => {
+			form.clearAutomaticCatalogSharing();
 			form.data.barcodePhoto = file;
 		},
 		onSaveDestinationChange: (destination) => {

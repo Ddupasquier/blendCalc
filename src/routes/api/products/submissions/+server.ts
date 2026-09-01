@@ -34,6 +34,14 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 		"AUTH_REQUIRED",
 	);
 
+	const formData = await readLimitedFormData(
+		request,
+		PRODUCT_SUBMISSION_REQUEST_MAX_BYTES,
+	);
+	const foodValue = formData.get("food");
+	const consentToShare = formData.get("consentToShare") === "true";
+	if (!consentToShare) throwAppError(400, "CATALOG_CONSENT_REQUIRED");
+
 	try {
 		await assertCanSubmitSharedProduct(user.id);
 	} catch (submissionError) {
@@ -49,12 +57,6 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 		return throwAppError(503, "CATALOG_VALIDATION_UNAVAILABLE");
 	}
 
-	const formData = await readLimitedFormData(
-		request,
-		PRODUCT_SUBMISSION_REQUEST_MAX_BYTES,
-	);
-	const foodValue = formData.get("food");
-	const consentToShare = formData.get("consentToShare") === "true";
 	let food: FoodItem | null = null;
 	try {
 		food = foodValue ? (JSON.parse(String(foodValue)) as FoodItem) : null;
@@ -66,7 +68,6 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 		400,
 		"CATALOG_SUBMISSION_INVALID",
 	);
-	if (!consentToShare) throwAppError(400, "CATALOG_CONSENT_REQUIRED");
 	const reviewFlagsValue = formData.get("reviewFlags");
 	const submissionIntentValue = String(
 		formData.get("submissionIntent") ?? "catalog_share",

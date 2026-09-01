@@ -115,7 +115,10 @@ Required behavior:
 - claim one submit lock before the final barcode confirmation begins, keep that lock
   through the authoritative save, and recover with editable input after failure;
 - allow destination choice between Fridge and Shopping List;
-- offer shared-catalog submission only for eligible, explicitly shared product data;
+- default shared-catalog submission on only for complete, valid, unchanged exact-source
+  data whose represented sources all permit canonical storage. Keep an immediate
+  opt-out, and turn sharing off whenever the user enters values, edits imported facts,
+  or selects private evidence until they explicitly enable it again;
 - automatically orient and frame each newly chosen product image when OCR confidently
   matches its product or brand text, while keeping the exact card preview, manual
   controls, retry, and restore available before submission;

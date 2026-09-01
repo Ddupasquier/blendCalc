@@ -98,6 +98,7 @@ export const createManualEntryValidationController = ({
 		buildRequiredManualNutrientValidationItems({
 			requiredFields: requiredNutrientFields,
 			getValue: form.getNutrientValue,
+			tone: form.data.shareWithCatalog ? "error" : "warning",
 		}),
 	);
 	const nutrientAvailabilityItems = $derived<StepValidationItem[]>(

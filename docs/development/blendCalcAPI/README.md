@@ -66,6 +66,11 @@ clients bypass the versioned HTTP contract.
 of products accepted for API publication. Accepted canonical records live in
 `shared_products`; the published-products view contains only the subset that currently
 passes `blendcalc_api_v1_product_readiness`.
+Private user foods and their evidence never enter this intake automatically. Complete,
+unchanged exact-source data may default to intake only when every represented source is
+approved for canonical storage and the user leaves sharing enabled. User-entered
+values, edits, corrections, and photos require an explicit community-share action
+before the moderation and publication gates can consider that data.
 
 The server can issue, expire, revoke, and atomically rotate high-entropy API keys while
 storing only hashes and short display prefixes. This credential foundation does not by
