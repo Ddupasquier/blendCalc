@@ -34,6 +34,13 @@ Public-data concerns are accepted only by the server route and stored in private
 resolve against canonical IDs before storage, while contact details and evidence remain
 outside API responses. Elevated AAL2 moderation routes read and resolve the queue.
 
+Catalog submitters can read only their own normalized intake workflow state through the
+authenticated app route. The query selects an explicit non-sensitive field allowlist,
+applies the submitter ID in addition to owner-only RLS, and maps internal terminal states
+to `accepted` or `declined`. Missing and non-owned identifiers are indistinguishable.
+Product payloads, evidence, validation reports, reviewer details, and review notes remain
+inside the private catalog and moderation boundaries.
+
 `blendcalc_api_publication_holds` is a reversible publication control, not another canonical-data
 store. Product holds feed the existing material-conflict readiness gate, source and
 dataset holds feed field-level attribution eligibility, and image holds are filtered

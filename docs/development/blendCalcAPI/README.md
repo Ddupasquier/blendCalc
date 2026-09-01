@@ -48,6 +48,14 @@ Open the OpenAPI document at `/api/v1/openapi.json`. To inspect raw API JSON in 
 browser, sign in to blendCalc first and then open one of the endpoints below in the same
 browser session. Public bearer keys and anonymous catalog access do not exist yet.
 
+Authenticated app submitters can read their own bounded intake state from
+`GET /api/intake/v1/submissions/{submissionId}`. This operational route is outside the
+public, read-only `/api/v1` catalog contract. It reports only the opaque submission ID,
+the normalized `pending`, `accepted`, or `declined` state, and submission/update
+timestamps. It never returns product payloads, evidence, validation reports, reviewer
+identity, or review notes. An API key cannot replace the submitter's app session, and a
+missing submission and another user's submission both return the same not-found result.
+
 The application database remains the canonical source of truth. The separate
 blendCalcAPI Supabase project is an isolated publication read model and receives only
 complete, redistributable API snapshots. See
@@ -421,6 +429,7 @@ Related operational routes are deliberately outside `/api/v1`:
 
 | Method and path                                               | Responsibility                                                       |
 | ------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `GET /api/intake/v1/submissions/{submissionId}`               | Read the signed-in submitter's bounded intake state                  |
 | `POST /api/publication-concerns`                              | Submit one bounded concern and receive an opaque tracking identifier |
 | `GET /api/moderation/catalog/products/{productId}/provenance` | Read private accepted and candidate evidence with an elevated role   |
 | `GET /api/moderation/publication-concerns`                    | Read unresolved concerns and active holds with elevated AAL2 access  |

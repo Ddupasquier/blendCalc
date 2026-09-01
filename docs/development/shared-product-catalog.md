@@ -498,6 +498,12 @@ older JSON snapshot. This means an approved product cannot continue to display a
 state, and a pending catalog update can display `Pending` without pretending the
 underlying active product has disappeared.
 
+The authenticated intake status route exposes only the owning submitter's opaque
+submission ID, normalized `pending`, `accepted`, or `declined` workflow state, and
+submission/update timestamps. Owner-only RLS and an explicit owner filter protect the
+read. Moderator identities, notes, validation reports, submitted product snapshots, and
+private evidence paths never enter this response.
+
 ## Source Quality Monitoring
 
 External source usage is measured in privacy-safe daily aggregates. Runtime metrics
