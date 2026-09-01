@@ -191,16 +191,30 @@ export const failBlendCalcAPIPublicationRun = async (
 export const readBlendCalcAPIOperationsDashboard = async () => {
 	const client = getBlendCalcAPIIsolatedClient();
 	const [publication, requests, parity, runs] = await Promise.all([
-		client.from("publication_operations_dashboard").select("*").maybeSingle(),
+		client
+			.from("publication_operations_dashboard")
+			.select(
+				"active_generation_age_seconds, active_generation_id, counts_match, failed_generation_count, hashes_match, latest_added_product_count, latest_production_read_mode, latest_removed_product_count, latest_request_observed_at, latest_sync_duration_ms, latest_sync_failure_code, latest_sync_outcome, latest_sync_run_id, latest_sync_started_at, latest_sync_status, source_catalog_hash, source_product_count, target_catalog_hash, target_product_count",
+			)
+			.maybeSingle(),
 		client
 			.from("api_request_operations_dashboard")
-			.select("*")
+			.select(
+				"average_result_count, cache_effectiveness, cache_not_modified_count, cache_validation_count, client_error_count, last_observed_at, max_database_duration_ms, max_result_count, max_total_duration_ms, operation, p50_database_duration_ms, p50_total_duration_ms, p95_database_duration_ms, p95_total_duration_ms, rate_limited_count, read_mode, request_count, server_error_count, total_result_count, window_name",
+			)
 			.order("window_name")
 			.order("operation"),
-		client.from("api_shadow_parity_dashboard").select("*").order("operation"),
+		client
+			.from("api_shadow_parity_dashboard")
+			.select(
+				"comparison_count, failure_count, last_failure_at, last_observed_at, operation, p95_source_duration_ms, p95_target_duration_ms",
+			)
+			.order("operation"),
 		client
 			.from("publication_sync_runs")
-			.select("*")
+			.select(
+				"added_product_count, completed_at, duration_ms, failure_code, generation_id, id, operation, outcome, read_mode, removed_product_count, source_catalog_hash, source_product_count, started_at, status, target_catalog_hash, target_product_count",
+			)
 			.order("started_at", { ascending: false })
 			.limit(25),
 	]);
