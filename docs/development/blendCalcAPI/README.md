@@ -143,6 +143,13 @@ products remain in `shared_products`, review work remains in
 field-level provenance. The public v1 API remains read-only; this shared server boundary
 does not expose a write endpoint or enable public API keys.
 
+Future intake writes require an actor-scoped idempotency key and a server-computed
+SHA-256 fingerprint before evidence upload or catalog mutation. The first request
+acquires the key; concurrent retries remain in progress, changed payloads conflict, and
+completed requests replay the original safe response. Processing keys are never stolen
+after an arbitrary timeout, so an ambiguous worker failure cannot duplicate submissions,
+revisions, observations, or images.
+
 ## Read Endpoints
 
 | Method and path                            | Returns                                                              |
