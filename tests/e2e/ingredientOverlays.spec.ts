@@ -308,13 +308,11 @@ const reachManualEntryExtendedStep = async (dialog: Locator) => {
 	await dialog.getByLabel("Weight (g)").fill("100");
 	await dialog.getByRole("button", { name: "Continue" }).click();
 
-	const requiredMacroInputs = dialog.locator(
-		'.manual-nutrients__fields input[aria-required="true"]',
-	);
-	await expect(requiredMacroInputs.first()).toBeVisible();
-	for (let index = 0; index < (await requiredMacroInputs.count()); index += 1) {
-		await requiredMacroInputs.nth(index).fill("1");
-	}
+	const macroInputs = dialog.locator(".manual-nutrients__fields input");
+	await expect(macroInputs.first()).toBeVisible();
+	await expect(
+		dialog.locator('.manual-nutrients__fields input[aria-required="true"]'),
+	).toHaveCount(0);
 	await dialog.getByRole("button", { name: "Continue" }).click();
 	await expect(dialog.getByRole("tab", { name: "Extended" })).toHaveAttribute(
 		"aria-current",
