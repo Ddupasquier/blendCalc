@@ -60,6 +60,6 @@ describe("page metadata", () => {
 			getCanonicalAppUrl(
 				url("/ingredients/shopping?sort=recent#saved-ingredients"),
 			),
-		).toBe("https://blendcalc.vercel.app/ingredients/shopping");
+		).toBe("https://www.blendcalc.food/ingredients/shopping");
 	});
 });

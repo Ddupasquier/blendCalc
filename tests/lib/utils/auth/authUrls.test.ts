@@ -29,18 +29,18 @@ describe("authentication URLs", () => {
 	});
 
 	it("uses the configured production site URL for hosted requests", () => {
-		publicEnvironment.PUBLIC_SITE_URL = "https://blendcalc.vercel.app/";
-		const request = new Request("https://blendcalc.vercel.app/auth");
+		publicEnvironment.PUBLIC_SITE_URL = "https://www.blendcalc.food/";
+		const request = new Request("https://www.blendcalc.food/auth");
 
 		expect(getRequestOrigin(request, new URL(request.url))).toBe(
-			"https://blendcalc.vercel.app",
+			"https://www.blendcalc.food",
 		);
 	});
 
 	it("fails closed for hosted requests without a configured site URL", () => {
 		const request = new Request("https://preview.example/auth", {
 			headers: {
-				"x-forwarded-host": "blendcalc.vercel.app",
+				"x-forwarded-host": "www.blendcalc.food",
 				"x-forwarded-proto": "https",
 			},
 		});
@@ -51,16 +51,16 @@ describe("authentication URLs", () => {
 	});
 
 	it("builds an exact production callback without dynamic query parameters", () => {
-		publicEnvironment.PUBLIC_SITE_URL = "blendcalc.vercel.app";
-		const request = new Request("https://blendcalc.vercel.app/auth");
+		publicEnvironment.PUBLIC_SITE_URL = "www.blendcalc.food";
+		const request = new Request("https://www.blendcalc.food/auth");
 
 		expect(getAuthCallbackUrl(request, new URL(request.url))).toBe(
-			"https://blendcalc.vercel.app/auth/callback",
+			"https://www.blendcalc.food/auth/callback",
 		);
 	});
 
 	it("falls back to localhost during direct local development", () => {
-		publicEnvironment.PUBLIC_SITE_URL = "https://blendcalc.vercel.app";
+		publicEnvironment.PUBLIC_SITE_URL = "https://www.blendcalc.food";
 		const request = new Request("http://localhost:5173/auth");
 
 		expect(getAuthCallbackUrl(request, new URL(request.url))).toBe(
@@ -69,7 +69,7 @@ describe("authentication URLs", () => {
 	});
 
 	it("keeps authentication on the exact Vercel preview deployment", () => {
-		publicEnvironment.PUBLIC_SITE_URL = "https://blendcalc.vercel.app";
+		publicEnvironment.PUBLIC_SITE_URL = "https://www.blendcalc.food";
 		privateEnvironment.VERCEL_URL =
 			"blendcalc-preview-hash-dylan-dupasquiers-projects.vercel.app";
 		const request = new Request(
@@ -89,10 +89,10 @@ describe("authentication URLs", () => {
 	});
 
 	it("uses Vercel's forwarded preview host when the framework URL is canonical", () => {
-		publicEnvironment.PUBLIC_SITE_URL = "https://blendcalc.vercel.app";
+		publicEnvironment.PUBLIC_SITE_URL = "https://www.blendcalc.food";
 		privateEnvironment.VERCEL_URL =
 			"blendcalc-git-feature-ba-f74008-dylan-dupasquiers-projects.vercel.app";
-		const request = new Request("https://blendcalc.vercel.app/auth", {
+		const request = new Request("https://www.blendcalc.food/auth", {
 			headers: {
 				"x-forwarded-host":
 					"blendcalc-git-feature-ba-f74008-dylan-dupasquiers-projects.vercel.app",
@@ -116,10 +116,10 @@ describe("authentication URLs", () => {
 	});
 
 	it("ignores an untrusted forwarded host", () => {
-		publicEnvironment.PUBLIC_SITE_URL = "https://blendcalc.vercel.app";
+		publicEnvironment.PUBLIC_SITE_URL = "https://www.blendcalc.food";
 		privateEnvironment.VERCEL_URL =
 			"blendcalc-git-feature-ba-f74008-dylan-dupasquiers-projects.vercel.app";
-		const request = new Request("https://blendcalc.vercel.app/auth", {
+		const request = new Request("https://www.blendcalc.food/auth", {
 			headers: {
 				"x-forwarded-host": "attacker-project.vercel.app",
 				"x-forwarded-proto": "https",
@@ -127,12 +127,12 @@ describe("authentication URLs", () => {
 		});
 
 		expect(getAuthCallbackUrl(request, new URL(request.url))).toBe(
-			"https://blendcalc.vercel.app/auth/callback",
+			"https://www.blendcalc.food/auth/callback",
 		);
 	});
 
 	it("keeps authentication on the Vercel branch preview alias", () => {
-		publicEnvironment.PUBLIC_SITE_URL = "https://blendcalc.vercel.app";
+		publicEnvironment.PUBLIC_SITE_URL = "https://www.blendcalc.food";
 		privateEnvironment.VERCEL_BRANCH_URL =
 			"blendcalc-git-feature-dylan-dupasquiers-projects.vercel.app";
 		const request = new Request(
@@ -145,24 +145,39 @@ describe("authentication URLs", () => {
 	});
 
 	it("does not trust an unrelated Vercel deployment host", () => {
-		publicEnvironment.PUBLIC_SITE_URL = "https://blendcalc.vercel.app";
+		publicEnvironment.PUBLIC_SITE_URL = "https://www.blendcalc.food";
 		privateEnvironment.VERCEL_URL =
 			"blendcalc-preview-hash-dylan-dupasquiers-projects.vercel.app";
 		const request = new Request("https://attacker-project.vercel.app/auth");
 
 		expect(getRequestOrigin(request, new URL(request.url))).toBe(
-			"https://blendcalc.vercel.app",
+			"https://www.blendcalc.food",
 		);
 	});
 
 	it("redirects alternate hosted domains to the canonical auth page", () => {
-		publicEnvironment.PUBLIC_SITE_URL = "https://blendcalc.vercel.app";
+		publicEnvironment.PUBLIC_SITE_URL = "https://www.blendcalc.food";
 		const request = new Request("https://preview.example/auth");
 
 		expect(
-			getCanonicalAuthPageUrl(request, new URL(request.url), "/mix?loaded=true"),
-		).toBe(
-			"https://blendcalc.vercel.app/auth?next=%2Fmix%3Floaded%3Dtrue",
-		);
+			getCanonicalAuthPageUrl(
+				request,
+				new URL(request.url),
+				"/mix?loaded=true",
+			),
+		).toBe("https://www.blendcalc.food/auth?next=%2Fmix%3Floaded%3Dtrue");
+	});
+
+	it("keeps the legacy production alias as a canonical-auth entry point", () => {
+		publicEnvironment.PUBLIC_SITE_URL = "https://www.blendcalc.food";
+		const request = new Request("https://blendcalc.vercel.app/auth");
+
+		expect(
+			getCanonicalAuthPageUrl(
+				request,
+				new URL(request.url),
+				"/ingredients/fridge",
+			),
+		).toBe("https://www.blendcalc.food/auth?next=%2Fingredients%2Ffridge");
 	});
 });

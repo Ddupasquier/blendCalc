@@ -29,9 +29,9 @@ const createSecureSnapshot = () => ({
 		walg_enabled: true,
 	},
 	authConfiguration: {
-		site_url: "https://blendcalc.vercel.app",
+		site_url: "https://www.blendcalc.food",
 		uri_allow_list:
-			"https://blendcalc.vercel.app/auth/callback,http://localhost:5173/auth/callback,http://localhost:5174/auth/callback,https://*-account.vercel.app/auth/callback",
+			"https://www.blendcalc.food/auth/callback,http://localhost:5173/auth/callback,http://localhost:5174/auth/callback,https://*-account.vercel.app/auth/callback",
 		mailer_autoconfirm: false,
 		password_min_length: 15,
 		password_hibp_enabled: true,
