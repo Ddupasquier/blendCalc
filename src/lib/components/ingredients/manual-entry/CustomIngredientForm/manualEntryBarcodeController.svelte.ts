@@ -108,6 +108,7 @@ export const createManualEntryBarcodeController = ({
 		form.data.shareWithCatalog &&
 			(form.data.submissionIntent === "catalog_correction" ||
 				form.data.barcodeSource === "manual" ||
+				form.data.barcodeShareValidation?.requiresCatalogEvidence === true ||
 				Boolean(hasSharedCatalogReference && referenceHasChanges)),
 	);
 	const trustedProductImage = $derived(
@@ -550,10 +551,17 @@ export const createManualEntryBarcodeController = ({
 
 	const applyVerifiedBarcodeForSharing = async () => {
 		if (form.data.barcodeShareValidation?.status !== "name-mismatch") return;
-		const draft = form.data.barcodeShareValidation.draft;
+		const validationResult = form.data.barcodeShareValidation;
+		const draft = validationResult.draft;
 		form.data.barcodeReferenceDraft = draft;
 		await applyBarcodeReferenceSuggestion();
-		form.data.barcodeShareValidation = null;
+		form.data.barcodeShareValidation = {
+			status: "matched",
+			barcode: validationResult.barcode,
+			draft,
+			defaultSharingAllowed: false,
+			requiresCatalogEvidence: validationResult.requiresCatalogEvidence,
+		};
 		form.data.shareWithCatalog =
 			draft.source !== "shared-catalog" && form.data.activeStep === "share";
 		form.data.shareSelectionSource = form.data.shareWithCatalog

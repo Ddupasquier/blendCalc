@@ -74,6 +74,10 @@ Preserve every source-supported field that the application can legally retain:
 - source record identifiers, dates, quality metadata, confidence, and field lineage;
 - private package, nutrition-label, and barcode evidence when moderation requires it.
 
+An exact provider match does not remove the evidence step when that provider cannot
+populate the canonical catalog. If the user opts to share that product, the Share step
+requires front-package, nutrition-label, and barcode photos before submission.
+
 Sparse labels remain honest. A nutrient omitted from an alcohol, kombucha, exempt, or
 otherwise limited package disclosure stays unknown; it never becomes reported zero or
 an estimated value. Users may save the available facts and complete only fields the
