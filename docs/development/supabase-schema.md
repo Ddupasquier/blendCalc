@@ -66,6 +66,8 @@ Stores app-facing profile information. Email should not be copied here.
 
 Notes:
 
+- Profile bios are optional and limited to 150 characters by the table constraint and
+  owner-scoped save function.
 - `MFA_REQUIRED` is the stable authentication code returned when an elevated action
   requires an AAL2 session. Friendly wording remains in the application message
   catalog.
