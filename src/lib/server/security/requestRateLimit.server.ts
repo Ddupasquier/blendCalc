@@ -56,7 +56,11 @@ export const getRequestRateLimitPolicy = (
 	if (!pathname.startsWith("/api/")) return null;
 	if (pathname.startsWith("/api/internal/")) return null;
 
-	if (pathname === "/api/products/submissions" && requestMethod === "POST") {
+	if (
+		requestMethod === "POST" &&
+		(pathname === "/api/intake/v1/product-observations" ||
+			pathname === "/api/products/submissions")
+	) {
 		return {
 			scope: "catalog:submission",
 			limit: 10,

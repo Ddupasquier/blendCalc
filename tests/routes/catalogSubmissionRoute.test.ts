@@ -19,7 +19,8 @@ vi.mock("$lib/server/products/productEvidence.server", () => ({
 	uploadProductEvidence: mocks.uploadProductEvidence,
 }));
 
-import { POST } from "../../src/routes/api/products/submissions/+server";
+import { POST } from "../../src/routes/api/intake/v1/product-observations/+server";
+import { POST as legacySubmissionPOST } from "../../src/routes/api/products/submissions/+server";
 
 const food = {
 	fdcId: -1,
@@ -31,9 +32,11 @@ const food = {
 
 const createEvent = ({
 	consentToShare,
+	apiKey,
 	userId = "qa-user-id",
 }: {
 	consentToShare: boolean;
+	apiKey?: string;
 	userId?: string | null;
 }) => {
 	const formData = new FormData();
@@ -47,10 +50,14 @@ const createEvent = ({
 				.fn()
 				.mockResolvedValue(userId ? { id: userId } : null),
 		},
-		request: new Request("http://localhost:5173/api/products/submissions", {
-			method: "POST",
-			body: formData,
-		}),
+		request: new Request(
+			"http://localhost:5173/api/intake/v1/product-observations",
+			{
+				method: "POST",
+				headers: apiKey ? { "x-blendcalc-api-key": apiKey } : undefined,
+				body: formData,
+			},
+		),
 	};
 };
 
@@ -64,6 +71,10 @@ describe("catalog submission route", () => {
 			message: "The product is waiting for review.",
 			evidenceAccepted: true,
 		});
+	});
+
+	it("keeps the legacy app endpoint as a compatibility alias", () => {
+		expect(legacySubmissionPOST).toBe(POST);
 	});
 
 	it("creates exactly one submission after explicit sharing consent", async () => {
@@ -99,6 +110,20 @@ describe("catalog submission route", () => {
 	it("rejects a signed-out submission", async () => {
 		await expect(
 			POST(createEvent({ consentToShare: true, userId: null }) as never),
+		).rejects.toMatchObject({ status: 401 });
+
+		expect(mocks.submitCatalogIntake).not.toHaveBeenCalled();
+	});
+
+	it("does not accept an API key without an authenticated app session", async () => {
+		await expect(
+			POST(
+				createEvent({
+					consentToShare: true,
+					apiKey: `bc_test_${"A".repeat(43)}`,
+					userId: null,
+				}) as never,
+			),
 		).rejects.toMatchObject({ status: 401 });
 
 		expect(mocks.submitCatalogIntake).not.toHaveBeenCalled();

@@ -22,6 +22,13 @@ cannot read key rows. Names, scopes, issue/use/expiry dates, revocation, and ato
 rotation are separate from Supabase user sessions, and API routes do not accept these
 keys until the reviewed access policy explicitly enables keyed access.
 
+Product intake begins through the independently versioned
+`POST /api/intake/v1/product-observations` app route. It requires the verified Supabase
+session used by the signed-in blendCalc app; an API key alone never grants intake.
+Requests reuse the existing catalog moderation pipeline rather than writing canonical
+products directly. The legacy app submission path remains a compatibility alias, while
+third-party write access requires a separate reviewed authorization release.
+
 Public-data concerns are accepted only by the server route and stored in private
 `blendcalc_api_publication_concerns`; browser roles have no direct table privileges. Exact targets
 resolve against canonical IDs before storage, while contact details and evidence remain
