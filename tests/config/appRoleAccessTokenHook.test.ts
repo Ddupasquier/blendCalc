@@ -31,10 +31,8 @@ describe("application-role access token hook", () => {
 	});
 
 	it("keeps hosted and local Auth callbacks explicit", () => {
-		expect(config).toContain('site_url = "https://blendcalc.vercel.app"');
-		expect(config).toContain(
-			'"https://blendcalc.vercel.app/auth/callback"',
-		);
+		expect(config).toContain('site_url = "https://www.blendcalc.food"');
+		expect(config).toContain('"https://www.blendcalc.food/auth/callback"');
 		expect(config).toContain('"http://localhost:5173/auth/callback"');
 		expect(config).toContain('"http://localhost:5174/auth/callback"');
 		expect(config).toContain(
@@ -44,8 +42,12 @@ describe("application-role access token hook", () => {
 
 	it("preserves the hardened hosted Auth settings", () => {
 		expect(readTomlSection("auth")).toContain("minimum_password_length = 15");
-		expect(readTomlSection("auth.email")).toContain("enable_confirmations = true");
-		expect(readTomlSection("auth.email")).toContain("secure_password_change = true");
+		expect(readTomlSection("auth.email")).toContain(
+			"enable_confirmations = true",
+		);
+		expect(readTomlSection("auth.email")).toContain(
+			"secure_password_change = true",
+		);
 		expect(readTomlSection("auth.email")).toContain('max_frequency = "60s"');
 		expect(readTomlSection("auth.email")).toContain("otp_length = 8");
 		expect(readTomlSection("auth.mfa.totp")).toContain("enroll_enabled = true");

@@ -11,6 +11,6 @@ const packageMetadata = JSON.parse(
 );
 
 export const APP_VERSION = packageMetadata.version;
-export const APP_ORIGIN = "https://blendcalc.vercel.app";
+export const APP_ORIGIN = "https://www.blendcalc.food";
 export const createAppUserAgent = (purpose) =>
 	`blendCalc/${APP_VERSION} (${purpose}; ${APP_ORIGIN})`;
