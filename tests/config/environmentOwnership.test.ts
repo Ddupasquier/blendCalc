@@ -40,6 +40,7 @@ const expectedEnvironmentKeys = {
 		"PUBLIC_SITE_URL",
 		"PUBLIC_SUPABASE_PUBLISHABLE_KEY",
 		"PUBLIC_SUPABASE_URL",
+		"PUBLIC_TURNSTILE_SITE_KEY",
 	],
 	".env.vercel.example": [
 		"BLENDCALC_API_READ_MODE",
