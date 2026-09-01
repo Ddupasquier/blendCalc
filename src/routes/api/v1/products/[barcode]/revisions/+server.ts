@@ -14,6 +14,7 @@ import {
 	runBlendCalcAPIV1RequestWithinDeadline,
 } from "$lib/server/blendCalcAPI/v1/blendCalcAPIRequestBoundary.server";
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
+import { observeBlendCalcAPIDatabaseRead } from "$lib/server/blendCalcAPI/operations/blendCalcAPIOperations.server";
 import type { RequestHandler } from "./$types";
 
 export const GET: RequestHandler = async ({
@@ -37,14 +38,18 @@ export const GET: RequestHandler = async ({
 		throw error;
 	}
 	try {
-		const result = await runBlendCalcAPIV1RequestWithinDeadline(
-			(databaseAbortSignal) =>
-				readBlendCalcAPIV1ProductRevisionHistory(
-					getSupabaseAdminClient(),
-					barcode,
-					request,
-					{ databaseAbortSignal },
+		const result = await observeBlendCalcAPIDatabaseRead(
+			locals,
+			() =>
+				runBlendCalcAPIV1RequestWithinDeadline((databaseAbortSignal) =>
+					readBlendCalcAPIV1ProductRevisionHistory(
+						getSupabaseAdminClient(),
+						barcode,
+						request,
+						{ databaseAbortSignal },
+					),
 				),
+			(value) => value?.revisions.length ?? 0,
 		);
 		if (!result) {
 			return blendCalcAPIV1Error("product_not_found");

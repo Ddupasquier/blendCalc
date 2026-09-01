@@ -20,6 +20,8 @@ import {
 	THEME_PREFERENCE_COOKIE,
 } from "$lib/utils/theme/themePreference";
 import { env } from "$env/dynamic/private";
+import { recordBlendCalcAPIRequestObservation } from "$lib/server/blendCalcAPI/operations/blendCalcAPIOperations.server";
+import { completeServerBackgroundTask } from "$lib/server/runtime/backgroundTask.server";
 import {
 	redirect,
 	error,
@@ -73,6 +75,30 @@ export const handleError: HandleServerError = ({ error, event, status }) => {
 };
 
 export const handle: Handle = async ({ event, resolve }) => {
+	const requestStartedAt = performance.now();
+	const finalizeHandledResponse = async (
+		response: Response,
+		isAuthenticated: boolean,
+	) => {
+		const normalizedResponse = finalizeResponse(
+			normalizeBlendCalcAPIV1BoundaryResponse(event.url.pathname, response),
+			event.url,
+			isAuthenticated,
+		);
+		if (isBlendCalcAPIV1Pathname(event.url.pathname)) {
+			await completeServerBackgroundTask(
+				recordBlendCalcAPIRequestObservation({
+					pathname: event.url.pathname,
+					responseStatus: normalizedResponse.status,
+					totalDurationMs: performance.now() - requestStartedAt,
+					databaseObservation: event.locals.blendCalcAPIDatabaseObservation,
+					cacheValidation: event.request.headers.has("if-none-match"),
+				}),
+			);
+		}
+		return normalizedResponse;
+	};
+
 	event.locals.supabase = createSupabaseServerClient(event.cookies);
 
 	let authResult: ReturnType<App.Locals["getVerifiedUser"]> | null = null;
@@ -104,9 +130,8 @@ export const handle: Handle = async ({ event, resolve }) => {
 				event.request.method !== "POST"
 			) {
 				if (isBlendCalcAPIV1Pathname(event.url.pathname)) {
-					return finalizeResponse(
+					return finalizeHandledResponse(
 						blendCalcAPIV1Error("service_unavailable"),
-						event.url,
 						true,
 					);
 				}
@@ -118,9 +143,8 @@ export const handle: Handle = async ({ event, resolve }) => {
 		) {
 			await event.locals.supabase.auth.signOut({ scope: "local" });
 			if (isBlendCalcAPIV1Pathname(event.url.pathname)) {
-				return finalizeResponse(
+				return finalizeHandledResponse(
 					blendCalcAPIV1Error("access_denied"),
-					event.url,
 					true,
 				);
 			}
@@ -157,7 +181,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 								"x-ratelimit-remaining": "0",
 							},
 						});
-				return finalizeResponse(response, event.url, Boolean(user));
+				return finalizeHandledResponse(response, Boolean(user));
 			}
 		} catch (rateLimitError) {
 			console.error("[security] Request rate limit unavailable", {
@@ -173,7 +197,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 				: json(createAppIssuePayload("SERVICE_UNAVAILABLE"), {
 						status: 503,
 					});
-			return finalizeResponse(response, event.url, Boolean(user));
+			return finalizeHandledResponse(response, Boolean(user));
 		}
 	}
 
@@ -210,9 +234,5 @@ export const handle: Handle = async ({ event, resolve }) => {
 		response = blendCalcAPIV1Error("unexpected_error");
 	}
 
-	return finalizeResponse(
-		normalizeBlendCalcAPIV1BoundaryResponse(event.url.pathname, response),
-		event.url,
-		Boolean(user),
-	);
+	return finalizeHandledResponse(response, Boolean(user));
 };

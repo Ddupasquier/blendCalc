@@ -870,6 +870,15 @@ The isolated generated schema contract is
 `infrastructure/blendCalcAPI/supabase/database.types.ts`; it does not belong in
 application source until a runtime consumer imports it.
 
+The isolated schema also owns `api_request_observations`,
+`api_shadow_parity_observations`, and `publication_sync_runs`. Browser roles have no
+access. Privacy-safe request and parity observations retain only operation names,
+status, timing, counts, cache state, read mode, and hashes for 35 days; they never
+retain request identifiers or payloads. Service-role-only operational views expose
+request p50/p95, database time, errors, rate limits, cache effectiveness, shadow parity,
+generation state and age, source/target count and hash parity, sync duration/failures,
+product additions/removals, and the latest production read mode.
+
 Only `service_role` has schema usage or table/function privileges. `anon` and
 `authenticated` cannot access this project through the Data API. A generation becomes
 ready only when its stored product, revision, category, and attribution counts match the
