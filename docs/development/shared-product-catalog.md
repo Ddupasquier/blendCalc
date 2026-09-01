@@ -281,9 +281,13 @@ can change over time.
 
 1. The server compares the submitted label with the active blendCalc product first.
 2. An unchanged match returns the existing product and creates no duplicate submission.
-3. A clearly incompatible identity is blocked before normal moderation unless the user
-   explicitly reports the catalog information as incorrect and provides complete
-   package evidence.
+3. A dedicated identity gate compares normalized product and brand identity with the
+   active canonical record and every returned exact-barcode source record before any
+   field proposals enter moderation. An ordinary submission that conflicts with the
+   canonical identity, or with every exact source identity when no canonical record
+   exists, is blocked. Mixed exact-source evidence and material brand differences require
+   package-evidence review. An explicit catalog correction may proceed only through that
+   evidence-backed review path.
 4. A credible difference or explicit correction becomes a `product_update` submission linked to the active
    product and the exact revision reviewed by the comparison.
 5. USDA and Open Food Facts are checked for exact-barcode support. Their results are

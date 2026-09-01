@@ -1,5 +1,6 @@
 import type { FoodItem } from "$lib/utils/food/types";
 import type { CatalogSubmissionIntent } from "$lib/utils/products/catalog";
+import type { CatalogIntakeIdentityValidation } from "$lib/utils/products/catalogIntakeIdentity";
 import {
 	compareCatalogSubmissionToExistingProduct,
 	type CatalogSubmissionComparison,
@@ -85,7 +86,6 @@ export type PreparedCatalogSubmissionReview = {
 	matchedDraft: CatalogSourceAssessment["mergedDraft"];
 	needsSourceComparisonReview: boolean;
 	report: CatalogSubmissionValidationReport;
-	sourceMismatchName?: string;
 	verificationBundle: CatalogVerificationBundle | null;
 };
 
@@ -107,11 +107,17 @@ export const prepareCatalogSubmissionReview = (input: {
 	existingComparison: CatalogSubmissionComparison | null;
 	updateTarget: CatalogUpdateTarget | null;
 	sourceAssessment: CatalogSourceAssessment;
+	identityValidation: CatalogIntakeIdentityValidation;
 	evidencePaths: ProductEvidencePaths;
 	requestedReviewFlags?: string[];
 	frontImageCrop?: FoodImagePlacementValues | null;
 	labelObservedAt: string;
 }): PreparedCatalogSubmissionReview => {
+	if (input.identityValidation.disposition === "reject") {
+		throw new Error(
+			"Catalog field proposals require a non-rejected identity validation.",
+		);
+	}
 	const {
 		resolutionPolicy,
 		usdaDraft,
@@ -132,12 +138,11 @@ export const prepareCatalogSubmissionReview = (input: {
 				resolutionPolicy,
 			)
 		: null;
-	const sourceMismatchName =
-		!input.existingComparison && sourceComparison?.hasBlockingIdentityMismatch
-			? matchedDraft?.name
-			: undefined;
 	const reviewFlags = buildProductSubmissionReviewFlags({
-		requestedFlags: input.requestedReviewFlags,
+		requestedFlags: [
+			...(input.requestedReviewFlags ?? []),
+			...input.identityValidation.reviewFlags,
+		],
 		existingComparison: input.existingComparison,
 		sourceComparison,
 		sourceAccuracyFlags: input.sourceAssessment.sourceAccuracy.reviewFlags,
@@ -256,7 +261,6 @@ export const prepareCatalogSubmissionReview = (input: {
 		matchedDraft,
 		needsSourceComparisonReview,
 		report,
-		sourceMismatchName,
 		verificationBundle,
 	};
 };
