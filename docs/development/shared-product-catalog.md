@@ -290,6 +290,9 @@ can change over time.
    evidence-backed review path.
 4. A credible difference or explicit correction becomes a `product_update` submission linked to the active
    product and the exact revision reviewed by the comparison.
+   Its submitted identity, normalized label snapshot, evidence, observation date, and
+   structured differences are immutable after insertion. Moderation may advance only
+   workflow metadata; a changed proposal requires a new comparison and submission.
 5. USDA and Open Food Facts are checked for exact-barcode support. Their results are
    stored as research context; neither provider silently replaces the canonical row.
 6. Moderation shows the old and proposed values, source-check results, and private label

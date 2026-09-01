@@ -1,6 +1,6 @@
 begin;
 
-select plan(15);
+select plan(19);
 
 select has_table(
 	'public',
@@ -12,6 +12,12 @@ select has_function(
 	'catalog_change_summary_is_valid',
 	array['jsonb', 'boolean'],
 	'catalog change summaries have one authoritative validator'
+);
+select has_function(
+	'public',
+	'preserve_shared_product_update_proposal',
+	array[]::text[],
+	'catalog update proposals have an immutable database boundary'
 );
 select has_function(
 	'public',
@@ -183,6 +189,36 @@ cross join lateral (
 	limit 1
 ) user_row
 where product.id = '11111111-1111-4111-8111-111111111111'::uuid;
+
+select throws_ok(
+	$$
+		update public.shared_product_submissions
+		set food = jsonb_set(food, '{description}', '"Mutated Product"'::jsonb)
+		where id = '33333333-3333-4333-8333-333333333333'::uuid
+	$$,
+	'P0001',
+	'Catalog update proposal fields are immutable',
+	'a pending update proposal cannot replace its submitted snapshot'
+);
+select throws_ok(
+	$$
+		update public.shared_product_submissions
+		set change_summary = '{"changes":[{"field":"brand","label":"Brand","changeType":"added","previousValue":null,"submittedValue":"Late edit","severity":"low"}]}'::jsonb
+		where id = '33333333-3333-4333-8333-333333333333'::uuid
+	$$,
+	'P0001',
+	'Catalog update proposal fields are immutable',
+	'a pending update proposal cannot replace its explicit differences'
+);
+select throws_ok(
+	$$
+		delete from public.shared_product_submissions
+		where id = '33333333-3333-4333-8333-333333333333'::uuid
+	$$,
+	'P0001',
+	'Catalog update proposals are immutable',
+	'a catalog update proposal cannot be deleted after intake'
+);
 
 update public.shared_products
 set approved_submission_id = '33333333-3333-4333-8333-333333333333'::uuid

@@ -908,6 +908,10 @@ Notes:
   and future remapping.
 - `submission_kind` is `new_product` or `product_update`. Product updates must point to
   both the active shared product and the exact base revision used for comparison.
+- Product-update proposal fields are immutable after insertion. Status, reviewer,
+  review time, review note, and verification status remain mutable workflow metadata;
+  the proposed identity, category, label snapshot, evidence, base revision, and
+  structured differences cannot be edited or deleted in place.
 - `submission_intent` distinguishes ordinary catalog sharing from an explicit
   `catalog_correction`. A correction may reach moderation even when its differences
   would be too large for an ordinary same-barcode submission.
