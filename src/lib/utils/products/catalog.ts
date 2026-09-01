@@ -107,7 +107,7 @@ export const submitSharedProduct = async (
 	if (evidence.barcodePhoto)
 		formData.set("barcodePhoto", evidence.barcodePhoto);
 
-	const response = await fetch("/api/products/submissions", {
+	const response = await fetch("/api/intake/v1/product-observations", {
 		method: "POST",
 		headers: { accept: "application/json" },
 		body: formData,

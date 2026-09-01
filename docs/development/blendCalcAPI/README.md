@@ -170,6 +170,18 @@ closed when canonical identity conflicts or every exact source is unrelated; mix
 source evidence, brand conflicts, unknown products, and explicit corrections require
 complete package-evidence review. Exact identity never verifies unrelated fields.
 
+## App-Only Intake
+
+The signed-in blendCalc app is the first intake client. It submits product observations
+through `POST /api/intake/v1/product-observations` using an existing verified Supabase
+app session. API keys do not authorize this route, and `/api/v1` remains read-only.
+
+The versioned app route reuses the existing catalog submission, evidence, deduplication,
+and moderation pipeline; it never writes directly to the canonical catalog. The former
+`POST /api/products/submissions` app route remains a compatibility alias while deployed
+clients move to the versioned path. Intake versioning is independent from public read
+API versioning, and enabling third-party writes requires a separate reviewed release.
+
 ## Read Endpoints
 
 | Method and path                            | Returns                                                              |

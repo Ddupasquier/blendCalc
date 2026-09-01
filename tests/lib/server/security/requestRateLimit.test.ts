@@ -14,6 +14,13 @@ describe("request rate-limit policies", () => {
 			windowSeconds: 3600,
 		});
 		expect(
+			getRequestRateLimitPolicy("POST", "/api/intake/v1/product-observations"),
+		).toMatchObject({
+			scope: "catalog:submission",
+			limit: 10,
+			windowSeconds: 3600,
+		});
+		expect(
 			getRequestRateLimitPolicy("POST", "/api/food-compatibility/feedback"),
 		).toMatchObject({
 			scope: "compatibility:feedback",
