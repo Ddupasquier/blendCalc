@@ -622,26 +622,21 @@ test("manual entry renders every approved DB nutrient group and field", async ({
 		dialog.getByRole("switch", { name: "Package measure" }),
 	).not.toBeChecked();
 	await dialog.getByRole("button", { name: "Continue" }).click();
+	const privateMacroGroups = nutrientCatalog.macros.map((group) => ({
+		...group,
+		fields: group.fields.map((field) => ({ ...field, required: false })),
+	}));
 
 	await expectManualEntryNutrientGroupOpenStates(
 		dialog,
-		nutrientCatalog.macros.map((_, index) => index === 0),
+		privateMacroGroups.map((_, index) => index === 0),
 	);
-	await expectRenderedManualEntryNutrientGroups(dialog, nutrientCatalog.macros);
+	await expectRenderedManualEntryNutrientGroups(dialog, privateMacroGroups);
 	await expect(
 		dialog.locator(".manual-nutrients__group", { hasText: "Mineral details" }),
 	).toHaveCount(0);
 	await expect(dialog.getByLabel(/^Total Sugars \(g\)/)).toHaveCount(1);
 
-	for (const requiredField of nutrientCatalog.macros
-		.flatMap((group) => group.fields)
-		.filter((field) => field.required)) {
-		await dialog
-			.getByLabel(
-				new RegExp(`^${escapeRegularExpression(requiredField.label)}`),
-			)
-			.fill("1");
-	}
 	await dialog.getByRole("button", { name: "Continue" }).click();
 	await expect(dialog.getByRole("tab", { name: "Extended" })).toHaveAttribute(
 		"aria-current",
