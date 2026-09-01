@@ -1085,6 +1085,45 @@ export type Database = {
           },
         ]
       }
+      catalog_intake_requests: {
+        Row: {
+          actor_user_id: string
+          completed_at: string | null
+          created_at: string
+          id: string
+          idempotency_key: string
+          request_fingerprint: string
+          response_body: Json | null
+          response_status: number | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          actor_user_id: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          idempotency_key: string
+          request_fingerprint: string
+          response_body?: Json | null
+          response_status?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          actor_user_id?: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          idempotency_key?: string
+          request_fingerprint?: string
+          response_body?: Json | null
+          response_status?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       catalog_monitor_runs: {
         Row: {
           created_at: string
@@ -9310,6 +9349,19 @@ export type Database = {
         }
         Returns: boolean
       }
+      begin_catalog_intake_request: {
+        Args: {
+          p_actor_user_id: string
+          p_idempotency_key: string
+          p_request_fingerprint: string
+        }
+        Returns: {
+          outcome: string
+          request_id: string
+          response_body: Json
+          response_status: number
+        }[]
+      }
       blendcalc_api_key_scopes_are_well_formed: {
         Args: { p_scopes: string[] }
         Returns: boolean
@@ -9409,6 +9461,17 @@ export type Database = {
       compatibility_normalize_text: {
         Args: { p_value: string }
         Returns: string
+      }
+      complete_catalog_intake_request: {
+        Args: {
+          p_actor_user_id: string
+          p_outcome: string
+          p_request_fingerprint: string
+          p_request_id: string
+          p_response_body: Json
+          p_response_status: number
+        }
+        Returns: boolean
       }
       complete_catalog_revalidation_job: {
         Args: {

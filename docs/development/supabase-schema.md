@@ -827,6 +827,7 @@ removes those aliases after all application callers switch to the canonical
 | Table                                 | Primary Key             | Owner Scope                     | Purpose                                                                                                                    | Key Relationships                                                                     |
 | ------------------------------------- | ----------------------- | ------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
 | `shared_product_submissions`          | `id`                    | Submitted by one auth user      | Community product submissions awaiting review or already reviewed                                                          | `submitted_by → auth.users.id`, optional reviewer                                     |
+| `catalog_intake_requests`             | `id`                    | One actor-scoped request key    | Service-only idempotency ledger for catalog intake retries                                                                 | `actor_user_id → auth.users.id`                                                       |
 | `shared_products`                     | `id`                    | Shared catalog                  | Approved active shared products searchable by all authenticated users                                                      | Optional approved submission/reviewer                                                 |
 | `shared_product_revisions`            | `id`                    | Shared catalog                  | Historical revisions for approved products                                                                                 | `shared_product_id → shared_products.id`                                              |
 | `shared_product_revision_changes`     | `id`                    | Shared catalog history          | Queryable old/new field values attached to an approved product revision                                                    | `revision_id → shared_product_revisions.id`                                           |
@@ -915,6 +916,23 @@ Notes:
 - A user may have only one pending correction against a specific base revision.
   Different users may independently submit supporting or conflicting package evidence;
   approving one correction makes the others stale through the existing revision guard.
+
+### `catalog_intake_requests`
+
+Stores no submitted food, image, evidence path, or raw request body. It retains an
+actor-scoped idempotency key, SHA-256 request fingerprint, processing state, and the
+safe terminal HTTP response needed to replay a completed request.
+
+- `begin_catalog_intake_request` atomically returns `acquired`, `in_progress`,
+  `conflict`, or `replay`. A reused key with a different fingerprint always conflicts.
+- `complete_catalog_intake_request` finalizes an acquired key exactly once. Terminal
+  responses are replayed without rerunning submission, revision, observation, or image
+  work.
+- The ledger is forced-RLS and service-role-only. App and API routes must acquire the
+  key before evidence upload or any catalog mutation.
+- Processing rows are deliberately not stolen after a timeout. An ambiguous worker
+  failure therefore cannot cause a retry to duplicate downstream writes; operational
+  recovery must resolve the original request or require a new key.
 
 ### `user_catalog_submission_enforcement`
 
