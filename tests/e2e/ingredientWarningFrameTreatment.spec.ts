@@ -58,7 +58,12 @@ const focusCardWithKeyboard = async (
 	target: Locator,
 	allowWebkitKeyboardPreferenceFallback: boolean,
 ) => {
-	for (let tabIndex = 0; tabIndex < 30; tabIndex += 1) {
+	const focusableCount = await page
+		.locator(
+			'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+		)
+		.count();
+	for (let tabIndex = 0; tabIndex <= focusableCount; tabIndex += 1) {
 		await page.keyboard.press("Tab");
 		if (
 			await target.evaluate((element) => element === document.activeElement)

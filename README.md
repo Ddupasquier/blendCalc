@@ -135,6 +135,7 @@ intentionally omitted.
 | `npm run verify:quick`           | Show source checks and affected Vitest in the live dashboard.             |
 | `npm run verify:feature`         | Add every Vitest project and affected browser coverage.                   |
 | `npm run verify:release`         | Run the bounded blocking release profile in the dashboard.                |
+| `npm run verify:promotion`       | Reuse a fresh Release Check for an identical clean promoted tree.         |
 | `npm run verify:nightly`         | Run exhaustive nonblocking browser confidence in the dashboard.           |
 
 Use the [Testing Strategy](docs/development/testing.md) to choose a test layer. Browser

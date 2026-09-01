@@ -190,7 +190,7 @@ not duplicate the same assertion across runners.
 - Executable maintenance commands use a two-part ownership path under `scripts/`: the
   first folder names the operation (`audits`, `backfills`, `generators`, `imports`,
   `operations`, `qa`, or `seeds`) and the child folder names its domain (`catalog`,
-  `database`, `food-safety`, `food-sources`, `images`, `nutrition`, `recovery`,
+  `database`, `food-safety`, `food-sources`, `images`, `nutrition`, `quality`, `recovery`,
   `releases`, `security`, or `users`).
 - Reusable script code lives under the matching domain in `scripts/lib`; maintained
   reference catalogs remain in `scripts/lib/reference-data`.
