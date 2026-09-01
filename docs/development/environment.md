@@ -34,6 +34,10 @@ The ignored mirrors are local inventory and development inputs. Vercel and Supab
 remain authoritative for deployed values. Never copy a secret into a public variable,
 command argument, issue, log, test fixture, or documentation example.
 
+The tracked `.env.test` intentionally clears `PUBLIC_TURNSTILE_SITE_KEY`. Automated
+browser authentication runs only against disposable local Supabase and must not inherit
+a developer's real Turnstile configuration from `.env`.
+
 ## Local Application
 
 Copy `.env.example` to `.env`. This file owns browser-safe Supabase configuration plus
