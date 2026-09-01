@@ -150,6 +150,14 @@ completed requests replay the original safe response. Processing keys are never 
 after an arbitrary timeout, so an ambiguous worker failure cannot duplicate submissions,
 revisions, observations, or images.
 
+Future app-only intake persists each proposed field separately in
+`shared_product_submission_field_evidence`. Every retained proposal keeps its exact
+source value, nullable source unit and basis, matching source-observation record,
+observation time, bounded unreviewed confidence, and private evidence identifiers.
+Missing unit or basis never implies a conversion, and intake cannot label a proposal as
+canonically verified. These rows are private moderation evidence; approval still
+selects canonical lineage through `shared_product_field_provenance`.
+
 ## Read Endpoints
 
 | Method and path                            | Returns                                                              |

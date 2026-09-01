@@ -828,6 +828,7 @@ removes those aliases after all application callers switch to the canonical
 | ------------------------------------- | ----------------------- | ------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
 | `shared_product_submissions`          | `id`                    | Submitted by one auth user      | Community product submissions awaiting review or already reviewed                                                          | `submitted_by → auth.users.id`, optional reviewer                                     |
 | `catalog_intake_requests`             | `id`                    | One actor-scoped request key    | Service-only idempotency ledger for catalog intake retries                                                                 | `actor_user_id → auth.users.id`                                                       |
+| `shared_product_submission_field_evidence` | `id`               | Private proposed-field evidence | Exact value, unit, basis, source observation, timestamp, confidence, and evidence references for each submitted field      | `submission_id`, matching `source_observation_id`                                     |
 | `shared_products`                     | `id`                    | Shared catalog                  | Approved active shared products searchable by all authenticated users                                                      | Optional approved submission/reviewer                                                 |
 | `shared_product_revisions`            | `id`                    | Shared catalog                  | Historical revisions for approved products                                                                                 | `shared_product_id → shared_products.id`                                              |
 | `shared_product_revision_changes`     | `id`                    | Shared catalog history          | Queryable old/new field values attached to an approved product revision                                                    | `revision_id → shared_product_revisions.id`                                           |
@@ -1163,6 +1164,16 @@ and observed time from the selected row; raw payloads and private links remain
 service-role only. Trusted server-side catalog hydration has explicit read access to
 observations so authenticated app routes can return selected provenance without
 granting browsers direct access to the evidence tables.
+
+`shared_product_submission_field_evidence` is the private, append-only bridge between
+one proposed field and the exact submission-owned source observation supporting it.
+Each row retains the source value before normalization, nullable source unit and basis,
+field observation time, bounded unreviewed confidence, and one or more bounded evidence
+identifiers. A database trigger prevents evidence from borrowing an observation owned
+by another submission. Browser roles have no access, and proposed confidence
+cannot claim canonical verification. `NULL` unit or basis means not applicable or not
+reported; it never authorizes a conversion. Canonical selection remains separately
+owned by `shared_product_field_provenance` after review.
 
 `shared_product_field_provenance` stores the canonical field path, selected observation,
 source and normalized values, confidence, evidence method, and selected state. Evidence

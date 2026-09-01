@@ -7892,6 +7892,63 @@ export type Database = {
           },
         ]
       }
+      shared_product_submission_field_evidence: {
+        Row: {
+          basis: Json | null
+          confidence: string
+          created_at: string
+          evidence_references: string[]
+          field_path: string
+          id: string
+          observed_at: string
+          proposed_value: Json
+          source_observation_id: string
+          submission_id: string
+          unit: string | null
+        }
+        Insert: {
+          basis?: Json | null
+          confidence: string
+          created_at?: string
+          evidence_references: string[]
+          field_path: string
+          id?: string
+          observed_at: string
+          proposed_value: Json
+          source_observation_id: string
+          submission_id: string
+          unit?: string | null
+        }
+        Update: {
+          basis?: Json | null
+          confidence?: string
+          created_at?: string
+          evidence_references?: string[]
+          field_path?: string
+          id?: string
+          observed_at?: string
+          proposed_value?: Json
+          source_observation_id?: string
+          submission_id?: string
+          unit?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shared_product_submission_field_evid_source_observation_id_fkey"
+            columns: ["source_observation_id"]
+            isOneToOne: false
+            referencedRelation: "shared_product_observations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shared_product_submission_field_evidence_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "shared_product_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shared_product_revision_changes: {
         Row: {
           change_type: string
@@ -9418,6 +9475,10 @@ export type Database = {
       catalog_health_observation_field_value: {
         Args: { p_field_path: string; p_food: Json }
         Returns: Json
+      }
+      catalog_intake_evidence_references_are_valid: {
+        Args: { p_references: string[] }
+        Returns: boolean
       }
       claim_catalog_revalidation_jobs: {
         Args: { p_limit?: number; p_run_id: string }
