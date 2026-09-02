@@ -208,18 +208,18 @@ Vitest separates work by runtime instead of paying for jsdom in every file:
 - one OCR component test uses a standard isolated thread because Svelte runes cannot be
   evaluated safely in the VM pool.
 
-On the current development machine, the complete 2,191-assertion Vitest pass completed
-in 3 minutes 11 seconds: about 50 seconds for Node and 1 minute 53 seconds for rendered
-DOM ownership, including process startup. Six local workers remain the measured default;
-CI uses two workers for its smaller hosted runner. Rebenchmark after major dependency,
-hardware, or suite changes instead of treating either pool or worker count as universal.
+On the current development machine, a previous six-worker benchmark completed the
+2,191-assertion Vitest pass in 3 minutes 11 seconds, but that throughput setting was not
+safe under simultaneous editor, development-tool, browser, and local-database load. Vitest now uses
+two workers locally and in CI. Rebenchmark only inside the 4 GiB Node heap and resource
+preflight limits; do not trade machine stability for a shorter isolated benchmark.
 
 Playwright defaults to two workers. A clean bounded-matrix benchmark completed in 3.7
 minutes with two workers and 4.2 minutes with three, so the extra worker increased local
 contention instead of improving throughput. The maintained QA database still seeds three
 equivalent browser-worker personas for future remeasurement. Override
-`PLAYWRIGHT_WORKERS` only while benchmarking; raising it beyond the available personas
-is invalid. A hosted test run must provide one comma-separated
+`PLAYWRIGHT_WORKERS` only to select one or two workers while benchmarking; values above
+two are rejected. A hosted test run must provide one comma-separated
 `PLAYWRIGHT_QA_EMAILS` value per worker; one shared account is not parallel-safe.
 
 The current optimized Quick Check completes in 3 minutes 13 seconds. A cold Feature

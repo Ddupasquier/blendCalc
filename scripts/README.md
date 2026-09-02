@@ -42,6 +42,7 @@ the command line or place generated data in tracked files.
 | Read-only audit                          | Confirm the target environment and use `--json` only when a machine-readable report is needed.        |
 | Seed, import, or backfill                | Run the documented dry run first when one exists; review counts and exact write scope.                |
 | Local QA database                        | Use only `db:test:*`; the manager rejects non-local Supabase URLs.                                    |
+| Heavy local verification                 | Run `npm run resources:check`; maintained full-suite commands enforce it automatically.               |
 | Linked migration                         | Use only `db:push`, `db:push:auto`, or `db:push:dry`; never bypass the remote-`main` promotion guard. |
 | Privileged account or publication action | Verify the actor, target identifier, reason, and environment before writing.                          |
 | Backup or recovery                       | Store output outside the repository and verify permissions and checksums.                             |
@@ -49,6 +50,21 @@ the command line or place generated data in tracked files.
 Database-backed reference data is authoritative. Scripts must not introduce repository
 cache fallbacks, infer missing values, fabricate review evidence, or promote a provider
 as a whole-product authority.
+
+### Local Resource Safety
+
+Builds, complete Vitest projects, browser suites, feature/release/nightly verification,
+and full database verification run through
+`operations/quality/run_with_resource_limits.mjs`. On a local machine, the runner
+refuses to start when the macOS startup disk has less than 50 GiB free, swap use exceeds
+8 GiB, or an existing development process exceeds 4 GiB resident memory. It also gives
+child Node processes a 4 GiB old-space limit. CI skips machine-capacity checks but keeps
+the worker and heap limits.
+
+Use `npm run resources:check` for a read-only report. Resolve pressure before continuing.
+`BLENDCALC_ALLOW_RESOURCE_PRESSURE=1` is an explicit one-command emergency override;
+it is not a persistent setting and does not make an unsafe machine state acceptable.
+The guard never deletes files, caches, containers, volumes, or databases.
 
 ## Directory Map
 
@@ -87,7 +103,7 @@ start or reset only localhost Supabase, writes an ignored test environment, appl
 | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
 | `npm run db:test:start`                                                 | Start local Supabase and restore missing baseline fixtures without moving current tester list items. |
 | `npm run db:test:reset`                                                 | Destructively recreate only the local database from migrations and fixtures.                         |
-| `npm run db:test:verify`                                                | Recreate the local database and run all pgTAP checks.                                                |
+| `npm run db:test:verify`                                                | Recreate and test the local database, then stop the stack and manager-started Colima.                |
 | `npm run db:test:status`                                                | Report local service status.                                                                         |
 | `npm run db:test:stop`                                                  | Stop local Supabase.                                                                                 |
 | `npm run qa:deterministic`                                              | Run read-only hosted invariants without creating users or Fridge records.                            |

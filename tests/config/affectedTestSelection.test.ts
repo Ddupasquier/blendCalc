@@ -9,6 +9,7 @@ describe("affected-test selection", () => {
 		const selectorSource = readSource(
 			"scripts/operations/quality/run_affected_tests.mjs",
 		);
+		const verifyWorkflow = readSource(".github/workflows/verify.yml");
 
 		expect(packageSource).toContain('"test:affected"');
 		expect(packageSource).toContain('"test:e2e:affected"');
@@ -20,6 +21,11 @@ describe("affected-test selection", () => {
 		expect(selectorSource).toContain("globalUnitOwners");
 		expect(selectorSource).toContain('runCommand("npm", ["run", "test"])');
 		expect(selectorSource).toContain("browserDomainMappings");
+		expect(selectorSource).toContain('"chromium", "firefox", "webkit"');
+		expect(selectorSource).toContain("runCommandWithInheritedOutput");
+		expect(verifyWorkflow).toContain(
+			"run_affected_tests.mjs browser --install-browsers",
+		);
 		expect(selectorSource).toContain(
 			"test-results/affected-test-selection.json",
 		);

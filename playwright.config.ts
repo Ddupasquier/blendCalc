@@ -22,9 +22,10 @@ const terminalReporter = process.env.PLAYWRIGHT_PROGRESS_REPORTER ?? "dot";
 
 if (
 	!Number.isInteger(localPlaywrightWorkerCount) ||
-	localPlaywrightWorkerCount < 1
+	localPlaywrightWorkerCount < 1 ||
+	localPlaywrightWorkerCount > 2
 ) {
-	throw new Error("PLAYWRIGHT_WORKERS must be a positive integer.");
+	throw new Error("PLAYWRIGHT_WORKERS must be an integer from 1 through 2.");
 }
 
 export default defineConfig({

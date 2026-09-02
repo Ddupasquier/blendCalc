@@ -201,7 +201,7 @@ describe("Playwright browser-testing architecture", () => {
 		expect(hostedAuthWorkflow).toContain("npm run check:auth");
 		expect(hostedAuthWorkflow).toContain("vars.BLENDCALC_HOSTED_SUPABASE_URL");
 		expect(hostedAuthWorkflow).not.toContain("secrets.");
-		expect(viteConfig).toContain("maxWorkers: process.env.CI ? 2 : 6");
+		expect(viteConfig).toContain("maxWorkers: 2");
 	});
 
 	it("exposes one deterministic client-readiness signal before browser interaction", () => {
