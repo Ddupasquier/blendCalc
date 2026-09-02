@@ -46,6 +46,7 @@ const sharedLibraryDomains = [
 	"nutrition",
 	"qa",
 	"reference-data",
+	"recovery",
 	"releases",
 	"security",
 ];

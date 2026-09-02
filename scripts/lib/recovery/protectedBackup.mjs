@@ -1,3 +1,9 @@
+/**
+ * Purpose: Provide shared protected-backup manifest, checksum, and restore-data
+ * parsing for the maintained recovery operations.
+ * Do not run directly; import this module from a recovery command or focused test.
+ */
+
 import { createHash } from "node:crypto";
 import { createReadStream, readFileSync } from "node:fs";
 import { createInterface } from "node:readline";
