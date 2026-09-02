@@ -257,11 +257,16 @@ Create and verify a protected backup outside the repository:
 node scripts/operations/recovery/create_protected_hosted_backup.mjs
 node scripts/operations/recovery/verify_protected_hosted_backup.mjs \
   "/absolute/path/to/backup"
+npm run recovery:blendCalcAPI -- --backup-dir="/absolute/path/to/backup"
 ```
 
 The backup workflow reads production without changing it. Verification checks required
-database artifacts, Storage manifest coverage, owner-only permissions, and SHA-256
-checksums without contacting Supabase. See
+database artifacts, migration history, Storage manifest coverage, owner-only permissions,
+and SHA-256 checksums without contacting Supabase. The recovery drill restores the
+backup in disposable local stacks, applies forward migrations, validates counts and
+foreign keys, restores Storage bytes, rebuilds the isolated publication generation,
+and proves rollback. Legacy backups require an independently verified explicit migration
+cutoff. See
 [Hosted Security](../docs/development/hosted-security.md)
 for retention, restore drills, and incident procedures.
 

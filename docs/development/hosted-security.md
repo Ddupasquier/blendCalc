@@ -24,7 +24,7 @@ in [`authentication.md`](authentication.md); database policies and tables live i
 | Direct Postgres access     | Trusted operator networks only                                                                        |
 | Hosted CI database access  | None                                                                                                  |
 | Managed backups            | Completed daily physical backup                                                                       |
-| Additional recovery copy   | Protected logical public-schema/data backup plus Storage files                                        |
+| Additional recovery copy   | Protected logical public-schema/data backup, migration manifest, and Storage files                    |
 | Privileged authentication  | TOTP enrolled and AAL2 required for moderator, administrator, and developer actions                   |
 | Bot protection             | CAPTCHA token supplied by the browser before hosted CAPTCHA is enabled                                |
 | Auth event review          | Failed sign-ins, recovery, MFA, role, block, and token-revocation events reviewed through hosted logs |
@@ -47,6 +47,12 @@ The linked production project was verified on **August 11, 2026**:
   disposable local stack with exact row-count agreement and valid foreign keys.
 - All **5 Storage objects** were downloaded, checksum-verified, restored locally, and
   checksum-verified again. Database backups alone do not contain those file bytes.
+- The protected backup was exercised again through the maintained two-database drill
+  on **August 31, 2026**: all 88 tables and 1,098,271 rows matched exactly, 14 local
+  non-login Auth placeholders satisfied the public foreign-key graph, all 5 Storage
+  objects matched, and the isolated read model rebuilt 6 products, 27 revisions, 1,863
+  categories, and 1 attribution before a generation rollback restored the verified
+  catalog hash.
 - Email confirmation, 15-character passwords, breached-password screening, secure
   password changes, refresh-token rotation/reuse detection, hosted rate limits, and
   TOTP capability are enabled.
@@ -101,11 +107,18 @@ The default private location is:
 ~/Library/Application Support/blendCalc/backups/<UTC timestamp>/
 ```
 
-The operation writes the public schema, public data, every Storage object, a Storage
-manifest, and SHA-256 checksums. Directories are owner-only and files deny group/public
-access. It reads production but never changes it. The database password comes from
+The operation writes the public schema, public data, the exact linked migration history,
+every Storage object and its available content metadata, a Storage manifest, and SHA-256
+checksums. Directories are owner-only and files deny group/public access. It reads
+production but never changes it. The database password comes from
 `SUPABASE_DB_PASSWORD` or the maintained macOS Keychain item; Storage access comes from
 the gitignored moderation environment.
+
+This supplemental logical backup does not contain Supabase Auth records or managed
+platform state. Daily managed physical backups remain authoritative for complete
+production recovery, including Auth. The local drill creates non-login placeholder Auth
+rows only to prove the restored public graph and forward migrations without copying
+credentials or user identity data.
 
 Verify a backup without contacting Supabase:
 
@@ -119,20 +132,37 @@ attachments, chat, or CI artifacts. They contain user data.
 
 ## Recovery Drill
 
-Perform this against disposable local Supabase only:
+Perform the maintained drill against disposable local Supabase only:
+
+```bash
+npm run recovery:blendCalcAPI -- --backup-dir="/absolute/path/to/backup"
+```
+
+Backups created before migration manifests were added must provide an independently
+verified schema cutoff, for example:
+
+```bash
+npm run recovery:blendCalcAPI -- \
+  --backup-dir="/absolute/path/to/legacy-backup" \
+  --legacy-migration-cutoff=20260810120000
+```
 
 1. Create and checksum-verify a fresh protected backup.
-2. Run `npm run db:test:reset` so migrations recreate the current schema locally.
-3. Truncate local public tables and import `public-data.sql` with foreign-key triggers
-   deferred for the import session.
-4. Compare every imported public-table count with the matching `COPY` block in the
-   backup; require exact agreement and validated foreign keys.
-5. Recreate missing local Storage buckets from the manifest, upload every backed-up
-   object, and require exact byte size and SHA-256 agreement.
-6. Exercise sign-in plus one representative Ingredients, Mix, Saved, Profile, and
-   moderation read against the restored local data.
-7. Run `npm run db:test:reset` again so production-derived data is removed and the
-   deterministic QA baseline returns.
+2. Reconstruct the backup-era application schema from its tracked migration history in
+   a fresh temporary local stack. Never import old rows directly into today's schema.
+3. Import `public-data.sql`, require exact `COPY`-block row-count agreement, create
+   non-login Auth placeholders for public foreign keys, and reject every orphan.
+4. Apply every tracked forward migration after the backup cutoff and validate foreign
+   keys again.
+5. Recreate Storage buckets and objects from the manifest and require exact byte size
+   and SHA-256 agreement.
+6. Start a second disposable Supabase stack for blendCalcAPI, build the current app
+   against the restored source, synchronize a complete publication generation, and
+   require source/target count and content-hash parity.
+7. Activate a second complete local generation and invoke the real rollback contract;
+   require the first verified generation to become active again.
+8. Stop both temporary stacks and delete their volumes and working directories even
+   after a failed drill. The ordinary local QA database is never used or modified.
 
 Never use a linked-project reset, import, or restore command for this drill. A managed
 production restore is initiated through Supabase support/dashboard tooling only after
