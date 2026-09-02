@@ -4,7 +4,8 @@
  * ownership to its routed specs and expands to the bounded compatibility matrix when
  * shared browser infrastructure changes.
  * Run: `npm run test:affected`, `npm run test:e2e:affected`, or
- * `node scripts/operations/quality/run_affected_tests.mjs browser --prepare`.
+ * `node scripts/operations/quality/run_affected_tests.mjs browser --prepare`. CI may
+ * preinstall the selected engines with the `browser --install-browsers` mode.
  */
 
 import { spawnSync } from "node:child_process";
@@ -20,6 +21,8 @@ const reportPath = fileURLToPath(
 );
 const mode = process.argv[2] ?? "all";
 const shouldPrepareBrowserEnvironment = process.argv.includes("--prepare");
+const shouldInstallBrowserDependencies =
+	process.argv.includes("--install-browsers");
 
 const runCommand = (command, args, { capture = false } = {}) => {
 	const result = spawnSync(command, args, {
@@ -42,6 +45,12 @@ const readLines = (command, args) =>
 		.split("\n")
 		.map((line) => line.trim())
 		.filter(Boolean);
+
+const runCommandWithInheritedOutput = (command, args) =>
+	spawnSync(command, args, {
+		cwd: repositoryRoot,
+		stdio: "inherit",
+	}).status ?? 1;
 
 const getComparisonBase = () => {
 	if (process.env.TEST_BASE_REF) return process.env.TEST_BASE_REF;
@@ -188,14 +197,27 @@ const runAffectedBrowserTests = (selection) => {
 		console.log("No browser-owned files changed; Playwright is not required.");
 		return;
 	}
+	if (shouldInstallBrowserDependencies) {
+		const engines =
+			selection.projects.length === 0
+				? ["chromium", "firefox", "webkit"]
+				: [
+						...new Set(
+							selection.projects.map((project) => project.split("-").at(-1)),
+						),
+					];
+		runCommand("npx", ["playwright", "install", "--with-deps", ...engines]);
+		return;
+	}
 	if (shouldPrepareBrowserEnvironment) {
 		runCommand("npm", ["run", "test:e2e:prepare"]);
 	}
 	const projectArguments = selection.projects.flatMap((project) => [
 		`--project=${project}`,
 	]);
+	let browserTestStatus;
 	try {
-		runCommand("npx", [
+		browserTestStatus = runCommandWithInheritedOutput("npx", [
 			"playwright",
 			"test",
 			...selection.specs,
@@ -209,6 +231,7 @@ const runAffectedBrowserTests = (selection) => {
 			]);
 		}
 	}
+	if (browserTestStatus !== 0) process.exit(browserTestStatus);
 };
 
 if (!new Set(["all", "browser", "unit"]).has(mode)) {
