@@ -121,6 +121,13 @@ Before public launch, also:
 - Keep refresh-token reuse detection enabled.
 - Review Auth audit logs after failed or suspicious sign-ins.
 
+Engineering may apply Turnstile and custom SMTP settings from the ignored privileged
+environment with `npm run auth:configure-hosted -- --turnstile` or `--smtp`. Always run
+the matching `--dry-run` first, then repeat the command with the exact
+`--confirm-project=<project-ref>` value it reports. The operation accepts only
+`SUPABASE_AUTH_*` inputs, updates only the selected hosted Auth fields, and never prints
+protected values.
+
 CAPTCHA requires dashboard secrets and a public site key, so it must not be enabled in
 Supabase until both values are configured and the deployed token flow has passed a
 real email sign-in, registration, and recovery check. Google OAuth continues through

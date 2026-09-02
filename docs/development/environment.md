@@ -23,7 +23,7 @@ the variables consumed by that environment. Secrets never belong in tracked file
 
 | Tracked contract                  | Ignored values                                                 | Consumer                                          |
 | --------------------------------- | -------------------------------------------------------------- | ------------------------------------------------- |
-| `.env.example`                    | `.env` and `.env.local`                                        | Local SvelteKit application and server routes     |
+| `.env.example`                    | `.env`                                                         | Local SvelteKit application and server routes     |
 | `.env.blendCalcAPI.example`       | `.env.blendCalcAPI.local`                                      | Isolated blendCalcAPI database operations         |
 | `.env.moderation.example`         | `.env.moderation.local`                                        | Privileged scripts and linked Supabase operations |
 | `.env.test`                       | `.env.test.local`                                              | Disposable local database and Playwright          |
@@ -40,8 +40,9 @@ a developer's real Turnstile configuration from `.env`.
 
 ## Local Application
 
-Copy `.env.example` to `.env`. This file owns browser-safe Supabase configuration plus
-server-only credentials consumed by the local SvelteKit process.
+Copy `.env.example` to `.env`. This is the single local SvelteKit environment file; do
+not split its values across a second root `.env.local`. It owns browser-safe Supabase
+configuration plus server-only credentials consumed by the local SvelteKit process.
 
 ```bash
 cp .env.example .env
@@ -65,6 +66,22 @@ cp .env.moderation.example .env.moderation.local
 
 Confirm the target project before every write. Local test-database commands do not use
 these hosted credentials.
+
+The maintained hosted Auth command reads temporary Turnstile and custom SMTP inputs
+only from this privileged file:
+
+```bash
+npm run auth:configure-hosted -- --turnstile --dry-run
+npm run auth:configure-hosted -- --turnstile --confirm-project=<project-ref>
+npm run auth:configure-hosted -- --smtp --dry-run
+npm run auth:configure-hosted -- --smtp --confirm-project=<project-ref>
+```
+
+Add only the requested `SUPABASE_AUTH_*` values, run the dry run, then apply that exact
+operation with the reported project confirmation. The command updates only the selected
+hosted Auth fields and reports status without printing values. Leave unavailable inputs
+as commented empty names in the ignored file; never rename a secret with a `PUBLIC_`
+prefix.
 
 ## blendCalcAPI Database
 
@@ -175,6 +192,7 @@ Before handoff, verify:
 
 - every runtime variable appears in exactly the appropriate example;
 - every example variable has a real consumer or documented platform purpose;
+- the root local application uses `.env` rather than a duplicate `.env.local`;
 - removed aliases no longer appear in source or deployed configuration;
 - no tracked file contains a secret value; and
 - local mirrors and deployed settings contain the names required by their consumers.

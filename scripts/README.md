@@ -275,6 +275,20 @@ node scripts/audits/security/audit_hosted_security.mjs
 Add `--strict` to fail while launch controls are missing, or `--json` for structured
 output. The report never prints secrets or trusted CIDRs.
 
+Apply an explicitly requested hosted Auth setting after a successful dry run:
+
+```bash
+npm run auth:configure-hosted -- --turnstile --dry-run
+npm run auth:configure-hosted -- --turnstile --confirm-project=<project-ref>
+npm run auth:configure-hosted -- --smtp --dry-run
+npm run auth:configure-hosted -- --smtp --confirm-project=<project-ref>
+```
+
+This command reads only the selected `SUPABASE_AUTH_*` inputs from the ignored
+`.env.moderation.local`, identifies the linked project during dry run, requires that
+exact project reference on apply, updates only those hosted fields, and never prints
+protected values.
+
 Create and verify a protected backup outside the repository:
 
 ```bash
@@ -306,12 +320,13 @@ deployments.
 
 ## API References And Releases
 
-| Command                                       | Purpose                                                                             |
-| --------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `npm run generate:api-structures`             | Regenerate sampled, documentation-only USDA and Open Food Facts payload references  |
-| `npm run check:auth`                          | Validate Auth-related environment values and endpoint health                        |
-| `npm run version:check`                       | Verify Node, app, build, API, OpenAPI, tests, and documentation version consistency |
-| `npm run version:bump -- patch\|minor\|major` | Update application release files without committing or tagging                      |
+| Command                                                | Purpose                                                                             |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| `npm run generate:api-structures`                      | Regenerate sampled, documentation-only USDA and Open Food Facts payload references  |
+| `npm run check:auth`                                   | Validate Auth-related environment values and endpoint health                        |
+| `npm run auth:configure-hosted -- --turnstile\|--smtp` | Apply one explicit hosted Supabase Auth configuration safely                        |
+| `npm run version:check`                                | Verify Node, app, build, API, OpenAPI, tests, and documentation version consistency |
+| `npm run version:bump -- patch\|minor\|major`          | Update application release files without committing or tagging                      |
 
 The API generator may call providers and read stored query terms but never mutates
 Supabase. Generated references are not runtime types. See

@@ -102,42 +102,43 @@ intentionally omitted.
 
 ### Development And Verification
 
-| Command                          | Purpose                                                                   |
-| -------------------------------- | ------------------------------------------------------------------------- |
-| `npm run dev`                    | Start the normal development server on port `5173`.                       |
-| `npm run dev:test`               | Start the app on port `5174` against disposable local Supabase.           |
-| `npm run build`                  | Create the production build.                                              |
-| `npm run preview`                | Preview the production build.                                             |
-| `npm run check`                  | Run TypeScript and Svelte diagnostics.                                    |
-| `npm run check:watch`            | Keep TypeScript and Svelte diagnostics running while editing.             |
-| `npm run check:auth`             | Validate authentication environment and endpoint configuration.           |
-| `npm run lint`                   | Run the maintained TypeScript, Svelte, and SCSS lint contract.            |
-| `npm run lint:code`              | Run ESLint for application, test, and script code.                        |
-| `npm run lint:code:all`          | Include tracked migration warnings while auditing code.                   |
-| `npm run lint:styles`            | Run Stylelint for component and app-wide SCSS.                            |
-| `npm run format -- <paths...>`   | Apply the maintained Prettier layout to selected source or documentation. |
-| `npm run format:check`           | Verify newly added supported files match the maintained layout.           |
-| `npm run format:check:all`       | Audit remaining legacy formatting debt without rewriting it.              |
-| `npm run resources:check`        | Check local disk, swap, and process memory before heavy work.             |
-| `npm test`                       | Run the non-browser Vitest suite with compact output.                     |
-| `npm run test:affected`          | Run Vitest files related to the current branch and working-tree changes.  |
-| `npm run test:focused -- <path>` | Run one focused Vitest file or directory in its configured runtime.       |
-| `npm run test:watch -- <path>`   | Run focused Vitest checks in watch mode.                                  |
-| `npm run test:e2e`               | Run the bounded authenticated Playwright release tiers.                   |
-| `npm run test:e2e:affected`      | Prepare and run browser specs selected from changed feature ownership.    |
-| `npm run test:e2e:chromium`      | Run desktop Chromium plus compact/touch Chromium coverage.                |
-| `npm run test:e2e:compatibility` | Run tagged compatibility smoke coverage across maintained projects.       |
-| `npm run test:e2e:nightly`       | Run every browser scenario in every maintained project.                   |
-| `npm run test:e2e:session:start` | Prepare Supabase and keep one test build running on port `5174`.          |
-| `npm run test:e2e:headed`        | Run desktop Chromium in a visible browser.                                |
-| `npm run test:e2e:ui`            | Open Playwright's interactive test explorer.                              |
-| `npm run test:e2e:update`        | Review and update tracked Chromium visual snapshots.                      |
-| `npm run test:e2e:install`       | Install Chromium, Firefox, and WebKit for Playwright.                     |
-| `npm run verify:quick`           | Show source checks and affected Vitest in the live dashboard.             |
-| `npm run verify:feature`         | Add every Vitest project and affected browser coverage.                   |
-| `npm run verify:release`         | Run the bounded blocking release profile in the dashboard.                |
-| `npm run verify:promotion`       | Reuse a fresh Release Check for an identical clean promoted tree.         |
-| `npm run verify:nightly`         | Run exhaustive nonblocking browser confidence in the dashboard.           |
+| Command                                                | Purpose                                                                   |
+| ------------------------------------------------------ | ------------------------------------------------------------------------- |
+| `npm run dev`                                          | Start the normal development server on port `5173`.                       |
+| `npm run dev:test`                                     | Start the app on port `5174` against disposable local Supabase.           |
+| `npm run build`                                        | Create the production build.                                              |
+| `npm run preview`                                      | Preview the production build.                                             |
+| `npm run check`                                        | Run TypeScript and Svelte diagnostics.                                    |
+| `npm run check:watch`                                  | Keep TypeScript and Svelte diagnostics running while editing.             |
+| `npm run check:auth`                                   | Validate authentication environment and endpoint configuration.           |
+| `npm run auth:configure-hosted -- --turnstile\|--smtp` | Apply one explicit hosted Supabase Auth setting.                          |
+| `npm run lint`                                         | Run the maintained TypeScript, Svelte, and SCSS lint contract.            |
+| `npm run lint:code`                                    | Run ESLint for application, test, and script code.                        |
+| `npm run lint:code:all`                                | Include tracked migration warnings while auditing code.                   |
+| `npm run lint:styles`                                  | Run Stylelint for component and app-wide SCSS.                            |
+| `npm run format -- <paths...>`                         | Apply the maintained Prettier layout to selected source or documentation. |
+| `npm run format:check`                                 | Verify newly added supported files match the maintained layout.           |
+| `npm run format:check:all`                             | Audit remaining legacy formatting debt without rewriting it.              |
+| `npm run resources:check`                              | Check local disk, swap, and process memory before heavy work.             |
+| `npm test`                                             | Run the non-browser Vitest suite with compact output.                     |
+| `npm run test:affected`                                | Run Vitest files related to the current branch and working-tree changes.  |
+| `npm run test:focused -- <path>`                       | Run one focused Vitest file or directory in its configured runtime.       |
+| `npm run test:watch -- <path>`                         | Run focused Vitest checks in watch mode.                                  |
+| `npm run test:e2e`                                     | Run the bounded authenticated Playwright release tiers.                   |
+| `npm run test:e2e:affected`                            | Prepare and run browser specs selected from changed feature ownership.    |
+| `npm run test:e2e:chromium`                            | Run desktop Chromium plus compact/touch Chromium coverage.                |
+| `npm run test:e2e:compatibility`                       | Run tagged compatibility smoke coverage across maintained projects.       |
+| `npm run test:e2e:nightly`                             | Run every browser scenario in every maintained project.                   |
+| `npm run test:e2e:session:start`                       | Prepare Supabase and keep one test build running on port `5174`.          |
+| `npm run test:e2e:headed`                              | Run desktop Chromium in a visible browser.                                |
+| `npm run test:e2e:ui`                                  | Open Playwright's interactive test explorer.                              |
+| `npm run test:e2e:update`                              | Review and update tracked Chromium visual snapshots.                      |
+| `npm run test:e2e:install`                             | Install Chromium, Firefox, and WebKit for Playwright.                     |
+| `npm run verify:quick`                                 | Show source checks and affected Vitest in the live dashboard.             |
+| `npm run verify:feature`                               | Add every Vitest project and affected browser coverage.                   |
+| `npm run verify:release`                               | Run the bounded blocking release profile in the dashboard.                |
+| `npm run verify:promotion`                             | Reuse a fresh Release Check for an identical clean promoted tree.         |
+| `npm run verify:nightly`                               | Run exhaustive nonblocking browser confidence in the dashboard.           |
 
 Use the [Testing Strategy](docs/development/testing.md) to choose a test layer. Browser
 setup lives in [Browser Testing](docs/development/browser-testing.md); database fixtures

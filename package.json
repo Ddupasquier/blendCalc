@@ -34,6 +34,7 @@
 		"format:check": "node scripts/operations/quality/check_new_file_formatting.mjs",
 		"format:check:all": "prettier --check .",
 		"check:auth": "node scripts/operations/auth/check_auth_config.mjs",
+		"auth:configure-hosted": "node scripts/operations/auth/configure_hosted_auth.mjs",
 		"precheck:watch": "npm run version:check",
 		"check:watch": "PUBLIC_SUPABASE_URL=http://127.0.0.1:54321 PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_local_compile_only BLENDCALC_DATABASE_ENVIRONMENT=test svelte-kit sync && PUBLIC_SUPABASE_URL=http://127.0.0.1:54321 PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_local_compile_only BLENDCALC_DATABASE_ENVIRONMENT=test svelte-check --tsconfig ./tsconfig.json --watch",
 		"version:check": "node scripts/operations/releases/check_versions.mjs",
