@@ -1331,6 +1331,7 @@
 	destinationListKey={activeList}
 	{destinationListFoodIdentityKeys}
 	{otherListFoodIdentityKeys}
+	ingredientListIndex={listIndex}
 	{searchViewOpen}
 	{provenanceOptions}
 	{selectedFood}

@@ -16,6 +16,7 @@ import type { IngredientProvenanceOption } from "$lib/utils/ingredients/ingredie
 import type { FoodListSort } from "$lib/utils/list/listNavigation";
 import type { FoodSafetyFilter } from "$lib/utils/food/safety/foodSafetyFilters";
 import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
+import type { CloudIngredientListIndex } from "$lib/utils/storage/supabase/lists";
 
 export type IngredientRoutePopinsProps = {
 	activeSheet: IngredientRouteActiveSheet;
@@ -36,6 +37,7 @@ export type IngredientRoutePopinsProps = {
 	destinationListKey: IngredientListKey;
 	destinationListFoodIdentityKeys: ReadonlySet<string>;
 	otherListFoodIdentityKeys: ReadonlySet<string>;
+	ingredientListIndex: CloudIngredientListIndex;
 	searchViewOpen: boolean;
 	provenanceOptions: readonly IngredientProvenanceOption[];
 	selectedFood: FoodItem | null;

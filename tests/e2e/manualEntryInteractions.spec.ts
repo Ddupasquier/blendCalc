@@ -11,6 +11,47 @@ const canonicalCategoryDisplayTestNameKey =
 	canonicalCategoryDisplayTestName.toLocaleLowerCase("en-US");
 const expectedManualEntryReferenceDataUnavailableMessage =
 	"Nutrition tools couldn’t load. Refresh and try again before continuing.";
+const listMembershipTestBarcode = "04006381333931";
+const listMembershipTestFoodId = -9_280_001;
+
+const removeListMembershipTestFood = async (parallelWorkerIndex: number) => {
+	const supabase =
+		await getAuthenticatedLocalQaDatabaseClient(parallelWorkerIndex);
+	for (const listType of ["fridge", "shopping"] as const) {
+		const { error } = await supabase.rpc("remove_user_food_list_item", {
+			p_fdc_id: listMembershipTestFoodId,
+			p_list_type: listType,
+		});
+		if (error) throw error;
+	}
+};
+
+const seedListMembershipTestFood = async (parallelWorkerIndex: number) => {
+	const supabase =
+		await getAuthenticatedLocalQaDatabaseClient(parallelWorkerIndex);
+	await removeListMembershipTestFood(parallelWorkerIndex);
+	const food = {
+		fdcId: listMembershipTestFoodId,
+		description: "Manual Entry Membership Product",
+		foodCategory: "Other",
+		barcode: listMembershipTestBarcode,
+		barcodeSource: "manual",
+		customFood: true,
+		servingSize: 34,
+		servingSizeUnit: "g",
+		foodNutrients: [],
+	};
+	const { data, error } = await supabase.rpc("place_user_food_list_item", {
+		p_allow_move: false,
+		p_fdc_id: food.fdcId,
+		p_food: food,
+		p_list_type: "shopping",
+	});
+	if (error) throw error;
+	if (data !== "added") {
+		throw new Error(`Could not seed manual-entry list membership: ${data}`);
+	}
+};
 const cleanUpCanonicalCategoryDisplayTestFood = async (
 	parallelWorkerIndex: number,
 ) => {
@@ -205,6 +246,123 @@ test("manual-entry progress tabs perform the same forward validation", async ({
 	await expect(
 		dialog.getByText("Name must be at least 3 characters"),
 	).toBeVisible();
+});
+
+test("manual entry shows duplicate and move actions for the selected list", async ({
+	page,
+}, testInfo) => {
+	test.skip(
+		testInfo.project.name !== "desktop-chromium",
+		"The disposable list-membership corpus runs once in Chromium.",
+	);
+	const baseUrl = new URL(
+		String(testInfo.project.use.baseURL ?? "http://localhost:5174"),
+	);
+	test.skip(
+		!["127.0.0.1", "localhost"].includes(baseUrl.hostname),
+		"The list-membership corpus is restricted to disposable local infrastructure.",
+	);
+	await page.route(
+		`**/api/products/barcode/${listMembershipTestBarcode}`,
+		async (route) => {
+			await route.fulfill({
+				status: 200,
+				contentType: "application/json",
+				body: JSON.stringify({
+					status: "not-found",
+					barcode: listMembershipTestBarcode,
+				}),
+			});
+		},
+	);
+	await seedListMembershipTestFood(testInfo.parallelIndex);
+
+	try {
+		await page.goto("/ingredients/fridge/manual-entry");
+		await waitForAppReady(page);
+		const dialog = page.getByRole("dialog", { name: "Enter Manually" });
+		await dialog
+			.getByLabel("Food name")
+			.fill("Manual Entry Membership Product");
+		await dialog.getByLabel("UPC / Barcode").fill("4006381333931");
+		await dialog.getByLabel("UPC / Barcode").press("Tab");
+		await expect(dialog.getByText(/No source match found/i)).toBeVisible();
+		await dialog.getByRole("button", { name: "Category" }).click();
+		await dialog.getByRole("button", { name: "Jams", exact: true }).click();
+		await dialog.getByRole("button", { name: "Continue" }).click();
+		await dialog.getByLabel("Weight (g)").fill("34");
+		await dialog.getByRole("button", { name: "Continue" }).click();
+
+		for (const nutrient of [
+			{ label: /^Calories \(kcal\)/, value: "160" },
+			{ label: /^Total Fat \(g\)/, value: "6" },
+			{ label: /^Total Carbohydrates \(g\)/, value: "20" },
+			{ label: /^Protein \(g\)/, value: "2" },
+			{ label: /^Sodium.*\(mg\)/, value: "120" },
+		]) {
+			await dialog.getByLabel(nutrient.label).fill(nutrient.value);
+		}
+		await dialog.getByRole("button", { name: "Continue" }).click();
+		await dialog.getByRole("button", { name: "Continue" }).click();
+
+		await expect(
+			dialog.getByRole("button", { name: "Move to Fridge" }),
+		).toBeEnabled();
+		await expect(
+			dialog.getByText(/already saved in Shopping List/i),
+		).toBeVisible();
+		await dialog.getByRole("combobox", { name: "Add after saving" }).click();
+		await dialog
+			.getByRole("option", { name: "Shopping List", exact: true })
+			.click();
+		await expect(
+			dialog.getByRole("button", { name: "Already saved" }),
+		).toBeDisabled();
+		await expect(
+			dialog.getByText(/already saved in Shopping List/i),
+		).toBeVisible();
+		await dialog.getByRole("combobox", { name: "Add after saving" }).click();
+		await dialog.getByRole("option", { name: "Fridge", exact: true }).click();
+		await dialog.getByRole("button", { name: "Move to Fridge" }).click();
+		const moveDialog = page.getByRole("alertdialog", {
+			name: "Move ingredient?",
+		});
+		await expect(moveDialog).toContainText(/already in Shopping List/i);
+		await moveDialog.getByRole("button", { name: "Move", exact: true }).click();
+		await expect(dialog).not.toBeVisible();
+
+		const supabase = await getAuthenticatedLocalQaDatabaseClient(
+			testInfo.parallelIndex,
+		);
+		await expect
+			.poll(async () => {
+				const { data, error } = await supabase
+					.from("user_food_list_items")
+					.select("fdc_id, food, list_type")
+					.eq("fdc_id", listMembershipTestFoodId);
+				if (error) throw error;
+				return data.map((row) => ({
+					fdcId: row.fdc_id,
+					listType: row.list_type,
+					description: (row.food as { description?: unknown }).description,
+				}));
+			})
+			.toEqual([
+				{
+					fdcId: listMembershipTestFoodId,
+					listType: "fridge",
+					description: "Manual Entry Membership Product",
+				},
+			]);
+		const { count: customFoodCount, error: customFoodError } = await supabase
+			.from("custom_foods")
+			.select("id", { count: "exact", head: true })
+			.eq("barcode", listMembershipTestBarcode);
+		if (customFoodError) throw customFoodError;
+		expect(customFoodCount).toBe(0);
+	} finally {
+		await removeListMembershipTestFood(testInfo.parallelIndex);
+	}
 });
 
 test("manual entry shows one message when its reference catalog response is unavailable", async ({
