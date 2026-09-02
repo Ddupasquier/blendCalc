@@ -1,7 +1,8 @@
 /**
  * Purpose: Apply explicitly requested Turnstile or custom SMTP settings to the
  * linked hosted Supabase Auth service without printing protected values.
- * Run: dry-run first, then repeat with `--confirm-project=<project-ref>`.
+ * Run: `npm run auth:configure-hosted -- --turnstile`, then repeat with the
+ * reported `--confirm-project=<project-ref>` only after reviewing the dry run.
  * Writes: Only the named hosted Auth settings; never Git or local environment files.
  */
 
