@@ -71,7 +71,7 @@ fixed-ID submissions are not recreated by `start` after they have been reviewed;
 | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
 | `npm run db:test:start`  | Start the local stack, apply pending local migrations and reference fixtures, wait for Supabase services, and repair missing persona fixtures. |
 | `npm run db:test:reset`  | Destroy local data, replay every migration, refresh the local gateway, and reseed reference fixtures and QA accounts after services are ready. |
-| `npm run db:test:verify` | Reset the local database and run all pgTAP database tests.                                                                                     |
+| `npm run db:test:verify` | Reset and test the local database, then stop the stack and any Colima runtime started by the manager.                                          |
 | `npm run db:test:status` | Print local service URLs and status.                                                                                                           |
 | `npm run db:test:stop`   | Stop the local Supabase stack while retaining its Docker volume.                                                                               |
 | `npm run dev:test`       | Start SvelteKit in test mode against `.env.test.local` at `http://localhost:5174`.                                                             |

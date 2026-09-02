@@ -78,7 +78,7 @@ describe("visible verification dashboard", () => {
 
 	it("exposes every profile through npm and a dedicated visible terminal task", () => {
 		for (const profile of ["quick", "feature", "release", "nightly"]) {
-			expect(packageMetadata.scripts[`verify:${profile}`]).toBe(
+			expect(packageMetadata.scripts[`verify:${profile}`]).toContain(
 				`node scripts/operations/quality/run_verification_dashboard.mjs ${profile}`,
 			);
 			const task = vscodeTasks.tasks.find(

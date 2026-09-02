@@ -194,12 +194,21 @@ const runAffectedBrowserTests = (selection) => {
 	const projectArguments = selection.projects.flatMap((project) => [
 		`--project=${project}`,
 	]);
-	runCommand("npx", [
-		"playwright",
-		"test",
-		...selection.specs,
-		...projectArguments,
-	]);
+	try {
+		runCommand("npx", [
+			"playwright",
+			"test",
+			...selection.specs,
+			...projectArguments,
+		]);
+	} finally {
+		if (shouldPrepareBrowserEnvironment) {
+			runCommand("node", [
+				"scripts/operations/database/manage_test_database.mjs",
+				"stop",
+			]);
+		}
+	}
 };
 
 if (!new Set(["all", "browser", "unit"]).has(mode)) {

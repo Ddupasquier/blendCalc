@@ -118,6 +118,7 @@ intentionally omitted.
 | `npm run format -- <paths...>`   | Apply the maintained Prettier layout to selected source or documentation. |
 | `npm run format:check`           | Verify newly added supported files match the maintained layout.           |
 | `npm run format:check:all`       | Audit remaining legacy formatting debt without rewriting it.              |
+| `npm run resources:check`        | Check local disk, swap, and process memory before heavy work.             |
 | `npm test`                       | Run the non-browser Vitest suite with compact output.                     |
 | `npm run test:affected`          | Run Vitest files related to the current branch and working-tree changes.  |
 | `npm run test:focused -- <path>` | Run one focused Vitest file or directory in its configured runtime.       |
@@ -148,7 +149,7 @@ and personas live in [Database Testing](docs/development/database-testing.md).
 | ------------------------------------------------- | --------------------------------------------------------------- |
 | `npm run db:test:start`                           | Start local Supabase and repair missing QA baseline data.       |
 | `npm run db:test:reset`                           | Recreate the exact local QA baseline.                           |
-| `npm run db:test:verify`                          | Recreate local Supabase and run every database test.            |
+| `npm run db:test:verify`                          | Recreate and test local Supabase, then stop owned services.     |
 | `npm run db:test:status`                          | Show local Supabase service status.                             |
 | `npm run db:test:stop`                            | Stop local Supabase.                                            |
 | `npm run supabase -- <args>`                      | Run the repository-installed Supabase CLI.                      |

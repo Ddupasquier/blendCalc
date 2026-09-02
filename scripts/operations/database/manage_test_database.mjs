@@ -14,6 +14,7 @@
 
 import { spawnSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
+import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { createClient } from "@supabase/supabase-js";
@@ -47,6 +48,10 @@ const action = process.argv[2] ?? "status";
 const serviceReadinessAttempts = 30;
 const serviceReadinessDelayMs = 1000;
 const currentTutorialVersion = 3;
+const runtimeOwnershipPath = fileURLToPath(
+	new URL("../../../.cache/test-database-runtime-owner", import.meta.url),
+);
+const keepRuntimeRunning = process.argv.includes("--keep-running");
 
 const testAccounts = localQaPersonas;
 
@@ -87,16 +92,36 @@ const ensureContainerRuntime = () => {
 			"--cpu",
 			"4",
 			"--memory",
-			"8",
+			"4",
 			"--disk",
 			"40",
 		]);
+		mkdirSync(fileURLToPath(new URL("../../../.cache", import.meta.url)), {
+			recursive: true,
+		});
+		writeFileSync(runtimeOwnershipPath, `${new Date().toISOString()}\n`, {
+			mode: 0o600,
+		});
 	}
 
 	if (!commandSucceeds("docker", ["info"])) {
 		throw new Error(
 			"A Docker-compatible runtime is required. Install Docker and Colima, then rerun the command.",
 		);
+	}
+};
+
+const stopLocalStack = ({ stopOwnedRuntime = true } = {}) => {
+	if (commandSucceeds("docker", ["info"])) {
+		runCommand("supabase", ["stop"]);
+	}
+	if (
+		stopOwnedRuntime &&
+		existsSync(runtimeOwnershipPath) &&
+		commandSucceeds("colima", ["version"])
+	) {
+		runCommand("colima", ["stop"]);
+		rmSync(runtimeOwnershipPath, { force: true });
 	}
 };
 
@@ -1049,9 +1074,13 @@ const main = async () => {
 			printAccounts();
 			break;
 		case "verify":
-			await resetLocalStack();
-			await runDatabaseTests();
-			printAccounts();
+			try {
+				await resetLocalStack();
+				await runDatabaseTests();
+				printAccounts();
+			} finally {
+				if (!keepRuntimeRunning) stopLocalStack();
+			}
 			break;
 		case "status":
 			ensureContainerRuntime();
@@ -1065,8 +1094,7 @@ const main = async () => {
 			}
 			break;
 		case "stop":
-			ensureContainerRuntime();
-			runCommand("supabase", ["stop"]);
+			stopLocalStack();
 			break;
 		default:
 			throw new Error(`Unknown test database action: ${action}`);
