@@ -1,6 +1,6 @@
 /**
  * Purpose: Prepare, run, and always clean up a bounded Playwright verification pass.
- * Run: through the maintained `test:e2e*` npm commands.
+ * Run: `npm run test:e2e` or another maintained `test:e2e*` npm command.
  */
 
 import { spawnSync } from "node:child_process";

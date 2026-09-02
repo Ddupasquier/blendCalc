@@ -1,3 +1,9 @@
+/**
+ * Purpose: Provide shared parsing, inspection, and enforcement for local resource
+ * safety boundaries.
+ * Do not run directly; import this module from a maintained quality command.
+ */
+
 import { execFileSync } from "node:child_process";
 import { basename } from "node:path";
 

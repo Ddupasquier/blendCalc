@@ -1,7 +1,7 @@
 /**
  * Purpose: Refuse an unsafe local heavy run and bound the child Node heap without
  * modifying repository or machine state.
- * Run: through the maintained npm build and verification commands.
+ * Run: `node scripts/operations/quality/run_with_resource_limits.mjs -- <command>`.
  */
 
 import { spawn } from "node:child_process";
