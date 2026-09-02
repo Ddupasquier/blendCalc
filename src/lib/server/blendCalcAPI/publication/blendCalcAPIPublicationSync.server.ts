@@ -22,6 +22,11 @@ import {
 	type BlendCalcAPIIsolatedClient,
 } from "../v1/blendCalcAPIIsolatedClient.server";
 import { hashCanonicalJson } from "../v1/blendCalcAPIJson.server";
+import {
+	completeBlendCalcAPIPublicationRun,
+	failBlendCalcAPIPublicationRun,
+	startBlendCalcAPIPublicationRun,
+} from "../operations/blendCalcAPIOperations.server";
 
 const SOURCE_PROJECT_REF = "wbqsnipoiqjzppjuawpn";
 const PAGE_SIZE = 50;
@@ -98,6 +103,10 @@ export type BlendCalcAPIPublicationSyncResult = {
 		revisions: number;
 		categories: number;
 		attributions: number;
+	};
+	changes: {
+		added: number;
+		removed: number;
 	};
 };
 
@@ -572,9 +581,35 @@ const failGeneration = async (
 	});
 };
 
-export const synchronizeBlendCalcAPIPublication = async (
+const readGenerationGtins = async (
+	target: BlendCalcAPIIsolatedClient,
+	generationId: string | null,
+) => {
+	if (!generationId) return [];
+	const rows = await readAllRows<{ gtin14: string }>(async (from, to) => {
+		const result = await target
+			.from("publication_products")
+			.select("gtin14")
+			.eq("generation_id", generationId)
+			.order("gtin14", { ascending: true })
+			.range(from, to);
+		return { data: result.data, error: result.error };
+	});
+	return rows.map((row) => row.gtin14);
+};
+
+const comparePublicationGtins = (current: string[], next: string[]) => {
+	const currentGtins = new Set(current);
+	const nextGtins = new Set(next);
+	return {
+		added: next.filter((gtin) => !currentGtins.has(gtin)).length,
+		removed: current.filter((gtin) => !nextGtins.has(gtin)).length,
+	};
+};
+
+const synchronizeBlendCalcAPIPublicationOperation = async (
 	source: SupabaseClient<SourceDatabase>,
-	target = getBlendCalcAPIIsolatedClient(),
+	target: BlendCalcAPIIsolatedClient,
 ): Promise<BlendCalcAPIPublicationSyncResult> => {
 	const snapshot = await buildBlendCalcAPIPublicationSnapshot(source);
 	const counts = countsForSnapshot(snapshot);
@@ -584,8 +619,17 @@ export const synchronizeBlendCalcAPIPublication = async (
 		.eq("status", "active")
 		.maybeSingle();
 	if (activeError) throw activeError;
+	const activeGtins = await readGenerationGtins(target, active?.id ?? null);
 	if (active?.source_catalog_hash === snapshot.catalogHash) {
 		await verifyBlendCalcAPIPublicationGeneration(target, active.id, snapshot);
+		const verification = await target.rpc(
+			"record_publication_generation_verification",
+			{
+				p_generation_id: active.id,
+				p_target_catalog_hash: snapshot.catalogHash,
+			},
+		);
+		if (verification.error) throw verification.error;
 		await verifyBlendCalcAPIPublicationSearchParity(
 			source,
 			target,
@@ -598,6 +642,7 @@ export const synchronizeBlendCalcAPIPublication = async (
 			generationId: active.id,
 			catalogHash: snapshot.catalogHash,
 			counts,
+			changes: { added: 0, removed: 0 },
 		};
 	}
 
@@ -682,6 +727,14 @@ export const synchronizeBlendCalcAPIPublication = async (
 			generationId,
 			snapshot,
 		);
+		const verification = await target.rpc(
+			"record_publication_generation_verification",
+			{
+				p_generation_id: generationId,
+				p_target_catalog_hash: snapshot.catalogHash,
+			},
+		);
+		if (verification.error) throw verification.error;
 		await verifyBlendCalcAPIPublicationSearchParity(
 			source,
 			target,
@@ -704,12 +757,22 @@ export const synchronizeBlendCalcAPIPublication = async (
 		generationId,
 		catalogHash: snapshot.catalogHash,
 		counts,
+		changes: comparePublicationGtins(
+			activeGtins,
+			snapshot.products.map((product) => product.gtin14),
+		),
 	};
 };
 
-export const rollbackBlendCalcAPIPublication = async (
-	target = getBlendCalcAPIIsolatedClient(),
+const rollbackBlendCalcAPIPublicationOperation = async (
+	target: BlendCalcAPIIsolatedClient,
 ): Promise<BlendCalcAPIPublicationSyncResult> => {
+	const { data: active, error: activeError } = await target
+		.from("publication_generations")
+		.select("id")
+		.eq("status", "active")
+		.maybeSingle();
+	if (activeError) throw activeError;
 	const { data: generation, error } = await target
 		.from("publication_generations")
 		.select(
@@ -722,6 +785,10 @@ export const rollbackBlendCalcAPIPublication = async (
 	if (error) throw error;
 	if (!generation)
 		throw new Error("No retired publication generation is available.");
+	const [activeGtins, rollbackGtins] = await Promise.all([
+		readGenerationGtins(target, active?.id ?? null),
+		readGenerationGtins(target, generation.id),
+	]);
 	const activation = await target.rpc("activate_publication_generation", {
 		p_generation_id: generation.id,
 	});
@@ -736,5 +803,40 @@ export const rollbackBlendCalcAPIPublication = async (
 			categories: generation.expected_category_count,
 			attributions: generation.expected_attribution_count,
 		},
+		changes: comparePublicationGtins(activeGtins, rollbackGtins),
 	};
+};
+
+export const synchronizeBlendCalcAPIPublication = async (
+	source: SupabaseClient<SourceDatabase>,
+	target = getBlendCalcAPIIsolatedClient(),
+) => {
+	const startedAt = performance.now();
+	const runId = await startBlendCalcAPIPublicationRun(target, "synchronize");
+	try {
+		const result = await synchronizeBlendCalcAPIPublicationOperation(
+			source,
+			target,
+		);
+		await completeBlendCalcAPIPublicationRun(target, runId, startedAt, result);
+		return result;
+	} catch (error) {
+		await failBlendCalcAPIPublicationRun(target, runId, startedAt);
+		throw error;
+	}
+};
+
+export const rollbackBlendCalcAPIPublication = async (
+	target = getBlendCalcAPIIsolatedClient(),
+) => {
+	const startedAt = performance.now();
+	const runId = await startBlendCalcAPIPublicationRun(target, "rollback");
+	try {
+		const result = await rollbackBlendCalcAPIPublicationOperation(target);
+		await completeBlendCalcAPIPublicationRun(target, runId, startedAt, result);
+		return result;
+	} catch (error) {
+		await failBlendCalcAPIPublicationRun(target, runId, startedAt);
+		throw error;
+	}
 };

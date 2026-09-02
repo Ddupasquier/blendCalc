@@ -92,6 +92,26 @@ describe("visible verification dashboard", () => {
 				},
 			});
 		}
+		expect(packageMetadata.scripts["verify:promotion"]).toBe(
+			"node scripts/operations/quality/verify_release_promotion.mjs",
+		);
+		expect(
+			vscodeTasks.tasks.find(
+				({ command }) => command === "npm run verify:promotion",
+			),
+		).toMatchObject({
+			presentation: {
+				reveal: "always",
+				panel: "dedicated",
+				clear: true,
+			},
+		});
+	});
+
+	it("records reusable receipts only after a successful Release Check", () => {
+		expect(dashboardSource).toContain("invalidateReleaseReceipt");
+		expect(dashboardSource).toContain("recordReleaseReceipt");
+		expect(dashboardSource).toContain('profileKey === "release"');
 	});
 
 	it("keeps forced-color terminal output free of conflicting NO_COLOR warnings", () => {

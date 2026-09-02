@@ -1085,6 +1085,45 @@ export type Database = {
           },
         ]
       }
+      catalog_intake_requests: {
+        Row: {
+          actor_user_id: string
+          completed_at: string | null
+          created_at: string
+          id: string
+          idempotency_key: string
+          request_fingerprint: string
+          response_body: Json | null
+          response_status: number | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          actor_user_id: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          idempotency_key: string
+          request_fingerprint: string
+          response_body?: Json | null
+          response_status?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          actor_user_id?: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          idempotency_key?: string
+          request_fingerprint?: string
+          response_body?: Json | null
+          response_status?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       catalog_monitor_runs: {
         Row: {
           created_at: string
@@ -7853,6 +7892,63 @@ export type Database = {
           },
         ]
       }
+      shared_product_submission_field_evidence: {
+        Row: {
+          basis: Json | null
+          confidence: string
+          created_at: string
+          evidence_references: string[]
+          field_path: string
+          id: string
+          observed_at: string
+          proposed_value: Json
+          source_observation_id: string
+          submission_id: string
+          unit: string | null
+        }
+        Insert: {
+          basis?: Json | null
+          confidence: string
+          created_at?: string
+          evidence_references: string[]
+          field_path: string
+          id?: string
+          observed_at: string
+          proposed_value: Json
+          source_observation_id: string
+          submission_id: string
+          unit?: string | null
+        }
+        Update: {
+          basis?: Json | null
+          confidence?: string
+          created_at?: string
+          evidence_references?: string[]
+          field_path?: string
+          id?: string
+          observed_at?: string
+          proposed_value?: Json
+          source_observation_id?: string
+          submission_id?: string
+          unit?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shared_product_submission_field_evid_source_observation_id_fkey"
+            columns: ["source_observation_id"]
+            isOneToOne: false
+            referencedRelation: "shared_product_observations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shared_product_submission_field_evidence_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "shared_product_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shared_product_revision_changes: {
         Row: {
           change_type: string
@@ -9310,6 +9406,19 @@ export type Database = {
         }
         Returns: boolean
       }
+      begin_catalog_intake_request: {
+        Args: {
+          p_actor_user_id: string
+          p_idempotency_key: string
+          p_request_fingerprint: string
+        }
+        Returns: {
+          outcome: string
+          request_id: string
+          response_body: Json
+          response_status: number
+        }[]
+      }
       blendcalc_api_key_scopes_are_well_formed: {
         Args: { p_scopes: string[] }
         Returns: boolean
@@ -9367,6 +9476,10 @@ export type Database = {
         Args: { p_field_path: string; p_food: Json }
         Returns: Json
       }
+      catalog_intake_evidence_references_are_valid: {
+        Args: { p_references: string[] }
+        Returns: boolean
+      }
       claim_catalog_revalidation_jobs: {
         Args: { p_limit?: number; p_run_id: string }
         Returns: {
@@ -9409,6 +9522,17 @@ export type Database = {
       compatibility_normalize_text: {
         Args: { p_value: string }
         Returns: string
+      }
+      complete_catalog_intake_request: {
+        Args: {
+          p_actor_user_id: string
+          p_outcome: string
+          p_request_fingerprint: string
+          p_request_id: string
+          p_response_body: Json
+          p_response_status: number
+        }
+        Returns: boolean
       }
       complete_catalog_revalidation_job: {
         Args: {

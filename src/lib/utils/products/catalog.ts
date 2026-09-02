@@ -7,10 +7,7 @@ import {
 } from "$lib/utils/errors/userFacingErrors";
 
 export type SharedProductSubmissionStatus =
-	| "already-available"
-	| "approved"
-	| "pending"
-	| "source-mismatch";
+	"already-available" | "approved" | "pending" | "source-mismatch";
 
 export type SharedProductSubmissionResult = {
 	status: SharedProductSubmissionStatus;
@@ -18,9 +15,7 @@ export type SharedProductSubmissionResult = {
 	evidenceAccepted?: boolean;
 };
 
-export type CatalogSubmissionIntent =
-	| "catalog_share"
-	| "catalog_correction";
+export type CatalogSubmissionIntent = "catalog_share" | "catalog_correction";
 
 export type SharedProductEvidence = {
 	frontPhoto?: File | null;
@@ -30,20 +25,32 @@ export type SharedProductEvidence = {
 };
 
 export type SharedProductSubmissionContext = {
+	consentToShare: true;
 	reviewFlags?: string[];
 	intent?: CatalogSubmissionIntent;
 };
 
 export type BarcodeShareValidationResult =
 	| {
-			status: "matched" | "name-mismatch";
+			status: "matched";
 			barcode: string;
 			draft: BarcodeProductDraft;
+			defaultSharingAllowed: boolean;
+			requiresCatalogEvidence: boolean;
+	  }
+	| {
+			status: "name-mismatch";
+			barcode: string;
+			draft: BarcodeProductDraft;
+			defaultSharingAllowed?: false;
+			requiresCatalogEvidence: boolean;
 			message?: string;
 	  }
 	| {
 			status: "not-found";
 			barcode: string;
+			defaultSharingAllowed?: false;
+			requiresCatalogEvidence: true;
 	  };
 
 export const validateBarcodeProductForSharing = async (
@@ -67,7 +74,7 @@ export const validateBarcodeProductForSharing = async (
 			"CATALOG_VALIDATION_UNAVAILABLE",
 		);
 	}
-	const result = await response.json() as BarcodeShareValidationResult & {
+	const result = (await response.json()) as BarcodeShareValidationResult & {
 		issue?: unknown;
 	};
 	if (result.status !== "name-mismatch") return result;
@@ -77,6 +84,7 @@ export const validateBarcodeProductForSharing = async (
 		status: result.status,
 		barcode: result.barcode,
 		draft: result.draft,
+		requiresCatalogEvidence: result.requiresCatalogEvidence,
 		message: issue?.message,
 	};
 };
@@ -84,11 +92,11 @@ export const validateBarcodeProductForSharing = async (
 export const submitSharedProduct = async (
 	food: FoodItem,
 	evidence: SharedProductEvidence = {},
-	context: SharedProductSubmissionContext = {},
+	context: SharedProductSubmissionContext,
 ): Promise<SharedProductSubmissionResult> => {
 	const formData = new FormData();
 	formData.set("food", JSON.stringify(food));
-	formData.set("consentToShare", "true");
+	formData.set("consentToShare", String(context.consentToShare));
 	if (context.reviewFlags?.length) {
 		formData.set("reviewFlags", JSON.stringify(context.reviewFlags));
 	}
@@ -100,9 +108,10 @@ export const submitSharedProduct = async (
 	if (evidence.nutritionPhoto) {
 		formData.set("nutritionPhoto", evidence.nutritionPhoto);
 	}
-	if (evidence.barcodePhoto) formData.set("barcodePhoto", evidence.barcodePhoto);
+	if (evidence.barcodePhoto)
+		formData.set("barcodePhoto", evidence.barcodePhoto);
 
-	const response = await fetch("/api/products/submissions", {
+	const response = await fetch("/api/intake/v1/product-observations", {
 		method: "POST",
 		headers: { accept: "application/json" },
 		body: formData,
@@ -115,5 +124,5 @@ export const submitSharedProduct = async (
 		);
 	}
 
-	return await response.json() as SharedProductSubmissionResult;
+	return (await response.json()) as SharedProductSubmissionResult;
 };

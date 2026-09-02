@@ -21,6 +21,9 @@ export const createManualEntryFormState = () => {
 		savedData: Partial<ReturnType<typeof getManualEntryFormResetState>>,
 	) => {
 		Object.assign(data, getManualEntryFormResetState(), savedData, {
+			shareSelectionSource:
+				savedData.shareSelectionSource ??
+				(savedData.shareWithCatalog ? "user" : "none"),
 			checkingBarcodeReference: false,
 			validatingBarcodeShare: false,
 			frontPhoto: null,
@@ -29,7 +32,14 @@ export const createManualEntryFormState = () => {
 		});
 	};
 
+	const clearAutomaticCatalogSharing = () => {
+		if (data.shareSelectionSource !== "automatic") return;
+		data.shareWithCatalog = false;
+		data.shareSelectionSource = "none";
+	};
+
 	const markFieldAsUserEntered = (field: FoodTrackedField) => {
+		clearAutomaticCatalogSharing();
 		data.fieldProvenance = {
 			...data.fieldProvenance,
 			[field]: {
@@ -162,6 +172,7 @@ export const createManualEntryFormState = () => {
 		data,
 		reset,
 		restore,
+		clearAutomaticCatalogSharing,
 		markFieldAsUserEntered,
 		setNutrientValue,
 		getNutrientValue,

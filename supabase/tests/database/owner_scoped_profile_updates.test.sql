@@ -1,6 +1,6 @@
 begin;
 
-select plan(21);
+select plan(22);
 
 select has_function('public', 'save_current_user_profile_details', 'profile detail saves have a narrow owner-scoped function');
 select has_function('public', 'save_current_user_appearance_theme', 'appearance saves have a narrow owner-scoped function');
@@ -46,6 +46,10 @@ select throws_ok(
 	'22023',
 	'Bio must contain 150 characters or fewer.',
 	'the owner-scoped function enforces the application bio limit'
+);
+select lives_ok(
+	$$ select public.save_current_user_profile_details('Profile Owner', repeat('x', 150)) $$,
+	'the owner-scoped function accepts the exact profile bio boundary'
 );
 select lives_ok(
 	$$ select public.save_current_user_appearance_theme('dark') $$,

@@ -54,6 +54,7 @@ export const createManualEntryBarcodeController = ({
 	let manualBarcodeLookupQueued = $state(false);
 	let lookupGeneration = 0;
 	let shareValidationGeneration = 0;
+	let defaultShareAttemptKey = "";
 
 	const normalizedBarcode = $derived(normalizeBarcode(form.data.barcode));
 	const barcodeReferenceLookupPending = $derived(
@@ -107,6 +108,7 @@ export const createManualEntryBarcodeController = ({
 		form.data.shareWithCatalog &&
 			(form.data.submissionIntent === "catalog_correction" ||
 				form.data.barcodeSource === "manual" ||
+				form.data.barcodeShareValidation?.requiresCatalogEvidence === true ||
 				Boolean(hasSharedCatalogReference && referenceHasChanges)),
 	);
 	const trustedProductImage = $derived(
@@ -119,6 +121,35 @@ export const createManualEntryBarcodeController = ({
 			form.data.barcodeReferenceAcceptedBarcode === normalizedBarcode &&
 			form.data.barcodeReferenceSourceDraft?.barcode === normalizedBarcode,
 		),
+	);
+	const hasUserAuthoredCatalogValues = $derived(
+		Object.keys(form.data.manualTouchedNutrientIds).length > 0 ||
+			Object.values(form.data.fieldProvenance ?? {}).some(
+				(provenance) => provenance?.source === "user-label",
+			) ||
+			form.data.nutrientQualitativeFacts.some(
+				(fact) => fact.source === "user-label",
+			) ||
+			form.data.serving?.source === "user-label",
+	);
+	const automaticSharingCandidateKey = $derived(
+		form.data.activeStep === "share" &&
+			form.data.submissionIntent === "catalog_share" &&
+			canShareWithCatalog &&
+			hasAcceptedSourceBarcode &&
+			form.data.barcodeReferenceSourceDraft?.source !== "shared-catalog" &&
+			!referenceHasChanges &&
+			!hasUserAuthoredCatalogValues &&
+			!validation.blockingValidation &&
+			!form.data.frontPhoto &&
+			!form.data.nutritionPhoto &&
+			!form.data.barcodePhoto
+			? [
+					normalizedBarcode,
+					form.data.barcodeReferenceSourceDraft?.source ?? "",
+					form.data.barcodeReferenceSourceDraft?.sourceReference ?? "",
+				].join(":")
+			: "",
 	);
 	const privateCustomFood = $derived(
 		form.data.keptUnmatchedPrivate ||
@@ -145,13 +176,15 @@ export const createManualEntryBarcodeController = ({
 			: "",
 	);
 	const shareHelpMessage = $derived(
-		form.data.submissionIntent === "catalog_correction"
-			? "Show us what changed and add clear package photos. Your correction will be reviewed before the shared product changes."
-			: hasSharedCatalogReference && referenceHasChanges
-				? "Submit your edits for moderator review. Your private ingredient can still be saved now."
-				: canShareWithCatalog
-					? "Make this ingredient available to other users. All submissions are reviewed for accuracy."
-					: "Add a valid UPC or barcode if you want to submit this ingredient for shared search.",
+		form.data.shareSelectionSource === "automatic"
+			? "This complete product matches reusable source data, so sharing is on by default. Turn it off to keep this save private."
+			: form.data.submissionIntent === "catalog_correction"
+				? "Show us what changed and add clear package photos. Your correction will be reviewed before the shared product changes."
+				: hasSharedCatalogReference && referenceHasChanges
+					? "Submit your edits for moderator review. Your private ingredient can still be saved now."
+					: canShareWithCatalog
+						? "Make this ingredient available to other users. All submissions are reviewed for accuracy."
+						: "Add a valid UPC or barcode if you want to submit this ingredient for shared search.",
 	);
 	const barcodeShareMismatch = $derived<ManualEntryBarcodeShareMismatch>(
 		form.data.barcodeShareValidation?.status === "name-mismatch"
@@ -199,6 +232,7 @@ export const createManualEntryBarcodeController = ({
 		form.data.validatingBarcodeShare = false;
 		if (form.data.submissionIntent !== "catalog_correction") {
 			form.data.shareWithCatalog = false;
+			form.data.shareSelectionSource = "none";
 		}
 	};
 
@@ -412,6 +446,7 @@ export const createManualEntryBarcodeController = ({
 		form.data.keptUnmatchedPrivate = false;
 		form.data.submissionIntent = "catalog_correction";
 		form.data.shareWithCatalog = true;
+		form.data.shareSelectionSource = "user";
 		form.data.barcodeReferenceSourceDraft = draft;
 		form.data.barcodeReferenceAcceptedBarcode = draft.barcode;
 		form.data.barcodeReferenceDraft = null;
@@ -430,22 +465,29 @@ export const createManualEntryBarcodeController = ({
 		form.data.keptUnmatchedPrivate = false;
 		form.data.submissionIntent = "catalog_correction";
 		form.data.shareWithCatalog = true;
+		form.data.shareSelectionSource = "user";
 		form.data.barcodeMessage =
 			"Your version will be reviewed as a correction. Add clear package, nutrition, and barcode photos before submitting.";
 	};
 
-	const handleShareChange = async (checked: boolean) => {
-		if (!checked) {
-			clearBarcodeShareValidation();
-			return;
-		}
-		if (!normalizedBarcode || !canShareWithCatalog) {
+	const validateCatalogSharing = async (
+		selectionSource: "automatic" | "user",
+	) => {
+		const automatic = selectionSource === "automatic";
+		if (
+			!normalizedBarcode ||
+			!canShareWithCatalog ||
+			(automatic && !automaticSharingCandidateKey)
+		) {
 			form.data.shareWithCatalog = false;
+			form.data.shareSelectionSource = "none";
 			return;
 		}
 
+		const candidateKey = automaticSharingCandidateKey;
 		const generation = ++shareValidationGeneration;
 		form.data.shareWithCatalog = false;
+		form.data.shareSelectionSource = "none";
 		form.data.barcodeShareValidation = null;
 		form.data.validatingBarcodeShare = true;
 		onError("");
@@ -456,8 +498,9 @@ export const createManualEntryBarcodeController = ({
 			);
 			if (generation !== shareValidationGeneration) return;
 
-			form.data.barcodeShareValidation = result;
 			if (result.status === "name-mismatch") {
+				if (automatic) return;
+				form.data.barcodeShareValidation = result;
 				form.data.barcodeReferenceDraft = result.draft;
 				form.data.barcodeReferenceSourceDraft = result.draft;
 				return;
@@ -465,9 +508,20 @@ export const createManualEntryBarcodeController = ({
 			if (result.status === "matched") {
 				form.data.barcodeReferenceSourceDraft = result.draft;
 			}
+			if (
+				automatic &&
+				(result.status !== "matched" ||
+					!result.defaultSharingAllowed ||
+					candidateKey !== automaticSharingCandidateKey)
+			) {
+				return;
+			}
+			form.data.barcodeShareValidation = result;
 			form.data.shareWithCatalog = true;
+			form.data.shareSelectionSource = selectionSource;
 		} catch (error) {
 			if (generation !== shareValidationGeneration) return;
+			if (automatic) return;
 			console.error("[manual entry] Barcode sharing check failed", error);
 			onError(
 				getUserFacingErrorMessage(error, {
@@ -486,14 +540,33 @@ export const createManualEntryBarcodeController = ({
 		}
 	};
 
+	const handleShareChange = async (checked: boolean) => {
+		if (!checked) {
+			clearBarcodeShareValidation();
+			form.data.shareSelectionSource = "declined";
+			return;
+		}
+		await validateCatalogSharing("user");
+	};
+
 	const applyVerifiedBarcodeForSharing = async () => {
 		if (form.data.barcodeShareValidation?.status !== "name-mismatch") return;
-		const draft = form.data.barcodeShareValidation.draft;
+		const validationResult = form.data.barcodeShareValidation;
+		const draft = validationResult.draft;
 		form.data.barcodeReferenceDraft = draft;
 		await applyBarcodeReferenceSuggestion();
-		form.data.barcodeShareValidation = null;
+		form.data.barcodeShareValidation = {
+			status: "matched",
+			barcode: validationResult.barcode,
+			draft,
+			defaultSharingAllowed: false,
+			requiresCatalogEvidence: validationResult.requiresCatalogEvidence,
+		};
 		form.data.shareWithCatalog =
 			draft.source !== "shared-catalog" && form.data.activeStep === "share";
+		form.data.shareSelectionSource = form.data.shareWithCatalog
+			? "user"
+			: "none";
 	};
 
 	const detachMismatchedBarcodeForPrivateSave = () => {
@@ -619,7 +692,23 @@ export const createManualEntryBarcodeController = ({
 	});
 
 	$effect(() => {
-		if (!canShareWithCatalog) form.data.shareWithCatalog = false;
+		if (!canShareWithCatalog) {
+			form.data.shareWithCatalog = false;
+			form.data.shareSelectionSource = "none";
+		}
+	});
+
+	$effect(() => {
+		const candidateKey = automaticSharingCandidateKey;
+		if (
+			!candidateKey ||
+			candidateKey === defaultShareAttemptKey ||
+			form.data.shareSelectionSource !== "none"
+		) {
+			return;
+		}
+		defaultShareAttemptKey = candidateKey;
+		void validateCatalogSharing("automatic");
 	});
 
 	return {

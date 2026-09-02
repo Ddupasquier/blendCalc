@@ -95,7 +95,7 @@ const representativeBarcodeExperiences = [
 		brand: "blendCalc QA Beverage Lab",
 		expectedAlcoholByVolume: null,
 		expectedAllergen: null,
-		expectedAutofillStep: "Macros",
+		expectedAutofillStep: "Share",
 		expectedSourceServing: false,
 		minimumNutrientCount: 1,
 	},

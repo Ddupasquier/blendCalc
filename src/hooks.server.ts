@@ -27,6 +27,7 @@ import {
 	THEME_PREFERENCE_COOKIE,
 } from "$lib/utils/theme/themePreference";
 import { env } from "$env/dynamic/private";
+import { recordBlendCalcAPIRequestObservation } from "$lib/server/blendCalcAPI/operations/blendCalcAPIOperations.server";
 import {
 	redirect,
 	error,
@@ -97,15 +98,24 @@ export const handle: Handle = async ({ event, resolve }) => {
 		if (isBlendCalcAPIV1Pathname(event.url.pathname)) {
 			normalizedResponse.headers.set("x-request-id", requestId);
 			await completeServerBackgroundTask(
-				recordBlendCalcAPISafeRequest({
-					requestId,
-					pathname: event.url.pathname,
-					method: event.request.method,
-					responseStatus: normalizedResponse.status,
-					durationMs: performance.now() - requestStartedAt,
-					actorIdentifier,
-					rateLimitResult,
-				}),
+				Promise.all([
+					recordBlendCalcAPISafeRequest({
+						requestId,
+						pathname: event.url.pathname,
+						method: event.request.method,
+						responseStatus: normalizedResponse.status,
+						durationMs: performance.now() - requestStartedAt,
+						actorIdentifier,
+						rateLimitResult,
+					}),
+					recordBlendCalcAPIRequestObservation({
+						pathname: event.url.pathname,
+						responseStatus: normalizedResponse.status,
+						totalDurationMs: performance.now() - requestStartedAt,
+						databaseObservation: event.locals.blendCalcAPIDatabaseObservation,
+						cacheValidation: event.request.headers.has("if-none-match"),
+					}),
+				]),
 			);
 		}
 		return normalizedResponse;

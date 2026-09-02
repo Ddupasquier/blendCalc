@@ -17,13 +17,16 @@ signed-in user without exposing the account that submitted it.
 
 1. A user scans or enters a valid UPC/EAN barcode.
 2. The ingredient is always saved to that user's private custom-food list first.
-3. For eligible labels, the user can explicitly opt in to catalog review.
+3. Complete, unchanged exact-source data defaults to sharing only when every represented
+   product-data source is approved for canonical storage. User-entered values, edits,
+   corrections, and photos still require an explicit opt-in.
 4. The server validates the barcode, exact serving basis, nutrient values, and basic
    macro relationships.
 5. An exact, legally reusable USDA FoodData Central barcode match may publish or improve
    the blendCalc canonical product; the stored blendCalc record becomes the source used
    by later app and public-API reads while USDA remains recorded as field evidence.
-6. Unknown labels require front-package, nutrition-label, and barcode photos.
+6. Unknown labels and exact matches from sources that cannot populate the canonical
+   catalog require front-package, nutrition-label, and barcode photos.
 7. Unknown labels stay pending until a moderator approves or rejects them.
 8. Approved products appear in ingredient text search and are checked before outside
    barcode services.
@@ -40,6 +43,17 @@ from reviewed prepared-food overrides.
 Submitting is optional. A failed catalog submission never rolls back the user's private
 ingredient. Submission pauses only affect shared catalog submissions. Users can still
 save private custom foods, use their fridge, and build mixes.
+Private saves may omit catalog-required nutrient values and product evidence; those
+unknowns remain absent rather than becoming zero. Enabling community sharing makes the
+catalog nutrient and evidence requirements blocking, and the server independently
+rejects incomplete submissions.
+Private saves and user-authored values or photos never create catalog intake by
+themselves. When an exact provider-backed product is complete, unchanged, and uses only
+sources approved for canonical storage, the Share step enables sharing by default and
+clearly allows the user to turn it off. Any user edit or selected evidence file clears
+that automatic default; sharing those values requires the user to enable it again.
+The trusted route and database reject every submission without recorded sharing
+consent.
 
 ## Source Policy
 
@@ -281,11 +295,18 @@ can change over time.
 
 1. The server compares the submitted label with the active blendCalc product first.
 2. An unchanged match returns the existing product and creates no duplicate submission.
-3. A clearly incompatible identity is blocked before normal moderation unless the user
-   explicitly reports the catalog information as incorrect and provides complete
-   package evidence.
+3. A dedicated identity gate compares normalized product and brand identity with the
+   active canonical record and every returned exact-barcode source record before any
+   field proposals enter moderation. An ordinary submission that conflicts with the
+   canonical identity, or with every exact source identity when no canonical record
+   exists, is blocked. Mixed exact-source evidence and material brand differences require
+   package-evidence review. An explicit catalog correction may proceed only through that
+   evidence-backed review path.
 4. A credible difference or explicit correction becomes a `product_update` submission linked to the active
    product and the exact revision reviewed by the comparison.
+   Its submitted identity, normalized label snapshot, evidence, observation date, and
+   structured differences are immutable after insertion. Moderation may advance only
+   workflow metadata; a changed proposal requires a new comparison and submission.
 5. USDA and Open Food Facts are checked for exact-barcode support. Their results are
    stored as research context; neither provider silently replaces the canonical row.
 6. Moderation shows the old and proposed values, source-check results, and private label
@@ -477,6 +498,12 @@ links and their indexed origin/verification projection instead of guessing from 
 older JSON snapshot. This means an approved product cannot continue to display a stale
 state, and a pending catalog update can display `Pending` without pretending the
 underlying active product has disappeared.
+
+The authenticated intake status route exposes only the owning submitter's opaque
+submission ID, normalized `pending`, `accepted`, or `declined` workflow state, and
+submission/update timestamps. Owner-only RLS and an explicit owner filter protect the
+read. Moderator identities, notes, validation reports, submitted product snapshots, and
+private evidence paths never enter this response.
 
 ## Source Quality Monitoring
 

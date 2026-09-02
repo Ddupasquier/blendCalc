@@ -7,6 +7,8 @@ import { normalizeBarcode } from "$lib/utils/barcode/barcode";
 import { productNamesDiffer } from "$lib/utils/products/productIdentity";
 import { readLimitedJson } from "$lib/server/security/requestBody.server";
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
+import { getProductReferenceCatalog } from "$lib/server/products/productReferenceCatalog.server";
+import { barcodeDraftUsesOnlyCanonicalSources } from "$lib/utils/products/catalogSourcePolicy";
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 
@@ -22,15 +24,14 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
 		"INVALID_BARCODE",
 	);
 
-	const body = await readLimitedJson(
+	const body = (await readLimitedJson(
 		request,
 		SHARE_VALIDATION_REQUEST_MAX_BYTES,
-	) as {
+	)) as {
 		productName?: unknown;
 	} | null;
-	const productName = typeof body?.productName === "string"
-		? body.productName.trim()
-		: "";
+	const productName =
+		typeof body?.productName === "string" ? body.productName.trim() : "";
 	if (!productName) throwAppError(400, "PRODUCT_NAME_REQUIRED");
 
 	const draft = await lookupBarcodeProductDraft(
@@ -38,8 +39,16 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
 		barcode,
 	);
 	if (!draft) {
-		return json({ status: "not-found", barcode });
+		return json({
+			status: "not-found",
+			barcode,
+			requiresCatalogEvidence: true,
+		});
 	}
+	const requiresCatalogEvidence = !barcodeDraftUsesOnlyCanonicalSources(
+		draft,
+		await getProductReferenceCatalog(),
+	);
 
 	if (productNamesDiffer(productName, draft.name)) {
 		return json({
@@ -50,8 +59,15 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
 				code: "PRODUCT_NAME_CONFLICT",
 				params: { productName: draft.name },
 			},
+			requiresCatalogEvidence,
 		});
 	}
 
-	return json({ status: "matched", barcode, draft });
+	return json({
+		status: "matched",
+		barcode,
+		draft,
+		defaultSharingAllowed: !requiresCatalogEvidence,
+		requiresCatalogEvidence,
+	});
 };

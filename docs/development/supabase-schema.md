@@ -66,6 +66,8 @@ Stores app-facing profile information. Email should not be copied here.
 
 Notes:
 
+- Profile bios are optional and limited to 150 characters by the table constraint and
+  owner-scoped save function.
 - `MFA_REQUIRED` is the stable authentication code returned when an elevated action
   requires an AAL2 session. Friendly wording remains in the application message
   catalog.
@@ -827,6 +829,8 @@ removes those aliases after all application callers switch to the canonical
 | Table                                 | Primary Key             | Owner Scope                     | Purpose                                                                                                                    | Key Relationships                                                                     |
 | ------------------------------------- | ----------------------- | ------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
 | `shared_product_submissions`          | `id`                    | Submitted by one auth user      | Community product submissions awaiting review or already reviewed                                                          | `submitted_by → auth.users.id`, optional reviewer                                     |
+| `catalog_intake_requests`             | `id`                    | One actor-scoped request key    | Service-only idempotency ledger for catalog intake retries                                                                 | `actor_user_id → auth.users.id`                                                       |
+| `shared_product_submission_field_evidence` | `id`               | Private proposed-field evidence | Exact value, unit, basis, source observation, timestamp, confidence, and evidence references for each submitted field      | `submission_id`, matching `source_observation_id`                                     |
 | `shared_products`                     | `id`                    | Shared catalog                  | Approved active shared products searchable by all authenticated users                                                      | Optional approved submission/reviewer                                                 |
 | `shared_product_revisions`            | `id`                    | Shared catalog                  | Historical revisions for approved products                                                                                 | `shared_product_id → shared_products.id`                                              |
 | `shared_product_revision_changes`     | `id`                    | Shared catalog history          | Queryable old/new field values attached to an approved product revision                                                    | `revision_id → shared_product_revisions.id`                                           |
@@ -868,6 +872,15 @@ as writable catalog structures.
 The isolated generated schema contract is
 `infrastructure/blendCalcAPI/supabase/database.types.ts`; it does not belong in
 application source until a runtime consumer imports it.
+
+The isolated schema also owns `api_request_observations`,
+`api_shadow_parity_observations`, and `publication_sync_runs`. Browser roles have no
+access. Privacy-safe request and parity observations retain only operation names,
+status, timing, counts, cache state, read mode, and hashes for 35 days; they never
+retain request identifiers or payloads. Service-role-only operational views expose
+request p50/p95, database time, errors, rate limits, cache effectiveness, shadow parity,
+generation state and age, source/target count and hash parity, sync duration/failures,
+product additions/removals, and the latest production read mode.
 
 Only `service_role` has schema usage or table/function privileges. `anon` and
 `authenticated` cannot access this project through the Data API. A generation becomes
@@ -915,6 +928,10 @@ Notes:
   and future remapping.
 - `submission_kind` is `new_product` or `product_update`. Product updates must point to
   both the active shared product and the exact base revision used for comparison.
+- Product-update proposal fields are immutable after insertion. Status, reviewer,
+  review time, review note, and verification status remain mutable workflow metadata;
+  the proposed identity, category, label snapshot, evidence, base revision, and
+  structured differences cannot be edited or deleted in place.
 - `submission_intent` distinguishes ordinary catalog sharing from an explicit
   `catalog_correction`. A correction may reach moderation even when its differences
   would be too large for an ordinary same-barcode submission.
@@ -924,6 +941,23 @@ Notes:
 - A user may have only one pending correction against a specific base revision.
   Different users may independently submit supporting or conflicting package evidence;
   approving one correction makes the others stale through the existing revision guard.
+
+### `catalog_intake_requests`
+
+Stores no submitted food, image, evidence path, or raw request body. It retains an
+actor-scoped idempotency key, SHA-256 request fingerprint, processing state, and the
+safe terminal HTTP response needed to replay a completed request.
+
+- `begin_catalog_intake_request` atomically returns `acquired`, `in_progress`,
+  `conflict`, or `replay`. A reused key with a different fingerprint always conflicts.
+- `complete_catalog_intake_request` finalizes an acquired key exactly once. Terminal
+  responses are replayed without rerunning submission, revision, observation, or image
+  work.
+- The ledger is forced-RLS and service-role-only. App and API routes must acquire the
+  key before evidence upload or any catalog mutation.
+- Processing rows are deliberately not stolen after a timeout. An ambiguous worker
+  failure therefore cannot cause a retry to duplicate downstream writes; operational
+  recovery must resolve the original request or require a new key.
 
 ### `user_catalog_submission_enforcement`
 
@@ -1154,6 +1188,16 @@ and observed time from the selected row; raw payloads and private links remain
 service-role only. Trusted server-side catalog hydration has explicit read access to
 observations so authenticated app routes can return selected provenance without
 granting browsers direct access to the evidence tables.
+
+`shared_product_submission_field_evidence` is the private, append-only bridge between
+one proposed field and the exact submission-owned source observation supporting it.
+Each row retains the source value before normalization, nullable source unit and basis,
+field observation time, bounded unreviewed confidence, and one or more bounded evidence
+identifiers. A database trigger prevents evidence from borrowing an observation owned
+by another submission. Browser roles have no access, and proposed confidence
+cannot claim canonical verification. `NULL` unit or basis means not applicable or not
+reported; it never authorizes a conversion. Canonical selection remains separately
+owned by `shared_product_field_provenance` after review.
 
 `shared_product_field_provenance` stores the canonical field path, selected observation,
 source and normalized values, confidence, evidence method, and selected state. Evidence

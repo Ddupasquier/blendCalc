@@ -18,8 +18,10 @@ fields retain their stable versioned names.
 | Inspect available reads             | [Read Endpoints](#read-endpoints)                                                                                           |
 | Review response budgets             | [Response Targets](#response-targets)                                                                                       |
 | Understand publication rules        | [What Can Be Published](#what-can-be-published) and [Corrections And Rapid Removal](#corrections-and-rapid-removal)         |
+| Understand future intake ownership  | [Shared Intake And Moderation](#shared-intake-and-moderation)                                                               |
 | Understand database isolation       | [Publication Database Isolation](database-isolation.md)                                                                     |
 | Inspect upstream provider samples   | [External API Structure References](../api-structures/README.md)                                                            |
+| Review app-only intake observations | [App-Only Intake Contract](#app-only-intake-contract)                                                                       |
 
 ## blendCalcAPI v1 Status
 
@@ -46,6 +48,14 @@ Open the OpenAPI document at `/api/v1/openapi.json`. To inspect raw API JSON in 
 browser, sign in to blendCalc first and then open one of the endpoints below in the same
 browser session. Public bearer keys and anonymous catalog access do not exist yet.
 
+Authenticated app submitters can read their own bounded intake state from
+`GET /api/intake/v1/submissions/{submissionId}`. This operational route is outside the
+public, read-only `/api/v1` catalog contract. It reports only the opaque submission ID,
+the normalized `pending`, `accepted`, or `declined` state, and submission/update
+timestamps. It never returns product payloads, evidence, validation reports, reviewer
+identity, or review notes. An API key cannot replace the submitter's app session, and a
+missing submission and another user's submission both return the same not-found result.
+
 The application database remains the canonical source of truth. The separate
 blendCalcAPI Supabase project is an isolated publication read model and receives only
 complete, redistributable API snapshots. See
@@ -64,6 +74,11 @@ clients bypass the versioned HTTP contract.
 of products accepted for API publication. Accepted canonical records live in
 `shared_products`; the published-products view contains only the subset that currently
 passes `blendcalc_api_v1_product_readiness`.
+Private user foods and their evidence never enter this intake automatically. Complete,
+unchanged exact-source data may default to intake only when every represented source is
+approved for canonical storage and the user leaves sharing enabled. User-entered
+values, edits, corrections, and photos require an explicit community-share action
+before the moderation and publication gates can consider that data.
 
 The server can issue, expire, revoke, and atomically rotate high-entropy API keys while
 storing only hashes and short display prefixes. This credential foundation does not by
@@ -88,6 +103,92 @@ Scopes grant only their named responsibility. Catalog reads do not grant intake,
 intake does not grant corrections, and neither ordinary write scope grants moderation.
 Unknown scope values fail closed. Route enforcement will be enabled only through the
 deliberate public-release process after API keys and terms are approved.
+
+## App-Only Intake Contract
+
+The versioned app-only intake payload is owned by
+`src/lib/blendCalcAPI/intake/v1/blendCalcAPIIntakeTypes.ts`. It describes one current
+package-label observation; it does not create an accepted product, select canonical
+values, approve evidence, or publish anything through blendCalcAPI. Intake transport,
+idempotency, persistence, moderation, and status routes remain separate implementation
+responsibilities.
+
+Every payload carries `intakeVersion: "1.0"`, its observation time, its catalog-share or
+catalog-correction purpose, declared image evidence, and all nine source-neutral
+observation sections:
+
+1. product identity;
+2. current label-revision context;
+3. exact source servings;
+4. numeric or qualitative nutrient observations;
+5. ingredient statements and optional structure;
+6. allergen and precautionary statements;
+7. submitted category labels and optional validated app category selections;
+8. GTIN and other source identifiers; and
+9. image-evidence roles and intended use.
+
+`reported`, `checked-none`, and `not-observed` remain distinct. An absent nutrient is
+unknown, while an explicit label zero uses `reported-zero`. A count serving such as
+`1 cookie` is valid without grams or milliliters and cannot produce per-100g math until
+separate exact conversion evidence exists. Weight, volume, count, and package servings
+retain their native basis rather than being converted by name.
+
+Evidence descriptors contain a client-local reference, role, media type, byte count,
+SHA-256 digest, and optional capture time. Observation fields reference those IDs; they
+never contain Storage paths, private account identity, moderation decisions, or raw
+image bytes. The trusted server derives the actor, verifies uploads and identifiers,
+applies bounded validation, and creates immutable intake/moderation records. Canonical
+selection and API publication continue to happen only after evidence review and the
+existing readiness gates.
+
+## Shared Intake And Moderation
+
+Accepted app intake enters the existing catalog observation, submission, and moderation
+pipeline through `submitCatalogIntake`. The current authenticated product-submission
+route and any future app-only blendCalcAPI intake route share this boundary. It owns
+unclaimed evidence cleanup and delegates validation, source comparison, duplicate
+detection, revision classification, submission persistence, automated approval, and
+moderator review to the established catalog services.
+
+Intake does not write a second API-specific product or submission store. Canonical
+products remain in `shared_products`, review work remains in
+`shared_product_submissions`, and accepted source observations retain their existing
+field-level provenance. The public v1 API remains read-only; this shared server boundary
+does not expose a write endpoint or enable public API keys.
+
+Future intake writes require an actor-scoped idempotency key and a server-computed
+SHA-256 fingerprint before evidence upload or catalog mutation. The first request
+acquires the key; concurrent retries remain in progress, changed payloads conflict, and
+completed requests replay the original safe response. Processing keys are never stolen
+after an arbitrary timeout, so an ambiguous worker failure cannot duplicate submissions,
+revisions, observations, or images.
+
+Future app-only intake persists each proposed field separately in
+`shared_product_submission_field_evidence`. Every retained proposal keeps its exact
+source value, nullable source unit and basis, matching source-observation record,
+observation time, bounded unreviewed confidence, and private evidence identifiers.
+Missing unit or basis never implies a conversion, and intake cannot label a proposal as
+canonically verified. These rows are private moderation evidence; approval still
+selects canonical lineage through `shared_product_field_provenance`.
+
+App-only intake validates normalized product and brand identity before moderation can
+accept proposed fields. The submitted identity is checked against the active canonical
+record and every exact-barcode source record independently. Ordinary submissions fail
+closed when canonical identity conflicts or every exact source is unrelated; mixed
+source evidence, brand conflicts, unknown products, and explicit corrections require
+complete package-evidence review. Exact identity never verifies unrelated fields.
+
+## App-Only Intake
+
+The signed-in blendCalc app is the first intake client. It submits product observations
+through `POST /api/intake/v1/product-observations` using an existing verified Supabase
+app session. API keys do not authorize this route, and `/api/v1` remains read-only.
+
+The versioned app route reuses the existing catalog submission, evidence, deduplication,
+and moderation pipeline; it never writes directly to the canonical catalog. The former
+`POST /api/products/submissions` app route remains a compatibility alias while deployed
+clients move to the versioned path. Intake versioning is independent from public read
+API versioning, and enabling third-party writes requires a separate reviewed release.
 
 ## Read Endpoints
 
@@ -214,6 +315,16 @@ refresh failure may reuse the last complete verified attribution catalog, while 
 initial failure still fails closed. Core catalog failures continue to return the safe
 documented unavailable response.
 
+Operational monitoring is stored separately in the isolated publication project and
+is never required to complete a public read. In the blendCalcAPI Supabase SQL Editor,
+use `blendcalc_api.api_request_operations_dashboard` for request volume, p50/p95
+latency, database time, result counts, errors, rate limits, and cache effectiveness;
+`blendcalc_api.api_shadow_parity_dashboard` for source/isolated parity failures; and
+`blendcalc_api.publication_operations_dashboard` for active-generation age, count/hash
+parity, synchronization duration and failures, additions/removals, and the database
+currently serving reads. The protected `/api/internal/blendCalcAPI/operations` route
+returns the same bounded operational summary for automation.
+
 The request boundary applies endpoint-specific burst and sustained quotas to each
 available client identity: network address, authenticated account, and presented API
 key. The private database consumes every applicable layer in one call; exceeding any
@@ -336,6 +447,7 @@ Related operational routes are deliberately outside `/api/v1`:
 
 | Method and path                                               | Responsibility                                                       |
 | ------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `GET /api/intake/v1/submissions/{submissionId}`               | Read the signed-in submitter's bounded intake state                  |
 | `POST /api/publication-concerns`                              | Submit one bounded concern and receive an opaque tracking identifier |
 | `GET /api/moderation/catalog/products/{productId}/provenance` | Read private accepted and candidate evidence with an elevated role   |
 | `GET /api/moderation/publication-concerns`                    | Read unresolved concerns and active holds with elevated AAL2 access  |

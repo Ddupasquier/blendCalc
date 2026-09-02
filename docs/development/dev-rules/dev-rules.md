@@ -1031,9 +1031,15 @@ reuse long-lived view branches or combine unrelated work merely because it touch
 same page.
 
 **22a.** Promote an explicitly approved responsibility branch to `staging` only after
-its maintained local and remote checks pass. Promote `staging` to `main` only for an
-explicitly approved release, recheck the exact staging head, and never skip the staging
-integration boundary. Push and verify every updated branch, then return the local
+its maintained local and remote checks pass. Use `mock-staging` when a large, risky, or
+conflict-prone batch benefits from a disposable integration checkpoint; it is optional
+for ordinary promotions. Run one complete Release Check on the exact clean candidate,
+whether that candidate is `mock-staging` or `staging`. Reuse that result only when the
+next promotion preserves the identical Git tree and passes the maintained Promotion
+Check; any dirty tree, content mismatch, stale or missing receipt, runtime mismatch, or
+failed check requires a fresh complete Release Check. Promote `staging` to `main` only
+for an explicitly approved release and never skip the staging integration boundary.
+Push and verify every updated branch, then return the local
 checkout to the active feature branch when more work remains. This workflow does not
 grant standing permission to commit, push, merge, deploy, or include unrelated work.
 

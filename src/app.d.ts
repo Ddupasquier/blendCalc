@@ -8,6 +8,7 @@ import type { MixPageInitialData } from "$lib/types/pageData/mixPageData";
 import type { SavedRecipesPageInitialData } from "$lib/types/pageData/savedRecipesPageData";
 import type { AppIssueCode, AppIssueParams } from "$lib/utils/errors/appIssues";
 import type { ThemePreference } from "$lib/utils/theme/themePreference";
+import type { BlendCalcAPIDatabaseObservation } from "$lib/server/blendCalcAPI/operations/blendCalcAPIOperations.server";
 
 type AuthUser = {
 	id: string;
@@ -31,6 +32,7 @@ declare global {
 			supabase: SupabaseClient<Database>;
 			getVerifiedUser: () => Promise<VerifiedAuthUser | null>;
 			user: VerifiedAuthUser | null;
+			blendCalcAPIDatabaseObservation?: BlendCalcAPIDatabaseObservation;
 		}
 		interface PageData {
 			authUser: AuthUser | null;

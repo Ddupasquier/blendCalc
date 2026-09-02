@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
 	adminClient: { source: "trusted-server" },
 	getSupabaseAdminClient: vi.fn(),
+	getProductReferenceCatalog: vi.fn(),
 	lookupBarcodeProductDraft: vi.fn(),
 }));
 
@@ -12,6 +13,9 @@ vi.mock("$lib/server/products/barcodeProduct.server", () => ({
 vi.mock("$lib/supabase/admin.server", () => ({
 	getSupabaseAdminClient: mocks.getSupabaseAdminClient,
 }));
+vi.mock("$lib/server/products/productReferenceCatalog.server", () => ({
+	getProductReferenceCatalog: mocks.getProductReferenceCatalog,
+}));
 
 import { POST } from "../../src/routes/api/products/barcode/[barcode]/share-validation/+server";
 
@@ -19,7 +23,33 @@ describe("barcode share-validation privacy boundary", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mocks.getSupabaseAdminClient.mockReturnValue(mocks.adminClient);
-		mocks.lookupBarcodeProductDraft.mockResolvedValue({ name: "Tomato Sauce" });
+		mocks.getProductReferenceCatalog.mockResolvedValue({
+			sources: {
+				usda: {
+					key: "usda",
+					displayName: "USDA FoodData Central",
+					attributionText: "USDA",
+					canonicalStorageAllowed: true,
+					canonicalLicenseName: "CC0-1.0",
+				},
+				"open-food-facts": {
+					key: "open-food-facts",
+					displayName: "Open Food Facts",
+					attributionText: "Open Food Facts",
+					canonicalStorageAllowed: false,
+					canonicalLicenseName: "ODbL-1.0",
+				},
+			},
+			nutrientMappings: [],
+			nutrientConversions: [],
+			nutrientEquivalences: [],
+		});
+		mocks.lookupBarcodeProductDraft.mockResolvedValue({
+			name: "Tomato Sauce",
+			source: "usda",
+			sourceKey: "usda",
+			nutrients: [],
+		});
 	});
 
 	it("reads the raw catalog through the trusted server client", async () => {
@@ -38,6 +68,11 @@ describe("barcode share-validation privacy boundary", () => {
 		} as never);
 
 		expect(response.status).toBe(200);
+		expect(await response.json()).toMatchObject({
+			status: "matched",
+			defaultSharingAllowed: true,
+			requiresCatalogEvidence: false,
+		});
 		expect(mocks.lookupBarcodeProductDraft).toHaveBeenCalledWith(
 			mocks.adminClient,
 			"00021130493609",
@@ -46,5 +81,74 @@ describe("barcode share-validation privacy boundary", () => {
 			locals.supabase,
 			"00021130493609",
 		);
+	});
+
+	it("requires complete evidence for a source that cannot populate the catalog", async () => {
+		mocks.lookupBarcodeProductDraft.mockResolvedValue({
+			name: "Alabama White Sauce",
+			source: "open-food-facts",
+			sourceKey: "open-food-facts",
+			nutrients: [],
+		});
+
+		const response = await POST({
+			locals: {
+				getVerifiedUser: vi.fn().mockResolvedValue({ id: "user-id" }),
+			},
+			params: { barcode: "00051497279929" },
+			request: new Request("http://localhost", {
+				method: "POST",
+				headers: { "content-type": "application/json" },
+				body: JSON.stringify({ productName: "Alabama White Sauce" }),
+			}),
+		} as never);
+
+		expect(await response.json()).toMatchObject({
+			status: "matched",
+			requiresCatalogEvidence: true,
+		});
+	});
+
+	it("does not default sharing on for a restricted or mixed source", async () => {
+		mocks.getProductReferenceCatalog.mockResolvedValue({
+			sources: {
+				usda: {
+					canonicalStorageAllowed: true,
+					canonicalLicenseName: "CC0-1.0",
+				},
+				"open-food-facts": {
+					canonicalStorageAllowed: false,
+					canonicalLicenseName: "ODbL-1.0",
+				},
+			},
+		});
+		mocks.lookupBarcodeProductDraft.mockResolvedValue({
+			name: "Tomato Sauce",
+			source: "usda",
+			sourceKey: "usda",
+			fieldProvenance: {
+				ingredients: {
+					source: "open-food-facts",
+					confidence: "imported",
+				},
+			},
+		});
+
+		const response = await POST({
+			locals: {
+				getVerifiedUser: vi.fn().mockResolvedValue({ id: "user-id" }),
+			},
+			params: { barcode: "00021130493609" },
+			request: new Request("http://localhost", {
+				method: "POST",
+				headers: { "content-type": "application/json" },
+				body: JSON.stringify({ productName: "Tomato Sauce" }),
+			}),
+		} as never);
+
+		expect(await response.json()).toMatchObject({
+			status: "matched",
+			defaultSharingAllowed: false,
+		});
 	});
 });

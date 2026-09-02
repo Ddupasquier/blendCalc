@@ -39,8 +39,10 @@ barcode and nutrition label manually.
 ## Data And Accuracy
 
 - Barcode and custom-food name uniqueness are enforced per user, not globally.
-- Eligible user-entered labels can be submitted to the shared catalog only through an
-  explicit opt-in.
+- Complete, unchanged exact-source data may default to community sharing only when all
+  represented sources are approved for canonical storage. User-entered labels, edits,
+  corrections, and photos can be submitted only through an explicit opt-in, and any
+  such change clears an automatic sharing default.
 - GS1 lot, serial, expiration, query, and fragment values are not persisted.
 - Random, HTTP, credential-bearing, compressed/unsupported, and invalid-GTIN QR links
   are rejected instead of opened or guessed.

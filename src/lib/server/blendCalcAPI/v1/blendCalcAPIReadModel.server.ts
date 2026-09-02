@@ -14,26 +14,46 @@ import {
 } from "./blendCalcAPIIsolatedCatalog.server";
 import { hashCanonicalJson } from "./blendCalcAPIJson.server";
 import { readBlendCalcAPIReadMode } from "./blendCalcAPIIsolatedClient.server";
+import { recordBlendCalcAPIShadowParityObservation } from "../operations/blendCalcAPIOperations.server";
 
 type ReadOptions = { databaseAbortSignal?: AbortSignal };
 
 const recordShadowParity = (
-	operation: string,
+	operation: "categories" | "product" | "revisions" | "search",
 	primary: unknown,
+	sourceDurationMs: number,
 	isolatedRead: () => Promise<unknown>,
 ) => {
+	const isolatedStartedAt = performance.now();
 	void isolatedRead()
 		.then((isolated) => {
 			const sourceHash = hashCanonicalJson(primary);
 			const isolatedHash = hashCanonicalJson(isolated);
-			console.info("[blendCalcAPI] isolated read parity", {
+			const targetDurationMs = performance.now() - isolatedStartedAt;
+			void recordBlendCalcAPIShadowParityObservation({
 				operation,
 				matches: sourceHash === isolatedHash,
 				sourceHash,
-				isolatedHash,
+				targetHash: isolatedHash,
+				sourceDurationMs,
+				targetDurationMs,
+				failureCode: null,
+			});
+			console.info("[blendCalcAPI] isolated read parity", {
+				operation,
+				matches: sourceHash === isolatedHash,
 			});
 		})
 		.catch((error: unknown) => {
+			void recordBlendCalcAPIShadowParityObservation({
+				operation,
+				matches: false,
+				sourceHash: hashCanonicalJson(primary),
+				targetHash: null,
+				sourceDurationMs,
+				targetDurationMs: performance.now() - isolatedStartedAt,
+				failureCode: "isolated_read_failed",
+			});
 			console.error("[blendCalcAPI] isolated shadow read failed", {
 				operation,
 				errorType: error instanceof Error ? error.name : typeof error,
@@ -42,14 +62,22 @@ const recordShadowParity = (
 };
 
 const readConfigured = async <Result>(
-	operation: string,
+	operation: "categories" | "product" | "revisions" | "search",
 	readSource: () => Promise<Result>,
 	readIsolated: () => Promise<Result>,
 ) => {
 	const mode = readBlendCalcAPIReadMode();
 	if (mode === "isolated") return readIsolated();
+	const sourceStartedAt = performance.now();
 	const source = await readSource();
-	if (mode === "shadow") recordShadowParity(operation, source, readIsolated);
+	if (mode === "shadow") {
+		recordShadowParity(
+			operation,
+			source,
+			performance.now() - sourceStartedAt,
+			readIsolated,
+		);
+	}
 	return source;
 };
 

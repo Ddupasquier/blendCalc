@@ -9,6 +9,10 @@ import type { FoodItem } from "$lib/utils/food/types";
 import type { IngredientProvenanceFilters } from "$lib/utils/ingredients/ingredientProvenance";
 import type { SharedProductSubmissionResult } from "$lib/utils/products/catalog";
 import type { CatalogSubmissionIntent } from "$lib/utils/products/catalog";
+import {
+	validateCatalogIntakeIdentity,
+	type CatalogIntakeIdentityRecord,
+} from "$lib/utils/products/catalogIntakeIdentity";
 import { compareCatalogSubmissionToExistingProduct } from "$lib/utils/products/catalogSubmissionComparison";
 import { readCatalogUpdateSummary } from "$lib/utils/products/catalogUpdateReview";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -53,6 +57,8 @@ import {
 	validateSharedProductFood,
 } from "./catalogFoodValidation.server";
 import { recordProductSourceFieldMetrics } from "./sourceMetrics.server";
+import { getProductReferenceCatalog } from "./productReferenceCatalog.server";
+import { barcodeDraftUsesOnlyCanonicalSources } from "$lib/utils/products/catalogSourcePolicy";
 
 type ProductSubmissionContext = {
 	reviewFlags?: string[];
@@ -189,10 +195,12 @@ export const submitProductForCatalog = async (
 	const submissionFood = applyCanonicalFoodCategory(food, selectedCategory);
 	const submissionIntent = context.intent ?? "catalog_share";
 
-	const [existingCatalogFood, resolutionPolicy] = await Promise.all([
-		getSharedProductByBarcode(admin, validation.barcode),
-		getDefaultProductResolutionPolicy(),
-	]);
+	const [existingCatalogFood, resolutionPolicy, productReferenceCatalog] =
+		await Promise.all([
+			getSharedProductByBarcode(admin, validation.barcode),
+			getDefaultProductResolutionPolicy(),
+			getProductReferenceCatalog(),
+		]);
 	const existingCatalogComparison = existingCatalogFood
 		? compareCatalogSubmissionToExistingProduct(
 				submissionFood,
@@ -244,6 +252,46 @@ export const submitProductForCatalog = async (
 	await recordProductSourceFieldMetrics(
 		sourceAssessment.sourceAccuracy.metricIncrements,
 	);
+	const exactSourceRecords: CatalogIntakeIdentityRecord[] = [];
+	if (sourceAssessment.usdaDraft) {
+		exactSourceRecords.push({
+			source: "usda",
+			sourceReference: sourceAssessment.usdaDraft.sourceReference ?? null,
+			productName: sourceAssessment.usdaDraft.name,
+			brandOwner: sourceAssessment.usdaDraft.brandOwner || null,
+		});
+	}
+	if (sourceAssessment.openFoodFactsDraft) {
+		exactSourceRecords.push({
+			source: "open-food-facts",
+			sourceReference:
+				sourceAssessment.openFoodFactsDraft.sourceReference ?? null,
+			productName: sourceAssessment.openFoodFactsDraft.name,
+			brandOwner: sourceAssessment.openFoodFactsDraft.brandOwner || null,
+		});
+	}
+	const identityValidation = validateCatalogIntakeIdentity({
+		submittedFood: submissionFood,
+		canonicalRecord: existingCatalogFood
+			? {
+					source: "canonical",
+					sourceReference: existingCatalogFood.sharedProductId ?? null,
+					productName: existingCatalogFood.description,
+					brandOwner: existingCatalogFood.brandOwner ?? null,
+				}
+			: null,
+		exactSourceRecords,
+		intent: submissionIntent,
+		minimumRelatedNameTokenOverlap:
+			sourceAssessment.resolutionPolicy.minimumRelatedNameTokenOverlap,
+	});
+	if (identityValidation.disposition === "reject") {
+		return {
+			status: "source-mismatch",
+			message: `This barcode belongs to “${identityValidation.blockingRecord?.productName ?? "another product"}”. Your ingredient was saved privately, but it was not shared.`,
+			evidenceAccepted: false,
+		};
+	}
 	const preparedReview = prepareCatalogSubmissionReview({
 		submissionFood,
 		selectedCategory,
@@ -251,24 +299,22 @@ export const submitProductForCatalog = async (
 		existingComparison: existingCatalogComparison,
 		updateTarget: catalogUpdateTarget,
 		sourceAssessment,
+		identityValidation,
 		evidencePaths,
 		requestedReviewFlags: context.reviewFlags,
 		frontImageCrop: context.frontImageCrop,
 		labelObservedAt,
+		sourceCanAutoPublish: Boolean(
+			sourceAssessment.mergedDraft &&
+			barcodeDraftUsesOnlyCanonicalSources(
+				sourceAssessment.mergedDraft,
+				productReferenceCatalog,
+			),
+		),
 	});
 	await recordProductSourceFieldMetrics(
 		preparedReview.report.sourceLabelDisagreementMetrics ?? [],
 	);
-	if (
-		preparedReview.sourceMismatchName &&
-		submissionIntent !== "catalog_correction"
-	) {
-		return {
-			status: "source-mismatch",
-			message: `This barcode belongs to “${preparedReview.sourceMismatchName}”. Your ingredient was saved privately, but it was not shared.`,
-			evidenceAccepted: false,
-		};
-	}
 	const {
 		canonicalCategory,
 		canonicalSubmissionFood,
@@ -277,6 +323,7 @@ export const submitProductForCatalog = async (
 		hasSourceMatchedImageEvidence,
 		matchedDraft,
 		needsSourceComparisonReview,
+		sourceCanAutoPublish,
 		report,
 		verificationBundle,
 	} = preparedReview;
@@ -312,6 +359,7 @@ export const submitProductForCatalog = async (
 
 	if (
 		matchedDraft &&
+		sourceCanAutoPublish &&
 		!needsSourceComparisonReview &&
 		!hasSourceMatchedImageEvidence
 	) {

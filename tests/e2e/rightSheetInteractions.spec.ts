@@ -153,8 +153,22 @@ test("ingredient search remains opaque and unclipped while loading and scrolling
 	page,
 }) => {
 	await page.setViewportSize({ width: 390, height: 844 });
+	let markSearchRequestStarted: () => void = () => undefined;
+	let releaseSearchRequest: () => void = () => undefined;
+	const searchRequestStarted = new Promise<void>((resolve) => {
+		markSearchRequestStarted = resolve;
+	});
+	const searchRequestRelease = new Promise<void>((resolve) => {
+		releaseSearchRequest = resolve;
+	});
 	await page.route("**/api/foods/search?**", async (route) => {
-		await new Promise((resolve) => setTimeout(resolve, 300));
+		const requestUrl = new URL(route.request().url());
+		if (requestUrl.searchParams.get("q") !== "spinach") {
+			await route.continue();
+			return;
+		}
+		markSearchRequestStarted();
+		await searchRequestRelease;
 		await route.continue();
 	});
 	await page.goto("/ingredients/fridge/search");
@@ -166,10 +180,12 @@ test("ingredient search remains opaque and unclipped while loading and scrolling
 		name: "Search ingredients",
 	});
 	await searchInput.fill("spinach");
+	await searchRequestStarted;
 	await expect(
 		page.getByRole("status", { name: "Searching ingredients" }),
 	).toBeVisible();
 	await expectRightSheetOwnsVisibleContentArea(page);
+	releaseSearchRequest();
 
 	const results = page.locator(".results-panel");
 	await expect(

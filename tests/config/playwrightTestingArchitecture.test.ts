@@ -164,6 +164,17 @@ describe("Playwright browser-testing architecture", () => {
 		expect(verificationWorkflow).toContain("npm test");
 		expect(verificationWorkflow).toContain("npm run build");
 		expect(verificationWorkflow).toContain("name: Browser Matrix");
+		expect(verificationWorkflow).toContain("name: Affected Browser Flows");
+		expect(verificationWorkflow).toContain("github.ref_name == 'mock-staging'");
+		expect(verificationWorkflow).toContain(
+			"verify_release_promotion.mjs --against origin/mock-staging",
+		);
+		expect(verificationWorkflow).toContain(
+			"verify_release_promotion.mjs --against origin/staging",
+		);
+		expect(verificationWorkflow).toContain(
+			"No identical verified mock-staging candidate; running the full staging checks.",
+		);
 		expect(verificationWorkflow).toContain(
 			"PLAYWRIGHT_ENFORCE_DURATION_BUDGETS: true",
 		);
@@ -179,6 +190,12 @@ describe("Playwright browser-testing architecture", () => {
 		}
 		expect(databaseWorkflow).toContain("npm run db:test:verify");
 		expect(databaseWorkflow).toContain("name: Database Verification");
+		expect(databaseWorkflow).toContain(
+			"verify_release_promotion.mjs --against origin/mock-staging",
+		);
+		expect(databaseWorkflow).toContain(
+			"verify_release_promotion.mjs --against origin/staging",
+		);
 		expect(databaseWorkflow).not.toMatch(/pull_request:\s*\n\s+paths:/);
 		expect(hostedAuthWorkflow).toContain("name: Hosted Auth Health");
 		expect(hostedAuthWorkflow).toContain("npm run check:auth");

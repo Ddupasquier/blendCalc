@@ -39,10 +39,18 @@ select is(
 			on schema_contract.oid = table_contract.relnamespace
 		where schema_contract.nspname = 'blendcalc_api'
 			and table_contract.relkind = 'r'
+			and table_contract.relname in (
+				'publication_generations',
+				'publication_products',
+				'publication_product_revisions',
+				'publication_categories',
+				'publication_source_attributions',
+				'publication_generation_events'
+			)
 			and table_contract.relrowsecurity
 			and table_contract.relforcerowsecurity
 	),
-	7,
+	6,
 	'every isolated publication table forces row level security'
 );
 

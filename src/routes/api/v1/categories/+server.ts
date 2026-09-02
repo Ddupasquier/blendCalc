@@ -13,6 +13,7 @@ import {
 	runBlendCalcAPIV1RequestWithinDeadline,
 } from "$lib/server/blendCalcAPI/v1/blendCalcAPIRequestBoundary.server";
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
+import { observeBlendCalcAPIDatabaseRead } from "$lib/server/blendCalcAPI/operations/blendCalcAPIOperations.server";
 import type { RequestHandler } from "./$types";
 
 export const GET: RequestHandler = async ({
@@ -33,11 +34,15 @@ export const GET: RequestHandler = async ({
 		throw error;
 	}
 	try {
-		const result = await runBlendCalcAPIV1RequestWithinDeadline(
-			(databaseAbortSignal) =>
-				readBlendCalcAPIV1Categories(getSupabaseAdminClient(), request, {
-					databaseAbortSignal,
-				}),
+		const result = await observeBlendCalcAPIDatabaseRead(
+			locals,
+			() =>
+				runBlendCalcAPIV1RequestWithinDeadline((databaseAbortSignal) =>
+					readBlendCalcAPIV1Categories(getSupabaseAdminClient(), request, {
+						databaseAbortSignal,
+					}),
+				),
+			(value) => value.categories.length,
 		);
 		return blendCalcAPIV1Success(result.categories, result.pagination, {
 			ifNoneMatch: httpRequest?.headers.get("if-none-match"),

@@ -14,11 +14,31 @@ describe("request rate-limit policies", () => {
 			windowSeconds: 3600,
 		});
 		expect(
+			getRequestRateLimitPolicy("POST", "/api/intake/v1/product-observations"),
+		).toMatchObject({
+			scope: "catalog:submission",
+			limit: 10,
+			windowSeconds: 3600,
+		});
+		expect(
 			getRequestRateLimitPolicy("POST", "/api/food-compatibility/feedback"),
 		).toMatchObject({
 			scope: "compatibility:feedback",
 			limit: 30,
 			windowSeconds: 3600,
+		});
+	});
+
+	it("bounds authenticated intake status polling", () => {
+		expect(
+			getRequestRateLimitPolicy(
+				"GET",
+				"/api/intake/v1/submissions/11111111-1111-4111-8111-111111111111",
+			),
+		).toEqual({
+			scope: "catalog:intake-status",
+			limit: 60,
+			windowSeconds: 60,
 		});
 	});
 
