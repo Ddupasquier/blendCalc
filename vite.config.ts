@@ -59,7 +59,7 @@ export default defineConfig({
 	test: {
 		exclude: ["tests/e2e/**"],
 		globals: true,
-		maxWorkers: process.env.CI ? 2 : 6,
+		maxWorkers: 2,
 		pool: "threads",
 		projects: [
 			{

@@ -160,7 +160,7 @@ export const verificationProfiles = {
 				"database",
 				"Disposable database",
 				"npm",
-				["run", "db:test:verify"],
+				["run", "db:test:verify", "--", "--keep-running"],
 				240_000,
 			),
 			browserMatrixStage,
@@ -185,7 +185,7 @@ export const verificationProfiles = {
 				"database",
 				"Disposable database",
 				"npm",
-				["run", "db:test:verify"],
+				["run", "db:test:verify", "--", "--keep-running"],
 				240_000,
 			),
 			exhaustiveBrowserMatrixStage,
@@ -409,6 +409,23 @@ const runStage = async (verificationStage, state, render) => {
 	return { exitCode, outputLines };
 };
 
+const stopOwnedDatabaseStack = async () =>
+	new Promise((resolveExitCode) => {
+		const child = spawn(
+			"node",
+			["scripts/operations/database/manage_test_database.mjs", "stop"],
+			{
+				cwd: repositoryRoot,
+				env: getChildProcessEnvironment(),
+				stdio: "inherit",
+			},
+		);
+		child.on("error", () => resolveExitCode(1));
+		child.on("close", (code, signal) => {
+			resolveExitCode(signal ? 130 : (code ?? 1));
+		});
+	});
+
 const writeFailureLog = async (profileKey, stageId, outputLines) => {
 	await mkdir(failureLogDirectory, { recursive: true });
 	const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
@@ -478,36 +495,56 @@ const main = async () => {
 		refreshTimer.unref();
 	}
 
-	for (let index = 0; index < profile.stages.length; index += 1) {
-		const verificationStage = profile.stages[index];
-		const state = states[index];
-		if (!process.stdout.isTTY) {
-			console.log(`[${index + 1}/${profile.stages.length}] ${state.label}`);
+	let databaseStageStarted = false;
+	let failed = false;
+	try {
+		for (let index = 0; index < profile.stages.length; index += 1) {
+			const verificationStage = profile.stages[index];
+			const state = states[index];
+			if (!process.stdout.isTTY) {
+				console.log(`[${index + 1}/${profile.stages.length}] ${state.label}`);
+			}
+			if (verificationStage.id === "database") databaseStageStarted = true;
+			const result = await runStage(verificationStage, state, render);
+			const durationMilliseconds = state.finishedAt - state.startedAt;
+			history[verificationStage.id] = {
+				durationMilliseconds,
+				updatedAt: new Date().toISOString(),
+			};
+			await writeHistory(history);
+			if (result.exitCode !== 0) {
+				if (refreshTimer) clearInterval(refreshTimer);
+				const logPath = await writeFailureLog(
+					profileKey,
+					verificationStage.id,
+					result.outputLines,
+				);
+				render();
+				console.error(
+					`\n${state.label} failed after ${formatDuration(durationMilliseconds)}.`,
+				);
+				console.error(`Full diagnostics: ${logPath}`);
+				console.error(result.outputLines.slice(-30).join("\n"));
+				process.exitCode = result.exitCode;
+				failed = true;
+				break;
+			}
 		}
-		const result = await runStage(verificationStage, state, render);
-		const durationMilliseconds = state.finishedAt - state.startedAt;
-		history[verificationStage.id] = {
-			durationMilliseconds,
-			updatedAt: new Date().toISOString(),
-		};
-		await writeHistory(history);
-		if (result.exitCode !== 0) {
-			if (refreshTimer) clearInterval(refreshTimer);
-			const logPath = await writeFailureLog(
-				profileKey,
-				verificationStage.id,
-				result.outputLines,
+	} finally {
+		if (databaseStageStarted) {
+			console.log(
+				"Stopping the disposable database and owned container runtime...",
 			);
-			render();
-			console.error(
-				`\n${state.label} failed after ${formatDuration(durationMilliseconds)}.`,
-			);
-			console.error(`Full diagnostics: ${logPath}`);
-			console.error(result.outputLines.slice(-30).join("\n"));
-			process.exitCode = result.exitCode;
-			return;
+			const cleanupExitCode = await stopOwnedDatabaseStack();
+			if (cleanupExitCode !== 0) {
+				console.error("Disposable database cleanup failed.");
+				process.exitCode = process.exitCode || cleanupExitCode;
+				failed = true;
+			}
 		}
 	}
+
+	if (failed) return;
 
 	if (refreshTimer) clearInterval(refreshTimer);
 	render();

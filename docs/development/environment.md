@@ -91,6 +91,28 @@ label. The local database manager writes private keys and seeded account credent
 Playwright uses port `5174` and the disposable local Supabase stack. Test credentials
 must never point at production.
 
+## Local Resource Safety
+
+Run `npm run resources:check` before a long local session. Maintained builds, complete
+Vitest projects, browser suites, full database verification, and feature/release/nightly
+verification run the same preflight automatically. Local heavy work is blocked when:
+
+- the macOS startup disk has less than 50 GiB free;
+- swap use is above 8 GiB; or
+- an existing development process uses more than 4 GiB resident memory.
+
+The heavy-command runner limits Node old-space to 4 GiB, Vitest uses at most two workers,
+and Playwright accepts one or two workers. The local database manager starts Colima with
+four CPUs and 4 GiB memory. Complete database and release verification stop Supabase and
+also stop Colima when that command started it.
+
+Free storage or stop stale development processes rather than weakening the thresholds.
+Restart macOS after severe swap pressure, keep macOS and development tools current, and
+leave Colima stopped when database work is not active. The repository cannot install
+operating-system updates, choose personal files to remove, or reboot safely on the
+developer's behalf. `BLENDCALC_ALLOW_RESOURCE_PRESSURE=1` permits one deliberate command
+only when postponing the work is less safe than proceeding.
+
 ## Vercel
 
 `.env.vercel.example` lists only values consumed by the deployed SvelteKit app and

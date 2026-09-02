@@ -145,8 +145,8 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
-      - name: Install blocking browsers
-        run: npx playwright install --with-deps chromium
+      - name: Install affected browsers
+        run: node scripts/operations/quality/run_affected_tests.mjs browser --install-browsers
       - name: Run affected browser flows
         run: npm run test:e2e:affected
 
