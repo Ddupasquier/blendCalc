@@ -11,6 +11,8 @@ const PAGINATED_QUERY_PARAMETERS = new Set(["limit", "offset"]);
 const NO_QUERY_PARAMETERS = new Set<string>();
 const CANONICAL_WHOLE_NUMBER_PATTERN = /^(?:0|[1-9]\d*)$/;
 const STRICT_GTIN_PATTERN = /^(?:\d{8}|\d{12}|\d{13}|\d{14})$/;
+const UNSAFE_SEARCH_CHARACTER_PATTERN =
+	/[\p{Cc}\u200B\u202A-\u202E\u2060\u2066-\u2069\uFEFF]/u;
 
 export const BLENDCALC_API_V1_PAGINATION_LIMITS = Object.freeze({
 	search: Object.freeze({ defaultLimit: 15, maximumLimit: 50 }),
@@ -108,6 +110,12 @@ export const readBlendCalcAPIV1SearchRequest = (url: URL) => {
 		throw new BlendCalcAPIV1RequestError(
 			"invalid_query",
 			`q cannot exceed ${MAX_QUERY_LENGTH} characters.`,
+		);
+	}
+	if (UNSAFE_SEARCH_CHARACTER_PATTERN.test(query)) {
+		throw new BlendCalcAPIV1RequestError(
+			"invalid_query",
+			"q cannot contain control or formatting characters.",
 		);
 	}
 	return {

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+	authenticateBlendCalcAPIKey,
 	issueBlendCalcAPIKey,
 	rotateBlendCalcAPIKey,
 } from "$lib/server/blendCalcAPI/security/blendCalcAPIKeys.server";
@@ -11,6 +12,28 @@ vi.mock("$lib/server/runtime/backgroundTask.server", () => ({
 }));
 
 describe("blendCalcAPI key lifecycle", () => {
+	it("filters revoked keys before authenticating them", async () => {
+		const maybeSingle = vi.fn().mockResolvedValue({ data: null, error: null });
+		const query = {
+			select: vi.fn(),
+			eq: vi.fn(),
+			is: vi.fn(),
+			maybeSingle,
+		};
+		query.select.mockReturnValue(query);
+		query.eq.mockReturnValue(query);
+		query.is.mockReturnValue(query);
+		const supabase = {
+			from: vi.fn(() => query),
+		} as unknown as SupabaseClient<Database>;
+
+		await expect(
+			authenticateBlendCalcAPIKey(supabase, `bc_test_${"A".repeat(43)}`),
+		).resolves.toBeNull();
+		expect(query.is).toHaveBeenCalledWith("revoked_at", null);
+		expect(maybeSingle).toHaveBeenCalledOnce();
+	});
+
 	it("returns a plaintext key once while persisting only its hash and prefix", async () => {
 		const insert = vi.fn().mockResolvedValue({ error: null });
 		const supabase = {

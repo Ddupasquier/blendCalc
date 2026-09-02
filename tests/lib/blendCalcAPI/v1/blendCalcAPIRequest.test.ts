@@ -119,10 +119,29 @@ describe("blendCalcAPI v1 request validation", () => {
 		new URL(
 			`https://blendcalc.test/api/v1/foods/search?q=${"a".repeat(2_100)}`,
 		),
+		new URL("https://blendcalc.test/api/v1/foods/search?q=tomato%00hidden"),
+		new URL(
+			"https://blendcalc.test/api/v1/foods/search?q=tomato%E2%80%8Bhidden",
+		),
 	])("rejects an unbounded or ambiguous query shape", (url) => {
 		expect(() => readBlendCalcAPIV1SearchRequest(url)).toThrow(
 			BlendCalcAPIV1RequestError,
 		);
+	});
+
+	it.each([
+		"tomato') OR true --",
+		"crème brûlée",
+		"salt & pepper",
+		"O'Brien's oats",
+	])("preserves bounded searchable text as data: %s", (query) => {
+		const url = new URL("https://blendcalc.test/api/v1/foods/search");
+		url.searchParams.set("q", query);
+		expect(readBlendCalcAPIV1SearchRequest(url)).toEqual({
+			query,
+			limit: 15,
+			offset: 0,
+		});
 	});
 
 	it("rejects query parameters on exact-product reads", () => {
@@ -147,6 +166,8 @@ describe("blendCalcAPI v1 request validation", () => {
 		"0021130493609 ",
 		"product-0021130493609",
 		"0021130493600",
+		"0".repeat(10_000),
+		"0021130493609%2Fprivate",
 	])("rejects a malformed or invalid GTIN path value %s", (barcode) => {
 		expect(() => readBlendCalcAPIV1BarcodePathParameter(barcode)).toThrow(
 			BlendCalcAPIV1RequestError,
