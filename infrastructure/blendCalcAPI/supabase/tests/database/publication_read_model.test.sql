@@ -42,7 +42,7 @@ select is(
 			and table_contract.relrowsecurity
 			and table_contract.relforcerowsecurity
 	),
-	6,
+	7,
 	'every isolated publication table forces row level security'
 );
 

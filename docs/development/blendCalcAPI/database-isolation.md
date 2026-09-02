@@ -24,6 +24,10 @@ The blendCalcAPI project stores only complete public projections:
 - required public source attribution;
 - generation hashes, counts, timestamps, and transition audit records.
 
+It also stores bounded service-only operational records that cannot reconstruct a
+request payload: request UUID, normalized endpoint template, method, status, duration,
+rate-limit result, and either a keyed actor pseudonym or an explicit anonymous actor.
+
 It never stores application Auth users, private foods, user-list state, submissions,
 moderation notes, provider credentials, raw provider payloads, private evidence paths,
 restricted source fields, or unpublished canonical observations.
@@ -66,6 +70,21 @@ privilege boundary.
 The root Supabase CLI link must remain attached to the application project. Local API
 database work uses `infrastructure/blendCalcAPI`, distinct ports, a distinct project ref,
 and distinct credentials. No generic linked migration command may target both projects.
+
+## Safe Request Logs
+
+The Vercel boundary generates a fresh request UUID for every `/api/v1` request and
+returns it as `X-Request-ID`. Before persistence, product identifiers and every unknown
+path are reduced to a fixed route template. Authenticated user identifiers are converted
+to a domain-separated HMAC with the isolated service credential; anonymous requests
+store no identity. API-key actors use the same keyed-pseudonym contract when public key
+authentication is enabled.
+
+`blendcalc_api.safe_request_logs` is force-RLS and service-role only. It has no columns
+for raw URLs, query values, bodies, headers, IP addresses, credentials, plaintext actor
+identifiers, or evidence. Rows expire after 35 days, and each write removes at most 500
+expired rows so cleanup stays bounded. A logging outage emits only an error type and
+never changes the API response.
 
 ## Cutover Gates
 

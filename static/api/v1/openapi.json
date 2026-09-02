@@ -26,6 +26,9 @@
 				"responses": {
 					"200": {
 						"description": "Approved catalog product",
+						"headers": {
+							"X-Request-ID": { "$ref": "#/components/headers/RequestId" }
+						},
 						"content": {
 							"application/json": {
 								"schema": { "$ref": "#/components/schemas/ProductResponse" }
@@ -78,6 +81,9 @@
 				"responses": {
 					"200": {
 						"description": "Immutable revision metadata and supported field changes",
+						"headers": {
+							"X-Request-ID": { "$ref": "#/components/headers/RequestId" }
+						},
 						"content": {
 							"application/json": {
 								"schema": {
@@ -132,6 +138,9 @@
 				"responses": {
 					"200": {
 						"description": "Ranked approved catalog products",
+						"headers": {
+							"X-Request-ID": { "$ref": "#/components/headers/RequestId" }
+						},
 						"content": {
 							"application/json": {
 								"schema": { "$ref": "#/components/schemas/ProductListResponse" }
@@ -177,6 +186,9 @@
 				"responses": {
 					"200": {
 						"description": "Enabled canonical categories",
+						"headers": {
+							"X-Request-ID": { "$ref": "#/components/headers/RequestId" }
+						},
 						"content": {
 							"application/json": {
 								"schema": {
@@ -197,6 +209,12 @@
 		}
 	},
 	"components": {
+		"headers": {
+			"RequestId": {
+				"description": "Server-generated identifier for this request. It contains no actor, path parameter, query, or credential data.",
+				"schema": { "type": "string", "format": "uuid" }
+			}
+		},
 		"securitySchemes": {
 			"cookieAuth": {
 				"type": "apiKey",
@@ -208,6 +226,9 @@
 		"responses": {
 			"BadRequest": {
 				"description": "Invalid request",
+				"headers": {
+					"X-Request-ID": { "$ref": "#/components/headers/RequestId" }
+				},
 				"content": {
 					"application/json": {
 						"schema": { "$ref": "#/components/schemas/ErrorResponse" }
@@ -216,6 +237,9 @@
 			},
 			"Unauthorized": {
 				"description": "A signed-in blendCalc account is required",
+				"headers": {
+					"X-Request-ID": { "$ref": "#/components/headers/RequestId" }
+				},
 				"content": {
 					"application/json": {
 						"schema": { "$ref": "#/components/schemas/ErrorResponse" }
@@ -224,6 +248,9 @@
 			},
 			"Forbidden": {
 				"description": "The signed-in account cannot access the requested resource",
+				"headers": {
+					"X-Request-ID": { "$ref": "#/components/headers/RequestId" }
+				},
 				"content": {
 					"application/json": {
 						"schema": { "$ref": "#/components/schemas/ErrorResponse" }
@@ -232,6 +259,9 @@
 			},
 			"NotFound": {
 				"description": "No approved catalog record matched",
+				"headers": {
+					"X-Request-ID": { "$ref": "#/components/headers/RequestId" }
+				},
 				"content": {
 					"application/json": {
 						"schema": { "$ref": "#/components/schemas/ErrorResponse" }
@@ -240,6 +270,9 @@
 			},
 			"MethodNotAllowed": {
 				"description": "The resource does not support the request method",
+				"headers": {
+					"X-Request-ID": { "$ref": "#/components/headers/RequestId" }
+				},
 				"content": {
 					"application/json": {
 						"schema": { "$ref": "#/components/schemas/ErrorResponse" }
@@ -249,6 +282,7 @@
 			"RateLimited": {
 				"description": "The request rate limit was reached",
 				"headers": {
+					"X-Request-ID": { "$ref": "#/components/headers/RequestId" },
 					"Retry-After": { "schema": { "type": "integer", "minimum": 0 } },
 					"X-RateLimit-Remaining": {
 						"schema": { "type": "integer", "minimum": 0 }
@@ -262,6 +296,9 @@
 			},
 			"UnexpectedError": {
 				"description": "The request could not be completed safely",
+				"headers": {
+					"X-Request-ID": { "$ref": "#/components/headers/RequestId" }
+				},
 				"content": {
 					"application/json": {
 						"schema": { "$ref": "#/components/schemas/ErrorResponse" }
@@ -270,6 +307,9 @@
 			},
 			"Unavailable": {
 				"description": "The canonical catalog could not be read",
+				"headers": {
+					"X-Request-ID": { "$ref": "#/components/headers/RequestId" }
+				},
 				"content": {
 					"application/json": {
 						"schema": { "$ref": "#/components/schemas/ErrorResponse" }

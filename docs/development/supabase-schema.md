@@ -861,8 +861,9 @@ the server never invents an expiry timestamp solely to satisfy transport typing.
 `infrastructure/blendCalcAPI/supabase/migrations/` owns a separate migration history
 for the publication read model. Its `blendcalc_api` schema contains complete immutable
 publication generations, public product and revision payloads, categories, attribution,
-and generation transition events. The application project's canonical tables remain
-authoritative and are never duplicated as writable catalog structures.
+generation transition events, and bounded service-only safe request logs. The
+application project's canonical tables remain authoritative and are never duplicated
+as writable catalog structures.
 
 The isolated generated schema contract is
 `infrastructure/blendCalcAPI/supabase/database.types.ts`; it does not belong in
@@ -878,6 +879,14 @@ canonical source category ranking input without exposing private source records,
 `search_active_publication_products` reads only the active generation. Activation
 atomically replaces the complete visible generation; the previous generation becomes
 retired and remains available for bounded rollback.
+
+`safe_request_logs` retains one server-generated request UUID, a fixed endpoint
+template, bounded method, response status, duration, keyed actor pseudonym or explicit
+anonymous actor, rate-limit result, observation time, and 35-day expiry. It deliberately
+has no raw URL, path parameter, query, body, header, IP address, credential, plaintext
+actor identifier, or evidence column. `record_safe_request_log` is idempotent by request
+UUID, executable only by `service_role`, and prunes at most 500 expired records per
+write. Browser roles have no schema or table access.
 See [Publication Database Isolation](blendCalcAPI/database-isolation.md).
 
 ### `shared_product_submissions`

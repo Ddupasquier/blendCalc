@@ -274,6 +274,45 @@ export type Database = {
 					},
 				];
 			};
+			safe_request_logs: {
+				Row: {
+					actor_hash: string | null;
+					actor_type: string;
+					duration_ms: number;
+					endpoint: string;
+					expires_at: string;
+					method: string;
+					observed_at: string;
+					rate_limit_result: string;
+					request_id: string;
+					response_status: number;
+				};
+				Insert: {
+					actor_hash?: string | null;
+					actor_type: string;
+					duration_ms: number;
+					endpoint: string;
+					expires_at?: string;
+					method: string;
+					observed_at?: string;
+					rate_limit_result: string;
+					request_id: string;
+					response_status: number;
+				};
+				Update: {
+					actor_hash?: string | null;
+					actor_type?: string;
+					duration_ms?: number;
+					endpoint?: string;
+					expires_at?: string;
+					method?: string;
+					observed_at?: string;
+					rate_limit_result?: string;
+					request_id?: string;
+					response_status?: number;
+				};
+				Relationships: [];
+			};
 		};
 		Views: {
 			active_publication_categories: {
@@ -386,6 +425,19 @@ export type Database = {
 				Args: { p_generation_id: string };
 				Returns: undefined;
 			};
+			record_safe_request_log: {
+				Args: {
+					p_actor_hash?: string;
+					p_actor_type: string;
+					p_duration_ms: number;
+					p_endpoint: string;
+					p_method: string;
+					p_rate_limit_result?: string;
+					p_request_id: string;
+					p_response_status: number;
+				};
+				Returns: undefined;
+			};
 			search_active_publication_products: {
 				Args: {
 					p_limit?: number;
@@ -410,6 +462,31 @@ export type Database = {
 					search_payload: Json;
 					total_count: number;
 				}[];
+			};
+		};
+		Enums: {
+			[_ in never]: never;
+		};
+		CompositeTypes: {
+			[_ in never]: never;
+		};
+	};
+	graphql_public: {
+		Tables: {
+			[_ in never]: never;
+		};
+		Views: {
+			[_ in never]: never;
+		};
+		Functions: {
+			graphql: {
+				Args: {
+					extensions?: Json;
+					operationName?: string;
+					query?: string;
+					variables?: Json;
+				};
+				Returns: Json;
 			};
 		};
 		Enums: {
@@ -557,6 +634,9 @@ export type CompositeTypes<
 
 export const Constants = {
 	blendcalc_api: {
+		Enums: {},
+	},
+	graphql_public: {
 		Enums: {},
 	},
 	public: {

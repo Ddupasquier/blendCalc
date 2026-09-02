@@ -14,10 +14,12 @@ const mocks = vi.hoisted(() => {
 		applySecurityHeaders: vi.fn(),
 		consumeRequestRateLimits: vi.fn(),
 		createSupabaseServerClient: vi.fn(),
+		completeServerBackgroundTask: vi.fn(),
 		getRequestRateLimitLayers: vi.fn(),
 		isActiveAccountBlock: vi.fn(),
 		moderationQuery,
 		readVerifiedAuthUser: vi.fn(),
+		recordBlendCalcAPISafeRequest: vi.fn(),
 		signOut: vi.fn(),
 	};
 });
@@ -36,6 +38,19 @@ vi.mock("$lib/server/auth/verifiedAuthUser.server", () => ({
 vi.mock("$lib/server/security/requestRateLimit.server", () => ({
 	consumeRequestRateLimits: mocks.consumeRequestRateLimits,
 	getRequestRateLimitLayers: mocks.getRequestRateLimitLayers,
+}));
+vi.mock(
+	"$lib/server/blendCalcAPI/security/blendCalcAPIRequestLogs.server",
+	() => ({
+		readBlendCalcAPISafeEndpoint: (pathname: string) =>
+			pathname.startsWith("/api/v1/products/")
+				? "/api/v1/products/{barcode}"
+				: pathname,
+		recordBlendCalcAPISafeRequest: mocks.recordBlendCalcAPISafeRequest,
+	}),
+);
+vi.mock("$lib/server/runtime/backgroundTask.server", () => ({
+	completeServerBackgroundTask: mocks.completeServerBackgroundTask,
 }));
 vi.mock("$lib/utils/http/securityHeaders", () => ({
 	applySecurityHeaders: mocks.applySecurityHeaders,
@@ -77,6 +92,10 @@ describe("blendCalcAPI v1 server request boundary", () => {
 			from: vi.fn(() => mocks.moderationQuery),
 		});
 		mocks.readVerifiedAuthUser.mockResolvedValue(null);
+		mocks.recordBlendCalcAPISafeRequest.mockResolvedValue(undefined);
+		mocks.completeServerBackgroundTask.mockImplementation(async (task) => {
+			await task;
+		});
 		mocks.getRequestRateLimitLayers.mockReturnValue([
 			{
 				limit: 180,
@@ -109,11 +128,20 @@ describe("blendCalcAPI v1 server request boundary", () => {
 		} as never);
 		expect(response.status).toBe(429);
 		expect(response.headers.get("retry-after")).toBe("14");
+		expect(response.headers.get("x-request-id")).toMatch(/^[0-9a-f-]{36}$/);
 		const payload = await expectBlendCalcAPIV1ResponseToMatchOpenAPI({
 			path: API_PATH,
 			response,
 		});
 		expect(payload).toMatchObject({ error: { code: "rate_limited" } });
+		expect(mocks.recordBlendCalcAPISafeRequest).toHaveBeenCalledWith(
+			expect.objectContaining({
+				actorIdentifier: null,
+				pathname: API_PATH,
+				rateLimitResult: "denied",
+				responseStatus: 429,
+			}),
+		);
 	});
 
 	it("returns a documented API error when rate-limit storage fails", async () => {
@@ -127,7 +155,6 @@ describe("blendCalcAPI v1 server request boundary", () => {
 			event: createEvent(),
 			resolve: vi.fn(),
 		} as never);
-		consoleError.mockRestore();
 		expect(response.status).toBe(503);
 		const payload = await expectBlendCalcAPIV1ResponseToMatchOpenAPI({
 			path: API_PATH,
@@ -136,6 +163,16 @@ describe("blendCalcAPI v1 server request boundary", () => {
 		expect(payload).toMatchObject({ error: { code: "service_unavailable" } });
 		expect(JSON.stringify(payload)).not.toContain(
 			"private rate-limit database detail",
+		);
+		expect(JSON.stringify(consoleError.mock.calls)).not.toContain(
+			"private rate-limit database detail",
+		);
+		consoleError.mockRestore();
+		expect(mocks.recordBlendCalcAPISafeRequest).toHaveBeenCalledWith(
+			expect.objectContaining({
+				rateLimitResult: "unavailable",
+				responseStatus: 503,
+			}),
 		);
 	});
 
@@ -157,6 +194,13 @@ describe("blendCalcAPI v1 server request boundary", () => {
 			response,
 		});
 		expect(payload).toMatchObject({ error: { code: "access_denied" } });
+		expect(mocks.recordBlendCalcAPISafeRequest).toHaveBeenCalledWith(
+			expect.objectContaining({
+				actorIdentifier: "blocked-user",
+				rateLimitResult: "not-evaluated",
+				responseStatus: 403,
+			}),
+		);
 	});
 
 	it("replaces a handled server failure with the stable API shape", async () => {
@@ -186,7 +230,6 @@ describe("blendCalcAPI v1 server request boundary", () => {
 			event: createEvent(),
 			resolve: vi.fn().mockRejectedValue(new Error("private thrown exception")),
 		} as never);
-		consoleError.mockRestore();
 		expect(response.status).toBe(500);
 		const payload = await expectBlendCalcAPIV1ResponseToMatchOpenAPI({
 			path: API_PATH,
@@ -194,6 +237,10 @@ describe("blendCalcAPI v1 server request boundary", () => {
 		});
 		expect(payload).toMatchObject({ error: { code: "unexpected_error" } });
 		expect(JSON.stringify(payload)).not.toContain("private thrown exception");
+		expect(JSON.stringify(consoleError.mock.calls)).not.toContain(
+			"private thrown exception",
+		);
+		consoleError.mockRestore();
 	});
 
 	it("does not replace failures outside blendCalcAPI v1", async () => {
@@ -204,5 +251,29 @@ describe("blendCalcAPI v1 server request boundary", () => {
 				resolve: vi.fn().mockRejectedValue(requestError),
 			} as never),
 		).rejects.toBe(requestError);
+		expect(mocks.recordBlendCalcAPISafeRequest).not.toHaveBeenCalled();
+	});
+
+	it("logs a normalized successful API request without query or client address", async () => {
+		mocks.readVerifiedAuthUser.mockResolvedValue({ id: "private-user-id" });
+		const event = createEvent(`${API_PATH}?limit=25&private=value`);
+		const response = await handle({
+			event,
+			resolve: vi.fn().mockResolvedValue(new Response("{}", { status: 200 })),
+		} as never);
+		expect(response.status).toBe(200);
+		expect(mocks.recordBlendCalcAPISafeRequest).toHaveBeenCalledWith(
+			expect.objectContaining({
+				actorIdentifier: "private-user-id",
+				pathname: API_PATH,
+				rateLimitResult: "allowed",
+				responseStatus: 200,
+			}),
+		);
+		const recorded = JSON.stringify(
+			mocks.recordBlendCalcAPISafeRequest.mock.calls,
+		);
+		expect(recorded).not.toContain("private=value");
+		expect(recorded).not.toContain("127.0.0.1");
 	});
 });

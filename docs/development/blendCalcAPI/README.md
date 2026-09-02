@@ -296,6 +296,14 @@ Versioned HTTP routes are the only client-facing catalog API boundary. Browser s
 cannot call the service-role catalog RPCs directly. Serializers use explicit allowlists
 instead of returning database rows or stored JSON snapshots.
 
+Every v1 response includes a server-generated `X-Request-ID`. The service-only request
+log retains that identifier, a normalized endpoint template, response status, duration,
+a keyed pseudonym for an authenticated actor, and the rate-limit outcome for 35 days.
+It never stores raw URLs or path parameters, query values, request or response bodies,
+headers, IP addresses, plaintext user IDs, credentials, or private evidence. Anonymous
+requests retain no actor hash. Logging failures are contained and cannot change the API
+response.
+
 blendCalcAPI v1 excludes:
 
 - private custom foods and user list state;
