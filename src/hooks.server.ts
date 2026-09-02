@@ -1,4 +1,5 @@
 import { createSupabaseServerClient } from "$lib/supabase/server";
+import { randomUUID } from "node:crypto";
 import { readVerifiedAuthUser } from "$lib/server/auth/verifiedAuthUser.server";
 import { applySecurityHeaders } from "$lib/utils/http/securityHeaders";
 import { isActiveAccountBlock } from "$lib/utils/moderation/moderation";
@@ -14,6 +15,12 @@ import {
 	getRequestRateLimitLayers,
 } from "$lib/server/security/requestRateLimit.server";
 import {
+	readBlendCalcAPISafeEndpoint,
+	recordBlendCalcAPISafeRequest,
+	type BlendCalcAPIRateLimitResult,
+} from "$lib/server/blendCalcAPI/security/blendCalcAPIRequestLogs.server";
+import { completeServerBackgroundTask } from "$lib/server/runtime/backgroundTask.server";
+import {
 	DARK_THEME_COLOR,
 	LIGHT_THEME_COLOR,
 	normalizeThemePreference,
@@ -21,7 +28,6 @@ import {
 } from "$lib/utils/theme/themePreference";
 import { env } from "$env/dynamic/private";
 import { recordBlendCalcAPIRequestObservation } from "$lib/server/blendCalcAPI/operations/blendCalcAPIOperations.server";
-import { completeServerBackgroundTask } from "$lib/server/runtime/backgroundTask.server";
 import {
 	appendServerTimingHeader,
 	recordServerTiming,
@@ -58,11 +64,13 @@ const logUnexpectedRequestError = ({
 }) => {
 	const technicalError =
 		requestError instanceof Error
-			? { name: requestError.name, message: requestError.message }
+			? { name: requestError.name }
 			: { type: typeof requestError };
 	console.error("[request] Unexpected server error", {
 		method,
-		path,
+		path: isBlendCalcAPIV1Pathname(path)
+			? readBlendCalcAPISafeEndpoint(path)
+			: path,
 		status,
 		error: technicalError,
 	});
@@ -79,15 +87,17 @@ export const handleError: HandleServerError = ({ error, event, status }) => {
 };
 
 export const handle: Handle = async ({ event, resolve }) => {
+	const requestId = randomUUID();
 	const requestStartedAt = performance.now();
+	let rateLimitResult: BlendCalcAPIRateLimitResult = "not-evaluated";
 	const finalizeHandledResponse = async (
 		response: Response,
-		isAuthenticated: boolean,
+		actorIdentifier: string | null,
 	) => {
 		const normalizedResponse = finalizeResponse(
 			normalizeBlendCalcAPIV1BoundaryResponse(event.url.pathname, response),
 			event.url,
-			isAuthenticated,
+			Boolean(actorIdentifier),
 		);
 		if (event.url.pathname.startsWith("/ingredients/")) {
 			recordServerTiming(
@@ -101,14 +111,26 @@ export const handle: Handle = async ({ event, resolve }) => {
 			);
 		}
 		if (isBlendCalcAPIV1Pathname(event.url.pathname)) {
+			normalizedResponse.headers.set("x-request-id", requestId);
 			await completeServerBackgroundTask(
-				recordBlendCalcAPIRequestObservation({
-					pathname: event.url.pathname,
-					responseStatus: normalizedResponse.status,
-					totalDurationMs: performance.now() - requestStartedAt,
-					databaseObservation: event.locals.blendCalcAPIDatabaseObservation,
-					cacheValidation: event.request.headers.has("if-none-match"),
-				}),
+				Promise.all([
+					recordBlendCalcAPISafeRequest({
+						requestId,
+						pathname: event.url.pathname,
+						method: event.request.method,
+						responseStatus: normalizedResponse.status,
+						durationMs: performance.now() - requestStartedAt,
+						actorIdentifier,
+						rateLimitResult,
+					}),
+					recordBlendCalcAPIRequestObservation({
+						pathname: event.url.pathname,
+						responseStatus: normalizedResponse.status,
+						totalDurationMs: performance.now() - requestStartedAt,
+						databaseObservation: event.locals.blendCalcAPIDatabaseObservation,
+						cacheValidation: event.request.headers.has("if-none-match"),
+					}),
+				]),
 			);
 		}
 		return normalizedResponse;
@@ -140,7 +162,8 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 		if (moderationError) {
 			console.error("[moderation] Unable to verify account status", {
-				userId: user.id,
+				requestId,
+				actorType: "authenticated-user",
 				code: moderationError.code,
 			});
 			if (
@@ -150,7 +173,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 				if (isBlendCalcAPIV1Pathname(event.url.pathname)) {
 					return finalizeHandledResponse(
 						blendCalcAPIV1Error("service_unavailable"),
-						true,
+						user.id,
 					);
 				}
 				throw error(503, createAppIssuePayload("MODERATION_DATA_UNAVAILABLE"));
@@ -163,7 +186,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 			if (isBlendCalcAPIV1Pathname(event.url.pathname)) {
 				return finalizeHandledResponse(
 					blendCalcAPIV1Error("access_denied"),
-					true,
+					user.id,
 				);
 			}
 			throw redirect(303, "/auth?error=account_blocked");
@@ -186,6 +209,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 	if (rateLimitLayers.length > 0) {
 		try {
 			const rateLimit = await consumeRequestRateLimits(rateLimitLayers);
+			rateLimitResult = rateLimit.allowed ? "allowed" : "denied";
 			if (!rateLimit.allowed) {
 				const response = isBlendCalcAPIV1Pathname(event.url.pathname)
 					? blendCalcAPIV1Error("rate_limited", undefined, {
@@ -199,15 +223,19 @@ export const handle: Handle = async ({ event, resolve }) => {
 								"x-ratelimit-remaining": "0",
 							},
 						});
-				return finalizeHandledResponse(response, Boolean(user));
+				return finalizeHandledResponse(response, user?.id ?? null);
 			}
 		} catch (rateLimitError) {
+			rateLimitResult = "unavailable";
 			console.error("[security] Request rate limit unavailable", {
-				path: event.url.pathname,
+				requestId,
+				path: isBlendCalcAPIV1Pathname(event.url.pathname)
+					? readBlendCalcAPISafeEndpoint(event.url.pathname)
+					: event.url.pathname,
 				method: event.request.method,
-				error:
+				errorType:
 					rateLimitError instanceof Error
-						? rateLimitError.message
+						? rateLimitError.name
 						: typeof rateLimitError,
 			});
 			const response = isBlendCalcAPIV1Pathname(event.url.pathname)
@@ -215,7 +243,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 				: json(createAppIssuePayload("SERVICE_UNAVAILABLE"), {
 						status: 503,
 					});
-			return finalizeHandledResponse(response, Boolean(user));
+			return finalizeHandledResponse(response, user?.id ?? null);
 		}
 	}
 
@@ -252,5 +280,5 @@ export const handle: Handle = async ({ event, resolve }) => {
 		response = blendCalcAPIV1Error("unexpected_error");
 	}
 
-	return finalizeHandledResponse(response, Boolean(user));
+	return finalizeHandledResponse(response, user?.id ?? null);
 };

@@ -515,6 +515,45 @@ export type Database = {
 					},
 				];
 			};
+			safe_request_logs: {
+				Row: {
+					actor_hash: string | null;
+					actor_type: string;
+					duration_ms: number;
+					endpoint: string;
+					expires_at: string;
+					method: string;
+					observed_at: string;
+					rate_limit_result: string;
+					request_id: string;
+					response_status: number;
+				};
+				Insert: {
+					actor_hash?: string | null;
+					actor_type: string;
+					duration_ms: number;
+					endpoint: string;
+					expires_at?: string;
+					method: string;
+					observed_at?: string;
+					rate_limit_result: string;
+					request_id: string;
+					response_status: number;
+				};
+				Update: {
+					actor_hash?: string | null;
+					actor_type?: string;
+					duration_ms?: number;
+					endpoint?: string;
+					expires_at?: string;
+					method?: string;
+					observed_at?: string;
+					rate_limit_result?: string;
+					request_id?: string;
+					response_status?: number;
+				};
+				Relationships: [];
+			};
 		};
 		Views: {
 			active_publication_categories: {
@@ -849,6 +888,19 @@ export type Database = {
 			};
 			record_publication_generation_verification: {
 				Args: { p_generation_id: string; p_target_catalog_hash: string };
+				Returns: undefined;
+			};
+			record_safe_request_log: {
+				Args: {
+					p_actor_hash?: string;
+					p_actor_type: string;
+					p_duration_ms: number;
+					p_endpoint: string;
+					p_method: string;
+					p_rate_limit_result?: string;
+					p_request_id: string;
+					p_response_status: number;
+				};
 				Returns: undefined;
 			};
 			search_active_publication_products: {
