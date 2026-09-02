@@ -26,7 +26,7 @@
 	};
 
 	$effect(() => {
-		if (shouldRender) void loadRoutePopins();
+		void loadRoutePopins();
 	});
 </script>
 
