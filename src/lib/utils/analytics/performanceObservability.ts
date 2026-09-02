@@ -1,6 +1,11 @@
+import { FRIDGE_FIELD_P75_BUDGETS_MS } from "$lib/config/performanceBudgets";
+
 export const APP_PERFORMANCE_TIMING_EVENT = "blendcalc:performance-timing";
 
 export const APP_PERFORMANCE_METRIC = "app_performance_timing";
+
+export const SLOW_INTERACTION_THRESHOLD_MS =
+	FRIDGE_FIELD_P75_BUDGETS_MS.interactionToNextPaint;
 
 export type AppPerformanceTimingName =
 	"hydration" | "slow_interaction" | "fridge_load_more";

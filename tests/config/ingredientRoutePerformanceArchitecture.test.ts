@@ -7,14 +7,14 @@ describe("ingredient route performance architecture", () => {
 	it("keeps closed route popins outside the initial Fridge graph", () => {
 		const fridgePage = readSource("src/routes/ingredients/fridge/+page.svelte");
 		const lazyPopins = readSource(
-			"src/lib/components/ingredients/page/IngredientRoutePopins/LazyIngredientRoutePopins.svelte",
+			"src/lib/components/ingredients/page/IngredientRoutePopins/LazyIngredientRoutePopins/LazyIngredientRoutePopins.svelte",
 		);
 		expect(fridgePage).toContain("LazyIngredientRoutePopins");
 		expect(fridgePage).not.toContain(
 			'IngredientRoutePopins/IngredientRoutePopins.svelte";',
 		);
 		expect(lazyPopins).toContain(
-			'await import("./IngredientRoutePopins.svelte")',
+			'await import("../IngredientRoutePopins.svelte")',
 		);
 		expect(lazyPopins).not.toContain('from "svelte"');
 		expect(lazyPopins).not.toContain("requestIdleCallback");

@@ -39,6 +39,7 @@
 		getPerformanceRouteGroup,
 		isApprovedObservabilityHostname,
 		reportAppPerformanceTiming,
+		SLOW_INTERACTION_THRESHOLD_MS,
 		type AppPerformanceTimingDetail,
 	} from "$lib/utils/analytics/performanceObservability";
 	import type { AppLayoutProps } from "./types";
@@ -100,7 +101,7 @@
 						if (reportedSlowInteraction) return;
 						const slowInteraction = list
 							.getEntries()
-							.find((entry) => entry.duration >= 200);
+							.find((entry) => entry.duration >= SLOW_INTERACTION_THRESHOLD_MS);
 						if (!slowInteraction) return;
 						reportedSlowInteraction = true;
 						trackPerformanceTiming({

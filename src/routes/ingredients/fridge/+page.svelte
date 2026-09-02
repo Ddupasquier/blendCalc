@@ -8,7 +8,7 @@
 	import { getAppDocumentTitle } from "$lib/config/pageMetadata";
 	import type { ManualEntryCreateContext } from "$lib/components/ingredients/manual-entry/types";
 	import IngredientsSearchPanel from "$lib/components/ingredients/page/IngredientsSearchPanel/IngredientsSearchPanel.svelte";
-	import LazyIngredientRoutePopins from "$lib/components/ingredients/page/IngredientRoutePopins/LazyIngredientRoutePopins.svelte";
+	import LazyIngredientRoutePopins from "$lib/components/ingredients/page/IngredientRoutePopins/LazyIngredientRoutePopins/LazyIngredientRoutePopins.svelte";
 	import type { IngredientRouteNavigationOptions } from "$lib/components/ingredients/page/types";
 	import type { IngredientFilterApplyPayload } from "$lib/components/ingredients/sheets/types";
 	import SavedIngredientList from "$lib/components/ingredients/list/SavedIngredientList/SavedIngredientList.svelte";

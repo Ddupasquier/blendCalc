@@ -1,9 +1,9 @@
 <script lang="ts">
-	import type { IngredientRoutePopinsProps } from "./types";
+	import type { IngredientRoutePopinsProps } from "../types";
 
 	let props: IngredientRoutePopinsProps = $props();
 	let RoutePopins = $state<
-		typeof import("./IngredientRoutePopins.svelte").default | null
+		typeof import("../IngredientRoutePopins.svelte").default | null
 	>(null);
 	let loadFailed = $state(false);
 	const shouldRender = $derived(
@@ -19,7 +19,7 @@
 	const loadRoutePopins = async () => {
 		if (RoutePopins || loadFailed) return;
 		try {
-			RoutePopins = (await import("./IngredientRoutePopins.svelte")).default;
+			RoutePopins = (await import("../IngredientRoutePopins.svelte")).default;
 		} catch {
 			loadFailed = true;
 		}
