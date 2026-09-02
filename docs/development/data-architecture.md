@@ -359,6 +359,20 @@ sends only the stable event name; it does not attach email addresses, user ids, 
 identifiers, search terms, or free-form properties. Analytics and Speed Insights strip
 query strings and URL hashes before sending page URLs.
 
+The authenticated Ingredients layout server-renders only the requested Fridge or
+Shopping List page, the opposite list count, route-target food, and current food-safety
+annotation needed for first paint. The inactive list page, custom foods, complete list
+identity index, and provenance controls load after first paint or immediately when an
+overlay needs them. Deferred custom foods still cross an authenticated server boundary
+and receive the current user food-safety policy before reaching the browser; deferral
+never permits unchecked safety data.
+
+Authenticated Ingredients responses expose coarse `Server-Timing` phases for verified
+authentication, root profile data, root reference catalogs, ingredient data, and total
+server time. Names are fixed and values are durations only; no user, product, query, or
+route identifiers enter the header. Browser diagnostics likewise emit only a fixed
+phase, coarse duration bucket, and coarse route group on approved production hosts.
+
 A protected production cron route queries Vercel's aggregate API each day for the
 previous three completed UTC days. It atomically replaces that bounded range in
 `app_interaction_daily_metrics`, allowing delayed Vercel processing to settle without

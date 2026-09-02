@@ -132,6 +132,14 @@ Every run writes `test-results/playwright-slow-tests.json`. Blocking release and
 checks fail when a passing test exceeds the maintained duration budget, preventing slow
 polling or accidental sleeps from quietly rebuilding a long suite.
 
+`fridgePerformanceObservability.spec.ts` is the repeatable Fridge diagnostic. It proves
+that the authenticated response exposes only the fixed server phases and that hydration
+and explicit Load more publish browser timing events. The run attaches measured values
+to the Playwright result instead of failing normal traffic or a release because of one
+noisy local sample. Production p75 acceptance remains owned by Vercel Speed Insights on
+both approved production hostnames against the budgets in
+`src/lib/config/performanceBudgets.ts`.
+
 ## Writing Tests
 
 - Prefer role, label, and visible-name locators over internal selectors.

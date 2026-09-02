@@ -467,7 +467,7 @@ describe("SavedIngredientList overlay behavior", () => {
 		expect(screen.getByRole("button", { name: "Return to top" })).toBeVisible();
 
 		await fireEvent.click(screen.getByRole("button", { name: "Load more" }));
-		expect(onRevealMore).toHaveBeenCalledOnce();
+		await waitFor(() => expect(onRevealMore).toHaveBeenCalledOnce());
 	});
 
 	it.each([

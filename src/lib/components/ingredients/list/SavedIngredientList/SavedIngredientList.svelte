@@ -64,6 +64,7 @@
 	let singleMoveStatus = $state("");
 	let scrollResumeFrame: number | null = null;
 	let scrollSettleFrame: number | null = null;
+	let loadMoreScheduled = $state(false);
 	let compactHeaderLayoutSettling = false;
 
 	const BULK_EXIT_STAGGER_MS = 100;
@@ -90,8 +91,20 @@
 	);
 
 	const requestMoreItems = () => {
-		if (revealPaused || !canRevealMore || loadingMoreList) return;
-		void onRevealMore();
+		if (
+			revealPaused ||
+			!canRevealMore ||
+			loadingMoreList ||
+			loadMoreScheduled
+		) {
+			return;
+		}
+		loadMoreScheduled = true;
+		requestAnimationFrame(() => {
+			void Promise.resolve(onRevealMore()).finally(() => {
+				loadMoreScheduled = false;
+			});
+		});
 	};
 
 	const getListReflowDuration = () =>
@@ -322,7 +335,7 @@
 				<PaginatedListControls
 					scrollContainer={listElement}
 					hasMoreItems={canRevealMore}
-					loadingMore={loadingMoreList !== null}
+					loadingMore={loadingMoreList !== null || loadMoreScheduled}
 					loadMoreDisabled={revealPaused}
 					contentVersion={`${activeList}:${foods.length}:${resetKey}`}
 					onLoadMore={requestMoreItems}
