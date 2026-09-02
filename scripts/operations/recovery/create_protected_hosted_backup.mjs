@@ -20,6 +20,10 @@ import { homedir } from "node:os";
 import { basename, dirname, join, relative, resolve, sep } from "node:path";
 import { createClient } from "@supabase/supabase-js";
 import { config } from "dotenv";
+import {
+	buildMigrationManifest,
+	parseLinkedMigrationList,
+} from "../../lib/recovery/protectedBackup.mjs";
 
 config({ path: ".env.moderation.local", quiet: true });
 config({ path: ".env", quiet: true });
@@ -36,7 +40,10 @@ const getDefaultBackupRoot = () =>
 		: join(homedir(), ".local", "share", "blendCalc", "backups");
 
 const getTimestampDirectoryName = () =>
-	new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
+	new Date()
+		.toISOString()
+		.replace(/[-:]/g, "")
+		.replace(/\.\d{3}Z$/, "Z");
 
 const readDatabasePassword = () => {
 	const environmentPassword = process.env.SUPABASE_DB_PASSWORD?.trim();
@@ -80,20 +87,31 @@ const listStorageObjects = async (supabase, bucketName, prefix = "") => {
 	const pageSize = 100;
 
 	while (true) {
-		const { data, error } = await supabase.storage.from(bucketName).list(prefix, {
-			limit: pageSize,
-			offset,
-			sortBy: { column: "name", order: "asc" },
-		});
+		const { data, error } = await supabase.storage
+			.from(bucketName)
+			.list(prefix, {
+				limit: pageSize,
+				offset,
+				sortBy: { column: "name", order: "asc" },
+			});
 		if (error) {
-			throw new Error(`Unable to list Storage bucket ${bucketName}: ${error.message}`);
+			throw new Error(
+				`Unable to list Storage bucket ${bucketName}: ${error.message}`,
+			);
 		}
 		for (const item of data ?? []) {
 			const objectPath = prefix ? `${prefix}/${item.name}` : item.name;
 			if (item.id === null && item.metadata === null) {
-				objects.push(...(await listStorageObjects(supabase, bucketName, objectPath)));
+				objects.push(
+					...(await listStorageObjects(supabase, bucketName, objectPath)),
+				);
 			} else {
-				objects.push({ path: objectPath });
+				objects.push({
+					path: objectPath,
+					contentType:
+						item.metadata?.mimetype ?? item.metadata?.contentType ?? null,
+					cacheControl: item.metadata?.cacheControl ?? null,
+				});
 			}
 		}
 		if ((data?.length ?? 0) < pageSize) break;
@@ -118,7 +136,9 @@ const listFiles = (directory) =>
 		return entry.isDirectory() ? listFiles(entryPath) : [entryPath];
 	});
 
-const outputRoot = resolve(getArgumentValue("--output-dir") ?? getDefaultBackupRoot());
+const outputRoot = resolve(
+	getArgumentValue("--output-dir") ?? getDefaultBackupRoot(),
+);
 const backupDirectory = join(outputRoot, getTimestampDirectoryName());
 const databasePassword = readDatabasePassword();
 const supabaseUrl = process.env.PUBLIC_SUPABASE_URL?.trim();
@@ -134,6 +154,20 @@ if (!supabaseUrl || !serviceRoleKey) {
 		"PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required in .env.moderation.local.",
 	);
 }
+
+const readLinkedMigrationVersions = () =>
+	parseLinkedMigrationList(
+		execFileSync(
+			"supabase",
+			["migration", "list", "--linked", "--output-format", "json"],
+			{
+				encoding: "utf8",
+				stdio: ["ignore", "pipe", "inherit"],
+			},
+		),
+	);
+
+const migrationVersionsBeforeBackup = readLinkedMigrationVersions();
 
 mkdirSync(backupDirectory, { recursive: true, mode: 0o700 });
 chmodSync(backupDirectory, 0o700);
@@ -183,7 +217,9 @@ try {
 	const { data: buckets, error: bucketError } =
 		await supabase.storage.listBuckets();
 	if (bucketError) {
-		throw new Error(`Unable to list hosted Storage buckets: ${bucketError.message}`);
+		throw new Error(
+			`Unable to list hosted Storage buckets: ${bucketError.message}`,
+		);
 	}
 
 	const storageObjects = [];
@@ -212,6 +248,8 @@ try {
 				path: storageObject.path,
 				sizeBytes: buffer.byteLength,
 				sha256: createHash("sha256").update(buffer).digest("hex"),
+				contentType: storageObject.contentType || objectData.type || null,
+				cacheControl: storageObject.cacheControl,
 			});
 		}
 	}
@@ -230,6 +268,29 @@ try {
 				})),
 				objects: storageObjects,
 			},
+			null,
+			2,
+		),
+		{ mode: 0o600 },
+	);
+
+	const migrationVersionsAfterBackup = readLinkedMigrationVersions();
+	if (
+		JSON.stringify(migrationVersionsAfterBackup) !==
+		JSON.stringify(migrationVersionsBeforeBackup)
+	) {
+		throw new Error(
+			"Hosted migration history changed while the backup was running. Retry from a stable release point.",
+		);
+	}
+	const migrationManifestPath = join(
+		backupDirectory,
+		"migration-manifest.json",
+	);
+	writeFileSync(
+		migrationManifestPath,
+		JSON.stringify(
+			buildMigrationManifest(migrationVersionsAfterBackup),
 			null,
 			2,
 		),

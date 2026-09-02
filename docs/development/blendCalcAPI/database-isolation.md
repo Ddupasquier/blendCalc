@@ -42,6 +42,13 @@ hold, withdrawal, source-policy change, or canonical correction disappear togeth
 the replacement activates. A partial or failed sync never alters the active generation.
 The prior complete generation remains available for an immediate operator rollback.
 
+Backup recovery starts from the canonical blendCalc backup, not from the isolated read
+model. The maintained `recovery:blendCalcAPI` drill restores the backup at its recorded
+migration point, migrates it forward, rebuilds the isolated generation, verifies
+count/content-hash parity, and exercises the real rollback contract in two disposable
+local Supabase stacks. The API database is therefore reproducible output and is never a
+source of truth.
+
 Generation state is:
 
 1. `building` while the server writes a new snapshot;

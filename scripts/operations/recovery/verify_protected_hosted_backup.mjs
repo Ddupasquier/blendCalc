@@ -5,8 +5,9 @@
  */
 
 import { createHash } from "node:crypto";
-import { createReadStream, readFileSync, statSync } from "node:fs";
+import { createReadStream, existsSync, readFileSync, statSync } from "node:fs";
 import { isAbsolute, join, relative, resolve, sep } from "node:path";
+import { validateMigrationManifest } from "../../lib/recovery/protectedBackup.mjs";
 
 const backupArgument = process.argv[2];
 if (!backupArgument || !isAbsolute(backupArgument)) {
@@ -57,6 +58,19 @@ for (const relativePath of requiredFiles) {
 	}
 }
 
+const migrationManifestPath = join(backupDirectory, "migration-manifest.json");
+if (existsSync(migrationManifestPath)) {
+	const migrationManifestStats = statSync(migrationManifestPath);
+	if ((migrationManifestStats.mode & 0o077) !== 0) {
+		throw new Error(
+			"Backup file permissions are too broad: migration-manifest.json",
+		);
+	}
+	validateMigrationManifest(
+		JSON.parse(readFileSync(migrationManifestPath, "utf8")),
+	);
+}
+
 const checksumLines = readFileSync(join(backupDirectory, "SHA256SUMS"), "utf8")
 	.split("\n")
 	.filter(Boolean);
@@ -78,6 +92,13 @@ for (const [relativePath, expectedHash] of checksums) {
 	if (actualHash !== expectedHash) {
 		throw new Error(`Checksum mismatch: ${relativePath}`);
 	}
+}
+
+if (
+	existsSync(migrationManifestPath) &&
+	!checksums.has("migration-manifest.json")
+) {
+	throw new Error("Migration manifest is not protected by SHA256SUMS.");
 }
 
 const storageManifest = JSON.parse(
@@ -102,5 +123,5 @@ for (const storageObject of storageManifest.objects ?? []) {
 }
 
 console.log(
-	`Protected backup verified: ${checksums.size} files, ${(storageManifest.objects ?? []).length} Storage objects.`,
+	`Protected backup verified: ${checksums.size} files, ${(storageManifest.objects ?? []).length} Storage objects${existsSync(migrationManifestPath) ? ", migration history recorded" : ", legacy backup without migration history"}.`,
 );

@@ -146,33 +146,34 @@ and personas live in [Database Testing](docs/development/database-testing.md).
 
 ### Database And QA
 
-| Command                                           | Purpose                                                         |
-| ------------------------------------------------- | --------------------------------------------------------------- |
-| `npm run db:test:start`                           | Start local Supabase and repair missing QA baseline data.       |
-| `npm run db:test:reset`                           | Recreate the exact local QA baseline.                           |
-| `npm run db:test:verify`                          | Recreate and test local Supabase, then stop owned services.     |
-| `npm run db:test:status`                          | Show local Supabase service status.                             |
-| `npm run db:test:stop`                            | Stop local Supabase.                                            |
-| `npm run supabase -- <args>`                      | Run the repository-installed Supabase CLI.                      |
-| `npm run blendCalcAPI:db:start`                   | Start the isolated local API publication database.              |
-| `npm run blendCalcAPI:db:reset`                   | Replay the isolated API publication migrations locally.         |
-| `npm run blendCalcAPI:db:test`                    | Run isolated API publication database policy tests.             |
-| `npm run blendCalcAPI:db:stop`                    | Stop the isolated local API publication database.               |
-| `npm run blendCalcAPI:db:push:dry`                | Preview isolated hosted API-database migrations.                |
-| `npm run blendCalcAPI:db:push`                    | Apply reviewed isolated migrations with confirmation.           |
-| `npm run blendCalcAPI:db:types`                   | Generate isolated publication-database TypeScript types.        |
-| `npm run db:link`                                 | Link the CLI to the configured blendCalc Supabase project.      |
-| `npm run db:new -- <name>`                        | Create a forward-only migration.                                |
-| `npm run db:push:dry`                             | Preview linked migrations without applying them.                |
-| `npm run db:push`                                 | Confirm and apply migrations already reviewed on remote `main`. |
-| `npm run db:push:auto`                            | Apply the same reviewed migrations without another prompt.      |
-| `npm run db:lint`                                 | Run linked Supabase database linting.                           |
-| `npm run db:types`                                | Regenerate linked Supabase TypeScript types.                    |
-| `npm run qa:deterministic`                        | Run safe, read-only deterministic hosted data checks.           |
-| `npm run catalog:qa-seed -- <email> <mode>`       | Add disposable local catalog review fixtures.                   |
-| `npm run catalog:qa-clean -- <email>`             | Remove those catalog fixtures.                                  |
-| `npm run catalog:qa-image-seed -- <email> <mode>` | Add disposable local image-review fixtures.                     |
-| `npm run catalog:qa-image-clean -- <email>`       | Remove those image fixtures.                                    |
+| Command                                                         | Purpose                                                            |
+| --------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `npm run db:test:start`                                         | Start local Supabase and repair missing QA baseline data.          |
+| `npm run db:test:reset`                                         | Recreate the exact local QA baseline.                              |
+| `npm run db:test:verify`                                        | Recreate and test local Supabase, then stop owned services.        |
+| `npm run db:test:status`                                        | Show local Supabase service status.                                |
+| `npm run db:test:stop`                                          | Stop local Supabase.                                               |
+| `npm run supabase -- <args>`                                    | Run the repository-installed Supabase CLI.                         |
+| `npm run blendCalcAPI:db:start`                                 | Start the isolated local API publication database.                 |
+| `npm run blendCalcAPI:db:reset`                                 | Replay the isolated API publication migrations locally.            |
+| `npm run blendCalcAPI:db:test`                                  | Run isolated API publication database policy tests.                |
+| `npm run blendCalcAPI:db:stop`                                  | Stop the isolated local API publication database.                  |
+| `npm run blendCalcAPI:db:push:dry`                              | Preview isolated hosted API-database migrations.                   |
+| `npm run blendCalcAPI:db:push`                                  | Apply reviewed isolated migrations with confirmation.              |
+| `npm run blendCalcAPI:db:types`                                 | Generate isolated publication-database TypeScript types.           |
+| `npm run recovery:blendCalcAPI -- --backup-dir=<absolute-path>` | Restore and verify both database tiers in disposable local stacks. |
+| `npm run db:link`                                               | Link the CLI to the configured blendCalc Supabase project.         |
+| `npm run db:new -- <name>`                                      | Create a forward-only migration.                                   |
+| `npm run db:push:dry`                                           | Preview linked migrations without applying them.                   |
+| `npm run db:push`                                               | Confirm and apply migrations already reviewed on remote `main`.    |
+| `npm run db:push:auto`                                          | Apply the same reviewed migrations without another prompt.         |
+| `npm run db:lint`                                               | Run linked Supabase database linting.                              |
+| `npm run db:types`                                              | Regenerate linked Supabase TypeScript types.                       |
+| `npm run qa:deterministic`                                      | Run safe, read-only deterministic hosted data checks.              |
+| `npm run catalog:qa-seed -- <email> <mode>`                     | Add disposable local catalog review fixtures.                      |
+| `npm run catalog:qa-clean -- <email>`                           | Remove those catalog fixtures.                                     |
+| `npm run catalog:qa-image-seed -- <email> <mode>`               | Add disposable local image-review fixtures.                        |
+| `npm run catalog:qa-image-clean -- <email>`                     | Remove those image fixtures.                                       |
 
 Never reset a linked or production database. Real migration pushes fail closed unless
 the exact migration source already exists on remote `main`.
