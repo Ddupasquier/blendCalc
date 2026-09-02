@@ -13,13 +13,17 @@ describe("Vercel Web Analytics", () => {
 			'import { injectAnalytics } from "@vercel/analytics/sveltekit";',
 		);
 		expect(appLayout).toContain(
-			'window.location.hostname.endsWith(".vercel.app")',
+			"isApprovedObservabilityHostname(window.location.hostname)",
 		);
-		expect(appLayout).toContain(
-			"if (!dev && isVercelObservabilityAvailable)",
-		);
+		expect(appLayout).toContain("if (!dev && isVercelObservabilityAvailable)");
 		expect(appLayout).toContain("injectAnalytics({");
 		expect(appLayout).toContain('mode: "production"');
+		const observability = readFileSync(
+			"src/lib/utils/analytics/performanceObservability.ts",
+			"utf8",
+		);
+		expect(observability).toContain('"www.blendcalc.food"');
+		expect(observability).toContain('"blendcalc.vercel.app"');
 	});
 
 	it("redacts URL details and preserves Vercel resilient intake defaults", () => {

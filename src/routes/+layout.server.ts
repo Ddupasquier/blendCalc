@@ -23,6 +23,7 @@ import {
 	normalizeThemePreference,
 	THEME_PREFERENCE_COOKIE,
 } from "$lib/utils/theme/themePreference";
+import { measureServerTiming } from "$lib/server/observability/serverTiming.server";
 
 const PUBLIC_PATHS = new Set(["/", "/auth"]);
 
@@ -58,36 +59,37 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 		};
 	}
 
-	const profileWithAvatarPromise = getUserProfile(
-		locals.supabase,
-		user.id,
-	).then(async (profile) => ({
-		profile,
-		avatarUrl: await getSignedAvatarUrl(locals.supabase, profile?.avatar_path),
-	}));
 	const claimedElevatedRole = getElevatedAppRole(user.appRoleClaim);
-	const rolePromise =
-		user.appRoleClaim === "user"
-			? Promise.resolve(null)
-			: getUserAppRole(locals.supabase, user.id).then((databaseRole) =>
-					databaseRole === claimedElevatedRole || user.appRoleClaim === null
-						? databaseRole
-						: null,
-				);
 	const [
-		{ profile, avatarUrl },
-		role,
-		tutorialPreference,
-		servingMeasureCatalog,
-		nutritionCompletenessCatalog,
-		appReferenceCatalog,
+		[{ profile, avatarUrl }, role, tutorialPreference],
+		[servingMeasureCatalog, nutritionCompletenessCatalog, appReferenceCatalog],
 	] = await Promise.all([
-		profileWithAvatarPromise,
-		rolePromise,
-		getTutorialPreference(locals.supabase, user.id),
-		getServingMeasureCatalog(),
-		getNutritionCompletenessCatalog(),
-		getAppReferenceCatalog(),
+		measureServerTiming(locals, "root_profile", () =>
+			Promise.all([
+				getUserProfile(locals.supabase, user.id).then(async (profile) => ({
+					profile,
+					avatarUrl: await getSignedAvatarUrl(
+						locals.supabase,
+						profile?.avatar_path,
+					),
+				})),
+				user.appRoleClaim === "user"
+					? Promise.resolve(null)
+					: getUserAppRole(locals.supabase, user.id).then((databaseRole) =>
+							databaseRole === claimedElevatedRole || user.appRoleClaim === null
+								? databaseRole
+								: null,
+						),
+				getTutorialPreference(locals.supabase, user.id),
+			]),
+		),
+		measureServerTiming(locals, "root_reference", () =>
+			Promise.all([
+				getServingMeasureCatalog(),
+				getNutritionCompletenessCatalog(),
+				getAppReferenceCatalog(),
+			]),
+		),
 	]);
 	configureServingMeasureCatalog(servingMeasureCatalog);
 	configureNutritionCompletenessCatalog(nutritionCompletenessCatalog);

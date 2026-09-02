@@ -23,6 +23,10 @@ import { env } from "$env/dynamic/private";
 import { recordBlendCalcAPIRequestObservation } from "$lib/server/blendCalcAPI/operations/blendCalcAPIOperations.server";
 import { completeServerBackgroundTask } from "$lib/server/runtime/backgroundTask.server";
 import {
+	appendServerTimingHeader,
+	recordServerTiming,
+} from "$lib/server/observability/serverTiming.server";
+import {
 	redirect,
 	error,
 	json,
@@ -85,6 +89,17 @@ export const handle: Handle = async ({ event, resolve }) => {
 			event.url,
 			isAuthenticated,
 		);
+		if (event.url.pathname.startsWith("/ingredients/")) {
+			recordServerTiming(
+				event.locals,
+				"total",
+				performance.now() - requestStartedAt,
+			);
+			appendServerTimingHeader(
+				normalizedResponse,
+				event.locals.serverTimings ?? {},
+			);
+		}
 		if (isBlendCalcAPIV1Pathname(event.url.pathname)) {
 			await completeServerBackgroundTask(
 				recordBlendCalcAPIRequestObservation({
@@ -100,6 +115,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 	};
 
 	event.locals.supabase = createSupabaseServerClient(event.cookies);
+	event.locals.serverTimings = {};
 
 	let authResult: ReturnType<App.Locals["getVerifiedUser"]> | null = null;
 	event.locals.getVerifiedUser = () => {
@@ -109,7 +125,9 @@ export const handle: Handle = async ({ event, resolve }) => {
 		return authResult;
 	};
 
+	const authStartedAt = performance.now();
 	const user = await event.locals.getVerifiedUser();
+	recordServerTiming(event.locals, "auth", performance.now() - authStartedAt);
 	event.locals.user = user;
 
 	if (user) {

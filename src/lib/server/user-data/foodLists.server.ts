@@ -106,6 +106,22 @@ export const readCloudIngredientListPage = async (
 	};
 };
 
+export const readCloudIngredientListCount = async (
+	key: IngredientListKey,
+	context: CloudDataContext,
+) => {
+	const cloud = await resolveCloudDataContext(context);
+	if (!cloud) return null;
+	const { supabase, userId } = cloud;
+	const { count, error } = await supabase
+		.from("user_food_list_items")
+		.select("id", { count: "exact", head: true })
+		.eq("user_id", userId)
+		.eq("list_type", getCloudListType(key));
+	if (error) throw error;
+	return count ?? 0;
+};
+
 export const readCloudIngredientListFood = async (
 	key: IngredientListKey,
 	foodId: number,

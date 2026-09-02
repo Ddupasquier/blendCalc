@@ -7,6 +7,7 @@ const cloudStorage = vi.hoisted(() => ({
 	readCloudIngredientListIndex: vi.fn(),
 }));
 const ingredientLists = vi.hoisted(() => ({
+	readCloudIngredientListCount: vi.fn(),
 	readCloudIngredientListFood: vi.fn(),
 	readCloudIngredientListPage: vi.fn(),
 }));
@@ -70,9 +71,11 @@ const ingredientListIndex = {
 describe("loadIngredientPageData", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		ingredientLists.readCloudIngredientListPage
-			.mockResolvedValueOnce({ foods: [{ fdcId: 1 }], totalCount: 1 })
-			.mockResolvedValueOnce({ foods: [{ fdcId: 2 }], totalCount: 1 });
+		ingredientLists.readCloudIngredientListPage.mockResolvedValueOnce({
+			foods: [{ fdcId: 1 }],
+			totalCount: 1,
+		});
+		ingredientLists.readCloudIngredientListCount.mockResolvedValue(1);
 		cloudStorage.readCloudCustomFoods.mockResolvedValue([{ fdcId: -1 }]);
 		cloudStorage.readCloudCustomFoodByFdcId.mockResolvedValue(null);
 		cloudStorage.readCloudIngredientListIndex.mockResolvedValue(
@@ -131,18 +134,38 @@ describe("loadIngredientPageData", () => {
 		});
 	});
 
-	it("loads the initial Fridge, Shopping List, custom foods, and filter metadata", async () => {
+	it("loads only the visible list while preserving the deferred list count", async () => {
 		const result = await loadIngredientPageData(cloudDataContext);
 
 		expect(result.fridge.totalCount).toBe(1);
-		expect(result.shoppingList.totalCount).toBe(1);
-		expect(result.customFoods).toEqual([{ fdcId: -1 }]);
+		expect(result.shoppingList).toEqual({ foods: [], totalCount: 1 });
+		expect(result.customFoods).toEqual([]);
 		expect(result.routeFood).toBeNull();
-		expect(result.listIndex).toEqual(ingredientListIndex);
+		expect(result.listIndex).toEqual({
+			[MIX_STORAGE_KEYS.fridge]: {
+				foodIds: [1],
+				foodIdentityKeys: ["fdc:1"],
+			},
+			[MIX_STORAGE_KEYS.shoppingList]: {
+				foodIds: [],
+				foodIdentityKeys: [],
+			},
+		});
+		expect(result.initialListKey).toBe(MIX_STORAGE_KEYS.fridge);
+		expect(result.deferredDataPending).toBe(true);
 		expect(result.loadError).toBe("");
 		expect(ingredientLists.readCloudIngredientListPage).toHaveBeenCalledTimes(
-			2,
+			1,
 		);
+		expect(ingredientLists.readCloudIngredientListCount).toHaveBeenCalledWith(
+			MIX_STORAGE_KEYS.shoppingList,
+			cloudDataContext,
+		);
+		expect(cloudStorage.readCloudCustomFoods).not.toHaveBeenCalled();
+		expect(cloudStorage.readCloudIngredientListIndex).not.toHaveBeenCalled();
+		expect(
+			ingredientProvenance.readIngredientProvenanceOptions,
+		).not.toHaveBeenCalled();
 	});
 
 	it("loads a routed food directly from its requested ingredient list", async () => {
@@ -242,6 +265,8 @@ describe("loadIngredientPageData", () => {
 				},
 			},
 			provenanceOptions: [],
+			initialListKey: MIX_STORAGE_KEYS.fridge,
+			deferredDataPending: false,
 			loadError: "Saved ingredients could not be loaded. Try again.",
 			provenanceError: "",
 		});

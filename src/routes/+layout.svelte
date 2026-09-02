@@ -32,6 +32,15 @@
 	import { track } from "@vercel/analytics/sveltekit";
 	import { injectSpeedInsights } from "@vercel/speed-insights/sveltekit";
 	import { APP_INTERACTION_METRICS } from "$lib/utils/analytics/appInteractionMetrics";
+	import {
+		APP_PERFORMANCE_METRIC,
+		APP_PERFORMANCE_TIMING_EVENT,
+		getPerformanceDurationBucket,
+		getPerformanceRouteGroup,
+		isApprovedObservabilityHostname,
+		reportAppPerformanceTiming,
+		type AppPerformanceTimingDetail,
+	} from "$lib/utils/analytics/performanceObservability";
 	import type { AppLayoutProps } from "./types";
 
 	const redactObservabilityUrl = <Event extends { url: string }>(
@@ -43,7 +52,7 @@
 		return { ...event, url: url.toString() };
 	};
 	const isVercelObservabilityAvailable =
-		browser && window.location.hostname.endsWith(".vercel.app");
+		browser && isApprovedObservabilityHostname(window.location.hostname);
 
 	if (!dev && isVercelObservabilityAvailable) {
 		injectAnalytics({
@@ -58,13 +67,65 @@
 	}
 
 	onMount(() => {
-		if (dev || !isVercelObservabilityAvailable) return;
-		const navigationEntry = performance.getEntriesByType(
-			"navigation",
-		)[0] as PerformanceNavigationTiming | undefined;
+		if (dev || !isVercelObservabilityAvailable) {
+			reportAppPerformanceTiming("hydration", performance.now());
+			return;
+		}
+		const trackPerformanceTiming = ({
+			name,
+			durationMilliseconds,
+		}: AppPerformanceTimingDetail) => {
+			track(APP_PERFORMANCE_METRIC, {
+				phase: name,
+				durationBucket: getPerformanceDurationBucket(durationMilliseconds),
+				routeGroup: getPerformanceRouteGroup(window.location.pathname),
+			});
+		};
+		const handlePerformanceTiming = (event: Event) => {
+			trackPerformanceTiming(
+				(event as CustomEvent<AppPerformanceTimingDetail>).detail,
+			);
+		};
+		window.addEventListener(
+			APP_PERFORMANCE_TIMING_EVENT,
+			handlePerformanceTiming,
+		);
+		reportAppPerformanceTiming("hydration", performance.now());
+
+		let reportedSlowInteraction = false;
+		const interactionObserver =
+			typeof PerformanceObserver !== "undefined" &&
+			PerformanceObserver.supportedEntryTypes.includes("event")
+				? new PerformanceObserver((list) => {
+						if (reportedSlowInteraction) return;
+						const slowInteraction = list
+							.getEntries()
+							.find((entry) => entry.duration >= 200);
+						if (!slowInteraction) return;
+						reportedSlowInteraction = true;
+						trackPerformanceTiming({
+							name: "slow_interaction",
+							durationMilliseconds: slowInteraction.duration,
+						});
+					})
+				: null;
+		interactionObserver?.observe({
+			type: "event",
+			buffered: true,
+		});
+
+		const navigationEntry = performance.getEntriesByType("navigation")[0] as
+			PerformanceNavigationTiming | undefined;
 		if (navigationEntry?.type === "reload") {
 			track(APP_INTERACTION_METRICS.PAGE_RELOAD);
 		}
+		return () => {
+			interactionObserver?.disconnect();
+			window.removeEventListener(
+				APP_PERFORMANCE_TIMING_EVENT,
+				handlePerformanceTiming,
+			);
+		};
 	});
 
 	onMount(() => {
@@ -74,19 +135,14 @@
 		};
 	});
 
-	let {
-		children,
-		data,
-	}: AppLayoutProps = $props();
+	let { children, data }: AppLayoutProps = $props();
 
 	let tutorialOpen = $state(page.url.pathname === "/profile/tutorial");
 	let tutorialUserId = $state<string | null>(null);
 	let tutorialMode = $state<"onboarding" | "replay">(
 		page.url.pathname === "/profile/tutorial" ? "replay" : "onboarding",
 	);
-	let tutorialReplayActive = $state(
-		page.url.pathname === "/profile/tutorial",
-	);
+	let tutorialReplayActive = $state(page.url.pathname === "/profile/tutorial");
 	const appViewShellRoute = $derived(
 		Boolean(data.authUser) &&
 			(page.url.pathname === "/mix" ||
@@ -169,10 +225,7 @@
 
 <svelte:head>
 	<title>{documentTitle}</title>
-	<meta
-		name="description"
-		content={APP_DESCRIPTION}
-	/>
+	<meta name="description" content={APP_DESCRIPTION} />
 	<meta name="theme-color" content={LIGHT_THEME_COLOR} />
 	<meta name="application-version" content={APP_VERSION} />
 	<meta name="application-build" content={APP_BUILD_VERSION} />
@@ -182,10 +235,7 @@
 	<meta property="og:type" content="website" />
 	<meta property="og:url" content={canonicalUrl} />
 	<meta property="og:title" content={documentTitle} />
-	<meta
-		property="og:description"
-		content={APP_DESCRIPTION}
-	/>
+	<meta property="og:description" content={APP_DESCRIPTION} />
 	<meta property="og:image" content={APP_SOCIAL_PREVIEW_URL} />
 	<meta property="og:image:type" content="image/png" />
 	<meta property="og:image:width" content="1200" />
@@ -193,10 +243,7 @@
 	<meta property="og:image:alt" content={APP_SOCIAL_PREVIEW_ALT} />
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:title" content={documentTitle} />
-	<meta
-		name="twitter:description"
-		content={APP_DESCRIPTION}
-	/>
+	<meta name="twitter:description" content={APP_DESCRIPTION} />
 	<meta name="twitter:image" content={APP_SOCIAL_PREVIEW_URL} />
 	<meta name="twitter:image:alt" content={APP_SOCIAL_PREVIEW_ALT} />
 </svelte:head>
@@ -212,18 +259,15 @@
 	/>
 	<TabNavigation />
 	{#if !tutorialVisible}
-		<DailyWelcome
-			userId={data.authUser.id}
-			name={data.authUser.welcomeName}
-		/>
+		<DailyWelcome userId={data.authUser.id} name={data.authUser.welcomeName} />
 	{/if}
-		<TutorialOverlay
-			open={tutorialVisible}
-			mode={tutorialMode}
-			pathname={page.url.pathname}
-			onNavigate={navigateTutorial}
-			onFinish={finishTutorial}
-		/>
+	<TutorialOverlay
+		open={tutorialVisible}
+		mode={tutorialMode}
+		pathname={page.url.pathname}
+		onNavigate={navigateTutorial}
+		onFinish={finishTutorial}
+	/>
 {/if}
 
 <main

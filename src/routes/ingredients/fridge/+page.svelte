@@ -8,7 +8,7 @@
 	import { getAppDocumentTitle } from "$lib/config/pageMetadata";
 	import type { ManualEntryCreateContext } from "$lib/components/ingredients/manual-entry/types";
 	import IngredientsSearchPanel from "$lib/components/ingredients/page/IngredientsSearchPanel/IngredientsSearchPanel.svelte";
-	import IngredientRoutePopins from "$lib/components/ingredients/page/IngredientRoutePopins/IngredientRoutePopins.svelte";
+	import LazyIngredientRoutePopins from "$lib/components/ingredients/page/IngredientRoutePopins/LazyIngredientRoutePopins.svelte";
 	import type { IngredientRouteNavigationOptions } from "$lib/components/ingredients/page/types";
 	import type { IngredientFilterApplyPayload } from "$lib/components/ingredients/sheets/types";
 	import SavedIngredientList from "$lib/components/ingredients/list/SavedIngredientList/SavedIngredientList.svelte";
@@ -72,23 +72,23 @@
 		INGREDIENT_LISTS_CHANGED_EVENT,
 		type IngredientListKey,
 	} from "$lib/utils/storage/client/ingredientLists";
-	import {
-		readCloudCustomFoods,
-		readCloudIngredientListIndex,
-		type CloudIngredientListIndex,
-	} from "$lib/utils/storage/supabase";
+	import type { CloudIngredientListIndex } from "$lib/utils/storage/supabase";
 	import {
 		readIngredientListPage,
 		readIngredientListWindow,
 	} from "$lib/utils/ingredients/ingredientListApi";
+	import { readIngredientPageSupportingData } from "$lib/utils/ingredients/ingredientSupportingDataApi";
 	import { onMount } from "svelte";
 	import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
+	import { reportAppPerformanceTiming } from "$lib/utils/analytics/performanceObservability";
 
 	const initialIngredientData = page.data.ingredientData;
 	const initialIngredientRouteState = getIngredientRouteState(page.url);
 	const initialOnHand = initialIngredientData?.fridge.foods ?? [];
 	const initialShoppingList = initialIngredientData?.shoppingList.foods ?? [];
 	const initialCustomFoods = initialIngredientData?.customFoods ?? [];
+	const initialListKey =
+		initialIngredientData?.initialListKey ?? MIX_STORAGE_KEYS.fridge;
 	const allowPlayfulMessages = $derived(
 		page.data.authUser?.playfulMessagesEnabled ?? true,
 	);
@@ -161,6 +161,11 @@
 	let provenanceOptionsError = $state(
 		initialIngredientData?.provenanceError ?? "",
 	);
+	let deferredDataPending = $state(
+		initialIngredientData?.deferredDataPending ?? false,
+	);
+	let deferredDataError = $state(Boolean(initialIngredientData?.loadError));
+	let deferredDataPromise: Promise<boolean> | null = null;
 	let listLoadRequestId = 0;
 	let loadingMoreList = $state<IngredientListKey | null>(null);
 	let listViewResetKey = $state(0);
@@ -300,6 +305,7 @@
 
 	$effect(() => {
 		const routeList = activeList;
+		if (routeList !== initialListKey) void loadDeferredIngredientData();
 		if (routeList === previousActiveList) return;
 		selectedListItemIds = {
 			...selectedListItemIds,
@@ -332,6 +338,59 @@
 			? LIST_PAGE_SIZES.ingredientPills
 			: Math.max(shoppingVisibleCount, shoppingList.length);
 	};
+
+	const loadDeferredIngredientData = () => {
+		if (!deferredDataPending) return Promise.resolve(!deferredDataError);
+		if (deferredDataPromise) return deferredDataPromise;
+
+		deferredDataError = false;
+		const deferredListKey = getOppositeIngredientListKey(initialListKey);
+		deferredDataPromise = Promise.all([
+			readIngredientListPage(deferredListKey, {
+				limit: LIST_PAGE_SIZES.ingredientPills,
+				offset: 0,
+				sort: "recent",
+				sourceFilter,
+				trustFilter,
+				safetyFilter: FOOD_SAFETY_FILTER_VALUES.all,
+			}),
+			readIngredientPageSupportingData(),
+		])
+			.then(([deferredList, supportingData]) => {
+				const existingFoods =
+					deferredListKey === MIX_STORAGE_KEYS.fridge ? onHand : shoppingList;
+				if (existingFoods.length === 0) {
+					setListPage(
+						deferredListKey,
+						deferredList.foods,
+						deferredList.totalCount,
+						true,
+						false,
+					);
+				}
+				customFoods = supportingData.customFoods;
+				listIndex = supportingData.listIndex;
+				provenanceOptions = supportingData.provenanceOptions;
+				provenanceOptionsError = "";
+				return true;
+			})
+			.catch(() => {
+				deferredDataError = true;
+				provenanceOptionsError =
+					"Some ingredient details could not finish loading. Try again after refreshing.";
+				return false;
+			})
+			.finally(() => {
+				deferredDataPending = false;
+				deferredDataPromise = null;
+			});
+
+		return deferredDataPromise;
+	};
+
+	$effect(() => {
+		if (ingredientOverlayOpen) void loadDeferredIngredientData();
+	});
 
 	const loadListPage = async (
 		key: IngredientListKey,
@@ -379,9 +438,8 @@
 		listLoadingError = "";
 		if (resetViewport) resetVisibleCounts();
 		try {
-			const [nextCustomFoods, nextListIndex] = await Promise.all([
-				readCloudCustomFoods(),
-				readCloudIngredientListIndex(),
+			const [supportingData] = await Promise.all([
+				readIngredientPageSupportingData(),
 				loadListPage(MIX_STORAGE_KEYS.fridge, true, requestId, resetViewport),
 				loadListPage(
 					MIX_STORAGE_KEYS.shoppingList,
@@ -390,13 +448,11 @@
 					resetViewport,
 				),
 			]);
-			if (!nextCustomFoods || !nextListIndex) {
-				throw new Error("Saved ingredients are unavailable.");
-			}
-
 			if (requestId !== listLoadRequestId) return;
-			customFoods = nextCustomFoods;
-			listIndex = nextListIndex;
+			customFoods = supportingData.customFoods;
+			listIndex = supportingData.listIndex;
+			provenanceOptions = supportingData.provenanceOptions;
+			provenanceOptionsError = "";
 		} catch {
 			if (requestId === listLoadRequestId) {
 				listLoadingError = "Saved ingredients could not be loaded. Try again.";
@@ -642,6 +698,11 @@
 
 	const placeSearchResultInActiveList = async (food: FoodItem) => {
 		if (searchAddFoodId !== null) return;
+		if (!(await loadDeferredIngredientData())) {
+			listActionError =
+				"Saved-list details could not be checked. Refresh before adding this ingredient.";
+			return;
+		}
 
 		const destinationListKey = activeList;
 		const destinationListLabel = getIngredientListLabel(destinationListKey);
@@ -1080,6 +1141,7 @@
 
 	const revealMoreActiveItems = async () => {
 		if (!canRevealMoreActiveItems || loadingMoreList) return;
+		const startedAt = performance.now();
 		loadingMoreList = activeList;
 
 		try {
@@ -1103,6 +1165,15 @@
 			);
 		} finally {
 			loadingMoreList = null;
+			await tick();
+			requestAnimationFrame(() => {
+				requestAnimationFrame(() => {
+					reportAppPerformanceTiming(
+						"fridge_load_more",
+						performance.now() - startedAt,
+					);
+				});
+			});
 		}
 	};
 
@@ -1239,11 +1310,22 @@
 			INGREDIENT_LISTS_CHANGED_EVENT,
 			handleIngredientListsChanged,
 		);
+		const scheduleDeferredData = () => void loadDeferredIngredientData();
+		const idleCallback =
+			"requestIdleCallback" in window
+				? window.requestIdleCallback(scheduleDeferredData)
+				: null;
+		const timeout =
+			idleCallback === null
+				? window.setTimeout(scheduleDeferredData, 5_000)
+				: null;
 		return () => {
 			window.removeEventListener(
 				INGREDIENT_LISTS_CHANGED_EVENT,
 				handleIngredientListsChanged,
 			);
+			if (idleCallback !== null) window.cancelIdleCallback(idleCallback);
+			if (timeout !== null) window.clearTimeout(timeout);
 		};
 	});
 </script>
@@ -1312,7 +1394,7 @@
 	</ViewBody>
 </ViewFrame>
 
-<IngredientRoutePopins
+<LazyIngredientRoutePopins
 	{activeSheet}
 	{actionSheetItem}
 	{barcodeLookupBusy}

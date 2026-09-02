@@ -2,16 +2,14 @@ import { LIST_PAGE_SIZES } from "$lib/config/listPagination";
 import type { FoodItem } from "$lib/utils/food/types";
 import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 import type { IngredientPageInitialData } from "$lib/types/pageData/ingredientPageData";
-import { readIngredientProvenanceOptions } from "$lib/utils/ingredients/ingredientProvenance";
 import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
 import {
-	readCloudCustomFoods,
 	readCloudCustomFoodByFdcId,
-	readCloudIngredientListIndex,
 	type CloudDataContext,
 	type CloudIngredientListIndex,
 } from "$lib/utils/storage/supabase";
 import {
+	readCloudIngredientListCount,
 	readCloudIngredientListFood,
 	readCloudIngredientListPage,
 } from "$lib/server/user-data/foodLists.server";
@@ -24,6 +22,7 @@ import { getApprovedCatalogRecordByApplicationFoodId } from "$lib/server/product
 import { readCanonicalFoodCatalogMetadata } from "$lib/server/products/catalogRecordMetadata.server";
 import { readGenericFoodByApplicationId } from "$lib/server/products/genericFoods.server";
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
+import { getFoodIdentityKey } from "$lib/utils/food/records/foodIdentity";
 
 type LoadIngredientPageDataOptions = {
 	routeFoodId?: number | null;
@@ -34,6 +33,23 @@ const createEmptyIngredientListIndex = (): CloudIngredientListIndex => ({
 	[MIX_STORAGE_KEYS.fridge]: { foodIds: [], foodIdentityKeys: [] },
 	[MIX_STORAGE_KEYS.shoppingList]: { foodIds: [], foodIdentityKeys: [] },
 });
+
+const getOppositeListKey = (listKey: IngredientListKey) =>
+	listKey === MIX_STORAGE_KEYS.fridge
+		? MIX_STORAGE_KEYS.shoppingList
+		: MIX_STORAGE_KEYS.fridge;
+
+const createInitialIngredientListIndex = (
+	listKey: IngredientListKey,
+	foods: FoodItem[],
+) => {
+	const index = createEmptyIngredientListIndex();
+	index[listKey] = {
+		foodIds: foods.map((food) => food.fdcId),
+		foodIdentityKeys: foods.map(getFoodIdentityKey),
+	};
+	return index;
+};
 
 const annotateIngredientListPageWithFoodSafety = (
 	ingredientListPage: NonNullable<
@@ -114,55 +130,54 @@ export const loadIngredientPageData = async (
 	cloudDataContext: CloudDataContext,
 	options: LoadIngredientPageDataOptions = {},
 ): Promise<IngredientPageInitialData> => {
+	const initialListKey = options.routeListKey ?? MIX_STORAGE_KEYS.fridge;
+	const deferredListKey = getOppositeListKey(initialListKey);
 	try {
-		const [
-			fridge,
-			shoppingList,
-			customFoods,
-			listIndex,
-			provenanceOptions,
-			foodSafetyContext,
-			routeFood,
-		] = await Promise.all([
-			readInitialIngredientListPage(cloudDataContext, MIX_STORAGE_KEYS.fridge),
-			readInitialIngredientListPage(
-				cloudDataContext,
-				MIX_STORAGE_KEYS.shoppingList,
-			),
-			readCloudCustomFoods(cloudDataContext),
-			readCloudIngredientListIndex(cloudDataContext),
-			readIngredientProvenanceOptions(cloudDataContext.supabase),
-			getUserFoodSafetyContext(
-				cloudDataContext.supabase,
-				cloudDataContext.userId,
-			),
-			readIngredientRouteFoodByApplicationId(cloudDataContext, options),
-		]);
+		const [initialList, deferredListCount, foodSafetyContext, routeFood] =
+			await Promise.all([
+				readInitialIngredientListPage(cloudDataContext, initialListKey),
+				readCloudIngredientListCount(deferredListKey, cloudDataContext),
+				getUserFoodSafetyContext(
+					cloudDataContext.supabase,
+					cloudDataContext.userId,
+				),
+				readIngredientRouteFoodByApplicationId(cloudDataContext, options),
+			]);
 
-		if (!fridge || !shoppingList || !customFoods || !listIndex) {
+		if (!initialList || deferredListCount === null) {
 			throw new Error("Authenticated ingredient data was unavailable.");
 		}
+		const annotatedInitialList = annotateIngredientListPageWithFoodSafety(
+			initialList,
+			foodSafetyContext,
+		);
+		const deferredList = { foods: [], totalCount: deferredListCount };
+		const fridge =
+			initialListKey === MIX_STORAGE_KEYS.fridge
+				? annotatedInitialList
+				: deferredList;
+		const shoppingList =
+			initialListKey === MIX_STORAGE_KEYS.shoppingList
+				? annotatedInitialList
+				: deferredList;
 
 		return {
-			fridge: annotateIngredientListPageWithFoodSafety(
-				fridge,
-				foodSafetyContext,
-			),
-			shoppingList: annotateIngredientListPageWithFoodSafety(
-				shoppingList,
-				foodSafetyContext,
-			),
-			customFoods: annotateFoodsWithFoodSafety(customFoods, foodSafetyContext),
+			fridge,
+			shoppingList,
+			customFoods: [],
 			routeFood: routeFood
 				? (annotateFoodsWithFoodSafety([routeFood], foodSafetyContext)[0] ??
 					null)
 				: null,
-			listIndex,
-			provenanceOptions: provenanceOptions ?? [],
+			listIndex: createInitialIngredientListIndex(
+				initialListKey,
+				annotatedInitialList.foods,
+			),
+			provenanceOptions: [],
+			initialListKey,
+			deferredDataPending: true,
 			loadError: "",
-			provenanceError: provenanceOptions?.length
-				? ""
-				: "Ingredient source and review filters could not load. Try again after refreshing.",
+			provenanceError: "",
 		};
 	} catch (error) {
 		console.error("[user-data] Ingredient page data could not load.", error);
@@ -173,6 +188,8 @@ export const loadIngredientPageData = async (
 			routeFood: null,
 			listIndex: createEmptyIngredientListIndex(),
 			provenanceOptions: [],
+			initialListKey,
+			deferredDataPending: false,
 			loadError: "Saved ingredients could not be loaded. Try again.",
 			provenanceError: "",
 		};

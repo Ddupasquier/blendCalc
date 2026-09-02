@@ -315,6 +315,15 @@ Both lists share the same card and list behavior:
   preference or public-health warnings, or items in an active recall. Safety filtering
   uses current server-annotated DB evidence before pagination so counts and pages stay
   accurate.
+- The requested list is server-rendered for first paint. The inactive list and
+  overlay-only supporting data load during idle time or on demand, while counts remain
+  accurate and every food shown to the user retains current server-owned safety
+  evaluation.
+- Closed routed sheets, dialogs, scanners, and detail views stay outside the initial
+  Fridge JavaScript and CSS graph. Opening one loads the shared popin bundle, with an
+  accessible loading status if that network boundary is observable.
+- Explicit Load more paints its busy state before list retrieval or reflow begins and
+  records a bounded interaction diagnostic without changing pagination semantics.
 - The full card performs its primary open/select action. Trailing move, options, and
   delete controls remain separate and take priority.
 - Long-press enters selection mode and selects the held card. Selection remains visible

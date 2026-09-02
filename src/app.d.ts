@@ -32,6 +32,7 @@ declare global {
 			supabase: SupabaseClient<Database>;
 			getVerifiedUser: () => Promise<VerifiedAuthUser | null>;
 			user: VerifiedAuthUser | null;
+			serverTimings?: Record<string, number>;
 			blendCalcAPIDatabaseObservation?: BlendCalcAPIDatabaseObservation;
 		}
 		interface PageData {

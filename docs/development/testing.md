@@ -254,6 +254,15 @@ Routine evidence needs the command, exit status, pass/fail/skip counts, and rele
 failure block—not a complete successful log. Never truncate the diagnostic that explains
 a failure.
 
+Route performance uses two distinct gates. Deterministic tests require the maintained
+instrumentation, lazy boundaries, and explicit budgets to remain present. A repeatable
+Playwright diagnostic records server phases, hydration, and important interaction
+durations as an attachment, but one local sample is not a production request blocker.
+Release acceptance compares p75 production field metrics to the maintained Fridge
+budgets: FCP and LCP at 2.5 seconds, INP at 200 milliseconds, and TTFB at 800
+milliseconds. Diagnose failures with the fixed server phase budgets before changing a
+user-visible or safety contract.
+
 The maintained Vitest and Playwright configurations use compact dot output by default.
 Redirect a long unattended run to `test-results/` when only its summary is needed; that
 directory is ignored. Open retained HTML reports, traces, screenshots, videos, or logs
