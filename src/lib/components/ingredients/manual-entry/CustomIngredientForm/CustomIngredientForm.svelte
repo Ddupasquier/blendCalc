@@ -31,6 +31,26 @@
 		readManualEntryDraft,
 	} from "./manualEntryDraft";
 	import { getManualEntryFormStateFromFood } from "$lib/components/ingredients/manual-entry/utils/formState";
+	import {
+		getManualEntryBarcodeIdentityKey,
+		getManualEntryDestinationAction,
+		resolveManualEntryListIdentity,
+		type ManualEntryListIdentityState,
+	} from "$lib/components/ingredients/manual-entry/utils/listMembership";
+	import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
+	import type { CloudIngredientListIndex } from "$lib/utils/storage/supabase/lists";
+	import {
+		moveIngredientListItemById,
+		type IngredientListKey,
+	} from "$lib/utils/storage/client/ingredientLists";
+
+	const emptyIngredientListIndex: CloudIngredientListIndex = {
+		[MIX_STORAGE_KEYS.fridge]: { foodIds: [], foodIdentityKeys: [] },
+		[MIX_STORAGE_KEYS.shoppingList]: {
+			foodIds: [],
+			foodIdentityKeys: [],
+		},
+	};
 
 	let {
 		onCreate,
@@ -48,6 +68,7 @@
 		initialFood,
 		submissionIntent = "catalog_share",
 		catalogSubmissionOnly = false,
+		ingredientListIndex = emptyIngredientListIndex,
 	}: CustomIngredientFormProps = $props();
 
 	const servingMeasureOptions = SERVING_MEASURE_OPTIONS.filter(
@@ -67,6 +88,16 @@
 	let lastScanSignal: number | null = null;
 	let lastMovePromptOpen: boolean | null = null;
 	let draftRestored = $state(false);
+	let listIdentityState = $state<ManualEntryListIdentityState>({
+		status: "idle",
+	});
+	let listIdentityRequestId = 0;
+	let preflightMovePrompt = $state<{
+		source: IngredientListKey;
+		destination: IngredientListKey;
+		foodId: number;
+	} | null>(null);
+	let preflightMoveBusy = $state(false);
 
 	const collapseManualEntry = () => {
 		if (labelDetailsElement) {
@@ -95,6 +126,30 @@
 		onLookupStateChange: (lookingUp) => onLookupStateChange(lookingUp),
 		onError: setSubmissionError,
 	});
+	const destinationAction = $derived(
+		getManualEntryDestinationAction({
+			identityState: listIdentityState,
+			listIndex: ingredientListIndex,
+			destination: outcome.state.saveDestination,
+		}),
+	);
+
+	const refreshListIdentity = async (name: string, barcodeValue: string) => {
+		const requestId = ++listIdentityRequestId;
+		listIdentityState = { status: "checking" };
+		try {
+			const identityKey = await resolveManualEntryListIdentity({
+				name,
+				barcode: barcodeValue,
+				initialFood,
+			});
+			if (requestId !== listIdentityRequestId) return;
+			listIdentityState = { status: "ready", identityKey };
+		} catch {
+			if (requestId !== listIdentityRequestId) return;
+			listIdentityState = { status: "error" };
+		}
+	};
 
 	const resetForm = () => {
 		validation.clearStepWarning();
@@ -110,7 +165,61 @@
 		outcome,
 		onReset: resetForm,
 		getCatalogSubmissionOnly: () => catalogSubmissionOnly,
+		getDestinationAction: () => destinationAction,
 	});
+
+	const handleDestinationSubmit = async () => {
+		if (destinationAction.kind !== "move") {
+			await submission.handleSubmit();
+			return;
+		}
+		const existingSource = destinationAction.source;
+		const existingFoodId = destinationAction.foodId;
+		if (
+			!existingSource ||
+			typeof existingFoodId !== "number" ||
+			!Number.isSafeInteger(existingFoodId)
+		) {
+			setSubmissionError(
+				"The existing ingredient could not be identified safely. Refresh before moving it.",
+			);
+			return;
+		}
+		preflightMovePrompt = {
+			destination: outcome.state.saveDestination,
+			source: existingSource,
+			foodId: existingFoodId,
+		};
+	};
+
+	const resolvePreflightMovePrompt = async (confirmed: boolean) => {
+		if (!preflightMovePrompt || preflightMoveBusy) return;
+		const prompt = preflightMovePrompt;
+		if (!confirmed) {
+			preflightMovePrompt = null;
+			return;
+		}
+
+		preflightMoveBusy = true;
+		submission.setError("");
+		try {
+			const result = await moveIngredientListItemById(
+				prompt.source,
+				prompt.destination,
+				prompt.foodId,
+			);
+			if (result !== "moved") {
+				setSubmissionError(
+					"The existing ingredient could not be moved. Refresh and try again.",
+				);
+				return;
+			}
+			onClose?.();
+		} finally {
+			preflightMoveBusy = false;
+			preflightMovePrompt = null;
+		}
+	};
 
 	const goToStep = async (step: string) => {
 		await validation.goToStep(step, barcode.checkManualBarcodeReference);
@@ -396,6 +505,7 @@
 		usesNonstandardNutritionDisclosure:
 			!validation.disclosurePolicy.requiresStandardNutrition,
 		saveDestination: outcome.state.saveDestination,
+		destinationAction,
 		error: submission.state.error,
 		placementMessage: outcome.state.placementMessage,
 		catalogMessage: submission.state.catalogMessage,
@@ -429,7 +539,7 @@
 			saveDestinationControl = element;
 		},
 		onBack: validation.goBack,
-		onSubmit: submission.handleSubmit,
+		onSubmit: handleDestinationSubmit,
 		onCatalogSubmissionComplete: () => onClose?.(),
 	});
 
@@ -449,7 +559,39 @@
 		void referenceData.load();
 	});
 
+	$effect(() => {
+		const activeStep = form.data.activeStep;
+		const name = form.data.name;
+		const barcodeValue = form.data.barcode;
+		if (activeStep !== "share" || catalogSubmissionOnly) {
+			listIdentityRequestId += 1;
+			listIdentityState = { status: "idle" };
+			return;
+		}
+		const hasSavedIngredients =
+			ingredientListIndex[MIX_STORAGE_KEYS.fridge].foodIdentityKeys.length >
+				0 ||
+			ingredientListIndex[MIX_STORAGE_KEYS.shoppingList].foodIdentityKeys
+				.length > 0;
+		if (!hasSavedIngredients) {
+			listIdentityRequestId += 1;
+			listIdentityState = { status: "ready", identityKey: null };
+			return;
+		}
+		const barcodeIdentityKey = getManualEntryBarcodeIdentityKey(barcodeValue);
+		if (barcodeIdentityKey) {
+			listIdentityRequestId += 1;
+			listIdentityState = {
+				status: "ready",
+				identityKey: barcodeIdentityKey,
+			};
+			return;
+		}
+		void refreshListIdentity(name, barcodeValue);
+	});
+
 	onDestroy(() => {
+		listIdentityRequestId += 1;
 		referenceData.destroy();
 		validation.destroy();
 		barcode.destroy();
@@ -483,7 +625,9 @@
 	});
 
 	$effect(() => {
-		const movePromptOpen = Boolean(outcome.state.listMovePrompt);
+		const movePromptOpen = Boolean(
+			outcome.state.listMovePrompt || preflightMovePrompt,
+		);
 		if (movePromptOpen === lastMovePromptOpen) return;
 		lastMovePromptOpen = movePromptOpen;
 
@@ -544,14 +688,24 @@
 {/if}
 
 <ConfirmationDialog
-	open={Boolean(outcome.state.listMovePrompt) && moveConfirmationRouteOpen}
+	open={Boolean(outcome.state.listMovePrompt || preflightMovePrompt) &&
+		moveConfirmationRouteOpen}
+	busy={preflightMoveBusy}
 	title="Move ingredient?"
-	description={outcome.state.listMovePrompt
-		? `${outcome.state.listMovePrompt.food.description} is already in ${getDestinationLabel(outcome.state.listMovePrompt.source)}. Move it to ${getDestinationLabel(outcome.state.listMovePrompt.destination)}?`
-		: ""}
+	description={preflightMovePrompt
+		? `${validation.normalizedName} is already in ${getDestinationLabel(preflightMovePrompt.source)}. Move it to ${getDestinationLabel(preflightMovePrompt.destination)}?`
+		: outcome.state.listMovePrompt
+			? `${outcome.state.listMovePrompt.food.description} is already in ${getDestinationLabel(outcome.state.listMovePrompt.source)}. Move it to ${getDestinationLabel(outcome.state.listMovePrompt.destination)}?`
+			: ""}
 	confirmLabel="Move"
-	onConfirm={() => outcome.resolveListMovePrompt(true)}
-	onCancel={() => outcome.resolveListMovePrompt(false)}
+	onConfirm={() =>
+		preflightMovePrompt
+			? resolvePreflightMovePrompt(true)
+			: outcome.resolveListMovePrompt(true)}
+	onCancel={() =>
+		preflightMovePrompt
+			? resolvePreflightMovePrompt(false)
+			: outcome.resolveListMovePrompt(false)}
 />
 
 <style lang="scss">

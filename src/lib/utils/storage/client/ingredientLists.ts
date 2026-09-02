@@ -1,5 +1,8 @@
 import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
-import { normalizeFoodForStorage, deduplicateFoodItemsByApplicationId } from "$lib/utils/food/records/foodRecords";
+import {
+	normalizeFoodForStorage,
+	deduplicateFoodItemsByApplicationId,
+} from "$lib/utils/food/records/foodRecords";
 import {
 	placeCloudIngredientListItem,
 	readCloudIngredientListIndex,
@@ -14,11 +17,11 @@ import {
 	deduplicateFoodItemsByIdentity,
 } from "$lib/utils/food/records/foodIdentity";
 
-export const INGREDIENT_LISTS_CHANGED_EVENT = "blendcalc-ingredient-lists-changed";
+export const INGREDIENT_LISTS_CHANGED_EVENT =
+	"blendcalc-ingredient-lists-changed";
 
 export type IngredientListKey =
-	| typeof MIX_STORAGE_KEYS.fridge
-	| typeof MIX_STORAGE_KEYS.shoppingList;
+	typeof MIX_STORAGE_KEYS.fridge | typeof MIX_STORAGE_KEYS.shoppingList;
 
 export type IngredientListMutationResult =
 	| "added"
@@ -58,7 +61,10 @@ export const preserveSelectedListItems = (
 	);
 
 	return deduplicateFoodItemsByIdentity(
-		deduplicateFoodItemsByApplicationId([...syncedList, ...selectedLoadedFoods]),
+		deduplicateFoodItemsByApplicationId([
+			...syncedList,
+			...selectedLoadedFoods,
+		]),
 	);
 };
 
@@ -90,11 +96,31 @@ export const moveFoodToIngredientList = async (
 		...food,
 		listAddedAt: Date.now(),
 	});
-	const placementResult = await placeCloudIngredientListItem(key, foodRecord, true);
+	const placementResult = await placeCloudIngredientListItem(
+		key,
+		foodRecord,
+		true,
+	);
 	if (placementResult === "error") return "error";
 
 	if (options.notify !== false) notifyIngredientListsChanged();
 	return placementResult === "duplicate" ? "duplicate" : "moved";
+};
+
+export const moveIngredientListItemById = async (
+	sourceKey: IngredientListKey,
+	targetKey: IngredientListKey,
+	foodId: number,
+	options: IngredientListMutationOptions = {},
+): Promise<IngredientListMutationResult> => {
+	if (!Number.isSafeInteger(foodId) || sourceKey === targetKey)
+		return "invalid";
+	const moved = await moveCloudIngredientListItems(sourceKey, targetKey, [
+		foodId,
+	]);
+	if (!moved) return "error";
+	if (options.notify !== false) notifyIngredientListsChanged();
+	return "moved";
 };
 
 export const moveFoodsToIngredientList = async (
@@ -138,7 +164,8 @@ export const addFoodsToIngredientList = async (
 		.filter(
 			(food, index, items) =>
 				items.findIndex(
-					(candidate) => getFoodIdentityKey(candidate) === getFoodIdentityKey(food),
+					(candidate) =>
+						getFoodIdentityKey(candidate) === getFoodIdentityKey(food),
 				) === index,
 		)
 		.map((food) =>

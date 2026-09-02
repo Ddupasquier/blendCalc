@@ -18,6 +18,7 @@
 		initialFood,
 		submissionIntent = "catalog_share",
 		catalogSubmissionOnly = false,
+		ingredientListIndex,
 	}: ManualEntrySheetProps = $props();
 	let closingAfterSuccessfulCreate = $state(false);
 
@@ -68,5 +69,6 @@
 		{initialFood}
 		{submissionIntent}
 		{catalogSubmissionOnly}
+		{ingredientListIndex}
 	/>
 </BottomSheet>

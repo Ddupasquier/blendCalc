@@ -29,6 +29,7 @@
 		destinationListKey,
 		destinationListFoodIdentityKeys,
 		otherListFoodIdentityKeys,
+		ingredientListIndex,
 		searchViewOpen,
 		provenanceOptions,
 		selectedFood,
@@ -99,6 +100,7 @@
 	onMoveConfirmationClose={onCloseMoveConfirmation}
 	onCreate={onCreateManualIngredient}
 	{onLookupStateChange}
+	{ingredientListIndex}
 />
 
 <IngredientFilterSheet
@@ -175,4 +177,5 @@
 	onClose={onCloseCorrection}
 	onCreate={onCreateManualIngredient}
 	{onLookupStateChange}
+	{ingredientListIndex}
 />

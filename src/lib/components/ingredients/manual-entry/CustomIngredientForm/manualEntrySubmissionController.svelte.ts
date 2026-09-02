@@ -11,6 +11,7 @@ import type { ManualEntryValidationController } from "./manualEntryValidationCon
 import type { ManualEntryBarcodeController } from "./manualEntryBarcodeController.svelte";
 import type { ManualEntryOutcomeController } from "./manualEntryOutcomeController.svelte";
 import { applyCardImagePlacementToFoodImage } from "$lib/utils/food/images/foodImages";
+import type { ManualEntryDestinationAction } from "$lib/components/ingredients/manual-entry/utils/listMembership";
 
 type ManualEntrySubmissionControllerOptions = {
 	form: ManualEntryFormState;
@@ -20,6 +21,7 @@ type ManualEntrySubmissionControllerOptions = {
 	outcome: ManualEntryOutcomeController;
 	onReset: () => void;
 	getCatalogSubmissionOnly?: () => boolean;
+	getDestinationAction?: () => ManualEntryDestinationAction;
 };
 
 export const createManualEntrySubmissionController = ({
@@ -30,6 +32,13 @@ export const createManualEntrySubmissionController = ({
 	outcome,
 	onReset,
 	getCatalogSubmissionOnly = () => false,
+	getDestinationAction = () => ({
+		kind: "add",
+		label: "Add Ingredient",
+		disabled: false,
+		message: "",
+		messageTone: "info",
+	}),
 }: ManualEntrySubmissionControllerOptions) => {
 	const state = $state<{
 		error: string;
@@ -53,6 +62,16 @@ export const createManualEntrySubmissionController = ({
 		state.catalogMessage = "";
 		state.catalogMessageTone = "success";
 		outcome.resetBeforeSubmit();
+		const catalogSubmissionOnly = getCatalogSubmissionOnly();
+		const destinationAction = catalogSubmissionOnly
+			? null
+			: getDestinationAction();
+		if (
+			destinationAction?.kind === "checking" ||
+			destinationAction?.kind === "duplicate"
+		) {
+			return;
+		}
 
 		const submitState = getManualEntrySubmitState({
 			loadingNutrientRelationshipRules:
@@ -162,7 +181,6 @@ export const createManualEntrySubmissionController = ({
 				customFood: barcode.privateCustomFood,
 			});
 
-			const catalogSubmissionOnly = getCatalogSubmissionOnly();
 			const result = await saveManualEntryCustomFood({
 				food,
 				name: form.data.name,

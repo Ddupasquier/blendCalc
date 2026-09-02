@@ -2,6 +2,7 @@ import type { ImagePlacementValue } from "$lib/utils/food/images/types";
 import type { FoodImageAsset, FoodSafetyAlert } from "$lib/utils/food/types";
 import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
 import type { ProductRegulatoryDisclosureProfile } from "$lib/utils/food/quality/nutritionCompletenessCatalog";
+import type { ManualEntryDestinationAction } from "$lib/components/ingredients/manual-entry/utils/listMembership";
 import type { ManualEntryCatalogMessageTone } from "$lib/components/ingredients/manual-entry/utils/submitFlow";
 import type {
 	ManualEntryBarcodeShareMismatch,
@@ -37,6 +38,7 @@ export type ShareStepProps = {
 	packageQuantityLabel: string;
 	usesNonstandardNutritionDisclosure: boolean;
 	saveDestination: IngredientListKey;
+	destinationAction: ManualEntryDestinationAction;
 	error: string;
 	placementMessage: string;
 	catalogMessage: string;

@@ -44,6 +44,7 @@
 		packageQuantityLabel,
 		usesNonstandardNutritionDisclosure,
 		saveDestination,
+		destinationAction,
 		error,
 		placementMessage,
 		catalogMessage,
@@ -313,6 +314,12 @@
 					onSaveDestinationChange(value as IngredientListKey)}
 			/>
 		</ManualEntryField>
+		{#if destinationAction.message}
+			<StatusMessage
+				tone={destinationAction.messageTone}
+				message={destinationAction.message}
+			/>
+		{/if}
 	{/if}
 
 	{#if error}
@@ -332,9 +339,10 @@
 			? "Done"
 			: catalogSubmissionOnly
 				? "Submit Correction"
-				: "Add Ingredient"}
+				: destinationAction.label}
 		busy={saving}
-		nextDisabled={automaticImagePlacementBusy}
+		nextDisabled={automaticImagePlacementBusy ||
+			(!catalogSubmissionOnly && destinationAction.disabled)}
 		showBack={!catalogSubmissionComplete}
 	/>
 </ManualEntryStepLayout>

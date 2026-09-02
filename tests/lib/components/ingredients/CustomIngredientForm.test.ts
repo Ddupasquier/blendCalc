@@ -21,6 +21,7 @@ vi.mock("$lib/utils/food/custom/customFoods", async (importOriginal) => {
 const ingredientListMocks = vi.hoisted(() => ({
 	addFoodToIngredientList: vi.fn().mockResolvedValue("added"),
 	moveFoodToIngredientList: vi.fn().mockResolvedValue("moved"),
+	moveIngredientListItemById: vi.fn().mockResolvedValue("moved"),
 	removeFoodFromIngredientList: vi.fn().mockResolvedValue("removed"),
 }));
 
@@ -33,6 +34,7 @@ vi.mock("$lib/utils/storage/client/ingredientLists", async (importOriginal) => {
 		...actual,
 		addFoodToIngredientList: ingredientListMocks.addFoodToIngredientList,
 		moveFoodToIngredientList: ingredientListMocks.moveFoodToIngredientList,
+		moveIngredientListItemById: ingredientListMocks.moveIngredientListItemById,
 		removeFoodFromIngredientList:
 			ingredientListMocks.removeFoodFromIngredientList,
 	};
@@ -593,6 +595,7 @@ describe("CustomIngredientForm", () => {
 		customFoodMocks.findCustomFoodByName.mockReturnValue(null);
 		ingredientListMocks.addFoodToIngredientList.mockResolvedValue("added");
 		ingredientListMocks.moveFoodToIngredientList.mockResolvedValue("moved");
+		ingredientListMocks.moveIngredientListItemById.mockResolvedValue("moved");
 		ingredientListMocks.removeFoodFromIngredientList.mockResolvedValue(
 			"removed",
 		);
@@ -1064,6 +1067,84 @@ describe("CustomIngredientForm", () => {
 			MIX_STORAGE_KEYS.shoppingList,
 			expect.objectContaining({ description: "Shelf stable snack" }),
 		);
+	});
+
+	it("disables saving when the selected list already contains the barcode", async () => {
+		const onCreate = vi.fn();
+		const identityKey = "barcode:04006381333931";
+		render(CustomIngredientForm, {
+			props: {
+				onCreate,
+				ingredientListIndex: {
+					[MIX_STORAGE_KEYS.fridge]: {
+						foodIds: [41],
+						foodIdentityKeys: [identityKey],
+					},
+					[MIX_STORAGE_KEYS.shoppingList]: {
+						foodIds: [],
+						foodIdentityKeys: [],
+					},
+				},
+			},
+		});
+
+		await fillRequiredCustomIngredient("Existing barcode snack", {
+			barcode: "4006381333931",
+		});
+
+		const alreadySaved = screen.getByRole("button", {
+			name: "Already saved",
+		});
+		expect(alreadySaved).toBeDisabled();
+		expect(screen.getByText(/already saved in Fridge/i)).toBeInTheDocument();
+		await fireEvent.click(alreadySaved);
+		expect(customFoodMocks.saveCustomFood).not.toHaveBeenCalled();
+		expect(onCreate).not.toHaveBeenCalled();
+	});
+
+	it("offers and confirms moving an existing barcode to the selected list", async () => {
+		const onCreate = vi.fn();
+		const onClose = vi.fn();
+		const identityKey = "barcode:04006381333931";
+		const existingFoodId = -9_280_001;
+		render(CustomIngredientForm, {
+			props: {
+				onCreate,
+				onClose,
+				moveConfirmationRouteOpen: true,
+				ingredientListIndex: {
+					[MIX_STORAGE_KEYS.fridge]: {
+						foodIds: [existingFoodId],
+						foodIdentityKeys: [identityKey],
+					},
+					[MIX_STORAGE_KEYS.shoppingList]: {
+						foodIds: [],
+						foodIdentityKeys: [],
+					},
+				},
+			},
+		});
+
+		await fillRequiredCustomIngredient("Existing barcode snack", {
+			barcode: "4006381333931",
+			destination: MIX_STORAGE_KEYS.shoppingList,
+		});
+		await fireEvent.click(
+			screen.getByRole("button", { name: "Move to Shopping List" }),
+		);
+		expect(await screen.findByText(/already in Fridge/i)).toBeInTheDocument();
+		expect(customFoodMocks.saveCustomFood).not.toHaveBeenCalled();
+		await fireEvent.click(screen.getByRole("button", { name: "Move" }));
+
+		await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+		expect(ingredientListMocks.moveIngredientListItemById).toHaveBeenCalledWith(
+			MIX_STORAGE_KEYS.fridge,
+			MIX_STORAGE_KEYS.shoppingList,
+			existingFoodId,
+		);
+		expect(customFoodMocks.saveCustomFood).not.toHaveBeenCalled();
+		expect(ingredientListMocks.moveFoodToIngredientList).not.toHaveBeenCalled();
+		expect(onCreate).not.toHaveBeenCalled();
 	});
 
 	it("asks before moving an existing fridge item to shopping", async () => {

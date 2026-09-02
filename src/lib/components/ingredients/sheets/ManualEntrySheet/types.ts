@@ -1,6 +1,7 @@
 import type { ManualEntryCreateHandler } from "$lib/components/ingredients/manual-entry/types";
 import type { FoodItem } from "$lib/utils/food/types";
 import type { CatalogSubmissionIntent } from "$lib/utils/products/catalog";
+import type { CloudIngredientListIndex } from "$lib/utils/storage/supabase/lists";
 
 export type ManualEntrySheetProps = {
 	open: boolean;
@@ -15,4 +16,5 @@ export type ManualEntrySheetProps = {
 	initialFood?: FoodItem;
 	submissionIntent?: CatalogSubmissionIntent;
 	catalogSubmissionOnly?: boolean;
+	ingredientListIndex?: CloudIngredientListIndex;
 };
