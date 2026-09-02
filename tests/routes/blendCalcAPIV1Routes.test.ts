@@ -194,6 +194,28 @@ describe("blendCalcAPI v1 route responses", () => {
 		});
 	});
 
+	it("returns the same public result for withheld and absent products", async () => {
+		mocks.readBlendCalcAPIV1ProductByBarcode.mockResolvedValue(null);
+		const responses = await Promise.all(
+			["00021130493609", "00000000000000"].map((barcode) =>
+				getProduct({
+					locals: createLocals(),
+					params: { barcode },
+					url: createProductUrl(barcode),
+				} as never),
+			),
+		);
+		const payloads = await Promise.all(
+			responses.map((response) => response.json()),
+		);
+
+		expect(responses.map((response) => response.status)).toEqual([404, 404]);
+		expect(payloads[0]).toEqual(payloads[1]);
+		expect(JSON.stringify(payloads)).not.toMatch(
+			/readiness|withheld|moderation|publication/i,
+		);
+	});
+
 	it.each([
 		{ barcode: "not-a-barcode", path: PRODUCT_PATH, request: getProduct },
 		{
@@ -343,6 +365,30 @@ describe("blendCalcAPI v1 route responses", () => {
 				limit: 15,
 				offset: 0,
 				query: "tomato",
+			},
+			{ databaseAbortSignal: expect.any(AbortSignal) },
+		);
+	});
+
+	it("passes hostile-looking search text only as a bounded data value", async () => {
+		mocks.searchBlendCalcAPIV1Products.mockResolvedValue({
+			products: [],
+			pagination: { ...blendCalcAPIV1PaginationFixture, total: 0 },
+		});
+		const url = new URL("http://localhost/api/v1/foods/search");
+		url.searchParams.set("q", "tomato') OR true --");
+		const response = await searchFoods({
+			locals: createLocals(),
+			url,
+		} as never);
+
+		expect(response.status).toBe(200);
+		expect(mocks.searchBlendCalcAPIV1Products).toHaveBeenCalledWith(
+			mocks.adminClient,
+			{
+				limit: 15,
+				offset: 0,
+				query: "tomato') OR true --",
 			},
 			{ databaseAbortSignal: expect.any(AbortSignal) },
 		);

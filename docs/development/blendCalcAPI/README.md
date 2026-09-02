@@ -342,8 +342,9 @@ Every blendCalcAPI v1 read is bounded on the server:
   whitespace.
 - Each endpoint accepts only its documented query parameters. Unknown and repeated
   parameters are rejected, pagination uses canonical base-10 whole numbers only, search
-  text is limited to 120 characters, and the complete encoded query string is limited
-  to 2,048 characters.
+  text is limited to 120 characters, control and ambiguous invisible formatting
+  characters are rejected, and the complete encoded query string is limited to 2,048
+  characters.
 - Search, category, and revision pages enforce their documented maximum page sizes and
   a maximum offset of 1,000 before the database is queried.
 - Catalog work has a 10-second deadline. The same abort signal is passed into the
@@ -355,6 +356,11 @@ Every blendCalcAPI v1 read is bounded on the server:
 - Collection responses are bounded by pagination. Exact-product responses remain
   complete rather than being silently truncated; the read-only payload audit measures
   those responses before a new detail level or production response-size gate is added.
+
+The abuse regression corpus verifies indistinguishable absent/withheld product responses,
+oversized and ambiguous query rejection, strict malformed-GTIN rejection, literal handling
+of hostile-looking search text, burst and sustained retry-storm limits, revoked-key denial,
+and the absence of upload or request-body operations from v1.
 
 ## Payload Measurement
 

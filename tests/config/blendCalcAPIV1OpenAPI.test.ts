@@ -35,6 +35,17 @@ describe("blendCalcAPI v1 OpenAPI contract", () => {
 		}
 	});
 
+	it("exposes no upload or mutable request-body contract", () => {
+		for (const path of Object.values(specification.paths)) {
+			expect(Object.keys(path)).toEqual(["get"]);
+			expect(path.get).not.toHaveProperty("requestBody");
+		}
+		const serialized = JSON.stringify(specification);
+		expect(serialized).not.toContain("multipart/form-data");
+		expect(serialized).not.toContain("application/octet-stream");
+		expect(serialized).not.toContain('"format":"binary"');
+	});
+
 	it("keeps documented pagination aligned with runtime limits", () => {
 		const readQueryParameter = (path: string, name: string) => {
 			const operation = specification.paths[path]?.get as {
