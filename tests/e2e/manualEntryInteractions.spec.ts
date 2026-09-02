@@ -13,6 +13,80 @@ const expectedManualEntryReferenceDataUnavailableMessage =
 	"Nutrition tools couldn’t load. Refresh and try again before continuing.";
 const listMembershipTestBarcode = "04006381333931";
 const listMembershipTestFoodId = -9_280_001;
+const optionalPhotoProductBarcode = "00030000581728";
+const optionalPhotoProductDraft = {
+	barcode: optionalPhotoProductBarcode,
+	name: "Caramel Rice Crisps",
+	nameProvenance: "source",
+	brandOwner: "Quaker",
+	servingLabel: "1 cake",
+	servingWeightGrams: 13,
+	hasSourceServing: true,
+	nutrients: [
+		{
+			nutrientId: 1008,
+			nutrientName: "Calories",
+			nutrientNumber: "208",
+			unitName: "kcal",
+			value: 50,
+		},
+		{
+			nutrientId: 1004,
+			nutrientName: "Total Fat",
+			nutrientNumber: "204",
+			unitName: "g",
+			value: 0.5,
+		},
+		{
+			nutrientId: 1005,
+			nutrientName: "Total Carbohydrates",
+			nutrientNumber: "205",
+			unitName: "g",
+			value: 11,
+		},
+		{
+			nutrientId: 1079,
+			nutrientName: "Dietary Fiber",
+			nutrientNumber: "291",
+			unitName: "g",
+			value: 0,
+		},
+		{
+			nutrientId: 2000,
+			nutrientName: "Total Sugars",
+			nutrientNumber: "269",
+			unitName: "g",
+			value: 3,
+		},
+		{
+			nutrientId: 1003,
+			nutrientName: "Protein",
+			nutrientNumber: "203",
+			unitName: "g",
+			value: 1,
+		},
+		{
+			nutrientId: 1093,
+			nutrientName: "Sodium",
+			nutrientNumber: "307",
+			unitName: "mg",
+			value: 45,
+		},
+	],
+	reportedNutrientIds: [1008, 1004, 1005, 1079, 2000, 1003, 1093],
+	categories: ["Cereal Grains and Pasta"],
+	resolvedCategory: "Cereal Grains and Pasta",
+	categoryResolution: {
+		categoryOptionId: "qa-grains",
+		label: "Cereal Grains and Pasta",
+		sourceValue: "Cereal Grains and Pasta",
+		confidence: "exact",
+	},
+	source: "usda",
+	sourceKey: "usda",
+	sourceLabel: "USDA FDC",
+	sourceReference: "12345",
+};
 
 const removeListMembershipTestFood = async (parallelWorkerIndex: number) => {
 	const supabase =
@@ -51,6 +125,36 @@ const seedListMembershipTestFood = async (parallelWorkerIndex: number) => {
 	if (data !== "added") {
 		throw new Error(`Could not seed manual-entry list membership: ${data}`);
 	}
+};
+
+const cleanUpOptionalPhotoProduct = async (parallelWorkerIndex: number) => {
+	const supabase =
+		await getAuthenticatedLocalQaDatabaseClient(parallelWorkerIndex);
+	const { data: customFoods, error: customFoodsError } = await supabase
+		.from("custom_foods")
+		.select("id, fdc_id")
+		.eq("barcode", optionalPhotoProductBarcode);
+	if (customFoodsError) throw customFoodsError;
+
+	for (const customFood of customFoods ?? []) {
+		for (const listType of ["fridge", "shopping"] as const) {
+			const { error } = await supabase.rpc("remove_user_food_list_item", {
+				p_fdc_id: customFood.fdc_id,
+				p_list_type: listType,
+			});
+			if (error) throw error;
+		}
+	}
+
+	if ((customFoods ?? []).length === 0) return;
+	const { error: deleteError } = await supabase
+		.from("custom_foods")
+		.delete()
+		.in(
+			"id",
+			(customFoods ?? []).map((customFood) => customFood.id),
+		);
+	if (deleteError) throw deleteError;
 };
 const cleanUpCanonicalCategoryDisplayTestFood = async (
 	parallelWorkerIndex: number,
@@ -467,6 +571,144 @@ test("manual barcode entry shows input-bound progress until lookup finishes", as
 		loadingFrame.getByRole("status", { name: "Checking barcode sources" }),
 	).toHaveCount(0);
 	await expect(continueButton).toBeEnabled();
+});
+
+test("an optional source product photo enters moderation without blocking a private save", async ({
+	page,
+}, testInfo) => {
+	testInfo.setTimeout(120_000);
+	test.skip(
+		testInfo.project.name !== "desktop-chromium",
+		"One isolated local Chromium project owns the optional-photo save corpus.",
+	);
+	const baseUrl = new URL(
+		String(testInfo.project.use.baseURL ?? "http://localhost:5174"),
+	);
+	test.skip(
+		!["127.0.0.1", "localhost"].includes(baseUrl.hostname),
+		"The optional-photo save corpus is restricted to disposable local infrastructure.",
+	);
+	const supabase = await getAuthenticatedLocalQaDatabaseClient(
+		testInfo.parallelIndex,
+	);
+
+	let intakeRequestBody: Buffer | null = null;
+	let intakeRequestCount = 0;
+	await page.route(
+		`**/api/products/barcode/${optionalPhotoProductBarcode}`,
+		async (route) => {
+			await route.fulfill({
+				status: 200,
+				contentType: "application/json",
+				body: JSON.stringify({
+					status: "found",
+					draft: optionalPhotoProductDraft,
+				}),
+			});
+		},
+	);
+	await page.route(
+		`**/api/products/barcode/${optionalPhotoProductBarcode}/share-validation`,
+		async (route) => {
+			await route.fulfill({
+				status: 200,
+				contentType: "application/json",
+				body: JSON.stringify({
+					status: "matched",
+					barcode: optionalPhotoProductBarcode,
+					draft: optionalPhotoProductDraft,
+					defaultSharingAllowed: true,
+					requiresCatalogEvidence: false,
+				}),
+			});
+		},
+	);
+	await page.route("**/api/intake/v1/product-observations", async (route) => {
+		intakeRequestCount += 1;
+		intakeRequestBody = route.request().postDataBuffer();
+		await route.fulfill({
+			status: 201,
+			contentType: "application/json",
+			body: JSON.stringify({
+				status: "pending",
+				message:
+					"The ingredient was saved privately. The product image is waiting for moderator review before it can be shared.",
+				evidenceAccepted: true,
+			}),
+		});
+	});
+
+	const openProductAtShare = async () => {
+		await page.goto("/ingredients/fridge/manual-entry");
+		await waitForAppReady(page);
+		const dialog = page.getByRole("dialog", { name: "Enter Manually" });
+		const barcodeInput = dialog.getByLabel("UPC / Barcode");
+		await barcodeInput.fill(optionalPhotoProductBarcode);
+		await barcodeInput.press("Tab");
+		await expect(
+			dialog.getByText("Caramel Rice Crisps · Quaker", { exact: true }),
+		).toBeVisible();
+		await dialog.getByRole("button", { name: "Autofill" }).click();
+		const shareTab = dialog.getByRole("tab", { name: "Share" });
+		await shareTab.click();
+		await expect(shareTab).toHaveAttribute("aria-selected", "true");
+		await expect(dialog.getByLabel("Share with community")).toBeChecked();
+		return dialog;
+	};
+
+	await cleanUpOptionalPhotoProduct(testInfo.parallelIndex);
+	try {
+		let dialog = await openProductAtShare();
+		const frontPhotoInput = dialog.getByLabel("Front of package");
+		await expect(frontPhotoInput).toBeVisible();
+		await expect(frontPhotoInput).not.toHaveAttribute("required", "");
+		await expect(dialog.getByLabel("Nutrition facts label")).toHaveCount(0);
+		await expect(dialog.getByLabel("Barcode", { exact: true })).toHaveCount(0);
+
+		await dialog.getByLabel("Share with community").click();
+		await dialog.getByRole("button", { name: "Add Ingredient" }).click();
+		await expect(dialog).toBeHidden();
+		expect(intakeRequestCount).toBe(0);
+
+		const { count: privateFoodCount, error: privateFoodError } = await supabase
+			.from("custom_foods")
+			.select("id", { count: "exact", head: true })
+			.eq("barcode", optionalPhotoProductBarcode);
+		if (privateFoodError) throw privateFoodError;
+		expect(privateFoodCount).toBe(1);
+
+		await cleanUpOptionalPhotoProduct(testInfo.parallelIndex);
+		await page.evaluate(() => sessionStorage.clear());
+		dialog = await openProductAtShare();
+		await dialog.getByLabel("Front of package").setInputFiles({
+			name: "caramel-rice-crisps-front.png",
+			mimeType: "image/png",
+			buffer: Buffer.from("browser evidence upload"),
+		});
+		await expect(dialog.getByLabel("Share with community")).not.toBeChecked();
+		await dialog.getByLabel("Share with community").click();
+		await expect(dialog.getByLabel("Share with community")).toBeChecked();
+		const addButton = dialog.getByRole("button", { name: "Add Ingredient" });
+		await expect(addButton).toBeEnabled({ timeout: 30_000 });
+		await addButton.click();
+		await expect.poll(() => intakeRequestCount).toBe(1);
+
+		expect(intakeRequestBody).not.toBeNull();
+		const multipartBody = intakeRequestBody!.toString("latin1");
+		expect(multipartBody).toContain(
+			'name="frontPhoto"; filename="caramel-rice-crisps-front.png"',
+		);
+		expect(multipartBody).not.toContain('name="nutritionPhoto"');
+		expect(multipartBody).not.toContain('name="barcodePhoto"');
+		expect(multipartBody).not.toContain('name="reviewFlags"');
+
+		const publicProductResponse = await page.request.get(
+			`/api/v1/products/${optionalPhotoProductBarcode}`,
+		);
+		expect(publicProductResponse.status()).toBe(404);
+	} finally {
+		await cleanUpOptionalPhotoProduct(testInfo.parallelIndex);
+	}
 });
 
 test("regulated alcohol lookup keeps sparse nutrition honest before Share", async ({

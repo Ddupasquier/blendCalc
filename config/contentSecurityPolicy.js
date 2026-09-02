@@ -21,7 +21,7 @@ export const readViteMode = (
 ) => {
 	if (environment.BLENDCALC_DATABASE_ENVIRONMENT === "test") return "test";
 	const modeIndex = args.indexOf("--mode");
-	return modeIndex >= 0 ? args[modeIndex + 1] ?? "" : "";
+	return modeIndex >= 0 ? (args[modeIndex + 1] ?? "") : "";
 };
 
 export const createConnectSources = (mode = readViteMode()) => [
@@ -32,6 +32,7 @@ export const createConnectSources = (mode = readViteMode()) => [
 export const createImageSources = (mode = readViteMode()) => [
 	"self",
 	"data:",
+	"blob:",
 	"https:",
 	...(mode === "test" ? ["http://127.0.0.1:54321"] : []),
 ];
