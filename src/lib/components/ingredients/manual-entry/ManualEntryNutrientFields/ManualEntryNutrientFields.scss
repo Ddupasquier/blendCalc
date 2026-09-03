@@ -41,6 +41,19 @@
 	}
 }
 
+.manual-nutrients__group-count {
+	flex: 0 0 auto;
+	padding: $app-text-badge-padding-y $app-text-badge-padding-x;
+	color: $app-shell-text-muted;
+	background: $app-shell-surface-control;
+	border-radius: $app-shell-radius-pill;
+	font-size: $app-font-size-xs;
+	font-variant-numeric: tabular-nums;
+	font-weight: $app-font-weight-bold;
+	line-height: $app-line-height-tight;
+	white-space: nowrap;
+}
+
 label {
 	display: grid;
 	gap: $app-gap-sm;

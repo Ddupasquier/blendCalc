@@ -244,6 +244,9 @@ export const normalizeFoodForStorage = (food: FoodItem): FoodItem => {
 		})),
 		nutrientSourceReview: food.nutrientSourceReview?.map((entry) => ({
 			...entry,
+			measurementBasis: entry.measurementBasis
+				? { ...entry.measurementBasis }
+				: undefined,
 		})),
 	};
 };

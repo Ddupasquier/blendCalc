@@ -5,6 +5,25 @@ import {
 	getManualBarcodeReferenceResult,
 } from "$lib/components/ingredients/manual-entry/utils/barcodeFlow";
 import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
+import type { ManualEntryNutrientDefinition } from "$lib/utils/food/nutrients/nutrientDefinitions";
+
+const nutrientField = (
+	nutrientId: number,
+	step: "macros" | "extended",
+): ManualEntryNutrientDefinition => ({
+	dedupeKey: `${step}:${nutrientId}`,
+	nutrientId,
+	nutrientName: `Nutrient ${nutrientId}`,
+	nutrientNumber: String(nutrientId),
+	unitName: "G",
+	nutrientType: null,
+	step,
+	group: step === "macros" ? "Macros" : "Vitamins",
+	groupSort: 10,
+	sort: nutrientId,
+	label: `Nutrient ${nutrientId}`,
+	requiredForManualEntry: false,
+});
 
 const makeSparseDraft = (
 	overrides: Partial<BarcodeProductDraft>,
@@ -81,10 +100,10 @@ describe("sparse alcohol barcode form state", () => {
 			usesInternal100GramBasis: true,
 			alcoholByVolume: { percent: 20 },
 		});
-		expect(getBarcodeImportMessage(draft, 0, "scan")).toContain(
-			"did not report nutrition values",
+		expect(getBarcodeImportMessage(draft, [], "scan")).toContain(
+			"No nutrition values from this source could be accepted and retained",
 		);
-		expect(getBarcodeImportMessage(draft, 0, "scan")).toContain(
+		expect(getBarcodeImportMessage(draft, [], "scan")).toContain(
 			"No package serving weight was reported",
 		);
 	});
@@ -120,11 +139,91 @@ describe("sparse alcohol barcode form state", () => {
 		const state = getBarcodeDraftState(draft);
 		expect(state.manualNutrientValues).toEqual({ 1258: 0, 2000: 0 });
 		expect(state.importedNutrients).toHaveLength(2);
-		expect(getBarcodeImportMessage(draft, 0, "autofill")).toContain(
-			"2 nutrition values were reported",
+		const message = getBarcodeImportMessage(
+			draft,
+			[nutrientField(1258, "macros"), nutrientField(2000, "macros")],
+			"autofill",
 		);
-		expect(getBarcodeImportMessage(draft, 0, "autofill")).toContain(
-			"Missing values remain unknown",
+		expect(message).toContain(
+			"2 nutrition values were accepted and retained from the source",
+		);
+		expect(message).toContain("Review 2 in Macros");
+		expect(message).not.toContain("vitamin or mineral");
+		expect(message).toContain("Missing values remain unknown");
+	});
+
+	it("reports the exact Manual Entry locations for the investigated UPC", () => {
+		const macroIds = [
+			1008, 1003, 1004, 1005, 1079, 2000, 1235, 1093, 1258, 1257, 1293, 1292,
+			1253,
+		];
+		const extendedIds = [1087, 1089, 1092, 1114];
+		const draft = makeSparseDraft({
+			barcode: "00030000581728",
+			nutrients: [...macroIds, ...extendedIds].map((nutrientId) => ({
+				nutrientId,
+				nutrientName: `Nutrient ${nutrientId}`,
+				nutrientNumber: String(nutrientId),
+				unitName: "G",
+				value: nutrientId === 1114 ? 0 : 1,
+			})),
+			reportedNutrientIds: [...macroIds, ...extendedIds],
+		});
+
+		const message = getBarcodeImportMessage(
+			draft,
+			[
+				...macroIds.map((id) => nutrientField(id, "macros")),
+				...extendedIds.map((id) => nutrientField(id, "extended")),
+			],
+			"autofill",
+		);
+
+		expect(message).toContain(
+			"17 nutrition values were accepted and retained from the source",
+		);
+		expect(message).toContain("Review 13 in Macros and 4 in Extended");
+		expect(message).not.toContain("additional vitamin or mineral");
+	});
+
+	it("calls out accepted values without an editable field", () => {
+		const draft = makeSparseDraft({
+			nutrients: [
+				{
+					nutrientId: 9999,
+					nutrientName: "Reviewed nutrient",
+					nutrientNumber: "9999",
+					unitName: "G",
+					value: 1,
+				},
+			],
+			reportedNutrientIds: [9999],
+		});
+
+		expect(getBarcodeImportMessage(draft, [], "scan")).toContain(
+			"1 accepted and retained value does not yet have an editable Manual Entry field",
+		);
+	});
+
+	it("carries mapping-review evidence into the form and explains that it is excluded from math", () => {
+		const draft = makeSparseDraft({
+			nutrientSourceReview: [
+				{
+					nutrientName: "Example nutrient",
+					unitName: "mg",
+					amount: 4,
+					measurementBasis: { kind: "mass", quantity: 100, unitKey: "g" },
+					valueStatus: "reported",
+					mappingStatus: "unmapped",
+					sourceNutrientKey: "example-nutrient",
+				},
+			],
+		});
+
+		const state = getBarcodeDraftState(draft);
+		expect(state.nutrientSourceReview).toHaveLength(1);
+		expect(getBarcodeImportMessage(draft, [], "autofill")).toContain(
+			"1 additional source value needs mapping review and is not used in nutrition calculations",
 		);
 	});
 });

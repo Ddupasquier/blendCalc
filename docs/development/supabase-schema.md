@@ -388,6 +388,19 @@ Notes:
   `amount_per_100g`. Source nutrient keys/codes and mapping/derivation metadata retain
   the exact normalization decision; `mapping_review_reference` is internal moderation
   evidence and is not serialized by the public API.
+- Numeric Open Food Facts values whose exact source key, reported unit, or required
+  conversion is not approved remain in the parent food JSON's private
+  `nutrientSourceReview` evidence, including the source amount and its reported basis.
+  They do not create `food_nutrients` rows. The read-only
+  `npm run audit:off-nutrient-mappings` command reconciles the complete provider
+  taxonomy against approved, queued, unqueued-candidate, and unsupported mapping
+  identities. Existing successful Open Food Facts cache refreshes populate the private
+  `nutrient_source_mapping_observations` identity/count table without an extra provider
+  request and without user, barcode, product, amount, or raw-payload data.
+  `node scripts/seeds/nutrition/seed_open_food_facts_nutrient_mapping_candidates.mjs`
+  previews only observed exact rows with
+  a cautious canonical candidate as eligible for `pending_review`; only an explicit
+  `--apply` writes those rows. Taxonomy-only candidates remain audit evidence.
 - USDA FoodData Central nutrient identifiers are the canonical nutrient identifiers
   stored by blendCalc. When the identifier, canonical unit, USDA source, and exact
   source reference agree, the database records `source-identifier` lineage
@@ -479,7 +492,11 @@ Notes:
   whether an approved field exists in the UI.
 - Required status should render from `nutrient_manual_entry_required_nutrients` via
   `nutrient_manual_entry_fields.required_for_manual_entry`; do not maintain a separate
-  UI-only required nutrient list.
+  UI-only required nutrient list. The neutral `Core nutrition` group title describes
+  the fields without promising that every save requires them. Those fields are required
+  only for the current action of sharing a standard label; private saves and reviewed
+  sparse-label profiles preserve blank values as unknown. An explicit reported zero is
+  still a populated value.
 - Observations preserve raw API provenance. Unknown nutrients go to the disabled
   unclassified review group until an approved DB classification is added. Retired
   aliases retain a canonical replacement rather than becoming duplicate inputs.
@@ -627,10 +644,11 @@ Notes:
 
 ### `nutrient_source_mappings`
 
-| Table                               | Documented columns                                                                                                                                                                                                                                            |
-| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `nutrient_source_mappings`          | `id`, `source_key`, `source_nutrient_key`, `source_unit_name`, `source_nutrient_name`, `nutrient_id`, `priority`, `mapping_method`, `review_status`, `review_reference`, `confidence`, `enabled`, observation counts/timestamps, `provenance`, and timestamps |
-| `nutrient_mapping_review_decisions` | `id`, `mapping_id`, source identity snapshot, `outcome`, previous and selected nutrient IDs, previous mapping method, bounded review note and evidence reference, reviewer, and review time                                                                   |
+| Table                                  | Documented columns                                                                                                                                                                                                                                            |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `nutrient_source_mappings`             | `id`, `source_key`, `source_nutrient_key`, `source_unit_name`, `source_nutrient_name`, `nutrient_id`, `priority`, `mapping_method`, `review_status`, `review_reference`, `confidence`, `enabled`, observation counts/timestamps, `provenance`, and timestamps |
+| `nutrient_source_mapping_observations` | `source_key`, exact `source_nutrient_key` and normalized `source_unit_name`, neutral source name, anonymous observation count, first/last-seen times, and timestamps                                                                                          |
+| `nutrient_mapping_review_decisions`    | `id`, `mapping_id`, source identity snapshot, `outcome`, previous and selected nutrient IDs, previous mapping method, bounded review note and evidence reference, reviewer, and review time                                                                   |
 
 Notes:
 
@@ -673,6 +691,16 @@ Notes:
 - `20260727120000_canonical_barcode_nutrient_mappings.sql` restores the reviewed Open
   Food Facts label mappings, including Total Fat and gram-to-milligram Sodium, and
   rewrites applicable existing food snapshots through the enabled equivalence catalog.
+- `20260902120000_open_food_facts_micronutrient_mappings.sql` adds the reviewed
+  gram-unit Open Food Facts mappings observed on UPC `00030000581728` for Calcium,
+  Iron, Potassium, and Vitamin D. Their source values convert to the canonical
+  milligram or microgram units through nutrient-specific UCUM-backed conversion rows,
+  so all four remain available in Manual Entry's Extended step instead of being
+  discarded during barcode mapping.
+- `20260902133000_complete_open_food_facts_mass_conversions.sql` completes that UPC's
+  reviewed source-unit path with the missing gram-to-milligram conversions for Sodium
+  and Cholesterol. The already-approved source identities can therefore retain all 17
+  reported values instead of diverting those two values to mapping review.
 
 ### `nutrient_unit_conversions`
 
@@ -690,6 +718,12 @@ Notes:
 - A source mapping with a different unit cannot rely on same-family mass or energy
   assumptions. It remains unusable until this table contains the exact reviewed
   source/nutrient/from-unit/to-unit conversion.
+- Open Food Facts observation rows come from trusted successful `product_api_cache`
+  refreshes, not client-submitted food JSON. The cache write already exists, so the
+  observation adds no provider request and does not occur on cache hits. Only the exact
+  nutrient identity, a bounded neutral name, aggregate count, and first/last-seen times
+  are retained. The service-role-only table has no user, barcode, product, nutrient
+  amount, or raw-payload columns.
 
 ### `serving_measure_units` and `serving_measure_aliases`
 

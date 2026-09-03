@@ -25,6 +25,7 @@
 		getValue,
 		onValueChange,
 		isRequired,
+		getGroupBadge,
 		onBack,
 		onNext,
 	}: NutrientStepProps = $props();
@@ -55,8 +56,9 @@
 			{accordion}
 			{defaultOpenFirst}
 			{getValue}
-			onValueChange={onValueChange}
+			{onValueChange}
 			{isRequired}
+			{getGroupBadge}
 		/>
 	{/if}
 

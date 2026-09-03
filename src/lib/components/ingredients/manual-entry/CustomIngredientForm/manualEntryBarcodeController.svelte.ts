@@ -167,9 +167,6 @@ export const createManualEntryBarcodeController = ({
 				form.data.barcodeSource === "usda"),
 		),
 	);
-	const shouldSubmitOptionalProductImageReview = $derived(
-		showOptionalProductImageUpload && Boolean(form.data.frontPhoto),
-	);
 	const shareUnavailableMessage = $derived(
 		sharedCatalogMatchIsUnchanged
 			? "This barcode already exists in blendCalc with matching data, so it cannot be shared again. You can still save it to your own profile."
@@ -340,6 +337,7 @@ export const createManualEntryBarcodeController = ({
 			]),
 		);
 		form.data.reportedNutrientIds = [];
+		form.data.nutrientSourceReview = [];
 		form.data.serving = form.data.serving
 			? {
 					...form.data.serving,
@@ -418,10 +416,7 @@ export const createManualEntryBarcodeController = ({
 		form.data.barcodeReferenceDraft = null;
 		form.data.barcodeMessage = getBarcodeImportMessage(
 			draft,
-			form.getOptionalNutrientTotal(
-				validation.nutrientFields,
-				validation.requiredNutrientFields,
-			),
+			validation.nutrientFields,
 			"autofill",
 		);
 		await tick();
@@ -604,11 +599,7 @@ export const createManualEntryBarcodeController = ({
 		try {
 			const outcome = await resolveManualEntryBarcodeScan({
 				result,
-				getOptionalNutrientCount: () =>
-					form.getOptionalNutrientTotal(
-						validation.nutrientFields,
-						validation.requiredNutrientFields,
-					),
+				manualEntryNutrientFields: validation.nutrientFields,
 			});
 			if (generation !== lookupGeneration) return { focusTarget };
 
@@ -664,11 +655,6 @@ export const createManualEntryBarcodeController = ({
 			barcodeReferenceAcceptedBarcode:
 				form.data.barcodeReferenceAcceptedBarcode,
 		}),
-		...(shouldSubmitOptionalProductImageReview
-			? [
-					"User provided an optional product image because no trusted DB/API image exists for this barcode. Review the package image and crop before publishing it.",
-				]
-			: []),
 	];
 
 	const reset = () => {
@@ -739,9 +725,6 @@ export const createManualEntryBarcodeController = ({
 		},
 		get showOptionalProductImageUpload() {
 			return showOptionalProductImageUpload;
-		},
-		get shouldSubmitOptionalProductImageReview() {
-			return shouldSubmitOptionalProductImageReview;
 		},
 		get shareUnavailableMessage() {
 			return shareUnavailableMessage;

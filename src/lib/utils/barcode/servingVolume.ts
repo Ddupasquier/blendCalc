@@ -14,7 +14,9 @@ const parseQuantity = (value: string) => {
 	const normalized = value.trim();
 	const mixedNumber = normalized.match(/^(\d+)\s+(\d+)\/(\d+)$/);
 	if (mixedNumber) {
-		return Number(mixedNumber[1]) + Number(mixedNumber[2]) / Number(mixedNumber[3]);
+		return (
+			Number(mixedNumber[1]) + Number(mixedNumber[2]) / Number(mixedNumber[3])
+		);
 	}
 	const fraction = normalized.match(/^(\d+)\/(\d+)$/);
 	if (fraction) return Number(fraction[1]) / Number(fraction[2]);
@@ -32,20 +34,28 @@ export const parseVolumeEquivalent = (
 
 	const quantity = parseQuantity(match[1]);
 	if (!Number.isFinite(quantity) || quantity <= 0) return null;
-	const normalizedUnitText = normalizeServingMeasureAlias(
-		match[2].replaceAll(".", ""),
-	);
+	const normalizedUnitText = match[2]
+		.replaceAll(".", "")
+		.trim()
+		.toLowerCase()
+		.replace(/\s+/g, " ");
 	const alias = [...SERVING_MEASURE_ALIAS_ENTRIES]
 		.sort(
 			(left, right) =>
 				normalizeServingMeasureAlias(right.alias).length -
 				normalizeServingMeasureAlias(left.alias).length,
 		)
-		.find((entry) =>
-			normalizedUnitText.startsWith(
-				normalizeServingMeasureAlias(entry.alias.replaceAll(".", "")),
-			),
-		);
+		.find((entry) => {
+			const normalizedAlias = entry.alias
+				.replaceAll(".", "")
+				.trim()
+				.toLowerCase()
+				.replace(/\s+/g, " ");
+			return (
+				normalizedUnitText === normalizedAlias ||
+				normalizedUnitText.startsWith(`${normalizedAlias} `)
+			);
+		});
 	if (!alias || getServingMeasureOption(alias.unit)?.dimension !== "volume") {
 		return null;
 	}

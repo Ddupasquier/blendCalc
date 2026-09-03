@@ -112,6 +112,11 @@ Required behavior:
 - validate the current step only after a forward attempt through Continue or the step
   progress control;
 - accept explicit reported zero without treating an empty field as zero;
+- after accepted barcode autofill, label nutrient groups with returned values `From
+barcode` and source-empty groups `Not provided`. Keep source omissions blank and
+  explain that users may enter only values the package actually reports; do not present
+  every barcode-backed nutrient group as optional or imply that identity supplies
+  nutrients the source omitted;
 - use the searchable DB-backed category picker when no canonical category is known;
 - show the shared spinner inside the barcode input as soon as a complete valid barcode
   queues a lookup, keep it visible through the request, and block forward navigation

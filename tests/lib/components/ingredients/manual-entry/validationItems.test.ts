@@ -66,16 +66,14 @@ describe("manual-entry private nutrition boundary", () => {
 		step: "macros",
 	} as ManualEntryNutrientDefinition;
 
-	it("treats missing catalog nutrients as nonblocking for a private save", () => {
+	it("does not request catalog nutrients for a private save", () => {
 		expect(
 			buildRequiredManualNutrientValidationItems({
-				requiredFields: [requiredField],
+				requiredFields: [],
 				getValue: () => null,
 				tone: "warning",
 			}),
-		).toEqual([
-			{ message: "Calories is required", tone: "warning", step: "macros" },
-		]);
+		).toEqual([]);
 	});
 
 	it("blocks sharing when a required catalog nutrient is missing", () => {
