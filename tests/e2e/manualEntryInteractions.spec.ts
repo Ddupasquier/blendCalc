@@ -1,5 +1,6 @@
 import { expect, test, waitForAppReady } from "./support/browserTest";
 import type { Locator } from "@playwright/test";
+import { readFile } from "node:fs/promises";
 import { getAuthenticatedLocalQaDatabaseClient } from "./support/localQaDatabase";
 import {
 	readApprovedManualEntryNutrientCatalog,
@@ -778,16 +779,25 @@ test("an optional source product photo enters moderation without blocking a priv
 		await cleanUpOptionalPhotoProduct(testInfo.parallelIndex);
 		await page.evaluate(() => sessionStorage.clear());
 		dialog = await openProductAtShare();
+		const responsivePlacementPhoto = await readFile(
+			new URL("../../static/social-preview.png", import.meta.url),
+		);
 		await dialog.getByLabel("Front of package").setInputFiles({
 			name: "caramel-rice-crisps-front.png",
 			mimeType: "image/png",
-			buffer: Buffer.from("browser evidence upload"),
+			buffer: responsivePlacementPhoto,
 		});
 		const publicShareToggle = dialog.getByLabel("Share with community");
 		if (!(await publicShareToggle.isChecked())) await publicShareToggle.click();
 		await expect(publicShareToggle).toBeChecked();
 		const addButton = dialog.getByRole("button", { name: "Add Ingredient" });
-		await expect(addButton).toBeEnabled({ timeout: 30_000 });
+		await expect(addButton).toBeEnabled({ timeout: 2_000 });
+		const destination = dialog.getByRole("combobox", {
+			name: "Add after saving",
+		});
+		await destination.click();
+		await expect(dialog.getByRole("option", { name: "Fridge" })).toBeVisible();
+		await page.keyboard.press("Escape");
 		await addButton.click();
 		await expect.poll(() => intakeRequestCount).toBe(1);
 
@@ -807,6 +817,87 @@ test("an optional source product photo enters moderation without blocking a priv
 	} finally {
 		await cleanUpOptionalPhotoProduct(testInfo.parallelIndex);
 	}
+});
+
+test("@mobile automatic front-photo placement never owns the Share sheet", async ({
+	page,
+}, testInfo) => {
+	test.skip(
+		testInfo.project.name !== "mobile-chromium",
+		"The phone-sized Chromium project owns this focused responsiveness check.",
+	);
+	await page.route(
+		`**/api/products/barcode/${optionalPhotoProductBarcode}/share-validation`,
+		async (route) => {
+			const response = await route.fetch();
+			const result = (await response.json()) as Record<string, unknown>;
+			await route.fulfill({
+				response,
+				contentType: "application/json",
+				body: JSON.stringify({
+					...result,
+					defaultSharingAllowed: true,
+					requiresCatalogEvidence: false,
+				}),
+			});
+		},
+	);
+
+	await page.goto("/ingredients/fridge/manual-entry");
+	await waitForAppReady(page);
+	const dialog = page.getByRole("dialog", { name: "Enter Manually" });
+	const barcodeInput = dialog.getByLabel("UPC / Barcode");
+	await barcodeInput.fill(optionalPhotoProductBarcode);
+	await barcodeInput.press("Tab");
+	await expect(
+		dialog.getByText("Caramel Rice Crisps · Quaker", { exact: true }),
+	).toBeVisible();
+	await dialog.getByRole("button", { name: "Autofill" }).click();
+	const shareTab = dialog.getByRole("tab", { name: "Share" });
+	await shareTab.click();
+	const relationshipRulesLoading = dialog.getByText(
+		"Nutrition validation rules are still loading. Try again in a moment.",
+	);
+	if (await relationshipRulesLoading.isVisible()) {
+		await expect(relationshipRulesLoading).toBeHidden();
+		await shareTab.click();
+	}
+	await expect(shareTab).toHaveAttribute("aria-selected", "true");
+	const shareToggle = dialog.getByLabel("Share with community");
+	if (!(await shareToggle.isChecked())) await shareToggle.click();
+
+	const responsivePlacementPhoto = await readFile(
+		new URL("../../static/social-preview.png", import.meta.url),
+	);
+	await dialog.getByLabel("Front of package").setInputFiles({
+		name: "mobile-front-photo.png",
+		mimeType: "image/png",
+		buffer: responsivePlacementPhoto,
+	});
+	await expect(
+		dialog.getByRole("button", { name: "Add Ingredient" }),
+	).toBeEnabled({ timeout: 2_000 });
+	await dialog.getByRole("button", { name: "Full image" }).click();
+
+	const destination = dialog.getByRole("combobox", {
+		name: "Add after saving",
+	});
+	await destination.click();
+	await expect(dialog.getByRole("option", { name: "Fridge" })).toBeVisible();
+	await page.keyboard.press("Escape");
+	const scrollRegion = dialog.locator(".bottom-sheet__content");
+	await scrollRegion.evaluate((element) =>
+		element.scrollTo(0, element.scrollHeight),
+	);
+	await expect
+		.poll(() => scrollRegion.evaluate((element) => element.scrollTop))
+		.toBeGreaterThan(0);
+
+	await dialog.getByRole("button", { name: "Back" }).click();
+	await expect(dialog.getByRole("tab", { name: "Extended" })).toHaveAttribute(
+		"aria-selected",
+		"true",
+	);
 });
 
 test("regulated alcohol lookup keeps sparse nutrition honest before Share", async ({

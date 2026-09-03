@@ -10,6 +10,7 @@ const browserDependentUtilityTests = [
 	"tests/lib/utils/animation/motion.test.ts",
 	"tests/lib/utils/barcode/scanner.test.ts",
 	"tests/lib/utils/food/customFoods.test.ts",
+	"tests/lib/utils/food/smartImagePlacementClient.test.ts",
 	"tests/lib/utils/food/smartImagePlacement.test.ts",
 	"tests/lib/utils/interaction/longPress.test.ts",
 	"tests/lib/utils/mix/mixDraftPersistenceController.test.ts",

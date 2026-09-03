@@ -68,7 +68,6 @@
 	}: ShareStepProps = $props();
 
 	let saveDestinationControl = $state<HTMLButtonElement | null>(null);
-	let automaticImagePlacementBusy = $state(false);
 
 	$effect(() => {
 		if (saveDestinationControl)
@@ -258,8 +257,6 @@
 				requireFreshPhoto={catalogSubmissionOnly}
 				{onFrontPhotoChange}
 				onPlacementChange={onImagePlacementChange}
-				onPlacementProcessingStateChange={(busy) =>
-					(automaticImagePlacementBusy = busy)}
 			/>
 			<PhotoUploadInput
 				id="custom-product-nutrition-photo"
@@ -296,8 +293,6 @@
 				description="No trusted DB/API product image was found for this barcode. You can add a front package photo now; it stays private until a moderator approves it."
 				{onFrontPhotoChange}
 				onPlacementChange={onImagePlacementChange}
-				onPlacementProcessingStateChange={(busy) =>
-					(automaticImagePlacementBusy = busy)}
 			/>
 		</section>
 	{/if}
@@ -344,8 +339,7 @@
 				? "Submit Correction"
 				: destinationAction.label}
 		busy={saving}
-		nextDisabled={automaticImagePlacementBusy ||
-			(!catalogSubmissionOnly && destinationAction.disabled)}
+		nextDisabled={!catalogSubmissionOnly && destinationAction.disabled}
 		showBack={!catalogSubmissionComplete}
 	/>
 </ManualEntryStepLayout>

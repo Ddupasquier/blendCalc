@@ -648,6 +648,9 @@ option cards, and placement previews remain identical.
 - Group long optional nutrient sets in `CollapsibleSection`.
 - Keep form state intact when the browser loses focus or the user returns from another
   window.
+- Treat automatic image placement as cancelable background assistance. The complete
+  photo remains immediately usable, progress and Stop stay visible, and no form,
+  scrolling, evidence upload, navigation, or save control waits for recognition.
 - `SelectField`, `FoodCategoryPicker`, `PhotoUploadInput`, `NutritionLabelOcrInput`,
   `BarcodeAutofillSuggestion`, validation lists, toggles, and image placement are part
   of the baseline and must use their shared components rather than raw native styling.

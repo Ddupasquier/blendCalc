@@ -78,6 +78,14 @@ An exact provider match does not remove the evidence step when that provider can
 populate the canonical catalog. If the user opts to share that product, the Share step
 requires front-package, nutrition-label, and barcode photos before submission.
 
+Front-package evidence becomes usable as soon as the file is selected. Automatic card
+placement is optional background assistance: it uses one bounded, downscaled recognition
+pass, never enlarges the source photo, stops after a short time limit, and provides an
+immediate Stop action. It must not disable Share-step scrolling, evidence inputs,
+placement controls, navigation, or submission. Replacing the photo, editing placement,
+leaving the surface, or completing the submission cancels unfinished recognition and
+late results never replace the user's newer choice.
+
 Sparse labels remain honest. A nutrient omitted from an alcohol, kombucha, exempt, or
 otherwise limited package disclosure stays unknown; it never becomes reported zero or
 an estimated value. Users may save the available facts and complete only fields the
