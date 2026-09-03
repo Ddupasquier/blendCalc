@@ -50,7 +50,7 @@
 		"audit:off-nutrient-mappings": "node scripts/audits/food-sources/audit_open_food_facts_nutrient_mappings.mjs",
 		"generate:api-structures": "node scripts/generators/api/generate_api_structures.mjs",
 		"pretest": "npm run version:check",
-		"test": "BLENDCALC_DATABASE_ENVIRONMENT=test npm run test:node && npm run test:dom",
+		"test": "BLENDCALC_DATABASE_ENVIRONMENT=test node scripts/operations/quality/run_with_resource_limits.mjs vitest run --reporter=dot",
 		"test:node": "BLENDCALC_DATABASE_ENVIRONMENT=test node scripts/operations/quality/run_with_resource_limits.mjs vitest run --project=node --reporter=dot",
 		"test:dom": "npm run test:dom:fast && npm run test:dom:svelte-runtime",
 		"test:dom:fast": "BLENDCALC_DATABASE_ENVIRONMENT=test node scripts/operations/quality/run_with_resource_limits.mjs vitest run --project=dom --reporter=dot",

@@ -119,13 +119,13 @@ npx playwright test --last-failed
 Use the visible terminal dashboard when a complete progress view is more useful than
 compact output:
 
-| Profile         | Command                    | Target       | Ownership                                                                                          |
-| --------------- | -------------------------- | ------------ | -------------------------------------------------------------------------------------------------- |
-| Quick Check     | `npm run verify:quick`     | Under 4 min  | Formatting, lint, Svelte/TypeScript, and Vitest selected from changed ownership                    |
-| Feature Check   | `npm run verify:feature`   | Under 8 min  | Source gates, every Vitest project, and browser specs selected from changed ownership              |
-| Release Check   | `npm run verify:release`   | Under 15 min | Dependency audit, source gates, disposable database, build, and the bounded blocking browser tiers |
-| Promotion Check | `npm run verify:promotion` | Under 1 min  | Proves the clean staging or main tree exactly matches a fresh successful Release Check receipt     |
-| Nightly Check   | `npm run verify:nightly`   | Nonblocking  | Release confidence plus every scenario in every maintained browser and device-emulation project    |
+| Profile         | Command                    | Target       | Ownership                                                                                             |
+| --------------- | -------------------------- | ------------ | ----------------------------------------------------------------------------------------------------- |
+| Quick Check     | `npm run verify:quick`     | Under 4 min  | Formatting, lint, Svelte/TypeScript, and Vitest selected from changed ownership                       |
+| Feature Check   | `npm run verify:feature`   | Under 6 min  | Source gates plus Vitest and browser specs selected from changed ownership                            |
+| Release Check   | `npm run verify:release`   | Under 15 min | Dependency audit, source gates, disposable database, build, and the bounded blocking browser tiers    |
+| Promotion Check | `npm run verify:promotion` | Under 1 min  | Proves a clean promoted tree matches its tested candidate, using a local receipt when no ref is given |
+| Nightly Check   | `npm run verify:nightly`   | Nonblocking  | Release confidence plus every scenario in every maintained browser and device-emulation project       |
 
 VS Code exposes the same checks through **Terminal → Run Task**. Each task opens
 one dedicated terminal and shows stage progress, elapsed time, an estimate based on
@@ -151,50 +151,55 @@ after documentation, comments, or unrelated source-only edits.
 
 ### Release Confidence
 
-Run the complete `npm run verify:release` once on the exact clean release candidate. Use
-`mock-staging` first when a large, risky, or conflict-prone batch needs a disposable
-integration checkpoint; otherwise `staging` is the release candidate. A successful run
-records an ignored, content-addressed receipt in the shared Git directory. After an
-unchanged promotion, run `npm run verify:promotion`; it finishes quickly and fails
-closed when the tree is dirty, changed, stale, missing a receipt, or uses a different
-runtime. Use `npm run verify:promotion -- --force-full` whenever a fresh full run is
-desired.
+Run `npm run verify:feature` on child branches. After approved children are merged into
+their parent feature branch, run the combined affected checks and complete the feature's
+visual or manual review there. For a multi-ticket feature, promote that exact tree to
+`mock-staging` as the release candidate and let GitHub run the complete source and
+bounded browser confidence once. The source job and independent browser jobs start
+together; desktop Chromium is split into two shards. For an ordinary single-branch
+change that does not need `mock-staging`, `staging` itself is the release candidate.
 
-GitHub follows the same boundary: feature branches run source/unit checks plus affected
-browser flows. `mock-staging` runs the complete matrix when used. Otherwise `staging`
-runs the complete checks, while `main` must match the verified `staging` tree exactly.
-Hosted checks that depend on the deployed environment still run for each applicable
-branch.
+Use `npm run verify:release` locally only when the hosted candidate run is unavailable,
+the candidate includes uncommitted work that cannot yet be published, or a fresh local
+full run is explicitly requested. A successful local run records an ignored,
+content-addressed receipt in the shared Git directory. `npm run verify:promotion`
+validates that receipt; `npm run verify:promotion -- --against <candidate-ref>` validates
+an exact Git-tree promotion without rerunning the suite. Both paths fail closed on a
+dirty or changed tree. `--force-full` deliberately bypasses local reuse.
+
+GitHub runs affected Vitest and browser coverage on ordinary feature branches. The
+selected candidate runs the complete Vitest and bounded browser tiers once. An unchanged
+promotion reuses that result: `staging` must match `mock-staging` when the disposable
+checkpoint was used, and `main` must match `staging`. Database verification runs only
+when database-owned files changed. Hosted Auth health runs only when Auth-owned files
+changed, plus its daily drift check and manual runs.
 
 #### Work-Quota Closeout
 
-An explicit work-queue quota is one review batch, not permission to combine its source
-responsibilities. Run focused checks on each feature branch while implementing. After
-the full quota is engineering-complete, create a temporary local integration worktree
-from current `staging`, apply the exact uncommitted quota diffs without committing them,
-and run one `npm run verify:release` against that combined candidate. Repair failures in
-the feature branch that owns them, recreate the integration candidate, and rerun the
-failed stage before presenting the batch for approval.
+An explicit work-queue quota is one review batch, not permission to combine unrelated
+source responsibilities. For a large feature, use one parent ticket and parent feature
+branch, with focused child branches for independently reviewable work. Run Feature Check
+on each child. After the user approves a child, merge it into the parent branch and
+rerun only checks affected by the combined change. Complete visual and manual feature
+review on the assembled parent, then promote its exact tree to `mock-staging` for one
+complete hosted candidate run. If that run fails, reopen or repair the child that owns
+the failure and create a new candidate result.
 
-The quota handoff must include every local branch, focused verification, the combined
-Release Check result, and any remaining direct user-verification steps. A green quota
-check does not authorize commits, changed-content pushes, merges, database deployment,
-or promotion. `npm run verify:nightly` remains a separate pre-release or explicitly
-requested matrix so quota closeout does not reintroduce the former 45-minute browser
-workflow.
+Use an auxiliary worktree only when unrelated uncommitted work makes a normal branch
+switch unsafe. The quota handoff must include every branch, focused evidence, the exact
+parent candidate, its hosted result, and any remaining direct user-verification steps.
+A green candidate does not authorize commits, changed-content pushes, merges, database
+deployment, or promotion. `npm run verify:nightly` remains a separate scheduled or
+explicitly requested matrix.
 
-Before promoting browser-facing work to a release branch, run:
+During browser-facing feature work, run:
 
 ```bash
-npm run lint
-npm run format:check
-npm test
-npm run check
-npm run build
-npm run test:e2e
+npm run verify:feature
 ```
 
-Run `npm run db:test:verify` when migrations, policies, functions, grants, Auth hooks,
+The exact candidate's hosted full run supplies the broader release proof. Run
+`npm run db:test:verify` when migrations, policies, functions, grants, Auth hooks,
 Storage behavior, or database-owned reference data changed. Run the maintained
 dependency audit after dependency or lockfile changes. Documentation-only work needs
 only the focused architecture and documentation checks that govern the changed text.
@@ -208,11 +213,11 @@ Vitest separates work by runtime instead of paying for jsdom in every file:
 - one OCR component test uses a standard isolated thread because Svelte runes cannot be
   evaluated safely in the VM pool.
 
-On the current development machine, a previous six-worker benchmark completed the
-2,191-assertion Vitest pass in 3 minutes 11 seconds, but that throughput setting was not
-safe under simultaneous editor, development-tool, browser, and local-database load. Vitest now uses
-two workers locally and in CI. Rebenchmark only inside the 4 GiB Node heap and resource
-preflight limits; do not trade machine stability for a shorter isolated benchmark.
+On the current development machine after removing the former editor-memory bottleneck,
+the complete 2,553-assertion Vitest pass completed in 64.6 seconds with four workers in
+one process, versus 90.8 seconds with two workers across three sequential processes.
+Vitest therefore uses four workers locally and in CI inside the maintained 4 GiB Node
+heap and resource preflight limits.
 
 Playwright defaults to two workers. A clean bounded-matrix benchmark completed in 3.7
 minutes with two workers and 4.2 minutes with three, so the extra worker increased local
@@ -222,12 +227,10 @@ equivalent browser-worker personas for future remeasurement. Override
 two are rejected. A hosted test run must provide one comma-separated
 `PLAYWRIGHT_QA_EMAILS` value per worker; one shared account is not parallel-safe.
 
-The current optimized Quick Check completes in 3 minutes 13 seconds. A cold Feature
-Check completes in 11 minutes 1 second because it still prepares the browser database
-and creates a production test build before the 3.7-minute Playwright pass. Replacing the
-production preview with a Vite development server was measured and rejected because it
-increased the same run to 12 minutes 20 seconds. Further cold-start optimization remains
-tracked work; do not shorten the run by weakening database isolation, browser ownership,
+Feature Check now runs only affected Vitest and Playwright ownership after source gates;
+it no longer repeats every Vitest project. A browser-owning change still pays for the
+isolated browser database and production test build. Further cold-start optimization
+must not weaken database isolation, browser ownership,
 production-build confidence, or failure diagnostics.
 
 `fullyParallel` lets Playwright schedule independent tests from large responsibility
@@ -272,9 +275,10 @@ only when a failure needs investigation.
 
 The checked-in workflows use Node.js 24 and a clean dependency install:
 
-- `.github/workflows/verify.yml` runs version consistency, dependency auditing, Svelte
-  checks, Vitest, the production build, and one isolated bounded job per browser
-  project. Desktop Chromium owns every routed interaction, mobile Chromium owns
+- `.github/workflows/verify.yml` chooses feature, full-candidate, or exact-promotion
+  scope before expensive setup. Feature branches run affected unit and browser work.
+  On a full candidate, source checks and browser jobs run concurrently, and desktop
+  Chromium is split across two isolated shards. Desktop Chromium owns every routed interaction, mobile Chromium owns
   compact/touch contracts, and Firefox/WebKit own tagged compatibility smoke coverage. Its
   source job supplies compile-only local public Supabase placeholders so Svelte can
   generate `$env/static/public` types without production credentials or database
@@ -288,13 +292,16 @@ The checked-in workflows use Node.js 24 and a clean dependency install:
   unchanged, so GitHub can safely require the check without leaving a pull request
   pending;
 - `.github/workflows/hosted-auth-verification.yml` checks the public production site and
-  Supabase Auth health endpoint using repository variables. The publishable browser key
-  is public configuration; the workflow receives no database password, service-role
-  key, management token, or other protected credential.
+  Supabase Auth health endpoint after Auth-owned changes, on a daily schedule, and when
+  manually requested. Unrelated pushes retain the stable required conclusion without
+  installing dependencies. The publishable browser key is public configuration; the
+  workflow receives no database password, service-role key, management token, or other
+  protected credential.
 
 The stable required conclusions are `Source, Tests, And Build`, `Browser Matrix`,
-`Database Verification`, and `Hosted Auth Health`. Every pushed branch runs the
-maintained gates so a feature can be verified before integration. Repository protection
+`Database Verification`, and `Hosted Auth Health`. Every pushed branch reports the
+maintained gates, while expensive domain checks run only when their ownership changed.
+Repository protection
 must require all four on `staging` and `main`; pull requests target `staging` for normal
 work and `main` only for an explicitly approved release.
 
