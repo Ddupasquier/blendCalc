@@ -38,6 +38,19 @@ The tracked `.env.test` intentionally clears `PUBLIC_TURNSTILE_SITE_KEY`. Automa
 browser authentication runs only against disposable local Supabase and must not inherit
 a developer's real Turnstile configuration from `.env`.
 
+### Branches And Auxiliary Worktrees
+
+Run ordinary branches from the primary repository checkout so its ignored environment
+files remain available while switching branches. Do not copy environment files into a
+new directory for routine work.
+
+When an auxiliary Git worktree is genuinely necessary to preserve unrelated dirty work,
+support explicitly requested simultaneous checkouts, or assemble a temporary integration
+candidate, link only the ignored environment files required by that checkout back to the
+primary repository. Verify each source with `git check-ignore`, refuse to overwrite an
+existing target, and never print, copy, move, commit, or broaden access to secret values.
+Remove those links with the auxiliary checkout after its work is safely integrated.
+
 ## Local Application
 
 Copy `.env.example` to `.env`. This is the single local SvelteKit environment file; do

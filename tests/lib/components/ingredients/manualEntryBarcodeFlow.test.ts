@@ -5,7 +5,9 @@ import {
 } from "$lib/components/ingredients/manual-entry/utils/barcodeFlow";
 import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
 
-const createDraft = (overrides: Partial<BarcodeProductDraft> = {}): BarcodeProductDraft => ({
+const createDraft = (
+	overrides: Partial<BarcodeProductDraft> = {},
+): BarcodeProductDraft => ({
 	barcode: "00021130462506",
 	name: "Strawberry jelly, strawberry",
 	nameProvenance: "source",
@@ -23,39 +25,68 @@ const createDraft = (overrides: Partial<BarcodeProductDraft> = {}): BarcodeProdu
 
 describe("manual entry barcode flow", () => {
 	it("keeps reported zeroes without fabricating zeroes for missing values", () => {
-		const state = getBarcodeDraftState(createDraft({
-			nutrients: [
-				{
-					nutrientId: 1004,
-					nutrientName: "Total Fat",
-					nutrientNumber: "204",
-					unitName: "G",
-					value: 0,
-				},
-				{
-					nutrientId: 1003,
-					nutrientName: "Protein",
-					nutrientNumber: "203",
-					unitName: "G",
-					value: Number.NaN,
-				},
-			],
-		}));
+		const state = getBarcodeDraftState(
+			createDraft({
+				nutrients: [
+					{
+						nutrientId: 1004,
+						nutrientName: "Total Fat",
+						nutrientNumber: "204",
+						unitName: "G",
+						value: 0,
+					},
+					{
+						nutrientId: 1003,
+						nutrientName: "Protein",
+						nutrientNumber: "203",
+						unitName: "G",
+						value: Number.NaN,
+					},
+				],
+			}),
+		);
 
 		expect(state.manualNutrientValues).toEqual({ 1004: 0 });
 		expect(state.importedNutrients).toHaveLength(1);
 	});
 
+	it("does not turn a mass-only source serving into an item measure", () => {
+		const state = getBarcodeDraftState(
+			createDraft({
+				servingLabel: "28 g",
+				servingWeightGrams: 28,
+				serving: {
+					label: "28 g",
+					gramWeight: 28,
+					amount: 28,
+					unitKey: "g",
+					isPrimary: true,
+					measureType: "Package serving",
+					isHouseholdMeasure: false,
+				},
+			}),
+		);
+
+		expect(state).toMatchObject({
+			servingWeightGrams: 28,
+			useServingMeasure: false,
+			servingMeasureQuantity: 28,
+			servingMeasureUnit: "g",
+		});
+	});
+
 	it("uses the DB-resolved category for the visible manual-entry category", () => {
-		const state = getBarcodeDraftState(createDraft({
-			resolvedCategory: "Jams",
-			categoryResolution: {
-				categoryOptionId: "jams",
-				label: "Jams",
-				sourceValue: "fruit and vegetable preserves",
-				confidence: "exact",
-			},
-		}));
+		const state = getBarcodeDraftState(
+			createDraft({
+				resolvedCategory: "Jams",
+				categoryResolution: {
+					categoryOptionId: "jams",
+					label: "Jams",
+					sourceValue: "fruit and vegetable preserves",
+					confidence: "exact",
+				},
+			}),
+		);
 
 		expect(state.category).toBe("Jams");
 		expect(state.categories).toEqual([
@@ -76,25 +107,27 @@ describe("manual entry barcode flow", () => {
 	});
 
 	it("carries the canonical image placement into the saved manual-entry draft", () => {
-		const state = getBarcodeDraftState(createDraft({
-			image: {
-				source: "open-food-facts",
-				sourceReference: "00021130462506",
-				role: "front",
-				imageUrl: "https://images.openfoodfacts.org/example.jpg",
-				licenseName: "Example license",
-				confidence: "source-verified",
-				cropX: 62,
-				cropY: 44,
-				cropZoom: 2.4,
-				rotationDegrees: 0,
-				fitMode: "custom",
-				placementVersion: 2,
-				placementMethod: "automatic-ocr",
-				suggestionVersion: "tesseract-product-label-v3",
-				suggestionConfidence: 78,
-			},
-		}));
+		const state = getBarcodeDraftState(
+			createDraft({
+				image: {
+					source: "open-food-facts",
+					sourceReference: "00021130462506",
+					role: "front",
+					imageUrl: "https://images.openfoodfacts.org/example.jpg",
+					licenseName: "Example license",
+					confidence: "source-verified",
+					cropX: 62,
+					cropY: 44,
+					cropZoom: 2.4,
+					rotationDegrees: 0,
+					fitMode: "custom",
+					placementVersion: 2,
+					placementMethod: "automatic-ocr",
+					suggestionVersion: "tesseract-product-label-v3",
+					suggestionConfidence: 78,
+				},
+			}),
+		);
 
 		expect(state.imagePlacement).toMatchObject({
 			cropX: 62,

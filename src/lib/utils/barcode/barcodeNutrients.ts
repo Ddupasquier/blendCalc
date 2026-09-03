@@ -2,6 +2,7 @@ import type {
 	FoodNutrient,
 	FoodNutrientMeasurementBasis,
 	FoodNutrientQualitativeFact,
+	FoodNutrientSourceReview,
 } from "$lib/utils/food/types";
 import type {
 	NutrientSourceMapping,
@@ -211,4 +212,120 @@ export const mapOpenFoodFactsNutrients = (
 	}
 
 	return canonicalizeProductNutrients(nutrients, productReferenceCatalog);
+};
+
+const OPEN_FOOD_FACTS_NON_NUTRIENT_KEYS = [
+	// Alcohol by volume has a separate reviewed product field and is not nutrient math.
+	/^alcohol$/i,
+	/^carbon-footprint/i,
+	/^ecoscore/i,
+	/^environmental-score/i,
+	/^fruits-vegetables-/i,
+	/^nova-group$/i,
+	/^nutrition-score/i,
+];
+
+const getOpenFoodFactsSourceKeys = (nutriments: OpenFoodFactsNutriments) =>
+	new Set(
+		Object.keys(nutriments).flatMap((key) => {
+			const match = key.match(/^(.+)_(?:100g|serving)$/);
+			return match?.[1] ? [match[1]] : [];
+		}),
+	);
+
+const formatOpenFoodFactsNutrientName = (sourceKey: string) =>
+	sourceKey
+		.replaceAll("-", " ")
+		.replace(/\b\w/g, (character) => character.toUpperCase());
+
+/**
+ * Retains usable Open Food Facts values that could not safely enter canonical
+ * nutrition math. The result is private review evidence, never a calculation input.
+ */
+export const mapOpenFoodFactsNutrientSourceReview = (
+	nutriments: OpenFoodFactsNutriments,
+	useServingValues: boolean,
+	productReferenceCatalog: ProductReferenceCatalog,
+	servingMeasurementBasis: FoodNutrientMeasurementBasis,
+): FoodNutrientSourceReview[] => {
+	const mappings = productReferenceCatalog.nutrientMappings
+		.filter((mapping) => mapping.sourceKey === "open-food-facts")
+		.sort((left, right) => left.priority - right.priority);
+	const acceptedSourceKeys = new Set<string>();
+
+	for (const mapping of mappings) {
+		const source = getOpenFoodFactsValue(
+			nutriments,
+			[mapping.sourceNutrientKey],
+			null,
+			useServingValues,
+		);
+		if (!source) continue;
+		const reportedUnit = String(nutriments[`${source.key}_unit`] ?? "");
+		if (
+			reportedUnit.trim() &&
+			normalizeNutrientUnit(reportedUnit) !==
+				normalizeNutrientUnit(mapping.sourceUnitName)
+		) {
+			continue;
+		}
+		const converted = convertMappedValue({
+			value: source.value,
+			sourceUnit: reportedUnit || mapping.sourceUnitName,
+			mapping,
+			productReferenceCatalog,
+		});
+		if (converted !== null) acceptedSourceKeys.add(source.key);
+	}
+
+	return [...getOpenFoodFactsSourceKeys(nutriments)].flatMap((sourceKey) => {
+		if (
+			acceptedSourceKeys.has(sourceKey) ||
+			OPEN_FOOD_FACTS_NON_NUTRIENT_KEYS.some((pattern) =>
+				pattern.test(sourceKey),
+			) ||
+			String(nutriments[`${sourceKey}_modifier`] ?? "").trim()
+		) {
+			return [];
+		}
+
+		const servingAmount = toOptionalNumber(nutriments[`${sourceKey}_serving`]);
+		const amountPer100g = toOptionalNumber(nutriments[`${sourceKey}_100g`]);
+		const useServing = useServingValues && servingAmount !== null;
+		const amount = useServing ? servingAmount : amountPer100g;
+		if (amount === null) return [];
+
+		const relatedMapping = mappings.find(
+			(mapping) => mapping.sourceNutrientKey === sourceKey,
+		);
+		const unitName = String(
+			nutriments[`${sourceKey}_unit`] ?? relatedMapping?.sourceUnitName ?? "",
+		).trim();
+		// Unitless provider scores and computed metadata are not nutrient amounts.
+		if (!unitName && !relatedMapping) return [];
+
+		return [
+			{
+				...(relatedMapping ? { nutrientId: relatedMapping.nutrientId } : {}),
+				nutrientName:
+					relatedMapping?.sourceNutrientName?.trim() ||
+					formatOpenFoodFactsNutrientName(sourceKey),
+				...(unitName ? { unitName } : {}),
+				amount,
+				measurementBasis: useServing
+					? servingMeasurementBasis
+					: { kind: "mass" as const, quantity: 100, unitKey: "g" },
+				...(!useServing && amountPer100g !== null ? { amountPer100g } : {}),
+				valueStatus:
+					amount === 0 ? ("reported-zero" as const) : ("reported" as const),
+				mappingStatus: "unmapped" as const,
+				mappingMethod: relatedMapping
+					? "reported-unit-or-conversion-not-approved"
+					: "source-key-awaiting-review",
+				sourceNutrientKey: sourceKey,
+				sourceNutrientCode: sourceKey,
+				source: "open-food-facts" as const,
+			},
+		];
+	});
 };

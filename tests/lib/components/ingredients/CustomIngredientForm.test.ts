@@ -1561,7 +1561,7 @@ describe("CustomIngredientForm", () => {
 		expect(screen.queryByDisplayValue("18")).not.toBeInTheDocument();
 		await goToStep(/extended/i);
 		expect(
-			screen.getByText(/all fields on this step are optional/i),
+			screen.getByText(/Not provided means that source did not report/i),
 		).toBeInTheDocument();
 	});
 

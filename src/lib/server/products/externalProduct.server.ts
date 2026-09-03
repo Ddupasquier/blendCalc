@@ -89,7 +89,10 @@ export const lookupExternalBarcodeProduct = async (
 	);
 	const externalLookupsEnabled =
 		lookups.externalLookupsEnabled ?? areExternalProductLookupsEnabled();
-	if (!hasInjectedProvider && !externalLookupsEnabled) return null;
+	if (!hasInjectedProvider && lookups.externalLookupsEnabled === false)
+		return null;
+	const cacheOnlyExternalLookups =
+		!hasInjectedProvider && !externalLookupsEnabled;
 	const sourceCoverageEnabled =
 		!hasInjectedProvider ||
 		Boolean(lookups.resolutionPolicy || lookups.sourceCoverageSupabase);
@@ -133,12 +136,16 @@ export const lookupExternalBarcodeProduct = async (
 				: getRegulatedAlcoholDisclosureProfileKeys();
 	void regulatedAlcoholProfileKeysPromise.catch(() => undefined);
 	const productReferenceCatalog = await productReferenceCatalogPromise;
-	const lookupUsda = lookups.usda ?? lookupUsdaBarcodeProduct;
+	const lookupUsda =
+		lookups.usda ??
+		(cacheOnlyExternalLookups ? async () => null : lookupUsdaBarcodeProduct);
 	const lookupOpenFoodFacts =
 		lookups.openFoodFacts ?? lookupOpenFoodFactsBarcodeProduct;
 	const lookupColaCloud =
 		lookups.colaCloud ??
-		(hasInjectedProvider ? async () => null : lookupColaCloudBarcodeProduct);
+		(hasInjectedProvider || cacheOnlyExternalLookups
+			? async () => null
+			: lookupColaCloudBarcodeProduct);
 	const lookupProviderWithCoverage = async (
 		providerKey: "usda" | "open-food-facts" | "cola-cloud",
 		requestedFieldPaths: readonly ProductSourceFieldPath[],
@@ -261,7 +268,12 @@ export const lookupExternalBarcodeProduct = async (
 				const supplement = await lookupProviderWithCoverage(
 					"open-food-facts",
 					requestedFieldPaths,
-					() => lookupOpenFoodFacts(barcode, productReferenceCatalog),
+					() =>
+						lookupOpenFoodFacts(
+							barcode,
+							productReferenceCatalog,
+							requestedFieldPaths,
+						),
 				);
 				return applyAlcoholSupplement(
 					mergeMissingBarcodeProductFields(
@@ -282,7 +294,19 @@ export const lookupExternalBarcodeProduct = async (
 		const openFoodFactsDraft = await lookupProviderWithCoverage(
 			"open-food-facts",
 			getBarcodeProductDesiredSourceFieldPaths(),
-			() => lookupOpenFoodFacts(barcode, productReferenceCatalog),
+			() =>
+				lookups.openFoodFacts
+					? lookupOpenFoodFacts(
+							barcode,
+							productReferenceCatalog,
+							getBarcodeProductDesiredSourceFieldPaths(),
+						)
+					: lookupOpenFoodFacts(
+							barcode,
+							productReferenceCatalog,
+							getBarcodeProductDesiredSourceFieldPaths(),
+							{ cacheOnly: cacheOnlyExternalLookups },
+						),
 		);
 		if (openFoodFactsDraft) {
 			const draftWithCachedImage = await applyCachedImage(openFoodFactsDraft);

@@ -43,6 +43,14 @@
 		moveIngredientListItemById,
 		type IngredientListKey,
 	} from "$lib/utils/storage/client/ingredientLists";
+	import {
+		getManualEntryNutrientGroupBadge,
+		getManualEntryNutritionStepHelper,
+	} from "$lib/components/ingredients/manual-entry/utils/manualEntryDisclosurePolicy";
+	import type {
+		ManualEntryNutrientDefinition,
+		ManualEntryNutrientGroup,
+	} from "$lib/utils/food/nutrients/nutrientDefinitions";
 
 	const emptyIngredientListIndex: CloudIngredientListIndex = {
 		[MIX_STORAGE_KEYS.fridge]: { foodIds: [], foodIdentityKeys: [] },
@@ -133,6 +141,23 @@
 			destination: outcome.state.saveDestination,
 		}),
 	);
+	const hasAcceptedBarcodeSource = $derived(
+		Boolean(form.data.barcodeReferenceAcceptedBarcode),
+	);
+	const hasAcceptedBarcodeNutrients = $derived(
+		hasAcceptedBarcodeSource && form.data.reportedNutrientIds.length > 0,
+	);
+	const isNutrientRequired = (field: ManualEntryNutrientDefinition) =>
+		form.data.shareWithCatalog &&
+		validation.disclosurePolicy.requiresStandardNutrition &&
+		field.requiredForManualEntry;
+	const getNutrientGroupBadge = (group: ManualEntryNutrientGroup) =>
+		getManualEntryNutrientGroupBadge({
+			group,
+			hasAcceptedBarcodeSource,
+			reportedNutrientIds: form.data.reportedNutrientIds,
+			isRequired: isNutrientRequired,
+		});
 
 	const refreshListIdentity = async (name: string, barcodeValue: string) => {
 		const requestId = ++listIdentityRequestId;
@@ -424,11 +449,10 @@
 		groups: referenceData.state.nutrientGroups.macros,
 		loading: referenceData.state.loadingNutrients,
 		error: referenceData.state.nutrientError,
-		helper: validation.disclosurePolicy.requiresStandardNutrition
-			? "Enter values from the nutrition label for the serving above. blendCalc keeps the package's exact weight, volume, or item basis. Fields marked * are required."
-			: form.data.usesInternal100GramBasis
-				? "This label may legally omit standard nutrition. Imported values stay on their reported per-100g basis. Add package values only after entering the package's exact gram serving; everything else stays unknown."
-				: "This label may legally omit standard nutrition. Enter only values the package actually reports; everything else stays unknown.",
+		helper: getManualEntryNutritionStepHelper({
+			hasAcceptedBarcodeNutrients,
+			fallback: validation.nutritionFieldPolicy.helper,
+		}),
 		hideUnavailableStatus: validation.hideMacroUnavailableStatus,
 		validationItems: validation.getAttemptedValidationItems(
 			validation.validationItems.filter((item) => item.step === "macros"),
@@ -444,10 +468,8 @@
 			form.applyNutritionLabelOcr(payload, validation.nutrientFields),
 		getValue: form.getNutrientValue,
 		onValueChange: form.setNutrientValue,
-		isRequired: (field) =>
-			form.data.shareWithCatalog &&
-			validation.disclosurePolicy.requiresStandardNutrition &&
-			field.requiredForManualEntry,
+		isRequired: isNutrientRequired,
+		getGroupBadge: getNutrientGroupBadge,
 		onBack: validation.goBack,
 		onNext: goNext,
 	});
@@ -456,15 +478,16 @@
 		groups: referenceData.state.nutrientGroups.extended,
 		loading: referenceData.state.loadingNutrients,
 		error: referenceData.state.nutrientError,
-		helper: "All fields on this step are optional. Fill what you know.",
+		helper: getManualEntryNutritionStepHelper({
+			hasAcceptedBarcodeNutrients,
+			fallback: "All fields on this step are optional. Fill what you know.",
+		}),
 		accordion: true,
 		defaultOpenFirst: false,
 		getValue: form.getNutrientValue,
 		onValueChange: form.setNutrientValue,
-		isRequired: (field) =>
-			form.data.shareWithCatalog &&
-			validation.disclosurePolicy.requiresStandardNutrition &&
-			field.requiredForManualEntry,
+		isRequired: isNutrientRequired,
+		getGroupBadge: getNutrientGroupBadge,
 		onBack: validation.goBack,
 		onNext: goNext,
 	});
@@ -480,6 +503,7 @@
 			validation.nutrientFields,
 			validation.requiredNutrientFields,
 		),
+		hasAcceptedBarcodeNutrients,
 		validationItems: validation.getAttemptedValidationItems(
 			validation.validationItems,
 		),
