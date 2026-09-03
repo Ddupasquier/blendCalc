@@ -262,7 +262,11 @@ test("placement controls update the exact card preview within safe movement boun
 	);
 	await expect(previewImage).toBeVisible();
 	await expect
-		.poll(() => previewImage.evaluate((image) => image.naturalWidth))
+		.poll(() =>
+			previewImage.evaluate(
+				(image) => (image as HTMLImageElement).naturalWidth,
+			),
+		)
 		.toBeGreaterThan(0);
 
 	const restoreButton = placementEditor.getByRole("button", {
