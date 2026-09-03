@@ -22,6 +22,7 @@
 		activeCategory,
 		summaryNutrients,
 		optionalNutrientCount,
+		hasAcceptedBarcodeNutrients,
 		validationItems,
 		barcodeMessage,
 		barcodeSafetyAlerts,
@@ -100,7 +101,9 @@
 			? optionalNutrientCount > 0
 				? `${optionalNutrientCount} reported nutrition ${optionalNutrientCount === 1 ? "value" : "values"}`
 				: "No nutrition values were reported; missing values remain unknown"
-			: `${optionalNutrientCount} optional nutrients filled`,
+			: hasAcceptedBarcodeNutrients
+				? `${optionalNutrientCount} barcode ${optionalNutrientCount === 1 ? "nutrient" : "nutrients"} filled`
+				: `${optionalNutrientCount} optional ${optionalNutrientCount === 1 ? "nutrient" : "nutrients"} filled`,
 	);
 </script>
 

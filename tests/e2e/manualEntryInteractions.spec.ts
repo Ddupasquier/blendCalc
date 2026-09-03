@@ -733,6 +733,9 @@ test("an optional source product photo enters moderation without blocking a priv
 			await shareTab.click();
 		}
 		await expect(shareTab).toHaveAttribute("aria-selected", "true");
+		await expect(
+			dialog.getByText("17 barcode nutrients filled", { exact: true }),
+		).toBeVisible();
 		return dialog;
 	};
 

@@ -16,6 +16,7 @@ export type ShareStepProps = {
 	activeCategory: string;
 	summaryNutrients: ManualEntrySummaryItem[];
 	optionalNutrientCount: number;
+	hasAcceptedBarcodeNutrients: boolean;
 	validationItems: ManualEntryValidationItem[];
 	barcodeMessage: string;
 	barcodeSafetyAlerts: FoodSafetyAlert[];
