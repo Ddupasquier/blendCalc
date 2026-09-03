@@ -131,7 +131,7 @@ maintained Vitest and Playwright ownership groups used by Quick and Feature chec
 | Command                    | Scope                                                                                                 |
 | -------------------------- | ----------------------------------------------------------------------------------------------------- |
 | `npm run verify:quick`     | Formatting, lint, Svelte/TypeScript, and Vitest selected from changed ownership                       |
-| `npm run verify:feature`   | Source gates, every Vitest project, and browser specs selected from changed ownership                 |
+| `npm run verify:feature`   | Source gates plus Vitest and browser specs selected from changed ownership                            |
 | `npm run verify:release`   | Dependency audit, source gates, disposable database, build, and bounded blocking browser tiers        |
 | `npm run verify:promotion` | Validate a fresh content-addressed Release Check receipt for the exact clean promoted tree            |
 | `npm run verify:nightly`   | Release confidence plus every scenario in all five browser/device projects; scheduled and nonblocking |
@@ -140,10 +140,12 @@ Use the VS Code tasks with the same names for a dedicated visible terminal. Cont
 run the narrowest direct test while editing; the dashboard is for confidence passes,
 not a reason to rerun every layer after a small change.
 
-A successful clean Release Check on `staging` or an optional `mock-staging` checkpoint
-stores its receipt under the repository's shared Git directory so all local worktrees
-can validate the same immutable tree. Promotion checks never reuse results across
-changed, dirty, stale, missing, or differently executed candidates.
+A successful local Release Check stores its receipt under the repository's shared Git
+directory so every local branch can validate the same immutable tree. The routine
+release path instead runs the complete hosted checks once on the exact `mock-staging`
+or `staging` candidate and uses `verify:promotion -- --against <candidate-ref>` for
+unchanged promotions. Promotion checks never reuse results across changed, dirty,
+stale, missing, or differently executed candidates.
 `npm run verify:promotion -- --force-full` bypasses reuse and runs the full Release
 Check.
 

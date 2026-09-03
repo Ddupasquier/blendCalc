@@ -135,7 +135,7 @@ intentionally omitted.
 | `npm run test:e2e:update`                              | Review and update tracked Chromium visual snapshots.                      |
 | `npm run test:e2e:install`                             | Install Chromium, Firefox, and WebKit for Playwright.                     |
 | `npm run verify:quick`                                 | Show source checks and affected Vitest in the live dashboard.             |
-| `npm run verify:feature`                               | Add every Vitest project and affected browser coverage.                   |
+| `npm run verify:feature`                               | Run source gates plus affected Vitest and browser coverage.               |
 | `npm run verify:release`                               | Run the bounded blocking release profile in the dashboard.                |
 | `npm run verify:promotion`                             | Reuse a fresh Release Check for an identical clean promoted tree.         |
 | `npm run verify:nightly`                               | Run exhaustive nonblocking browser confidence in the dashboard.           |

@@ -131,7 +131,7 @@ verification run the same preflight automatically. Local heavy work is blocked w
 - swap use is above 8 GiB; or
 - an existing development process uses more than 4 GiB resident memory.
 
-The heavy-command runner limits Node old-space to 4 GiB, Vitest uses at most two workers,
+The heavy-command runner limits Node old-space to 4 GiB, Vitest uses at most four workers,
 and Playwright accepts one or two workers. The local database manager starts Colima with
 four CPUs and 4 GiB memory. Complete database and release verification stop Supabase and
 also stop Colima when that command started it.

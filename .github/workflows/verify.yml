@@ -11,17 +11,16 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  source:
-    name: Source, Tests, And Build
+  verification-plan:
+    name: Choose Verification Scope
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 5
     outputs:
-      reuse: ${{ steps.promotion.outputs.reuse }}
-    env:
-      PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
-      PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_compile_only
+      comparison-base: ${{ steps.plan.outputs.comparison-base }}
+      dependencies: ${{ steps.plan.outputs.dependencies }}
+      mode: ${{ steps.plan.outputs.mode }}
     steps:
-      - name: Check out repository
+      - name: Check out repository history
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
@@ -29,74 +28,143 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: 24
-          cache: npm
-      - name: Choose release verification path
-        id: promotion
+      - name: Choose the smallest safe verification scope
+        id: plan
         env:
+          BEFORE_SHA: ${{ github.event.before }}
           EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
           REF_NAME: ${{ github.ref_name }}
         run: |
-          reuse=false
+          mode=feature
+          comparison_base="$PR_BASE_SHA"
+
           if [[ "$EVENT_NAME" == "push" && "$REF_NAME" == "main" ]]; then
             git fetch origin staging:refs/remotes/origin/staging
             node scripts/operations/quality/verify_release_promotion.mjs --against origin/staging
-            reuse=true
+            mode=reuse
+            comparison_base=origin/staging
           elif [[ "$EVENT_NAME" == "push" && "$REF_NAME" == "staging" ]]; then
             if git fetch origin mock-staging:refs/remotes/origin/mock-staging && \
               node scripts/operations/quality/verify_release_promotion.mjs --against origin/mock-staging; then
-              reuse=true
+              mode=reuse
+              comparison_base=origin/mock-staging
             else
               echo "No identical verified mock-staging candidate; running the full staging checks."
+              mode=full
+              comparison_base="$BEFORE_SHA"
             fi
+          elif [[ "$EVENT_NAME" == "push" && "$REF_NAME" == "mock-staging" ]]; then
+            mode=full
           fi
-          echo "reuse=$reuse" >> "$GITHUB_OUTPUT"
+
+          if [[ "$mode" != "reuse" && ( -z "$comparison_base" || "$comparison_base" =~ ^0+$ ) ]]; then
+            git fetch origin staging:refs/remotes/origin/staging
+            comparison_base=$(git merge-base origin/staging HEAD)
+          elif [[ "$mode" == "feature" ]]; then
+            git fetch origin staging:refs/remotes/origin/staging
+            comparison_base=$(git merge-base origin/staging HEAD)
+          fi
+
+          dependencies=false
+          if [[ "$mode" == "full" ]]; then
+            dependencies=true
+          elif [[ "$mode" == "feature" ]] && ! git diff --quiet "$comparison_base" HEAD -- \
+            package.json package-lock.json npm-shrinkwrap.json; then
+            dependencies=true
+          fi
+
+          echo "comparison-base=$comparison_base" >> "$GITHUB_OUTPUT"
+          echo "dependencies=$dependencies" >> "$GITHUB_OUTPUT"
+          echo "mode=$mode" >> "$GITHUB_OUTPUT"
+
+  source:
+    name: Source, Tests, And Build
+    needs: verification-plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+      PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_compile_only
+    steps:
+      - name: Reuse the identical candidate result
+        if: needs.verification-plan.outputs.mode == 'reuse'
+        run: echo "The promoted tree exactly matches the verified candidate."
+      - name: Check out repository history
+        if: needs.verification-plan.outputs.mode != 'reuse'
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Use Node.js 24
+        if: needs.verification-plan.outputs.mode != 'reuse'
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
       - name: Install dependencies
-        if: steps.promotion.outputs.reuse != 'true'
+        if: needs.verification-plan.outputs.mode != 'reuse'
         run: npm ci
       - name: Verify versions
-        if: steps.promotion.outputs.reuse != 'true'
+        if: needs.verification-plan.outputs.mode != 'reuse'
         run: npm run version:check
       - name: Audit dependencies
-        if: steps.promotion.outputs.reuse != 'true'
+        if: needs.verification-plan.outputs.dependencies == 'true'
         run: npm audit --audit-level=high
       - name: Lint TypeScript, Svelte, and SCSS
-        if: steps.promotion.outputs.reuse != 'true'
+        if: needs.verification-plan.outputs.mode != 'reuse'
         run: npm run lint
       - name: Check source formatting
-        if: steps.promotion.outputs.reuse != 'true'
+        if: needs.verification-plan.outputs.mode != 'reuse'
         run: npm run format:check
         env:
-          FORMAT_BASE_REF: ${{ github.event.pull_request.base.sha || github.event.before }}
+          FORMAT_BASE_REF: ${{ needs.verification-plan.outputs.comparison-base }}
       - name: Check Svelte and TypeScript
-        if: steps.promotion.outputs.reuse != 'true'
+        if: needs.verification-plan.outputs.mode != 'reuse'
         run: npm run check
-      - name: Run Vitest
-        if: steps.promotion.outputs.reuse != 'true'
+      - name: Run affected Vitest coverage
+        if: needs.verification-plan.outputs.mode == 'feature'
+        run: npm run test:affected
+      - name: Run complete Vitest coverage
+        if: needs.verification-plan.outputs.mode == 'full'
         run: npm test
       - name: Build production application
-        if: steps.promotion.outputs.reuse != 'true'
+        if: needs.verification-plan.outputs.mode != 'reuse'
         run: npm run build
 
   browser:
-    name: Browser / ${{ matrix.project }}
-    if: github.event_name == 'push' && (github.ref_name == 'mock-staging' || ((github.ref_name == 'staging' || github.ref_name == 'main') && needs.source.outputs.reuse != 'true'))
-    needs: source
+    name: Browser / ${{ matrix.label }}
+    if: needs.verification-plan.outputs.mode == 'full'
+    needs: verification-plan
     runs-on: ubuntu-latest
     timeout-minutes: 35
     strategy:
       fail-fast: false
       matrix:
         include:
-          - project: desktop-chromium
+          - label: desktop-chromium-1-of-2
+            project: desktop-chromium
             browser: chromium
-          - project: desktop-firefox
+            shard: "1/2"
+          - label: desktop-chromium-2-of-2
+            project: desktop-chromium
+            browser: chromium
+            shard: "2/2"
+          - label: desktop-firefox
+            project: desktop-firefox
             browser: firefox
-          - project: desktop-webkit
+            shard: ""
+          - label: desktop-webkit
+            project: desktop-webkit
             browser: webkit
-          - project: mobile-chromium
+            shard: ""
+          - label: mobile-chromium
+            project: mobile-chromium
             browser: chromium
-          - project: mobile-webkit
+            shard: ""
+          - label: mobile-webkit
+            project: mobile-webkit
             browser: webkit
+            shard: ""
     env:
       PLAYWRIGHT_ENFORCE_DURATION_BUDGETS: true
       PLAYWRIGHT_WORKERS: 2
@@ -115,12 +183,20 @@ jobs:
       - name: Prepare isolated test database
         run: npm run test:e2e:prepare
       - name: Run browser project
-        run: npx playwright test --project=${{ matrix.project }}
+        env:
+          PLAYWRIGHT_PROJECT: ${{ matrix.project }}
+          PLAYWRIGHT_SHARD: ${{ matrix.shard }}
+        run: |
+          args=(--project="$PLAYWRIGHT_PROJECT")
+          if [[ -n "$PLAYWRIGHT_SHARD" ]]; then
+            args+=(--shard="$PLAYWRIGHT_SHARD")
+          fi
+          npx playwright test "${args[@]}"
       - name: Upload failure evidence
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-${{ matrix.project }}-${{ github.run_attempt }}
+          name: playwright-${{ matrix.label }}-${{ github.run_attempt }}
           path: |
             playwright-report/
             test-results/playwright/
@@ -129,8 +205,8 @@ jobs:
 
   browser-affected:
     name: Affected Browser Flows
-    if: github.event_name == 'pull_request' || (github.ref_name != 'mock-staging' && github.ref_name != 'staging' && github.ref_name != 'main')
-    needs: source
+    if: needs.verification-plan.outputs.mode == 'feature'
+    needs: verification-plan
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -154,29 +230,32 @@ jobs:
     name: Browser Matrix
     if: always()
     needs:
+      - verification-plan
       - source
       - browser
       - browser-affected
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Confirm every browser project passed
+      - name: Confirm required verification passed
         env:
-          EVENT_NAME: ${{ github.event_name }}
-          REF_NAME: ${{ github.ref_name }}
-          REUSE_PROMOTION: ${{ needs.source.outputs.reuse }}
-          SOURCE_RESULT: ${{ needs.source.result }}
-          BROWSER_RESULT: ${{ needs.browser.result }}
           AFFECTED_RESULT: ${{ needs.browser-affected.result }}
+          BROWSER_RESULT: ${{ needs.browser.result }}
+          MODE: ${{ needs.verification-plan.outputs.mode }}
+          PLAN_RESULT: ${{ needs.verification-plan.result }}
+          SOURCE_RESULT: ${{ needs.source.result }}
         run: |
-          if [[ "$EVENT_NAME" == "push" && ("$REF_NAME" == "staging" || "$REF_NAME" == "main") ]]; then
-            if [[ "$REUSE_PROMOTION" == "true" ]]; then
-              [[ "$SOURCE_RESULT" == "success" && "$BROWSER_RESULT" == "skipped" && "$AFFECTED_RESULT" == "skipped" ]]
-            else
-              [[ "$SOURCE_RESULT" == "success" && "$BROWSER_RESULT" == "success" && "$AFFECTED_RESULT" == "skipped" ]]
-            fi
-          elif [[ "$EVENT_NAME" == "push" && "$REF_NAME" == "mock-staging" ]]; then
-            [[ "$SOURCE_RESULT" == "success" && "$BROWSER_RESULT" == "success" && "$AFFECTED_RESULT" == "skipped" ]]
+          if [[ "$PLAN_RESULT" != "success" || "$SOURCE_RESULT" != "success" ]]; then
+            echo "Verification planning or source checks failed."
+            exit 1
+          fi
+          if [[ "$MODE" == "reuse" ]]; then
+            [[ "$BROWSER_RESULT" == "skipped" && "$AFFECTED_RESULT" == "skipped" ]]
+          elif [[ "$MODE" == "full" ]]; then
+            [[ "$BROWSER_RESULT" == "success" && "$AFFECTED_RESULT" == "skipped" ]]
+          elif [[ "$MODE" == "feature" ]]; then
+            [[ "$BROWSER_RESULT" == "skipped" && "$AFFECTED_RESULT" == "success" ]]
           else
-            [[ "$SOURCE_RESULT" == "success" && "$BROWSER_RESULT" == "skipped" && "$AFFECTED_RESULT" == "success" ]]
+            echo "Unknown verification mode: $MODE"
+            exit 1
           fi

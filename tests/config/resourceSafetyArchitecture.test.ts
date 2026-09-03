@@ -24,7 +24,9 @@ describe("resource-safe verification architecture", () => {
 		expect(packageMetadata.scripts["test:e2e"]).toContain(
 			"run_browser_verification.mjs",
 		);
-		expect(readSource("vite.config.ts")).toContain("maxWorkers: 2");
+		expect(readSource("vite.config.ts")).toContain("maxWorkers: 4");
+		expect(packageMetadata.scripts.test).toContain("vitest run --reporter=dot");
+		expect(packageMetadata.scripts.test).not.toContain("npm run test:node");
 	});
 
 	it("caps browser workers and cleans up an owned database runtime", () => {
