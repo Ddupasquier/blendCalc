@@ -149,12 +149,15 @@ it does not share mutable state with browser jobs or another workflow run.
   retained without inventing structured ingredients, allergen declarations, traces, or
   dietary classifications that the source did not report. One focused fixture
   intentionally reports no serving.
-- `npm run dev:test` disables runtime USDA and Open Food Facts lookups. A barcode missing
-  from the local catalog returns the normal not-found result instead of silently spending
-  provider or hosted-database quota. Provider adapters remain covered through injected
-  unit tests, source-shaped Open Food Facts application fixtures, and separate explicit
-  live-source audits. Open Food Facts records are not silently republished through the
-  blendCalcAPI because their redistribution model remains separate from USDA CC0 data.
+- `npm run dev:test` disables outbound USDA and Open Food Facts requests. The real
+  barcode route may read source-shaped responses already stored in the disposable local
+  provider cache; UPC `00030000581728` is the maintained end-to-end Open Food Facts
+  example. Any other barcode missing from the local catalog and local provider cache
+  returns the normal not-found result without spending provider or hosted-database
+  quota. Provider adapters also remain covered through injected unit tests and separate
+  explicit live-source audits. Open Food Facts records are not silently republished
+  through the blendCalcAPI because their redistribution model remains separate from
+  USDA CC0 data.
 - Local login-capable users are created only after the local Auth and PostgREST APIs are
   available.
 

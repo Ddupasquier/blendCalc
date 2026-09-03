@@ -7,11 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.5"
-  }
   graphql_public: {
     Tables: {
       [_ in never]: never
@@ -1865,6 +1860,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      external_provider_request_budgets: {
+        Row: {
+          created_at: string
+          provider: string
+          request_count: number
+          updated_at: string
+          window_started_at: string
+        }
+        Insert: {
+          created_at?: string
+          provider: string
+          request_count: number
+          updated_at?: string
+          window_started_at: string
+        }
+        Update: {
+          created_at?: string
+          provider?: string
+          request_count?: number
+          updated_at?: string
+          window_started_at?: string
+        }
+        Relationships: []
       }
       food_allergen_regulatory_profile_tags: {
         Row: {
@@ -5079,7 +5098,7 @@ export type Database = {
           {
             foreignKeyName: "nutrient_manual_entry_fields_nutrient_id_fkey"
             columns: ["nutrient_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "nutrient_definitions"
             referencedColumns: ["nutrient_id"]
           },
@@ -5448,6 +5467,50 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "nutrient_definitions"
             referencedColumns: ["nutrient_id"]
+          },
+        ]
+      }
+      nutrient_source_mapping_observations: {
+        Row: {
+          created_at: string
+          first_observed_at: string
+          last_observed_at: string
+          observation_count: number
+          source_key: string
+          source_nutrient_key: string
+          source_nutrient_name: string
+          source_unit_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          first_observed_at?: string
+          last_observed_at?: string
+          observation_count?: number
+          source_key: string
+          source_nutrient_key: string
+          source_nutrient_name: string
+          source_unit_name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          first_observed_at?: string
+          last_observed_at?: string
+          observation_count?: number
+          source_key?: string
+          source_nutrient_key?: string
+          source_nutrient_name?: string
+          source_unit_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nutrient_source_mapping_observations_source_key_fkey"
+            columns: ["source_key"]
+            isOneToOne: false
+            referencedRelation: "product_data_sources"
+            referencedColumns: ["key"]
           },
         ]
       }
@@ -6010,6 +6073,33 @@ export type Database = {
           request_kind?: string
           response?: Json
           status_code?: number
+        }
+        Relationships: []
+      }
+      product_api_request_leases: {
+        Row: {
+          cache_key: string
+          created_at: string
+          lease_expires_at: string
+          owner_token: string
+          provider: string
+          updated_at: string
+        }
+        Insert: {
+          cache_key: string
+          created_at?: string
+          lease_expires_at: string
+          owner_token: string
+          provider: string
+          updated_at?: string
+        }
+        Update: {
+          cache_key?: string
+          created_at?: string
+          lease_expires_at?: string
+          owner_token?: string
+          provider?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -7892,63 +7982,6 @@ export type Database = {
           },
         ]
       }
-      shared_product_submission_field_evidence: {
-        Row: {
-          basis: Json | null
-          confidence: string
-          created_at: string
-          evidence_references: string[]
-          field_path: string
-          id: string
-          observed_at: string
-          proposed_value: Json
-          source_observation_id: string
-          submission_id: string
-          unit: string | null
-        }
-        Insert: {
-          basis?: Json | null
-          confidence: string
-          created_at?: string
-          evidence_references: string[]
-          field_path: string
-          id?: string
-          observed_at: string
-          proposed_value: Json
-          source_observation_id: string
-          submission_id: string
-          unit?: string | null
-        }
-        Update: {
-          basis?: Json | null
-          confidence?: string
-          created_at?: string
-          evidence_references?: string[]
-          field_path?: string
-          id?: string
-          observed_at?: string
-          proposed_value?: Json
-          source_observation_id?: string
-          submission_id?: string
-          unit?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "shared_product_submission_field_evid_source_observation_id_fkey"
-            columns: ["source_observation_id"]
-            isOneToOne: false
-            referencedRelation: "shared_product_observations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "shared_product_submission_field_evidence_submission_id_fkey"
-            columns: ["submission_id"]
-            isOneToOne: false
-            referencedRelation: "shared_product_submissions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       shared_product_revision_changes: {
         Row: {
           change_type: string
@@ -8136,6 +8169,63 @@ export type Database = {
             columns: ["supersedes_revision_id"]
             isOneToOne: false
             referencedRelation: "shared_product_revisions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shared_product_submission_field_evidence: {
+        Row: {
+          basis: Json | null
+          confidence: string
+          created_at: string
+          evidence_references: string[]
+          field_path: string
+          id: string
+          observed_at: string
+          proposed_value: Json
+          source_observation_id: string
+          submission_id: string
+          unit: string | null
+        }
+        Insert: {
+          basis?: Json | null
+          confidence: string
+          created_at?: string
+          evidence_references: string[]
+          field_path: string
+          id?: string
+          observed_at: string
+          proposed_value: Json
+          source_observation_id: string
+          submission_id: string
+          unit?: string | null
+        }
+        Update: {
+          basis?: Json | null
+          confidence?: string
+          created_at?: string
+          evidence_references?: string[]
+          field_path?: string
+          id?: string
+          observed_at?: string
+          proposed_value?: Json
+          source_observation_id?: string
+          submission_id?: string
+          unit?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shared_product_submission_field_evid_source_observation_id_fkey"
+            columns: ["source_observation_id"]
+            isOneToOne: false
+            referencedRelation: "shared_product_observations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shared_product_submission_field_evidence_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "shared_product_submissions"
             referencedColumns: ["id"]
           },
         ]
@@ -9494,6 +9584,23 @@ export type Database = {
           source_reference: string
         }[]
       }
+      claim_external_provider_request_budget: {
+        Args: {
+          p_max_requests: number
+          p_provider: string
+          p_window_milliseconds: number
+        }
+        Returns: Json
+      }
+      claim_product_api_request_lease: {
+        Args: {
+          p_cache_key: string
+          p_lease_milliseconds: number
+          p_owner_token: string
+          p_provider: string
+        }
+        Returns: boolean
+      }
       claim_safety_alert_ingestion_sources: {
         Args: { p_limit?: number; p_run_id: string }
         Returns: {
@@ -9828,6 +9935,10 @@ export type Database = {
         Returns: undefined
       }
       reject_blocked_signup: { Args: { event: Json }; Returns: Json }
+      release_product_api_request_lease: {
+        Args: { p_cache_key: string; p_owner_token: string; p_provider: string }
+        Returns: undefined
+      }
       remove_user_food_list_item: {
         Args: { p_fdc_id: number; p_list_type: string }
         Returns: boolean
