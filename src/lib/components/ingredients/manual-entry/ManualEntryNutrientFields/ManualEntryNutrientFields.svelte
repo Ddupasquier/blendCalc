@@ -19,6 +19,7 @@
 		getValue,
 		onValueChange,
 		isRequired = () => false,
+		getGroupBadge,
 	}: ManualEntryNutrientFieldsProps = $props();
 
 	const toDomSafeId = (value: string | number) =>
@@ -31,8 +32,13 @@
 	const getInputId = (field: ManualEntryNutrientDefinition) =>
 		`manual-entry-nutrient-${toDomSafeId(field.dedupeKey || field.nutrientId)}`;
 
-	const isOptionalGroup = (group: ManualEntryNutrientGroup) =>
-		group.fields.every((field) => !isRequired(field));
+	const getFallbackGroupBadge = (group: ManualEntryNutrientGroup) =>
+		group.fields.every((field) => !isRequired(field))
+			? "Optional"
+			: "Required to share";
+
+	const getResolvedGroupBadge = (group: ManualEntryNutrientGroup) =>
+		getGroupBadge?.(group) ?? getFallbackGroupBadge(group);
 
 	const getInputValue = (field: ManualEntryNutrientDefinition) => {
 		const value = getValue(field);
@@ -61,11 +67,11 @@
 	/>
 {:else}
 	<div class="manual-nutrients">
-		{#each groups as group, index}
+		{#each groups as group, index (group.title)}
 			{#if accordion}
 				<CollapsibleSection
 					title={group.title}
-					badge={isOptionalGroup(group) ? "optional" : undefined}
+					badge={getResolvedGroupBadge(group)}
 					open={defaultOpenFirst && index === 0}
 					class="manual-nutrients__group"
 				>
@@ -111,9 +117,7 @@
 						<h3>
 							<span class="manual-nutrients__group-title">
 								{group.title}
-								{#if isOptionalGroup(group)}
-									<small>optional</small>
-								{/if}
+								<small>{getResolvedGroupBadge(group)}</small>
 							</span>
 							<span
 								class="manual-nutrients__group-count"

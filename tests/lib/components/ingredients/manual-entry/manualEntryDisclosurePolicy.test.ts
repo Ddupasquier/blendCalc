@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
 	getManualEntryDisclosurePolicy,
+	getManualEntryNutrientGroupBadge,
 	getManualEntryNutritionFieldPolicy,
+	getManualEntryNutritionStepHelper,
 } from "$lib/components/ingredients/manual-entry/utils/manualEntryDisclosurePolicy";
 import type { ProductRegulatoryDisclosureProfile } from "$lib/utils/food/quality/nutritionCompletenessCatalog";
+import type { ManualEntryNutrientDefinition } from "$lib/utils/food/nutrients/nutrientDefinitions";
 
 const profiles: ProductRegulatoryDisclosureProfile[] = [
 	{
@@ -127,5 +130,95 @@ describe("manual-entry nutrition field policy", () => {
 		expect(policy.requiresNutritionFields).toBe(false);
 		expect(policy.helper).toContain("reported per-100g basis");
 		expect(policy.helper).toContain("Leave a field blank");
+	});
+});
+
+describe("manual-entry barcode nutrient presentation", () => {
+	const field = (
+		nutrientId: number,
+		requiredForManualEntry = false,
+	): ManualEntryNutrientDefinition => ({
+		dedupeKey: `test-${nutrientId}`,
+		nutrientId,
+		nutrientName: `Nutrient ${nutrientId}`,
+		nutrientNumber: String(nutrientId),
+		unitName: "g",
+		nutrientType: null,
+		step: "macros",
+		group: "Test group",
+		groupSort: 1,
+		sort: 1,
+		label: `Nutrient ${nutrientId} (g)`,
+		requiredForManualEntry,
+	});
+
+	it("labels accepted source groups by what the barcode actually reported", () => {
+		const group = { title: "Test group", fields: [field(1008), field(1003)] };
+		const base = {
+			group,
+			hasAcceptedBarcodeSource: true,
+			isRequired: () => false,
+		};
+
+		expect(
+			getManualEntryNutrientGroupBadge({
+				...base,
+				reportedNutrientIds: [1008],
+			}),
+		).toBe("From barcode");
+		expect(
+			getManualEntryNutrientGroupBadge({
+				...base,
+				reportedNutrientIds: [],
+			}),
+		).toBe("Not provided");
+	});
+
+	it("keeps manual-only groups optional and marks real sharing requirements", () => {
+		const optionalGroup = { title: "Optional", fields: [field(1008)] };
+		const requiredGroup = { title: "Required", fields: [field(1003, true)] };
+		const base = {
+			hasAcceptedBarcodeSource: false,
+			reportedNutrientIds: [],
+		};
+
+		expect(
+			getManualEntryNutrientGroupBadge({
+				...base,
+				group: optionalGroup,
+				isRequired: () => false,
+			}),
+		).toBe("Optional");
+		expect(
+			getManualEntryNutrientGroupBadge({
+				...base,
+				group: requiredGroup,
+				isRequired: (candidate) => candidate.requiredForManualEntry,
+			}),
+		).toBe("Required to share");
+	});
+
+	it("replaces blanket optional guidance after a barcode is accepted", () => {
+		const fallback =
+			"All fields on this step are optional. Fill what you know.";
+
+		expect(
+			getManualEntryNutritionStepHelper({
+				hasAcceptedBarcodeSource: false,
+				fallback,
+			}),
+		).toBe(fallback);
+		expect(
+			getManualEntryNutritionStepHelper({
+				hasAcceptedBarcodeSource: true,
+				fallback,
+			}),
+		).toContain("Values marked From barcode");
+		expect(
+			getManualEntryNutritionStepHelper({
+				hasAcceptedBarcodeSource: true,
+				fallback,
+			}),
+		).toContain("Not provided");
 	});
 });

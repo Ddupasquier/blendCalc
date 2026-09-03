@@ -667,7 +667,7 @@ test("an optional source product photo enters moderation without blocking a priv
 
 	let intakeRequestBody: Buffer | null = null;
 	let intakeRequestCount = 0;
-	let nutrientAutofillVerified = false;
+	let nutrientPresentationVerified = false;
 	await page.route(
 		`**/api/products/barcode/${optionalPhotoProductBarcode}`,
 		async (route) => {
@@ -723,20 +723,54 @@ test("an optional source product photo enters moderation without blocking a priv
 			dialog.getByText("Caramel Rice Crisps · Quaker", { exact: true }),
 		).toBeVisible();
 		await dialog.getByRole("button", { name: "Autofill" }).click();
-		if (!nutrientAutofillVerified) {
+		if (!nutrientPresentationVerified) {
 			await expect(
 				dialog.getByText(
 					/17 nutrition values were accepted and retained from the source\. Review 13 in Macros and 4 in Extended\./,
 				),
 			).toBeVisible();
-		}
-		await dialog.getByRole("tab", { name: "Macros" }).click();
-		if (!nutrientAutofillVerified) {
+			await dialog.getByRole("tab", { name: "Macros" }).click();
+			await expect(
+				dialog.getByText(/Values marked From barcode were supplied/),
+			).toBeVisible();
+			for (const title of [
+				"Core nutrition",
+				"Carbohydrate details",
+				"Fat details",
+			]) {
+				await expect(
+					dialog.locator("summary", { hasText: title }).locator(".text-badge"),
+				).toHaveText("From barcode");
+			}
 			await expect(dialog.getByLabel("Calories (kcal) *")).toHaveValue("110");
 			await expect(dialog.getByLabel("Added sugars (g)")).toHaveValue("9");
-		}
-		await dialog.getByRole("tab", { name: "Extended" }).click();
-		if (!nutrientAutofillVerified) {
+			await expect(
+				dialog
+					.locator("summary", { hasText: "Core nutrition" })
+					.locator(".manual-nutrients__group-count"),
+			).toHaveText("5 of 5");
+
+			await dialog.getByRole("tab", { name: "Extended" }).click();
+			await expect(
+				dialog.getByText(/Not provided means that source did not report/),
+			).toBeVisible();
+			for (const title of ["Vitamins", "Minerals"]) {
+				await expect(
+					dialog.locator("summary", { hasText: title }).locator(".text-badge"),
+				).toHaveText("From barcode");
+			}
+			for (const title of [
+				"Carotenoids",
+				"Advanced carbohydrate details",
+				"Advanced fat details",
+				"Amino acids",
+				"Other nutrients",
+			]) {
+				await expect(
+					dialog.locator("summary", { hasText: title }).locator(".text-badge"),
+				).toHaveText("Not provided");
+			}
+			await dialog.locator("summary", { hasText: "Vitamins" }).click();
 			await expect(dialog.getByLabel("Vitamin D (D2 + D3) (mcg)")).toHaveValue(
 				"0",
 			);
@@ -744,10 +778,22 @@ test("an optional source product photo enters moderation without blocking a priv
 			await expect(dialog.getByLabel("Calcium, Ca (mg)")).toHaveValue("10");
 			await expect(dialog.getByLabel("Iron, Fe (mg)")).toHaveValue("0.4");
 			await expect(dialog.getByLabel("Potassium, K (mg)")).toHaveValue("60");
-			nutrientAutofillVerified = true;
+			await expect(
+				dialog
+					.locator("summary", { hasText: "Carotenoids" })
+					.locator(".manual-nutrients__group-count"),
+			).toHaveText("0 of 2");
+			nutrientPresentationVerified = true;
 		}
 		const shareTab = dialog.getByRole("tab", { name: "Share" });
 		await shareTab.click();
+		const relationshipRulesLoading = dialog.getByText(
+			"Nutrition validation rules are still loading. Try again in a moment.",
+		);
+		if (await relationshipRulesLoading.isVisible()) {
+			await expect(relationshipRulesLoading).toBeHidden();
+			await shareTab.click();
+		}
 		await expect(shareTab).toHaveAttribute("aria-selected", "true");
 		await expect(dialog.getByLabel("Share with community")).toBeChecked();
 		return dialog;
