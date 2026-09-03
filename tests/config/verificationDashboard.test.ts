@@ -46,13 +46,10 @@ describe("visible verification dashboard", () => {
 
 		expect(quickStageIds).toContain("vitest-affected");
 		expect(featureStageIds).toEqual(
-			expect.arrayContaining([
-				"vitest-node",
-				"vitest-dom",
-				"playwright-affected",
-			]),
+			expect.arrayContaining(["vitest-affected", "playwright-affected"]),
 		);
-		expect(featureStageIds).not.toContain("vitest-affected");
+		expect(featureStageIds).not.toContain("vitest-node");
+		expect(featureStageIds).not.toContain("vitest-dom");
 		expect(featureStageIds).not.toContain("build");
 		expect(releaseStageIds).toEqual(
 			expect.arrayContaining([
