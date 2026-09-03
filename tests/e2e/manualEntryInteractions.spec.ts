@@ -13,6 +13,7 @@ const expectedManualEntryReferenceDataUnavailableMessage =
 	"Nutrition tools couldn’t load. Refresh and try again before continuing.";
 const listMembershipTestBarcode = "04006381333931";
 const listMembershipTestFoodId = -9_280_001;
+const optionalPhotoProductBarcode = "00030000581728";
 
 const removeListMembershipTestFood = async (parallelWorkerIndex: number) => {
 	const supabase =
@@ -51,6 +52,36 @@ const seedListMembershipTestFood = async (parallelWorkerIndex: number) => {
 	if (data !== "added") {
 		throw new Error(`Could not seed manual-entry list membership: ${data}`);
 	}
+};
+
+const cleanUpOptionalPhotoProduct = async (parallelWorkerIndex: number) => {
+	const supabase =
+		await getAuthenticatedLocalQaDatabaseClient(parallelWorkerIndex);
+	const { data: customFoods, error: customFoodsError } = await supabase
+		.from("custom_foods")
+		.select("id, fdc_id")
+		.eq("barcode", optionalPhotoProductBarcode);
+	if (customFoodsError) throw customFoodsError;
+
+	for (const customFood of customFoods ?? []) {
+		for (const listType of ["fridge", "shopping"] as const) {
+			const { error } = await supabase.rpc("remove_user_food_list_item", {
+				p_fdc_id: customFood.fdc_id,
+				p_list_type: listType,
+			});
+			if (error) throw error;
+		}
+	}
+
+	if ((customFoods ?? []).length === 0) return;
+	const { error: deleteError } = await supabase
+		.from("custom_foods")
+		.delete()
+		.in(
+			"id",
+			(customFoods ?? []).map((customFood) => customFood.id),
+		);
+	if (deleteError) throw deleteError;
 };
 const cleanUpCanonicalCategoryDisplayTestFood = async (
 	parallelWorkerIndex: number,
@@ -469,6 +500,315 @@ test("manual barcode entry shows input-bound progress until lookup finishes", as
 	await expect(continueButton).toBeEnabled();
 });
 
+test("barcode autofill explains unmapped source nutrition without using it in the form", async ({
+	page,
+}) => {
+	const barcode = "00000000000123";
+	await page.route(`**/api/products/barcode/${barcode}`, async (route) => {
+		await route.fulfill({
+			status: 200,
+			contentType: "application/json",
+			body: JSON.stringify({
+				status: "found",
+				draft: {
+					barcode,
+					name: "Future Nutrient Example",
+					nameProvenance: "source",
+					brandOwner: "Example",
+					servingLabel: "100 g reference",
+					servingWeightGrams: 100,
+					hasSourceServing: false,
+					nutrients: [
+						{
+							nutrientId: 1008,
+							nutrientName: "Energy",
+							nutrientNumber: "208",
+							unitName: "KCAL",
+							value: 100,
+						},
+					],
+					nutrientSourceReview: [
+						{
+							nutrientName: "Future nutrient",
+							unitName: "MG",
+							amount: 2,
+							measurementBasis: {
+								kind: "mass",
+								quantity: 100,
+								unitKey: "g",
+							},
+							amountPer100g: 2,
+							valueStatus: "reported",
+							mappingStatus: "unmapped",
+							sourceNutrientKey: "future-nutrient",
+						},
+					],
+					reportedNutrientIds: [1008],
+					categories: ["Other"],
+					resolvedCategory: "Other",
+					categoryResolution: {
+						categoryOptionId: "other",
+						label: "Other",
+						sourceValue: "Other",
+						confidence: "reviewed",
+					},
+					source: "open-food-facts",
+					sourceKey: "open-food-facts",
+					sourceLabel: "Open Food Facts",
+					sourceReference: barcode,
+				},
+			}),
+		});
+	});
+
+	await page.goto("/ingredients/fridge/manual-entry");
+	await waitForAppReady(page);
+	const dialog = page.getByRole("dialog", { name: "Enter Manually" });
+	await dialog.getByLabel("UPC / Barcode").fill(barcode);
+	await dialog.getByLabel("UPC / Barcode").press("Tab");
+	await expect(
+		dialog.getByText("Future Nutrient Example · Example", { exact: true }),
+	).toBeVisible();
+	await dialog.getByRole("button", { name: "Autofill" }).click();
+
+	await expect(dialog).toContainText(
+		"1 nutrition value was accepted and retained from the source",
+	);
+	await expect(dialog).toContainText("Review 1 in Macros");
+	await expect(dialog).toContainText(
+		"1 additional source value needs mapping review and is not used in nutrition calculations",
+	);
+	await dialog.getByRole("tab", { name: "Macros" }).click();
+	await expect(dialog.getByLabel("Calories (kcal)")).toHaveValue("100");
+});
+
+test("an optional source product photo enters moderation without blocking a private save", async ({
+	page,
+}, testInfo) => {
+	testInfo.setTimeout(120_000);
+	test.skip(
+		testInfo.project.name !== "desktop-chromium",
+		"One isolated local Chromium project owns the optional-photo save corpus.",
+	);
+	const baseUrl = new URL(
+		String(testInfo.project.use.baseURL ?? "http://localhost:5174"),
+	);
+	test.skip(
+		!["127.0.0.1", "localhost"].includes(baseUrl.hostname),
+		"The optional-photo save corpus is restricted to disposable local infrastructure.",
+	);
+	const supabase = await getAuthenticatedLocalQaDatabaseClient(
+		testInfo.parallelIndex,
+	);
+
+	let intakeRequestBody: Buffer | null = null;
+	let intakeRequestCount = 0;
+	let nutrientPresentationVerified = false;
+	await page.route(
+		`**/api/products/barcode/${optionalPhotoProductBarcode}/share-validation`,
+		async (route) => {
+			const response = await route.fetch();
+			const result = (await response.json()) as Record<string, unknown>;
+			await route.fulfill({
+				response,
+				contentType: "application/json",
+				body: JSON.stringify({
+					...result,
+					defaultSharingAllowed: true,
+					requiresCatalogEvidence: false,
+				}),
+			});
+		},
+	);
+	await page.route("**/api/intake/v1/product-observations", async (route) => {
+		intakeRequestCount += 1;
+		intakeRequestBody = route.request().postDataBuffer();
+		await route.fulfill({
+			status: 201,
+			contentType: "application/json",
+			body: JSON.stringify({
+				status: "pending",
+				message:
+					"The ingredient was saved privately. The product image is waiting for moderator review before it can be shared.",
+				evidenceAccepted: true,
+			}),
+		});
+	});
+
+	const openProductAtShare = async () => {
+		await page.goto("/ingredients/fridge/manual-entry");
+		await waitForAppReady(page);
+		const dialog = page.getByRole("dialog", { name: "Enter Manually" });
+		const barcodeInput = dialog.getByLabel("UPC / Barcode");
+		await barcodeInput.fill(optionalPhotoProductBarcode);
+		await barcodeInput.press("Tab");
+		await expect(
+			dialog.getByText("Caramel Rice Crisps · Quaker", { exact: true }),
+		).toBeVisible();
+		await dialog.getByRole("button", { name: "Autofill" }).click();
+		const shareTab = dialog.getByRole("tab", { name: "Share" });
+		const relationshipRulesLoading = dialog.getByText(
+			"Nutrition validation rules are still loading. Try again in a moment.",
+		);
+		if ((await shareTab.getAttribute("aria-selected")) !== "true") {
+			await shareTab.click();
+			if (await relationshipRulesLoading.isVisible()) {
+				await expect(relationshipRulesLoading).toBeHidden();
+				await shareTab.click();
+			}
+		}
+		await expect(shareTab).toHaveAttribute("aria-selected", "true");
+		if (!nutrientPresentationVerified) {
+			await expect(
+				dialog.getByText(
+					/17 nutrition values were accepted and retained from the source\. Review 13 in Macros and 4 in Extended\./,
+				),
+			).toBeVisible();
+			await dialog.getByRole("tab", { name: "Servings" }).click();
+			await expect(dialog.getByLabel("Weight (g) optional")).toHaveValue("28");
+			await expect(
+				dialog.getByRole("switch", { name: "Package measure" }),
+			).toBeChecked();
+			await expect(dialog.getByLabel("Amount")).toHaveValue("16");
+			await expect(dialog.getByLabel("Unit")).toHaveText("Items");
+			await dialog.getByRole("tab", { name: "Macros" }).click();
+			await expect(
+				dialog.getByText(/Values marked From barcode were supplied/),
+			).toBeVisible();
+			for (const title of [
+				"Core nutrition",
+				"Carbohydrate details",
+				"Fat details",
+			]) {
+				await expect(
+					dialog.locator("summary", { hasText: title }).locator(".text-badge"),
+				).toHaveText("From barcode");
+			}
+			await expect(dialog.getByLabel("Calories (kcal)")).toHaveValue("110");
+			await expect(dialog.getByLabel("Added sugars (g)")).toHaveValue("9");
+			await expect(
+				dialog
+					.locator("summary", { hasText: "Core nutrition" })
+					.locator(".manual-nutrients__group-count"),
+			).toHaveText("5 of 5");
+
+			await dialog.getByRole("tab", { name: "Extended" }).click();
+			await expect(
+				dialog.getByText(/Not provided means that source did not report/),
+			).toBeVisible();
+			for (const title of ["Vitamins", "Minerals"]) {
+				await expect(
+					dialog.locator("summary", { hasText: title }).locator(".text-badge"),
+				).toHaveText("From barcode");
+			}
+			for (const title of [
+				"Carotenoids",
+				"Advanced carbohydrate details",
+				"Advanced fat details",
+				"Amino acids",
+				"Other nutrients",
+			]) {
+				await expect(
+					dialog.locator("summary", { hasText: title }).locator(".text-badge"),
+				).toHaveText("Not provided");
+			}
+			await dialog.locator("summary", { hasText: "Vitamins" }).click();
+			await expect(dialog.getByLabel("Vitamin D (D2 + D3) (mcg)")).toHaveValue(
+				"0",
+			);
+			await dialog.locator("summary").filter({ hasText: "Minerals" }).click();
+			await expect(dialog.getByLabel("Calcium, Ca (mg)")).toHaveValue("10");
+			await expect(dialog.getByLabel("Iron, Fe (mg)")).toHaveValue("0.4");
+			await expect(dialog.getByLabel("Potassium, K (mg)")).toHaveValue("60");
+			await expect(
+				dialog
+					.locator("summary", { hasText: "Carotenoids" })
+					.locator(".manual-nutrients__group-count"),
+			).toHaveText("0 of 2");
+			nutrientPresentationVerified = true;
+		}
+		await shareTab.click();
+		if (await relationshipRulesLoading.isVisible()) {
+			await expect(relationshipRulesLoading).toBeHidden();
+			await shareTab.click();
+		}
+		await expect(shareTab).toHaveAttribute("aria-selected", "true");
+		await expect(
+			dialog.getByText("17 barcode nutrients filled", { exact: true }),
+		).toBeVisible();
+		return dialog;
+	};
+
+	await cleanUpOptionalPhotoProduct(testInfo.parallelIndex);
+	try {
+		let dialog = await openProductAtShare();
+		const frontPhotoInput = dialog.getByLabel("Front of package");
+		await expect(frontPhotoInput).toBeVisible();
+		await expect(frontPhotoInput).not.toHaveAttribute("required", "");
+		await expect(dialog.getByLabel("Nutrition facts label")).toHaveCount(0);
+		await expect(dialog.getByLabel("Barcode", { exact: true })).toHaveCount(0);
+
+		const privateShareToggle = dialog.getByLabel("Share with community");
+		if (await privateShareToggle.isChecked()) await privateShareToggle.click();
+		await dialog.getByRole("button", { name: "Add Ingredient" }).click();
+		await expect(dialog).toBeHidden();
+		expect(intakeRequestCount).toBe(0);
+
+		const { data: privateFoods, error: privateFoodError } = await supabase
+			.from("custom_foods")
+			.select("food")
+			.eq("barcode", optionalPhotoProductBarcode);
+		if (privateFoodError) throw privateFoodError;
+		expect(privateFoods).toHaveLength(1);
+		const savedNutrients =
+			(
+				privateFoods?.[0]?.food as {
+					foodNutrients?: { nutrientId: number; value: number }[];
+				}
+			).foodNutrients ?? [];
+		expect(savedNutrients).toHaveLength(17);
+		const savedValuesByNutrientId = new Map(
+			savedNutrients.map((nutrient) => [nutrient.nutrientId, nutrient.value]),
+		);
+		expect(savedValuesByNutrientId.get(1087)).toBeCloseTo((10 / 28) * 100);
+		expect(savedValuesByNutrientId.get(1089)).toBeCloseTo((0.4 / 28) * 100);
+		expect(savedValuesByNutrientId.get(1092)).toBeCloseTo((60 / 28) * 100);
+		expect(savedValuesByNutrientId.get(1114)).toBe(0);
+
+		await cleanUpOptionalPhotoProduct(testInfo.parallelIndex);
+		await page.evaluate(() => sessionStorage.clear());
+		dialog = await openProductAtShare();
+		await dialog.getByLabel("Front of package").setInputFiles({
+			name: "caramel-rice-crisps-front.png",
+			mimeType: "image/png",
+			buffer: Buffer.from("browser evidence upload"),
+		});
+		const publicShareToggle = dialog.getByLabel("Share with community");
+		if (!(await publicShareToggle.isChecked())) await publicShareToggle.click();
+		await expect(publicShareToggle).toBeChecked();
+		const addButton = dialog.getByRole("button", { name: "Add Ingredient" });
+		await expect(addButton).toBeEnabled({ timeout: 30_000 });
+		await addButton.click();
+		await expect.poll(() => intakeRequestCount).toBe(1);
+
+		expect(intakeRequestBody).not.toBeNull();
+		const multipartBody = intakeRequestBody!.toString("latin1");
+		expect(multipartBody).toContain(
+			'name="frontPhoto"; filename="caramel-rice-crisps-front.png"',
+		);
+		expect(multipartBody).not.toContain('name="nutritionPhoto"');
+		expect(multipartBody).not.toContain('name="barcodePhoto"');
+		expect(multipartBody).not.toContain('name="reviewFlags"');
+
+		const publicProductResponse = await page.request.get(
+			`/api/v1/products/${optionalPhotoProductBarcode}`,
+		);
+		expect(publicProductResponse.status()).toBe(404);
+	} finally {
+		await cleanUpOptionalPhotoProduct(testInfo.parallelIndex);
+	}
+});
+
 test("regulated alcohol lookup keeps sparse nutrition honest before Share", async ({
 	page,
 }) => {
@@ -787,6 +1127,11 @@ test("manual entry renders every approved DB nutrient group and field", async ({
 		privateMacroGroups.map((_, index) => index === 0),
 	);
 	await expectRenderedManualEntryNutrientGroups(dialog, privateMacroGroups);
+	for (const group of await dialog.locator(".manual-nutrients__group").all()) {
+		await expect(group.locator(".manual-nutrients__group-count")).toHaveText(
+			/^0 of \d+$/,
+		);
+	}
 	await expect(
 		dialog.locator(".manual-nutrients__group", { hasText: "Mineral details" }),
 	).toHaveCount(0);
@@ -810,7 +1155,7 @@ test("manual entry renders every approved DB nutrient group and field", async ({
 		).toHaveCount(1);
 		await expect(
 			extendedGroups.nth(index).locator("summary .text-badge"),
-		).toHaveText("optional");
+		).toHaveText("Optional");
 	}
 	await expect(
 		dialog.locator(".manual-nutrients__fields .text-badge"),
@@ -837,6 +1182,18 @@ test("manual entry renders every approved DB nutrient group and field", async ({
 		.nth(vitaminsIndex)
 		.locator(".manual-nutrients__fields input")
 		.first();
+	await vitaminInput.fill("1.25");
+	await expect(
+		extendedGroups.nth(vitaminsIndex).locator(".manual-nutrients__group-count"),
+	).toHaveText(`1 of ${nutrientCatalog.extended[vitaminsIndex].fields.length}`);
+	await vitaminInput.fill("0");
+	await expect(
+		extendedGroups.nth(vitaminsIndex).locator(".manual-nutrients__group-count"),
+	).toHaveText(`1 of ${nutrientCatalog.extended[vitaminsIndex].fields.length}`);
+	await vitaminInput.fill("");
+	await expect(
+		extendedGroups.nth(vitaminsIndex).locator(".manual-nutrients__group-count"),
+	).toHaveText(`0 of ${nutrientCatalog.extended[vitaminsIndex].fields.length}`);
 	await vitaminInput.fill("1.25");
 
 	await extendedGroups.nth(mineralsIndex).locator("summary").click();

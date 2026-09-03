@@ -126,6 +126,32 @@ describe("fetchCachedProductApiJson", () => {
 		expect(recordProductSourceCacheMiss).not.toHaveBeenCalled();
 	});
 
+	it("returns the configured miss value without an external request in cache-only mode", async () => {
+		const cacheStore = {
+			read: vi.fn().mockResolvedValue(null),
+			write: vi.fn(),
+		};
+		const fetcher = vi.fn();
+
+		await expect(
+			fetchCachedProductApiJson<null>({
+				provider: "open-food-facts",
+				requestKind: "barcode-product",
+				cacheValue: "local-qa-miss",
+				url: "https://example.com",
+				ttlMilliseconds: 60_000,
+				notFoundValue: null,
+				cacheStore,
+				fetcher,
+				cacheOnly: true,
+			}),
+		).resolves.toBeNull();
+
+		expect(fetcher).not.toHaveBeenCalled();
+		expect(cacheStore.write).not.toHaveBeenCalled();
+		expect(recordProductSourceCacheMiss).toHaveBeenCalledOnce();
+	});
+
 	it("writes successful provider responses to persistent cache", async () => {
 		const cacheStore = {
 			read: vi.fn().mockResolvedValue(null),
@@ -254,5 +280,103 @@ describe("fetchCachedProductApiJson", () => {
 		expect(fetcher).not.toHaveBeenCalled();
 		expect(cacheStore.write).not.toHaveBeenCalled();
 		expect(recordProductSourceCacheHit).toHaveBeenCalledTimes(1);
+	});
+
+	it("waits for another app instance to refresh the shared cache", async () => {
+		const expired = {
+			response: { value: "expired" },
+			statusCode: 200,
+			expiresAt: new Date(Date.now() - 1_000).toISOString(),
+			etag: null,
+		};
+		const refreshed = {
+			response: { value: "refreshed elsewhere" },
+			statusCode: 200,
+			expiresAt: new Date(Date.now() + 60_000).toISOString(),
+			etag: null,
+		};
+		const cacheStore = {
+			read: vi
+				.fn()
+				.mockResolvedValueOnce(expired)
+				.mockResolvedValueOnce(refreshed),
+			write: vi.fn(),
+		};
+		const coordinator = {
+			claimLease: vi.fn().mockResolvedValue(false),
+			releaseLease: vi.fn(),
+			claimBudget: vi.fn(),
+		};
+		const fetcher = vi.fn();
+
+		await expect(
+			fetchCachedProductApiJson({
+				provider: "open-food-facts",
+				requestKind: "barcode-product",
+				cacheValue: "shared-request",
+				url: "https://example.com",
+				ttlMilliseconds: 60_000,
+				cacheStore,
+				fetcher,
+				sleep: vi.fn().mockResolvedValue(undefined),
+				coordination: {
+					maxRequestsPerWindow: 12,
+					windowMilliseconds: 60_000,
+					leaseMilliseconds: 10_000,
+					waitForRefreshMilliseconds: 1_000,
+					coordinator,
+				},
+			}),
+		).resolves.toEqual({ value: "refreshed elsewhere" });
+
+		expect(fetcher).not.toHaveBeenCalled();
+		expect(coordinator.claimBudget).not.toHaveBeenCalled();
+		expect(coordinator.releaseLease).not.toHaveBeenCalled();
+	});
+
+	it("uses stale data instead of exceeding the shared provider budget", async () => {
+		const cacheStore = {
+			read: vi.fn().mockResolvedValue({
+				response: { value: "stale" },
+				statusCode: 200,
+				expiresAt: new Date(Date.now() - 1_000).toISOString(),
+				etag: null,
+			}),
+			write: vi.fn(),
+		};
+		const coordinator = {
+			claimLease: vi.fn().mockResolvedValue(true),
+			releaseLease: vi.fn().mockResolvedValue(undefined),
+			claimBudget: vi.fn().mockResolvedValue({
+				allowed: false,
+				retryAfterMilliseconds: 30_000,
+				remaining: 0,
+			}),
+		};
+		const fetcher = vi.fn();
+
+		await expect(
+			fetchCachedProductApiJson({
+				provider: "open-food-facts",
+				requestKind: "barcode-product",
+				cacheValue: "rate-limited-request",
+				url: "https://example.com",
+				ttlMilliseconds: 60_000,
+				staleIfErrorMilliseconds: 60_000,
+				cacheStore,
+				fetcher,
+				coordination: {
+					maxRequestsPerWindow: 12,
+					windowMilliseconds: 60_000,
+					leaseMilliseconds: 10_000,
+					waitForRefreshMilliseconds: 1_000,
+					coordinator,
+				},
+			}),
+		).resolves.toEqual({ value: "stale" });
+
+		expect(fetcher).not.toHaveBeenCalled();
+		expect(coordinator.releaseLease).toHaveBeenCalledOnce();
+		expect(recordProductSourceStaleFallback).toHaveBeenCalledOnce();
 	});
 });

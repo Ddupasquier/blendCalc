@@ -293,6 +293,16 @@ const record: ApprovedCatalogRecord = {
 				confidence: "source-verified",
 			},
 		],
+		nutrientSourceReview: [
+			{
+				nutrientName: "Private mapping candidate",
+				unitName: "MG",
+				amountPer100g: 2,
+				valueStatus: "reported",
+				mappingStatus: "unmapped",
+				mappingReviewReference: "internal-review-only",
+			},
+		],
 		foodServings: [
 			{
 				label: "1/2 cup",
@@ -403,6 +413,8 @@ describe("blendCalcAPI v1 catalog mapping", () => {
 		expect(product.nutrients[0]?.quality).not.toHaveProperty(
 			"mappingReviewReference",
 		);
+		expect(JSON.stringify(product)).not.toContain("nutrientSourceReview");
+		expect(JSON.stringify(product)).not.toContain("internal-review-only");
 		expect(product.nutrients[1]?.amountPer100g).toBeNull();
 		expect(product.nutrients[1]?.valueStatus).toBe("unknown");
 		expect(product.nutrients[1]?.source).toBeNull();

@@ -47,6 +47,7 @@
 		"audit:blendCalcAPI-load": "node scripts/audits/catalog/audit_blendCalcAPI_read_load.mjs",
 		"audit:blendCalcAPI-payloads": "node scripts/audits/catalog/audit_blendCalcAPI_payload_sizes.mjs",
 		"report:source-quality": "node scripts/audits/food-sources/report_product_source_quality.mjs",
+		"audit:off-nutrient-mappings": "node scripts/audits/food-sources/audit_open_food_facts_nutrient_mappings.mjs",
 		"generate:api-structures": "node scripts/generators/api/generate_api_structures.mjs",
 		"pretest": "npm run version:check",
 		"test": "BLENDCALC_DATABASE_ENVIRONMENT=test npm run test:node && npm run test:dom",

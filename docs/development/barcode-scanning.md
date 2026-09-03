@@ -24,9 +24,11 @@ boundaries belong in the
 6. Imported values stay in the form until the user reviews and saves them.
 
 UPC-E scans are expanded to their UPC-A equivalent before canonical GTIN-14 storage.
-Manual eight-digit lookups retain the original EAN-8 candidate and also try a valid
-UPC-E expansion, so ambiguous printed codes can be resolved by exact provider identity
-without treating unrelated products as equivalent.
+Providers retain their own identifier rules: Open Food Facts receives one valid
+UPC-E expansion or ordinary scanned barcode and performs its documented leading-zero
+normalization, while providers without that contract may still use bounded exact
+candidates. Every returned identity must normalize back to the requested canonical
+GTIN, so unrelated products are never treated as equivalent.
 
 The scan itself never waits for scheduled catalog maintenance. Once a canonical product
 exists, its exact Open Food Facts and known USDA identifiers can enter the independent

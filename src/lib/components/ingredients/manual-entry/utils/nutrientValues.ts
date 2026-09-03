@@ -1,5 +1,6 @@
 import type {
 	ManualEntryNutrientDefinition,
+	ManualEntryNutrientGroup,
 	ManualEntryNutrientGroupsByStep,
 } from "$lib/utils/food/nutrients/nutrientDefinitions";
 import type { FoodNutrient } from "$lib/utils/food/types";
@@ -66,6 +67,11 @@ export const getManualEntryNutrientFields = (
 	...groups.extended.flatMap((group) => group.fields),
 ];
 
+export const getPopulatedNutrientGroupCount = (
+	group: ManualEntryNutrientGroup,
+	getValue: (field: ManualEntryNutrientDefinition) => number | null,
+) => group.fields.filter((field) => Number.isFinite(getValue(field))).length;
+
 export const stripUnitFromNutrientLabel = (label: string) =>
 	label.replace(/\s*\([^)]*\)\s*$/u, "").trim();
 
@@ -89,11 +95,8 @@ export const buildSaveNutrients = ({
 	for (const nutrient of importedNutrients) {
 		const nutrientId = Number(nutrient.nutrientId);
 		const value = toFiniteNonnegativeNumber(nutrient.value);
-		if (
-			!Number.isSafeInteger(nutrientId) ||
-			nutrientId <= 0 ||
-			value === null
-		) continue;
+		if (!Number.isSafeInteger(nutrientId) || nutrientId <= 0 || value === null)
+			continue;
 		nutrientsById.set(nutrientId, {
 			...nutrient,
 			nutrientId,
@@ -111,7 +114,12 @@ export const buildSaveNutrients = ({
 			field.requiredForManualEntry ||
 			(value !== null && value > 0);
 
-		if (!shouldPersistManualValue || !Number.isFinite(value) || Number(value) < 0) continue;
+		if (
+			!shouldPersistManualValue ||
+			!Number.isFinite(value) ||
+			Number(value) < 0
+		)
+			continue;
 		if (value <= 0 && !field.requiredForManualEntry && !wasEdited) continue;
 
 		const keepImportedMetadata = Boolean(existing && !wasEdited);
@@ -121,35 +129,33 @@ export const buildSaveNutrients = ({
 			nutrientName: field.nutrientName,
 			nutrientNumber: field.nutrientNumber,
 			unitName: field.unitName,
-				value,
-				valueOrigin: "reported",
-				valueStatus: value === 0 ? "reported-zero" : "reported",
-				source: keepImportedMetadata ? existing?.source : "user-label",
+			value,
+			valueOrigin: "reported",
+			valueStatus: value === 0 ? "reported-zero" : "reported",
+			source: keepImportedMetadata ? existing?.source : "user-label",
 			sourceReference: keepImportedMetadata
 				? existing?.sourceReference
 				: undefined,
-				confidence: keepImportedMetadata
-					? existing?.confidence
-					: "user-reported",
-				sourceNutrientKey: keepImportedMetadata
-					? existing?.sourceNutrientKey
-					: String(field.nutrientId),
-				sourceNutrientCode: keepImportedMetadata
-					? existing?.sourceNutrientCode
-					: field.nutrientNumber,
-				mappingStatus: keepImportedMetadata
-					? existing?.mappingStatus
-					: "canonical",
-				mappingMethod: keepImportedMetadata
-					? existing?.mappingMethod
-					: "user-entered-canonical-field",
-				mappingReviewReference: keepImportedMetadata
-					? existing?.mappingReviewReference
-					: undefined,
-				derivationMethod: keepImportedMetadata
-					? existing?.derivationMethod
-					: undefined,
-			});
+			confidence: keepImportedMetadata ? existing?.confidence : "user-reported",
+			sourceNutrientKey: keepImportedMetadata
+				? existing?.sourceNutrientKey
+				: String(field.nutrientId),
+			sourceNutrientCode: keepImportedMetadata
+				? existing?.sourceNutrientCode
+				: field.nutrientNumber,
+			mappingStatus: keepImportedMetadata
+				? existing?.mappingStatus
+				: "canonical",
+			mappingMethod: keepImportedMetadata
+				? existing?.mappingMethod
+				: "user-entered-canonical-field",
+			mappingReviewReference: keepImportedMetadata
+				? existing?.mappingReviewReference
+				: undefined,
+			derivationMethod: keepImportedMetadata
+				? existing?.derivationMethod
+				: undefined,
+		});
 	}
 
 	return [...nutrientsById.values()];

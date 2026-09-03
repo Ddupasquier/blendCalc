@@ -16,6 +16,7 @@ import {
 import type {
 	FoodItem,
 	FoodNutrient,
+	FoodNutrientSourceReview,
 	FoodFieldProvenance,
 	FoodImageAsset,
 	FoodIdentityType,
@@ -31,6 +32,7 @@ import type {
 import { toFiniteNonnegativeNumber } from "$lib/utils/numbers/finiteNumbers";
 import { getStoredImagePlacement } from "$lib/utils/food/images/imagePlacement";
 import type { ImagePlacementValue } from "$lib/utils/food/images/types";
+import type { ManualEntryNutrientDefinition } from "$lib/utils/food/nutrients/nutrientDefinitions";
 
 export type ManualEntryBarcodeDraftState = {
 	name: string;
@@ -44,6 +46,7 @@ export type ManualEntryBarcodeDraftState = {
 	usesInternal100GramBasis: boolean;
 	serving?: FoodServing;
 	importedNutrients: FoodNutrient[];
+	nutrientSourceReview: FoodNutrientSourceReview[];
 	manualNutrientValues: Record<number, number>;
 	useServingMeasure: boolean;
 	servingMeasureQuantity: number | null;
@@ -248,10 +251,15 @@ export const getBarcodeDraftState = (
 		usesInternal100GramBasis,
 		serving: usesInternal100GramBasis ? undefined : draft.serving,
 		importedNutrients: validNutrients,
+		nutrientSourceReview: [...(draft.nutrientSourceReview ?? [])],
 		manualNutrientValues: Object.fromEntries(
 			validNutrients.map((nutrient) => [nutrient.nutrientId, nutrient.value]),
 		),
-		useServingMeasure: Boolean(draft.serving?.amount && draft.serving?.unitKey),
+		useServingMeasure: Boolean(
+			draft.serving?.isHouseholdMeasure &&
+			draft.serving.amount &&
+			draft.serving.unitKey,
+		),
 		servingMeasureQuantity: draft.serving?.amount ?? null,
 		servingMeasureUnit:
 			draft.serving?.unitKey ?? getDefaultServingMeasureUnit("volume") ?? "",
@@ -330,14 +338,52 @@ export const getBarcodeCategoryWarningMessage = ({
 
 export const getBarcodeImportMessage = (
 	draft: BarcodeProductDraft,
-	optionalNutrientCount: number,
+	manualEntryNutrientFields: ManualEntryNutrientDefinition[],
 	mode: "autofill" | "scan",
 ) => {
-	const reportedNutrientCount = new Set(draft.reportedNutrientIds).size;
+	const acceptedNutrientIds = new Set(
+		draft.nutrients.flatMap((nutrient) => {
+			const nutrientId = Number(nutrient.nutrientId);
+			return Number.isSafeInteger(nutrientId) &&
+				nutrientId > 0 &&
+				toFiniteNonnegativeNumber(nutrient.value) !== null
+				? [nutrientId]
+				: [];
+		}),
+	);
+	const fieldStepByNutrientId = new Map(
+		manualEntryNutrientFields.map((field) => [field.nutrientId, field.step]),
+	);
+	let macrosCount = 0;
+	let extendedCount = 0;
+	let unavailableFieldCount = 0;
+	for (const nutrientId of acceptedNutrientIds) {
+		const step = fieldStepByNutrientId.get(nutrientId);
+		if (step === "macros") macrosCount += 1;
+		else if (step === "extended") extendedCount += 1;
+		else unavailableFieldCount += 1;
+	}
+	const acceptedNutrientCount = acceptedNutrientIds.size;
+	const reviewLocations = [
+		macrosCount > 0 ? `${macrosCount} in Macros` : "",
+		extendedCount > 0 ? `${extendedCount} in Extended` : "",
+	].filter(Boolean);
+	const reviewSummary = reviewLocations.length
+		? ` Review ${reviewLocations.join(" and ")}.`
+		: "";
+	const unavailableSummary =
+		unavailableFieldCount > 0
+			? ` ${unavailableFieldCount} accepted and retained ${unavailableFieldCount === 1 ? "value does" : "values do"} not yet have an editable Manual Entry field.`
+			: "";
+	const sourceReviewCount = draft.nutrientSourceReview?.length ?? 0;
+	const sourceReviewSummary =
+		sourceReviewCount > 0
+			? ` ${sourceReviewCount} additional source ${sourceReviewCount === 1 ? "value needs" : "values need"} mapping review and ${sourceReviewCount === 1 ? "is" : "are"} not used in nutrition calculations.`
+			: "";
 	const nutrientSummary =
-		reportedNutrientCount === 0
-			? " This source did not report nutrition values, so missing values remain unknown."
-			: ` ${reportedNutrientCount} nutrition ${reportedNutrientCount === 1 ? "value was" : "values were"} reported${optionalNutrientCount > 0 ? `, including ${optionalNutrientCount} additional vitamin or mineral ${optionalNutrientCount === 1 ? "value" : "values"}` : ""}. Missing values remain unknown.`;
+		acceptedNutrientCount === 0
+			? ` No nutrition values from this source could be accepted and retained.${sourceReviewSummary} Missing values remain unknown.`
+			: ` ${acceptedNutrientCount} nutrition ${acceptedNutrientCount === 1 ? "value was" : "values were"} accepted and retained from the source.${reviewSummary}${unavailableSummary}${sourceReviewSummary} Missing values remain unknown.`;
 	const volumeSummary = draft.volumeEquivalent
 		? " The package's volume-to-weight serving was also included."
 		: draft.hasSourceServing === false

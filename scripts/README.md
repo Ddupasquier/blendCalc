@@ -208,14 +208,15 @@ authorization.
 
 ## Source Coverage And Quality
 
-| Command                                                                                   | Purpose                                                                                                                         |
-| ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `node scripts/audits/food-sources/benchmark_product_sources.mjs --limit=10`               | Controlled same-barcode provider comparison recorded as benchmark metrics                                                       |
-| `npm run report:source-quality -- --days=30 --origin=runtime`                             | Runtime requests, cache use, coverage, selected field contributions, missing fields, and unresolved disagreements               |
-| `npm run report:source-quality -- --days=30 --origin=benchmark`                           | Controlled-benchmark metrics plus current contribution, missing-field, and disagreement evidence                                |
-| `npm run report:source-quality -- --days=30 --origin=runtime --json`                      | The same privacy-safe report with field-level counts as structured JSON                                                         |
-| `node scripts/audits/food-sources/audit_barcode_provider_experience.mjs --sample-size=50` | Read-only USDA, Open Food Facts, and COLA Cloud exact-barcode coverage, latency, source math, and manual-entry experience audit |
-| `node scripts/audits/food-sources/audit_generic_dataset_contribution.mjs --queries=100`   | Read-only imported-dataset record, nutrient, measure, identity, and bounded search contribution                                 |
+| Command                                                                                   | Purpose                                                                                                                                          |
+| ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `node scripts/audits/food-sources/benchmark_product_sources.mjs --limit=10`               | Controlled same-barcode provider comparison recorded as benchmark metrics                                                                        |
+| `npm run report:source-quality -- --days=30 --origin=runtime`                             | Runtime requests, cache use, coverage, selected field contributions, missing fields, and unresolved disagreements                                |
+| `npm run report:source-quality -- --days=30 --origin=benchmark`                           | Controlled-benchmark metrics plus current contribution, missing-field, and disagreement evidence                                                 |
+| `npm run report:source-quality -- --days=30 --origin=runtime --json`                      | The same privacy-safe report with field-level counts as structured JSON                                                                          |
+| `node scripts/audits/food-sources/audit_barcode_provider_experience.mjs --sample-size=50` | Read-only USDA, Open Food Facts, and COLA Cloud exact-barcode coverage, latency, source math, and manual-entry experience audit                  |
+| `npm run audit:off-nutrient-mappings`                                                     | Read-only Open Food Facts taxonomy plus anonymous observed key/unit reconciliation against approved, queued, candidate, and unsupported outcomes |
+| `node scripts/audits/food-sources/audit_generic_dataset_contribution.mjs --queries=100`   | Read-only imported-dataset record, nutrient, measure, identity, and bounded search contribution                                                  |
 
 These reports measure coverage and efficiency. They do not establish provider-wide
 trust, merge similar food names, or change field-selection policy. Reviewed UCUM codes
@@ -229,16 +230,17 @@ version of that maintained evidence.
 
 ## Imports And Reference Seeds
 
-| Command                                                                                           | Write scope                                                                                                                  |
-| ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `npm run import:nutrition:cnf -- --dry-run`                                                       | Download and validate Canadian Nutrient File 2026 without replacing dataset rows                                             |
-| `npm run import:nutrition:cofid -- --dry-run`                                                     | Download and validate UK CoFID 2021 without replacing dataset rows                                                           |
-| `node scripts/seeds/food-safety/seed_food_preference_api_observations.mjs --dry-run`              | Preview provider-backed ingredient, allergen, trace, and dietary observations                                                |
-| `node scripts/seeds/catalog/seed_custom_food_categories.mjs --dry-run`                            | Preview category observations and canonical mapping rebuild                                                                  |
-| `node scripts/seeds/catalog/seed_custom_food_categories.mjs --deep`                               | Run the wider category source sweep and rebuild mappings                                                                     |
-| `node scripts/seeds/catalog/seed_custom_food_categories.mjs --rebuild-mappings-only`              | Rebuild mappings from stored observations only                                                                               |
-| `node scripts/seeds/nutrition/seed_manual_entry_nutrients.mjs --dry-run --pages=1 --page-size=25` | Preview nutrient metadata and manual-entry policy observations                                                               |
-| `node scripts/seeds/catalog/seed_product_reference_data.mjs --sample-size=200`                    | Idempotently store source identities, nutrient mappings, reviewed unit conversions, servings, and aliases; no dry run exists |
+| Command                                                                                           | Write scope                                                                                                                      |
+| ------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run import:nutrition:cnf -- --dry-run`                                                       | Download and validate Canadian Nutrient File 2026 without replacing dataset rows                                                 |
+| `npm run import:nutrition:cofid -- --dry-run`                                                     | Download and validate UK CoFID 2021 without replacing dataset rows                                                               |
+| `node scripts/seeds/food-safety/seed_food_preference_api_observations.mjs --dry-run`              | Preview provider-backed ingredient, allergen, trace, and dietary observations                                                    |
+| `node scripts/seeds/catalog/seed_custom_food_categories.mjs --dry-run`                            | Preview category observations and canonical mapping rebuild                                                                      |
+| `node scripts/seeds/catalog/seed_custom_food_categories.mjs --deep`                               | Run the wider category source sweep and rebuild mappings                                                                         |
+| `node scripts/seeds/catalog/seed_custom_food_categories.mjs --rebuild-mappings-only`              | Rebuild mappings from stored observations only                                                                                   |
+| `node scripts/seeds/nutrition/seed_manual_entry_nutrients.mjs --dry-run --pages=1 --page-size=25` | Preview nutrient metadata and manual-entry policy observations                                                                   |
+| `node scripts/seeds/nutrition/seed_open_food_facts_nutrient_mapping_candidates.mjs`               | Preview observed exact Open Food Facts identities eligible for the private mapping-review queue; add `--apply` only after review |
+| `node scripts/seeds/catalog/seed_product_reference_data.mjs --sample-size=200`                    | Idempotently store source identities, nutrient mappings, reviewed unit conversions, servings, and aliases; no dry run exists     |
 
 Remove `--dry-run` only after reviewing the script's proposed scope and the governing
 licence, catalog, nutrient, or food-safety documentation.

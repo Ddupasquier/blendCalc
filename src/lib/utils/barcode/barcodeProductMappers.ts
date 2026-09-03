@@ -1,6 +1,7 @@
 import { normalizeBarcode } from "$lib/utils/barcode/barcode";
 import {
 	mapOpenFoodFactsNutrients,
+	mapOpenFoodFactsNutrientSourceReview,
 	mapOpenFoodFactsQualitativeNutrients,
 	type OpenFoodFactsNutriments,
 } from "$lib/utils/barcode/barcodeNutrients";
@@ -14,6 +15,7 @@ import {
 	type FoodFieldSource,
 	type FoodNutrient,
 	type FoodNutrientQualitativeFact,
+	type FoodNutrientSourceReview,
 	type FoodImageAsset,
 	type FoodIdentityType,
 	type FoodIngredientAnalysis,
@@ -39,10 +41,12 @@ import {
 	convertServingAmount,
 	convertFoodServingMultiplier,
 	convertServingToGrams,
+	getServingMeasureDimension,
 	parseSourceServingMeasure,
 	parseSourceWeightMeasure,
 } from "$lib/utils/serving/servingAmount";
 import { getNutrientAmountForServingConversion } from "$lib/utils/food/nutrients/foodNutrients";
+import { normalizeFoodServingIdentityLabel } from "$lib/utils/food/servings/foodServings";
 import { formatSourceProductName } from "$lib/utils/products/productNameFormatting.js";
 import { toFiniteNonnegativeNumber } from "$lib/utils/numbers/finiteNumbers";
 
@@ -125,7 +129,7 @@ export type OpenFoodFactsIngredient = {
 };
 
 export type OpenFoodFactsResponse = {
-	status: number;
+	status?: number | "success" | "success_with_warnings";
 	product?: OpenFoodFactsProduct;
 };
 
@@ -140,6 +144,7 @@ export type BarcodeProductDraft = {
 	serving?: FoodServing;
 	nutrients: FoodNutrient[];
 	nutrientQualitativeFacts?: FoodNutrientQualitativeFact[];
+	nutrientSourceReview?: FoodNutrientSourceReview[];
 	reportedNutrientIds: number[];
 	foodIdentityType?: FoodIdentityType;
 	ingredients?: string;
@@ -998,12 +1003,44 @@ export const mapOpenFoodFactsProduct = (
 					}
 			: { kind: "mass" as const, quantity: 100, unitKey: "g" },
 	).map((fact) => ({ ...fact, sourceReference: canonicalBarcode }));
+	const nutrientSourceReview = mapOpenFoodFactsNutrientSourceReview(
+		product.nutriments ?? {},
+		useServingValues,
+		productReferenceCatalog,
+		useServingValues
+			? milliliterVolume !== null
+				? {
+						kind: "volume" as const,
+						quantity: parsedServing?.quantity ?? milliliterVolume,
+						unitKey: parsedServing?.unit ?? "ml",
+					}
+				: {
+						kind: "serving" as const,
+						quantity: 1,
+						unitKey: "serving",
+						servingLabel: product.serving_size?.trim() || "Serving",
+					}
+			: { kind: "mass" as const, quantity: 100, unitKey: "g" },
+	).map((entry) => ({ ...entry, sourceReference: canonicalBarcode }));
 	const metadata = parseOpenFoodFactsMetadata(product);
 	const image = parseOpenFoodFactsImage(product, canonicalBarcode);
 	const alcoholByVolume = parseOpenFoodFactsAlcoholByVolume(product.nutriments);
 	const volumeEquivalent = hasExactGramWeight
 		? (parseVolumeEquivalent(product.serving_size) ?? undefined)
 		: undefined;
+	const parsedHouseholdEquivalent = hasExactGramWeight
+		? parseSourceServingMeasure(
+				normalizeFoodServingIdentityLabel(product.serving_size ?? ""),
+			)
+		: null;
+	const householdEquivalent =
+		parsedHouseholdEquivalent &&
+		["count", "volume"].includes(
+			getServingMeasureDimension(parsedHouseholdEquivalent.unit) ?? "",
+		)
+			? parsedHouseholdEquivalent
+			: undefined;
+	const displayEquivalent = volumeEquivalent ?? householdEquivalent;
 	const packageVolumeServing = useServingValues
 		? undefined
 		: createExactPackageVolumeServing(
@@ -1017,12 +1054,12 @@ export const mapOpenFoodFactsProduct = (
 					(servingWeightGrams ? `${servingWeightGrams} g` : "Package serving"),
 				gramWeight: servingWeightGrams ?? undefined,
 				milliliterVolume: milliliterVolume ?? undefined,
-				amount: volumeEquivalent?.quantity ?? parsedServing?.quantity,
-				unitKey: volumeEquivalent?.unit ?? parsedServing?.unit,
+				amount: displayEquivalent?.quantity ?? parsedServing?.quantity,
+				unitKey: displayEquivalent?.unit ?? parsedServing?.unit,
 				isPrimary: true,
 				measureType: "Package serving",
 				isHouseholdMeasure:
-					Boolean(volumeEquivalent) || milliliterVolume !== null,
+					Boolean(displayEquivalent) || milliliterVolume !== null,
 				sourceMeasureKey: "serving_size",
 				origin: "package-label",
 				gramWeightMethod: hasExactGramWeight ? "source-reported" : "unknown",
@@ -1050,6 +1087,7 @@ export const mapOpenFoodFactsProduct = (
 		serving: exactServing,
 		nutrients,
 		nutrientQualitativeFacts: qualitativeFacts,
+		nutrientSourceReview,
 		reportedNutrientIds: [
 			...new Set(nutrients.map((nutrient) => nutrient.nutrientId)),
 		],

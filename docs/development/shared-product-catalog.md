@@ -236,6 +236,22 @@ unchanged.
   source-reported standard error, source nutrient key/code, mapping decision, and
   derivation method. Trace, present-but-unquantified, missing, invalid, and unmapped
   source facts remain review evidence and never enter nutrition or Mix math.
+- Open Food Facts barcode imports account for every usable numeric nutrient fact. An
+  exact reviewed key, unit, and conversion may enter canonical nutrition; an unfamiliar
+  key, mismatched unit, or unavailable conversion is retained in private
+  `nutrientSourceReview` evidence and called out during Manual Entry without being used
+  in calculations. Successful existing provider-cache refreshes also add only the
+  anonymous exact key/unit identity, count, and first/last-seen times to
+  `nutrient_source_mapping_observations`; they add no provider request and retain no
+  user, barcode, product, amount, or raw payload. The complete provider taxonomy is
+  reconciled with `npm run audit:off-nutrient-mappings`; missing and pending identities
+  stay review work rather than becoming guessed mappings. The preview-first
+  `node scripts/seeds/nutrition/seed_open_food_facts_nutrient_mapping_candidates.mjs`
+  can place exact key/unit
+  identities with both a trusted runtime observation and one cautious canonical
+  candidate into the existing private review queue only when an operator explicitly
+  adds `--apply`. Taxonomy-only and unsupported identities remain reported without
+  creating review noise or inventing a canonical nutrient.
 - Canonical categories are resolved through database options and mappings; they are not
   replaced with a generic packaged-food label during publication.
 - Raw USDA and Open Food Facts category values remain attached to the food payload so
@@ -470,8 +486,12 @@ asynchronous and does not bypass comparison, conflict, verification, or publicat
 policy. Sources without approved retention, including COLA Cloud, remain transient.
 USDA exact-barcode lookup retains one bounded detail read because the detail record adds
 source category and availability fields omitted by search results. Shared caching and
-request coalescing prevent repeated outbound detail calls. Open Food Facts remains a
-missing-field supplement rather than a whole-product winner.
+request coalescing prevent repeated outbound detail calls. Open Food Facts uses one
+stable-v2, provider-normalized barcode read with only the fields required for the
+current primary or supplement decision. A service-role shared lease prevents identical
+cross-instance misses, and a shared 12-read-per-minute budget plus a one-attempt policy
+stops 429 responses instead of amplifying them. Open Food Facts remains a missing-field
+supplement rather than a whole-product winner.
 
 The full read/write/cache boundary is maintained in
 [`data-architecture.md`](data-architecture.md), provider behavior in the

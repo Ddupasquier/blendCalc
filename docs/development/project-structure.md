@@ -34,12 +34,20 @@ where any file belongs:
    `feat/`, `fix/`, `refactor/`, `docs/`, `test/`, or `chore/`. When a private Project
    ticket owns the work, use `<type>/<TICKET-ID>-<short-description>`, such as
    `fix/QA-032-012-browser-title`. Do not invent an ID for unticketed maintenance.
-4. Before acting on another prompt, verify that its outcome belongs to the active
-   branch. If it does not, create a separate branch before editing.
-5. When the current working tree contains uncommitted work for another responsibility,
-   preserve it and create a separate Git worktree from `staging`. Do not move, stash,
-   discard, or absorb those changes into the new branch.
-6. Do not edit tracked content directly on `staging` or `main`. Those branches are
+4. Use the primary repository checkout for normal development and review. When it is
+   clean, switch it to the focused branch and run localhost from that same directory.
+5. Before acting on another prompt, verify that its outcome belongs to the active
+   branch. If it does not and the primary checkout is clean, switch to a separate branch
+   before editing. Do not create an auxiliary worktree for ordinary branch isolation.
+6. When the primary checkout contains unrelated uncommitted work that must remain
+   untouched, preserve it in place and create an auxiliary Git worktree from `staging`.
+   An auxiliary checkout is also acceptable for explicitly requested simultaneous work
+   or a documented temporary integration/release candidate. Do not move, stash, discard,
+   or absorb unrelated changes.
+7. For a necessary auxiliary worktree, link required ignored environment files from the
+   primary checkout only after verifying each source is ignored and each target is
+   absent. Never copy, move, print, or overwrite secret values.
+8. Do not edit tracked content directly on `staging` or `main`. Those branches are
    integration and release boundaries, not development workspaces.
 
 Read-only investigation does not require a branch. Creating a branch or worktree does

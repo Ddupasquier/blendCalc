@@ -6,6 +6,7 @@ import type {
 	FoodItem,
 	FoodNutrient,
 	FoodNutrientQualitativeFact,
+	FoodNutrientSourceReview,
 	FoodFieldProvenance,
 	FoodImageAsset,
 	FoodBarcodeProvenance,
@@ -60,6 +61,7 @@ export type ManualEntryCustomFoodPayload = {
 	fieldProvenance?: FoodFieldProvenance;
 	reportedNutrientIds: number[];
 	nutrientQualitativeFacts: FoodNutrientQualitativeFact[];
+	nutrientSourceReview?: FoodNutrientSourceReview[];
 	hasSourceServing?: boolean;
 	importedNutrients: FoodNutrient[];
 	manualEntryNutrientFields: ManualEntryNutrientDefinition[];
@@ -177,6 +179,7 @@ export const createManualEntryCustomFood = (
 				: undefined,
 		nutrients: saveNutrients,
 		nutrientQualitativeFacts: payload.nutrientQualitativeFacts,
+		nutrientSourceReview: payload.nutrientSourceReview,
 		reportedNutrientIds: [
 			...new Set([
 				...payload.reportedNutrientIds,

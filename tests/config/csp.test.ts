@@ -25,11 +25,17 @@ describe("content security policy", () => {
 		);
 	});
 
+	it("allows local image previews without allowing another network origin", () => {
+		expect(createImageSources("production")).toContain("blob:");
+	});
+
 	it("limits on-device OCR assets to the Tesseract CDN and local workers", () => {
 		const configSource = readFileSync("svelte.config.js", "utf8");
 
 		expect(configSource).toContain("'https://cdn.jsdelivr.net'");
-		expect(configSource).toContain("'worker-src': ['self', 'blob:', 'https://cdn.jsdelivr.net']");
+		expect(configSource).toContain(
+			"'worker-src': ['self', 'blob:', 'https://cdn.jsdelivr.net']",
+		);
 		expect(configSource).toContain("'wasm-unsafe-eval'");
 	});
 
@@ -64,13 +70,15 @@ describe("content security policy", () => {
 	});
 
 	it("detects test-database mode before Vite loads mode-specific env files", () => {
-		expect(
-			readViteMode([], { BLENDCALC_DATABASE_ENVIRONMENT: "test" }),
-		).toBe("test");
+		expect(readViteMode([], { BLENDCALC_DATABASE_ENVIRONMENT: "test" })).toBe(
+			"test",
+		);
 	});
 
 	it("preserves test-database CSP while validation commands regenerate SvelteKit output", () => {
-		const packageMetadata = JSON.parse(readFileSync("package.json", "utf8")) as {
+		const packageMetadata = JSON.parse(
+			readFileSync("package.json", "utf8"),
+		) as {
 			scripts: Record<string, string>;
 		};
 

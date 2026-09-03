@@ -117,6 +117,9 @@ export type FoodNutrientSourceReview = {
 	nutrientId?: number;
 	nutrientName: string;
 	unitName?: string;
+	/** Exact source amount when the source basis is not necessarily 100 grams. */
+	amount?: number;
+	measurementBasis?: FoodNutrientMeasurementBasis;
 	amountPer100g?: number;
 	standardError?: number;
 	sourceNutrientKey?: string;

@@ -5,6 +5,7 @@ import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
 import type { ProductResolutionPolicy } from "$lib/utils/products/productResolutionPolicy";
 import type { NutrientRelationshipRule } from "$lib/utils/food/nutrients/nutrientRelationshipRules";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { ensureServerServingMeasureCatalog } from "$lib/server/serving/servingMeasureCatalog.server";
 import { resolveBarcodeDraftCategory } from "./categoryMapping.server";
 import {
 	lookupOpenFoodFactsBarcodeProduct,
@@ -107,6 +108,7 @@ export const assessCatalogProductSources = async (
 	barcode: string,
 	dependencies: CatalogSourceLookupDependencies = {},
 ): Promise<CatalogSourceAssessment> => {
+	await ensureServerServingMeasureCatalog();
 	const policy =
 		dependencies.policy ?? (await getDefaultProductResolutionPolicy());
 	const [usda, openFoodFacts] = await Promise.all([

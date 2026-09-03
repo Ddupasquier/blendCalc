@@ -967,6 +967,14 @@ Never make content changes directly on `staging` or `main`. Read-only investigat
 the explicitly authorized merge or release operation itself do not require another
 branch.
 
+Use the primary repository checkout for ordinary branch work. When it is clean, switch
+that checkout from `staging` to the focused task branch and run localhost from the same
+directory so its existing ignored environment remains available. Do not create an
+auxiliary `git worktree` checkout merely to isolate a normal branch. An auxiliary
+worktree is warranted only to preserve unrelated uncommitted work, satisfy an explicit
+request for simultaneous checkouts, or build a documented temporary integration or
+release candidate. Record its path whenever it exists.
+
 When a branch implements or verifies a private Project ticket, include the exact ticket
 ID in every new branch name using `<type>/<TICKET-ID>-<short-description>`, for example
 `fix/QA-032-012-browser-title`. This applies prospectively; do not rename active branches
@@ -1044,16 +1052,21 @@ checkout to the active feature branch when more work remains. This workflow does
 grant standing permission to commit, push, merge, deploy, or include unrelated work.
 
 **22b.** Preserve interrupted or uncommitted work when a new prompt needs another
-branch. Never stash, discard, stage, or carry unrelated changes merely to switch tasks.
-Create a separate Git worktree from current `staging`, perform the new responsibility on
-its own feature branch, publish that branch pointer to `origin`, and leave the original
-working tree untouched. Branch creation and initial remote publication do not grant
-permission to commit, push changed content, merge, deploy, or include unrelated files.
+branch. If the primary checkout is clean, switch it normally; do not create another
+checkout. If unrelated uncommitted work must remain untouched, an auxiliary worktree is
+necessary: create it from current `staging`, perform the new responsibility on its own
+feature branch, publish that branch pointer to `origin`, and leave the original checkout
+untouched. Never stash, discard, stage, or carry unrelated changes merely to switch
+tasks. Before using an auxiliary checkout, link only the required ignored environment
+files from the primary checkout after verifying that each source is ignored and each
+target is absent. Never copy, move, print, or overwrite secrets. Branch creation,
+environment linking, and initial remote publication do not grant permission to commit,
+push changed content, merge, deploy, or include unrelated files.
 
 **22c.** Remove completed local branch state after a successful merge. Once the complete
 feature-branch tip is proven to be an ancestor of the approved target branch and that
-target's required checks pass, remove the branch's clean auxiliary worktree and delete
-the local feature branch. Never delete `main`, `staging`, the current active work branch,
+target's required checks pass, remove any clean auxiliary worktree and delete the local
+feature branch. Never delete `main`, `staging`, the current active work branch,
 a dirty worktree, an unpushed commit, an unmerged branch, or a branch whose migration,
 application, or contract responsibility was only partially promoted. Remote branch
 cleanup remains a separate explicit action; deleting a merged local branch does not
