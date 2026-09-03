@@ -1,8 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import {
-	normalizeFdcFood,
-	searchFoodPage,
-} from "$lib/utils/food/sources/fdc";
+import { normalizeFdcFood, searchFoodPage } from "$lib/utils/food/sources/fdc";
 
 afterEach(() => {
 	vi.unstubAllGlobals();
@@ -108,6 +105,44 @@ describe("FoodData Central normalization", () => {
 		expect(food.reportedNutrientIds).toEqual([1004]);
 	});
 
+	it("normalizes USDA ingredients before returning a client-facing food", () => {
+		const food = normalizeFdcFood({
+			fdcId: 125,
+			description: "INGREDIENT TEST PRODUCT",
+			foodNutrients: [],
+			ingredients:
+				"OTHER INGREDIENTS: DRY ROASTED _PEANUTS_, SALT. MAY CONTAIN SOY.",
+		});
+
+		expect(food).toMatchObject({
+			ingredients: "Dry roasted peanuts, salt",
+			ingredientList: ["Dry roasted peanuts", "salt"],
+			ingredientAnalysis: {
+				normalization: {
+					method: "external-ingredient-statement",
+					version: 1,
+					languageCode: "en",
+				},
+				allergenDeclarationAnalysis: {
+					mayContain: ["Soy"],
+				},
+			},
+			precautionaryStatements: [
+				{
+					type: "may_contain",
+					text: "MAY CONTAIN SOY",
+					allergens: ["Soy"],
+					languageCode: "en",
+					sourceField: "ingredients",
+				},
+			],
+			fieldProvenance: {
+				ingredients: { source: "usda", sourceReference: "125" },
+				ingredientAnalysis: { source: "usda", sourceReference: "125" },
+			},
+		});
+	});
+
 	it("preserves exact USDA household portion weights as serving conversions", () => {
 		const food = normalizeFdcFood({
 			fdcId: 171032,
@@ -173,39 +208,50 @@ describe("FoodData Central normalization", () => {
 	});
 
 	it("maps USDA source-owned identity types without a shared allowlist", () => {
-		expect(normalizeFdcFood({
-			fdcId: 200,
-			description: "Branded product",
-			dataType: "Branded",
-			foodNutrients: [],
-		}).foodIdentityType).toBe("packaged");
-		expect(normalizeFdcFood({
-			fdcId: 201,
-			description: "Experimental generic food",
-			dataType: "Experimental",
-			foodNutrients: [],
-		}).foodIdentityType).toBe("generic");
-		expect(normalizeFdcFood({
-			fdcId: 202,
-			description: "Future source record",
-			dataType: "Future source type",
-			foodNutrients: [],
-		}).foodIdentityType).toBe("unknown");
+		expect(
+			normalizeFdcFood({
+				fdcId: 200,
+				description: "Branded product",
+				dataType: "Branded",
+				foodNutrients: [],
+			}).foodIdentityType,
+		).toBe("packaged");
+		expect(
+			normalizeFdcFood({
+				fdcId: 201,
+				description: "Experimental generic food",
+				dataType: "Experimental",
+				foodNutrients: [],
+			}).foodIdentityType,
+		).toBe("generic");
+		expect(
+			normalizeFdcFood({
+				fdcId: 202,
+				description: "Future source record",
+				dataType: "Future source type",
+				foodNutrients: [],
+			}).foodIdentityType,
+		).toBe("unknown");
 	});
 });
 
 describe("ingredient search request", () => {
 	it("forwards the cancellation signal to the internal search endpoint", async () => {
 		const abortController = new AbortController();
-		const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify({
-			foods: [],
-			hasMore: false,
-			nextOffset: null,
-			total: 0,
-		}), {
-			status: 200,
-			headers: { "content-type": "application/json" },
-		}));
+		const fetcher = vi.fn().mockResolvedValue(
+			new Response(
+				JSON.stringify({
+					foods: [],
+					hasMore: false,
+					nextOffset: null,
+					total: 0,
+				}),
+				{
+					status: 200,
+					headers: { "content-type": "application/json" },
+				},
+			),
+		);
 		vi.stubGlobal("fetch", fetcher);
 
 		await searchFoodPage("tomato", { signal: abortController.signal });

@@ -143,13 +143,22 @@ User-linked list reads load the current accepted canonical record instead of
 rewriting those historical submissions or duplicating canonical metadata into every
 saved snapshot.
 
+Provider ingredient text is normalized before it enters the canonical food snapshot or
+client model. The stored form records the normalization method, version, source field,
+and known language under `ingredientAnalysis.normalization`; raw source wording remains
+available only in its private provider cache or exact source observation. Formatting is
+conservative: structural artifacts are safe to clean across languages, English all-caps
+statements become readable, nested lists remain intact, and explicit `Contains`, `May
+contain`, shared-equipment, and shared-facility statements remain separate evidence.
+The formatter does not infer allergens and does not rewrite user- or moderator-authored
+text.
+
 Reported ingredient evidence is also projected into relational statement and component
 rows. A structured provider tree retains its exact order, source path, nesting, source
 wording, language, source payload, and any explicitly reported percentage bounds. A
-reported list retains its order. Raw statement text is stored as one unparsed statement
-rather than being split on punctuation. The original canonical JSON and source
-observation remain the evidence authority, so the reported statement can be
-reconstructed without guessing.
+reported list retains its order. The exact provider observation retains the untouched
+statement while the canonical JSON carries the versioned normalized form; neither is
+reconstructed by splitting arbitrary punctuation.
 
 Authenticated catalog reads project that evidence through one server-owned ingredient
 presentation model. It formats nested source paths, explicit exact/estimated percentage
