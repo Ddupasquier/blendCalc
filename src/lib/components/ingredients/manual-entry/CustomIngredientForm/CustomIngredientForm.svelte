@@ -424,11 +424,7 @@
 		groups: referenceData.state.nutrientGroups.macros,
 		loading: referenceData.state.loadingNutrients,
 		error: referenceData.state.nutrientError,
-		helper: validation.disclosurePolicy.requiresStandardNutrition
-			? "Enter values from the nutrition label for the serving above. blendCalc keeps the package's exact weight, volume, or item basis. Fields marked * are required."
-			: form.data.usesInternal100GramBasis
-				? "This label may legally omit standard nutrition. Imported values stay on their reported per-100g basis. Add package values only after entering the package's exact gram serving; everything else stays unknown."
-				: "This label may legally omit standard nutrition. Enter only values the package actually reports; everything else stays unknown.",
+		helper: validation.nutritionFieldPolicy.helper,
 		hideUnavailableStatus: validation.hideMacroUnavailableStatus,
 		validationItems: validation.getAttemptedValidationItems(
 			validation.validationItems.filter((item) => item.step === "macros"),

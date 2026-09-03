@@ -479,7 +479,11 @@ Notes:
   whether an approved field exists in the UI.
 - Required status should render from `nutrient_manual_entry_required_nutrients` via
   `nutrient_manual_entry_fields.required_for_manual_entry`; do not maintain a separate
-  UI-only required nutrient list.
+  UI-only required nutrient list. The neutral `Core nutrition` group title describes
+  the fields without promising that every save requires them. Those fields are required
+  only for the current action of sharing a standard label; private saves and reviewed
+  sparse-label profiles preserve blank values as unknown. An explicit reported zero is
+  still a populated value.
 - Observations preserve raw API provenance. Unknown nutrients go to the disabled
   unclassified review group until an approved DB classification is added. Retired
   aliases retain a canonical replacement rather than becoming duplicate inputs.

@@ -122,7 +122,7 @@ insert into public.nutrient_manual_entry_groups (
 	group_role
 )
 values
-	('required-basics', 'macros', 'Required basics', 10, true, 1, 1, 'single_source', array['local-qa-fixture'], '2026-07-25T00:00:00Z', 'display'),
+	('required-basics', 'macros', 'Core nutrition', 10, true, 1, 1, 'single_source', array['local-qa-fixture'], '2026-07-25T00:00:00Z', 'display'),
 	('carbohydrate-details', 'macros', 'Carbohydrate details', 20, true, 1, 1, 'single_source', array['local-qa-fixture'], '2026-07-25T00:00:00Z', 'display'),
 	('fat-details', 'macros', 'Fat details', 30, true, 1, 1, 'single_source', array['local-qa-fixture'], '2026-07-25T00:00:00Z', 'display'),
 	('vitamins', 'extended', 'Vitamins', 10, true, 1, 1, 'single_source', array['local-qa-fixture'], '2026-07-25T00:00:00Z', 'display'),

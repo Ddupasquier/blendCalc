@@ -94,7 +94,7 @@
 									class="manual-nutrients__input"
 									min="0"
 									step="any"
-									placeholder="0"
+									placeholder=""
 									ariaRequired={isRequired(field)}
 									value={getInputValue(field)}
 									onValueChange={(value) => onValueChange(field, value)}
@@ -140,7 +140,7 @@
 									class="manual-nutrients__input"
 									min="0"
 									step="any"
-									placeholder="0"
+									placeholder=""
 									ariaRequired={isRequired(field)}
 									value={getInputValue(field)}
 									onValueChange={(value) => onValueChange(field, value)}

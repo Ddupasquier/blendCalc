@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { getManualEntryDisclosurePolicy } from "$lib/components/ingredients/manual-entry/utils/manualEntryDisclosurePolicy";
+import {
+	getManualEntryDisclosurePolicy,
+	getManualEntryNutritionFieldPolicy,
+} from "$lib/components/ingredients/manual-entry/utils/manualEntryDisclosurePolicy";
 import type { ProductRegulatoryDisclosureProfile } from "$lib/utils/food/quality/nutritionCompletenessCatalog";
 
 const profiles: ProductRegulatoryDisclosureProfile[] = [
@@ -75,5 +78,54 @@ describe("manual-entry regulatory disclosure policy", () => {
 			requiresStandardNutrition: true,
 			allowsMissingServingWeight: false,
 		});
+	});
+});
+
+describe("manual-entry nutrition field policy", () => {
+	const standardPolicy = getManualEntryDisclosurePolicy({
+		profileKey: "us-standard-nutrition-facts-v1",
+		profiles,
+	});
+	const sparsePolicy = getManualEntryDisclosurePolicy({
+		profileKey: "us-ttb-alcohol-beverage-v1",
+		profiles,
+	});
+
+	it("requires core nutrition only when sharing a standard label", () => {
+		expect(
+			getManualEntryNutritionFieldPolicy({
+				shareWithCatalog: true,
+				usesInternal100GramBasis: false,
+				disclosurePolicy: standardPolicy,
+			}),
+		).toEqual({
+			requiresNutritionFields: true,
+			helper:
+				"To share this standard label, enter every value marked *. Leave a field blank when the label does not list it, and enter 0 only when the label reports zero.",
+		});
+	});
+
+	it("explains that nutrition is optional for a private save", () => {
+		const policy = getManualEntryNutritionFieldPolicy({
+			shareWithCatalog: false,
+			usesInternal100GramBasis: false,
+			disclosurePolicy: standardPolicy,
+		});
+
+		expect(policy.requiresNutritionFields).toBe(false);
+		expect(policy.helper).toContain("optional for a private save");
+		expect(policy.helper).toContain("enter 0 only when the label reports zero");
+	});
+
+	it("keeps sparse imported values on their source basis without inventing zeroes", () => {
+		const policy = getManualEntryNutritionFieldPolicy({
+			shareWithCatalog: true,
+			usesInternal100GramBasis: true,
+			disclosurePolicy: sparsePolicy,
+		});
+
+		expect(policy.requiresNutritionFields).toBe(false);
+		expect(policy.helper).toContain("reported per-100g basis");
+		expect(policy.helper).toContain("Leave a field blank");
 	});
 });
