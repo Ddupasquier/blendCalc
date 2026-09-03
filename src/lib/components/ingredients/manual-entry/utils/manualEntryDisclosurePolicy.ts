@@ -74,12 +74,12 @@ export const getManualEntryNutritionFieldPolicy = ({
 };
 
 export const getManualEntryNutritionStepHelper = ({
-	hasAcceptedBarcodeSource,
+	hasAcceptedBarcodeNutrients,
 	fallback,
 }: {
-	hasAcceptedBarcodeSource: boolean;
+	hasAcceptedBarcodeNutrients: boolean;
 	fallback: string;
-}) => (hasAcceptedBarcodeSource ? barcodeNutritionHelper : fallback);
+}) => (hasAcceptedBarcodeNutrients ? barcodeNutritionHelper : fallback);
 
 export const getManualEntryNutrientGroupBadge = ({
 	group,
