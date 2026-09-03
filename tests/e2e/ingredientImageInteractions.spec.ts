@@ -236,7 +236,7 @@ test("moderator image placement controls stay grouped, singular, and last", asyn
 	}
 });
 
-test("one placement save shows pending feedback, sends one request, and persists only the card crop", async ({
+test("one placement save shows pending feedback and sends one request", async ({
 	page,
 }, testInfo) => {
 	test.skip(
@@ -246,7 +246,6 @@ test("one placement save shows pending feedback, sends one request, and persists
 	const product = representativeImageProducts[0];
 	const nutritionPath = `/ingredients/fridge/nutrition/${product.foodId}`;
 	let slowPlacementSave: ((route: Route) => Promise<void>) | null = null;
-	let savedFridgeResponse: ((route: Route) => Promise<void>) | null = null;
 	let releasePlacementSave = () => {};
 
 	try {
@@ -257,13 +256,11 @@ test("one placement save shows pending feedback, sends one request, and persists
 		});
 		await expect(page).toHaveURL((url) => url.pathname === nutritionPath);
 		await waitForAppReady(page);
-
-		const originalPlacement = await page.evaluate(async (foodId) => {
+		const originalImage = await page.evaluate(async (foodId) => {
 			const response = await fetch(
 				"/api/user-food-lists/fridge?limit=100&offset=0&sort=recent&source=all&trust=any",
 			);
-			if (!response.ok)
-				throw new Error("Could not read the original image placement.");
+			if (!response.ok) throw new Error("Could not read the product image.");
 			const data = (await response.json()) as {
 				foods?: Array<{
 					fdcId?: number;
@@ -272,31 +269,12 @@ test("one placement save shows pending feedback, sends one request, and persists
 			};
 			const image = data.foods?.find((food) => food.fdcId === foodId)?.image;
 			if (!image) throw new Error("The QA product image was unavailable.");
-			return {
-				...image,
-				source: image.source,
-				sourceReference: image.sourceReference,
-				role: image.role,
-				cropX: image.cropX ?? 50,
-				cropY: image.cropY ?? 50,
-				cropZoom: image.cropZoom ?? 1,
-				rotationDegrees: image.rotationDegrees ?? 0,
-				fitMode: image.fitMode ?? "contain",
-				placementVersion: image.placementVersion ?? 2,
-				placementMethod: image.placementMethod ?? "default",
-				...(image.suggestionVersion
-					? {
-							suggestionVersion: image.suggestionVersion,
-							suggestionConfidence: image.suggestionConfidence,
-						}
-					: {}),
-			};
+			return image;
 		}, product.foodId);
-		const targetZoom = Number(originalPlacement.cropZoom) === 1.65 ? 1.8 : 1.65;
-		const targetVerticalPosition =
-			Number(originalPlacement.cropY) === 35 ? 65 : 35;
-		const targetHorizontalShift =
-			Number(originalPlacement.cropX) === 72.5 ? 65 : 45;
+
+		const targetZoom = 1.65;
+		const targetVerticalPosition = 35;
+		const targetHorizontalShift = 45;
 		const targetCropX = 50 + targetHorizontalShift / 2;
 		const savedPlacement = {
 			cropX: targetCropX,
@@ -353,7 +331,7 @@ test("one placement save shows pending feedback, sends one request, and persists
 			await route.fulfill({
 				contentType: "application/json",
 				body: JSON.stringify({
-					image: { ...originalPlacement, ...placementRequest },
+					image: { ...originalImage, ...placementRequest },
 				}),
 				status: 200,
 			});
@@ -378,7 +356,34 @@ test("one placement save shows pending feedback, sends one request, and persists
 		expect(placementRequests[0]).toMatchObject(savedPlacement);
 		await page.unroute("**/api/food-images/crop", slowPlacementSave);
 		slowPlacementSave = null;
+	} finally {
+		releasePlacementSave();
+		if (slowPlacementSave) {
+			await page
+				.unroute("**/api/food-images/crop", slowPlacementSave)
+				.catch(() => undefined);
+		}
+	}
+});
 
+test("saved placement crops the card image but not the nutrition detail image", async ({
+	page,
+}, testInfo) => {
+	test.skip(
+		testInfo.project.name !== "desktop-chromium",
+		"One isolated Chromium project owns the saved placement rendering proof.",
+	);
+	const product = representativeImageProducts[0];
+	const nutritionPath = `/ingredients/fridge/nutrition/${product.foodId}`;
+	const savedPlacement = {
+		cropX: 72.5,
+		cropY: 35,
+		cropZoom: 1.65,
+		fitMode: "custom",
+	};
+	let savedFridgeResponse: ((route: Route) => Promise<void>) | null = null;
+
+	try {
 		savedFridgeResponse = async (route) => {
 			const response = await route.fetch();
 			const data = (await response.json()) as {
@@ -403,26 +408,13 @@ test("one placement save shows pending feedback, sends one request, and persists
 			});
 		};
 		await page.route("**/api/user-food-lists/fridge?**", savedFridgeResponse);
-
-		const listData = await page.evaluate(async () => {
-			const response = await fetch(
-				"/api/user-food-lists/fridge?limit=100&offset=0&sort=recent&source=all&trust=any",
-			);
-			if (!response.ok)
-				throw new Error("Could not verify the saved placement.");
-			return (await response.json()) as {
-				foods?: Array<{
-					fdcId?: number;
-					image?: Record<string, unknown>;
-				}>;
-			};
+		await signInLocalQaAccount({
+			page,
+			email: moderatorEmail,
+			nextPath: "/ingredients/fridge",
 		});
-		expect(
-			listData.foods?.find((food) => food.fdcId === product.foodId)?.image,
-		).toMatchObject(savedPlacement);
-
-		await page.goto("/ingredients/fridge");
 		await waitForAppReady(page);
+
 		const savedCard = page
 			.getByRole("button", {
 				name: new RegExp(`^Preview ${product.name}`),
@@ -461,12 +453,6 @@ test("one placement save shows pending feedback, sends one request, and persists
 			),
 		).toHaveCount(0);
 	} finally {
-		releasePlacementSave();
-		if (slowPlacementSave) {
-			await page
-				.unroute("**/api/food-images/crop", slowPlacementSave)
-				.catch(() => undefined);
-		}
 		if (savedFridgeResponse) {
 			await page
 				.unroute("**/api/user-food-lists/fridge?**", savedFridgeResponse)
