@@ -805,6 +805,18 @@ test("an optional source product photo enters moderation without blocking a priv
 			dialog.getByText("Caramel Rice Crisps · Quaker", { exact: true }),
 		).toBeVisible();
 		await dialog.getByRole("button", { name: "Autofill" }).click();
+		const shareTab = dialog.getByRole("tab", { name: "Share" });
+		const relationshipRulesLoading = dialog.getByText(
+			"Nutrition validation rules are still loading. Try again in a moment.",
+		);
+		if ((await shareTab.getAttribute("aria-selected")) !== "true") {
+			await shareTab.click();
+			if (await relationshipRulesLoading.isVisible()) {
+				await expect(relationshipRulesLoading).toBeHidden();
+				await shareTab.click();
+			}
+		}
+		await expect(shareTab).toHaveAttribute("aria-selected", "true");
 		if (!nutrientPresentationVerified) {
 			await expect(
 				dialog.getByText(
@@ -867,11 +879,7 @@ test("an optional source product photo enters moderation without blocking a priv
 			).toHaveText("0 of 2");
 			nutrientPresentationVerified = true;
 		}
-		const shareTab = dialog.getByRole("tab", { name: "Share" });
 		await shareTab.click();
-		const relationshipRulesLoading = dialog.getByText(
-			"Nutrition validation rules are still loading. Try again in a moment.",
-		);
 		if (await relationshipRulesLoading.isVisible()) {
 			await expect(relationshipRulesLoading).toBeHidden();
 			await shareTab.click();
