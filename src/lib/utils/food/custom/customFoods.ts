@@ -15,6 +15,7 @@ import type {
 	FoodItem,
 	FoodNutrient,
 	FoodNutrientQualitativeFact,
+	FoodNutrientSourceReview,
 	FoodFieldProvenance,
 	FoodFieldSource,
 	FoodImageAsset,
@@ -76,6 +77,7 @@ export type CustomFoodInput = {
 	fieldProvenance?: FoodFieldProvenance;
 	nutrients: FoodNutrient[];
 	nutrientQualitativeFacts?: FoodNutrientQualitativeFact[];
+	nutrientSourceReview?: FoodNutrientSourceReview[];
 	reportedNutrientIds?: number[];
 	hasSourceServing?: boolean;
 	serving?: FoodServing;
@@ -423,6 +425,7 @@ export const createCustomFood = (input: CustomFoodInput): FoodItem => {
 		customDensityConfidence: isUserServing && density ? "known" : undefined,
 		foodNutrients,
 		nutrientQualitativeFacts: input.nutrientQualitativeFacts,
+		nutrientSourceReview: input.nutrientSourceReview,
 		reportedNutrientIds: input.reportedNutrientIds
 			? [...new Set(input.reportedNutrientIds)].filter((nutrientId) =>
 					foodNutrients.some((nutrient) => nutrient.nutrientId === nutrientId),

@@ -388,6 +388,18 @@ Notes:
   `amount_per_100g`. Source nutrient keys/codes and mapping/derivation metadata retain
   the exact normalization decision; `mapping_review_reference` is internal moderation
   evidence and is not serialized by the public API.
+- Numeric Open Food Facts values whose exact source key, reported unit, or required
+  conversion is not approved remain in the parent food JSON's private
+  `nutrientSourceReview` evidence, including the source amount and its reported basis.
+  They do not create `food_nutrients` rows. The read-only
+  `npm run audit:off-nutrient-mappings` command reconciles the complete provider
+  taxonomy against approved, queued, unqueued-candidate, and unsupported mapping
+  identities. Existing successful Open Food Facts cache refreshes populate the private
+  `nutrient_source_mapping_observations` identity/count table without an extra provider
+  request and without user, barcode, product, amount, or raw-payload data.
+  `npm run seed:off-nutrient-mapping-candidates` previews only observed exact rows with
+  a cautious canonical candidate as eligible for `pending_review`; only an explicit
+  `--apply` writes those rows. Taxonomy-only candidates remain audit evidence.
 - USDA FoodData Central nutrient identifiers are the canonical nutrient identifiers
   stored by blendCalc. When the identifier, canonical unit, USDA source, and exact
   source reference agree, the database records `source-identifier` lineage
@@ -631,10 +643,11 @@ Notes:
 
 ### `nutrient_source_mappings`
 
-| Table                               | Documented columns                                                                                                                                                                                                                                            |
-| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `nutrient_source_mappings`          | `id`, `source_key`, `source_nutrient_key`, `source_unit_name`, `source_nutrient_name`, `nutrient_id`, `priority`, `mapping_method`, `review_status`, `review_reference`, `confidence`, `enabled`, observation counts/timestamps, `provenance`, and timestamps |
-| `nutrient_mapping_review_decisions` | `id`, `mapping_id`, source identity snapshot, `outcome`, previous and selected nutrient IDs, previous mapping method, bounded review note and evidence reference, reviewer, and review time                                                                   |
+| Table                                  | Documented columns                                                                                                                                                                                                                                            |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `nutrient_source_mappings`             | `id`, `source_key`, `source_nutrient_key`, `source_unit_name`, `source_nutrient_name`, `nutrient_id`, `priority`, `mapping_method`, `review_status`, `review_reference`, `confidence`, `enabled`, observation counts/timestamps, `provenance`, and timestamps |
+| `nutrient_source_mapping_observations` | `source_key`, exact `source_nutrient_key` and normalized `source_unit_name`, neutral source name, anonymous observation count, first/last-seen times, and timestamps                                                                                          |
+| `nutrient_mapping_review_decisions`    | `id`, `mapping_id`, source identity snapshot, `outcome`, previous and selected nutrient IDs, previous mapping method, bounded review note and evidence reference, reviewer, and review time                                                                   |
 
 Notes:
 
@@ -700,6 +713,12 @@ Notes:
 - A source mapping with a different unit cannot rely on same-family mass or energy
   assumptions. It remains unusable until this table contains the exact reviewed
   source/nutrient/from-unit/to-unit conversion.
+- Open Food Facts observation rows come from trusted successful `product_api_cache`
+  refreshes, not client-submitted food JSON. The cache write already exists, so the
+  observation adds no provider request and does not occur on cache hits. Only the exact
+  nutrient identity, a bounded neutral name, aggregate count, and first/last-seen times
+  are retained. The service-role-only table has no user, barcode, product, nutrient
+  amount, or raw-payload columns.
 
 ### `serving_measure_units` and `serving_measure_aliases`
 

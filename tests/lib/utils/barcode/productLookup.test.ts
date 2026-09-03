@@ -93,6 +93,38 @@ describe("barcode product mapping", () => {
 		).toHaveLength(6);
 	});
 
+	it("keeps unmapped Open Food Facts nutrient values as private review evidence", () => {
+		const draft = mapOpenFoodFactsProduct(
+			{
+				product_name: "Future nutrient example",
+				nutriments: {
+					"energy-kcal_100g": 100,
+					"future-nutrient_100g": 2,
+					"future-nutrient_unit": "mg",
+				},
+			},
+			"00000000000123",
+			productReferenceCatalogFixture,
+		);
+
+		expect(draft?.nutrients).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({ nutrientId: NUTRIENT_IDS.CALORIES }),
+			]),
+		);
+		expect(draft?.nutrientSourceReview).toMatchObject([
+			{
+				nutrientName: "Future Nutrient",
+				amount: 2,
+				amountPer100g: 2,
+				mappingStatus: "unmapped",
+				source: "open-food-facts",
+				sourceReference: "00000000000123",
+				sourceNutrientKey: "future-nutrient",
+			},
+		]);
+	});
+
 	it("keeps Open Food Facts ABV separate from nutrient math", () => {
 		const draft = mapOpenFoodFactsProduct(
 			{
@@ -118,6 +150,11 @@ describe("barcode product mapping", () => {
 			sourceReference: "00000075041670",
 		});
 		expect(draft?.nutrients).not.toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({ sourceNutrientKey: "alcohol" }),
+			]),
+		);
+		expect(draft?.nutrientSourceReview).not.toEqual(
 			expect.arrayContaining([
 				expect.objectContaining({ sourceNutrientKey: "alcohol" }),
 			]),

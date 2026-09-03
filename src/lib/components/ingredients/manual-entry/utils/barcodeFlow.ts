@@ -16,6 +16,7 @@ import {
 import type {
 	FoodItem,
 	FoodNutrient,
+	FoodNutrientSourceReview,
 	FoodFieldProvenance,
 	FoodImageAsset,
 	FoodIdentityType,
@@ -45,6 +46,7 @@ export type ManualEntryBarcodeDraftState = {
 	usesInternal100GramBasis: boolean;
 	serving?: FoodServing;
 	importedNutrients: FoodNutrient[];
+	nutrientSourceReview: FoodNutrientSourceReview[];
 	manualNutrientValues: Record<number, number>;
 	useServingMeasure: boolean;
 	servingMeasureQuantity: number | null;
@@ -249,6 +251,7 @@ export const getBarcodeDraftState = (
 		usesInternal100GramBasis,
 		serving: usesInternal100GramBasis ? undefined : draft.serving,
 		importedNutrients: validNutrients,
+		nutrientSourceReview: [...(draft.nutrientSourceReview ?? [])],
 		manualNutrientValues: Object.fromEntries(
 			validNutrients.map((nutrient) => [nutrient.nutrientId, nutrient.value]),
 		),
@@ -368,10 +371,15 @@ export const getBarcodeImportMessage = (
 		unavailableFieldCount > 0
 			? ` ${unavailableFieldCount} accepted and retained ${unavailableFieldCount === 1 ? "value does" : "values do"} not yet have an editable Manual Entry field.`
 			: "";
+	const sourceReviewCount = draft.nutrientSourceReview?.length ?? 0;
+	const sourceReviewSummary =
+		sourceReviewCount > 0
+			? ` ${sourceReviewCount} additional source ${sourceReviewCount === 1 ? "value needs" : "values need"} mapping review and ${sourceReviewCount === 1 ? "is" : "are"} not used in nutrition calculations.`
+			: "";
 	const nutrientSummary =
 		acceptedNutrientCount === 0
-			? " No nutrition values from this source could be accepted and retained. Missing values remain unknown."
-			: ` ${acceptedNutrientCount} nutrition ${acceptedNutrientCount === 1 ? "value was" : "values were"} accepted and retained from the source.${reviewSummary}${unavailableSummary} Missing values remain unknown.`;
+			? ` No nutrition values from this source could be accepted and retained.${sourceReviewSummary} Missing values remain unknown.`
+			: ` ${acceptedNutrientCount} nutrition ${acceptedNutrientCount === 1 ? "value was" : "values were"} accepted and retained from the source.${reviewSummary}${unavailableSummary}${sourceReviewSummary} Missing values remain unknown.`;
 	const volumeSummary = draft.volumeEquivalent
 		? " The package's volume-to-weight serving was also included."
 		: draft.hasSourceServing === false

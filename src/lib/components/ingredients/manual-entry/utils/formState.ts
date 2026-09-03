@@ -8,6 +8,7 @@ import type {
 	FoodItem,
 	FoodNutrient,
 	FoodNutrientQualitativeFact,
+	FoodNutrientSourceReview,
 	FoodFieldProvenance,
 	FoodImageAsset,
 	FoodBarcodeProvenance,
@@ -56,6 +57,7 @@ export type ManualEntryFormResetState = {
 	validationAttemptedSteps: ValidationAttemptState;
 	importedNutrients: FoodNutrient[];
 	nutrientQualitativeFacts: FoodNutrientQualitativeFact[];
+	nutrientSourceReview: FoodNutrientSourceReview[];
 	barcode: string;
 	barcodeSource: FoodItem["barcodeSource"];
 	barcodeProvenance?: FoodBarcodeProvenance;
@@ -116,6 +118,7 @@ export const getManualEntryFormResetState = (): ManualEntryFormResetState => ({
 	validationAttemptedSteps: {},
 	importedNutrients: [],
 	nutrientQualitativeFacts: [],
+	nutrientSourceReview: [],
 	barcode: "",
 	barcodeSource: "manual",
 	barcodeProvenance: undefined,
@@ -222,6 +225,7 @@ export const getManualEntryFormStateFromFood = (
 			Boolean(servingMeasureUnit),
 		importedNutrients: nutrientsPerServing,
 		nutrientQualitativeFacts: [...(food.nutrientQualitativeFacts ?? [])],
+		nutrientSourceReview: [...(food.nutrientSourceReview ?? [])],
 		manualNutrientValues: Object.fromEntries(
 			nutrientsPerServing.map((nutrient) => [
 				nutrient.nutrientId,

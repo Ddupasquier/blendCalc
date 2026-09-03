@@ -236,6 +236,21 @@ unchanged.
   source-reported standard error, source nutrient key/code, mapping decision, and
   derivation method. Trace, present-but-unquantified, missing, invalid, and unmapped
   source facts remain review evidence and never enter nutrition or Mix math.
+- Open Food Facts barcode imports account for every usable numeric nutrient fact. An
+  exact reviewed key, unit, and conversion may enter canonical nutrition; an unfamiliar
+  key, mismatched unit, or unavailable conversion is retained in private
+  `nutrientSourceReview` evidence and called out during Manual Entry without being used
+  in calculations. Successful existing provider-cache refreshes also add only the
+  anonymous exact key/unit identity, count, and first/last-seen times to
+  `nutrient_source_mapping_observations`; they add no provider request and retain no
+  user, barcode, product, amount, or raw payload. The complete provider taxonomy is
+  reconciled with `npm run audit:off-nutrient-mappings`; missing and pending identities
+  stay review work rather than becoming guessed mappings. The preview-first
+  `npm run seed:off-nutrient-mapping-candidates` command can place exact key/unit
+  identities with both a trusted runtime observation and one cautious canonical
+  candidate into the existing private review queue only when an operator explicitly
+  adds `--apply`. Taxonomy-only and unsupported identities remain reported without
+  creating review noise or inventing a canonical nutrient.
 - Canonical categories are resolved through database options and mappings; they are not
   replaced with a generic packaged-food label during publication.
 - Raw USDA and Open Food Facts category values remain attached to the food payload so

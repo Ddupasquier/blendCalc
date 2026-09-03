@@ -337,6 +337,7 @@ export const createManualEntryBarcodeController = ({
 			]),
 		);
 		form.data.reportedNutrientIds = [];
+		form.data.nutrientSourceReview = [];
 		form.data.serving = form.data.serving
 			? {
 					...form.data.serving,

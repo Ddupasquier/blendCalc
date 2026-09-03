@@ -204,4 +204,26 @@ describe("sparse alcohol barcode form state", () => {
 			"1 accepted and retained value does not yet have an editable Manual Entry field",
 		);
 	});
+
+	it("carries mapping-review evidence into the form and explains that it is excluded from math", () => {
+		const draft = makeSparseDraft({
+			nutrientSourceReview: [
+				{
+					nutrientName: "Example nutrient",
+					unitName: "mg",
+					amount: 4,
+					measurementBasis: { kind: "mass", quantity: 100, unitKey: "g" },
+					valueStatus: "reported",
+					mappingStatus: "unmapped",
+					sourceNutrientKey: "example-nutrient",
+				},
+			],
+		});
+
+		const state = getBarcodeDraftState(draft);
+		expect(state.nutrientSourceReview).toHaveLength(1);
+		expect(getBarcodeImportMessage(draft, [], "autofill")).toContain(
+			"1 additional source value needs mapping review and is not used in nutrition calculations",
+		);
+	});
 });

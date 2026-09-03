@@ -7,11 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.5"
-  }
   graphql_public: {
     Tables: {
       [_ in never]: never
@@ -5079,7 +5074,7 @@ export type Database = {
           {
             foreignKeyName: "nutrient_manual_entry_fields_nutrient_id_fkey"
             columns: ["nutrient_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "nutrient_definitions"
             referencedColumns: ["nutrient_id"]
           },
@@ -5448,6 +5443,50 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "nutrient_definitions"
             referencedColumns: ["nutrient_id"]
+          },
+        ]
+      }
+      nutrient_source_mapping_observations: {
+        Row: {
+          created_at: string
+          first_observed_at: string
+          last_observed_at: string
+          observation_count: number
+          source_key: string
+          source_nutrient_key: string
+          source_nutrient_name: string
+          source_unit_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          first_observed_at?: string
+          last_observed_at?: string
+          observation_count?: number
+          source_key: string
+          source_nutrient_key: string
+          source_nutrient_name: string
+          source_unit_name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          first_observed_at?: string
+          last_observed_at?: string
+          observation_count?: number
+          source_key?: string
+          source_nutrient_key?: string
+          source_nutrient_name?: string
+          source_unit_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nutrient_source_mapping_observations_source_key_fkey"
+            columns: ["source_key"]
+            isOneToOne: false
+            referencedRelation: "product_data_sources"
+            referencedColumns: ["key"]
           },
         ]
       }
@@ -7892,63 +7931,6 @@ export type Database = {
           },
         ]
       }
-      shared_product_submission_field_evidence: {
-        Row: {
-          basis: Json | null
-          confidence: string
-          created_at: string
-          evidence_references: string[]
-          field_path: string
-          id: string
-          observed_at: string
-          proposed_value: Json
-          source_observation_id: string
-          submission_id: string
-          unit: string | null
-        }
-        Insert: {
-          basis?: Json | null
-          confidence: string
-          created_at?: string
-          evidence_references: string[]
-          field_path: string
-          id?: string
-          observed_at: string
-          proposed_value: Json
-          source_observation_id: string
-          submission_id: string
-          unit?: string | null
-        }
-        Update: {
-          basis?: Json | null
-          confidence?: string
-          created_at?: string
-          evidence_references?: string[]
-          field_path?: string
-          id?: string
-          observed_at?: string
-          proposed_value?: Json
-          source_observation_id?: string
-          submission_id?: string
-          unit?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "shared_product_submission_field_evid_source_observation_id_fkey"
-            columns: ["source_observation_id"]
-            isOneToOne: false
-            referencedRelation: "shared_product_observations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "shared_product_submission_field_evidence_submission_id_fkey"
-            columns: ["submission_id"]
-            isOneToOne: false
-            referencedRelation: "shared_product_submissions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       shared_product_revision_changes: {
         Row: {
           change_type: string
@@ -8136,6 +8118,63 @@ export type Database = {
             columns: ["supersedes_revision_id"]
             isOneToOne: false
             referencedRelation: "shared_product_revisions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shared_product_submission_field_evidence: {
+        Row: {
+          basis: Json | null
+          confidence: string
+          created_at: string
+          evidence_references: string[]
+          field_path: string
+          id: string
+          observed_at: string
+          proposed_value: Json
+          source_observation_id: string
+          submission_id: string
+          unit: string | null
+        }
+        Insert: {
+          basis?: Json | null
+          confidence: string
+          created_at?: string
+          evidence_references: string[]
+          field_path: string
+          id?: string
+          observed_at: string
+          proposed_value: Json
+          source_observation_id: string
+          submission_id: string
+          unit?: string | null
+        }
+        Update: {
+          basis?: Json | null
+          confidence?: string
+          created_at?: string
+          evidence_references?: string[]
+          field_path?: string
+          id?: string
+          observed_at?: string
+          proposed_value?: Json
+          source_observation_id?: string
+          submission_id?: string
+          unit?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shared_product_submission_field_evid_source_observation_id_fkey"
+            columns: ["source_observation_id"]
+            isOneToOne: false
+            referencedRelation: "shared_product_observations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shared_product_submission_field_evidence_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "shared_product_submissions"
             referencedColumns: ["id"]
           },
         ]

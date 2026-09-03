@@ -646,6 +646,88 @@ test("manual barcode entry shows input-bound progress until lookup finishes", as
 	await expect(continueButton).toBeEnabled();
 });
 
+test("barcode autofill explains unmapped source nutrition without using it in the form", async ({
+	page,
+}) => {
+	const barcode = "00000000000123";
+	await page.route(`**/api/products/barcode/${barcode}`, async (route) => {
+		await route.fulfill({
+			status: 200,
+			contentType: "application/json",
+			body: JSON.stringify({
+				status: "found",
+				draft: {
+					barcode,
+					name: "Future Nutrient Example",
+					nameProvenance: "source",
+					brandOwner: "Example",
+					servingLabel: "100 g reference",
+					servingWeightGrams: 100,
+					hasSourceServing: false,
+					nutrients: [
+						{
+							nutrientId: 1008,
+							nutrientName: "Energy",
+							nutrientNumber: "208",
+							unitName: "KCAL",
+							value: 100,
+						},
+					],
+					nutrientSourceReview: [
+						{
+							nutrientName: "Future nutrient",
+							unitName: "MG",
+							amount: 2,
+							measurementBasis: {
+								kind: "mass",
+								quantity: 100,
+								unitKey: "g",
+							},
+							amountPer100g: 2,
+							valueStatus: "reported",
+							mappingStatus: "unmapped",
+							sourceNutrientKey: "future-nutrient",
+						},
+					],
+					reportedNutrientIds: [1008],
+					categories: ["Other"],
+					resolvedCategory: "Other",
+					categoryResolution: {
+						categoryOptionId: "other",
+						label: "Other",
+						sourceValue: "Other",
+						confidence: "reviewed",
+					},
+					source: "open-food-facts",
+					sourceKey: "open-food-facts",
+					sourceLabel: "Open Food Facts",
+					sourceReference: barcode,
+				},
+			}),
+		});
+	});
+
+	await page.goto("/ingredients/fridge/manual-entry");
+	await waitForAppReady(page);
+	const dialog = page.getByRole("dialog", { name: "Enter Manually" });
+	await dialog.getByLabel("UPC / Barcode").fill(barcode);
+	await dialog.getByLabel("UPC / Barcode").press("Tab");
+	await expect(
+		dialog.getByText("Future Nutrient Example · Example", { exact: true }),
+	).toBeVisible();
+	await dialog.getByRole("button", { name: "Autofill" }).click();
+
+	await expect(dialog).toContainText(
+		"1 nutrition value was accepted and retained from the source",
+	);
+	await expect(dialog).toContainText("Review 1 in Macros");
+	await expect(dialog).toContainText(
+		"1 additional source value needs mapping review and is not used in nutrition calculations",
+	);
+	await dialog.getByRole("tab", { name: "Macros" }).click();
+	await expect(dialog.getByLabel("Calories (kcal)")).toHaveValue("100");
+});
+
 test("an optional source product photo enters moderation without blocking a private save", async ({
 	page,
 }, testInfo) => {

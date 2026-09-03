@@ -121,6 +121,16 @@ remain unknown unless a richer observation or reviewed package label supplies th
 qualitative statement. COLA, CNF, and CoFID do not currently supply equivalent runtime
 qualifier evidence, so their missing nutrient fields remain unknown.
 
+Open Food Facts numeric nutrient fields are handled by exact source key and unit. Values
+without an approved mapping or conversion are retained as private mapping-review
+evidence and excluded from math; they are not discarded, guessed, or exposed by the
+public blendCalcAPI. `npm run audit:off-nutrient-mappings` compares the complete current
+provider taxonomy with the maintained mapping catalog. Successful existing provider
+cache refreshes retain only anonymous exact key/unit observation counts for this audit;
+they do not cause another provider request or retain a barcode, product, user, amount,
+or raw response in the mapping-review observation table. Only observed identities with
+a cautious canonical candidate can be previewed for the private review queue.
+
 When imported generic records declare an exact shared identifier, ingredient search may
 assemble one read result per field. The strongest evidenced category, serving,
 preparation detail, safety field, and canonical nutrient can come from different linked
