@@ -1861,6 +1861,30 @@ export type Database = {
           },
         ]
       }
+      external_provider_request_budgets: {
+        Row: {
+          created_at: string
+          provider: string
+          request_count: number
+          updated_at: string
+          window_started_at: string
+        }
+        Insert: {
+          created_at?: string
+          provider: string
+          request_count: number
+          updated_at?: string
+          window_started_at: string
+        }
+        Update: {
+          created_at?: string
+          provider?: string
+          request_count?: number
+          updated_at?: string
+          window_started_at?: string
+        }
+        Relationships: []
+      }
       food_allergen_regulatory_profile_tags: {
         Row: {
           classification: string
@@ -6052,6 +6076,33 @@ export type Database = {
         }
         Relationships: []
       }
+      product_api_request_leases: {
+        Row: {
+          cache_key: string
+          created_at: string
+          lease_expires_at: string
+          owner_token: string
+          provider: string
+          updated_at: string
+        }
+        Insert: {
+          cache_key: string
+          created_at?: string
+          lease_expires_at: string
+          owner_token: string
+          provider: string
+          updated_at?: string
+        }
+        Update: {
+          cache_key?: string
+          created_at?: string
+          lease_expires_at?: string
+          owner_token?: string
+          provider?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       product_compatibility_facts: {
         Row: {
           confidence: string
@@ -9533,6 +9584,23 @@ export type Database = {
           source_reference: string
         }[]
       }
+      claim_external_provider_request_budget: {
+        Args: {
+          p_max_requests: number
+          p_provider: string
+          p_window_milliseconds: number
+        }
+        Returns: Json
+      }
+      claim_product_api_request_lease: {
+        Args: {
+          p_cache_key: string
+          p_lease_milliseconds: number
+          p_owner_token: string
+          p_provider: string
+        }
+        Returns: boolean
+      }
       claim_safety_alert_ingestion_sources: {
         Args: { p_limit?: number; p_run_id: string }
         Returns: {
@@ -9867,6 +9935,10 @@ export type Database = {
         Returns: undefined
       }
       reject_blocked_signup: { Args: { event: Json }; Returns: Json }
+      release_product_api_request_lease: {
+        Args: { p_cache_key: string; p_owner_token: string; p_provider: string }
+        Returns: undefined
+      }
       remove_user_food_list_item: {
         Args: { p_fdc_id: number; p_list_type: string }
         Returns: boolean

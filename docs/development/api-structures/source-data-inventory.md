@@ -70,6 +70,14 @@ ordinary sparse record never spends COLA quota. Its barcode response selects one
 approved label before one dependent detail request; model-generated categories and
 descriptions are ignored.
 
+The Open Food Facts adapter uses the current v3.6 exact-product endpoint. The provider
+normalizes leading zeroes, so blendCalc sends one valid barcode representation rather
+than probing equivalent candidates. Requested response fields are derived from the
+current missing-field plan; any requested canonical nutrient IDs still use the single
+provider `nutriments` object in that request. In-process coalescing, cross-instance
+leases, the durable cache, and a shared 12-read-per-minute budget protect the provider.
+A 429 response is not retried inline.
+
 Product revalidation and official-notice ingestion are separate from interactive
 lookup. `supabase/functions/catalog-monitor/` claims bounded database jobs, compares
 stable normalized hashes, and records changed provider observations without changing

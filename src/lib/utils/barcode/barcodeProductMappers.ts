@@ -127,7 +127,7 @@ export type OpenFoodFactsIngredient = {
 };
 
 export type OpenFoodFactsResponse = {
-	status: number;
+	status?: number | "success" | "success_with_warnings";
 	product?: OpenFoodFactsProduct;
 };
 

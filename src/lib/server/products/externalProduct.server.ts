@@ -261,7 +261,12 @@ export const lookupExternalBarcodeProduct = async (
 				const supplement = await lookupProviderWithCoverage(
 					"open-food-facts",
 					requestedFieldPaths,
-					() => lookupOpenFoodFacts(barcode, productReferenceCatalog),
+					() =>
+						lookupOpenFoodFacts(
+							barcode,
+							productReferenceCatalog,
+							requestedFieldPaths,
+						),
 				);
 				return applyAlcoholSupplement(
 					mergeMissingBarcodeProductFields(
@@ -282,7 +287,12 @@ export const lookupExternalBarcodeProduct = async (
 		const openFoodFactsDraft = await lookupProviderWithCoverage(
 			"open-food-facts",
 			getBarcodeProductDesiredSourceFieldPaths(),
-			() => lookupOpenFoodFacts(barcode, productReferenceCatalog),
+			() =>
+				lookupOpenFoodFacts(
+					barcode,
+					productReferenceCatalog,
+					getBarcodeProductDesiredSourceFieldPaths(),
+				),
 		);
 		if (openFoodFactsDraft) {
 			const draftWithCachedImage = await applyCachedImage(openFoodFactsDraft);

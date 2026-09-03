@@ -485,8 +485,12 @@ asynchronous and does not bypass comparison, conflict, verification, or publicat
 policy. Sources without approved retention, including COLA Cloud, remain transient.
 USDA exact-barcode lookup retains one bounded detail read because the detail record adds
 source category and availability fields omitted by search results. Shared caching and
-request coalescing prevent repeated outbound detail calls. Open Food Facts remains a
-missing-field supplement rather than a whole-product winner.
+request coalescing prevent repeated outbound detail calls. Open Food Facts uses one
+current-v3.6, provider-normalized barcode read with only the fields required for the
+current primary or supplement decision. A service-role shared lease prevents identical
+cross-instance misses, and a shared 12-read-per-minute budget plus a one-attempt policy
+stops 429 responses instead of amplifying them. Open Food Facts remains a missing-field
+supplement rather than a whole-product winner.
 
 The full read/write/cache boundary is maintained in
 [`data-architecture.md`](data-architecture.md), provider behavior in the
