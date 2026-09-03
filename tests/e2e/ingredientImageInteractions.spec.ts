@@ -90,6 +90,15 @@ const expectPlacementSummaryOrder = async (summary: Locator) => {
 	).toBe(true);
 };
 
+const setRangeValue = async (slider: Locator, value: number) => {
+	await slider.evaluate((element, nextValue) => {
+		const input = element as HTMLInputElement;
+		input.value = String(nextValue);
+		input.dispatchEvent(new Event("input", { bubbles: true }));
+		input.dispatchEvent(new Event("change", { bubbles: true }));
+	}, value);
+};
+
 test("normal users see source images without privileged placement controls", async ({
 	page,
 }, testInfo) => {
@@ -221,4 +230,133 @@ test("moderator image placement controls stay grouped, singular, and last", asyn
 		).toBeVisible();
 		await placementDialog.getByRole("button", { name: "Close sheet" }).click();
 	}
+});
+
+test("placement controls update the exact card preview within safe movement bounds", async ({
+	page,
+}, testInfo) => {
+	test.skip(
+		testInfo.project.name !== "desktop-chromium",
+		"One primary browser proves the deterministic placement-control geometry.",
+	);
+	const product = representativeImageProducts[0];
+	await signInLocalQaAccount({
+		page,
+		email: "qa-moderator@blendcalc.local",
+		nextPath: `/ingredients/fridge/nutrition/${product.foodId}`,
+	});
+
+	const nutritionDetails = await openNutritionDetails(page, product);
+	const placementDetails = nutritionDetails.locator(
+		"details.product-image-panel__placement",
+	);
+	await placementDetails.locator(":scope > summary").click();
+	const placementEditor = placementDetails.getByRole("region", {
+		name: "Card image placement",
+	});
+	const preview = placementEditor.getByRole("group", {
+		name: "Interactive card image preview",
+	});
+	const previewImage = preview.locator(
+		".image-placement-viewport__image--current",
+	);
+	await expect(previewImage).toBeVisible();
+	await expect
+		.poll(() => previewImage.evaluate((image) => image.naturalWidth))
+		.toBeGreaterThan(0);
+
+	const restoreButton = placementEditor.getByRole("button", {
+		name: "Restore default",
+	});
+	const shiftSlider = placementEditor.getByRole("slider", {
+		name: "Shift image left",
+	});
+	const verticalSlider = placementEditor.getByRole("slider", {
+		name: "Vertical image position",
+	});
+	const zoomSlider = placementEditor.getByRole("slider", {
+		name: "Image zoom",
+	});
+	await restoreButton.click();
+	await expect(shiftSlider).toBeEnabled();
+	await expect(verticalSlider).toBeDisabled();
+	await expect(zoomSlider).toBeEnabled();
+
+	const defaultGeometry = await preview.evaluate((element) => {
+		const previewBounds = element.getBoundingClientRect();
+		const editorBounds = element
+			.closest(".image-placement-editor")
+			?.getBoundingClientRect();
+		const lane = element.querySelector<HTMLElement>(
+			".ingredient-card-media-lane",
+		);
+		const image = element.querySelector<HTMLImageElement>(
+			".image-placement-viewport__image--current",
+		);
+		const copy = element.querySelector<HTMLElement>(
+			".image-placement-card-preview__copy",
+		);
+		if (!editorBounds || !lane || !image || !copy) return null;
+		const laneBounds = lane.getBoundingClientRect();
+		const imageBounds = image.getBoundingClientRect();
+		const copyBounds = copy.getBoundingClientRect();
+		const previewStyle = getComputedStyle(element);
+		return {
+			containerInlineSize:
+				previewBounds.width -
+				Number.parseFloat(previewStyle.paddingLeft) -
+				Number.parseFloat(previewStyle.paddingRight) -
+				Number.parseFloat(previewStyle.borderLeftWidth) -
+				Number.parseFloat(previewStyle.borderRightWidth),
+			copyOffset: copyBounds.left - previewBounds.left,
+			imageHeight: imageBounds.height,
+			imageLeft: imageBounds.left,
+			laneLeft: laneBounds.left,
+			laneWidth: laneBounds.width,
+			maskImage: getComputedStyle(lane).maskImage,
+			previewWidth: previewBounds.width,
+			editorWidth: editorBounds.width,
+		};
+	});
+	expect(defaultGeometry).not.toBeNull();
+	expect(defaultGeometry?.previewWidth).toBeCloseTo(
+		defaultGeometry?.editorWidth ?? 0,
+		0,
+	);
+	expect(defaultGeometry?.laneWidth).toBeCloseTo(
+		(defaultGeometry?.containerInlineSize ?? 0) * 0.28,
+		0,
+	);
+	expect(defaultGeometry?.copyOffset).toBeLessThan(
+		(defaultGeometry?.previewWidth ?? 0) * 0.28,
+	);
+	expect(defaultGeometry?.maskImage).toContain("radial-gradient");
+	expect(defaultGeometry?.imageLeft).toBeCloseTo(
+		defaultGeometry?.laneLeft ?? 0,
+		0,
+	);
+
+	await setRangeValue(shiftSlider, 100);
+	await expect
+		.poll(() =>
+			previewImage.evaluate((image) => image.getBoundingClientRect().left),
+		)
+		.toBeLessThan((defaultGeometry?.imageLeft ?? 0) - 1);
+
+	await setRangeValue(zoomSlider, 4);
+	await expect
+		.poll(() =>
+			previewImage.evaluate((image) => image.getBoundingClientRect().height),
+		)
+		.toBeGreaterThan((defaultGeometry?.imageHeight ?? 0) + 1);
+	await expect(verticalSlider).toBeEnabled();
+	const zoomedTop = await previewImage.evaluate(
+		(image) => image.getBoundingClientRect().top,
+	);
+	await setRangeValue(verticalSlider, 20);
+	await expect
+		.poll(() =>
+			previewImage.evaluate((image) => image.getBoundingClientRect().top),
+		)
+		.not.toBeCloseTo(zoomedTop, 0);
 });
