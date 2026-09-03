@@ -70,7 +70,9 @@ ordinary sparse record never spends COLA quota. Its barcode response selects one
 approved label before one dependent detail request; model-generated categories and
 descriptions are ignored.
 
-The Open Food Facts adapter uses the current v3.6 exact-product endpoint. The provider
+The Open Food Facts adapter uses the stable v2 exact-product endpoint. The provider's
+v3.6 product projection can omit the requested `nutriments` object, so it is not used
+for nutrition-bearing product reads. The provider
 normalizes leading zeroes, so blendCalc sends one valid barcode representation rather
 than probing equivalent candidates. Requested response fields are derived from the
 current missing-field plan; any requested canonical nutrient IDs still use the single

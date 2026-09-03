@@ -5,6 +5,10 @@ import {
 } from "$lib/utils/barcode/barcode";
 import type { ProductSourceFieldPath } from "$lib/utils/barcode/barcodeProductEnrichment";
 
+export const OPEN_FOOD_FACTS_PRODUCT_API_VERSION = "2";
+export const OPEN_FOOD_FACTS_PRODUCT_API_BASE_URL =
+	"https://world.openfoodfacts.org/api/v2/product";
+
 const IDENTITY_FIELDS = ["code", "product_name", "generic_name"] as const;
 
 const OPEN_FOOD_FACTS_FIELDS_BY_PATH: Record<
