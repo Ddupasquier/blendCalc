@@ -40,6 +40,7 @@ describe("affected-test selection", () => {
 
 		expect(gitignore).toContain("/test-results/");
 		expect(reporterSource).toContain("PLAYWRIGHT_TEST_BUDGET_MS");
+		expect(reporterSource).toContain('PLAYWRIGHT_TEST_BUDGET_MS ?? "60000"');
 		expect(reporterSource).toContain("PLAYWRIGHT_ENFORCE_DURATION_BUDGETS");
 		expect(reporterSource).toContain("playwright-slow-tests.json");
 		expect(dashboardSource).toContain(

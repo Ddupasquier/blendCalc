@@ -1,10 +1,14 @@
-import type { Locator, Page } from "@playwright/test";
+import type { Locator, Page, Route } from "@playwright/test";
 import {
 	expect,
 	signInLocalQaAccount,
 	test,
 	waitForAppReady,
 } from "./support/browserTest";
+
+test.describe.configure({ mode: "serial" });
+
+const moderatorEmail = "qa-moderator@blendcalc.local";
 
 const representativeImageProducts = [
 	{
@@ -90,6 +94,15 @@ const expectPlacementSummaryOrder = async (summary: Locator) => {
 	).toBe(true);
 };
 
+const setRangeValue = async (slider: Locator, value: number) => {
+	await slider.evaluate((element, nextValue) => {
+		const input = element as HTMLInputElement;
+		input.value = String(nextValue);
+		input.dispatchEvent(new Event("input", { bubbles: true }));
+		input.dispatchEvent(new Event("change", { bubbles: true }));
+	}, value);
+};
+
 test("normal users see source images without privileged placement controls", async ({
 	page,
 }, testInfo) => {
@@ -129,7 +142,7 @@ test("moderator image placement controls stay grouped, singular, and last", asyn
 	);
 	await signInLocalQaAccount({
 		page,
-		email: "qa-moderator@blendcalc.local",
+		email: moderatorEmail,
 		nextPath: "/ingredients/fridge",
 	});
 
@@ -221,4 +234,362 @@ test("moderator image placement controls stay grouped, singular, and last", asyn
 		).toBeVisible();
 		await placementDialog.getByRole("button", { name: "Close sheet" }).click();
 	}
+});
+
+test("one placement save shows pending feedback and sends one request", async ({
+	page,
+}, testInfo) => {
+	test.skip(
+		testInfo.project.name !== "desktop-chromium",
+		"One isolated Chromium project owns the shared moderator save fixture.",
+	);
+	const product = representativeImageProducts[0];
+	const nutritionPath = `/ingredients/fridge/nutrition/${product.foodId}`;
+	let slowPlacementSave: ((route: Route) => Promise<void>) | null = null;
+	let releasePlacementSave = () => {};
+
+	try {
+		await signInLocalQaAccount({
+			page,
+			email: moderatorEmail,
+			nextPath: nutritionPath,
+		});
+		await expect(page).toHaveURL((url) => url.pathname === nutritionPath);
+		await waitForAppReady(page);
+		const originalImage = await page.evaluate(async (foodId) => {
+			const response = await fetch(
+				"/api/user-food-lists/fridge?limit=100&offset=0&sort=recent&source=all&trust=any",
+			);
+			if (!response.ok) throw new Error("Could not read the product image.");
+			const data = (await response.json()) as {
+				foods?: Array<{
+					fdcId?: number;
+					image?: Record<string, unknown>;
+				}>;
+			};
+			const image = data.foods?.find((food) => food.fdcId === foodId)?.image;
+			if (!image) throw new Error("The QA product image was unavailable.");
+			return image;
+		}, product.foodId);
+
+		const targetZoom = 1.65;
+		const targetVerticalPosition = 35;
+		const targetHorizontalShift = 45;
+		const targetCropX = 50 + targetHorizontalShift / 2;
+		const savedPlacement = {
+			cropX: targetCropX,
+			cropY: targetVerticalPosition,
+			cropZoom: targetZoom,
+			fitMode: "custom",
+		};
+
+		const nutritionDetails = page.locator(".nutrition-detail-view");
+		await expect(
+			nutritionDetails.getByRole("img", {
+				name: `${product.name} package image`,
+			}),
+		).toBeVisible();
+		await expect(
+			nutritionDetails.locator(
+				".product-image-frame .image-placement-viewport",
+			),
+		).toHaveCount(0);
+
+		const placementDetails = nutritionDetails.locator(
+			"details.product-image-panel__placement",
+		);
+		await placementDetails.locator(":scope > summary").click();
+		const placementEditor = placementDetails.getByRole("region", {
+			name: "Card image placement",
+		});
+		await setRangeValue(
+			placementEditor.getByRole("slider", { name: "Image zoom" }),
+			targetZoom,
+		);
+		const horizontalShift = placementEditor.getByRole("slider", {
+			name: "Shift image left",
+		});
+		await setRangeValue(horizontalShift, 80);
+		await setRangeValue(horizontalShift, targetHorizontalShift);
+		const verticalPosition = placementEditor.getByRole("slider", {
+			name: "Vertical image position",
+		});
+		await expect(verticalPosition).toBeEnabled();
+		await setRangeValue(verticalPosition, targetVerticalPosition);
+
+		const placementRequests: Array<Record<string, unknown>> = [];
+		const placementSaveGate = new Promise<void>((resolve) => {
+			releasePlacementSave = () => resolve();
+		});
+		slowPlacementSave = async (route) => {
+			const placementRequest = route.request().postDataJSON() as Record<
+				string,
+				unknown
+			>;
+			placementRequests.push(placementRequest);
+			await placementSaveGate;
+			await route.fulfill({
+				contentType: "application/json",
+				body: JSON.stringify({
+					image: { ...originalImage, ...placementRequest },
+				}),
+				status: 200,
+			});
+		};
+		await page.route("**/api/food-images/crop", slowPlacementSave);
+
+		const saveButton = placementDetails.locator(
+			".product-image-panel__placement-save button[type='submit']",
+		);
+		await saveButton.evaluate((button) =>
+			(button as HTMLButtonElement).click(),
+		);
+		await expect(saveButton).toHaveAttribute("aria-busy", "true");
+		await expect(saveButton).toBeDisabled();
+		await expect(saveButton).toContainText("Saving image placement…");
+		releasePlacementSave();
+		releasePlacementSave = () => {};
+		await expect(
+			placementDetails.getByText("Your card image placement is saved."),
+		).toBeVisible();
+		expect(placementRequests).toHaveLength(1);
+		expect(placementRequests[0]).toMatchObject(savedPlacement);
+		await page.unroute("**/api/food-images/crop", slowPlacementSave);
+		slowPlacementSave = null;
+	} finally {
+		releasePlacementSave();
+		if (slowPlacementSave) {
+			await page
+				.unroute("**/api/food-images/crop", slowPlacementSave)
+				.catch(() => undefined);
+		}
+	}
+});
+
+test("saved placement crops the card image but not the nutrition detail image", async ({
+	page,
+}, testInfo) => {
+	test.skip(
+		testInfo.project.name !== "desktop-chromium",
+		"One isolated Chromium project owns the saved placement rendering proof.",
+	);
+	const product = representativeImageProducts[0];
+	const nutritionPath = `/ingredients/fridge/nutrition/${product.foodId}`;
+	const savedPlacement = {
+		cropX: 72.5,
+		cropY: 35,
+		cropZoom: 1.65,
+		fitMode: "custom",
+	};
+	let savedFridgeResponse: ((route: Route) => Promise<void>) | null = null;
+
+	try {
+		savedFridgeResponse = async (route) => {
+			const response = await route.fetch();
+			const data = (await response.json()) as {
+				foods?: Array<{
+					fdcId?: number;
+					image?: Record<string, unknown>;
+				}>;
+			};
+			await route.fulfill({
+				response,
+				json: {
+					...data,
+					foods: data.foods?.map((food) =>
+						food.fdcId === product.foodId
+							? {
+									...food,
+									image: { ...food.image, ...savedPlacement },
+								}
+							: food,
+					),
+				},
+			});
+		};
+		await page.route("**/api/user-food-lists/fridge?**", savedFridgeResponse);
+		await signInLocalQaAccount({
+			page,
+			email: moderatorEmail,
+			nextPath: "/ingredients/fridge",
+		});
+		await waitForAppReady(page);
+
+		const savedCard = page
+			.getByRole("button", {
+				name: new RegExp(`^Preview ${product.name}`),
+			})
+			.locator("..");
+		await expect(savedCard).toBeVisible();
+		await expect(
+			savedCard.locator(".ingredient-card-media-lane img"),
+		).toBeVisible();
+		expect(
+			await savedCard
+				.locator(".ingredient-card-media-lane")
+				.evaluate((lane) => {
+					const laneBounds = lane.getBoundingClientRect();
+					const imageBounds = lane
+						.querySelector("img")
+						?.getBoundingClientRect();
+					return Boolean(
+						imageBounds && imageBounds.left <= laneBounds.left + 1,
+					);
+				}),
+		).toBe(true);
+
+		await savedCard
+			.getByRole("button", { name: new RegExp(`^Preview ${product.name}`) })
+			.click();
+		await expect(page).toHaveURL((url) => url.pathname === nutritionPath);
+		await expect(
+			page.locator(
+				".nutrition-detail-view .product-image-frame .product-image-frame__image",
+			),
+		).toBeVisible();
+		await expect(
+			page.locator(
+				".nutrition-detail-view .product-image-frame .image-placement-viewport",
+			),
+		).toHaveCount(0);
+	} finally {
+		if (savedFridgeResponse) {
+			await page
+				.unroute("**/api/user-food-lists/fridge?**", savedFridgeResponse)
+				.catch(() => undefined);
+		}
+	}
+});
+
+test("placement controls update the exact card preview within safe movement bounds", async ({
+	page,
+}, testInfo) => {
+	test.skip(
+		testInfo.project.name !== "desktop-chromium",
+		"One primary browser proves the deterministic placement-control geometry.",
+	);
+	const product = representativeImageProducts[0];
+	await signInLocalQaAccount({
+		page,
+		email: "qa-moderator@blendcalc.local",
+		nextPath: `/ingredients/fridge/nutrition/${product.foodId}`,
+	});
+
+	const nutritionDetails = await openNutritionDetails(page, product);
+	const placementDetails = nutritionDetails.locator(
+		"details.product-image-panel__placement",
+	);
+	await placementDetails.locator(":scope > summary").click();
+	const placementEditor = placementDetails.getByRole("region", {
+		name: "Card image placement",
+	});
+	const preview = placementEditor.getByRole("group", {
+		name: "Interactive card image preview",
+	});
+	const previewImage = preview.locator(
+		".image-placement-viewport__image--current",
+	);
+	await expect(previewImage).toBeVisible();
+	await expect
+		.poll(() =>
+			previewImage.evaluate(
+				(image) => (image as HTMLImageElement).naturalWidth,
+			),
+		)
+		.toBeGreaterThan(0);
+
+	const restoreButton = placementEditor.getByRole("button", {
+		name: "Restore default",
+	});
+	const shiftSlider = placementEditor.getByRole("slider", {
+		name: "Shift image left",
+	});
+	const verticalSlider = placementEditor.getByRole("slider", {
+		name: "Vertical image position",
+	});
+	const zoomSlider = placementEditor.getByRole("slider", {
+		name: "Image zoom",
+	});
+	await restoreButton.click();
+	await expect(shiftSlider).toBeEnabled();
+	await expect(verticalSlider).toBeDisabled();
+	await expect(zoomSlider).toBeEnabled();
+
+	const defaultGeometry = await preview.evaluate((element) => {
+		const previewBounds = element.getBoundingClientRect();
+		const editorBounds = element
+			.closest(".image-placement-editor")
+			?.getBoundingClientRect();
+		const lane = element.querySelector<HTMLElement>(
+			".ingredient-card-media-lane",
+		);
+		const image = element.querySelector<HTMLImageElement>(
+			".image-placement-viewport__image--current",
+		);
+		const copy = element.querySelector<HTMLElement>(
+			".image-placement-card-preview__copy",
+		);
+		if (!editorBounds || !lane || !image || !copy) return null;
+		const laneBounds = lane.getBoundingClientRect();
+		const imageBounds = image.getBoundingClientRect();
+		const copyBounds = copy.getBoundingClientRect();
+		const previewStyle = getComputedStyle(element);
+		return {
+			containerInlineSize:
+				previewBounds.width -
+				Number.parseFloat(previewStyle.paddingLeft) -
+				Number.parseFloat(previewStyle.paddingRight) -
+				Number.parseFloat(previewStyle.borderLeftWidth) -
+				Number.parseFloat(previewStyle.borderRightWidth),
+			copyOffset: copyBounds.left - previewBounds.left,
+			imageHeight: imageBounds.height,
+			imageLeft: imageBounds.left,
+			laneLeft: laneBounds.left,
+			laneWidth: laneBounds.width,
+			maskImage: getComputedStyle(lane).maskImage,
+			previewWidth: previewBounds.width,
+			editorWidth: editorBounds.width,
+		};
+	});
+	expect(defaultGeometry).not.toBeNull();
+	expect(defaultGeometry?.previewWidth).toBeCloseTo(
+		defaultGeometry?.editorWidth ?? 0,
+		0,
+	);
+	expect(defaultGeometry?.laneWidth).toBeCloseTo(
+		(defaultGeometry?.containerInlineSize ?? 0) * 0.28,
+		0,
+	);
+	expect(defaultGeometry?.copyOffset).toBeLessThan(
+		(defaultGeometry?.previewWidth ?? 0) * 0.28,
+	);
+	expect(defaultGeometry?.maskImage).toContain("radial-gradient");
+	expect(defaultGeometry?.imageLeft).toBeCloseTo(
+		defaultGeometry?.laneLeft ?? 0,
+		0,
+	);
+
+	await setRangeValue(shiftSlider, 100);
+	await expect
+		.poll(() =>
+			previewImage.evaluate((image) => image.getBoundingClientRect().left),
+		)
+		.toBeLessThan((defaultGeometry?.imageLeft ?? 0) - 1);
+
+	await setRangeValue(zoomSlider, 4);
+	await expect
+		.poll(() =>
+			previewImage.evaluate((image) => image.getBoundingClientRect().height),
+		)
+		.toBeGreaterThan((defaultGeometry?.imageHeight ?? 0) + 1);
+	await expect(verticalSlider).toBeEnabled();
+	const zoomedTop = await previewImage.evaluate(
+		(image) => image.getBoundingClientRect().top,
+	);
+	await setRangeValue(verticalSlider, 20);
+	await expect
+		.poll(() =>
+			previewImage.evaluate((image) => image.getBoundingClientRect().top),
+		)
+		.not.toBeCloseTo(zoomedTop, 0);
 });
