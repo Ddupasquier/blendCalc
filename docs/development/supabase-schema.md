@@ -397,7 +397,8 @@ Notes:
   identities. Existing successful Open Food Facts cache refreshes populate the private
   `nutrient_source_mapping_observations` identity/count table without an extra provider
   request and without user, barcode, product, amount, or raw-payload data.
-  `npm run seed:off-nutrient-mapping-candidates` previews only observed exact rows with
+  `node scripts/seeds/nutrition/seed_open_food_facts_nutrient_mapping_candidates.mjs`
+  previews only observed exact rows with
   a cautious canonical candidate as eligible for `pending_review`; only an explicit
   `--apply` writes those rows. Taxonomy-only candidates remain audit evidence.
 - USDA FoodData Central nutrient identifiers are the canonical nutrient identifiers
@@ -696,6 +697,10 @@ Notes:
   milligram or microgram units through nutrient-specific UCUM-backed conversion rows,
   so all four remain available in Manual Entry's Extended step instead of being
   discarded during barcode mapping.
+- `20260902133000_complete_open_food_facts_mass_conversions.sql` completes that UPC's
+  reviewed source-unit path with the missing gram-to-milligram conversions for Sodium
+  and Cholesterol. The already-approved source identities can therefore retain all 17
+  reported values instead of diverting those two values to mapping review.
 
 ### `nutrient_unit_conversions`
 

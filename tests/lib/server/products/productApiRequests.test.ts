@@ -126,6 +126,32 @@ describe("fetchCachedProductApiJson", () => {
 		expect(recordProductSourceCacheMiss).not.toHaveBeenCalled();
 	});
 
+	it("returns the configured miss value without an external request in cache-only mode", async () => {
+		const cacheStore = {
+			read: vi.fn().mockResolvedValue(null),
+			write: vi.fn(),
+		};
+		const fetcher = vi.fn();
+
+		await expect(
+			fetchCachedProductApiJson<null>({
+				provider: "open-food-facts",
+				requestKind: "barcode-product",
+				cacheValue: "local-qa-miss",
+				url: "https://example.com",
+				ttlMilliseconds: 60_000,
+				notFoundValue: null,
+				cacheStore,
+				fetcher,
+				cacheOnly: true,
+			}),
+		).resolves.toBeNull();
+
+		expect(fetcher).not.toHaveBeenCalled();
+		expect(cacheStore.write).not.toHaveBeenCalled();
+		expect(recordProductSourceCacheMiss).toHaveBeenCalledOnce();
+	});
+
 	it("writes successful provider responses to persistent cache", async () => {
 		const cacheStore = {
 			read: vi.fn().mockResolvedValue(null),

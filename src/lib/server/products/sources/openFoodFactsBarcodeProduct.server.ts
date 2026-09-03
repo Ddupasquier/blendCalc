@@ -37,6 +37,7 @@ export const lookupOpenFoodFactsBarcodeProduct = async (
 	barcode: string,
 	productReferenceCatalog?: ProductReferenceCatalog,
 	requestedFieldPaths: readonly ProductSourceFieldPath[] = getBarcodeProductDesiredSourceFieldPaths(),
+	options: { cacheOnly?: boolean } = {},
 ): Promise<BarcodeProductDraft | null> => {
 	const canonicalBarcode = normalizeBarcode(barcode);
 	const requestBarcode = getOpenFoodFactsRequestBarcode(barcode);
@@ -72,6 +73,7 @@ export const lookupOpenFoodFactsBarcodeProduct = async (
 			trace,
 			maxAttempts: 1,
 			coordination: OPEN_FOOD_FACTS_REQUEST_COORDINATION,
+			cacheOnly: options.cacheOnly,
 		});
 		if (!data?.product) return null;
 		const matchedBarcode = normalizeBarcode(

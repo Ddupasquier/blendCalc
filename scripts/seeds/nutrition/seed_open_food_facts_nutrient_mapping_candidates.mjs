@@ -1,8 +1,8 @@
 /**
  * Purpose: Preview or enqueue exact Open Food Facts taxonomy key/unit identities that
  * have one cautious canonical nutrient candidate but no existing mapping decision.
- * Run: `npm run seed:off-nutrient-mapping-candidates`
- * Apply only after review: `npm run seed:off-nutrient-mapping-candidates -- --apply`
+ * Run: `node scripts/seeds/nutrition/seed_open_food_facts_nutrient_mapping_candidates.mjs`
+ * Apply only after review: add `--apply` to the direct command above.
  */
 
 import { config } from "dotenv";

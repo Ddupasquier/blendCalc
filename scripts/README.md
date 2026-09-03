@@ -239,7 +239,7 @@ version of that maintained evidence.
 | `node scripts/seeds/catalog/seed_custom_food_categories.mjs --deep`                               | Run the wider category source sweep and rebuild mappings                                                                         |
 | `node scripts/seeds/catalog/seed_custom_food_categories.mjs --rebuild-mappings-only`              | Rebuild mappings from stored observations only                                                                                   |
 | `node scripts/seeds/nutrition/seed_manual_entry_nutrients.mjs --dry-run --pages=1 --page-size=25` | Preview nutrient metadata and manual-entry policy observations                                                                   |
-| `npm run seed:off-nutrient-mapping-candidates`                                                    | Preview observed exact Open Food Facts identities eligible for the private mapping-review queue; add `--apply` only after review |
+| `node scripts/seeds/nutrition/seed_open_food_facts_nutrient_mapping_candidates.mjs`               | Preview observed exact Open Food Facts identities eligible for the private mapping-review queue; add `--apply` only after review |
 | `node scripts/seeds/catalog/seed_product_reference_data.mjs --sample-size=200`                    | Idempotently store source identities, nutrient mappings, reviewed unit conversions, servings, and aliases; no dry run exists     |
 
 Remove `--dry-run` only after reviewing the script's proposed scope and the governing

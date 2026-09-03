@@ -246,7 +246,8 @@ unchanged.
   user, barcode, product, amount, or raw payload. The complete provider taxonomy is
   reconciled with `npm run audit:off-nutrient-mappings`; missing and pending identities
   stay review work rather than becoming guessed mappings. The preview-first
-  `npm run seed:off-nutrient-mapping-candidates` command can place exact key/unit
+  `node scripts/seeds/nutrition/seed_open_food_facts_nutrient_mapping_candidates.mjs`
+  can place exact key/unit
   identities with both a trusted runtime observation and one cautious canonical
   candidate into the existing private review queue only when an operator explicitly
   adds `--apply`. Taxonomy-only and unsupported identities remain reported without

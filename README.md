@@ -180,22 +180,22 @@ the exact migration source already exists on remote `main`.
 
 ### Data, Catalog, And Operations
 
-| Command                                        | Purpose                                                                                                   |
-| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `npm run import:nutrition:cnf -- --dry-run`    | Validate the Canadian Nutrient File import without writing.                                               |
-| `npm run import:nutrition:cofid -- --dry-run`  | Validate the UK CoFID import without writing.                                                             |
-| `npm run audit:blendCalcAPI-catalog`           | Audit blendCalcAPI publication readiness and field lineage.                                               |
-| `npm run audit:blendCalcAPI-catalog -- --json` | Reassess active products and print machine-repair, review, and unresolved readiness ownership as JSON.    |
-| `npm run audit:blendCalcAPI-performance`       | Measure authenticated product, category, search, and browser-cached repeat response budgets.              |
-| `npm run audit:blendCalcAPI-payloads`          | Measure authenticated blendCalcAPI response sizes without changing catalog data.                          |
-| `npm run report:source-quality`                | Report stored provider coverage, reliability, and request cost.                                           |
-| `npm run audit:off-nutrient-mappings`          | Reconcile Open Food Facts taxonomy and anonymous observed key/unit identities with mapping review status. |
-| `npm run seed:off-nutrient-mapping-candidates` | Preview observed Open Food Facts identities with cautious canonical review candidates.                    |
-| `npm run generate:api-structures`              | Regenerate documentation-only provider payload references.                                                |
-| `npm run moderate -- ...`                      | Run privileged role or account operations.                                                                |
-| `npm run blendCalcAPI:publication -- ...`      | Review concerns and manage reversible blendCalcAPI publication holds.                                     |
-| `npm run version:check`                        | Verify Node, app, build, API, OpenAPI, test, and documentation versions.                                  |
-| `npm run version:bump -- patch\|minor\|major`  | Update application version files without committing or tagging.                                           |
+| Command                                                                             | Purpose                                                                                                   |
+| ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `npm run import:nutrition:cnf -- --dry-run`                                         | Validate the Canadian Nutrient File import without writing.                                               |
+| `npm run import:nutrition:cofid -- --dry-run`                                       | Validate the UK CoFID import without writing.                                                             |
+| `npm run audit:blendCalcAPI-catalog`                                                | Audit blendCalcAPI publication readiness and field lineage.                                               |
+| `npm run audit:blendCalcAPI-catalog -- --json`                                      | Reassess active products and print machine-repair, review, and unresolved readiness ownership as JSON.    |
+| `npm run audit:blendCalcAPI-performance`                                            | Measure authenticated product, category, search, and browser-cached repeat response budgets.              |
+| `npm run audit:blendCalcAPI-payloads`                                               | Measure authenticated blendCalcAPI response sizes without changing catalog data.                          |
+| `npm run report:source-quality`                                                     | Report stored provider coverage, reliability, and request cost.                                           |
+| `npm run audit:off-nutrient-mappings`                                               | Reconcile Open Food Facts taxonomy and anonymous observed key/unit identities with mapping review status. |
+| `node scripts/seeds/nutrition/seed_open_food_facts_nutrient_mapping_candidates.mjs` | Preview observed Open Food Facts identities with cautious canonical review candidates.                    |
+| `npm run generate:api-structures`                                                   | Regenerate documentation-only provider payload references.                                                |
+| `npm run moderate -- ...`                                                           | Run privileged role or account operations.                                                                |
+| `npm run blendCalcAPI:publication -- ...`                                           | Review concerns and manage reversible blendCalcAPI publication holds.                                     |
+| `npm run version:check`                                                             | Verify Node, app, build, API, OpenAPI, test, and documentation versions.                                  |
+| `npm run version:bump -- patch\|minor\|major`                                       | Update application version files without committing or tagging.                                           |
 
 Writing commands are deliberately not implied by their preview examples. Read
 [Repository Scripts](scripts/README.md) before running imports, seeds, backfills,

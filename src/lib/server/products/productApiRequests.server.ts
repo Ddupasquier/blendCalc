@@ -1,4 +1,4 @@
-import { createHash, randomUUID } from "node:crypto";
+import { randomUUID } from "node:crypto";
 import { fetchWithExternalRequestPolicy } from "$lib/server/http/externalRequest.server";
 import { completeServerBackgroundTask } from "$lib/server/runtime/backgroundTask.server";
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
@@ -12,6 +12,7 @@ import {
 	recordProductSourceStaleFallback,
 	type ProductSourceRequestTrace,
 } from "$lib/server/products/sourceMetrics.server";
+import { getProductApiCacheKey } from "$lib/server/products/productApiCacheKey";
 
 const inFlightRequests = new Map<string, Promise<unknown>>();
 const memoryCache = new Map<string, ProductApiCacheRecord<unknown>>();
@@ -97,12 +98,8 @@ type CachedProductApiRequest<T> = {
 	sleep?: (milliseconds: number) => Promise<void>;
 	maxAttempts?: number;
 	coordination?: ProductApiRequestCoordination;
+	cacheOnly?: boolean;
 };
-
-const getCacheKey = (requestKind: string, cacheValue: unknown) =>
-	createHash("sha256")
-		.update(JSON.stringify({ kind: requestKind, value: cacheValue }))
-		.digest("hex");
 
 const getMemoryCacheKey = (provider: string, cacheKey: string) =>
 	`${provider}:${cacheKey}`;
@@ -323,7 +320,7 @@ export const coalesceProductApiRequest = async <T>(
 export const fetchCachedProductApiJson = async <T>(
 	input: CachedProductApiRequest<T>,
 ): Promise<T> => {
-	const cacheKey = getCacheKey(input.requestKind, input.cacheValue);
+	const cacheKey = getProductApiCacheKey(input.requestKind, input.cacheValue);
 	const requestKey = `${input.provider}:${cacheKey}`;
 	const cacheStore = input.cacheStore ?? supabaseProductApiCacheStore;
 	const notFoundStatuses = new Set(input.notFoundStatusCodes ?? []);
@@ -347,6 +344,7 @@ export const fetchCachedProductApiJson = async <T>(
 				);
 			}
 			recordProductSourceCacheMiss(input.trace);
+			if (input.cacheOnly) return input.notFoundValue as T;
 
 			const headers = new Headers(input.headers);
 			if (cached?.etag) headers.set("if-none-match", cached.etag);

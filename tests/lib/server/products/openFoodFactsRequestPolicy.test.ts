@@ -4,6 +4,8 @@ import {
 	getOpenFoodFactsRequestBarcode,
 	getOpenFoodFactsRequestedFields,
 } from "$lib/server/products/sources/openFoodFactsRequestPolicy";
+import { getProductApiCacheKey } from "$lib/server/products/productApiCacheKey";
+import { getBarcodeProductDesiredSourceFieldPaths } from "$lib/utils/barcode/barcodeProductEnrichment";
 
 describe("Open Food Facts request policy", () => {
 	it("sends one provider-normalized barcode instead of probing leading-zero variants", () => {
@@ -55,5 +57,18 @@ describe("Open Food Facts request policy", () => {
 
 	it("identifies the app with a contact email in the provider user agent", () => {
 		expect(APP_USER_AGENT).toMatch(/^blendCalc\/.+ \([^\s()]+@[^\s()]+\)$/);
+	});
+
+	it("keeps the local QA UPC fixture aligned with the real request shape", () => {
+		const fields = getOpenFoodFactsRequestedFields(
+			getBarcodeProductDesiredSourceFieldPaths(),
+		);
+		expect(
+			getProductApiCacheKey("barcode-product", {
+				apiVersion: "3.6",
+				barcode: "0030000581728",
+				fields,
+			}),
+		).toBe("28adf3cf67af3c608ac2f358a68788149b1629861921948a59479117a3c823fd");
 	});
 });

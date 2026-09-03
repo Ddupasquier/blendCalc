@@ -132,6 +132,10 @@ blendCalc data first, requests only missing permitted fields, records field-leve
 and license information, and stores accepted data in Supabase. Public/catalog reads do
 not call external providers.
 
+The disposable local QA environment never sends provider requests. It may exercise the
+same barcode route and mapping pipeline against deterministic source-shaped records in
+its private provider cache; a cache miss remains a normal not-found result.
+
 Product enrichment is field-based rather than provider-winner based. Exact identifiers
 may link records, but similar names never establish identity. Raw or restricted
 observations remain in their licensed cache/evidence boundary, while accepted canonical

@@ -1,6 +1,6 @@
 begin;
 
-select plan(8);
+select plan(9);
 
 select has_table(
 	'public',
@@ -68,6 +68,10 @@ select is(
 		select count(*)
 		from public.nutrient_source_mapping_observations
 		where source_key = 'open-food-facts'
+			and (source_nutrient_key, source_unit_name) in (
+				('calcium', 'MG'),
+				('future-nutrient', 'UG')
+			)
 	),
 	2::bigint,
 	'provider scores and other non-nutrient metadata are excluded'

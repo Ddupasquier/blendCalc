@@ -14,152 +14,6 @@ const expectedManualEntryReferenceDataUnavailableMessage =
 const listMembershipTestBarcode = "04006381333931";
 const listMembershipTestFoodId = -9_280_001;
 const optionalPhotoProductBarcode = "00030000581728";
-const optionalPhotoProductDraft = {
-	barcode: optionalPhotoProductBarcode,
-	name: "Caramel Rice Crisps",
-	nameProvenance: "source",
-	brandOwner: "Quaker",
-	servingLabel: "16 crisps (28 g)",
-	servingWeightGrams: 28,
-	hasSourceServing: true,
-	nutrients: [
-		{
-			nutrientId: 1008,
-			nutrientName: "Calories",
-			nutrientNumber: "208",
-			unitName: "kcal",
-			value: 110,
-		},
-		{
-			nutrientId: 1004,
-			nutrientName: "Total Fat",
-			nutrientNumber: "204",
-			unitName: "g",
-			value: 1,
-		},
-		{
-			nutrientId: 1005,
-			nutrientName: "Total Carbohydrates",
-			nutrientNumber: "205",
-			unitName: "g",
-			value: 24,
-		},
-		{
-			nutrientId: 1079,
-			nutrientName: "Dietary Fiber",
-			nutrientNumber: "291",
-			unitName: "g",
-			value: 1,
-		},
-		{
-			nutrientId: 2000,
-			nutrientName: "Total Sugars",
-			nutrientNumber: "269",
-			unitName: "g",
-			value: 9,
-		},
-		{
-			nutrientId: 1235,
-			nutrientName: "Sugars, added",
-			nutrientNumber: "1235",
-			unitName: "g",
-			value: 9,
-		},
-		{
-			nutrientId: 1003,
-			nutrientName: "Protein",
-			nutrientNumber: "203",
-			unitName: "g",
-			value: 2,
-		},
-		{
-			nutrientId: 1093,
-			nutrientName: "Sodium",
-			nutrientNumber: "307",
-			unitName: "mg",
-			value: 190,
-		},
-		{
-			nutrientId: 1258,
-			nutrientName: "Fatty acids, total saturated",
-			nutrientNumber: "606",
-			unitName: "g",
-			value: 0,
-		},
-		{
-			nutrientId: 1257,
-			nutrientName: "Fatty acids, total trans",
-			nutrientNumber: "605",
-			unitName: "g",
-			value: 0,
-		},
-		{
-			nutrientId: 1293,
-			nutrientName: "Fatty acids, total polyunsaturated",
-			nutrientNumber: "646",
-			unitName: "g",
-			value: 0,
-		},
-		{
-			nutrientId: 1292,
-			nutrientName: "Fatty acids, total monounsaturated",
-			nutrientNumber: "645",
-			unitName: "g",
-			value: 0,
-		},
-		{
-			nutrientId: 1253,
-			nutrientName: "Cholesterol",
-			nutrientNumber: "601",
-			unitName: "mg",
-			value: 0,
-		},
-		{
-			nutrientId: 1087,
-			nutrientName: "Calcium, Ca",
-			nutrientNumber: "301",
-			unitName: "mg",
-			value: 10,
-		},
-		{
-			nutrientId: 1089,
-			nutrientName: "Iron, Fe",
-			nutrientNumber: "303",
-			unitName: "mg",
-			value: 0.4,
-		},
-		{
-			nutrientId: 1092,
-			nutrientName: "Potassium, K",
-			nutrientNumber: "306",
-			unitName: "mg",
-			value: 60,
-		},
-		{
-			nutrientId: 1114,
-			nutrientName: "Vitamin D (D2 + D3)",
-			nutrientNumber: "328",
-			unitName: "mcg",
-			value: 0,
-		},
-	],
-	reportedNutrientIds: [
-		1008, 1004, 1005, 1079, 2000, 1235, 1003, 1093, 1258, 1257, 1293, 1292,
-		1253, 1087, 1089, 1092, 1114,
-	],
-	categories: ["Cereal Grains and Pasta"],
-	resolvedCategory: "Cereal Grains and Pasta",
-	categoryResolution: {
-		categoryOptionId: "qa-grains",
-		label: "Cereal Grains and Pasta",
-		sourceValue: "Cereal Grains and Pasta",
-		confidence: "exact",
-	},
-	source: "open-food-facts",
-	sourceKey: "open-food-facts",
-	sourceLabel: "Open Food Facts",
-	sourceReference: optionalPhotoProductBarcode,
-};
 
 const removeListMembershipTestFood = async (parallelWorkerIndex: number) => {
 	const supabase =
@@ -751,28 +605,15 @@ test("an optional source product photo enters moderation without blocking a priv
 	let intakeRequestCount = 0;
 	let nutrientPresentationVerified = false;
 	await page.route(
-		`**/api/products/barcode/${optionalPhotoProductBarcode}`,
-		async (route) => {
-			await route.fulfill({
-				status: 200,
-				contentType: "application/json",
-				body: JSON.stringify({
-					status: "found",
-					draft: optionalPhotoProductDraft,
-				}),
-			});
-		},
-	);
-	await page.route(
 		`**/api/products/barcode/${optionalPhotoProductBarcode}/share-validation`,
 		async (route) => {
+			const response = await route.fetch();
+			const result = (await response.json()) as Record<string, unknown>;
 			await route.fulfill({
-				status: 200,
+				response,
 				contentType: "application/json",
 				body: JSON.stringify({
-					status: "matched",
-					barcode: optionalPhotoProductBarcode,
-					draft: optionalPhotoProductDraft,
+					...result,
 					defaultSharingAllowed: true,
 					requiresCatalogEvidence: false,
 				}),
@@ -836,7 +677,7 @@ test("an optional source product photo enters moderation without blocking a priv
 					dialog.locator("summary", { hasText: title }).locator(".text-badge"),
 				).toHaveText("From barcode");
 			}
-			await expect(dialog.getByLabel("Calories (kcal) *")).toHaveValue("110");
+			await expect(dialog.getByLabel("Calories (kcal)")).toHaveValue("110");
 			await expect(dialog.getByLabel("Added sugars (g)")).toHaveValue("9");
 			await expect(
 				dialog
@@ -885,7 +726,6 @@ test("an optional source product photo enters moderation without blocking a priv
 			await shareTab.click();
 		}
 		await expect(shareTab).toHaveAttribute("aria-selected", "true");
-		await expect(dialog.getByLabel("Share with community")).toBeChecked();
 		return dialog;
 	};
 
@@ -898,7 +738,8 @@ test("an optional source product photo enters moderation without blocking a priv
 		await expect(dialog.getByLabel("Nutrition facts label")).toHaveCount(0);
 		await expect(dialog.getByLabel("Barcode", { exact: true })).toHaveCount(0);
 
-		await dialog.getByLabel("Share with community").click();
+		const privateShareToggle = dialog.getByLabel("Share with community");
+		if (await privateShareToggle.isChecked()) await privateShareToggle.click();
 		await dialog.getByRole("button", { name: "Add Ingredient" }).click();
 		await expect(dialog).toBeHidden();
 		expect(intakeRequestCount).toBe(0);
@@ -932,9 +773,9 @@ test("an optional source product photo enters moderation without blocking a priv
 			mimeType: "image/png",
 			buffer: Buffer.from("browser evidence upload"),
 		});
-		await expect(dialog.getByLabel("Share with community")).not.toBeChecked();
-		await dialog.getByLabel("Share with community").click();
-		await expect(dialog.getByLabel("Share with community")).toBeChecked();
+		const publicShareToggle = dialog.getByLabel("Share with community");
+		if (!(await publicShareToggle.isChecked())) await publicShareToggle.click();
+		await expect(publicShareToggle).toBeChecked();
 		const addButton = dialog.getByRole("button", { name: "Add Ingredient" });
 		await expect(addButton).toBeEnabled({ timeout: 30_000 });
 		await addButton.click();

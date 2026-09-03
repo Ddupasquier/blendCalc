@@ -1,3 +1,9 @@
+/**
+ * Purpose: Build bounded Open Food Facts nutrient taxonomy, observation, and
+ * mapping-review results for the executable audit and seed workflows.
+ * Do not run directly; use the documented audit or seed script entry point.
+ */
+
 import {
 	findCanonicalNutrientCandidate,
 	normalizeUnitName,
