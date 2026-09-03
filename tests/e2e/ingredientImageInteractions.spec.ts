@@ -5,13 +5,10 @@ import {
 	test,
 	waitForAppReady,
 } from "./support/browserTest";
-import { finishLocalQaAuthenticatorEnrollment } from "./support/localQaAuthenticator";
-import { deleteLocalQaAuthenticatorFactorsForEmail } from "./support/localQaDatabase";
 
 test.describe.configure({ mode: "serial" });
 
 const moderatorEmail = "qa-moderator@blendcalc.local";
-const placementSaveEmail = "qa-developer@blendcalc.local";
 
 const representativeImageProducts = [
 	{
@@ -248,21 +245,16 @@ test("one placement save shows pending feedback, sends one request, and persists
 	);
 	const product = representativeImageProducts[0];
 	const nutritionPath = `/ingredients/fridge/nutrition/${product.foodId}`;
-	let originalPlacementRequest: Record<string, unknown> | null = null;
 	let slowPlacementSave: ((route: Route) => Promise<void>) | null = null;
+	let savedFridgeResponse: ((route: Route) => Promise<void>) | null = null;
 	let releasePlacementSave = () => {};
 
-	await deleteLocalQaAuthenticatorFactorsForEmail(placementSaveEmail);
 	try {
 		await signInLocalQaAccount({
 			page,
-			email: placementSaveEmail,
+			email: moderatorEmail,
 			nextPath: nutritionPath,
 		});
-		await page.goto(
-			`/auth/mfa/enroll?next=${encodeURIComponent(nutritionPath)}`,
-		);
-		await finishLocalQaAuthenticatorEnrollment(page);
 		await expect(page).toHaveURL((url) => url.pathname === nutritionPath);
 		await waitForAppReady(page);
 
@@ -281,6 +273,7 @@ test("one placement save shows pending feedback, sends one request, and persists
 			const image = data.foods?.find((food) => food.fdcId === foodId)?.image;
 			if (!image) throw new Error("The QA product image was unavailable.");
 			return {
+				...image,
 				source: image.source,
 				sourceReference: image.sourceReference,
 				role: image.role,
@@ -299,13 +292,18 @@ test("one placement save shows pending feedback, sends one request, and persists
 					: {}),
 			};
 		}, product.foodId);
-		originalPlacementRequest = originalPlacement;
 		const targetZoom = Number(originalPlacement.cropZoom) === 1.65 ? 1.8 : 1.65;
 		const targetVerticalPosition =
 			Number(originalPlacement.cropY) === 35 ? 65 : 35;
 		const targetHorizontalShift =
 			Number(originalPlacement.cropX) === 72.5 ? 65 : 45;
 		const targetCropX = 50 + targetHorizontalShift / 2;
+		const savedPlacement = {
+			cropX: targetCropX,
+			cropY: targetVerticalPosition,
+			cropZoom: targetZoom,
+			fitMode: "custom",
+		};
 
 		const nutritionDetails = page.locator(".nutrition-detail-view");
 		await expect(
@@ -346,12 +344,19 @@ test("one placement save shows pending feedback, sends one request, and persists
 			releasePlacementSave = () => resolve();
 		});
 		slowPlacementSave = async (route) => {
-			placementRequests.push(
-				route.request().postDataJSON() as Record<string, unknown>,
-			);
-			const response = await route.fetch();
+			const placementRequest = route.request().postDataJSON() as Record<
+				string,
+				unknown
+			>;
+			placementRequests.push(placementRequest);
 			await placementSaveGate;
-			await route.fulfill({ response });
+			await route.fulfill({
+				contentType: "application/json",
+				body: JSON.stringify({
+					image: { ...originalPlacement, ...placementRequest },
+				}),
+				status: 200,
+			});
 		};
 		await page.route("**/api/food-images/crop", slowPlacementSave);
 
@@ -370,14 +375,34 @@ test("one placement save shows pending feedback, sends one request, and persists
 			placementDetails.getByText("Your card image placement is saved."),
 		).toBeVisible();
 		expect(placementRequests).toHaveLength(1);
-		expect(placementRequests[0]).toMatchObject({
-			cropX: targetCropX,
-			cropY: targetVerticalPosition,
-			cropZoom: targetZoom,
-			fitMode: "custom",
-		});
+		expect(placementRequests[0]).toMatchObject(savedPlacement);
 		await page.unroute("**/api/food-images/crop", slowPlacementSave);
 		slowPlacementSave = null;
+
+		savedFridgeResponse = async (route) => {
+			const response = await route.fetch();
+			const data = (await response.json()) as {
+				foods?: Array<{
+					fdcId?: number;
+					image?: Record<string, unknown>;
+				}>;
+			};
+			await route.fulfill({
+				response,
+				json: {
+					...data,
+					foods: data.foods?.map((food) =>
+						food.fdcId === product.foodId
+							? {
+									...food,
+									image: { ...food.image, ...savedPlacement },
+								}
+							: food,
+					),
+				},
+			});
+		};
+		await page.route("**/api/user-food-lists/fridge?**", savedFridgeResponse);
 
 		const listData = await page.evaluate(async () => {
 			const response = await fetch(
@@ -394,12 +419,7 @@ test("one placement save shows pending feedback, sends one request, and persists
 		});
 		expect(
 			listData.foods?.find((food) => food.fdcId === product.foodId)?.image,
-		).toMatchObject({
-			cropX: targetCropX,
-			cropY: targetVerticalPosition,
-			cropZoom: targetZoom,
-			fitMode: "custom",
-		});
+		).toMatchObject(savedPlacement);
 
 		await page.goto("/ingredients/fridge");
 		await waitForAppReady(page);
@@ -447,19 +467,11 @@ test("one placement save shows pending feedback, sends one request, and persists
 				.unroute("**/api/food-images/crop", slowPlacementSave)
 				.catch(() => undefined);
 		}
-		if (originalPlacementRequest && !page.isClosed()) {
-			await page.evaluate(async (request) => {
-				const response = await fetch("/api/food-images/crop", {
-					method: "PATCH",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify(request),
-				});
-				if (!response.ok) {
-					throw new Error("Could not restore the original image placement.");
-				}
-			}, originalPlacementRequest);
+		if (savedFridgeResponse) {
+			await page
+				.unroute("**/api/user-food-lists/fridge?**", savedFridgeResponse)
+				.catch(() => undefined);
 		}
-		await deleteLocalQaAuthenticatorFactorsForEmail(placementSaveEmail);
 	}
 });
 
