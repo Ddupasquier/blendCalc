@@ -8,6 +8,91 @@ import { NUTRIENT_IDS } from "$lib/utils/food/types";
 import { productReferenceCatalogFixture } from "../../../fixtures/referenceCatalogs";
 
 describe("barcode product mapping", () => {
+	it("retains every reviewed nutrient reported for UPC 00030000581728", () => {
+		const draft = mapOpenFoodFactsProduct(
+			{
+				product_name: "Caramel Rice Crisps",
+				brands: "Quaker",
+				serving_size: "16 crisps (28 g)",
+				serving_quantity: 28,
+				nutrition_data_per: "serving",
+				nutriments: {
+					"energy-kcal_serving": 110,
+					"energy-kcal_unit": "kcal",
+					proteins_serving: 2,
+					proteins_unit: "g",
+					fat_serving: 1,
+					fat_unit: "g",
+					carbohydrates_serving: 24,
+					carbohydrates_unit: "g",
+					fiber_serving: 1,
+					fiber_unit: "g",
+					sugars_serving: 9,
+					sugars_unit: "g",
+					"added-sugars_serving": 9,
+					"added-sugars_unit": "g",
+					sodium_serving: 0.19,
+					sodium_unit: "g",
+					"saturated-fat_serving": 0,
+					"saturated-fat_unit": "g",
+					"trans-fat_serving": 0,
+					"trans-fat_unit": "g",
+					"polyunsaturated-fat_serving": 0,
+					"polyunsaturated-fat_unit": "g",
+					"monounsaturated-fat_serving": 0,
+					"monounsaturated-fat_unit": "g",
+					cholesterol_serving: 0,
+					cholesterol_unit: "g",
+					calcium_serving: 0.01,
+					calcium_unit: "g",
+					iron_serving: 0.0004,
+					iron_unit: "g",
+					potassium_serving: 0.06,
+					potassium_unit: "g",
+					"vitamin-d_serving": 0,
+					"vitamin-d_unit": "g",
+				},
+			},
+			"00030000581728",
+			productReferenceCatalogFixture,
+		);
+
+		const valuesByNutrientId = new Map(
+			draft?.nutrients.map((nutrient) => [nutrient.nutrientId, nutrient.value]),
+		);
+		expect(draft).toMatchObject({
+			barcode: "00030000581728",
+			servingLabel: "16 crisps (28 g)",
+			servingWeightGrams: 28,
+		});
+		expect(draft?.nutrients).toHaveLength(17);
+		expect(valuesByNutrientId).toEqual(
+			new Map([
+				[1008, 110],
+				[1004, 1],
+				[1005, 24],
+				[1079, 1],
+				[2000, 9],
+				[1235, 9],
+				[1003, 2],
+				[1258, 0],
+				[1257, 0],
+				[1293, 0],
+				[1292, 0],
+				[1253, 0],
+				[1093, 190],
+				[1087, 10],
+				[1089, 0.4],
+				[1092, 60],
+				[1114, 0],
+			]),
+		);
+		expect(draft?.reportedNutrientIds).toHaveLength(17);
+		expect(
+			draft?.nutrients.filter((nutrient) => nutrient.value === 0),
+		).toHaveLength(6);
+	});
+
 	it("keeps Open Food Facts ABV separate from nutrient math", () => {
 		const draft = mapOpenFoodFactsProduct(
 			{

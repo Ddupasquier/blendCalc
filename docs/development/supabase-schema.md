@@ -673,6 +673,12 @@ Notes:
 - `20260727120000_canonical_barcode_nutrient_mappings.sql` restores the reviewed Open
   Food Facts label mappings, including Total Fat and gram-to-milligram Sodium, and
   rewrites applicable existing food snapshots through the enabled equivalence catalog.
+- `20260902120000_open_food_facts_micronutrient_mappings.sql` adds the reviewed
+  gram-unit Open Food Facts mappings observed on UPC `00030000581728` for Calcium,
+  Iron, Potassium, and Vitamin D. Their source values convert to the canonical
+  milligram or microgram units through nutrient-specific UCUM-backed conversion rows,
+  so all four remain available in Manual Entry's Extended step instead of being
+  discarded during barcode mapping.
 
 ### `nutrient_unit_conversions`
 

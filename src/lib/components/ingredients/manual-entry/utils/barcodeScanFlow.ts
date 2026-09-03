@@ -5,6 +5,7 @@ import {
 } from "$lib/utils/barcode/productLookup";
 import type { FoodSafetyAlert } from "$lib/utils/food/types";
 import { getBarcodeImportMessage } from "$lib/components/ingredients/manual-entry/utils/barcodeFlow";
+import type { ManualEntryNutrientDefinition } from "$lib/utils/food/nutrients/nutrientDefinitions";
 
 export type ManualEntryBarcodeScanOutcome =
 	| {
@@ -23,10 +24,10 @@ export type ManualEntryBarcodeScanOutcome =
 
 export const resolveManualEntryBarcodeScan = async ({
 	result,
-	getOptionalNutrientCount,
+	manualEntryNutrientFields,
 }: {
 	result: BarcodeScanResult;
-	getOptionalNutrientCount: () => number;
+	manualEntryNutrientFields: ManualEntryNutrientDefinition[];
 }): Promise<ManualEntryBarcodeScanOutcome> => {
 	const lookup = await lookupBarcodeProduct(result.canonicalValue);
 
@@ -36,7 +37,7 @@ export const resolveManualEntryBarcodeScan = async ({
 			draft: lookup.draft,
 			message: getBarcodeImportMessage(
 				lookup.draft,
-				getOptionalNutrientCount(),
+				manualEntryNutrientFields,
 				"scan",
 			),
 			focusTarget: "destination",

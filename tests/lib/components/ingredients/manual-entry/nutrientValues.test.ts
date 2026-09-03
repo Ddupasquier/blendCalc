@@ -74,12 +74,66 @@ describe("manual-entry nutrient values", () => {
 		]);
 	});
 
-	it("keeps missing summary values missing", () => {
-		expect(getSummaryItems({
-			requiredFields: [proteinField],
-			getValue: () => null,
-		})).toEqual([
-			expect.objectContaining({ value: null }),
+	it("preserves all 17 imported nutrients for UPC 00030000581728", () => {
+		const valuesByNutrientId = new Map([
+			[1008, 110],
+			[1003, 2],
+			[1004, 1],
+			[1005, 24],
+			[1079, 1],
+			[2000, 9],
+			[1235, 9],
+			[1093, 190],
+			[1258, 0],
+			[1257, 0],
+			[1293, 0],
+			[1292, 0],
+			[1253, 0],
+			[1087, 10],
+			[1089, 0.4],
+			[1092, 60],
+			[1114, 0],
 		]);
+		const nutrients = buildSaveNutrients({
+			importedNutrients: [...valuesByNutrientId].map(([nutrientId, value]) => ({
+				nutrientId,
+				nutrientName: `Nutrient ${nutrientId}`,
+				nutrientNumber: String(nutrientId),
+				unitName: "G",
+				value,
+				source: "open-food-facts" as const,
+				sourceReference: "00030000581728",
+				mappingStatus: "canonical" as const,
+			})),
+			manualEntryNutrientFields: [],
+			manualNutrientValues: {},
+			manualTouchedNutrientIds: {},
+		});
+
+		expect(nutrients).toHaveLength(17);
+		expect(
+			new Map(
+				nutrients.map((nutrient) => [nutrient.nutrientId, nutrient.value]),
+			),
+		).toEqual(valuesByNutrientId);
+		expect(nutrients).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					nutrientId: 1114,
+					value: 0,
+					source: "open-food-facts",
+					sourceReference: "00030000581728",
+				}),
+			]),
+		);
+	});
+
+	it("keeps missing summary values missing", () => {
+		expect(
+			getSummaryItems({
+				requiredFields: [proteinField],
+				getValue: () => null,
+			}),
+		).toEqual([expect.objectContaining({ value: null })]);
 	});
 });

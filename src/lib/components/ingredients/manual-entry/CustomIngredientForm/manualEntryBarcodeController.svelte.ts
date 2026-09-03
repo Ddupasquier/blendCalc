@@ -415,10 +415,7 @@ export const createManualEntryBarcodeController = ({
 		form.data.barcodeReferenceDraft = null;
 		form.data.barcodeMessage = getBarcodeImportMessage(
 			draft,
-			form.getOptionalNutrientTotal(
-				validation.nutrientFields,
-				validation.requiredNutrientFields,
-			),
+			validation.nutrientFields,
 			"autofill",
 		);
 		await tick();
@@ -601,11 +598,7 @@ export const createManualEntryBarcodeController = ({
 		try {
 			const outcome = await resolveManualEntryBarcodeScan({
 				result,
-				getOptionalNutrientCount: () =>
-					form.getOptionalNutrientTotal(
-						validation.nutrientFields,
-						validation.requiredNutrientFields,
-					),
+				manualEntryNutrientFields: validation.nutrientFields,
 			});
 			if (generation !== lookupGeneration) return { focusTarget };
 
