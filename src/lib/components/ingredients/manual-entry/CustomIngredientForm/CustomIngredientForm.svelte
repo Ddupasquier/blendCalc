@@ -503,6 +503,7 @@
 			validation.nutrientFields,
 			validation.requiredNutrientFields,
 		),
+		hasAcceptedBarcodeNutrients,
 		validationItems: validation.getAttemptedValidationItems(
 			validation.validationItems,
 		),
