@@ -13,5 +13,6 @@ describe("barcode serving volume parsing", () => {
 
 	it("returns null when no volume is reported", () => {
 		expect(parseVolumeEquivalent("1 package (28 g)")).toBeNull();
+		expect(parseVolumeEquivalent("16 crisps (28 g)")).toBeNull();
 	});
 });

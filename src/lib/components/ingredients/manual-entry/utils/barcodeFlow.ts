@@ -255,7 +255,11 @@ export const getBarcodeDraftState = (
 		manualNutrientValues: Object.fromEntries(
 			validNutrients.map((nutrient) => [nutrient.nutrientId, nutrient.value]),
 		),
-		useServingMeasure: Boolean(draft.serving?.amount && draft.serving?.unitKey),
+		useServingMeasure: Boolean(
+			draft.serving?.isHouseholdMeasure &&
+			draft.serving.amount &&
+			draft.serving.unitKey,
+		),
 		servingMeasureQuantity: draft.serving?.amount ?? null,
 		servingMeasureUnit:
 			draft.serving?.unitKey ?? getDefaultServingMeasureUnit("volume") ?? "",
