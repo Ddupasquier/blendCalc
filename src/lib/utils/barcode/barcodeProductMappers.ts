@@ -41,10 +41,12 @@ import {
 	convertServingAmount,
 	convertFoodServingMultiplier,
 	convertServingToGrams,
+	getServingMeasureDimension,
 	parseSourceServingMeasure,
 	parseSourceWeightMeasure,
 } from "$lib/utils/serving/servingAmount";
 import { getNutrientAmountForServingConversion } from "$lib/utils/food/nutrients/foodNutrients";
+import { normalizeFoodServingIdentityLabel } from "$lib/utils/food/servings/foodServings";
 import { formatSourceProductName } from "$lib/utils/products/productNameFormatting.js";
 import { toFiniteNonnegativeNumber } from "$lib/utils/numbers/finiteNumbers";
 
@@ -1026,6 +1028,19 @@ export const mapOpenFoodFactsProduct = (
 	const volumeEquivalent = hasExactGramWeight
 		? (parseVolumeEquivalent(product.serving_size) ?? undefined)
 		: undefined;
+	const parsedHouseholdEquivalent = hasExactGramWeight
+		? parseSourceServingMeasure(
+				normalizeFoodServingIdentityLabel(product.serving_size ?? ""),
+			)
+		: null;
+	const householdEquivalent =
+		parsedHouseholdEquivalent &&
+		["count", "volume"].includes(
+			getServingMeasureDimension(parsedHouseholdEquivalent.unit) ?? "",
+		)
+			? parsedHouseholdEquivalent
+			: undefined;
+	const displayEquivalent = volumeEquivalent ?? householdEquivalent;
 	const packageVolumeServing = useServingValues
 		? undefined
 		: createExactPackageVolumeServing(
@@ -1039,12 +1054,12 @@ export const mapOpenFoodFactsProduct = (
 					(servingWeightGrams ? `${servingWeightGrams} g` : "Package serving"),
 				gramWeight: servingWeightGrams ?? undefined,
 				milliliterVolume: milliliterVolume ?? undefined,
-				amount: volumeEquivalent?.quantity ?? parsedServing?.quantity,
-				unitKey: volumeEquivalent?.unit ?? parsedServing?.unit,
+				amount: displayEquivalent?.quantity ?? parsedServing?.quantity,
+				unitKey: displayEquivalent?.unit ?? parsedServing?.unit,
 				isPrimary: true,
 				measureType: "Package serving",
 				isHouseholdMeasure:
-					Boolean(volumeEquivalent) || milliliterVolume !== null,
+					Boolean(displayEquivalent) || milliliterVolume !== null,
 				sourceMeasureKey: "serving_size",
 				origin: "package-label",
 				gramWeightMethod: hasExactGramWeight ? "source-reported" : "unknown",

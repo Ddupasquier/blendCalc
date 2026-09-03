@@ -992,6 +992,14 @@ export const servingMeasureCatalogFixture: ServingMeasureCatalog = {
 			conversionToBase: 29.57353,
 			isDefault: false,
 		},
+		{
+			value: "item",
+			label: "Items",
+			shortLabel: "item",
+			dimension: "count",
+			conversionToBase: 1,
+			isDefault: true,
+		},
 	],
 	aliases: {
 		g: "g",
@@ -1022,9 +1030,12 @@ export const servingMeasureCatalogFixture: ServingMeasureCatalog = {
 		tablespoons: "tbsp",
 		cup: "cup",
 		cups: "cup",
+		c: "cup",
 		floz: "floz",
 		fluidounce: "floz",
 		fluidounces: "floz",
+		item: "item",
+		items: "item",
 	},
 	aliasEntries: [
 		{ alias: "g", unit: "g" },
@@ -1038,8 +1049,11 @@ export const servingMeasureCatalogFixture: ServingMeasureCatalog = {
 		{ alias: "tablespoons", unit: "tbsp" },
 		{ alias: "cup", unit: "cup" },
 		{ alias: "cups", unit: "cup" },
+		{ alias: "c", unit: "cup" },
 		{ alias: "fl oz", unit: "floz" },
 		{ alias: "fluid ounces", unit: "floz" },
+		{ alias: "item", unit: "item" },
+		{ alias: "items", unit: "item" },
 	],
 };
 

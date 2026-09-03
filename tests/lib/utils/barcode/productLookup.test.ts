@@ -64,6 +64,13 @@ describe("barcode product mapping", () => {
 			barcode: "00030000581728",
 			servingLabel: "16 crisps (28 g)",
 			servingWeightGrams: 28,
+			serving: {
+				label: "16 crisps (28 g)",
+				gramWeight: 28,
+				amount: 16,
+				unitKey: "item",
+				isHouseholdMeasure: true,
+			},
 		});
 		expect(draft?.nutrients).toHaveLength(17);
 		expect(valuesByNutrientId).toEqual(

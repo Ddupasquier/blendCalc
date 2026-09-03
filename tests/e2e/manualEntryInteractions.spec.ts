@@ -664,6 +664,13 @@ test("an optional source product photo enters moderation without blocking a priv
 					/17 nutrition values were accepted and retained from the source\. Review 13 in Macros and 4 in Extended\./,
 				),
 			).toBeVisible();
+			await dialog.getByRole("tab", { name: "Servings" }).click();
+			await expect(dialog.getByLabel("Weight (g) optional")).toHaveValue("28");
+			await expect(
+				dialog.getByRole("switch", { name: "Package measure" }),
+			).toBeChecked();
+			await expect(dialog.getByLabel("Amount")).toHaveValue("16");
+			await expect(dialog.getByLabel("Unit")).toHaveText("Items");
 			await dialog.getByRole("tab", { name: "Macros" }).click();
 			await expect(
 				dialog.getByText(/Values marked From barcode were supplied/),
