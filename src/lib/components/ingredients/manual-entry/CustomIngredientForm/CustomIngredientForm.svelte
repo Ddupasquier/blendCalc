@@ -144,6 +144,9 @@
 	const hasAcceptedBarcodeSource = $derived(
 		Boolean(form.data.barcodeReferenceAcceptedBarcode),
 	);
+	const hasAcceptedBarcodeNutrients = $derived(
+		hasAcceptedBarcodeSource && form.data.reportedNutrientIds.length > 0,
+	);
 	const isNutrientRequired = (field: ManualEntryNutrientDefinition) =>
 		form.data.shareWithCatalog &&
 		validation.disclosurePolicy.requiresStandardNutrition &&
@@ -447,7 +450,7 @@
 		loading: referenceData.state.loadingNutrients,
 		error: referenceData.state.nutrientError,
 		helper: getManualEntryNutritionStepHelper({
-			hasAcceptedBarcodeSource,
+			hasAcceptedBarcodeNutrients,
 			fallback: validation.nutritionFieldPolicy.helper,
 		}),
 		hideUnavailableStatus: validation.hideMacroUnavailableStatus,
@@ -476,7 +479,7 @@
 		loading: referenceData.state.loadingNutrients,
 		error: referenceData.state.nutrientError,
 		helper: getManualEntryNutritionStepHelper({
-			hasAcceptedBarcodeSource,
+			hasAcceptedBarcodeNutrients,
 			fallback: "All fields on this step are optional. Fill what you know.",
 		}),
 		accordion: true,

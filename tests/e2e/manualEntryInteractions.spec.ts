@@ -1145,7 +1145,7 @@ test("manual entry renders every approved DB nutrient group and field", async ({
 		).toHaveCount(1);
 		await expect(
 			extendedGroups.nth(index).locator("summary .text-badge"),
-		).toHaveText("optional");
+		).toHaveText("Optional");
 	}
 	await expect(
 		dialog.locator(".manual-nutrients__fields .text-badge"),

@@ -160,10 +160,9 @@ export const createManualEntryValidationController = ({
 		validationItems.find((item) => item.tone === "error") ?? null,
 	);
 	const hideMacroUnavailableStatus = $derived(
-		Boolean(referenceData.state.nutrientError) ||
-			(!referenceData.state.loadingNutrients &&
-				!referenceData.state.nutrientError &&
-				requiredNutrientFields.length === 0),
+		!referenceData.state.loadingNutrients &&
+			!referenceData.state.nutrientError &&
+			requiredNutrientFields.length === 0,
 	);
 
 	const handleCategoryPickerStatus = (status: FoodCategoryPickerStatus) => {

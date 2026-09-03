@@ -198,25 +198,25 @@ describe("manual-entry barcode nutrient presentation", () => {
 		).toBe("Required to share");
 	});
 
-	it("replaces blanket optional guidance after a barcode is accepted", () => {
+	it("replaces blanket optional guidance after barcode nutrients are accepted", () => {
 		const fallback =
 			"All fields on this step are optional. Fill what you know.";
 
 		expect(
 			getManualEntryNutritionStepHelper({
-				hasAcceptedBarcodeSource: false,
+				hasAcceptedBarcodeNutrients: false,
 				fallback,
 			}),
 		).toBe(fallback);
 		expect(
 			getManualEntryNutritionStepHelper({
-				hasAcceptedBarcodeSource: true,
+				hasAcceptedBarcodeNutrients: true,
 				fallback,
 			}),
 		).toContain("Values marked From barcode");
 		expect(
 			getManualEntryNutritionStepHelper({
-				hasAcceptedBarcodeSource: true,
+				hasAcceptedBarcodeNutrients: true,
 				fallback,
 			}),
 		).toContain("Not provided");
