@@ -11,6 +11,7 @@ import { deleteLocalQaAuthenticatorFactorsForEmail } from "./support/localQaData
 test.describe.configure({ mode: "serial" });
 
 const moderatorEmail = "qa-moderator@blendcalc.local";
+const placementSaveEmail = "qa-developer@blendcalc.local";
 
 const representativeImageProducts = [
 	{
@@ -251,11 +252,11 @@ test("one placement save shows pending feedback, sends one request, and persists
 	let slowPlacementSave: ((route: Route) => Promise<void>) | null = null;
 	let releasePlacementSave = () => {};
 
-	await deleteLocalQaAuthenticatorFactorsForEmail(moderatorEmail);
+	await deleteLocalQaAuthenticatorFactorsForEmail(placementSaveEmail);
 	try {
 		await signInLocalQaAccount({
 			page,
-			email: moderatorEmail,
+			email: placementSaveEmail,
 			nextPath: nutritionPath,
 		});
 		await page.goto(
@@ -378,8 +379,6 @@ test("one placement save shows pending feedback, sends one request, and persists
 		await page.unroute("**/api/food-images/crop", slowPlacementSave);
 		slowPlacementSave = null;
 
-		await page.goto("/ingredients/fridge");
-		await waitForAppReady(page);
 		const listData = await page.evaluate(async () => {
 			const response = await fetch(
 				"/api/user-food-lists/fridge?limit=100&offset=0&sort=recent&source=all&trust=any",
@@ -402,6 +401,8 @@ test("one placement save shows pending feedback, sends one request, and persists
 			fitMode: "custom",
 		});
 
+		await page.goto("/ingredients/fridge");
+		await waitForAppReady(page);
 		const savedCard = page
 			.getByRole("button", {
 				name: new RegExp(`^Preview ${product.name}`),
@@ -458,6 +459,6 @@ test("one placement save shows pending feedback, sends one request, and persists
 				}
 			}, originalPlacementRequest);
 		}
-		await deleteLocalQaAuthenticatorFactorsForEmail(moderatorEmail);
+		await deleteLocalQaAuthenticatorFactorsForEmail(placementSaveEmail);
 	}
 });
