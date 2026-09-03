@@ -6,6 +6,7 @@ import {
 	test,
 	waitForAppReady,
 } from "./support/browserTest";
+import { execFile } from "node:child_process";
 import type { Locator } from "@playwright/test";
 import {
 	getAuthenticatedBrowserStatePath,
@@ -18,6 +19,49 @@ const tinyPng = Buffer.from(
 	"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
 	"base64",
 );
+
+const moderatorEmail = "qa-moderator@blendcalc.local";
+
+const runImageModerationFixture = async (command: "seed" | "cleanup") =>
+	new Promise<void>((resolve, reject) => {
+		execFile(
+			process.execPath,
+			[
+				"scripts/qa/catalog/seed_image_moderation_submission.mjs",
+				command,
+				moderatorEmail,
+				"addition",
+			],
+			{
+				cwd: process.cwd(),
+				env: {
+					...process.env,
+					BLENDCALC_DATABASE_ENVIRONMENT: "test",
+				},
+				maxBuffer: 256 * 1024,
+			},
+			(error, stdout, stderr) => {
+				if (error) {
+					reject(
+						new Error(
+							`Could not ${command} the image-moderation fixture: ${stderr || stdout || error.message}`,
+						),
+					);
+					return;
+				}
+				resolve();
+			},
+		);
+	});
+
+const setRangeValue = async (slider: Locator, value: number) => {
+	await slider.evaluate((element, nextValue) => {
+		const input = element as HTMLInputElement;
+		input.value = String(nextValue);
+		input.dispatchEvent(new Event("input", { bubbles: true }));
+		input.dispatchEvent(new Event("change", { bubbles: true }));
+	}, value);
+};
 
 const openFoodPreferenceDisclosure = async (
 	foodPreferencesView: Locator,
@@ -726,7 +770,6 @@ test("privileged tools stay hidden from regular accounts and use the shared shee
 		testInfo.project.name !== "desktop-chromium",
 		"One isolated Chromium project owns the shared moderator MFA persona.",
 	);
-	const moderatorEmail = "qa-moderator@blendcalc.local";
 	await deleteLocalQaAuthenticatorFactorsForEmail(moderatorEmail);
 	await page.goto("/profile");
 	await waitForAppReady(page);
@@ -788,6 +831,9 @@ test("privileged tools stay hidden from regular accounts and use the shared shee
 
 	try {
 		await finishLocalQaAuthenticatorEnrollment(page);
+		await runImageModerationFixture("seed");
+		await page.reload();
+		await waitForAppReady(page);
 
 		await expect(page).toHaveURL(
 			/\/profile\/privileged-tools\/product-submissions$/,
@@ -799,6 +845,93 @@ test("privileged tools stay hidden from regular accounts and use the shared shee
 		await expect(
 			productSubmissionSheet.getByText(/submission(?:s)? waiting for review/),
 		).toBeVisible();
+
+		const imageSubmission = productSubmissionSheet
+			.locator("article.moderator-review-card")
+			.filter({ hasText: "[QA Image] Image Addition Granola" })
+			.first();
+		await expect(imageSubmission).toBeVisible();
+
+		await imageSubmission
+			.locator("summary")
+			.filter({ hasText: "Package evidence" })
+			.click();
+		const privateEvidence = imageSubmission.getByLabel(
+			"Private product evidence",
+		);
+		await expect(privateEvidence.getByRole("img")).toHaveCount(3);
+		const originalFrontImage = privateEvidence.getByRole("img", {
+			name: "Front of package",
+		});
+		await expect(originalFrontImage).toBeVisible();
+
+		await imageSubmission
+			.locator("summary")
+			.filter({ hasText: "Card image placement" })
+			.click();
+		const placementEditor = imageSubmission.getByRole("region", {
+			name: "Card image preview",
+		});
+		const liveCardPreview = placementEditor.getByRole("group", {
+			name: "Interactive card image preview",
+		});
+		await expect(liveCardPreview).toBeVisible();
+		await expect(
+			liveCardPreview.locator(".ingredient-card-media-lane"),
+		).toHaveCount(1);
+		await expect(imageSubmission.locator(".product-image-frame")).toHaveCount(
+			0,
+		);
+		const originalFrontImageUrl = await originalFrontImage.getAttribute("src");
+		expect(originalFrontImageUrl).toBeTruthy();
+		await expect(
+			liveCardPreview.getByRole("img", { name: "Product image preview" }),
+		).toHaveAttribute("src", originalFrontImageUrl!);
+
+		const sharedGeometry = await liveCardPreview.evaluate((element) => {
+			const styles = getComputedStyle(element);
+			return {
+				contentInset: styles
+					.getPropertyValue("--ingredient-card-content-inset")
+					.trim(),
+				mediaLaneWidth: styles
+					.getPropertyValue("--ingredient-card-media-lane-width")
+					.trim(),
+				mediaMask: getComputedStyle(
+					element.querySelector(".ingredient-card-media-lane")!,
+				).maskImage,
+			};
+		});
+		expect(sharedGeometry.mediaLaneWidth).toBe("28cqw");
+		expect(sharedGeometry.contentInset).toContain("18cqw");
+		expect(sharedGeometry.mediaMask).toContain("radial-gradient");
+
+		await setRangeValue(
+			placementEditor.getByRole("slider", { name: "Image zoom" }),
+			1.65,
+		);
+		await setRangeValue(
+			placementEditor.getByRole("slider", { name: "Shift image left" }),
+			60,
+		);
+		const verticalPosition = placementEditor.getByRole("slider", {
+			name: "Vertical image position",
+		});
+		await expect(verticalPosition).toBeEnabled();
+		await setRangeValue(verticalPosition, 35);
+
+		const approvalForm = imageSubmission.locator(
+			'form[action*="approveProduct"]',
+		);
+		await expect(
+			approvalForm.locator('input[name="imageCropZoom"]'),
+		).toHaveValue("1.65");
+		await expect(approvalForm.locator('input[name="imageCropY"]')).toHaveValue(
+			"35",
+		);
+		await expect(
+			approvalForm.locator('input[name="imageFitMode"]'),
+		).toHaveValue("custom");
 
 		for (const protectedTool of [
 			{
@@ -834,7 +967,11 @@ test("privileged tools stay hidden from regular accounts and use the shared shee
 			).toBeVisible();
 		}
 	} finally {
-		await deleteLocalQaAuthenticatorFactorsForEmail(moderatorEmail);
+		try {
+			await runImageModerationFixture("cleanup");
+		} finally {
+			await deleteLocalQaAuthenticatorFactorsForEmail(moderatorEmail);
+		}
 	}
 });
 

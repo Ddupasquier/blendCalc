@@ -18,7 +18,7 @@ type CompletedTestTiming = {
 };
 
 const durationBudgetMilliseconds = Number.parseInt(
-	process.env.PLAYWRIGHT_TEST_BUDGET_MS ?? "45000",
+	process.env.PLAYWRIGHT_TEST_BUDGET_MS ?? "60000",
 	10,
 );
 const enforceDurationBudget =
