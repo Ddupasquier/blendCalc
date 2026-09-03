@@ -129,8 +129,10 @@ under ignored `playwright-report/` and `test-results/`. Approved snapshot baseli
 beside their test files and are tracked.
 
 Every run writes `test-results/playwright-slow-tests.json`. Blocking release and CI
-checks fail when a passing test exceeds the maintained duration budget, preventing slow
-polling or accidental sleeps from quietly rebuilding a long suite.
+checks fail when a passing test exceeds the maintained 60-second per-test duration
+budget, preventing slow polling or accidental sleeps from quietly rebuilding a long
+suite while allowing normal hosted-runner variance. Set `PLAYWRIGHT_TEST_BUDGET_MS`
+explicitly only when diagnosing a narrower temporary threshold.
 
 `fridgePerformanceObservability.spec.ts` is the repeatable Fridge diagnostic. It proves
 that the authenticated response exposes only the fixed server phases and that hydration
