@@ -2,6 +2,87 @@
 -- Supabase executes this file after `db reset --local`. These rows contain no
 -- production users, private records, evidence, or images.
 
+-- Source-shaped Open Food Facts response used by the real local barcode route.
+-- The cache key is guarded by the request-policy unit test so field-list changes
+-- cannot silently make this fixture unreachable. Local QA reads this record while
+-- outbound provider requests remain disabled.
+insert into public.product_api_cache (
+	provider,
+	cache_key,
+	request_kind,
+	status_code,
+	response,
+	fetched_at,
+	expires_at,
+	etag
+)
+values (
+	'open-food-facts',
+	'28adf3cf67af3c608ac2f358a68788149b1629861921948a59479117a3c823fd',
+	'barcode-product',
+	200,
+	$json${
+		"code": "0030000581728",
+		"product": {
+			"code": "0030000581728",
+			"product_name": "Caramel Rice Crisps",
+			"brands": "Quaker",
+			"categories": "Cereal Grains and Pasta",
+			"categories_tags": ["en:cereal-grains-and-pasta"],
+			"serving_size": "16 crisps (28 g)",
+			"serving_quantity": 28,
+			"serving_quantity_unit": "g",
+			"nutrition_data_per": "serving",
+			"nutriments": {
+				"energy-kcal_serving": 110,
+				"energy-kcal_unit": "kcal",
+				"proteins_serving": 2,
+				"proteins_unit": "g",
+				"fat_serving": 1,
+				"fat_unit": "g",
+				"carbohydrates_serving": 24,
+				"carbohydrates_unit": "g",
+				"fiber_serving": 1,
+				"fiber_unit": "g",
+				"sugars_serving": 9,
+				"sugars_unit": "g",
+				"added-sugars_serving": 9,
+				"added-sugars_unit": "g",
+				"sodium_serving": 0.19,
+				"sodium_unit": "g",
+				"saturated-fat_serving": 0,
+				"saturated-fat_unit": "g",
+				"trans-fat_serving": 0,
+				"trans-fat_unit": "g",
+				"polyunsaturated-fat_serving": 0,
+				"polyunsaturated-fat_unit": "g",
+				"monounsaturated-fat_serving": 0,
+				"monounsaturated-fat_unit": "g",
+				"cholesterol_serving": 0,
+				"cholesterol_unit": "g",
+				"calcium_serving": 0.01,
+				"calcium_unit": "g",
+				"iron_serving": 0.0004,
+				"iron_unit": "g",
+				"potassium_serving": 0.06,
+				"potassium_unit": "g",
+				"vitamin-d_serving": 0,
+				"vitamin-d_unit": "g"
+			}
+		}
+	}$json$::jsonb,
+	'2026-09-02T00:00:00Z',
+	'2099-01-01T00:00:00Z',
+	null
+)
+on conflict (provider, cache_key) do update set
+	request_kind = excluded.request_kind,
+	status_code = excluded.status_code,
+	response = excluded.response,
+	fetched_at = excluded.fetched_at,
+	expires_at = excluded.expires_at,
+	etag = excluded.etag;
+
 insert into public.serving_measure_units (
 	key,
 	display_label,
@@ -122,7 +203,7 @@ insert into public.nutrient_manual_entry_groups (
 	group_role
 )
 values
-	('required-basics', 'macros', 'Required basics', 10, true, 1, 1, 'single_source', array['local-qa-fixture'], '2026-07-25T00:00:00Z', 'display'),
+	('required-basics', 'macros', 'Core nutrition', 10, true, 1, 1, 'single_source', array['local-qa-fixture'], '2026-07-25T00:00:00Z', 'display'),
 	('carbohydrate-details', 'macros', 'Carbohydrate details', 20, true, 1, 1, 'single_source', array['local-qa-fixture'], '2026-07-25T00:00:00Z', 'display'),
 	('fat-details', 'macros', 'Fat details', 30, true, 1, 1, 'single_source', array['local-qa-fixture'], '2026-07-25T00:00:00Z', 'display'),
 	('vitamins', 'extended', 'Vitamins', 10, true, 1, 1, 'single_source', array['local-qa-fixture'], '2026-07-25T00:00:00Z', 'display'),
