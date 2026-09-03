@@ -128,7 +128,8 @@ Official references:
 
 ### Current blendCalc Handling
 
-- Runtime exact-product reads use the current v3.6 endpoint and identify blendCalc as
+- Runtime exact-product reads use the stable v2 product endpoint because the provider's
+  v3.6 product projection can omit the requested `nutriments` object. Requests identify blendCalc as
   `App/Version (ContactEmail)`. Open Food Facts receives one provider-normalized barcode
   rather than leading-zero probes, and the requested field list follows the missing
   primary or supplement fields while retaining all needed nutrients in one

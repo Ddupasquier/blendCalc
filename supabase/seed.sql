@@ -18,7 +18,7 @@ insert into public.product_api_cache (
 )
 values (
 	'open-food-facts',
-	'28adf3cf67af3c608ac2f358a68788149b1629861921948a59479117a3c823fd',
+	'0e23d67b7eff5e4c3c4b23f6361d5d8926a60630ec04a114d2e02e231f38b733',
 	'barcode-product',
 	200,
 	$json${

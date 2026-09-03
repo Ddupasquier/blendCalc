@@ -9,6 +9,8 @@ import { normalizeBarcode } from "$lib/utils/barcode/barcode";
 import {
 	getOpenFoodFactsRequestBarcode,
 	getOpenFoodFactsRequestedFields,
+	OPEN_FOOD_FACTS_PRODUCT_API_BASE_URL,
+	OPEN_FOOD_FACTS_PRODUCT_API_VERSION,
 } from "$lib/server/products/sources/openFoodFactsRequestPolicy";
 import {
 	getBarcodeProductDesiredSourceFieldPaths,
@@ -22,7 +24,6 @@ import {
 import type { ProductReferenceCatalog } from "$lib/utils/food/reference/productReferenceCatalog";
 import { summarizeBarcodeProductQuality } from "$lib/utils/food/sources/sourceQuality";
 
-const OPEN_FOOD_FACTS_URL = "https://world.openfoodfacts.org/api/v3.6/product";
 const OPEN_FOOD_FACTS_CACHE_MILLISECONDS = 7 * 24 * 60 * 60 * 1000;
 const OPEN_FOOD_FACTS_NOT_FOUND_CACHE_MILLISECONDS = 12 * 60 * 60 * 1000;
 const OPEN_FOOD_FACTS_STALE_FALLBACK_MILLISECONDS = 30 * 24 * 60 * 60 * 1000;
@@ -49,14 +50,14 @@ export const lookupOpenFoodFactsBarcodeProduct = async (
 
 	try {
 		const url = new URL(
-			`${OPEN_FOOD_FACTS_URL}/${encodeURIComponent(requestBarcode)}.json`,
+			`${OPEN_FOOD_FACTS_PRODUCT_API_BASE_URL}/${encodeURIComponent(requestBarcode)}.json`,
 		);
 		url.searchParams.set("fields", requestedFieldsValue);
 		const data = await fetchCachedProductApiJson<OpenFoodFactsResponse | null>({
 			provider: "open-food-facts",
 			requestKind: "barcode-product",
 			cacheValue: {
-				apiVersion: "3.6",
+				apiVersion: OPEN_FOOD_FACTS_PRODUCT_API_VERSION,
 				barcode: requestBarcode,
 				fields: requestedFields,
 			},

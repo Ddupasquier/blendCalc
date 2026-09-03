@@ -3,6 +3,8 @@ import { APP_USER_AGENT } from "$lib/config/brand";
 import {
 	getOpenFoodFactsRequestBarcode,
 	getOpenFoodFactsRequestedFields,
+	OPEN_FOOD_FACTS_PRODUCT_API_BASE_URL,
+	OPEN_FOOD_FACTS_PRODUCT_API_VERSION,
 } from "$lib/server/products/sources/openFoodFactsRequestPolicy";
 import { getProductApiCacheKey } from "$lib/server/products/productApiCacheKey";
 import { getBarcodeProductDesiredSourceFieldPaths } from "$lib/utils/barcode/barcodeProductEnrichment";
@@ -42,7 +44,7 @@ describe("Open Food Facts request policy", () => {
 		expect(fields).not.toContain("ingredients");
 	});
 
-	it("uses current tags_sources fields instead of removed v3.6 hierarchy fields", () => {
+	it("uses tags_sources fields instead of obsolete hierarchy fields", () => {
 		const fields = getOpenFoodFactsRequestedFields([
 			"categories",
 			"allergens",
@@ -59,16 +61,23 @@ describe("Open Food Facts request policy", () => {
 		expect(APP_USER_AGENT).toMatch(/^blendCalc\/.+ \([^\s()]+@[^\s()]+\)$/);
 	});
 
+	it("uses the stable product endpoint that returns the requested nutriments object", () => {
+		expect(OPEN_FOOD_FACTS_PRODUCT_API_VERSION).toBe("2");
+		expect(OPEN_FOOD_FACTS_PRODUCT_API_BASE_URL).toBe(
+			"https://world.openfoodfacts.org/api/v2/product",
+		);
+	});
+
 	it("keeps the local QA UPC fixture aligned with the real request shape", () => {
 		const fields = getOpenFoodFactsRequestedFields(
 			getBarcodeProductDesiredSourceFieldPaths(),
 		);
 		expect(
 			getProductApiCacheKey("barcode-product", {
-				apiVersion: "3.6",
+				apiVersion: OPEN_FOOD_FACTS_PRODUCT_API_VERSION,
 				barcode: "0030000581728",
 				fields,
 			}),
-		).toBe("28adf3cf67af3c608ac2f358a68788149b1629861921948a59479117a3c823fd");
+		).toBe("0e23d67b7eff5e4c3c4b23f6361d5d8926a60630ec04a114d2e02e231f38b733");
 	});
 });
