@@ -1,10 +1,16 @@
-import type { Locator, Page } from "@playwright/test";
+import type { Locator, Page, Route } from "@playwright/test";
 import {
 	expect,
 	signInLocalQaAccount,
 	test,
 	waitForAppReady,
 } from "./support/browserTest";
+import { finishLocalQaAuthenticatorEnrollment } from "./support/localQaAuthenticator";
+import { deleteLocalQaAuthenticatorFactorsForEmail } from "./support/localQaDatabase";
+
+test.describe.configure({ mode: "serial" });
+
+const moderatorEmail = "qa-moderator@blendcalc.local";
 
 const representativeImageProducts = [
 	{
@@ -90,6 +96,15 @@ const expectPlacementSummaryOrder = async (summary: Locator) => {
 	).toBe(true);
 };
 
+const setRangeValue = async (slider: Locator, value: number) => {
+	await slider.evaluate((element, nextValue) => {
+		const input = element as HTMLInputElement;
+		input.value = String(nextValue);
+		input.dispatchEvent(new Event("input", { bubbles: true }));
+		input.dispatchEvent(new Event("change", { bubbles: true }));
+	}, value);
+};
+
 test("normal users see source images without privileged placement controls", async ({
 	page,
 }, testInfo) => {
@@ -129,7 +144,7 @@ test("moderator image placement controls stay grouped, singular, and last", asyn
 	);
 	await signInLocalQaAccount({
 		page,
-		email: "qa-moderator@blendcalc.local",
+		email: moderatorEmail,
 		nextPath: "/ingredients/fridge",
 	});
 
@@ -220,5 +235,229 @@ test("moderator image placement controls stay grouped, singular, and last", asyn
 			placementDialog.getByRole("button", { name: "Save image placement" }),
 		).toBeVisible();
 		await placementDialog.getByRole("button", { name: "Close sheet" }).click();
+	}
+});
+
+test("one placement save shows pending feedback, sends one request, and persists only the card crop", async ({
+	page,
+}, testInfo) => {
+	test.skip(
+		testInfo.project.name !== "desktop-chromium",
+		"One isolated Chromium project owns the shared moderator save fixture.",
+	);
+	const product = representativeImageProducts[0];
+	const nutritionPath = `/ingredients/fridge/nutrition/${product.foodId}`;
+	let originalPlacementRequest: Record<string, unknown> | null = null;
+	let slowPlacementSave: ((route: Route) => Promise<void>) | null = null;
+	let releasePlacementSave = () => {};
+
+	await deleteLocalQaAuthenticatorFactorsForEmail(moderatorEmail);
+	try {
+		await signInLocalQaAccount({
+			page,
+			email: moderatorEmail,
+			nextPath: nutritionPath,
+		});
+		await page.goto(
+			`/auth/mfa/enroll?next=${encodeURIComponent(nutritionPath)}`,
+		);
+		await finishLocalQaAuthenticatorEnrollment(page);
+		await expect(page).toHaveURL((url) => url.pathname === nutritionPath);
+		await waitForAppReady(page);
+
+		const originalPlacement = await page.evaluate(async (foodId) => {
+			const response = await fetch(
+				"/api/user-food-lists/fridge?limit=100&offset=0&sort=recent&source=all&trust=any",
+			);
+			if (!response.ok)
+				throw new Error("Could not read the original image placement.");
+			const data = (await response.json()) as {
+				foods?: Array<{
+					fdcId?: number;
+					image?: Record<string, unknown>;
+				}>;
+			};
+			const image = data.foods?.find((food) => food.fdcId === foodId)?.image;
+			if (!image) throw new Error("The QA product image was unavailable.");
+			return {
+				source: image.source,
+				sourceReference: image.sourceReference,
+				role: image.role,
+				cropX: image.cropX ?? 50,
+				cropY: image.cropY ?? 50,
+				cropZoom: image.cropZoom ?? 1,
+				rotationDegrees: image.rotationDegrees ?? 0,
+				fitMode: image.fitMode ?? "contain",
+				placementVersion: image.placementVersion ?? 2,
+				placementMethod: image.placementMethod ?? "default",
+				...(image.suggestionVersion
+					? {
+							suggestionVersion: image.suggestionVersion,
+							suggestionConfidence: image.suggestionConfidence,
+						}
+					: {}),
+			};
+		}, product.foodId);
+		originalPlacementRequest = originalPlacement;
+		const targetZoom = Number(originalPlacement.cropZoom) === 1.65 ? 1.8 : 1.65;
+		const targetVerticalPosition =
+			Number(originalPlacement.cropY) === 35 ? 65 : 35;
+		const targetHorizontalShift =
+			Number(originalPlacement.cropX) === 72.5 ? 65 : 45;
+		const targetCropX = 50 + targetHorizontalShift / 2;
+
+		const nutritionDetails = page.locator(".nutrition-detail-view");
+		await expect(
+			nutritionDetails.getByRole("img", {
+				name: `${product.name} package image`,
+			}),
+		).toBeVisible();
+		await expect(
+			nutritionDetails.locator(
+				".product-image-frame .image-placement-viewport",
+			),
+		).toHaveCount(0);
+
+		const placementDetails = nutritionDetails.locator(
+			"details.product-image-panel__placement",
+		);
+		await placementDetails.locator(":scope > summary").click();
+		const placementEditor = placementDetails.getByRole("region", {
+			name: "Card image placement",
+		});
+		await setRangeValue(
+			placementEditor.getByRole("slider", { name: "Image zoom" }),
+			targetZoom,
+		);
+		const horizontalShift = placementEditor.getByRole("slider", {
+			name: "Shift image left",
+		});
+		await setRangeValue(horizontalShift, 80);
+		await setRangeValue(horizontalShift, targetHorizontalShift);
+		const verticalPosition = placementEditor.getByRole("slider", {
+			name: "Vertical image position",
+		});
+		await expect(verticalPosition).toBeEnabled();
+		await setRangeValue(verticalPosition, targetVerticalPosition);
+
+		const placementRequests: Array<Record<string, unknown>> = [];
+		const placementSaveGate = new Promise<void>((resolve) => {
+			releasePlacementSave = () => resolve();
+		});
+		slowPlacementSave = async (route) => {
+			placementRequests.push(
+				route.request().postDataJSON() as Record<string, unknown>,
+			);
+			const response = await route.fetch();
+			await placementSaveGate;
+			await route.fulfill({ response });
+		};
+		await page.route("**/api/food-images/crop", slowPlacementSave);
+
+		const saveButton = placementDetails.locator(
+			".product-image-panel__placement-save button[type='submit']",
+		);
+		await saveButton.evaluate((button) =>
+			(button as HTMLButtonElement).click(),
+		);
+		await expect(saveButton).toHaveAttribute("aria-busy", "true");
+		await expect(saveButton).toBeDisabled();
+		await expect(saveButton).toContainText("Saving image placement…");
+		releasePlacementSave();
+		releasePlacementSave = () => {};
+		await expect(
+			placementDetails.getByText("Your card image placement is saved."),
+		).toBeVisible();
+		expect(placementRequests).toHaveLength(1);
+		expect(placementRequests[0]).toMatchObject({
+			cropX: targetCropX,
+			cropY: targetVerticalPosition,
+			cropZoom: targetZoom,
+			fitMode: "custom",
+		});
+		await page.unroute("**/api/food-images/crop", slowPlacementSave);
+		slowPlacementSave = null;
+
+		await page.goto("/ingredients/fridge");
+		await waitForAppReady(page);
+		const listData = await page.evaluate(async () => {
+			const response = await fetch(
+				"/api/user-food-lists/fridge?limit=100&offset=0&sort=recent&source=all&trust=any",
+			);
+			if (!response.ok)
+				throw new Error("Could not verify the saved placement.");
+			return (await response.json()) as {
+				foods?: Array<{
+					fdcId?: number;
+					image?: Record<string, unknown>;
+				}>;
+			};
+		});
+		expect(
+			listData.foods?.find((food) => food.fdcId === product.foodId)?.image,
+		).toMatchObject({
+			cropX: targetCropX,
+			cropY: targetVerticalPosition,
+			cropZoom: targetZoom,
+			fitMode: "custom",
+		});
+
+		const savedCard = page
+			.getByRole("button", {
+				name: new RegExp(`^Preview ${product.name}`),
+			})
+			.locator("..");
+		await expect(savedCard).toBeVisible();
+		await expect(
+			savedCard.locator(".ingredient-card-media-lane img"),
+		).toBeVisible();
+		expect(
+			await savedCard
+				.locator(".ingredient-card-media-lane")
+				.evaluate((lane) => {
+					const laneBounds = lane.getBoundingClientRect();
+					const imageBounds = lane
+						.querySelector("img")
+						?.getBoundingClientRect();
+					return Boolean(
+						imageBounds && imageBounds.left <= laneBounds.left + 1,
+					);
+				}),
+		).toBe(true);
+
+		await savedCard
+			.getByRole("button", { name: new RegExp(`^Preview ${product.name}`) })
+			.click();
+		await expect(page).toHaveURL((url) => url.pathname === nutritionPath);
+		await expect(
+			page.locator(
+				".nutrition-detail-view .product-image-frame .product-image-frame__image",
+			),
+		).toBeVisible();
+		await expect(
+			page.locator(
+				".nutrition-detail-view .product-image-frame .image-placement-viewport",
+			),
+		).toHaveCount(0);
+	} finally {
+		releasePlacementSave();
+		if (slowPlacementSave) {
+			await page
+				.unroute("**/api/food-images/crop", slowPlacementSave)
+				.catch(() => undefined);
+		}
+		if (originalPlacementRequest && !page.isClosed()) {
+			await page.evaluate(async (request) => {
+				const response = await fetch("/api/food-images/crop", {
+					method: "PATCH",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify(request),
+				});
+				if (!response.ok) {
+					throw new Error("Could not restore the original image placement.");
+				}
+			}, originalPlacementRequest);
+		}
+		await deleteLocalQaAuthenticatorFactorsForEmail(moderatorEmail);
 	}
 });
