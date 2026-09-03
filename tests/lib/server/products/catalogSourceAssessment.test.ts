@@ -5,6 +5,14 @@ import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { PRODUCT_RESOLUTION_POLICY_FIXTURE } from "../../../fixtures/productResolutionPolicy";
 
+const mocks = vi.hoisted(() => ({
+	ensureServerServingMeasureCatalog: vi.fn().mockResolvedValue({}),
+}));
+
+vi.mock("$lib/server/serving/servingMeasureCatalog.server", () => ({
+	ensureServerServingMeasureCatalog: mocks.ensureServerServingMeasureCatalog,
+}));
+
 const makeDraft = (
 	source: "usda" | "open-food-facts",
 	overrides: Partial<BarcodeProductDraft> = {},
@@ -77,6 +85,7 @@ describe("catalog source assessment", () => {
 			},
 		});
 		expect(assessment.mergedDraft?.nutrients).toHaveLength(1);
+		expect(mocks.ensureServerServingMeasureCatalog).toHaveBeenCalled();
 	});
 
 	it("selects present fields by evidence rather than provider order", async () => {

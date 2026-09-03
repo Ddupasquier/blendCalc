@@ -7,6 +7,7 @@ import {
 } from "$lib/server/products/externalProduct.server";
 import { getProductReferenceCatalog } from "$lib/server/products/productReferenceCatalog.server";
 import { getDefaultProductResolutionPolicy } from "$lib/server/products/productResolutionPolicy.server";
+import { ensureServerServingMeasureCatalog } from "$lib/server/serving/servingMeasureCatalog.server";
 import type { Database } from "$lib/types/database.types";
 import { normalizeBarcode } from "$lib/utils/barcode/barcode";
 import {
@@ -33,7 +34,10 @@ export const lookupBarcodeProductDraft = async (
 		barcode,
 	).catch(() => null);
 
-	const sharedFood = await getSharedProductByBarcode(supabase, barcode);
+	const [sharedFood] = await Promise.all([
+		getSharedProductByBarcode(supabase, barcode),
+		ensureServerServingMeasureCatalog(),
+	]);
 	if (sharedFood) {
 		const resolvedBarcode =
 			normalizeBarcode(sharedFood.barcode ?? sharedFood.gtinUpc ?? "") ??

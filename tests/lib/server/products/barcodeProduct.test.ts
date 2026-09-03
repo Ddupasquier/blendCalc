@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
 	getCachedFoodImageByBarcode: vi.fn(),
 	resolveBarcodeDraftCategory: vi.fn(),
 	persistSharedProductExternalEnrichment: vi.fn(),
+	ensureServerServingMeasureCatalog: vi.fn(),
 }));
 
 vi.mock("$lib/server/products/catalog.server", () => ({
@@ -39,6 +40,9 @@ vi.mock("$lib/server/products/categoryMapping.server", () => ({
 vi.mock("$lib/server/products/catalogEnrichment.server", () => ({
 	persistSharedProductExternalEnrichment:
 		mocks.persistSharedProductExternalEnrichment,
+}));
+vi.mock("$lib/server/serving/servingMeasureCatalog.server", () => ({
+	ensureServerServingMeasureCatalog: mocks.ensureServerServingMeasureCatalog,
 }));
 
 import { lookupBarcodeProductDraft } from "$lib/server/products/barcodeProduct.server";
@@ -116,6 +120,7 @@ describe("barcode product DB-first enrichment", () => {
 			async (_supabase, draft) => draft,
 		);
 		mocks.persistSharedProductExternalEnrichment.mockResolvedValue([]);
+		mocks.ensureServerServingMeasureCatalog.mockResolvedValue({});
 	});
 
 	it("returns a complete DB product without calling an external API", async () => {
@@ -132,6 +137,7 @@ describe("barcode product DB-first enrichment", () => {
 
 		expect(result).toBe(sharedDraft);
 		expect(mocks.getSharedProductByBarcode).toHaveBeenCalledOnce();
+		expect(mocks.ensureServerServingMeasureCatalog).toHaveBeenCalledOnce();
 		expect(mocks.lookupExternalBarcodeProduct).not.toHaveBeenCalled();
 		expect(mocks.persistSharedProductExternalEnrichment).not.toHaveBeenCalled();
 	});
