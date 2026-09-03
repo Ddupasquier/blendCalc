@@ -162,10 +162,21 @@ describe("Playwright browser-testing architecture", () => {
 		);
 		expect(verificationWorkflow).toContain("npm run check");
 		expect(verificationWorkflow).toContain("npm test");
+		expect(verificationWorkflow).toContain("npm run test:affected");
 		expect(verificationWorkflow).toContain("npm run build");
+		expect(verificationWorkflow).toContain("name: Choose Verification Scope");
 		expect(verificationWorkflow).toContain("name: Browser Matrix");
 		expect(verificationWorkflow).toContain("name: Affected Browser Flows");
-		expect(verificationWorkflow).toContain("github.ref_name == 'mock-staging'");
+		expect(verificationWorkflow).not.toContain("needs: source");
+		expect(verificationWorkflow).toContain('shard: "1/2"');
+		expect(verificationWorkflow).toContain('shard: "2/2"');
+		expect(verificationWorkflow).toContain(
+			"if: needs.verification-plan.outputs.mode == 'full'",
+		);
+		expect(verificationWorkflow).toContain(
+			"if: needs.verification-plan.outputs.mode == 'feature'",
+		);
+		expect(verificationWorkflow).toContain('REF_NAME" == "mock-staging"');
 		expect(verificationWorkflow).toContain(
 			"verify_release_promotion.mjs --against origin/mock-staging",
 		);
@@ -198,10 +209,19 @@ describe("Playwright browser-testing architecture", () => {
 		);
 		expect(databaseWorkflow).not.toMatch(/pull_request:\s*\n\s+paths:/);
 		expect(hostedAuthWorkflow).toContain("name: Hosted Auth Health");
+		expect(hostedAuthWorkflow).toContain("name: Detect Authentication Changes");
 		expect(hostedAuthWorkflow).toContain("npm run check:auth");
+		expect(hostedAuthWorkflow).toContain('cron: "30 10 * * *"');
+		expect(hostedAuthWorkflow).toContain("src/lib/server/auth");
+		expect(hostedAuthWorkflow).toContain(
+			"verify_release_promotion.mjs --against origin/staging",
+		);
+		expect(hostedAuthWorkflow).toContain(
+			"verify_release_promotion.mjs --against origin/mock-staging",
+		);
 		expect(hostedAuthWorkflow).toContain("vars.BLENDCALC_HOSTED_SUPABASE_URL");
 		expect(hostedAuthWorkflow).not.toContain("secrets.");
-		expect(viteConfig).toContain("maxWorkers: 2");
+		expect(viteConfig).toContain("maxWorkers: 4");
 	});
 
 	it("exposes one deterministic client-readiness signal before browser interaction", () => {

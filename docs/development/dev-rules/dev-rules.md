@@ -1017,16 +1017,16 @@ scope warrants it.
 **21a.** When the user sets an explicit work-queue quota, complete the entire quota
 before the final handoff instead of stopping after each item. Keep every responsibility
 on its own locally reviewable feature branch and run its focused checks while iterating.
-After the last quota item is engineering-complete, assemble the exact combined
-uncommitted diffs in a temporary local quota-integration worktree created from current
-`staging`, then run one blocking `npm run verify:release` over that combined candidate.
-Do not commit, push changed content, merge, or promote merely to create the test
-candidate. If the combined check fails, fix the owning feature branch, rebuild the
-candidate, and rerun the failed stage before handoff. The final report must list every
-quota branch, its focused evidence, and the combined Release Check result so one user
-approval can authorize the already-reviewed next Git action. The exhaustive Nightly
-Check remains separate unless the user explicitly requests it or the release scope
-requires it.
+For a multi-ticket feature, use one parent ticket and parent feature branch. After the
+user approves each child branch, merge it into the parent and run only the affected
+checks. Complete combined visual and manual review on the assembled parent. After
+approval, promote that exact tree to `mock-staging` and run the complete hosted source
+and bounded browser checks once. If the candidate fails, fix or reopen the child that
+owns the failure and invalidate the candidate result. Use an auxiliary worktree only
+when unrelated uncommitted work makes a normal branch switch unsafe. The final report
+must list every quota branch, its focused evidence, the assembled parent, and the exact
+`mock-staging` candidate result. The exhaustive Nightly Check remains separate unless
+the user explicitly requests it or the release scope requires it.
 
 **22.** At the start of every request, compare the requested outcome with the active
 branch's single responsibility. Continue only when they match. If the prompt introduces
@@ -1040,12 +1040,16 @@ same page.
 
 **22a.** Promote an explicitly approved responsibility branch to `staging` only after
 its maintained local and remote checks pass. Use `mock-staging` when a large, risky, or
-conflict-prone batch benefits from a disposable integration checkpoint; it is optional
-for ordinary promotions. Run one complete Release Check on the exact clean candidate,
-whether that candidate is `mock-staging` or `staging`. Reuse that result only when the
-next promotion preserves the identical Git tree and passes the maintained Promotion
-Check; any dirty tree, content mismatch, stale or missing receipt, runtime mismatch, or
-failed check requires a fresh complete Release Check. Promote `staging` to `main` only
+conflict-prone batch benefits from a disposable integration checkpoint; use it for an
+assembled multi-ticket parent so the complete hosted checks run once. For an ordinary
+single-branch promotion, `staging` is the candidate. Source and browser jobs may run
+concurrently because their environments are isolated. Reuse a candidate result only
+when the next promotion preserves the identical Git tree and passes the maintained
+Promotion Check; any dirty tree, content mismatch, or failed check requires a fresh
+complete candidate run. A local `npm run verify:release` remains the fallback for an
+unavailable hosted run, an unpublished candidate, or an explicitly requested local
+full check.
+Promote `staging` to `main` only
 for an explicitly approved release and never skip the staging integration boundary.
 Push and verify every updated branch, then return the local
 checkout to the active feature branch when more work remains. This workflow does not

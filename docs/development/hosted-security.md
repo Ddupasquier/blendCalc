@@ -185,6 +185,10 @@ database password, or service-role key. Backup recency, network restrictions, pr
 Auth settings, and unresolved provider controls remain part of the operator audit and
 release runbook rather than untrusted pull-request execution.
 
+The endpoint check runs after Auth-owned changes, once daily to detect hosted drift,
+and on manual request. Unrelated pushes report the same stable required conclusion
+without reinstalling the application merely to repeat an unchanged endpoint probe.
+
 When `.env.moderation.local` provides the hosted URL and service-role key, the operator
 audit reads elevated role assignments and verified TOTP factors. Its report contains
 only aggregate account counts. It never serializes email addresses, user identifiers,

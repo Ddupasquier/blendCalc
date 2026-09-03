@@ -138,8 +138,8 @@ export const verificationProfiles = {
 	feature: {
 		label: "Feature Check",
 		description:
-			"Source contracts, every unit test, and browser flows selected from changed ownership.",
-		stages: [...sourceContractStages, ...fullUnitStages, affectedBrowserStage],
+			"Source contracts plus unit and browser coverage selected from changed ownership.",
+		stages: [...sourceContractStages, affectedUnitStage, affectedBrowserStage],
 	},
 	release: {
 		label: "Release Check",
