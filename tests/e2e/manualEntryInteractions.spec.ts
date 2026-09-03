@@ -1140,6 +1140,11 @@ test("manual entry renders every approved DB nutrient group and field", async ({
 		privateMacroGroups.map((_, index) => index === 0),
 	);
 	await expectRenderedManualEntryNutrientGroups(dialog, privateMacroGroups);
+	for (const group of await dialog.locator(".manual-nutrients__group").all()) {
+		await expect(group.locator(".manual-nutrients__group-count")).toHaveText(
+			/^0 of \d+$/,
+		);
+	}
 	await expect(
 		dialog.locator(".manual-nutrients__group", { hasText: "Mineral details" }),
 	).toHaveCount(0);
@@ -1190,6 +1195,18 @@ test("manual entry renders every approved DB nutrient group and field", async ({
 		.nth(vitaminsIndex)
 		.locator(".manual-nutrients__fields input")
 		.first();
+	await vitaminInput.fill("1.25");
+	await expect(
+		extendedGroups.nth(vitaminsIndex).locator(".manual-nutrients__group-count"),
+	).toHaveText(`1 of ${nutrientCatalog.extended[vitaminsIndex].fields.length}`);
+	await vitaminInput.fill("0");
+	await expect(
+		extendedGroups.nth(vitaminsIndex).locator(".manual-nutrients__group-count"),
+	).toHaveText(`1 of ${nutrientCatalog.extended[vitaminsIndex].fields.length}`);
+	await vitaminInput.fill("");
+	await expect(
+		extendedGroups.nth(vitaminsIndex).locator(".manual-nutrients__group-count"),
+	).toHaveText(`0 of ${nutrientCatalog.extended[vitaminsIndex].fields.length}`);
 	await vitaminInput.fill("1.25");
 
 	await extendedGroups.nth(mineralsIndex).locator("summary").click();

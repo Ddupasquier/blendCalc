@@ -3,6 +3,7 @@
 	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import NumberInput from "$lib/components/common/forms/NumberInput/NumberInput.svelte";
+	import { getPopulatedNutrientGroupCount } from "$lib/components/ingredients/manual-entry/utils/nutrientValues";
 	import type { ManualEntryNutrientFieldsProps } from "./types";
 	import type {
 		ManualEntryNutrientDefinition,
@@ -37,6 +38,14 @@
 		const value = getValue(field);
 		return Number.isFinite(value) ? value : "";
 	};
+
+	const getGroupCountLabel = (group: ManualEntryNutrientGroup) => {
+		const populatedCount = getPopulatedNutrientGroupCount(group, getValue);
+		return {
+			accessible: `${populatedCount} of ${group.fields.length} nutrient values present`,
+			visible: `${populatedCount} of ${group.fields.length}`,
+		};
+	};
 </script>
 
 {#if loading}
@@ -60,6 +69,16 @@
 					open={defaultOpenFirst && index === 0}
 					class="manual-nutrients__group"
 				>
+					{#snippet summaryEnd()}
+						<span
+							class="manual-nutrients__group-count"
+							role="status"
+							aria-live="polite"
+							aria-label={getGroupCountLabel(group).accessible}
+						>
+							{getGroupCountLabel(group).visible}
+						</span>
+					{/snippet}
 					<div class="manual-nutrients__fields">
 						{#each group.fields as field (field.dedupeKey || field.nutrientId)}
 							<label for={getInputId(field)}>
@@ -85,7 +104,9 @@
 					</div>
 				</CollapsibleSection>
 			{:else}
-				<section class="manual-nutrients__group manual-nutrients__group--static">
+				<section
+					class="manual-nutrients__group manual-nutrients__group--static"
+				>
 					{#if groups.length > 1}
 						<h3>
 							<span class="manual-nutrients__group-title">
@@ -93,6 +114,14 @@
 								{#if isOptionalGroup(group)}
 									<small>optional</small>
 								{/if}
+							</span>
+							<span
+								class="manual-nutrients__group-count"
+								role="status"
+								aria-live="polite"
+								aria-label={getGroupCountLabel(group).accessible}
+							>
+								{getGroupCountLabel(group).visible}
 							</span>
 						</h3>
 					{/if}

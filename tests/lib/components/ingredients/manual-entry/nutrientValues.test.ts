@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
 	buildSaveNutrients,
+	getPopulatedNutrientGroupCount,
 	getSummaryItems,
 	setManualNutrientState,
 } from "$lib/components/ingredients/manual-entry/utils/nutrientValues";
@@ -32,6 +33,37 @@ describe("manual-entry nutrient values", () => {
 
 		expect(state.values).toEqual({ 1003: 0 });
 		expect(state.touched).toEqual({ 1003: true });
+	});
+
+	it("counts positive and explicit-zero values while leaving blanks unknown", () => {
+		const carbohydrateField = {
+			...proteinField,
+			dedupeKey: "macros:required-basics:carbohydrate-g",
+			nutrientId: 1005,
+			nutrientName: "Carbohydrate",
+			label: "Carbohydrate (g)",
+		};
+		const fatField = {
+			...proteinField,
+			dedupeKey: "macros:required-basics:fat-g",
+			nutrientId: 1004,
+			nutrientName: "Total fat",
+			label: "Total Fat (g)",
+		};
+		const values = new Map([
+			[proteinField.nutrientId, 0],
+			[carbohydrateField.nutrientId, 12],
+		]);
+
+		expect(
+			getPopulatedNutrientGroupCount(
+				{
+					title: "Required basics",
+					fields: [proteinField, carbohydrateField, fatField],
+				},
+				(field) => values.get(field.nutrientId) ?? null,
+			),
+		).toBe(2);
 	});
 
 	it("clears invalid input instead of converting it to zero", () => {
@@ -127,7 +159,6 @@ describe("manual-entry nutrient values", () => {
 			]),
 		);
 	});
-
 	it("keeps missing summary values missing", () => {
 		expect(
 			getSummaryItems({
