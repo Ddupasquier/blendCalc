@@ -451,6 +451,47 @@ describe("custom foods", () => {
 		).toBe("1.5 cup");
 	});
 
+	it("retains unmapped source nutrients as review evidence instead of nutrition math", () => {
+		const food = createCustomFood({
+			name: "Provider review example",
+			servingWeightGrams: 50,
+			nutrients: makeTestNutrients({
+				calories: 100,
+				fat: 1,
+				carbs: 20,
+				fiber: 2,
+				sugar: 6,
+				protein: 4,
+			}),
+			nutrientSourceReview: [
+				{
+					nutrientName: "Future nutrient",
+					unitName: "mg",
+					amount: 4,
+					measurementBasis: { kind: "mass", quantity: 100, unitKey: "g" },
+					amountPer100g: 4,
+					valueStatus: "reported",
+					mappingStatus: "unmapped",
+					source: "open-food-facts",
+					sourceNutrientKey: "future-nutrient",
+				},
+			],
+		});
+
+		expect(food.nutrientSourceReview).toMatchObject([
+			{
+				sourceNutrientKey: "future-nutrient",
+				amount: 4,
+				mappingStatus: "unmapped",
+			},
+		]);
+		expect(food.foodNutrients).not.toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({ sourceNutrientKey: "future-nutrient" }),
+			]),
+		);
+	});
+
 	it("reads custom food matches from the database", async () => {
 		const food = createCustomFood({
 			name: "Homemade protein crunch",

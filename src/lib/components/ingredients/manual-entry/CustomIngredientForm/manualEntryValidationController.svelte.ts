@@ -25,7 +25,10 @@ import {
 } from "$lib/components/ingredients/manual-entry/utils/stepNavigation";
 import { getBarcodeCategoryWarningMessage } from "$lib/components/ingredients/manual-entry/utils/barcodeFlow";
 import { validateNutrientRelationshipRules } from "$lib/utils/food/nutrients/nutrientRelationshipRules";
-import { getManualEntryDisclosurePolicy } from "$lib/components/ingredients/manual-entry/utils/manualEntryDisclosurePolicy";
+import {
+	getManualEntryDisclosurePolicy,
+	getManualEntryNutritionFieldPolicy,
+} from "$lib/components/ingredients/manual-entry/utils/manualEntryDisclosurePolicy";
 import type { ManualEntryFormState } from "./manualEntryFormState.svelte";
 import type { ManualEntryReferenceDataController } from "./manualEntryReferenceDataController.svelte";
 
@@ -58,8 +61,15 @@ export const createManualEntryValidationController = ({
 			profiles: referenceData.state.regulatoryDisclosureProfiles,
 		}),
 	);
+	const nutritionFieldPolicy = $derived(
+		getManualEntryNutritionFieldPolicy({
+			shareWithCatalog: form.data.shareWithCatalog,
+			usesInternal100GramBasis: form.data.usesInternal100GramBasis,
+			disclosurePolicy,
+		}),
+	);
 	const requiredNutrientFields = $derived(
-		disclosurePolicy.requiresStandardNutrition
+		nutritionFieldPolicy.requiresNutritionFields
 			? getRequiredManualEntryNutrientFields(nutrientFields)
 			: [],
 	);
@@ -105,10 +115,10 @@ export const createManualEntryValidationController = ({
 		buildManualEntryNutrientAvailabilityItems({
 			loadingManualEntryNutrients: referenceData.state.loadingNutrients,
 			manualEntryNutrientError: referenceData.state.nutrientError,
-			requiredFieldCount: disclosurePolicy.requiresStandardNutrition
+			requiredFieldCount: nutritionFieldPolicy.requiresNutritionFields
 				? requiredNutrientFields.length
 				: 1,
-			requiresNutritionFields: disclosurePolicy.requiresStandardNutrition,
+			requiresNutritionFields: nutritionFieldPolicy.requiresNutritionFields,
 		}),
 	);
 	const normalizedName = $derived(form.data.name.trim());
@@ -295,6 +305,9 @@ export const createManualEntryValidationController = ({
 		},
 		get disclosurePolicy() {
 			return disclosurePolicy;
+		},
+		get nutritionFieldPolicy() {
+			return nutritionFieldPolicy;
 		},
 		get requiresServingMeasurement() {
 			return requiresServingMeasurement;

@@ -70,6 +70,14 @@ ordinary sparse record never spends COLA quota. Its barcode response selects one
 approved label before one dependent detail request; model-generated categories and
 descriptions are ignored.
 
+The Open Food Facts adapter uses the current v3.6 exact-product endpoint. The provider
+normalizes leading zeroes, so blendCalc sends one valid barcode representation rather
+than probing equivalent candidates. Requested response fields are derived from the
+current missing-field plan; any requested canonical nutrient IDs still use the single
+provider `nutriments` object in that request. In-process coalescing, cross-instance
+leases, the durable cache, and a shared 12-read-per-minute budget protect the provider.
+A 429 response is not retried inline.
+
 Product revalidation and official-notice ingestion are separate from interactive
 lookup. `supabase/functions/catalog-monitor/` claims bounded database jobs, compares
 stable normalized hashes, and records changed provider observations without changing
@@ -120,6 +128,16 @@ only when the payload explicitly identifies a serving or 100 g basis. USDA omiss
 remain unknown unless a richer observation or reviewed package label supplies the
 qualitative statement. COLA, CNF, and CoFID do not currently supply equivalent runtime
 qualifier evidence, so their missing nutrient fields remain unknown.
+
+Open Food Facts numeric nutrient fields are handled by exact source key and unit. Values
+without an approved mapping or conversion are retained as private mapping-review
+evidence and excluded from math; they are not discarded, guessed, or exposed by the
+public blendCalcAPI. `npm run audit:off-nutrient-mappings` compares the complete current
+provider taxonomy with the maintained mapping catalog. Successful existing provider
+cache refreshes retain only anonymous exact key/unit observation counts for this audit;
+they do not cause another provider request or retain a barcode, product, user, amount,
+or raw response in the mapping-review observation table. Only observed identities with
+a cautious canonical candidate can be previewed for the private review queue.
 
 When imported generic records declare an exact shared identifier, ingredient search may
 assemble one read result per field. The strongest evidenced category, serving,

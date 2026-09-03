@@ -23,11 +23,9 @@ export type NutrientStepProps = {
 	onNutritionPhotoChange?: (file: File | null) => void;
 	onApplyNutritionLabelOcr?: (payload: NutritionLabelOcrApplyPayload) => void;
 	getValue: (field: ManualEntryNutrientDefinition) => number | null;
-	onValueChange: (
-		field: ManualEntryNutrientDefinition,
-		value: string,
-	) => void;
+	onValueChange: (field: ManualEntryNutrientDefinition, value: string) => void;
 	isRequired: (field: ManualEntryNutrientDefinition) => boolean;
+	getGroupBadge?: (group: ManualEntryNutrientGroup) => string | undefined;
 	onBack: () => void;
 	onNext: () => void;
 };

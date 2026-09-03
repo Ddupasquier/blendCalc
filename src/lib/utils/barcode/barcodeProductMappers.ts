@@ -1,6 +1,7 @@
 import { normalizeBarcode } from "$lib/utils/barcode/barcode";
 import {
 	mapOpenFoodFactsNutrients,
+	mapOpenFoodFactsNutrientSourceReview,
 	mapOpenFoodFactsQualitativeNutrients,
 	type OpenFoodFactsNutriments,
 } from "$lib/utils/barcode/barcodeNutrients";
@@ -14,6 +15,7 @@ import {
 	type FoodFieldSource,
 	type FoodNutrient,
 	type FoodNutrientQualitativeFact,
+	type FoodNutrientSourceReview,
 	type FoodImageAsset,
 	type FoodIdentityType,
 	type FoodIngredientAnalysis,
@@ -125,7 +127,7 @@ export type OpenFoodFactsIngredient = {
 };
 
 export type OpenFoodFactsResponse = {
-	status: number;
+	status?: number | "success" | "success_with_warnings";
 	product?: OpenFoodFactsProduct;
 };
 
@@ -140,6 +142,7 @@ export type BarcodeProductDraft = {
 	serving?: FoodServing;
 	nutrients: FoodNutrient[];
 	nutrientQualitativeFacts?: FoodNutrientQualitativeFact[];
+	nutrientSourceReview?: FoodNutrientSourceReview[];
 	reportedNutrientIds: number[];
 	foodIdentityType?: FoodIdentityType;
 	ingredients?: string;
@@ -998,6 +1001,25 @@ export const mapOpenFoodFactsProduct = (
 					}
 			: { kind: "mass" as const, quantity: 100, unitKey: "g" },
 	).map((fact) => ({ ...fact, sourceReference: canonicalBarcode }));
+	const nutrientSourceReview = mapOpenFoodFactsNutrientSourceReview(
+		product.nutriments ?? {},
+		useServingValues,
+		productReferenceCatalog,
+		useServingValues
+			? milliliterVolume !== null
+				? {
+						kind: "volume" as const,
+						quantity: parsedServing?.quantity ?? milliliterVolume,
+						unitKey: parsedServing?.unit ?? "ml",
+					}
+				: {
+						kind: "serving" as const,
+						quantity: 1,
+						unitKey: "serving",
+						servingLabel: product.serving_size?.trim() || "Serving",
+					}
+			: { kind: "mass" as const, quantity: 100, unitKey: "g" },
+	).map((entry) => ({ ...entry, sourceReference: canonicalBarcode }));
 	const metadata = parseOpenFoodFactsMetadata(product);
 	const image = parseOpenFoodFactsImage(product, canonicalBarcode);
 	const alcoholByVolume = parseOpenFoodFactsAlcoholByVolume(product.nutriments);
@@ -1050,6 +1072,7 @@ export const mapOpenFoodFactsProduct = (
 		serving: exactServing,
 		nutrients,
 		nutrientQualitativeFacts: qualitativeFacts,
+		nutrientSourceReview,
 		reportedNutrientIds: [
 			...new Set(nutrients.map((nutrient) => nutrient.nutrientId)),
 		],

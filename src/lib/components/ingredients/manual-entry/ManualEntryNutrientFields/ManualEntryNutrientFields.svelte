@@ -3,6 +3,7 @@
 	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import NumberInput from "$lib/components/common/forms/NumberInput/NumberInput.svelte";
+	import { getPopulatedNutrientGroupCount } from "$lib/components/ingredients/manual-entry/utils/nutrientValues";
 	import type { ManualEntryNutrientFieldsProps } from "./types";
 	import type {
 		ManualEntryNutrientDefinition,
@@ -18,6 +19,7 @@
 		getValue,
 		onValueChange,
 		isRequired = () => false,
+		getGroupBadge,
 	}: ManualEntryNutrientFieldsProps = $props();
 
 	const toDomSafeId = (value: string | number) =>
@@ -30,12 +32,25 @@
 	const getInputId = (field: ManualEntryNutrientDefinition) =>
 		`manual-entry-nutrient-${toDomSafeId(field.dedupeKey || field.nutrientId)}`;
 
-	const isOptionalGroup = (group: ManualEntryNutrientGroup) =>
-		group.fields.every((field) => !isRequired(field));
+	const getFallbackGroupBadge = (group: ManualEntryNutrientGroup) =>
+		group.fields.every((field) => !isRequired(field))
+			? "Optional"
+			: "Required to share";
+
+	const getResolvedGroupBadge = (group: ManualEntryNutrientGroup) =>
+		getGroupBadge?.(group) ?? getFallbackGroupBadge(group);
 
 	const getInputValue = (field: ManualEntryNutrientDefinition) => {
 		const value = getValue(field);
 		return Number.isFinite(value) ? value : "";
+	};
+
+	const getGroupCountLabel = (group: ManualEntryNutrientGroup) => {
+		const populatedCount = getPopulatedNutrientGroupCount(group, getValue);
+		return {
+			accessible: `${populatedCount} of ${group.fields.length} nutrient values present`,
+			visible: `${populatedCount} of ${group.fields.length}`,
+		};
 	};
 </script>
 
@@ -52,14 +67,24 @@
 	/>
 {:else}
 	<div class="manual-nutrients">
-		{#each groups as group, index}
+		{#each groups as group, index (group.title)}
 			{#if accordion}
 				<CollapsibleSection
 					title={group.title}
-					badge={isOptionalGroup(group) ? "optional" : undefined}
+					badge={getResolvedGroupBadge(group)}
 					open={defaultOpenFirst && index === 0}
 					class="manual-nutrients__group"
 				>
+					{#snippet summaryEnd()}
+						<span
+							class="manual-nutrients__group-count"
+							role="status"
+							aria-live="polite"
+							aria-label={getGroupCountLabel(group).accessible}
+						>
+							{getGroupCountLabel(group).visible}
+						</span>
+					{/snippet}
 					<div class="manual-nutrients__fields">
 						{#each group.fields as field (field.dedupeKey || field.nutrientId)}
 							<label for={getInputId(field)}>
@@ -75,7 +100,7 @@
 									class="manual-nutrients__input"
 									min="0"
 									step="any"
-									placeholder="0"
+									placeholder=""
 									ariaRequired={isRequired(field)}
 									value={getInputValue(field)}
 									onValueChange={(value) => onValueChange(field, value)}
@@ -85,14 +110,22 @@
 					</div>
 				</CollapsibleSection>
 			{:else}
-				<section class="manual-nutrients__group manual-nutrients__group--static">
+				<section
+					class="manual-nutrients__group manual-nutrients__group--static"
+				>
 					{#if groups.length > 1}
 						<h3>
 							<span class="manual-nutrients__group-title">
 								{group.title}
-								{#if isOptionalGroup(group)}
-									<small>optional</small>
-								{/if}
+								<small>{getResolvedGroupBadge(group)}</small>
+							</span>
+							<span
+								class="manual-nutrients__group-count"
+								role="status"
+								aria-live="polite"
+								aria-label={getGroupCountLabel(group).accessible}
+							>
+								{getGroupCountLabel(group).visible}
 							</span>
 						</h3>
 					{/if}
@@ -111,7 +144,7 @@
 									class="manual-nutrients__input"
 									min="0"
 									step="any"
-									placeholder="0"
+									placeholder=""
 									ariaRequired={isRequired(field)}
 									value={getInputValue(field)}
 									onValueChange={(value) => onValueChange(field, value)}

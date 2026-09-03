@@ -128,9 +128,18 @@ Official references:
 
 ### Current blendCalc Handling
 
-- Runtime requests use a custom blendCalc `User-Agent`, a bounded field list, shared
-  request coalescing, a seven-day positive cache, a twelve-hour negative cache, and a
-  bounded stale-on-outage window.
+- Runtime exact-product reads use the current v3.6 endpoint and identify blendCalc as
+  `App/Version (ContactEmail)`. Open Food Facts receives one provider-normalized barcode
+  rather than leading-zero probes, and the requested field list follows the missing
+  primary or supplement fields while retaining all needed nutrients in one
+  `nutriments` object.
+- In-process coalescing and short service-role-only shared leases prevent duplicate
+  outbound work across app instances. A shared 12-read-per-minute budget stays below
+  the documented 15-read ceiling. Open Food Facts requests use one attempt: 429 and
+  long `Retry-After` responses stop immediately and fall back to stale cache, another
+  provider, or manual completion.
+- Successful exact products remain cached for seven days, product-not-found responses
+  for twelve hours, and eligible stale results for up to thirty additional days.
 - Raw responses live in the provider cache rather than being treated as blendCalc-owned
   records.
 - `product_data_sources.open-food-facts` currently sets
