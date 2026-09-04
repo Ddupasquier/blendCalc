@@ -819,12 +819,18 @@ test("an optional source product photo enters moderation without blocking a priv
 	}
 });
 
-test("@mobile automatic front-photo placement never owns the Share sheet", async ({
+test("@desktop @mobile @compatibility front-photo upload stays responsive before optional placement", async ({
 	page,
 }, testInfo) => {
 	test.skip(
-		testInfo.project.name !== "mobile-chromium",
-		"The phone-sized Chromium project owns this focused responsiveness check.",
+		![
+			"desktop-chromium",
+			"desktop-firefox",
+			"desktop-webkit",
+			"mobile-chromium",
+			"mobile-webkit",
+		].includes(testInfo.project.name),
+		"Maintained desktop and phone-sized projects own this responsiveness check.",
 	);
 	await page.route(
 		`**/api/products/barcode/${optionalPhotoProductBarcode}/share-validation`,
@@ -866,25 +872,128 @@ test("@mobile automatic front-photo placement never owns the Share sheet", async
 	const shareToggle = dialog.getByLabel("Share with community");
 	if (!(await shareToggle.isChecked())) await shareToggle.click();
 
-	const responsivePlacementPhoto = await readFile(
-		new URL("../../static/social-preview.png", import.meta.url),
+	const { default: sharp } = await import("sharp");
+	const responsivePlacementPhoto = await sharp({
+		create: {
+			width: 4032,
+			height: 3024,
+			channels: 3,
+			background: { r: 224, g: 235, b: 218 },
+			noise: { type: "gaussian", mean: 128, sigma: 32 },
+		},
+	})
+		.jpeg({ quality: 85, chromaSubsampling: "4:2:0" })
+		.toBuffer();
+	expect(responsivePlacementPhoto.byteLength).toBeGreaterThan(5_000_000);
+	const destinationResponsiveness = page.evaluate(
+		() =>
+			new Promise<{
+				destinationOpenMilliseconds: number;
+				maximumFrameGapMilliseconds: number;
+			}>((resolve, reject) => {
+				const input = document.querySelector<HTMLInputElement>(
+					'#custom-product-front-photo[type="file"]',
+				);
+				if (!input) {
+					reject(new Error("Share photo or destination control was not found"));
+					return;
+				}
+				input.addEventListener(
+					"change",
+					() => {
+						const startedAt = performance.now();
+						let lastFrameAt = startedAt;
+						let maximumFrameGapMilliseconds = 0;
+						let destinationOpenMilliseconds: number | null = null;
+						let destinationClickAt: number | null = null;
+						let previewFinished = false;
+						const finishIfReady = () => {
+							if (!previewFinished || destinationOpenMilliseconds === null)
+								return;
+							resolve({
+								destinationOpenMilliseconds,
+								maximumFrameGapMilliseconds,
+							});
+						};
+						const observeFrames = (now: number) => {
+							maximumFrameGapMilliseconds = Math.max(
+								maximumFrameGapMilliseconds,
+								now - lastFrameAt,
+							);
+							lastFrameAt = now;
+							previewFinished = Array.from(
+								document.querySelectorAll("button"),
+							).some((button) =>
+								button.textContent?.includes("Place automatically"),
+							);
+							if (destinationClickAt === null && now - startedAt >= 500) {
+								const destination = document.getElementById(
+									"custom-ingredient-save-destination",
+								) as HTMLButtonElement | null;
+								if (!destination) {
+									reject(
+										new Error(
+											"Destination control was unavailable after upload",
+										),
+									);
+									return;
+								}
+								destinationClickAt = now;
+								destination.click();
+							}
+							if (destinationClickAt !== null) {
+								const listbox = document.getElementById(
+									"custom-ingredient-save-destination-listbox",
+								);
+								const listboxStyle = listbox ? getComputedStyle(listbox) : null;
+								if (
+									destinationOpenMilliseconds === null &&
+									listbox?.getAttribute("aria-hidden") === "false" &&
+									listboxStyle?.display !== "none" &&
+									listboxStyle?.visibility !== "hidden" &&
+									listboxStyle?.opacity !== "0"
+								) {
+									destinationOpenMilliseconds = now - destinationClickAt;
+								}
+							}
+							finishIfReady();
+							if (!previewFinished || destinationOpenMilliseconds === null)
+								requestAnimationFrame(observeFrames);
+						};
+						requestAnimationFrame(observeFrames);
+					},
+					{ capture: true, once: true },
+				);
+			}),
 	);
 	await dialog.getByLabel("Front of package").setInputFiles({
-		name: "mobile-front-photo.png",
-		mimeType: "image/png",
+		name: "mobile-front-photo.jpg",
+		mimeType: "image/jpeg",
 		buffer: responsivePlacementPhoto,
 	});
+	const responsiveness = await destinationResponsiveness;
 	await expect(
 		dialog.getByRole("button", { name: "Add Ingredient" }),
 	).toBeEnabled({ timeout: 2_000 });
-	await dialog.getByRole("button", { name: "Full image" }).click();
-
+	await expect(
+		dialog.getByRole("button", { name: "Place automatically" }),
+	).toBeEnabled();
+	await expect(
+		dialog.getByRole("button", { name: "Stop automatic placement" }),
+	).toHaveCount(0);
 	const destination = dialog.getByRole("combobox", {
 		name: "Add after saving",
 	});
-	await destination.click();
-	await expect(dialog.getByRole("option", { name: "Fridge" })).toBeVisible();
-	await page.keyboard.press("Escape");
+	const fridgeOption = page.getByRole("option", { name: "Fridge" });
+	await expect(fridgeOption).toBeVisible({
+		timeout: 2_000,
+	});
+	expect(responsiveness.maximumFrameGapMilliseconds).toBeLessThan(250);
+	expect(responsiveness.destinationOpenMilliseconds).toBeLessThan(500);
+	await fridgeOption.evaluate((element) =>
+		(element as HTMLButtonElement).click(),
+	);
+	await expect(destination).toHaveAttribute("aria-expanded", "false");
 	const scrollRegion = dialog.locator(".bottom-sheet__content");
 	await scrollRegion.evaluate((element) =>
 		element.scrollTo(0, element.scrollHeight),

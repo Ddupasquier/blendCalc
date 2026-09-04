@@ -12,6 +12,7 @@ import type { ManualEntryBarcodeController } from "./manualEntryBarcodeControlle
 import type { ManualEntryOutcomeController } from "./manualEntryOutcomeController.svelte";
 import { applyCardImagePlacementToFoodImage } from "$lib/utils/food/images/foodImages";
 import type { ManualEntryDestinationAction } from "$lib/components/ingredients/manual-entry/utils/listMembership";
+import type { SharedProductSubmissionProgress } from "$lib/utils/products/catalog";
 
 type ManualEntrySubmissionControllerOptions = {
 	form: ManualEntryFormState;
@@ -45,11 +46,13 @@ export const createManualEntrySubmissionController = ({
 		catalogMessage: string;
 		catalogMessageTone: ManualEntryCatalogMessageTone;
 		saving: boolean;
+		evidenceProgress: SharedProductSubmissionProgress | null;
 	}>({
 		error: "",
 		catalogMessage: "",
 		catalogMessageTone: "success",
 		saving: false,
+		evidenceProgress: null,
 	});
 
 	const setError = (message: string) => {
@@ -61,6 +64,7 @@ export const createManualEntrySubmissionController = ({
 		state.error = "";
 		state.catalogMessage = "";
 		state.catalogMessageTone = "success";
+		state.evidenceProgress = null;
 		outcome.resetBeforeSubmit();
 		const catalogSubmissionOnly = getCatalogSubmissionOnly();
 		const destinationAction = catalogSubmissionOnly
@@ -199,6 +203,9 @@ export const createManualEntrySubmissionController = ({
 				useIngredient: outcome.useIngredient,
 				submissionIntent: form.data.submissionIntent,
 				catalogSubmissionOnly,
+				onCatalogProgress: (progress) => {
+					state.evidenceProgress = progress;
+				},
 			});
 
 			if (result.status === "error") {

@@ -92,8 +92,15 @@ describe("smart image placement client", () => {
 		expect(recognize).toHaveBeenCalledTimes(1);
 		const recognitionCanvas = recognize.mock.calls[0]?.[0] as HTMLCanvasElement;
 		expect(recognitionCanvas.width).toBe(MAX_SMART_PLACEMENT_IMAGE_DIMENSION);
-		expect(recognitionCanvas.height).toBe(600);
+		expect(recognitionCanvas.height).toBe(
+			MAX_SMART_PLACEMENT_IMAGE_DIMENSION / 2,
+		);
 		expect(drawImage).toHaveBeenCalledTimes(1);
+		expect(recognize).toHaveBeenCalledWith(
+			recognitionCanvas,
+			{},
+			{ blocks: true, text: true },
+		);
 	});
 
 	it("keeps small selected photos at their original dimensions", async () => {

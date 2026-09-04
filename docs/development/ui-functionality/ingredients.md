@@ -136,9 +136,24 @@ barcode` and source-empty groups `Not provided`. Keep source omissions blank and
   data whose represented sources all permit canonical storage. Keep an immediate
   opt-out, and turn sharing off whenever the user enters values, edits imported facts,
   or selects private evidence until they explicitly enable it again;
-- automatically orient and frame each newly chosen product image when OCR confidently
-  matches its product or brand text, while keeping the exact card preview, manual
-  controls, retry, and restore available before submission;
+- prepare a bounded display copy of each newly chosen product image in a dedicated
+  browser worker without mounting the full-resolution source or blocking another
+  interaction; keep the source selection intact, show preparation status until the
+  complete frame is ready, and do not
+  start OCR until the user selects `Place automatically`; when requested, frame the
+  image only when OCR confidently matches its product or brand text, while keeping the
+  exact card preview, manual controls, retry, and restore available before submission;
+  use the photo's stored orientation and a bounded analysis copy, with the visible
+  Rotate control handling sideways package art without an expensive automatic
+  orientation pass;
+- before a catalog submission, prepare front-package, nutrition-label, and barcode
+  upload copies one at a time in a worker so mobile image decoding cannot compete for
+  memory; accept JPEG, PNG, and WebP sources only up to 20 MB and 40 megapixels, retain
+  the largest detail budget for nutrition text, keep the combined multipart request
+  below the deployment boundary, and let the server independently validate and
+  normalize every result before private storage; show each selected input as
+  `Preparing photo`, `Ready`, `Uploading`, `Uploaded`, or `Needs attention`, use real
+  uploaded-byte progress when available, and never manufacture a percentage;
 - close the form after a successful add instead of opening another blank form;
 - after a successful add, an applicable reviewed food-symbol trigger may add one quiet
   broad-audience line beneath the factual outcome; unknown foods simply omit it;

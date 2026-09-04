@@ -14,6 +14,13 @@
 	gap: $app-gap-sm;
 }
 
+.photo-upload-input__status-copy {
+	display: flex;
+	align-items: center;
+	gap: $app-gap-xs;
+	min-width: 0;
+}
+
 .photo-upload-input__heading strong {
 	color: $app-shell-text-primary;
 	font-size: $app-font-size-sm;
@@ -100,6 +107,12 @@
 	overflow-wrap: anywhere;
 }
 
+.photo-upload-input__progress {
+	width: 100%;
+	height: 0.45rem;
+	accent-color: $app-shell-accent-primary;
+}
+
 .photo-upload-input__files {
 	display: grid;
 	gap: $app-gap-xs;
@@ -121,7 +134,8 @@
 	}
 }
 
-@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
 	.photo-upload-input {
 		gap: $app-gap-xs;
 	}

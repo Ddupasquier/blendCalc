@@ -8,16 +8,17 @@ import { UserFacingError } from "$lib/utils/errors/userFacingErrors";
 import { selectBestImagePlacementSuggestion } from "./smartImagePlacement";
 
 const MAX_URL_CACHE_ENTRIES = 12;
-export const MAX_SMART_PLACEMENT_IMAGE_DIMENSION = 1200;
+export const MAX_SMART_PLACEMENT_IMAGE_DIMENSION = 768;
 export const SMART_PLACEMENT_TIMEOUT_MILLISECONDS = 10_000;
 const blobRecognitionCache = new WeakMap<Blob, SmartImagePlacementDocument[]>();
 const urlRecognitionCache = new Map<string, SmartImagePlacementDocument[]>();
 
 const throwIfAborted = (signal?: AbortSignal) => {
 	if (!signal?.aborted) return;
-	throw signal.reason instanceof Error
-		? signal.reason
-		: new DOMException("Automatic placement cancelled", "AbortError");
+	throw (
+		signal.reason ??
+		new DOMException("Automatic placement cancelled", "AbortError")
+	);
 };
 
 const raceWithAbort = <Result>(
@@ -29,9 +30,8 @@ const raceWithAbort = <Result>(
 	return new Promise<Result>((resolve, reject) => {
 		const abort = () => {
 			reject(
-				signal.reason instanceof Error
-					? signal.reason
-					: new DOMException("Automatic placement cancelled", "AbortError"),
+				signal.reason ??
+					new DOMException("Automatic placement cancelled", "AbortError"),
 			);
 		};
 		signal.addEventListener("abort", abort, { once: true });
@@ -182,11 +182,7 @@ const recognizeImage = async (
 		);
 		throwIfAborted(signal);
 		const result = await raceWithAbort(
-			worker.recognize(
-				canvas,
-				{ rotateAuto: true },
-				{ blocks: true, text: true },
-			),
+			worker.recognize(canvas, {}, { blocks: true, text: true }),
 			signal,
 		);
 		throwIfAborted(signal);
@@ -291,9 +287,8 @@ export const suggestImagePlacement = async ({
 	);
 	const forwardAbort = () =>
 		timeoutController.abort(
-			signal?.reason instanceof Error
-				? signal.reason
-				: new DOMException("Automatic placement cancelled", "AbortError"),
+			signal?.reason ??
+				new DOMException("Automatic placement cancelled", "AbortError"),
 		);
 	signal?.addEventListener("abort", forwardAbort, { once: true });
 	if (signal?.aborted) forwardAbort();
