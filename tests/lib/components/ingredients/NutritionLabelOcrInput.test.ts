@@ -52,12 +52,21 @@ describe("NutritionLabelOcrInput", () => {
 		expect(onPhotoChange).toHaveBeenCalledWith(photo);
 
 		await rerender({ mappings, photo, recognize, onPhotoChange, onApply });
+		await fireEvent.input(screen.getByLabelText("Left edge"), {
+			target: { value: "20" },
+		});
 		await fireEvent.click(screen.getByRole("button", { name: "Read label" }));
 
 		await waitFor(() => {
 			expect(screen.getByText("Calories: 120 kcal")).toBeInTheDocument();
 		});
 		expect(onApply).not.toHaveBeenCalled();
+		expect(recognize).toHaveBeenCalledWith(
+			expect.objectContaining({
+				file: photo,
+				crop: { left: 0.2, top: 0, right: 1, bottom: 1 },
+			}),
+		);
 
 		await fireEvent.click(
 			screen.getByRole("button", { name: "Use selected values" }),
@@ -70,5 +79,67 @@ describe("NutritionLabelOcrInput", () => {
 			qualitativeFacts: [],
 			serving: { label: "1 cup", gramWeight: 240 },
 		});
+	});
+
+	it("cancels an active scan while preserving the selected photo", async () => {
+		const photo = new File(["label"], "nutrition-label.png", {
+			type: "image/png",
+		});
+		const recognize = vi.fn(
+			({ signal }: { signal?: AbortSignal }) =>
+				new Promise<never>((_, reject) => {
+					signal?.addEventListener("abort", () => reject(signal.reason), {
+						once: true,
+					});
+				}),
+		);
+		render(NutritionLabelOcrInput, {
+			props: {
+				mappings,
+				photo,
+				recognize,
+				onPhotoChange: vi.fn(),
+				onApply: vi.fn(),
+			},
+		});
+
+		await fireEvent.click(screen.getByRole("button", { name: "Read label" }));
+		await fireEvent.click(
+			await screen.findByRole("button", { name: "Stop label scan" }),
+		);
+		await waitFor(() =>
+			expect(screen.getByRole("button", { name: "Read label" })).toBeEnabled(),
+		);
+		expect(
+			screen.getByAltText("Selected nutrition label crop preview"),
+		).toBeInTheDocument();
+		expect(screen.queryByText(/could not be read/i)).not.toBeInTheDocument();
+	});
+
+	it("keeps manual entry available when recognition times out", async () => {
+		const photo = new File(["label"], "nutrition-label.png", {
+			type: "image/png",
+		});
+		const recognize = vi
+			.fn()
+			.mockRejectedValue(
+				new DOMException("Recognition timed out", "TimeoutError"),
+			);
+		render(NutritionLabelOcrInput, {
+			props: {
+				mappings,
+				photo,
+				recognize,
+				onPhotoChange: vi.fn(),
+				onApply: vi.fn(),
+			},
+		});
+
+		await fireEvent.click(screen.getByRole("button", { name: "Read label" }));
+		await screen.findByText(/The label scan took too long and was stopped/i);
+		expect(screen.getByRole("button", { name: "Read label" })).toBeEnabled();
+		expect(
+			screen.getByAltText("Selected nutrition label crop preview"),
+		).toBeInTheDocument();
 	});
 });

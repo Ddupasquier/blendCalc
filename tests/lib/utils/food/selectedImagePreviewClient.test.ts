@@ -11,10 +11,16 @@ vi.mock("@jsquash/resize", () => ({ default: codecs.resize }));
 import {
 	MAX_SELECTED_IMAGE_PREVIEW_INPUT_BYTES,
 	MAX_SELECTED_IMAGE_PREVIEW_DIMENSION,
+	MAX_NUTRITION_LABEL_OCR_DIMENSION,
+	prepareNutritionLabelOcrImage,
 	prepareSelectedImagePreview,
 	prepareSelectedImageUpload,
 } from "$lib/utils/food/images/selectedImagePreview.client";
-import { createBoundedSelectedImagePreview } from "$lib/utils/food/images/selectedImagePreview";
+import {
+	createBoundedSelectedImageCopy,
+	createBoundedSelectedImagePreview,
+	normalizeGrayscaleImageData,
+} from "$lib/utils/food/images/selectedImagePreview";
 
 class PreviewWorkerMock {
 	static instances: PreviewWorkerMock[] = [];
@@ -38,6 +44,12 @@ class PreviewWorkerMock {
 class OffscreenCanvasMock {
 	static instances: OffscreenCanvasMock[] = [];
 	putImageData = vi.fn();
+	drawImage = vi.fn();
+	getImageData = vi.fn().mockReturnValue({
+		data: new Uint8ClampedArray([10, 20, 30, 255, 240, 250, 255, 255]),
+		width: 2,
+		height: 1,
+	});
 	convertToBlob = vi
 		.fn()
 		.mockResolvedValue(new Blob(["preview"], { type: "image/webp" }));
@@ -48,7 +60,11 @@ class OffscreenCanvasMock {
 		OffscreenCanvasMock.instances.push(this);
 	}
 	getContext() {
-		return { putImageData: this.putImageData };
+		return {
+			putImageData: this.putImageData,
+			drawImage: this.drawImage,
+			getImageData: this.getImageData,
+		};
 	}
 }
 
@@ -148,6 +164,78 @@ describe("selected image preview client", () => {
 			size: 6,
 			lastModified: 42,
 		});
+	});
+
+	it("hands a normalized 1600-pixel label crop to its dedicated worker", async () => {
+		const crop = { left: 0.1, top: 0.2, right: 0.9, bottom: 0.8 };
+		const promise = prepareNutritionLabelOcrImage(
+			new File(["photo"], "label.jpg", { type: "image/jpeg" }),
+			crop,
+		);
+		const worker = PreviewWorkerMock.instances[0];
+		expect(worker?.options?.name).toBe("nutrition-label-ocr-image");
+		expect(worker?.postMessage).toHaveBeenCalledWith(
+			expect.objectContaining({
+				maxDimension: MAX_NUTRITION_LABEL_OCR_DIMENSION,
+				crop,
+				preprocessing: "grayscale-contrast",
+			}),
+		);
+		worker?.finish(new Blob(["bounded-label"], { type: "image/webp" }));
+		await expect(promise).resolves.toMatchObject({ type: "image/webp" });
+	});
+
+	it("crops before creating the bounded nutrition working image", async () => {
+		const jpeg = new Blob(
+			[
+				new Uint8Array([
+					0xff, 0xd8, 0xff, 0xc0, 0x00, 0x11, 0x08, 0x0b, 0xd0, 0x0f, 0xc0,
+					0x03, 0x01, 0x11, 0x00, 0x02, 0x11, 0x00, 0x03, 0x11, 0x00, 0xff,
+					0xd9,
+				]),
+			],
+			{ type: "image/jpeg" },
+		);
+		await createBoundedSelectedImageCopy(jpeg, {
+			maxDimension: MAX_NUTRITION_LABEL_OCR_DIMENSION,
+			crop: { left: 0.25, top: 0.25, right: 0.75, bottom: 0.75 },
+		});
+
+		const cropCanvas = OffscreenCanvasMock.instances.at(-1);
+		expect(cropCanvas).toMatchObject({ width: 1600, height: 1200 });
+		expect(cropCanvas?.drawImage).toHaveBeenCalledWith(
+			expect.any(OffscreenCanvasMock),
+			1008,
+			756,
+			2016,
+			1512,
+			0,
+			0,
+			1600,
+			1200,
+		);
+		expect(codecs.resize).not.toHaveBeenCalled();
+	});
+
+	it("normalizes a bounded grayscale copy without changing alpha", () => {
+		const image = {
+			data: new Uint8ClampedArray([
+				10, 20, 30, 90, 120, 130, 140, 180, 240, 250, 255, 255,
+			]),
+			width: 3,
+			height: 1,
+		} as ImageData;
+		const normalized = normalizeGrayscaleImageData(image);
+
+		expect(normalized.data[0]).toBe(normalized.data[1]);
+		expect(normalized.data[1]).toBe(normalized.data[2]);
+		expect(normalized.data[0]).toBe(0);
+		expect(normalized.data[8]).toBe(255);
+		expect([
+			normalized.data[3],
+			normalized.data[7],
+			normalized.data[11],
+		]).toEqual([90, 180, 255]);
 	});
 
 	it("terminates stale work when the selected photo changes", async () => {

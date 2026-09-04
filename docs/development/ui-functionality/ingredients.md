@@ -171,6 +171,23 @@ barcode` and source-empty groups `Not provided`. Keep source omissions blank and
   front, nutrition-label reading/evidence, barcode evidence, and package-warning
   evidence; only the camera action requests the rear camera, and neither choice uploads,
   analyzes, or persists the selection before its existing explicit action;
+- keep nutrition-label reading separate from the lower-resolution package-placement
+  analysis: let the user frame the nutrition panel, prepare at most a 1600-pixel
+  grayscale/contrast copy in the existing image worker, and send only that bounded copy
+  to OCR. Serialize nutrition reading and package placement through one lazily created
+  Tesseract worker, reuse it for five seconds, then release it; cancellation or timeout
+  releases it immediately. Show honest preparation/recognition progress, allow an
+  immediate Stop action, retain the chosen photo and manual-entry fallback, and apply no
+  recognized value until the user reviews and confirms the suggestions. Do not add
+  OpenCV or remote image analysis without a measured need and separate approval;
+- use Tesseract sparse-text page segmentation for the bounded nutrition crop. The
+  September 2026 development baseline compared automatic, block, column, and sparse
+  modes with color, grayscale, and contrast copies from three representative label
+  captures plus a derived faint-label case. Bounded grayscale/contrast with sparse-text
+  segmentation tied the best observed parse accuracy and had the fastest median warm
+  recognition time (about 190 ms). Treat that result as a regression baseline, not as
+  proof for every physical package; direct mobile review must still include clear,
+  sideways, skewed, faint, low-contrast, dense, and partial labels;
 - after a successful add, an applicable reviewed food-symbol trigger may add one quiet
   broad-audience line beneath the factual outcome; unknown foods simply omit it;
 - reuse an existing matching private food rather than ending in a duplicate-name error;
