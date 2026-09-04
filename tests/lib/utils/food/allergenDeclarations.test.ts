@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { analyzeIngredientLabelAllergenDeclarations } from "$lib/server/products/allergenDeclarations.server.js";
+import { analyzeIngredientLabelAllergenDeclarations } from "$lib/utils/food/ingredients/ingredientStatementNormalization.js";
 
 const analyzeEnglishDeclaration = (value: string) =>
 	analyzeIngredientLabelAllergenDeclarations(value, {
