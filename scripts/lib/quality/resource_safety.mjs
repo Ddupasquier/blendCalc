@@ -12,7 +12,7 @@ export const gibibyte = 1024 ** 3;
 export const resourceSafetyThresholds = Object.freeze({
 	minimumStartupDiskFreeBytes: 50 * gibibyte,
 	maximumSwapUsedBytes: 8 * gibibyte,
-	maximumProcessResidentBytes: 4 * gibibyte,
+	maximumProcessResidentBytes: 5 * gibibyte,
 });
 
 const sizeMultipliers = {
