@@ -3,6 +3,7 @@
 	import type { RoundedActionButtonProps } from "./types";
 
 	let {
+		element = $bindable(),
 		id,
 		type = "button",
 		variant = "primary",
@@ -23,6 +24,7 @@
 </script>
 
 <button
+	bind:this={element}
 	{id}
 	{type}
 	class="rounded-action-button"
