@@ -138,7 +138,10 @@ barcode` and source-empty groups `Not provided`. Keep source omissions blank and
   or selects private evidence until they explicitly enable it again;
 - automatically orient and frame each newly chosen product image when OCR confidently
   matches its product or brand text, while keeping the exact card preview, manual
-  controls, retry, and restore available before submission;
+  controls, retry, and restore available before submission; expected OCR progress and
+  engine chatter stay out of the error console, while a genuine failure records one
+  privacy-safe phase and reason code and leaves the full image and manual controls
+  usable;
 - close the form after a successful add instead of opening another blank form;
 - after a successful add, an applicable reviewed food-symbol trigger may add one quiet
   broad-audience line beneath the factual outcome; unknown foods simply omit it;

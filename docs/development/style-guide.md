@@ -651,6 +651,9 @@ option cards, and placement previews remain identical.
 - Treat automatic image placement as cancelable background assistance. The complete
   photo remains immediately usable, progress and Stop stay visible, and no form,
   scrolling, evidence upload, navigation, or save control waits for recognition.
+- Keep expected OCR progress and engine chatter out of the error console. A genuine
+  failure produces one privacy-safe phase and reason code without recognized package
+  text, image contents, product identity, credentials, or duplicate worker errors.
 - `SelectField`, `FoodCategoryPicker`, `PhotoUploadInput`, `NutritionLabelOcrInput`,
   `BarcodeAutofillSuggestion`, validation lists, toggles, and image placement are part
   of the baseline and must use their shared components rather than raw native styling.

@@ -26,6 +26,7 @@
 		getUserFacingErrorMessage,
 		isAbortError,
 	} from "$lib/utils/errors/userFacingErrors";
+	import { readSmartImagePlacementDiagnostic } from "$lib/utils/food/images/smartImagePlacementDiagnostics";
 
 	let {
 		imageUrl,
@@ -191,7 +192,10 @@
 		} catch (error) {
 			if (runId !== suggestionRunId || isAbortError(error)) return;
 			if (!(error instanceof DOMException && error.name === "TimeoutError"))
-				console.error("[image placement] Automatic placement failed", error);
+				console.error(
+					"[image placement] Automatic placement failed",
+					readSmartImagePlacementDiagnostic(error),
+				);
 			suggestionError = getUserFacingErrorMessage(error, {
 				fallback:
 					"We couldn't check this photo automatically. You can still position it by hand or try again.",

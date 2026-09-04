@@ -54,13 +54,16 @@ describe("smart image placement client", () => {
 	let recognize: ReturnType<typeof vi.fn>;
 	let terminate: ReturnType<typeof vi.fn>;
 	let drawImage: ReturnType<typeof vi.fn>;
+	let setParameters: ReturnType<typeof vi.fn>;
 
 	beforeEach(() => {
+		tesseract.createWorker.mockClear();
 		recognize = vi.fn().mockResolvedValue(createRecognitionResult());
 		terminate = vi.fn().mockResolvedValue(undefined);
+		setParameters = vi.fn().mockResolvedValue(undefined);
 		drawImage = vi.fn();
 		tesseract.createWorker.mockResolvedValue({
-			setParameters: vi.fn().mockResolvedValue(undefined),
+			setParameters,
 			recognize,
 			terminate,
 		});
@@ -94,6 +97,24 @@ describe("smart image placement client", () => {
 		expect(recognitionCanvas.width).toBe(MAX_SMART_PLACEMENT_IMAGE_DIMENSION);
 		expect(recognitionCanvas.height).toBe(600);
 		expect(drawImage).toHaveBeenCalledTimes(1);
+		expect(recognize).toHaveBeenCalledWith(
+			recognitionCanvas,
+			{ rotateAuto: true },
+			{ blocks: true, text: true },
+		);
+		expect(tesseract.createWorker).toHaveBeenCalledWith(
+			"eng",
+			1,
+			expect.objectContaining({
+				errorHandler: expect.any(Function),
+				logger: expect.any(Function),
+			}),
+		);
+		expect(setParameters).toHaveBeenCalledWith({
+			debug_file: "/dev/null",
+			preserve_interword_spaces: "1",
+			tessedit_pageseg_mode: "11",
+		});
 	});
 
 	it("keeps small selected photos at their original dimensions", async () => {
@@ -143,5 +164,64 @@ describe("smart image placement client", () => {
 
 		await expect(placement).rejects.toMatchObject({ name: "AbortError" });
 		expect(terminate).toHaveBeenCalledTimes(1);
+	});
+
+	it("classifies a failed OCR pass without exposing the worker error", async () => {
+		const privateWorkerError = new Error(
+			"recognized package text and local image bytes",
+		);
+		recognize.mockRejectedValueOnce(privateWorkerError);
+
+		const placement = suggestImagePlacement({
+			image: new Blob(["broken-photo"], { type: "image/jpeg" }),
+			geometry,
+			productName: "Sample Product",
+		});
+
+		await expect(placement).rejects.toMatchObject({
+			name: "SmartImagePlacementError",
+			phase: "recognition",
+			reasonCode: "ocr-recognition-failed",
+		});
+		await expect(placement).rejects.not.toHaveProperty(
+			"message",
+			privateWorkerError.message,
+		);
+		expect(terminate).toHaveBeenCalledTimes(1);
+	});
+
+	it("classifies worker configuration failures separately", async () => {
+		setParameters.mockRejectedValueOnce(new Error("configuration details"));
+
+		await expect(
+			suggestImagePlacement({
+				image: new Blob(["configuration-photo"], { type: "image/jpeg" }),
+				geometry,
+				productName: "Sample Product",
+			}),
+		).rejects.toMatchObject({
+			phase: "worker-configure",
+			reasonCode: "ocr-configuration-failed",
+		});
+		expect(recognize).not.toHaveBeenCalled();
+		expect(terminate).toHaveBeenCalledTimes(1);
+	});
+
+	it("classifies an unreadable photo before starting an OCR worker", async () => {
+		vi.mocked(createImageBitmap).mockRejectedValueOnce(
+			new Error("private corrupt image bytes"),
+		);
+
+		await expect(
+			suggestImagePlacement({
+				image: new Blob(["corrupt-photo"], { type: "image/jpeg" }),
+				geometry,
+				productName: "Sample Product",
+			}),
+		).rejects.toMatchObject({
+			phase: "image-load",
+			reasonCode: "photo-unreadable",
+		});
+		expect(tesseract.createWorker).not.toHaveBeenCalled();
 	});
 });
