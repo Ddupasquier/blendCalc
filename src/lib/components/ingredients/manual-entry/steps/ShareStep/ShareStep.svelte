@@ -46,6 +46,7 @@
 		usesNonstandardNutritionDisclosure,
 		saveDestination,
 		destinationAction,
+		reviewedUpdate,
 		error,
 		placementMessage,
 		catalogMessage,
@@ -80,7 +81,7 @@
 			? "kcal"
 			: unitName.trim().toLowerCase();
 	const catalogSubmissionComplete = $derived(
-		catalogSubmissionOnly && Boolean(catalogMessage),
+		(catalogSubmissionOnly || reviewedUpdate) && Boolean(catalogMessage),
 	);
 	const saveDestinationOptions = [
 		{ value: MIX_STORAGE_KEYS.fridge, label: "Fridge" },

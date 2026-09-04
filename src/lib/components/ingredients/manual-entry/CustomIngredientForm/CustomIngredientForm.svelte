@@ -141,6 +141,24 @@
 			destination: outcome.state.saveDestination,
 		}),
 	);
+	const displayedDestinationAction = $derived(
+		destinationAction.kind !== "duplicate" || !barcode.reviewedUpdateCandidate
+			? destinationAction
+			: barcode.reviewedUpdateSelected
+				? {
+						...destinationAction,
+						kind: "add" as const,
+						label: "Update and share",
+						disabled: false,
+						message:
+							"Your saved ingredient will stay in this list unchanged while moderators review the current package details.",
+					}
+				: {
+						...destinationAction,
+						message:
+							"This ingredient is already saved. Turn on community sharing to submit the changed package details for review without adding a duplicate.",
+					},
+	);
 	const hasAcceptedBarcodeSource = $derived(
 		Boolean(form.data.barcodeReferenceAcceptedBarcode),
 	);
@@ -194,7 +212,7 @@
 	});
 
 	const handleDestinationSubmit = async () => {
-		if (destinationAction.kind !== "move") {
+		if (destinationAction.kind !== "move" || barcode.reviewedUpdateSelected) {
 			await submission.handleSubmit();
 			return;
 		}
@@ -529,7 +547,8 @@
 		usesNonstandardNutritionDisclosure:
 			!validation.disclosurePolicy.requiresStandardNutrition,
 		saveDestination: outcome.state.saveDestination,
-		destinationAction,
+		destinationAction: displayedDestinationAction,
+		reviewedUpdate: barcode.reviewedUpdateSelected,
 		error: submission.state.error,
 		placementMessage: outcome.state.placementMessage,
 		catalogMessage: submission.state.catalogMessage,

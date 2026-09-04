@@ -67,12 +67,13 @@ export const createManualEntrySubmissionController = ({
 		state.evidenceProgress = null;
 		outcome.resetBeforeSubmit();
 		const catalogSubmissionOnly = getCatalogSubmissionOnly();
+		const reviewedUpdate = barcode.reviewedUpdateSelected;
 		const destinationAction = catalogSubmissionOnly
 			? null
 			: getDestinationAction();
 		if (
 			destinationAction?.kind === "checking" ||
-			destinationAction?.kind === "duplicate"
+			(destinationAction?.kind === "duplicate" && !reviewedUpdate)
 		) {
 			return;
 		}
@@ -87,7 +88,7 @@ export const createManualEntrySubmissionController = ({
 			barcode: form.data.barcode,
 			requiresCatalogEvidence: barcode.requiresCatalogEvidence,
 			requiresFreshFrontPhoto:
-				form.data.submissionIntent === "catalog_correction",
+				form.data.submissionIntent === "catalog_correction" || reviewedUpdate,
 			hasTrustedProductImage: barcode.hasTrustedProductImage,
 			frontPhoto: form.data.frontPhoto,
 			nutritionPhoto: form.data.nutritionPhoto,
@@ -201,8 +202,10 @@ export const createManualEntrySubmissionController = ({
 				},
 				reviewFlags: barcode.getReferenceReviewFlags(),
 				useIngredient: outcome.useIngredient,
-				submissionIntent: form.data.submissionIntent,
-				catalogSubmissionOnly,
+				submissionIntent: reviewedUpdate
+					? "catalog_correction"
+					: form.data.submissionIntent,
+				catalogSubmissionOnly: catalogSubmissionOnly || reviewedUpdate,
 				onCatalogProgress: (progress) => {
 					state.evidenceProgress = progress;
 				},
@@ -216,7 +219,7 @@ export const createManualEntrySubmissionController = ({
 
 			state.catalogMessage = result.catalogMessage;
 			state.catalogMessageTone = result.catalogMessageTone;
-			if (catalogSubmissionOnly) return;
+			if (catalogSubmissionOnly || reviewedUpdate) return;
 			if (result.resetForm) onReset();
 		} catch {
 			state.error =

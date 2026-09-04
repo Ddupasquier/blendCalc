@@ -2004,7 +2004,21 @@ describe("CustomIngredientForm", () => {
 			},
 		});
 
-		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
+		render(CustomIngredientForm, {
+			props: {
+				onCreate: vi.fn(),
+				ingredientListIndex: {
+					[MIX_STORAGE_KEYS.fridge]: {
+						foodIds: [91],
+						foodIdentityKeys: ["barcode:00021130462506"],
+					},
+					[MIX_STORAGE_KEYS.shoppingList]: {
+						foodIds: [],
+						foodIdentityKeys: [],
+					},
+				},
+			},
+		});
 
 		await openManualForm();
 		await fireEvent.input(screen.getByLabelText(/upc \/ barcode/i), {
@@ -2024,9 +2038,13 @@ describe("CustomIngredientForm", () => {
 		expect(
 			screen.queryByLabelText(/share with community/i),
 		).not.toBeInTheDocument();
+		expect(
+			screen.getByRole("button", { name: "Already saved" }),
+		).toBeDisabled();
 	});
 
-	it("allows community sharing when a non-name catalog field is edited", async () => {
+	it("submits one reviewed update without changing an existing list item", async () => {
+		const onCreate = vi.fn();
 		const draft = {
 			barcode: "00021130462506",
 			name: "Strawberry Jelly, Strawberry",
@@ -2061,7 +2079,21 @@ describe("CustomIngredientForm", () => {
 			draft,
 		});
 
-		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
+		render(CustomIngredientForm, {
+			props: {
+				onCreate,
+				ingredientListIndex: {
+					[MIX_STORAGE_KEYS.fridge]: {
+						foodIds: [91],
+						foodIdentityKeys: ["barcode:00021130462506"],
+					},
+					[MIX_STORAGE_KEYS.shoppingList]: {
+						foodIds: [],
+						foodIdentityKeys: [],
+					},
+				},
+			},
+		});
 
 		await openManualForm();
 		await fireEvent.input(screen.getByLabelText(/upc \/ barcode/i), {
@@ -2087,6 +2119,43 @@ describe("CustomIngredientForm", () => {
 				screen.getByText(/photos for catalog review/i),
 			).toBeInTheDocument(),
 		);
+		expect(
+			screen.getByRole("button", { name: /update and share/i }),
+		).toBeEnabled();
+		expect(
+			screen.getByText(/saved ingredient will stay in this list unchanged/i),
+		).toBeInTheDocument();
+
+		const photo = new File([new Uint8Array([0xff, 0xd8, 0xff])], "label.jpg", {
+			type: "image/jpeg",
+		});
+		for (const label of [
+			/front of package/i,
+			/nutrition facts label/i,
+			/^barcode$/i,
+		]) {
+			await fireEvent.change(screen.getByLabelText(label), {
+				target: { files: [photo] },
+			});
+		}
+		await fireEvent.click(
+			screen.getByRole("button", { name: /update and share/i }),
+		);
+
+		await waitFor(() => expect(submitSharedProduct).toHaveBeenCalledOnce());
+		expect(submitSharedProduct.mock.calls[0][2]).toMatchObject({
+			intent: "catalog_correction",
+			reviewFlags: expect.arrayContaining([
+				expect.stringContaining("current shared or source"),
+			]),
+		});
+		expect(customFoodMocks.saveCustomFood).not.toHaveBeenCalled();
+		expect(ingredientListMocks.addFoodToIngredientList).not.toHaveBeenCalled();
+		expect(
+			ingredientListMocks.moveIngredientListItemById,
+		).not.toHaveBeenCalled();
+		expect(onCreate).not.toHaveBeenCalled();
+		expect(screen.getByRole("button", { name: "Done" })).toBeInTheDocument();
 	});
 
 	it("blocks sharing when a verified barcode belongs to a different product name", async () => {

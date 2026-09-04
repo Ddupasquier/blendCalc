@@ -342,6 +342,13 @@ can change over time.
 8. If another update was approved while the submission waited, approval stops as stale
    and the change must be compared again.
 
+Manual Entry exposes this existing-revision path only after an exact shared-catalog
+barcode match has meaningful label differences. If that product is already in the
+selected list, `Update and share` submits the immutable correction without adding,
+moving, or overwriting the user's saved item. An unchanged match remains `Already
+saved`, and the same user cannot create another pending proposal against the same base
+revision.
+
 Independent users may submit separate correction evidence against the same active
 revision. The system never averages conflicting values or silently chooses a provider.
 The first approved correction advances the revision; every other pending correction
