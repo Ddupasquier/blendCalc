@@ -28,8 +28,6 @@
 	let rootElement = $state<HTMLDivElement | null>(null);
 	let listboxElement = $state<HTMLDivElement | null>(null);
 	let open = $state(false);
-	let placement = $state<"top" | "bottom">("bottom");
-	let popoverSupported = $state(false);
 	let activeIndex = $state(-1);
 	let validationInvalid = $state(false);
 	let typeaheadQuery = "";
@@ -53,39 +51,6 @@
 	);
 	const effectiveInvalid = $derived(ariaInvalid || validationInvalid);
 
-	const isPopoverOpen = () =>
-		Boolean(listboxElement?.matches?.(":popover-open"));
-
-	function removePositionListeners() {
-		window.removeEventListener("resize", syncListboxPosition);
-		window.removeEventListener("scroll", syncListboxPosition, true);
-	}
-
-	function syncListboxPosition() {
-		if (!open || !element || !listboxElement) return;
-		const triggerRect = element.getBoundingClientRect();
-		listboxElement.style.setProperty(
-			"--select-field-trigger-left",
-			`${triggerRect.left}px`,
-		);
-		listboxElement.style.setProperty(
-			"--select-field-trigger-top",
-			`${triggerRect.top}px`,
-		);
-		listboxElement.style.setProperty(
-			"--select-field-trigger-bottom",
-			`${triggerRect.bottom}px`,
-		);
-		listboxElement.style.setProperty(
-			"--select-field-trigger-width",
-			`${triggerRect.width}px`,
-		);
-		const panelHeight = listboxElement.getBoundingClientRect().height;
-		const roomBelow = window.innerHeight - triggerRect.bottom;
-		placement =
-			roomBelow >= panelHeight || roomBelow >= triggerRect.top ? "bottom" : "top";
-	}
-
 	const scrollActiveOptionIntoView = () => {
 		if (!listboxElement || activeIndex < 0) return;
 		const activeOption = listboxElement.querySelector<HTMLElement>(
@@ -98,7 +63,8 @@
 		if (visibleOptions.length === 0) return -1;
 		let index = start;
 		for (let attempt = 0; attempt < visibleOptions.length; attempt += 1) {
-			index = (index + direction + visibleOptions.length) % visibleOptions.length;
+			index =
+				(index + direction + visibleOptions.length) % visibleOptions.length;
 			if (!visibleOptions[index]?.disabled) return index;
 		}
 		return -1;
@@ -110,42 +76,19 @@
 		scrollActiveOptionIntoView();
 	};
 
-	const showListbox = async () => {
+	const showListbox = () => {
 		if (disabled || open) return;
 		const selectedIndex =
-			selectedVisibleIndex >= 0 && !visibleOptions[selectedVisibleIndex]?.disabled
+			selectedVisibleIndex >= 0 &&
+			!visibleOptions[selectedVisibleIndex]?.disabled
 				? selectedVisibleIndex
 				: findEnabledIndex(-1, 1);
 		activeIndex = selectedIndex;
 		open = true;
-		placement = "bottom";
-		await tick();
-		if (!listboxElement) return;
-		if (
-			popoverSupported &&
-			typeof listboxElement.showPopover === "function" &&
-			!isPopoverOpen()
-		) {
-			try {
-				listboxElement.showPopover();
-			} catch {}
-		}
-		syncListboxPosition();
-		window.addEventListener("resize", syncListboxPosition);
-		window.addEventListener("scroll", syncListboxPosition, true);
-		scrollActiveOptionIntoView();
 	};
 
 	const hideListbox = ({ restoreFocus = false } = {}) => {
 		if (!open) return;
-		removePositionListeners();
-		if (
-			popoverSupported &&
-			typeof listboxElement?.hidePopover === "function" &&
-			isPopoverOpen()
-		) {
-			listboxElement.hidePopover();
-		}
 		open = false;
 		activeIndex = -1;
 		if (restoreFocus) element?.focus({ preventScroll: true });
@@ -218,18 +161,18 @@
 			hideListbox();
 			return;
 		}
-		if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
+		if (
+			event.key.length === 1 &&
+			!event.ctrlKey &&
+			!event.metaKey &&
+			!event.altKey
+		) {
 			if (!open) void showListbox();
 			handleTypeahead(event.key);
 		}
 	};
 
 	onMount(() => {
-		popoverSupported = Boolean(
-			typeof CSS !== "undefined" &&
-				CSS.supports?.("selector(:popover-open)") &&
-				typeof HTMLElement.prototype.showPopover === "function",
-		);
 		const handleDocumentPointerDown = (event: PointerEvent) => {
 			if (!open || rootElement?.contains(event.target as Node)) return;
 			hideListbox();
@@ -237,7 +180,6 @@
 		document.addEventListener("pointerdown", handleDocumentPointerDown);
 		return () => {
 			document.removeEventListener("pointerdown", handleDocumentPointerDown);
-			removePositionListeners();
 			if (typeaheadTimer !== null) window.clearTimeout(typeaheadTimer);
 		};
 	});
@@ -265,8 +207,8 @@
 				<option
 					value={option.value}
 					disabled={option.disabled}
-					hidden={option.hidden}
-				>{option.label}</option>
+					hidden={option.hidden}>{option.label}</option
+				>
 			{/each}
 		</select>
 		<button
@@ -286,52 +228,56 @@
 				: undefined}
 			aria-invalid={effectiveInvalid || undefined}
 			aria-required={required || undefined}
-			data-placeholder={selectedOption?.placeholder || !selectedOption || undefined}
+			data-placeholder={selectedOption?.placeholder ||
+				!selectedOption ||
+				undefined}
 			{disabled}
 			onclick={() => (open ? hideListbox() : void showListbox())}
 			onkeydown={handleTriggerKeydown}
 		>
-			<span class="select-field__value">{selectedOption?.label ?? "Choose an option"}</span>
-			<span class="select-field__icon" aria-hidden="true" data-open={open}>
+			<span class="select-field__value"
+				>{selectedOption?.label ?? "Choose an option"}</span
+			>
+			<span class="select-field__icon" aria-hidden="true">
 				<ChevronDown size={16} strokeWidth={2.4} />
 			</span>
 		</button>
-		{#if open}
-			<div
-				bind:this={listboxElement}
-				id={listboxId}
-				class="select-field__listbox"
-				popover={popoverSupported ? "manual" : undefined}
-				role="listbox"
-				data-placement={placement}
-				aria-label={ariaLabel ?? label ?? "Options"}
-			>
-				{#each visibleOptions as option, index (option.value)}
-					<button
-						id={`${id}-option-${index}`}
-						data-option-index={index}
-						type="button"
-						class="select-field__option"
-						class:select-field__option--active={index === activeIndex}
-						role="option"
-						aria-selected={option.value === value}
-						tabindex="-1"
-						disabled={option.disabled}
-						onpointermove={() => {
-							if (!option.disabled) activeIndex = index;
-						}}
-						onclick={() => chooseOption(index)}
-					>
-						<span>{option.label}</span>
-						{#if option.value === value}
-							<span class="select-field__check" aria-hidden="true">
-								<Check size={16} strokeWidth={2.5} />
-							</span>
-						{/if}
-					</button>
-				{/each}
-			</div>
-		{/if}
+		<div
+			bind:this={listboxElement}
+			id={listboxId}
+			class="select-field__listbox"
+			role="listbox"
+			aria-label={open ? (ariaLabel ?? label ?? "Options") : undefined}
+			aria-hidden={!open}
+			hidden={!open}
+			inert={!open}
+			data-open={open}
+		>
+			{#each visibleOptions as option, index (option.value)}
+				<button
+					id={`${id}-option-${index}`}
+					data-option-index={index}
+					type="button"
+					class="select-field__option"
+					class:select-field__option--active={index === activeIndex}
+					role="option"
+					aria-selected={option.value === value}
+					tabindex="-1"
+					disabled={option.disabled}
+					onpointermove={() => {
+						if (!option.disabled) activeIndex = index;
+					}}
+					onclick={() => chooseOption(index)}
+				>
+					<span>{option.label}</span>
+					{#if option.value === value}
+						<span class="select-field__check" aria-hidden="true">
+							<Check size={16} strokeWidth={2.5} />
+						</span>
+					{/if}
+				</button>
+			{/each}
+		</div>
 	</div>
 	{#if helper}
 		<small id={helperId} class="select-field__helper">{helper}</small>

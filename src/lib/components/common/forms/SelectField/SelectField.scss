@@ -120,32 +120,19 @@
 	height: $app-shell-control-icon-size;
 	color: $app-shell-text-muted;
 	pointer-events: none;
-	transition: transform motion.$duration-layout motion.$easing-spatial;
-}
-
-.select-field__icon[data-open="true"] {
-	transform: rotate(180deg);
 }
 
 .select-field__listbox {
-	position: fixed;
-	inset: unset;
-	inset-inline-start: clamp(
-		$app-gap-sm,
-		var(--select-field-trigger-left),
-		calc(100vw - min(12rem, calc(100vw - 2 * $app-gap-sm)) - $app-gap-sm)
-	);
-	top: calc(var(--select-field-trigger-bottom) + $app-gap-xs);
-	z-index: 120;
+	position: absolute;
+	top: calc(100% + $app-gap-xs);
+	inset-inline: 0;
+	z-index: 2;
 	display: grid;
 	gap: $app-gap-2xs;
-	width: var(--select-field-trigger-width);
-	min-width: min(12rem, calc(100vw - 2 * $app-gap-sm));
-	max-width: calc(100vw - 2 * $app-gap-sm);
-	max-height: min(
-		18rem,
-		calc(100dvh - var(--select-field-trigger-bottom) - 2 * $app-gap-sm)
-	);
+	width: 100%;
+	min-width: 0;
+	max-width: 100%;
+	max-height: 18rem;
 	padding: $app-gap-xs;
 	margin: 0;
 	overflow-y: auto;
@@ -153,20 +140,14 @@
 	background: $app-shell-surface-panel;
 	border: 1px solid $app-shell-border-subtle;
 	border-radius: $app-shell-radius-control;
+	opacity: 0;
 	overscroll-behavior: contain;
+	pointer-events: none;
 }
 
-.select-field__listbox[data-placement="top"] {
-	top: auto;
-	bottom: calc(100dvh - var(--select-field-trigger-top) + $app-gap-xs);
-	max-height: min(
-		18rem,
-		calc(var(--select-field-trigger-top) - 2 * $app-gap-sm)
-	);
-}
-
-.select-field__listbox::backdrop {
-	background: transparent;
+.select-field__listbox[data-open="true"] {
+	opacity: 1;
+	pointer-events: auto;
 }
 
 .select-field__option {
