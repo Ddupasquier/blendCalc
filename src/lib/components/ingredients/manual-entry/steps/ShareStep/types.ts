@@ -46,6 +46,12 @@ export type ShareStepProps = {
 	saveDestination: IngredientListKey;
 	destinationAction: ManualEntryDestinationAction;
 	reviewedUpdate: boolean;
+	moveConfirmation: {
+		foodName: string;
+		sourceLabel: string;
+		destinationLabel: string;
+		busy: boolean;
+	} | null;
 	error: string;
 	placementMessage: string;
 	catalogMessage: string;
@@ -65,6 +71,8 @@ export type ShareStepProps = {
 	onBack: () => void;
 	onSubmit: () => void | Promise<void>;
 	onCatalogSubmissionComplete: () => void;
+	onConfirmMove: () => void | Promise<void>;
+	onCancelMove: () => void | Promise<void>;
 	onSaveDestinationControl?: (element: HTMLButtonElement | null) => void;
 };
 

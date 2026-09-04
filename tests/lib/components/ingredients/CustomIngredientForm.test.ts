@@ -1132,7 +1132,25 @@ describe("CustomIngredientForm", () => {
 		await fireEvent.click(
 			screen.getByRole("button", { name: "Move to Shopping List" }),
 		);
-		expect(await screen.findByText(/already in Fridge/i)).toBeInTheDocument();
+		expect(
+			await screen.findByRole("region", { name: "Move this ingredient?" }),
+		).toHaveTextContent(
+			"Existing barcode snack is currently in Fridge. Move it to Shopping List?",
+		);
+		expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+		const cancel = screen.getByRole("button", { name: "Cancel" });
+		await waitFor(() => expect(cancel).toHaveFocus());
+		await fireEvent.click(cancel);
+		expect(
+			screen.getByRole("button", { name: "Move to Shopping List" }),
+		).toBeInTheDocument();
+		expect(
+			ingredientListMocks.moveIngredientListItemById,
+		).not.toHaveBeenCalled();
+
+		await fireEvent.click(
+			screen.getByRole("button", { name: "Move to Shopping List" }),
+		);
 		expect(customFoodMocks.saveCustomFood).not.toHaveBeenCalled();
 		await fireEvent.click(screen.getByRole("button", { name: "Move" }));
 
@@ -1145,6 +1163,90 @@ describe("CustomIngredientForm", () => {
 		expect(customFoodMocks.saveCustomFood).not.toHaveBeenCalled();
 		expect(ingredientListMocks.moveFoodToIngredientList).not.toHaveBeenCalled();
 		expect(onCreate).not.toHaveBeenCalled();
+	});
+
+	it("confirms the reverse Shopping List to Fridge move inline", async () => {
+		const identityKey = "barcode:04006381333931";
+		render(CustomIngredientForm, {
+			props: {
+				onCreate: vi.fn(),
+				moveConfirmationRouteOpen: true,
+				ingredientListIndex: {
+					[MIX_STORAGE_KEYS.fridge]: {
+						foodIds: [],
+						foodIdentityKeys: [],
+					},
+					[MIX_STORAGE_KEYS.shoppingList]: {
+						foodIds: [72],
+						foodIdentityKeys: [identityKey],
+					},
+				},
+			},
+		});
+
+		await fillRequiredCustomIngredient("Existing barcode snack", {
+			barcode: "4006381333931",
+		});
+		await fireEvent.click(
+			screen.getByRole("button", { name: "Move to Fridge" }),
+		);
+		expect(
+			await screen.findByRole("region", { name: "Move this ingredient?" }),
+		).toHaveTextContent(
+			"Existing barcode snack is currently in Shopping List. Move it to Fridge?",
+		);
+		await fireEvent.click(screen.getByRole("button", { name: "Move" }));
+
+		await waitFor(() =>
+			expect(
+				ingredientListMocks.moveIngredientListItemById,
+			).toHaveBeenCalledWith(
+				MIX_STORAGE_KEYS.shoppingList,
+				MIX_STORAGE_KEYS.fridge,
+				72,
+			),
+		);
+	});
+
+	it("cancels the inline move when browser navigation closes its route", async () => {
+		const identityKey = "barcode:04006381333931";
+		const ingredientListIndex = {
+			[MIX_STORAGE_KEYS.fridge]: {
+				foodIds: [81],
+				foodIdentityKeys: [identityKey],
+			},
+			[MIX_STORAGE_KEYS.shoppingList]: {
+				foodIds: [],
+				foodIdentityKeys: [],
+			},
+		};
+		const props = {
+			onCreate: vi.fn(),
+			moveConfirmationRouteOpen: true,
+			ingredientListIndex,
+		};
+		const view = render(CustomIngredientForm, { props });
+
+		await fillRequiredCustomIngredient("Existing barcode snack", {
+			barcode: "4006381333931",
+			destination: MIX_STORAGE_KEYS.shoppingList,
+		});
+		await fireEvent.click(
+			screen.getByRole("button", { name: "Move to Shopping List" }),
+		);
+		expect(
+			await screen.findByRole("region", { name: "Move this ingredient?" }),
+		).toBeInTheDocument();
+
+		await view.rerender({ ...props, moveConfirmationRouteOpen: false });
+		await waitFor(() =>
+			expect(
+				screen.queryByRole("region", { name: "Move this ingredient?" }),
+			).not.toBeInTheDocument(),
+		);
+		expect(
+			ingredientListMocks.moveIngredientListItemById,
+		).not.toHaveBeenCalled();
 	});
 
 	it("asks before moving an existing fridge item to shopping", async () => {
@@ -1163,7 +1265,9 @@ describe("CustomIngredientForm", () => {
 			screen.getByRole("button", { name: /add ingredient/i }),
 		);
 
-		expect(await screen.findByText(/already in Fridge/i)).toBeInTheDocument();
+		expect(
+			await screen.findByRole("region", { name: "Move this ingredient?" }),
+		).toHaveTextContent("currently in Fridge");
 		expect(screen.getByRole("button", { name: "Move" })).toBeInTheDocument();
 		expect(onCreate).not.toHaveBeenCalled();
 	});

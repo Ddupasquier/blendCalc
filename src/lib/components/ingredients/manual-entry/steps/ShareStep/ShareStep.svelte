@@ -11,6 +11,7 @@
 	import ManualEntryField from "$lib/components/ingredients/manual-entry/ManualEntryField/ManualEntryField.svelte";
 	import ManualEntryStepLayout from "$lib/components/ingredients/manual-entry/ManualEntryStepLayout/ManualEntryStepLayout.svelte";
 	import ManualEntryToggleRow from "$lib/components/ingredients/manual-entry/ManualEntryToggleRow/ManualEntryToggleRow.svelte";
+	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
 	import ProductSafetyAlerts from "$lib/components/ingredients/nutrition/ProductSafetyAlerts/ProductSafetyAlerts.svelte";
 	import { getEvidencePhotoStatus, type ShareStepProps } from "./types";
 	import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
@@ -47,6 +48,7 @@
 		saveDestination,
 		destinationAction,
 		reviewedUpdate,
+		moveConfirmation,
 		error,
 		placementMessage,
 		catalogMessage,
@@ -66,14 +68,20 @@
 		onBack,
 		onSubmit,
 		onCatalogSubmissionComplete,
+		onConfirmMove,
+		onCancelMove,
 		onSaveDestinationControl,
 	}: ShareStepProps = $props();
 
 	let saveDestinationControl = $state<HTMLButtonElement | null>(null);
+	let moveCancelControl = $state<HTMLButtonElement | null>(null);
 
 	$effect(() => {
 		if (saveDestinationControl)
 			onSaveDestinationControl?.(saveDestinationControl);
+	});
+	$effect(() => {
+		if (moveConfirmation && moveCancelControl) moveCancelControl.focus();
 	});
 
 	const formatUnit = (unitName: string) =>
@@ -361,18 +369,48 @@
 		<StatusMessage tone={catalogMessageTone} message={catalogMessage} />
 	{/if}
 
-	<ManualEntryActions
-		{onBack}
-		onNext={catalogSubmissionComplete ? onCatalogSubmissionComplete : onSubmit}
-		nextLabel={catalogSubmissionComplete
-			? "Done"
-			: catalogSubmissionOnly
-				? "Submit Correction"
-				: destinationAction.label}
-		busy={saving}
-		nextDisabled={!catalogSubmissionOnly && destinationAction.disabled}
-		showBack={!catalogSubmissionComplete}
-	/>
+	{#if moveConfirmation}
+		<section
+			class="share-step__move-confirmation"
+			aria-labelledby="manual-entry-move-title"
+		>
+			<div>
+				<strong id="manual-entry-move-title">Move this ingredient?</strong>
+				<p>
+					{moveConfirmation.foodName} is currently in
+					{moveConfirmation.sourceLabel}. Move it to
+					{moveConfirmation.destinationLabel}?
+				</p>
+			</div>
+			<div class="share-step__move-actions">
+				<RoundedActionButton
+					bind:element={moveCancelControl}
+					variant="neutral"
+					disabled={moveConfirmation.busy}
+					onclick={onCancelMove}>Cancel</RoundedActionButton
+				>
+				<RoundedActionButton
+					busy={moveConfirmation.busy}
+					onclick={onConfirmMove}>Move</RoundedActionButton
+				>
+			</div>
+		</section>
+	{:else}
+		<ManualEntryActions
+			{onBack}
+			onNext={catalogSubmissionComplete
+				? onCatalogSubmissionComplete
+				: onSubmit}
+			nextLabel={catalogSubmissionComplete
+				? "Done"
+				: catalogSubmissionOnly
+					? "Submit Correction"
+					: destinationAction.label}
+			busy={saving}
+			nextDisabled={!catalogSubmissionOnly && destinationAction.disabled}
+			showBack={!catalogSubmissionComplete}
+		/>
+	{/if}
 </ManualEntryStepLayout>
 
 <style lang="scss">
