@@ -114,4 +114,54 @@ describe("PhotoUploadInput", () => {
 			}),
 		).toHaveAttribute("value", "0.5");
 	});
+
+	it("keeps camera and existing-photo choices independent", async () => {
+		const onFilesChange = vi.fn();
+		render(PhotoUploadInput, {
+			props: {
+				...baseProps,
+				capture: "environment",
+				required: true,
+				onFilesChange,
+			},
+		});
+		const cameraInput = screen.getByLabelText("Take nutrition facts photo");
+		const libraryInput = screen.getByLabelText(
+			"Choose existing nutrition facts photo",
+		);
+		const libraryPhoto = new File(["library"], "library-label.jpg", {
+			type: "image/jpeg",
+		});
+		const cameraPhoto = new File(["camera"], "camera-label.jpg", {
+			type: "image/jpeg",
+		});
+
+		expect(cameraInput).toHaveAttribute("capture", "environment");
+		expect(libraryInput).not.toHaveAttribute("capture");
+		expect(cameraInput).toHaveAttribute("aria-required", "true");
+		expect(libraryInput).toHaveAttribute("aria-required", "true");
+		expect(screen.getByText("Take photo")).toBeInTheDocument();
+		expect(screen.getByText("Choose existing photo")).toBeInTheDocument();
+
+		await fireEvent.change(libraryInput, {
+			target: { files: [libraryPhoto] },
+		});
+		expect(onFilesChange).toHaveBeenLastCalledWith([libraryPhoto]);
+		expect(screen.getByText("library-label.jpg")).toBeInTheDocument();
+
+		await fireEvent.change(cameraInput, {
+			target: { files: [cameraPhoto] },
+		});
+		expect(onFilesChange).toHaveBeenLastCalledWith([cameraPhoto]);
+		expect(screen.getByText("camera-label.jpg")).toBeInTheDocument();
+		expect(screen.getByText("Replace from library")).toBeInTheDocument();
+
+		await fireEvent.click(
+			screen.getByRole("button", {
+				name: "Clear nutrition facts photo selection",
+			}),
+		);
+		expect(onFilesChange).toHaveBeenLastCalledWith([]);
+		expect(screen.getByText("No photo selected")).toBeInTheDocument();
+	});
 });
