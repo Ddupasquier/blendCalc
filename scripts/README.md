@@ -57,7 +57,7 @@ Builds, complete Vitest projects, browser suites, feature/release/nightly verifi
 and full database verification run through
 `operations/quality/run_with_resource_limits.mjs`. On a local machine, the runner
 refuses to start when the macOS startup disk has less than 50 GiB free, swap use exceeds
-8 GiB, or an existing development process exceeds 4 GiB resident memory. It also gives
+8 GiB, or an existing development process exceeds 5 GiB resident memory. It also gives
 child Node processes a 4 GiB old-space limit. CI skips machine-capacity checks but keeps
 the worker and heap limits.
 
