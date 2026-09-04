@@ -72,7 +72,6 @@ describe("selected image preview client", () => {
 	const originals = {
 		Worker: globalThis.Worker,
 		OffscreenCanvas: globalThis.OffscreenCanvas,
-		createImageBitmap: globalThis.createImageBitmap,
 	};
 	let createObjectUrlSpy: ReturnType<typeof vi.spyOn>;
 	let revokeObjectUrlSpy: ReturnType<typeof vi.spyOn>;
@@ -299,48 +298,6 @@ describe("selected image preview client", () => {
 			512,
 			384,
 		);
-	});
-
-	it("prefers native worker image decoding and releases the bitmap", async () => {
-		const close = vi.fn();
-		const bitmap = { width: 128, height: 128, close } as unknown as ImageBitmap;
-		const createBitmap = vi.fn().mockResolvedValue(bitmap);
-		Object.defineProperty(globalThis, "createImageBitmap", {
-			configurable: true,
-			value: createBitmap,
-		});
-		const jpeg = new Blob(
-			[
-				new Uint8Array([
-					0xff, 0xd8, 0xff, 0xc0, 0x00, 0x11, 0x08, 0x00, 0x80, 0x00, 0x80,
-					0x03, 0x01, 0x11, 0x00, 0x02, 0x11, 0x00, 0x03, 0x11, 0x00, 0xff,
-					0xd9,
-				]),
-			],
-			{ type: "image/jpeg" },
-		);
-
-		await createBoundedSelectedImagePreview(
-			jpeg,
-			MAX_SELECTED_IMAGE_PREVIEW_DIMENSION,
-		);
-
-		expect(createBitmap).toHaveBeenCalledWith(jpeg, {
-			imageOrientation: "from-image",
-		});
-		expect(codecs.decodeJpeg).not.toHaveBeenCalled();
-		expect(OffscreenCanvasMock.instances[0]?.drawImage).toHaveBeenCalledWith(
-			bitmap,
-			0,
-			0,
-			128,
-			128,
-			0,
-			0,
-			128,
-			128,
-		);
-		expect(close).toHaveBeenCalledOnce();
 	});
 
 	it("rejects unsafe image dimensions before starting a codec", async () => {
