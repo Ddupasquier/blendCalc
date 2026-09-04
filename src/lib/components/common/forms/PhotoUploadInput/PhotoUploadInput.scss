@@ -53,6 +53,13 @@
 	min-width: 0;
 }
 
+.photo-upload-input__source-choices {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: $app-gap-sm;
+	min-width: 0;
+}
+
 .photo-upload-input__native {
 	position: absolute;
 	width: 1px;
@@ -124,6 +131,10 @@
 }
 
 @media (max-width: $app-breakpoint-xs) {
+	.photo-upload-input__source-choices {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
 	.photo-upload-input__selection {
 		align-items: flex-start;
 		flex-direction: column;

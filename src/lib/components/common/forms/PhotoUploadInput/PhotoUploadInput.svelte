@@ -22,6 +22,8 @@
 	}: PhotoUploadInputProps = $props();
 
 	let input = $state<HTMLInputElement | null>(null);
+	let cameraInput = $state<HTMLInputElement | null>(null);
+	let libraryInput = $state<HTMLInputElement | null>(null);
 	let localFiles = $state<File[]>([]);
 	let error = $state("");
 
@@ -76,12 +78,17 @@
 
 	const clearSelection = () => {
 		if (input) input.value = "";
+		if (cameraInput) cameraInput.value = "";
+		if (libraryInput) libraryInput.value = "";
 		error = "";
 		updateFiles([]);
 	};
 
 	$effect(() => {
-		if (files?.length === 0 && input?.value) input.value = "";
+		if (files?.length !== 0) return;
+		if (input?.value) input.value = "";
+		if (cameraInput?.value) cameraInput.value = "";
+		if (libraryInput?.value) libraryInput.value = "";
 	});
 </script>
 
@@ -92,36 +99,88 @@
 	</div>
 	<p id={descriptionId}>{description}</p>
 
-	<div class="photo-upload-input__control">
-		<input
-			bind:this={input}
-			{id}
-			{name}
-			class="photo-upload-input__native"
-			type="file"
-			{accept}
-			{capture}
-			multiple={allowedPhotoCount > 1}
-			{required}
-			{disabled}
-			aria-labelledby={titleId}
-			aria-describedby={describedBy}
-			aria-invalid={error ? "true" : undefined}
-			onchange={handleSelection}
-		/>
-		<label class="photo-upload-input__trigger" for={id}>
-			<Plus size={18} />
-			<span>
-				{selectedFiles.length > 0
-					? allowedPhotoCount === 1
-						? "Replace photo"
-						: "Replace photos"
-					: allowedPhotoCount === 1
-						? "Choose photo"
-						: "Choose photos"}
-			</span>
-		</label>
-	</div>
+	{#if capture}
+		<div class="photo-upload-input__source-choices">
+			<div class="photo-upload-input__control">
+				<input
+					bind:this={cameraInput}
+					id={`${id}-camera`}
+					{name}
+					class="photo-upload-input__native"
+					type="file"
+					{accept}
+					{capture}
+					multiple={allowedPhotoCount > 1}
+					{disabled}
+					aria-label={`Take ${prompt.toLowerCase()}`}
+					aria-describedby={describedBy}
+					aria-required={required}
+					aria-invalid={error ? "true" : undefined}
+					onchange={handleSelection}
+				/>
+				<label class="photo-upload-input__trigger" for={`${id}-camera`}>
+					<Plus size={18} />
+					<span>{selectedFiles.length > 0 ? "Retake photo" : "Take photo"}</span
+					>
+				</label>
+			</div>
+			<div class="photo-upload-input__control">
+				<input
+					bind:this={libraryInput}
+					id={`${id}-library`}
+					{name}
+					class="photo-upload-input__native"
+					type="file"
+					{accept}
+					multiple={allowedPhotoCount > 1}
+					{disabled}
+					aria-label={`Choose existing ${prompt.toLowerCase()}`}
+					aria-describedby={describedBy}
+					aria-required={required}
+					aria-invalid={error ? "true" : undefined}
+					onchange={handleSelection}
+				/>
+				<label class="photo-upload-input__trigger" for={`${id}-library`}>
+					<Plus size={18} />
+					<span>
+						{selectedFiles.length > 0
+							? "Replace from library"
+							: "Choose existing photo"}
+					</span>
+				</label>
+			</div>
+		</div>
+	{:else}
+		<div class="photo-upload-input__control">
+			<input
+				bind:this={input}
+				{id}
+				{name}
+				class="photo-upload-input__native"
+				type="file"
+				{accept}
+				multiple={allowedPhotoCount > 1}
+				{required}
+				{disabled}
+				aria-labelledby={titleId}
+				aria-describedby={describedBy}
+				aria-invalid={error ? "true" : undefined}
+				onchange={handleSelection}
+			/>
+			<label class="photo-upload-input__trigger" for={id}>
+				<Plus size={18} />
+				<span>
+					{selectedFiles.length > 0
+						? allowedPhotoCount === 1
+							? "Replace photo"
+							: "Replace photos"
+						: allowedPhotoCount === 1
+							? "Choose photo"
+							: "Choose photos"}
+				</span>
+			</label>
+		</div>
+	{/if}
 
 	<div class="photo-upload-input__selection">
 		<div class="photo-upload-input__status-copy">
@@ -153,7 +212,7 @@
 
 	{#if selectedFiles.length > 1}
 		<ul class="photo-upload-input__files" aria-label="Selected photos">
-			{#each selectedFiles as file}
+			{#each selectedFiles as file (`${file.name}:${file.size}:${file.lastModified}`)}
 				<li>{file.name}</li>
 			{/each}
 		</ul>

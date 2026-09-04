@@ -45,7 +45,9 @@ describe("NutritionLabelOcrInput", () => {
 				onApply,
 			},
 		});
-		const input = screen.getByLabelText("Nutrition facts photo");
+		const input = screen.getByLabelText(
+			"Choose existing nutrition facts photo",
+		);
 		await fireEvent.change(input, { target: { files: [photo] } });
 		expect(onPhotoChange).toHaveBeenCalledWith(photo);
 

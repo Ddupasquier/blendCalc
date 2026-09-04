@@ -133,7 +133,9 @@ describe("ProductImageEvidenceInput", () => {
 			},
 		});
 
-		expect(screen.getByLabelText("Front of package")).toBeEnabled();
+		expect(
+			screen.getByLabelText("Choose existing front of package"),
+		).toBeEnabled();
 		expect(
 			screen.getByText(
 				"Preparing the photo preview. You can keep working while it loads.",
@@ -166,6 +168,8 @@ describe("ProductImageEvidenceInput", () => {
 				),
 			).toHaveAttribute("role", "alert"),
 		);
-		expect(screen.getByLabelText("Front of package")).toBeEnabled();
+		expect(
+			screen.getByLabelText("Choose existing front of package"),
+		).toBeEnabled();
 	});
 });

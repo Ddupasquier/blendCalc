@@ -1732,9 +1732,19 @@ describe("CustomIngredientForm", () => {
 				screen.getByText(/photos for catalog review/i),
 			).toBeInTheDocument(),
 		);
-		expect(screen.getByLabelText(/front of package/i)).toBeRequired();
-		expect(screen.getByLabelText(/nutrition facts label/i)).toBeRequired();
-		expect(screen.getByLabelText(/^barcode$/i)).toBeRequired();
+		for (const label of [
+			"Take front of package",
+			"Choose existing front of package",
+			"Take nutrition facts label",
+			"Choose existing nutrition facts label",
+			"Take barcode",
+			"Choose existing barcode",
+		]) {
+			expect(screen.getByLabelText(label)).toHaveAttribute(
+				"aria-required",
+				"true",
+			);
+		}
 		expect(onLookupStateChange).not.toHaveBeenCalledWith(true);
 	});
 
@@ -2234,9 +2244,9 @@ describe("CustomIngredientForm", () => {
 			type: "image/jpeg",
 		});
 		for (const label of [
-			/front of package/i,
-			/nutrition facts label/i,
-			/^barcode$/i,
+			"Choose existing front of package",
+			"Choose existing nutrition facts label",
+			"Choose existing barcode",
 		]) {
 			await fireEvent.change(screen.getByLabelText(label), {
 				target: { files: [photo] },
@@ -2526,9 +2536,9 @@ describe("CustomIngredientForm", () => {
 			type: "image/jpeg",
 		});
 		for (const label of [
-			/front of package/i,
-			/nutrition facts label/i,
-			/^barcode$/i,
+			"Choose existing front of package",
+			"Choose existing nutrition facts label",
+			"Choose existing barcode",
 		]) {
 			await fireEvent.change(screen.getByLabelText(label), {
 				target: { files: [photo] },
@@ -2778,9 +2788,9 @@ describe("CustomIngredientForm", () => {
 			type: "image/jpeg",
 		});
 		for (const label of [
-			/front of package/i,
-			/nutrition facts label/i,
-			/^barcode$/i,
+			"Choose existing front of package",
+			"Choose existing nutrition facts label",
+			"Choose existing barcode",
 		]) {
 			await fireEvent.change(screen.getByLabelText(label), {
 				target: { files: [photo] },
@@ -2927,9 +2937,9 @@ describe("CustomIngredientForm", () => {
 			type: "image/jpeg",
 		});
 		for (const label of [
-			/front of package/i,
-			/nutrition facts label/i,
-			/^barcode$/i,
+			"Choose existing front of package",
+			"Choose existing nutrition facts label",
+			"Choose existing barcode",
 		]) {
 			await fireEvent.change(screen.getByLabelText(label), {
 				target: { files: [photo] },

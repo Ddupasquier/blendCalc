@@ -167,6 +167,10 @@ barcode` and source-empty groups `Not provided`. Keep source omissions blank and
 - confirm cross-list moves inside the Share step rather than opening a nested dialog;
   name both the current and destination lists, focus Cancel first, keep Cancel and Move
   visible at compact heights, and change list membership exactly once only after Move;
+- offer separate native `Take photo` and `Choose existing photo` actions for package
+  front, nutrition-label reading/evidence, barcode evidence, and package-warning
+  evidence; only the camera action requests the rear camera, and neither choice uploads,
+  analyzes, or persists the selection before its existing explicit action;
 - after a successful add, an applicable reviewed food-symbol trigger may add one quiet
   broad-audience line beneath the factual outcome; unknown foods simply omit it;
 - reuse an existing matching private food rather than ending in a duplicate-name error;

@@ -670,6 +670,9 @@ option cards, and placement previews remain identical.
 - `SelectField`, `FoodCategoryPicker`, `PhotoUploadInput`, `NutritionLabelOcrInput`,
   `BarcodeAutofillSuggestion`, validation lists, toggles, and image placement are part
   of the baseline and must use their shared components rather than raw native styling.
+- Package-evidence photo controls present separate `Take photo` and `Choose existing
+photo` actions. Only the camera action carries the rear-camera hint; cancelling or
+  denying that native camera chooser leaves the library action and current form intact.
 
 ### Nutrition Details
 
