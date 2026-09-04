@@ -50,8 +50,9 @@ describe("client food-safety boundary", () => {
 		);
 
 		expect(mapper).toContain(
-			"$lib/server/products/allergenDeclarations.server.js",
+			"$lib/utils/food/ingredients/ingredientStatementNormalization.js",
 		);
+		expect(mapper).not.toContain("allergenDeclarations.server.js");
 		expect(clientFacade).not.toContain("mapOpenFoodFactsProduct");
 		expect(clientFacade).not.toContain("mapFdcBarcodeFood");
 		expect(clientFacade).not.toContain("mapSharedCatalogFood");
