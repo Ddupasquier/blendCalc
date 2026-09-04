@@ -40,7 +40,7 @@ describe("local resource safety", () => {
 		const safeSnapshot = {
 			startupDiskFreeBytes: 50 * gibibyte,
 			swapUsedBytes: 8 * gibibyte,
-			processes: [{ residentBytes: 4 * gibibyte, pid: 101, command: "node" }],
+			processes: [{ residentBytes: 5 * gibibyte, pid: 101, command: "node" }],
 		};
 		expect(evaluateResourceSafety(safeSnapshot)).toEqual([]);
 		expect(
@@ -49,7 +49,7 @@ describe("local resource safety", () => {
 				swapUsedBytes: 9 * gibibyte,
 				processes: [
 					{
-						residentBytes: 5 * gibibyte,
+						residentBytes: 6 * gibibyte,
 						pid: 101,
 						command: "development-agent",
 					},
