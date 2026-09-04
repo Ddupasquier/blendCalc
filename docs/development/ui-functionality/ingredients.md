@@ -154,6 +154,9 @@ barcode` and source-empty groups `Not provided`. Keep source omissions blank and
   normalize every result before private storage; show each selected input as
   `Preparing photo`, `Ready`, `Uploading`, `Uploaded`, or `Needs attention`, use real
   uploaded-byte progress when available, and never manufacture a percentage;
+- keep expected OCR progress and engine chatter out of the error console; a genuine
+  failure records one privacy-safe phase and reason code while leaving the complete
+  image and manual controls usable;
 - close the form after a successful add instead of opening another blank form;
 - after a successful add, an applicable reviewed food-symbol trigger may add one quiet
   broad-audience line beneath the factual outcome; unknown foods simply omit it;

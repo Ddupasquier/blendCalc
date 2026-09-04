@@ -4,8 +4,8 @@ import type {
 	SmartImagePlacementProgress,
 	SmartImagePlacementSuggestion,
 } from "$lib/utils/food/images/types";
-import { UserFacingError } from "$lib/utils/errors/userFacingErrors";
 import { selectBestImagePlacementSuggestion } from "./smartImagePlacement";
+import { SmartImagePlacementError } from "./smartImagePlacementDiagnostics";
 
 const MAX_URL_CACHE_ENTRIES = 12;
 export const MAX_SMART_PLACEMENT_IMAGE_DIMENSION = 768;
@@ -72,10 +72,13 @@ const loadBitmap = async (blob: Blob) => {
 			throw error;
 		}
 	} catch (error) {
-		throw new UserFacingError(
-			"We couldn't open this photo. Try another image or adjust it by hand.",
-			error,
-		);
+		throw new SmartImagePlacementError({
+			message:
+				"We couldn't open this photo. Try another image or adjust it by hand.",
+			phase: "image-load",
+			reasonCode: "photo-unreadable",
+			cause: error,
+		});
 	}
 };
 
@@ -84,15 +87,21 @@ const loadRemoteImage = async (url: string) => {
 	try {
 		response = await fetch(url, { credentials: "omit", mode: "cors" });
 	} catch (error) {
-		throw new UserFacingError(
-			"We couldn't load this photo for automatic placement. Check your connection or adjust it by hand.",
-			error,
-		);
+		throw new SmartImagePlacementError({
+			message:
+				"We couldn't load this photo for automatic placement. Check your connection or adjust it by hand.",
+			phase: "image-load",
+			reasonCode: "photo-unavailable",
+			cause: error,
+		});
 	}
 	if (!response.ok) {
-		throw new UserFacingError(
-			"We couldn't load this photo for automatic placement. You can still adjust it by hand.",
-		);
+		throw new SmartImagePlacementError({
+			message:
+				"We couldn't load this photo for automatic placement. You can still adjust it by hand.",
+			phase: "image-load",
+			reasonCode: "photo-unavailable",
+		});
 	}
 	return response.blob();
 };
@@ -121,9 +130,12 @@ const prepareImage = async (image: Blob | string, signal?: AbortSignal) => {
 		canvas.height = Math.max(1, Math.round(bitmap.height * scale));
 		const context = canvas.getContext("2d");
 		if (!context) {
-			throw new UserFacingError(
-				"We couldn't prepare this photo for automatic placement. You can still adjust it by hand.",
-			);
+			throw new SmartImagePlacementError({
+				message:
+					"We couldn't prepare this photo for automatic placement. You can still adjust it by hand.",
+				phase: "image-prepare",
+				reasonCode: "canvas-unavailable",
+			});
 		}
 		context.drawImage(bitmap.source, 0, 0, canvas.width, canvas.height);
 		return canvas;
@@ -139,11 +151,22 @@ const recognizeImage = async (
 ): Promise<SmartImagePlacementDocument[]> => {
 	const canvas = await prepareImage(image, signal);
 	throwIfAborted(signal);
-	const { createWorker, PSM } = await raceWithAbort(
-		import("tesseract.js"),
-		signal,
-	);
+	let tesseract: typeof import("tesseract.js");
+	try {
+		tesseract = await raceWithAbort(import("tesseract.js"), signal);
+	} catch (error) {
+		if (signal?.aborted) throwIfAborted(signal);
+		throw new SmartImagePlacementError({
+			message:
+				"We couldn't start automatic placement. You can still adjust this photo by hand or try again.",
+			phase: "worker-load",
+			reasonCode: "ocr-unavailable",
+			cause: error,
+		});
+	}
+	const { createWorker, PSM } = tesseract;
 	let worker: Awaited<ReturnType<typeof createWorker>> | null = null;
+	let phase: "worker-load" | "worker-configure" | "recognition" = "worker-load";
 	let terminated = false;
 	const terminate = async () => {
 		if (terminated || !worker) return;
@@ -157,6 +180,7 @@ const recognizeImage = async (
 
 	try {
 		const workerPromise = createWorker("eng", 1, {
+			errorHandler: () => undefined,
 			logger: (message) => {
 				onProgress?.({
 					status: message.status,
@@ -173,14 +197,17 @@ const recognizeImage = async (
 		);
 		worker = await raceWithAbort(workerPromise, signal);
 		throwIfAborted(signal);
+		phase = "worker-configure";
 		await raceWithAbort(
 			worker.setParameters({
+				debug_file: "/dev/null",
 				tessedit_pageseg_mode: PSM.SPARSE_TEXT,
 				preserve_interword_spaces: "1",
 			}),
 			signal,
 		);
 		throwIfAborted(signal);
+		phase = "recognition";
 		const result = await raceWithAbort(
 			worker.recognize(canvas, {}, { blocks: true, text: true }),
 			signal,
@@ -211,11 +238,19 @@ const recognizeImage = async (
 		];
 	} catch (error) {
 		if (signal?.aborted) throwIfAborted(signal);
-		if (error instanceof UserFacingError) throw error;
-		throw new UserFacingError(
-			"We couldn't find the product name in this photo. You can still adjust it by hand or try again.",
-			error,
-		);
+		if (error instanceof SmartImagePlacementError) throw error;
+		throw new SmartImagePlacementError({
+			message:
+				"We couldn't find the product name in this photo. You can still adjust it by hand or try again.",
+			phase,
+			reasonCode:
+				phase === "worker-load"
+					? "ocr-unavailable"
+					: phase === "worker-configure"
+						? "ocr-configuration-failed"
+						: "ocr-recognition-failed",
+			cause: error,
+		});
 	} finally {
 		signal?.removeEventListener("abort", abort);
 		await terminate();

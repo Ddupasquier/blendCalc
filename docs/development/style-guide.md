@@ -664,6 +664,9 @@ option cards, and placement previews remain identical.
   for recognition. Respect the photo's stored orientation, analyze only a small bounded
   copy, and leave sideways-package correction to the visible Rotate control instead of
   running a second automatic orientation pass that can starve mobile interaction.
+- Keep expected OCR progress and engine chatter out of the error console. A genuine
+  failure produces one privacy-safe phase and reason code without recognized package
+  text, image contents, product identity, credentials, or duplicate worker errors.
 - `SelectField`, `FoodCategoryPicker`, `PhotoUploadInput`, `NutritionLabelOcrInput`,
   `BarcodeAutofillSuggestion`, validation lists, toggles, and image placement are part
   of the baseline and must use their shared components rather than raw native styling.
