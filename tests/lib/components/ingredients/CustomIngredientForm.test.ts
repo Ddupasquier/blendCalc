@@ -1566,6 +1566,7 @@ describe("CustomIngredientForm", () => {
 	});
 
 	it("requires complete image evidence before sharing an Open Food Facts-only match", async () => {
+		const onLookupStateChange = vi.fn();
 		const nutrients = makeTestNutrients({
 			calories: 200,
 			fat: 20,
@@ -1608,7 +1609,9 @@ describe("CustomIngredientForm", () => {
 			requiresCatalogEvidence: true,
 		});
 
-		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
+		render(CustomIngredientForm, {
+			props: { onCreate: vi.fn(), onLookupStateChange },
+		});
 		await openManualForm();
 		await fireEvent.input(screen.getByLabelText(/upc \/ barcode/i), {
 			target: { value: "00051497279929" },
@@ -1617,6 +1620,7 @@ describe("CustomIngredientForm", () => {
 			await screen.findByRole("button", { name: /autofill/i }),
 		);
 		await goToStep(/^share$/i);
+		onLookupStateChange.mockClear();
 		await fireEvent.click(screen.getByLabelText(/share with community/i));
 
 		await waitFor(() =>
@@ -1627,6 +1631,7 @@ describe("CustomIngredientForm", () => {
 		expect(screen.getByLabelText(/front of package/i)).toBeRequired();
 		expect(screen.getByLabelText(/nutrition facts label/i)).toBeRequired();
 		expect(screen.getByLabelText(/^barcode$/i)).toBeRequired();
+		expect(onLookupStateChange).not.toHaveBeenCalledWith(true);
 	});
 
 	it("uses an exact catalog category and advances autofill directly to Share", async () => {

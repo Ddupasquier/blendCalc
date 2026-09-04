@@ -671,9 +671,7 @@ export const createManualEntryBarcodeController = ({
 
 	$effect(() => {
 		onLookupStateChange(
-			state.lookingUpBarcode ||
-				barcodeReferenceLookupPending ||
-				form.data.validatingBarcodeShare,
+			state.lookingUpBarcode || barcodeReferenceLookupPending,
 		);
 	});
 

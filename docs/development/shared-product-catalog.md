@@ -55,6 +55,14 @@ that automatic default; sharing those values requires the user to enable it agai
 The trusted route and database reject every submission without recorded sharing
 consent.
 
+Catalog evidence sources are bounded before transport so several modern camera photos
+cannot freeze the mobile interface or exceed the hosted intake boundary. The browser
+prepares role-specific WebP upload copies sequentially outside the main interface and
+keeps the combined request below 4 MB; nutrition-label evidence receives the largest
+detail budget. This is transport preparation, not a trust boundary: the intake server
+still verifies type, signature, dimensions, size, ownership, and content before writing
+to private Storage.
+
 ## Source Policy
 
 - **blendCalc shared catalog:** the active `shared_products` row plus its normalized

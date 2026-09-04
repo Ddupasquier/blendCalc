@@ -22,9 +22,9 @@ describe("select field architecture", () => {
 		const primitive = readFileSync(nativeSelectOwners[0], "utf8");
 		expect(primitive).toContain('role="combobox"');
 		expect(primitive).toContain('role="listbox"');
-		expect(primitive).toContain(
-			'popover={popoverSupported ? "manual" : undefined}',
-		);
+		expect(primitive).toContain("data-open={open}");
+		expect(primitive).toContain("hidden={!open}");
+		expect(primitive).not.toContain("getBoundingClientRect");
 	});
 
 	it("documents the primitive and preserves specialized searchable pickers", () => {

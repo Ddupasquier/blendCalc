@@ -90,4 +90,28 @@ describe("PhotoUploadInput", () => {
 		);
 		expect(onFilesChange).toHaveBeenLastCalledWith([]);
 	});
+
+	it("shows honest upload status and determinate progress", () => {
+		render(PhotoUploadInput, {
+			props: {
+				...baseProps,
+				files: [
+					new File(["label"], "nutrition-label.jpg", {
+						type: "image/jpeg",
+					}),
+				],
+				status: "uploading",
+				progress: 0.5,
+			},
+		});
+
+		expect(
+			screen.getByText("nutrition-label.jpg · Uploading"),
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole("progressbar", {
+				name: "Nutrition facts photo upload progress",
+			}),
+		).toHaveAttribute("value", "0.5");
+	});
 });

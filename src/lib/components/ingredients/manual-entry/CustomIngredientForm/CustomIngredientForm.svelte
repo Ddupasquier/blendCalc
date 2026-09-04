@@ -535,6 +535,7 @@
 		catalogMessage: submission.state.catalogMessage,
 		catalogMessageTone: submission.state.catalogMessageTone,
 		saving: submission.state.saving,
+		evidenceProgress: submission.state.evidenceProgress,
 		catalogSubmissionOnly,
 		onShareChange: barcode.handleShareChange,
 		onApplyVerifiedBarcode: barcode.applyVerifiedBarcodeForSharing,

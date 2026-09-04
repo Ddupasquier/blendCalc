@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Plus from "$lib/assets/icons/Plus/Plus.svelte";
 	import PillButton from "$lib/components/common/buttons/PillButton/PillButton.svelte";
+	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import type { PhotoUploadInputProps } from "./types";
 
@@ -15,6 +16,8 @@
 		capture = undefined,
 		required = false,
 		disabled = false,
+		status = undefined,
+		progress = null,
 		onFilesChange,
 	}: PhotoUploadInputProps = $props();
 
@@ -40,8 +43,17 @@
 				? "No photo selected"
 				: "No photos selected";
 		}
-		if (allowedPhotoCount === 1) return selectedFiles[0]?.name ?? "1 photo selected";
+		if (allowedPhotoCount === 1)
+			return selectedFiles[0]?.name ?? "1 photo selected";
 		return `${selectedFiles.length} of ${allowedPhotoCount} photos selected`;
+	});
+	const statusLabel = $derived.by(() => {
+		if (!status || selectedFiles.length === 0) return "";
+		if (status === "preparing") return "Preparing photo";
+		if (status === "ready") return "Ready";
+		if (status === "uploading") return "Uploading";
+		if (status === "uploaded") return "Uploaded";
+		return "Needs attention";
 	});
 
 	const updateFiles = (nextFiles: File[]) => {
@@ -112,17 +124,32 @@
 	</div>
 
 	<div class="photo-upload-input__selection">
-		<p id={statusId} aria-live="polite">{selectionLabel}</p>
+		<div class="photo-upload-input__status-copy">
+			{#if status === "preparing" || status === "uploading"}
+				<LoadingSpinner size="small" label={statusLabel} decorative />
+			{/if}
+			<p id={statusId} aria-live="polite">
+				{selectionLabel}{statusLabel ? ` · ${statusLabel}` : ""}
+			</p>
+		</div>
 		{#if selectedFiles.length > 0}
 			<PillButton
 				ariaLabel={`Clear ${prompt.toLowerCase()} selection`}
-				disabled={disabled}
+				{disabled}
 				onclick={clearSelection}
 			>
 				Clear
 			</PillButton>
 		{/if}
 	</div>
+	{#if status === "uploading"}
+		<progress
+			class="photo-upload-input__progress"
+			value={progress === null ? undefined : Math.max(0, Math.min(1, progress))}
+			max="1"
+			aria-label={`${prompt} upload progress`}
+		></progress>
+	{/if}
 
 	{#if selectedFiles.length > 1}
 		<ul class="photo-upload-input__files" aria-label="Selected photos">

@@ -12,7 +12,7 @@
 	import ManualEntryStepLayout from "$lib/components/ingredients/manual-entry/ManualEntryStepLayout/ManualEntryStepLayout.svelte";
 	import ManualEntryToggleRow from "$lib/components/ingredients/manual-entry/ManualEntryToggleRow/ManualEntryToggleRow.svelte";
 	import ProductSafetyAlerts from "$lib/components/ingredients/nutrition/ProductSafetyAlerts/ProductSafetyAlerts.svelte";
-	import type { ShareStepProps } from "./types";
+	import { getEvidencePhotoStatus, type ShareStepProps } from "./types";
 	import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
 	import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 
@@ -51,6 +51,7 @@
 		catalogMessage,
 		catalogMessageTone,
 		saving,
+		evidenceProgress,
 		catalogSubmissionOnly,
 		onShareChange,
 		onApplyVerifiedBarcode,
@@ -68,7 +69,6 @@
 	}: ShareStepProps = $props();
 
 	let saveDestinationControl = $state<HTMLButtonElement | null>(null);
-	let automaticImagePlacementBusy = $state(false);
 
 	$effect(() => {
 		if (saveDestinationControl)
@@ -104,6 +104,11 @@
 			: hasAcceptedBarcodeNutrients
 				? `${optionalNutrientCount} barcode ${optionalNutrientCount === 1 ? "nutrient" : "nutrients"} filled`
 				: `${optionalNutrientCount} optional ${optionalNutrientCount === 1 ? "nutrient" : "nutrients"} filled`,
+	);
+	const evidenceUploadProgress = $derived(
+		evidenceProgress?.phase === "uploading" && evidenceProgress.total
+			? evidenceProgress.loaded / evidenceProgress.total
+			: null,
 	);
 </script>
 
@@ -256,10 +261,14 @@
 				category={activeCategory}
 				required
 				requireFreshPhoto={catalogSubmissionOnly}
+				uploadStatus={getEvidencePhotoStatus(
+					"front",
+					Boolean(frontPhoto),
+					evidenceProgress,
+				)}
+				uploadProgress={evidenceUploadProgress}
 				{onFrontPhotoChange}
 				onPlacementChange={onImagePlacementChange}
-				onPlacementProcessingStateChange={(busy) =>
-					(automaticImagePlacementBusy = busy)}
 			/>
 			<PhotoUploadInput
 				id="custom-product-nutrition-photo"
@@ -270,6 +279,12 @@
 				files={nutritionPhoto ? [nutritionPhoto] : []}
 				capture="environment"
 				required
+				status={getEvidencePhotoStatus(
+					"nutrition",
+					Boolean(nutritionPhoto),
+					evidenceProgress,
+				)}
+				progress={evidenceUploadProgress}
 				onFilesChange={(files) => onNutritionPhotoChange(files[0] ?? null)}
 			/>
 			<PhotoUploadInput
@@ -281,6 +296,12 @@
 				files={barcodePhoto ? [barcodePhoto] : []}
 				capture="environment"
 				required
+				status={getEvidencePhotoStatus(
+					"barcode",
+					Boolean(barcodePhoto),
+					evidenceProgress,
+				)}
+				progress={evidenceUploadProgress}
 				onFilesChange={(files) => onBarcodePhotoChange(files[0] ?? null)}
 			/>
 		</section>
@@ -293,11 +314,15 @@
 				foodName={normalizedName || "Unnamed ingredient"}
 				brandName={brandOwner}
 				category={activeCategory}
+				uploadStatus={getEvidencePhotoStatus(
+					"front",
+					Boolean(frontPhoto),
+					evidenceProgress,
+				)}
+				uploadProgress={evidenceUploadProgress}
 				description="No trusted DB/API product image was found for this barcode. You can add a front package photo now; it stays private until a moderator approves it."
 				{onFrontPhotoChange}
 				onPlacementChange={onImagePlacementChange}
-				onPlacementProcessingStateChange={(busy) =>
-					(automaticImagePlacementBusy = busy)}
 			/>
 		</section>
 	{/if}
@@ -344,8 +369,7 @@
 				? "Submit Correction"
 				: destinationAction.label}
 		busy={saving}
-		nextDisabled={automaticImagePlacementBusy ||
-			(!catalogSubmissionOnly && destinationAction.disabled)}
+		nextDisabled={!catalogSubmissionOnly && destinationAction.disabled}
 		showBack={!catalogSubmissionComplete}
 	/>
 </ManualEntryStepLayout>

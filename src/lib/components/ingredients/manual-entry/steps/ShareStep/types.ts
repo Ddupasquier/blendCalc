@@ -5,6 +5,11 @@ import type { ProductRegulatoryDisclosureProfile } from "$lib/utils/food/quality
 import type { ManualEntryDestinationAction } from "$lib/components/ingredients/manual-entry/utils/listMembership";
 import type { ManualEntryCatalogMessageTone } from "$lib/components/ingredients/manual-entry/utils/submitFlow";
 import type {
+	SharedProductEvidenceRole,
+	SharedProductSubmissionProgress,
+} from "$lib/utils/products/catalog";
+import type { PhotoUploadStatus } from "$lib/components/common/forms/PhotoUploadInput/types";
+import type {
 	ManualEntryBarcodeShareMismatch,
 	ManualEntrySummaryItem,
 	ManualEntryValidationItem,
@@ -45,6 +50,7 @@ export type ShareStepProps = {
 	catalogMessage: string;
 	catalogMessageTone: ManualEntryCatalogMessageTone;
 	saving: boolean;
+	evidenceProgress: SharedProductSubmissionProgress | null;
 	catalogSubmissionOnly: boolean;
 	onShareChange: (checked: boolean) => void | Promise<void>;
 	onApplyVerifiedBarcode: () => void | Promise<void>;
@@ -59,4 +65,19 @@ export type ShareStepProps = {
 	onSubmit: () => void | Promise<void>;
 	onCatalogSubmissionComplete: () => void;
 	onSaveDestinationControl?: (element: HTMLButtonElement | null) => void;
+};
+
+export const getEvidencePhotoStatus = (
+	role: SharedProductEvidenceRole,
+	selected: boolean,
+	progress: SharedProductSubmissionProgress | null,
+): PhotoUploadStatus | undefined => {
+	if (!selected) return undefined;
+	if (!progress) return "ready";
+	if (progress.phase === "failed") return "needs-attention";
+	if (progress.phase === "uploaded") return "uploaded";
+	if (progress.phase === "uploading") return "uploading";
+	if (progress.phase === "preparing" && progress.role === role)
+		return "preparing";
+	return "ready";
 };

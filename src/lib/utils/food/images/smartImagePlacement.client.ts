@@ -8,24 +8,39 @@ import { UserFacingError } from "$lib/utils/errors/userFacingErrors";
 import { selectBestImagePlacementSuggestion } from "./smartImagePlacement";
 
 const MAX_URL_CACHE_ENTRIES = 12;
-const MAX_OCR_IMAGE_DIMENSION = 1800;
-const MIN_OCR_IMAGE_DIMENSION = 1200;
-const QUARTER_TURN_RECOGNITION_ATTEMPTS = [
-	0 as const,
-	90 as const,
-	270 as const,
-	180 as const,
-];
-const TOTAL_RECOGNITION_ATTEMPTS =
-	QUARTER_TURN_RECOGNITION_ATTEMPTS.length + 1;
-const blobRecognitionCache = new WeakMap<
-	Blob,
-	Promise<SmartImagePlacementDocument[]>
->();
-const urlRecognitionCache = new Map<
-	string,
-	Promise<SmartImagePlacementDocument[]>
->();
+export const MAX_SMART_PLACEMENT_IMAGE_DIMENSION = 768;
+export const SMART_PLACEMENT_TIMEOUT_MILLISECONDS = 10_000;
+const blobRecognitionCache = new WeakMap<Blob, SmartImagePlacementDocument[]>();
+const urlRecognitionCache = new Map<string, SmartImagePlacementDocument[]>();
+
+const throwIfAborted = (signal?: AbortSignal) => {
+	if (!signal?.aborted) return;
+	throw (
+		signal.reason ??
+		new DOMException("Automatic placement cancelled", "AbortError")
+	);
+};
+
+const raceWithAbort = <Result>(
+	promise: Promise<Result>,
+	signal?: AbortSignal,
+): Promise<Result> => {
+	if (!signal) return promise;
+	throwIfAborted(signal);
+	return new Promise<Result>((resolve, reject) => {
+		const abort = () => {
+			reject(
+				signal.reason ??
+					new DOMException("Automatic placement cancelled", "AbortError"),
+			);
+		};
+		signal.addEventListener("abort", abort, { once: true });
+		void promise.then(resolve, reject).then(
+			() => signal.removeEventListener("abort", abort),
+			() => signal.removeEventListener("abort", abort),
+		);
+	});
+};
 
 const loadBitmap = async (blob: Blob) => {
 	try {
@@ -82,127 +97,97 @@ const loadRemoteImage = async (url: string) => {
 	return response.blob();
 };
 
-const prepareImage = async (image: Blob | string) => {
-	const blob = typeof image === "string"
-		? await loadRemoteImage(image)
-		: image;
-	const bitmap = await loadBitmap(blob);
-	const largestDimension = Math.max(bitmap.width, bitmap.height);
-	const scale = Math.min(
-		MAX_OCR_IMAGE_DIMENSION / largestDimension,
-		Math.max(1, MIN_OCR_IMAGE_DIMENSION / largestDimension),
+const prepareImage = async (image: Blob | string, signal?: AbortSignal) => {
+	throwIfAborted(signal);
+	const blob = typeof image === "string" ? await loadRemoteImage(image) : image;
+	throwIfAborted(signal);
+	const bitmapPromise = loadBitmap(blob);
+	void bitmapPromise.then(
+		(bitmap) => {
+			if (signal?.aborted) bitmap.dispose();
+		},
+		() => undefined,
 	);
-	const canvas = document.createElement("canvas");
-	canvas.width = Math.max(1, Math.round(bitmap.width * scale));
-	canvas.height = Math.max(1, Math.round(bitmap.height * scale));
-	const context = canvas.getContext("2d");
-	if (!context) {
+	const bitmap = await raceWithAbort(bitmapPromise, signal);
+	try {
+		throwIfAborted(signal);
+		const largestDimension = Math.max(bitmap.width, bitmap.height);
+		const scale = Math.min(
+			1,
+			MAX_SMART_PLACEMENT_IMAGE_DIMENSION / largestDimension,
+		);
+		const canvas = document.createElement("canvas");
+		canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+		canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+		const context = canvas.getContext("2d");
+		if (!context) {
+			throw new UserFacingError(
+				"We couldn't prepare this photo for automatic placement. You can still adjust it by hand.",
+			);
+		}
+		context.drawImage(bitmap.source, 0, 0, canvas.width, canvas.height);
+		return canvas;
+	} finally {
 		bitmap.dispose();
-		throw new UserFacingError(
-			"We couldn't prepare this photo for automatic placement. You can still adjust it by hand.",
-		);
 	}
-	context.drawImage(bitmap.source, 0, 0, canvas.width, canvas.height);
-	bitmap.dispose();
-	return canvas;
-};
-
-const rotateImageCanvas = (
-	source: HTMLCanvasElement,
-	rotationDegrees: 0 | 90 | 180 | 270,
-) => {
-	if (rotationDegrees === 0) return source;
-	const swapsDimensions = rotationDegrees === 90 || rotationDegrees === 270;
-	const canvas = document.createElement("canvas");
-	canvas.width = swapsDimensions ? source.height : source.width;
-	canvas.height = swapsDimensions ? source.width : source.height;
-	const context = canvas.getContext("2d");
-	if (!context) {
-		throw new UserFacingError(
-			"We couldn't prepare this photo for automatic placement. You can still adjust it by hand.",
-		);
-	}
-	context.translate(canvas.width / 2, canvas.height / 2);
-	context.rotate((rotationDegrees * Math.PI) / 180);
-	context.drawImage(source, -source.width / 2, -source.height / 2);
-	return canvas;
 };
 
 const recognizeImage = async (
 	image: Blob | string,
 	onProgress?: (progress: SmartImagePlacementProgress) => void,
+	signal?: AbortSignal,
 ): Promise<SmartImagePlacementDocument[]> => {
-	const canvas = await prepareImage(image);
-	const { createWorker, PSM } = await import("tesseract.js");
+	const canvas = await prepareImage(image, signal);
+	throwIfAborted(signal);
+	const { createWorker, PSM } = await raceWithAbort(
+		import("tesseract.js"),
+		signal,
+	);
 	let worker: Awaited<ReturnType<typeof createWorker>> | null = null;
-	let recognitionAttemptIndex = -1;
+	let terminated = false;
+	const terminate = async () => {
+		if (terminated || !worker) return;
+		terminated = true;
+		await worker.terminate();
+	};
+	const abort = () => {
+		void terminate().catch(() => undefined);
+	};
+	signal?.addEventListener("abort", abort, { once: true });
 
 	try {
-		worker = await createWorker("eng", 1, {
+		const workerPromise = createWorker("eng", 1, {
 			logger: (message) => {
-				const initializationProgress = Math.max(
-					0,
-					Math.min(1, message.progress ?? 0),
-				);
-				const progress = recognitionAttemptIndex < 0
-					? initializationProgress * 0.15
-					: 0.15 +
-						((recognitionAttemptIndex + initializationProgress) /
-							TOTAL_RECOGNITION_ATTEMPTS) *
-							0.85;
 				onProgress?.({
 					status: message.status,
-					progress: Math.max(0, Math.min(1, progress)),
+					progress: Math.max(0, Math.min(1, message.progress ?? 0)),
 				});
 			},
 		});
-		await worker.setParameters({
-			tessedit_pageseg_mode: PSM.SPARSE_TEXT,
-			preserve_interword_spaces: "1",
-		});
-		const documents: SmartImagePlacementDocument[] = [];
-		for (const [attemptIndex, rotationDegrees] of QUARTER_TURN_RECOGNITION_ATTEMPTS.entries()) {
-			recognitionAttemptIndex = attemptIndex;
-			const orientedCanvas = rotateImageCanvas(canvas, rotationDegrees);
-			const result = await worker.recognize(
-				orientedCanvas,
-				{ rotateAuto: true },
-				{ blocks: true, text: true },
-			);
-			const regions =
-				result.data.blocks?.flatMap((block) =>
-					block.paragraphs.flatMap((paragraph) =>
-						paragraph.lines.map((line) => ({
-							text: line.text,
-							confidence: line.confidence,
-							bounds: {
-								x0: line.bbox.x0,
-								y0: line.bbox.y0,
-								x1: line.bbox.x1,
-								y1: line.bbox.y1,
-							},
-						}))
-					)
-				) ?? [];
-			documents.push({
-				width: orientedCanvas.width,
-				height: orientedCanvas.height,
-				rotationDegrees,
-				regions,
-			});
-		}
-		await worker.setParameters({
-			tessedit_pageseg_mode: PSM.SINGLE_BLOCK,
-			preserve_interword_spaces: "1",
-		});
-		recognitionAttemptIndex = QUARTER_TURN_RECOGNITION_ATTEMPTS.length;
-		const fallbackResult = await worker.recognize(
-			canvas,
-			{ rotateAuto: true },
-			{ blocks: true, text: true },
+		void workerPromise.then(
+			(createdWorker) => {
+				if (signal?.aborted)
+					void createdWorker.terminate().catch(() => undefined);
+			},
+			() => undefined,
 		);
-		const fallbackRegions =
-			fallbackResult.data.blocks?.flatMap((block) =>
+		worker = await raceWithAbort(workerPromise, signal);
+		throwIfAborted(signal);
+		await raceWithAbort(
+			worker.setParameters({
+				tessedit_pageseg_mode: PSM.SPARSE_TEXT,
+				preserve_interword_spaces: "1",
+			}),
+			signal,
+		);
+		throwIfAborted(signal);
+		const result = await raceWithAbort(
+			worker.recognize(canvas, {}, { blocks: true, text: true }),
+			signal,
+		);
+		throwIfAborted(signal);
+		const regions =
+			result.data.blocks?.flatMap((block) =>
 				block.paragraphs.flatMap((paragraph) =>
 					paragraph.lines.map((line) => ({
 						text: line.text,
@@ -216,29 +201,32 @@ const recognizeImage = async (
 					})),
 				),
 			) ?? [];
-		documents.push({
-			width: canvas.width,
-			height: canvas.height,
-			rotationDegrees: 0,
-			regions: fallbackRegions,
-		});
-		return documents;
+		return [
+			{
+				width: canvas.width,
+				height: canvas.height,
+				rotationDegrees: 0,
+				regions,
+			},
+		];
 	} catch (error) {
+		if (signal?.aborted) throwIfAborted(signal);
 		if (error instanceof UserFacingError) throw error;
 		throw new UserFacingError(
 			"We couldn't find the product name in this photo. You can still adjust it by hand or try again.",
 			error,
 		);
 	} finally {
-		await worker?.terminate();
+		signal?.removeEventListener("abort", abort);
+		await terminate();
 	}
 };
 
 const rememberUrlRecognition = (
 	url: string,
-	promise: Promise<SmartImagePlacementDocument[]>,
+	documents: SmartImagePlacementDocument[],
 ) => {
-	urlRecognitionCache.set(url, promise);
+	urlRecognitionCache.set(url, documents);
 	while (urlRecognitionCache.size > MAX_URL_CACHE_ENTRIES) {
 		const oldestKey = urlRecognitionCache.keys().next().value;
 		if (typeof oldestKey !== "string") break;
@@ -249,30 +237,27 @@ const rememberUrlRecognition = (
 const getRecognition = (
 	image: Blob | string,
 	onProgress?: (progress: SmartImagePlacementProgress) => void,
+	signal?: AbortSignal,
 ) => {
 	if (typeof image !== "string") {
 		const cached = blobRecognitionCache.get(image);
-		if (cached) return cached;
-		const recognition = recognizeImage(image, onProgress).catch((error) => {
-			blobRecognitionCache.delete(image);
-			throw error;
+		if (cached) return Promise.resolve(cached);
+		return recognizeImage(image, onProgress, signal).then((documents) => {
+			blobRecognitionCache.set(image, documents);
+			return documents;
 		});
-		blobRecognitionCache.set(image, recognition);
-		return recognition;
 	}
 
 	const cached = urlRecognitionCache.get(image);
 	if (cached) {
 		urlRecognitionCache.delete(image);
 		urlRecognitionCache.set(image, cached);
-		return cached;
+		return Promise.resolve(cached);
 	}
-	const recognition = recognizeImage(image, onProgress).catch((error) => {
-		urlRecognitionCache.delete(image);
-		throw error;
+	return recognizeImage(image, onProgress, signal).then((documents) => {
+		rememberUrlRecognition(image, documents);
+		return documents;
 	});
-	rememberUrlRecognition(image, recognition);
-	return recognition;
 };
 
 export const suggestImagePlacement = async ({
@@ -281,19 +266,49 @@ export const suggestImagePlacement = async ({
 	productName,
 	brandName,
 	onProgress,
+	signal,
+	timeoutMilliseconds = SMART_PLACEMENT_TIMEOUT_MILLISECONDS,
 }: {
 	image: Blob | string;
 	geometry: ImagePlacementGeometry;
 	productName: string;
 	brandName?: string;
 	onProgress?: (progress: SmartImagePlacementProgress) => void;
+	signal?: AbortSignal;
+	timeoutMilliseconds?: number;
 }): Promise<SmartImagePlacementSuggestion | null> => {
-	const documents = await getRecognition(image, onProgress);
-	onProgress?.({ status: "scoring product label text", progress: 1 });
-	return selectBestImagePlacementSuggestion({
-		documents,
-		geometry,
-		productName,
-		brandName,
-	});
+	const timeoutController = new AbortController();
+	const timeout = window.setTimeout(
+		() =>
+			timeoutController.abort(
+				new DOMException("Automatic placement timed out", "TimeoutError"),
+			),
+		Math.max(1, timeoutMilliseconds),
+	);
+	const forwardAbort = () =>
+		timeoutController.abort(
+			signal?.reason ??
+				new DOMException("Automatic placement cancelled", "AbortError"),
+		);
+	signal?.addEventListener("abort", forwardAbort, { once: true });
+	if (signal?.aborted) forwardAbort();
+
+	try {
+		const documents = await getRecognition(
+			image,
+			onProgress,
+			timeoutController.signal,
+		);
+		throwIfAborted(timeoutController.signal);
+		onProgress?.({ status: "scoring product label text", progress: 1 });
+		return selectBestImagePlacementSuggestion({
+			documents,
+			geometry,
+			productName,
+			brandName,
+		});
+	} finally {
+		window.clearTimeout(timeout);
+		signal?.removeEventListener("abort", forwardAbort);
+	}
 };
