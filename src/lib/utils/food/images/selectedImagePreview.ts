@@ -171,9 +171,16 @@ export const createBoundedSelectedImageCopy = async (
 		{ bitmap: ImageBitmap; data: null } | { bitmap: null; data: ImageData }
 	> => {
 		if (typeof createImageBitmap === "function") {
+			const resizeOptions =
+				!crop && Math.max(dimensions.width, dimensions.height) > maxDimension
+					? dimensions.width >= dimensions.height
+						? { resizeWidth: maxDimension, resizeQuality: "high" as const }
+						: { resizeHeight: maxDimension, resizeQuality: "high" as const }
+					: {};
 			return {
 				bitmap: await createImageBitmap(photo, {
 					imageOrientation: "from-image",
+					...resizeOptions,
 				}),
 				data: null,
 			};
