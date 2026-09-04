@@ -8,6 +8,10 @@ const environmentHelper = readFileSync(
 	"scripts/lib/qa/qa_database_environment.mjs",
 	"utf8",
 );
+const imageModerationSeed = readFileSync(
+	"scripts/qa/catalog/seed_image_moderation_submission.mjs",
+	"utf8",
+);
 
 describe("QA fixture database environment", () => {
 	it("routes every public QA fixture command to test mode", () => {
@@ -28,5 +32,13 @@ describe("QA fixture database environment", () => {
 		expect(environmentHelper).toContain("Refusing to run a disposable QA fixture command");
 		expect(environmentHelper).toContain('hostname === "127.0.0.1"');
 		expect(environmentHelper).toContain('hostname === "localhost"');
+	});
+
+	it("gives image-review fixtures a canonical category that moderation can approve", () => {
+		expect(imageModerationSeed).toContain('foodCategory: "Protein Bars"');
+		expect(imageModerationSeed).toContain('categories: ["Protein Bars"]');
+		expect(imageModerationSeed).not.toContain(
+			'foodCategory: "Verified Packaged Food"',
+		);
 	});
 });
