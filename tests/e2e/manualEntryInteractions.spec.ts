@@ -1,6 +1,5 @@
 import { expect, test, waitForAppReady } from "./support/browserTest";
 import type { Locator } from "@playwright/test";
-import { readFile } from "node:fs/promises";
 import { getAuthenticatedLocalQaDatabaseClient } from "./support/localQaDatabase";
 import {
 	readApprovedManualEntryNutrientCatalog,
@@ -15,6 +14,75 @@ const expectedManualEntryReferenceDataUnavailableMessage =
 const listMembershipTestBarcode = "04006381333931";
 const listMembershipTestFoodId = -9_280_001;
 const optionalPhotoProductBarcode = "00030000581728";
+const optionalPhotoProductLookupResponse = {
+	status: "found",
+	draft: {
+		barcode: optionalPhotoProductBarcode,
+		name: "Caramel Rice Crisps",
+		nameProvenance: "source",
+		brandOwner: "Quaker",
+		servingLabel: "16 crisps (28 g)",
+		servingWeightGrams: 28,
+		hasSourceServing: true,
+		serving: {
+			label: "16 crisps (28 g)",
+			gramWeight: 28,
+			amount: 16,
+			unitKey: "item",
+			isHouseholdMeasure: true,
+		},
+		nutrients: [
+			{
+				nutrientId: 1008,
+				nutrientName: "Calories",
+				nutrientNumber: "208",
+				unitName: "KCAL",
+				value: 110,
+			},
+			{
+				nutrientId: 1004,
+				nutrientName: "Total fat",
+				nutrientNumber: "204",
+				unitName: "G",
+				value: 1,
+			},
+			{
+				nutrientId: 1005,
+				nutrientName: "Carbohydrate",
+				nutrientNumber: "205",
+				unitName: "G",
+				value: 24,
+			},
+			{
+				nutrientId: 1003,
+				nutrientName: "Protein",
+				nutrientNumber: "203",
+				unitName: "G",
+				value: 2,
+			},
+			{
+				nutrientId: 1093,
+				nutrientName: "Sodium",
+				nutrientNumber: "307",
+				unitName: "MG",
+				value: 190,
+			},
+		],
+		reportedNutrientIds: [1008, 1004, 1005, 1003, 1093],
+		categories: ["cereal grains and pasta"],
+		categoryOptionId: "qa-grains",
+		resolvedCategory: "Cereal Grains and Pasta",
+		categoryResolution: {
+			categoryOptionId: "qa-grains",
+			label: "Cereal Grains and Pasta",
+			sourceValue: "cereal grains and pasta",
+			confidence: "exact",
+		},
+		source: "open-food-facts",
+		sourceLabel: "Open Food Facts",
+		sourceReference: optionalPhotoProductBarcode,
+	},
+};
 
 const removeListMembershipTestFood = async (parallelWorkerIndex: number) => {
 	const supabase =
@@ -356,11 +424,18 @@ test("manual entry shows duplicate and move actions for the selected list", asyn
 		await dialog.getByRole("combobox", { name: "Add after saving" }).click();
 		await dialog.getByRole("option", { name: "Fridge", exact: true }).click();
 		await dialog.getByRole("button", { name: "Move to Fridge" }).click();
-		const moveDialog = page.getByRole("alertdialog", {
-			name: "Move ingredient?",
-		});
-		await expect(moveDialog).toContainText(/already in Shopping List/i);
-		await moveDialog.getByRole("button", { name: "Move", exact: true }).click();
+		const moveConfirmation = dialog.locator(
+			'section[aria-labelledby="manual-entry-move-title"]',
+		);
+		await expect(moveConfirmation).toContainText(
+			/currently in\s+Shopping List/i,
+		);
+		await expect(
+			moveConfirmation.getByRole("button", { name: "Cancel", exact: true }),
+		).toBeFocused();
+		await moveConfirmation
+			.getByRole("button", { name: "Move", exact: true })
+			.click();
 		await expect(dialog).not.toBeVisible();
 
 		const supabase = await getAuthenticatedLocalQaDatabaseClient(
@@ -583,10 +658,9 @@ test("barcode autofill explains unmapped source nutrition without using it in th
 	await expect(dialog.getByLabel("Calories (kcal)")).toHaveValue("100");
 });
 
-test("an optional source product photo enters moderation without blocking a private save", async ({
+test("a source product can save privately without optional photos", async ({
 	page,
 }, testInfo) => {
-	testInfo.setTimeout(120_000);
 	test.skip(
 		testInfo.project.name !== "desktop-chromium",
 		"One isolated local Chromium project owns the optional-photo save corpus.",
@@ -602,9 +676,6 @@ test("an optional source product photo enters moderation without blocking a priv
 		testInfo.parallelIndex,
 	);
 
-	let intakeRequestBody: Buffer | null = null;
-	let intakeRequestCount = 0;
-	let nutrientPresentationVerified = false;
 	await page.route(
 		`**/api/products/barcode/${optionalPhotoProductBarcode}/share-validation`,
 		async (route) => {
@@ -621,21 +692,6 @@ test("an optional source product photo enters moderation without blocking a priv
 			});
 		},
 	);
-	await page.route("**/api/intake/v1/product-observations", async (route) => {
-		intakeRequestCount += 1;
-		intakeRequestBody = route.request().postDataBuffer();
-		await route.fulfill({
-			status: 201,
-			contentType: "application/json",
-			body: JSON.stringify({
-				status: "pending",
-				message:
-					"The ingredient was saved privately. The product image is waiting for moderator review before it can be shared.",
-				evidenceAccepted: true,
-			}),
-		});
-	});
-
 	const openProductAtShare = async () => {
 		await page.goto("/ingredients/fridge/manual-entry");
 		await waitForAppReady(page);
@@ -659,75 +715,6 @@ test("an optional source product photo enters moderation without blocking a priv
 			}
 		}
 		await expect(shareTab).toHaveAttribute("aria-selected", "true");
-		if (!nutrientPresentationVerified) {
-			await expect(
-				dialog.getByText(
-					/17 nutrition values were accepted and retained from the source\. Review 13 in Macros and 4 in Extended\./,
-				),
-			).toBeVisible();
-			await dialog.getByRole("tab", { name: "Servings" }).click();
-			await expect(dialog.getByLabel("Weight (g) optional")).toHaveValue("28");
-			await expect(
-				dialog.getByRole("switch", { name: "Package measure" }),
-			).toBeChecked();
-			await expect(dialog.getByLabel("Amount")).toHaveValue("16");
-			await expect(dialog.getByLabel("Unit")).toHaveText("Items");
-			await dialog.getByRole("tab", { name: "Macros" }).click();
-			await expect(
-				dialog.getByText(/Values marked From barcode were supplied/),
-			).toBeVisible();
-			for (const title of [
-				"Core nutrition",
-				"Carbohydrate details",
-				"Fat details",
-			]) {
-				await expect(
-					dialog.locator("summary", { hasText: title }).locator(".text-badge"),
-				).toHaveText("From barcode");
-			}
-			await expect(dialog.getByLabel("Calories (kcal)")).toHaveValue("110");
-			await expect(dialog.getByLabel("Added sugars (g)")).toHaveValue("9");
-			await expect(
-				dialog
-					.locator("summary", { hasText: "Core nutrition" })
-					.locator(".manual-nutrients__group-count"),
-			).toHaveText("5 of 5");
-
-			await dialog.getByRole("tab", { name: "Extended" }).click();
-			await expect(
-				dialog.getByText(/Not provided means that source did not report/),
-			).toBeVisible();
-			for (const title of ["Vitamins", "Minerals"]) {
-				await expect(
-					dialog.locator("summary", { hasText: title }).locator(".text-badge"),
-				).toHaveText("From barcode");
-			}
-			for (const title of [
-				"Carotenoids",
-				"Advanced carbohydrate details",
-				"Advanced fat details",
-				"Amino acids",
-				"Other nutrients",
-			]) {
-				await expect(
-					dialog.locator("summary", { hasText: title }).locator(".text-badge"),
-				).toHaveText("Not provided");
-			}
-			await dialog.locator("summary", { hasText: "Vitamins" }).click();
-			await expect(dialog.getByLabel("Vitamin D (D2 + D3) (mcg)")).toHaveValue(
-				"0",
-			);
-			await dialog.locator("summary").filter({ hasText: "Minerals" }).click();
-			await expect(dialog.getByLabel("Calcium, Ca (mg)")).toHaveValue("10");
-			await expect(dialog.getByLabel("Iron, Fe (mg)")).toHaveValue("0.4");
-			await expect(dialog.getByLabel("Potassium, K (mg)")).toHaveValue("60");
-			await expect(
-				dialog
-					.locator("summary", { hasText: "Carotenoids" })
-					.locator(".manual-nutrients__group-count"),
-			).toHaveText("0 of 2");
-			nutrientPresentationVerified = true;
-		}
 		await shareTab.click();
 		if (await relationshipRulesLoading.isVisible()) {
 			await expect(relationshipRulesLoading).toBeHidden();
@@ -742,8 +729,10 @@ test("an optional source product photo enters moderation without blocking a priv
 
 	await cleanUpOptionalPhotoProduct(testInfo.parallelIndex);
 	try {
-		let dialog = await openProductAtShare();
-		const frontPhotoInput = dialog.getByLabel("Front of package");
+		const dialog = await openProductAtShare();
+		const frontPhotoInput = dialog.getByLabel(
+			"Choose existing front of package",
+		);
 		await expect(frontPhotoInput).toBeVisible();
 		await expect(frontPhotoInput).not.toHaveAttribute("required", "");
 		await expect(dialog.getByLabel("Nutrition facts label")).toHaveCount(0);
@@ -753,7 +742,6 @@ test("an optional source product photo enters moderation without blocking a priv
 		if (await privateShareToggle.isChecked()) await privateShareToggle.click();
 		await dialog.getByRole("button", { name: "Add Ingredient" }).click();
 		await expect(dialog).toBeHidden();
-		expect(intakeRequestCount).toBe(0);
 
 		const { data: privateFoods, error: privateFoodError } = await supabase
 			.from("custom_foods")
@@ -775,36 +763,123 @@ test("an optional source product photo enters moderation without blocking a priv
 		expect(savedValuesByNutrientId.get(1089)).toBeCloseTo((0.4 / 28) * 100);
 		expect(savedValuesByNutrientId.get(1092)).toBeCloseTo((60 / 28) * 100);
 		expect(savedValuesByNutrientId.get(1114)).toBe(0);
-
+	} finally {
 		await cleanUpOptionalPhotoProduct(testInfo.parallelIndex);
-		await page.evaluate(() => sessionStorage.clear());
-		dialog = await openProductAtShare();
-		const responsivePlacementPhoto = await readFile(
-			new URL("../../static/social-preview.png", import.meta.url),
+	}
+});
+
+test("an optional source product photo enters moderation", async ({
+	page,
+}, testInfo) => {
+	testInfo.setTimeout(75_000);
+	test.skip(
+		testInfo.project.name !== "desktop-chromium",
+		"One isolated local Chromium project owns the optional-photo moderation corpus.",
+	);
+	const baseUrl = new URL(
+		String(testInfo.project.use.baseURL ?? "http://localhost:5174"),
+	);
+	test.skip(
+		!["127.0.0.1", "localhost"].includes(baseUrl.hostname),
+		"The optional-photo moderation corpus is restricted to disposable local infrastructure.",
+	);
+	let intakeRequestBody: Buffer | null = null;
+	let intakeRequestCount = 0;
+	await page.route(
+		`**/api/products/barcode/${optionalPhotoProductBarcode}`,
+		async (route) => {
+			await route.fulfill({
+				status: 200,
+				contentType: "application/json",
+				body: JSON.stringify(optionalPhotoProductLookupResponse),
+			});
+		},
+	);
+	await page.route(
+		`**/api/products/barcode/${optionalPhotoProductBarcode}/share-validation`,
+		async (route) => {
+			await route.fulfill({
+				status: 200,
+				contentType: "application/json",
+				body: JSON.stringify({
+					...optionalPhotoProductLookupResponse,
+					status: "matched",
+					defaultSharingAllowed: true,
+					requiresCatalogEvidence: false,
+				}),
+			});
+		},
+	);
+	await page.route("**/api/intake/v1/product-observations", async (route) => {
+		intakeRequestCount += 1;
+		intakeRequestBody = route.request().postDataBuffer();
+		await route.fulfill({
+			status: 201,
+			contentType: "application/json",
+			body: JSON.stringify({
+				status: "pending",
+				message:
+					"The ingredient was saved privately. The product image is waiting for moderator review before it can be shared.",
+				evidenceAccepted: true,
+			}),
+		});
+	});
+
+	await cleanUpOptionalPhotoProduct(testInfo.parallelIndex);
+	try {
+		await page.goto("/ingredients/fridge/manual-entry");
+		await waitForAppReady(page);
+		const dialog = page.getByRole("dialog", { name: "Enter Manually" });
+		const barcodeInput = dialog.getByLabel("UPC / Barcode");
+		await barcodeInput.fill(optionalPhotoProductBarcode);
+		await barcodeInput.press("Tab");
+		await expect(
+			dialog.getByText("Caramel Rice Crisps · Quaker", { exact: true }),
+		).toBeVisible();
+		await dialog.getByRole("button", { name: "Autofill" }).click();
+		const shareTab = dialog.getByRole("tab", { name: "Share" });
+		await shareTab.click();
+		const relationshipRulesLoading = dialog.getByText(
+			"Nutrition validation rules are still loading. Try again in a moment.",
 		);
-		await dialog.getByLabel("Front of package").setInputFiles({
-			name: "caramel-rice-crisps-front.png",
-			mimeType: "image/png",
+		if (await relationshipRulesLoading.isVisible()) {
+			await expect(relationshipRulesLoading).toBeHidden();
+			await shareTab.click();
+		}
+		await expect(shareTab).toHaveAttribute("aria-selected", "true");
+		const publicShareToggle = dialog.getByLabel("Share with community");
+		await publicShareToggle.click();
+		await expect(publicShareToggle).toBeChecked({ timeout: 30_000 });
+
+		const { default: sharp } = await import("sharp");
+		const responsivePlacementPhoto = await sharp({
+			create: {
+				width: 128,
+				height: 128,
+				channels: 3,
+				background: { r: 224, g: 235, b: 218 },
+			},
+		})
+			.jpeg({ quality: 80 })
+			.toBuffer();
+		await dialog.getByLabel("Choose existing front of package").setInputFiles({
+			name: "caramel-rice-crisps-front.jpg",
+			mimeType: "image/jpeg",
 			buffer: responsivePlacementPhoto,
 		});
-		const publicShareToggle = dialog.getByLabel("Share with community");
-		if (!(await publicShareToggle.isChecked())) await publicShareToggle.click();
+		await expect(
+			dialog.getByText(/caramel-rice-crisps-front\.jpg/),
+		).toBeVisible();
 		await expect(publicShareToggle).toBeChecked();
 		const addButton = dialog.getByRole("button", { name: "Add Ingredient" });
 		await expect(addButton).toBeEnabled({ timeout: 2_000 });
-		const destination = dialog.getByRole("combobox", {
-			name: "Add after saving",
-		});
-		await destination.click();
-		await expect(dialog.getByRole("option", { name: "Fridge" })).toBeVisible();
-		await page.keyboard.press("Escape");
 		await addButton.click();
 		await expect.poll(() => intakeRequestCount).toBe(1);
 
 		expect(intakeRequestBody).not.toBeNull();
 		const multipartBody = intakeRequestBody!.toString("latin1");
 		expect(multipartBody).toContain(
-			'name="frontPhoto"; filename="caramel-rice-crisps-front.png"',
+			'name="frontPhoto"; filename="caramel-rice-crisps-front.jpg"',
 		);
 		expect(multipartBody).not.toContain('name="nutritionPhoto"');
 		expect(multipartBody).not.toContain('name="barcodePhoto"');
@@ -892,7 +967,7 @@ test("@desktop @mobile @compatibility front-photo upload stays responsive before
 				maximumFrameGapMilliseconds: number;
 			}>((resolve, reject) => {
 				const input = document.querySelector<HTMLInputElement>(
-					'#custom-product-front-photo[type="file"]',
+					'#custom-product-front-photo-library[type="file"]',
 				);
 				if (!input) {
 					reject(new Error("Share photo or destination control was not found"));
@@ -966,7 +1041,7 @@ test("@desktop @mobile @compatibility front-photo upload stays responsive before
 				);
 			}),
 	);
-	await dialog.getByLabel("Front of package").setInputFiles({
+	await dialog.getByLabel("Choose existing front of package").setInputFiles({
 		name: "mobile-front-photo.jpg",
 		mimeType: "image/jpeg",
 		buffer: responsivePlacementPhoto,

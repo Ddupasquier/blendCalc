@@ -594,18 +594,15 @@
 			barcode.detachMismatchedBarcodeForPrivateSave,
 		onSubmitBarcodeCorrection: barcode.beginBarcodeCorrectionForSharing,
 		onFrontPhotoChange: (file) => {
-			form.clearAutomaticCatalogSharing();
 			form.data.frontPhoto = file;
 		},
 		onImagePlacementChange: (value) => {
 			form.data.imagePlacement = value;
 		},
 		onNutritionPhotoChange: (file) => {
-			form.clearAutomaticCatalogSharing();
 			form.data.nutritionPhoto = file;
 		},
 		onBarcodePhotoChange: (file) => {
-			form.clearAutomaticCatalogSharing();
 			form.data.barcodePhoto = file;
 		},
 		onSaveDestinationChange: (destination) => {

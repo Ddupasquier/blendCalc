@@ -167,21 +167,35 @@ export const createBoundedSelectedImageCopy = async (
 		MAX_SELECTED_IMAGE_PREVIEW_INPUT_PIXELS
 	)
 		throw new Error("The selected image is too large to decode safely.");
-	const decoded = await (async () => {
+	const decodedResult = await (async (): Promise<
+		{ bitmap: ImageBitmap; data: null } | { bitmap: null; data: ImageData }
+	> => {
+		if (typeof createImageBitmap === "function") {
+			return {
+				bitmap: await createImageBitmap(photo, {
+					imageOrientation: "from-image",
+				}),
+				data: null,
+			};
+		}
 		if (photo.type === "image/jpeg") {
 			const { default: decode } = await import("@jsquash/jpeg/decode.js");
-			return decode(source, { preserveOrientation: false });
+			return {
+				bitmap: null,
+				data: await decode(source, { preserveOrientation: false }),
+			};
 		}
 		if (photo.type === "image/png") {
 			const { default: decode } = await import("@jsquash/png/decode.js");
-			return decode(source);
+			return { bitmap: null, data: await decode(source) };
 		}
 		if (photo.type === "image/webp") {
 			const { default: decode } = await import("@jsquash/webp/decode.js");
-			return decode(source);
+			return { bitmap: null, data: await decode(source) };
 		}
 		throw new Error("The selected image type cannot be decoded safely.");
 	})();
+	const decoded = decodedResult.bitmap ?? decodedResult.data;
 	const normalizedCrop = crop
 		? {
 				left: Math.max(0, Math.min(0.9, crop.left)),
@@ -212,60 +226,52 @@ export const createBoundedSelectedImageCopy = async (
 		),
 	);
 	let targetDimension = Math.min(maxDimension, Math.max(cropWidth, cropHeight));
-	const sourceCanvas = normalizedCrop ? drawImageData(decoded) : null;
-	const resize = normalizedCrop
-		? null
-		: (await import("@jsquash/resize")).default;
+	const sourceCanvas: CanvasImageSource =
+		decodedResult.bitmap ?? drawImageData(decodedResult.data!);
 
-	while (true) {
-		const scale = Math.min(
-			1,
-			targetDimension / Math.max(cropWidth, cropHeight),
-		);
-		const width = Math.max(1, Math.round(cropWidth * scale));
-		const height = Math.max(1, Math.round(cropHeight * scale));
-		const canvas = normalizedCrop
-			? (() => {
-					const target = new OffscreenCanvas(width, height);
-					const context = target.getContext("2d");
-					if (!context || !sourceCanvas)
-						throw new Error("Image cropping is unavailable.");
-					context.drawImage(
-						sourceCanvas,
-						Math.round(decoded.width * normalizedCrop.left),
-						Math.round(decoded.height * normalizedCrop.top),
-						cropWidth,
-						cropHeight,
-						0,
-						0,
-						width,
-						height,
-					);
-					return target;
-				})()
-			: drawImageData(
-					scale === 1 ? decoded : await resize!(decoded, { width, height }),
-				);
-		if (preprocessing === "grayscale-contrast") {
+	try {
+		while (true) {
+			const scale = Math.min(
+				1,
+				targetDimension / Math.max(cropWidth, cropHeight),
+			);
+			const width = Math.max(1, Math.round(cropWidth * scale));
+			const height = Math.max(1, Math.round(cropHeight * scale));
+			const canvas = new OffscreenCanvas(width, height);
 			const context = canvas.getContext("2d");
-			if (!context) throw new Error("Image preprocessing is unavailable.");
-			const image = context.getImageData(0, 0, canvas.width, canvas.height);
-			context.putImageData(normalizeGrayscaleImageData(image), 0, 0);
+			if (!context) throw new Error("Image resizing is unavailable.");
+			context.drawImage(
+				sourceCanvas,
+				Math.round(decoded.width * (normalizedCrop?.left ?? 0)),
+				Math.round(decoded.height * (normalizedCrop?.top ?? 0)),
+				cropWidth,
+				cropHeight,
+				0,
+				0,
+				width,
+				height,
+			);
+			if (preprocessing === "grayscale-contrast") {
+				const image = context.getImageData(0, 0, canvas.width, canvas.height);
+				context.putImageData(normalizeGrayscaleImageData(image), 0, 0);
+			}
+			for (const candidateQuality of [quality, 0.74, 0.64, 0.54, 0.44]) {
+				const copy = await canvas.convertToBlob({
+					type: "image/webp",
+					quality: Math.min(quality, candidateQuality),
+				});
+				if (!maxBytes || copy.size <= maxBytes) return copy;
+			}
+			if (targetDimension <= 640) break;
+			targetDimension = Math.max(640, Math.floor(targetDimension * 0.8));
 		}
-		for (const candidateQuality of [quality, 0.74, 0.64, 0.54, 0.44]) {
-			const copy = await canvas.convertToBlob({
-				type: "image/webp",
-				quality: Math.min(quality, candidateQuality),
-			});
-			if (!maxBytes || copy.size <= maxBytes) return copy;
-		}
-		if (targetDimension <= 640) break;
-		targetDimension = Math.max(640, Math.floor(targetDimension * 0.8));
-	}
 
-	throw new Error(
-		"The selected photo could not be reduced to a safe upload size.",
-	);
+		throw new Error(
+			"The selected photo could not be reduced to a safe upload size.",
+		);
+	} finally {
+		decodedResult.bitmap?.close();
+	}
 };
 
 export const createBoundedSelectedImagePreview = (

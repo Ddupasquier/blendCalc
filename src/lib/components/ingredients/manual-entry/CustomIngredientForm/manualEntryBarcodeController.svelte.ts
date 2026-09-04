@@ -146,10 +146,7 @@ export const createManualEntryBarcodeController = ({
 			form.data.barcodeReferenceSourceDraft?.source !== "shared-catalog" &&
 			!referenceHasChanges &&
 			!hasUserAuthoredCatalogValues &&
-			!validation.blockingValidation &&
-			!form.data.frontPhoto &&
-			!form.data.nutritionPhoto &&
-			!form.data.barcodePhoto
+			!validation.blockingValidation
 			? [
 					normalizedBarcode,
 					form.data.barcodeReferenceSourceDraft?.source ?? "",
@@ -541,13 +538,13 @@ export const createManualEntryBarcodeController = ({
 		}
 	};
 
-	const handleShareChange = async (checked: boolean) => {
+	const handleShareChange = (checked: boolean) => {
 		if (!checked) {
 			clearBarcodeShareValidation();
 			form.data.shareSelectionSource = "declined";
 			return;
 		}
-		await validateCatalogSharing("user");
+		void validateCatalogSharing("user");
 	};
 
 	const applyVerifiedBarcodeForSharing = async () => {
