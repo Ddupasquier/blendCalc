@@ -29,7 +29,9 @@ describe("QA fixture database environment", () => {
 
 	it("loads the generated test environment and rejects non-local targets", () => {
 		expect(environmentHelper).toContain('config({ path: ".env.test.local"');
-		expect(environmentHelper).toContain("Refusing to run a disposable QA fixture command");
+		expect(environmentHelper).toContain(
+			"Refusing to run a disposable QA fixture command",
+		);
 		expect(environmentHelper).toContain('hostname === "127.0.0.1"');
 		expect(environmentHelper).toContain('hostname === "localhost"');
 	});

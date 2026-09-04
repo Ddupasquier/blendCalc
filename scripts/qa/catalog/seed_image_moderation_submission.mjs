@@ -82,7 +82,11 @@ const createPng = (width, height, draw) => {
 	};
 
 	const rect = (x, y, rectWidth, rectHeight, color) => {
-		for (let row = Math.max(0, y); row < Math.min(height, y + rectHeight); row += 1) {
+		for (
+			let row = Math.max(0, y);
+			row < Math.min(height, y + rectHeight);
+			row += 1
+		) {
 			for (
 				let column = Math.max(0, x);
 				column < Math.min(width, x + rectWidth);
@@ -116,9 +120,21 @@ const drawPackageImage = (mode) =>
 	createPng(360, 520, ({ rect, width, height }) => {
 		rect(0, 0, width, height, [248, 250, 252]);
 		rect(34, 24, 292, 472, [255, 255, 255]);
-		rect(34, 24, 292, 68, mode === "adjustment" ? [92, 174, 128] : [227, 94, 82]);
+		rect(
+			34,
+			24,
+			292,
+			68,
+			mode === "adjustment" ? [92, 174, 128] : [227, 94, 82],
+		);
 		rect(64, 124, 232, 126, [239, 246, 255]);
-		rect(92, 152, 176, 70, mode === "adjustment" ? [184, 225, 206] : [255, 210, 120]);
+		rect(
+			92,
+			152,
+			176,
+			70,
+			mode === "adjustment" ? [184, 225, 206] : [255, 210, 120],
+		);
 		rect(64, 284, 232, 22, [20, 27, 45]);
 		rect(64, 324, 232, 16, [145, 153, 180]);
 		rect(64, 354, 170, 16, [145, 153, 180]);
@@ -168,7 +184,8 @@ const calculateGtinCheckDigit = (body) => {
 	const sum = [...body]
 		.reverse()
 		.reduce(
-			(total, digit, index) => total + Number(digit) * (index % 2 === 0 ? 3 : 1),
+			(total, digit, index) =>
+				total + Number(digit) * (index % 2 === 0 ? 3 : 1),
 			0,
 		);
 	return String((10 - (sum % 10)) % 10);
@@ -181,7 +198,11 @@ const createQaBarcode = async (mode) => {
 		const body = `${prefix}${suffix}`;
 		const barcode = `${body}${calculateGtinCheckDigit(body)}`;
 		const [{ data: product }, { data: submission }] = await Promise.all([
-			supabase.from("shared_products").select("id").eq("barcode", barcode).maybeSingle(),
+			supabase
+				.from("shared_products")
+				.select("id")
+				.eq("barcode", barcode)
+				.maybeSingle(),
 			supabase
 				.from("shared_product_submissions")
 				.select("id")
@@ -212,13 +233,55 @@ const createFood = (barcode, mode) => ({
 	customServingWeightGrams: 40,
 	reportedNutrientIds: [1008, 1004, 1005, 1079, 2000, 1003, 1093],
 	foodNutrients: [
-		{ nutrientId: 1008, nutrientName: "Energy", nutrientNumber: "208", unitName: "KCAL", value: 425 },
-		{ nutrientId: 1004, nutrientName: "Total lipid (fat)", nutrientNumber: "204", unitName: "G", value: 12.5 },
-		{ nutrientId: 1005, nutrientName: "Carbohydrate, by difference", nutrientNumber: "205", unitName: "G", value: 62.5 },
-		{ nutrientId: 1079, nutrientName: "Fiber, total dietary", nutrientNumber: "291", unitName: "G", value: 7.5 },
-		{ nutrientId: 2000, nutrientName: "Sugars, total including NLEA", nutrientNumber: "269", unitName: "G", value: 15 },
-		{ nutrientId: 1003, nutrientName: "Protein", nutrientNumber: "203", unitName: "G", value: 10 },
-		{ nutrientId: 1093, nutrientName: "Sodium, Na", nutrientNumber: "307", unitName: "MG", value: 250 },
+		{
+			nutrientId: 1008,
+			nutrientName: "Energy",
+			nutrientNumber: "208",
+			unitName: "KCAL",
+			value: 425,
+		},
+		{
+			nutrientId: 1004,
+			nutrientName: "Total lipid (fat)",
+			nutrientNumber: "204",
+			unitName: "G",
+			value: 12.5,
+		},
+		{
+			nutrientId: 1005,
+			nutrientName: "Carbohydrate, by difference",
+			nutrientNumber: "205",
+			unitName: "G",
+			value: 62.5,
+		},
+		{
+			nutrientId: 1079,
+			nutrientName: "Fiber, total dietary",
+			nutrientNumber: "291",
+			unitName: "G",
+			value: 7.5,
+		},
+		{
+			nutrientId: 2000,
+			nutrientName: "Sugars, total including NLEA",
+			nutrientNumber: "269",
+			unitName: "G",
+			value: 15,
+		},
+		{
+			nutrientId: 1003,
+			nutrientName: "Protein",
+			nutrientNumber: "203",
+			unitName: "G",
+			value: 10,
+		},
+		{
+			nutrientId: 1093,
+			nutrientName: "Sodium, Na",
+			nutrientNumber: "307",
+			unitName: "MG",
+			value: 250,
+		},
 	],
 });
 
@@ -257,7 +320,9 @@ const createValidationReport = (mode) => ({
 	issues:
 		mode === "adjustment"
 			? ["QA image fixture: verify the crop before approving the image update."]
-			: ["QA image fixture: verify this user-submitted front image before making it public."],
+			: [
+					"QA image fixture: verify this user-submitted front image before making it public.",
+				],
 	evidenceComplete: true,
 	conflictCount: mode === "adjustment" ? 1 : 0,
 	externalLookupFailed: mode === "addition",
@@ -298,11 +363,15 @@ const seedSubmission = async (user, mode) => {
 		.single();
 
 	if (error) {
-		await supabase.storage.from(evidenceBucket).remove(Object.values(evidencePaths));
+		await supabase.storage
+			.from(evidenceBucket)
+			.remove(Object.values(evidencePaths));
 		throw error;
 	}
 
-	console.log(`Created ${mode} image moderation submission ${data.id}: ${data.product_name}`);
+	console.log(
+		`Created ${mode} image moderation submission ${data.id}: ${data.product_name}`,
+	);
 	console.log(`Barcode: ${data.barcode}`);
 };
 
@@ -314,7 +383,9 @@ const cleanupQaSubmissions = async (user) => {
 		.contains("validation_report", { qaImageSeed: true });
 	if (error) throw error;
 
-	const approved = (data ?? []).filter((submission) => submission.status === "approved");
+	const approved = (data ?? []).filter(
+		(submission) => submission.status === "approved",
+	);
 	if (approved.length > 0) {
 		throw new Error(
 			"An image QA fixture was approved. Retire its shared product before removing the audit record.",
@@ -341,7 +412,9 @@ const cleanupQaSubmissions = async (user) => {
 			.in("id", ids);
 		if (deleteError) throw deleteError;
 	}
-	console.log(`Removed ${ids.length} QA image moderation submission(s) for ${email}.`);
+	console.log(
+		`Removed ${ids.length} QA image moderation submission(s) for ${email}.`,
+	);
 };
 
 try {
@@ -357,7 +430,9 @@ try {
 			await seedSubmission(user, "adjustment");
 		}
 		console.log("Open /moderation to review the image submission(s).");
-		console.log("These fixtures are approvable; reject them if you only need a UI check.");
+		console.log(
+			"These fixtures are approvable; reject them if you only need a UI check.",
+		);
 	} else {
 		usage();
 		process.exitCode = 1;
