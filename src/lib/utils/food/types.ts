@@ -230,10 +230,18 @@ export type FoodIngredientAllergenDeclarationAnalysis = {
 	statements: FoodIngredientAllergenDeclarationStatement[];
 };
 
+export type FoodIngredientTextNormalization = {
+	method: "external-ingredient-statement";
+	version: number;
+	sourceField: string;
+	languageCode?: string;
+};
+
 export type FoodIngredientAnalysis = {
 	ingredientTags: string[];
 	analysisTags: string[];
 	derivedTraceTags: string[];
+	normalization?: FoodIngredientTextNormalization;
 	allergenDeclarationAnalysis?: FoodIngredientAllergenDeclarationAnalysis;
 	percentAnalysis?: number;
 	percentEstimate?: number;

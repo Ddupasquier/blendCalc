@@ -279,6 +279,9 @@ Notes:
   values. Internal JSON property names, nutrient values, provenance internals, URLs,
   and quality diagnostics are deliberately excluded.
 - Normalized nutrients for a custom food live in `food_nutrients`.
+- Externally sourced ingredient text carries versioned normalization metadata. The
+  service-only normalization backfill may update an exact unchanged imported snapshot,
+  but it rejects user-authored provenance and preserves every unrelated private field.
 - The `food` JSON stores `nameProvenance`. Valid-barcode and autofilled names are
   normalized before saving, including standalone `and` → `&`; barcode-free private names
   and later personal renames preserve the user's exact wording.
@@ -1060,6 +1063,11 @@ Notes:
   enrichment. Data with incompatible storage or redistribution terms remains in its
   isolated cache or source-backed asset table and is not copied into the future public
   dataset.
+- `apply_external_ingredient_statement_normalization` is executable only by
+  `service_role`. It accepts a complete previewed before/after food snapshot, rejects
+  unrelated field or provenance changes, rejects moderator-reviewed canonical rows,
+  preserves precautionary evidence, uses an exact whole-snapshot concurrency check, and
+  appends a linked revision for each canonical update. It performs no provider request.
 - The `food` JSON preserves source identity separately from catalog status. For
   USDA-backed products this includes `sourceKey`, the DB-provided `sourceLabel`,
   `sourceDataType` (`Branded`, `Foundation`, `SR Legacy`, or `Survey (FNDDS)`), and
@@ -1070,13 +1078,15 @@ Notes:
   evidence can identify a package, and all other unclassified snapshots remain unknown
   instead of interpreting provider datatype strings in shared application code.
 - When a source supplies them and source policy permits canonical storage, `food`
-  preserves the raw ingredient statement, normalized `ingredientList`, recursive
+  preserves a versioned normalized ingredient statement and `ingredientList`, recursive
   `structuredIngredients`, `ingredientAnalysis`, `additives`, explicit `allergens`,
   explicit `traces`, `dietaryTags`, `labels`, `packageQuantity`, and
   `sourceMetadata`. `sourceMetadata` includes source language, revision/schema version,
   market countries, created/published/available/modified/updated/discontinued
   timestamps, completeness, quality tags, obsolete state, and tag-source evidence.
-  Each independently accepted field keeps its source in `fieldProvenance`.
+  Each independently accepted field keeps its source in `fieldProvenance`. Untouched
+  provider wording remains in its private cache or source observation rather than being
+  exposed as the canonical display value.
 - `ingredientAnalysis.derivedTraceTags` records a provider-derived ingredient analysis
   only. It is not promoted into `food.traces` and therefore cannot become a package
   `May contain` disclosure.
