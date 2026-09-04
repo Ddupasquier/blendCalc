@@ -45,6 +45,7 @@ export type ShareStepProps = {
 	usesNonstandardNutritionDisclosure: boolean;
 	saveDestination: IngredientListKey;
 	destinationAction: ManualEntryDestinationAction;
+	reviewedUpdate: boolean;
 	error: string;
 	placementMessage: string;
 	catalogMessage: string;

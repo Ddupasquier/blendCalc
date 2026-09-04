@@ -101,6 +101,12 @@ export const createManualEntryBarcodeController = ({
 	const sharedCatalogMatchIsUnchanged = $derived(
 		Boolean(hasSharedCatalogReference && !referenceHasChanges),
 	);
+	const reviewedUpdateCandidate = $derived(
+		Boolean(hasSharedCatalogReference && referenceHasChanges),
+	);
+	const reviewedUpdateSelected = $derived(
+		reviewedUpdateCandidate && form.data.shareWithCatalog,
+	);
 	const canShareWithCatalog = $derived(
 		Boolean(normalizedBarcode) && !sharedCatalogMatchIsUnchanged,
 	);
@@ -641,7 +647,8 @@ export const createManualEntryBarcodeController = ({
 	};
 
 	const getReferenceReviewFlags = () => [
-		...(form.data.submissionIntent === "catalog_correction"
+		...(form.data.submissionIntent === "catalog_correction" ||
+		reviewedUpdateSelected
 			? [
 					"The user reports that the current shared or source product information is incorrect, outdated, or incomplete. Compare only the submitted changes against the current revision and package evidence.",
 				]
@@ -726,6 +733,12 @@ export const createManualEntryBarcodeController = ({
 		},
 		get shareUnavailableMessage() {
 			return shareUnavailableMessage;
+		},
+		get reviewedUpdateCandidate() {
+			return reviewedUpdateCandidate;
+		},
+		get reviewedUpdateSelected() {
+			return reviewedUpdateSelected;
 		},
 		get shareHelpMessage() {
 			return shareHelpMessage;
