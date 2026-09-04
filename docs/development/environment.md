@@ -129,11 +129,12 @@ verification run the same preflight automatically. Local heavy work is blocked w
 
 - the macOS startup disk has less than 50 GiB free;
 - swap use is above 8 GiB; or
-- an existing development process uses more than 4 GiB resident memory.
+- an existing development process uses more than 5 GiB resident memory.
 
 The heavy-command runner limits Node old-space to 4 GiB, Vitest uses at most four workers,
 and Playwright accepts one or two workers. The local database manager starts Colima with
-four CPUs and 4 GiB memory. Complete database and release verification stop Supabase and
+four CPUs and 4 GiB memory; the 5 GiB process guard leaves room for its virtualization
+overhead without loosening the Node heap or swap limits. Complete database and release verification stop Supabase and
 also stop Colima when that command started it.
 
 Free storage or stop stale development processes rather than weakening the thresholds.
