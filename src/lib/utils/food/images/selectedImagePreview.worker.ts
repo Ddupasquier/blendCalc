@@ -1,10 +1,13 @@
 import { createBoundedSelectedImageCopy } from "./selectedImagePreview";
+import type { NormalizedImageCrop } from "./selectedImagePreview";
 
 type PreviewWorkerRequest = {
 	sourceUrl: string;
 	maxDimension: number;
 	maxBytes?: number;
 	quality?: number;
+	crop?: NormalizedImageCrop;
+	preprocessing?: "none" | "grayscale-contrast";
 };
 
 type PreviewWorkerResponse =

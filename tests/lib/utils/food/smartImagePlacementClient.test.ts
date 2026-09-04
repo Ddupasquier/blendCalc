@@ -5,6 +5,7 @@ import {
 	MAX_SMART_PLACEMENT_IMAGE_DIMENSION,
 	suggestImagePlacement,
 } from "$lib/utils/food/images/smartImagePlacement.client";
+import { disposeOcrWorkerCoordinator } from "$lib/utils/food/ocr/ocrWorkerCoordinator.client";
 
 const tesseract = vi.hoisted(() => ({
 	createWorker: vi.fn(),
@@ -80,7 +81,8 @@ describe("smart image placement client", () => {
 		} as unknown as CanvasRenderingContext2D);
 	});
 
-	afterEach(() => {
+	afterEach(async () => {
+		await disposeOcrWorkerCoordinator();
 		vi.restoreAllMocks();
 		vi.unstubAllGlobals();
 	});

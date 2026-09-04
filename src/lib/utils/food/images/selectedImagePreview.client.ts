@@ -1,5 +1,8 @@
+import type { NormalizedImageCrop } from "./selectedImagePreview";
+
 export const MAX_SELECTED_IMAGE_PREVIEW_DIMENSION = 512;
 export const MAX_SELECTED_IMAGE_PREVIEW_INPUT_BYTES = 20 * 1024 * 1024;
+export const MAX_NUTRITION_LABEL_OCR_DIMENSION = 1600;
 
 type PreviewWorkerResponse =
 	{ ok: true; preview: Blob } | { ok: false; message: string };
@@ -8,6 +11,8 @@ type SelectedImageWorkerOptions = {
 	maxDimension: number;
 	maxBytes?: number;
 	quality?: number;
+	crop?: NormalizedImageCrop;
+	preprocessing?: "none" | "grayscale-contrast";
 	workerName: string;
 };
 
@@ -75,12 +80,31 @@ const prepareSelectedImage = (
 				maxDimension: options.maxDimension,
 				maxBytes: options.maxBytes,
 				quality: options.quality,
+				crop: options.crop,
+				preprocessing: options.preprocessing,
 			});
 		} catch (error) {
 			finish({ error });
 		}
 	});
 };
+
+export const prepareNutritionLabelOcrImage = (
+	file: File,
+	crop: NormalizedImageCrop,
+	signal?: AbortSignal,
+): Promise<Blob> =>
+	prepareSelectedImage(
+		file,
+		{
+			maxDimension: MAX_NUTRITION_LABEL_OCR_DIMENSION,
+			crop,
+			preprocessing: "grayscale-contrast",
+			quality: 0.9,
+			workerName: "nutrition-label-ocr-image",
+		},
+		signal,
+	);
 
 export const prepareSelectedImagePreview = (
 	file: File,

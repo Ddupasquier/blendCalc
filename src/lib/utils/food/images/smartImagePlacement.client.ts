@@ -6,6 +6,10 @@ import type {
 } from "$lib/utils/food/images/types";
 import { selectBestImagePlacementSuggestion } from "./smartImagePlacement";
 import { SmartImagePlacementError } from "./smartImagePlacementDiagnostics";
+import {
+	OcrWorkerCoordinatorError,
+	runCoordinatedOcrRecognition,
+} from "$lib/utils/food/ocr/ocrWorkerCoordinator.client";
 
 const MAX_URL_CACHE_ENTRIES = 12;
 export const MAX_SMART_PLACEMENT_IMAGE_DIMENSION = 768;
@@ -151,67 +155,21 @@ const recognizeImage = async (
 ): Promise<SmartImagePlacementDocument[]> => {
 	const canvas = await prepareImage(image, signal);
 	throwIfAborted(signal);
-	let tesseract: typeof import("tesseract.js");
-	try {
-		tesseract = await raceWithAbort(import("tesseract.js"), signal);
-	} catch (error) {
-		if (signal?.aborted) throwIfAborted(signal);
-		throw new SmartImagePlacementError({
-			message:
-				"We couldn't start automatic placement. You can still adjust this photo by hand or try again.",
-			phase: "worker-load",
-			reasonCode: "ocr-unavailable",
-			cause: error,
-		});
-	}
-	const { createWorker, PSM } = tesseract;
-	let worker: Awaited<ReturnType<typeof createWorker>> | null = null;
-	let phase: "worker-load" | "worker-configure" | "recognition" = "worker-load";
-	let terminated = false;
-	const terminate = async () => {
-		if (terminated || !worker) return;
-		terminated = true;
-		await worker.terminate();
-	};
-	const abort = () => {
-		void terminate().catch(() => undefined);
-	};
-	signal?.addEventListener("abort", abort, { once: true });
 
 	try {
-		const workerPromise = createWorker("eng", 1, {
-			errorHandler: () => undefined,
-			logger: (message) => {
-				onProgress?.({
-					status: message.status,
-					progress: Math.max(0, Math.min(1, message.progress ?? 0)),
-				});
-			},
-		});
-		void workerPromise.then(
-			(createdWorker) => {
-				if (signal?.aborted)
-					void createdWorker.terminate().catch(() => undefined);
-			},
-			() => undefined,
-		);
-		worker = await raceWithAbort(workerPromise, signal);
-		throwIfAborted(signal);
-		phase = "worker-configure";
-		await raceWithAbort(
-			worker.setParameters({
+		const result = await runCoordinatedOcrRecognition({
+			image: canvas,
+			parameters: {
 				debug_file: "/dev/null",
-				tessedit_pageseg_mode: PSM.SPARSE_TEXT,
+				tessedit_pageseg_mode: "11",
 				preserve_interword_spaces: "1",
-			}),
+			},
+			recognizeOptions: {},
+			output: { blocks: true, text: true },
+			onProgress,
 			signal,
-		);
-		throwIfAborted(signal);
-		phase = "recognition";
-		const result = await raceWithAbort(
-			worker.recognize(canvas, {}, { blocks: true, text: true }),
-			signal,
-		);
+			timeoutMilliseconds: SMART_PLACEMENT_TIMEOUT_MILLISECONDS,
+		});
 		throwIfAborted(signal);
 		const regions =
 			result.data.blocks?.flatMap((block) =>
@@ -239,21 +197,20 @@ const recognizeImage = async (
 	} catch (error) {
 		if (signal?.aborted) throwIfAborted(signal);
 		if (error instanceof SmartImagePlacementError) throw error;
+		const coordinatorPhase =
+			error instanceof OcrWorkerCoordinatorError ? error.phase : "recognition";
 		throw new SmartImagePlacementError({
 			message:
 				"We couldn't find the product name in this photo. You can still adjust it by hand or try again.",
-			phase,
+			phase: coordinatorPhase,
 			reasonCode:
-				phase === "worker-load"
+				coordinatorPhase === "worker-load"
 					? "ocr-unavailable"
-					: phase === "worker-configure"
+					: coordinatorPhase === "worker-configure"
 						? "ocr-configuration-failed"
 						: "ocr-recognition-failed",
 			cause: error,
 		});
-	} finally {
-		signal?.removeEventListener("abort", abort);
-		await terminate();
 	}
 };
 
