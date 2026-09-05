@@ -13,6 +13,7 @@ const expectedManualEntryReferenceDataUnavailableMessage =
 	"Nutrition tools couldn’t load. Refresh and try again before continuing.";
 const listMembershipTestBarcode = "04006381333931";
 const listMembershipTestFoodId = -9_280_001;
+const reviewedUpdateTimingBarcode = "00021130493609";
 const optionalPhotoProductBarcode = "00030000581728";
 const optionalPhotoProductLookupResponse = {
 	status: "found",
@@ -470,6 +471,72 @@ test("manual entry shows duplicate and move actions for the selected list", asyn
 	} finally {
 		await removeListMembershipTestFood(testInfo.parallelIndex);
 	}
+});
+
+test("@mobile a reviewed product correction reveals sharing evidence without blocking the sheet", async ({
+	page,
+}, testInfo) => {
+	test.skip(
+		testInfo.project.name !== "mobile-chromium",
+		"One phone-sized Chromium project owns the reviewed-update timing corpus.",
+	);
+	const baseUrl = new URL(
+		String(testInfo.project.use.baseURL ?? "http://localhost:5174"),
+	);
+	test.skip(
+		!["127.0.0.1", "localhost"].includes(baseUrl.hostname),
+		"The reviewed-update timing corpus is restricted to disposable local infrastructure.",
+	);
+
+	let shareValidationRequestCount = 0;
+	await page.route(
+		`**/api/products/barcode/${reviewedUpdateTimingBarcode}/share-validation`,
+		async (route) => {
+			shareValidationRequestCount += 1;
+			await route.continue();
+		},
+	);
+
+	await page.goto("/ingredients/fridge/manual-entry");
+	await waitForAppReady(page);
+	const dialog = page.getByRole("dialog", { name: "Enter Manually" });
+	const barcodeInput = dialog.getByLabel("UPC / Barcode");
+	await barcodeInput.fill(reviewedUpdateTimingBarcode);
+	await barcodeInput.press("Tab");
+	await expect(
+		dialog.getByText(/Roasted Onion & Garlic Pasta Sauce/i),
+	).toBeVisible();
+	await dialog.getByRole("button", { name: "Autofill" }).click();
+
+	await dialog.getByRole("tab", { name: "Macros" }).click();
+	await dialog.getByLabel(/^Total Fat \(g\)/).fill("0");
+	await dialog.getByRole("tab", { name: "Share" }).click();
+	await expect(
+		dialog.getByText(
+			/Turn on community sharing to submit the changed package details/i,
+		),
+	).toBeVisible();
+
+	const shareToggle = dialog.getByLabel("Share with community");
+	const revealStartedAt = Date.now();
+	await shareToggle.click();
+	await expect(
+		dialog.getByLabel("Choose existing nutrition facts label"),
+	).toBeVisible({ timeout: 500 });
+	expect(Date.now() - revealStartedAt).toBeLessThan(500);
+	expect(shareValidationRequestCount).toBe(0);
+	await expect(shareToggle).toBeChecked();
+	await expect(
+		dialog.getByRole("button", { name: "Update and share" }),
+	).toBeEnabled();
+
+	const destination = dialog.getByRole("combobox", {
+		name: "Add after saving",
+	});
+	await destination.click();
+	await expect(
+		dialog.getByRole("option", { name: "Shopping List", exact: true }),
+	).toBeVisible({ timeout: 500 });
 });
 
 test("manual entry shows one message when its reference catalog response is unavailable", async ({

@@ -2187,11 +2187,9 @@ describe("CustomIngredientForm", () => {
 			status: "found",
 			draft,
 		});
-		validateBarcodeProductForSharing.mockResolvedValue({
-			status: "matched",
-			barcode: draft.barcode,
-			draft,
-		});
+		validateBarcodeProductForSharing.mockImplementation(
+			() => new Promise(() => {}),
+		);
 
 		render(CustomIngredientForm, {
 			props: {
@@ -2228,11 +2226,9 @@ describe("CustomIngredientForm", () => {
 		const shareToggle = screen.getByLabelText(/share with community/i);
 		expect(shareToggle).not.toBeDisabled();
 		await fireEvent.click(shareToggle);
-		await waitFor(() =>
-			expect(
-				screen.getByText(/photos for catalog review/i),
-			).toBeInTheDocument(),
-		);
+		expect(validateBarcodeProductForSharing).not.toHaveBeenCalled();
+		expect(screen.getByText(/photos for catalog review/i)).toBeInTheDocument();
+		expect(shareToggle).toBeChecked();
 		expect(
 			screen.getByRole("button", { name: /update and share/i }),
 		).toBeEnabled();

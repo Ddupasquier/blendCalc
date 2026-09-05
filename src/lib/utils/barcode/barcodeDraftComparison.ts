@@ -87,6 +87,11 @@ const qualitativeNutrientsMatch = (
 	);
 };
 
+export const barcodeDraftNameMatchesEntry = (
+	draft: Pick<BarcodeProductDraft, "name">,
+	entry: Pick<BarcodeProductDraftComparisonEntry, "name">,
+) => normalizeText(draft.name) === normalizeText(entry.name);
+
 const volumeEquivalentMatches = (
 	left: BarcodeVolumeEquivalent | undefined,
 	right: { quantity: number; unit: string } | null,
@@ -109,7 +114,7 @@ export const barcodeDraftMatchesEntry = (
 	]);
 
 	return (
-		normalizeText(draft.name) === normalizeText(entry.name) &&
+		barcodeDraftNameMatchesEntry(draft, entry) &&
 		normalizeText(draft.brandOwner) === normalizeText(entry.brandOwner) &&
 		normalizeText(draft.servingLabel) === normalizeText(entry.servingLabel) &&
 		numbersMatch(draft.servingWeightGrams, entry.servingWeightGrams) &&

@@ -7,7 +7,10 @@ import {
 	getBarcodeProductSourceDisplayLabel,
 	type BarcodeProductDraft,
 } from "$lib/utils/barcode/productLookup";
-import { barcodeDraftHasEntryChanges } from "$lib/utils/barcode/barcodeDraftComparison";
+import {
+	barcodeDraftHasEntryChanges,
+	barcodeDraftNameMatchesEntry,
+} from "$lib/utils/barcode/barcodeDraftComparison";
 import type { BarcodeScanResult } from "$lib/utils/barcode/types";
 import {
 	getBarcodeDraftState,
@@ -103,6 +106,16 @@ export const createManualEntryBarcodeController = ({
 	);
 	const reviewedUpdateCandidate = $derived(
 		Boolean(hasSharedCatalogReference && referenceHasChanges),
+	);
+	const reviewedUpdateCanSkipValidation = $derived(
+		Boolean(
+			reviewedUpdateCandidate &&
+			form.data.barcodeReferenceSourceDraft &&
+			barcodeDraftNameMatchesEntry(
+				form.data.barcodeReferenceSourceDraft,
+				currentReferenceEntry,
+			),
+		),
 	);
 	const reviewedUpdateSelected = $derived(
 		reviewedUpdateCandidate && form.data.shareWithCatalog,
@@ -542,6 +555,13 @@ export const createManualEntryBarcodeController = ({
 		if (!checked) {
 			clearBarcodeShareValidation();
 			form.data.shareSelectionSource = "declined";
+			return;
+		}
+		if (reviewedUpdateCanSkipValidation) {
+			clearBarcodeShareValidation();
+			form.data.shareWithCatalog = true;
+			form.data.shareSelectionSource = "user";
+			onError("");
 			return;
 		}
 		void validateCatalogSharing("user");

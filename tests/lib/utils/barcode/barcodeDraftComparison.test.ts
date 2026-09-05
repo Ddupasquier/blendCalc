@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+	barcodeDraftNameMatchesEntry,
 	barcodeDraftMatchesEntry,
 	type BarcodeProductDraftComparisonEntry,
 } from "$lib/utils/barcode/barcodeDraftComparison";
@@ -54,6 +55,19 @@ const entry = {
 } satisfies BarcodeProductDraftComparisonEntry;
 
 describe("barcode draft comparison", () => {
+	it("recognizes the accepted product name without hiding identity changes", () => {
+		expect(
+			barcodeDraftNameMatchesEntry(draft, {
+				name: "  TEST FOOD ",
+			}),
+		).toBe(true);
+		expect(
+			barcodeDraftNameMatchesEntry(draft, {
+				name: "Different product",
+			}),
+		).toBe(false);
+	});
+
 	it("does not treat a missing nutrient as a reported zero", () => {
 		expect(barcodeDraftMatchesEntry(draft, entry)).toBe(false);
 	});
