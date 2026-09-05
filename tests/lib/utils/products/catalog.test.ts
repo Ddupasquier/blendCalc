@@ -42,47 +42,4 @@ describe("catalog intake client", () => {
 		expect(body.get("consentToShare")).toBe("true");
 		expect(body.get("food")).toBe(JSON.stringify(food));
 	});
-
-	it("reports real request upload progress when the caller asks for it", async () => {
-		const progress = vi.fn();
-		class XMLHttpRequestMock {
-			status = 201;
-			responseText = JSON.stringify({
-				status: "pending",
-				message: "The product is waiting for review.",
-			});
-			upload: { onprogress: ((event: ProgressEvent) => void) | null } = {
-				onprogress: null,
-			};
-			onload: (() => void) | null = null;
-			onerror: (() => void) | null = null;
-			onabort: (() => void) | null = null;
-			open = vi.fn();
-			setRequestHeader = vi.fn();
-			getResponseHeader = vi.fn().mockReturnValue("application/json");
-			send = vi.fn(() => {
-				this.upload.onprogress?.({
-					loaded: 50,
-					total: 100,
-					lengthComputable: true,
-				} as ProgressEvent);
-				this.onload?.();
-			});
-		}
-		vi.stubGlobal("XMLHttpRequest", XMLHttpRequestMock);
-
-		await expect(
-			submitSharedProduct(
-				food,
-				{},
-				{ consentToShare: true, onProgress: progress },
-			),
-		).resolves.toMatchObject({ status: "pending" });
-		expect(progress).toHaveBeenCalledWith({
-			phase: "uploading",
-			loaded: 50,
-			total: 100,
-		});
-		expect(progress).toHaveBeenLastCalledWith({ phase: "uploaded" });
-	});
 });

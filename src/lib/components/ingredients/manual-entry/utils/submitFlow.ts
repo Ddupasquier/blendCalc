@@ -7,7 +7,6 @@ import type { FoodItem } from "$lib/utils/food/types";
 import type { ImagePlacementValue } from "$lib/utils/food/images/types";
 import { submitSharedProduct } from "$lib/utils/products/catalog";
 import type { CatalogSubmissionIntent } from "$lib/utils/products/catalog";
-import type { SharedProductSubmissionProgress } from "$lib/utils/products/catalog";
 import { notifyIngredientListsChanged } from "$lib/utils/storage/client/ingredientLists";
 import { getUserFacingErrorMessage } from "$lib/utils/errors/userFacingErrors";
 
@@ -45,7 +44,6 @@ export const saveManualEntryCustomFood = async ({
 	useIngredient,
 	submissionIntent = "catalog_share",
 	catalogSubmissionOnly = false,
-	onCatalogProgress,
 }: {
 	food: FoodItem;
 	name: string;
@@ -56,14 +54,7 @@ export const saveManualEntryCustomFood = async ({
 	useIngredient: (food: FoodItem, alreadySaved?: boolean) => Promise<boolean>;
 	submissionIntent?: CatalogSubmissionIntent;
 	catalogSubmissionOnly?: boolean;
-	onCatalogProgress?: (progress: SharedProductSubmissionProgress) => void;
 }): Promise<ManualEntrySubmitFlowResult> => {
-	const submissionContext = {
-		consentToShare: true as const,
-		reviewFlags,
-		intent: submissionIntent,
-		...(onCatalogProgress ? { onProgress: onCatalogProgress } : {}),
-	};
 	if (catalogSubmissionOnly) {
 		if (!normalizedBarcode || !shareWithCatalog) {
 			return {
@@ -73,24 +64,22 @@ export const saveManualEntryCustomFood = async ({
 			};
 		}
 		try {
-			const submission = await submitSharedProduct(
-				food,
-				photos,
-				submissionContext,
-			);
+			const submission = await submitSharedProduct(food, photos, {
+				consentToShare: true,
+				reviewFlags,
+				intent: submissionIntent,
+			});
 			return {
 				status: "complete",
 				catalogMessage: submission.message,
 				catalogMessageTone: "success",
 				resetForm: false,
 			};
-		} catch (error) {
+		} catch {
 			return {
 				status: "error",
-				error: getUserFacingErrorMessage(error, {
-					fallback:
-						"We couldn’t submit this correction. Check your connection and try again.",
-				}),
+				error:
+					"We couldn’t submit this correction. Check your connection and try again.",
 			};
 		}
 	}
@@ -154,11 +143,11 @@ export const saveManualEntryCustomFood = async ({
 
 	if (normalizedBarcode && addedToDestination && shareWithCatalog) {
 		try {
-			const submission = await submitSharedProduct(
-				food,
-				photos,
-				submissionContext,
-			);
+			const submission = await submitSharedProduct(food, photos, {
+				consentToShare: true,
+				reviewFlags,
+				intent: submissionIntent,
+			});
 			catalogMessage = submission.message;
 			notifyIngredientListsChanged();
 		} catch (error) {

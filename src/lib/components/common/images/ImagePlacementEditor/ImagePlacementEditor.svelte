@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { onDestroy } from "svelte";
 	import PillButton from "$lib/components/common/buttons/PillButton/PillButton.svelte";
 	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
 	import RangeInput from "$lib/components/common/forms/RangeInput/RangeInput.svelte";
@@ -22,11 +21,7 @@
 		ImagePlacementGeometry,
 		ImagePlacementValue,
 	} from "$lib/utils/food/images/types";
-	import {
-		getUserFacingErrorMessage,
-		isAbortError,
-	} from "$lib/utils/errors/userFacingErrors";
-	import { readSmartImagePlacementDiagnostic } from "$lib/utils/food/images/smartImagePlacementDiagnostics";
+	import { getUserFacingErrorMessage } from "$lib/utils/errors/userFacingErrors";
 
 	let {
 		imageUrl,
@@ -57,9 +52,6 @@
 	let suggestionError = $state("");
 	let lastAutomaticallyProcessedSource: Blob | string | null = null;
 	let placementEditRevision = 0;
-	let activeSuggestionController: AbortController | null = null;
-	let activeSuggestionSource: Blob | string | null = null;
-	let suggestionRunId = 0;
 	const activeFitMode = $derived<ImageFitMode>(
 		value.placementVersion <= 1 ? "custom" : value.fitMode,
 	);
@@ -75,27 +67,8 @@
 		),
 	);
 
-	const stopSuggestion = ({ announce = false } = {}) => {
-		if (!activeSuggestionController) return;
-		suggestionRunId += 1;
-		activeSuggestionController.abort();
-		activeSuggestionController = null;
-		activeSuggestionSource = null;
-		suggestingPlacement = false;
-		onPlacementProcessingStateChange?.(false);
-		if (announce) {
-			suggestionMessage =
-				"Automatic placement stopped. The full photo is still ready to use.";
-			suggestionError = "";
-		}
-	};
-	const beginManualEdit = () => {
-		placementEditRevision += 1;
-		stopSuggestion();
-		clearSuggestionFeedback();
-	};
 	const updateCustomValue = (patch: Partial<ImagePlacementValue>) => {
-		beginManualEdit();
+		placementEditRevision += 1;
 		onChange?.(
 			constrainCardImagePlacement({
 				...createCustomImagePlacement(value, previewGeometry.effectiveZoom),
@@ -106,12 +79,12 @@
 	};
 
 	const handlePreviewChange = (nextValue: ImagePlacementValue) => {
-		beginManualEdit();
+		placementEditRevision += 1;
 		onChange?.(constrainCardImagePlacement(nextValue));
 	};
 
 	const selectFitMode = (fitMode: Exclude<ImageFitMode, "custom">) => {
-		beginManualEdit();
+		placementEditRevision += 1;
 		if (fitMode === "contain") {
 			onChange?.(createFullImagePlacement(value.rotationDegrees));
 			return;
@@ -131,21 +104,19 @@
 		suggestionError = "";
 	};
 	const restoreDefault = () => {
-		beginManualEdit();
+		placementEditRevision += 1;
+		clearSuggestionFeedback();
 		onChange?.(createFullImagePlacement());
 	};
 	const rotateClockwise = () => {
-		beginManualEdit();
+		placementEditRevision += 1;
+		clearSuggestionFeedback();
 		onChange?.(rotateImagePlacement(value));
 	};
 	const suggestPlacement = async ({ automatic = false } = {}) => {
 		if (!previewGeometry.ready || suggestingPlacement) return;
 		const startingEditRevision = placementEditRevision;
 		const placementSource = smartPlacementSource;
-		const abortController = new AbortController();
-		const runId = ++suggestionRunId;
-		activeSuggestionController = abortController;
-		activeSuggestionSource = placementSource;
 		suggestingPlacement = true;
 		onPlacementProcessingStateChange?.(true);
 		suggestionProgress = 0;
@@ -161,12 +132,10 @@
 				geometry: previewGeometry,
 				productName: foodName,
 				brandName,
-				signal: abortController.signal,
 				onProgress: ({ progress }) => {
-					if (runId === suggestionRunId) suggestionProgress = progress;
+					suggestionProgress = progress;
 				},
 			});
-			if (runId !== suggestionRunId || abortController.signal.aborted) return;
 			if (!suggestion) {
 				suggestionError =
 					"We couldn't confidently place this photo, so the full image is still showing. You can adjust it by hand or try again.";
@@ -190,12 +159,7 @@
 			suggestionMessage =
 				"We found the product label and placed it in the card. You can fine-tune it before saving.";
 		} catch (error) {
-			if (runId !== suggestionRunId || isAbortError(error)) return;
-			if (!(error instanceof DOMException && error.name === "TimeoutError"))
-				console.error(
-					"[image placement] Automatic placement failed",
-					readSmartImagePlacementDiagnostic(error),
-				);
+			console.error("[image placement] Automatic placement failed", error);
 			suggestionError = getUserFacingErrorMessage(error, {
 				fallback:
 					"We couldn't check this photo automatically. You can still position it by hand or try again.",
@@ -205,23 +169,13 @@
 					"Automatic placement took too long. Try again, or position the photo by hand.",
 			});
 		} finally {
-			if (runId === suggestionRunId) {
-				activeSuggestionController = null;
-				activeSuggestionSource = null;
-				suggestingPlacement = false;
-				onPlacementProcessingStateChange?.(false);
-			}
+			suggestingPlacement = false;
+			onPlacementProcessingStateChange?.(false);
 		}
 	};
 
 	$effect(() => {
 		const placementSource = smartPlacementSource;
-		if (
-			activeSuggestionController &&
-			activeSuggestionSource !== placementSource
-		) {
-			stopSuggestion();
-		}
 		if (
 			!automaticallyPlaceNewImage ||
 			!editable ||
@@ -234,8 +188,6 @@
 		lastAutomaticallyProcessedSource = placementSource;
 		void suggestPlacement({ automatic: true });
 	});
-
-	onDestroy(() => stopSuggestion());
 </script>
 
 <section class="image-placement-editor" aria-label={title}>
@@ -274,32 +226,17 @@
 
 	{#if editable}
 		<div class="image-placement-editor__controls">
-			<div class="image-placement-editor__automatic-controls">
-				<RoundedActionButton
-					variant="soft"
-					fullWidth
-					busy={suggestingPlacement}
-					disabled={!previewGeometry.ready}
-					onclick={() => suggestPlacement()}
-				>
-					{suggestingPlacement
-						? `Placing product label ${Math.round(suggestionProgress * 100)}%`
-						: "Place automatically"}
-				</RoundedActionButton>
-				{#if suggestingPlacement}
-					<p role="status" aria-live="polite">
-						The full photo is ready now. You can keep editing or save while
-						placement finishes.
-					</p>
-					<RoundedActionButton
-						variant="neutral"
-						fullWidth
-						onclick={() => stopSuggestion({ announce: true })}
-					>
-						Stop automatic placement
-					</RoundedActionButton>
-				{/if}
-			</div>
+			<RoundedActionButton
+				variant="soft"
+				fullWidth
+				busy={suggestingPlacement}
+				disabled={!previewGeometry.ready}
+				onclick={() => suggestPlacement()}
+			>
+				{suggestingPlacement
+					? `Placing product label ${Math.round(suggestionProgress * 100)}%`
+					: "Place automatically"}
+			</RoundedActionButton>
 			{#if suggestionMessage || suggestionError}
 				{#if suggestionMessage}
 					<StatusMessage tone="success" message={suggestionMessage} />

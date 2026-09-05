@@ -10,8 +10,6 @@ const browserDependentUtilityTests = [
 	"tests/lib/utils/animation/motion.test.ts",
 	"tests/lib/utils/barcode/scanner.test.ts",
 	"tests/lib/utils/food/customFoods.test.ts",
-	"tests/lib/utils/food/selectedImagePreviewClient.test.ts",
-	"tests/lib/utils/food/smartImagePlacementClient.test.ts",
 	"tests/lib/utils/food/smartImagePlacement.test.ts",
 	"tests/lib/utils/interaction/longPress.test.ts",
 	"tests/lib/utils/mix/mixDraftPersistenceController.test.ts",
@@ -49,14 +47,6 @@ const jsdomTestFiles = [
 
 export default defineConfig({
 	plugins: [sveltekit(), svelteTesting()],
-	optimizeDeps: {
-		exclude: [
-			"@jsquash/jpeg",
-			"@jsquash/png",
-			"@jsquash/resize",
-			"@jsquash/webp",
-		],
-	},
 	build: {
 		target: ["chrome111", "edge111", "firefox113", "safari16.4"],
 		cssTarget: ["chrome111", "edge111", "firefox113", "safari16.4"],

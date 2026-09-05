@@ -21,23 +21,21 @@
 	let statusMessage = $state("");
 
 	const reportablePreferences = $derived.by(() => {
-		const unique = new Map<
-			string,
-			NonNullable<
-				typeof food.compatibilityEvaluation
-			>["preferenceResolution"]["resolvedPreferences"][number]
-		>();
-		for (const preference of food.compatibilityEvaluation?.preferenceResolution
-			.resolvedPreferences ?? []) {
+		const unique = new Map<string, NonNullable<
+			typeof food.compatibilityEvaluation
+		>["preferenceResolution"]["resolvedPreferences"][number]>();
+		for (
+			const preference of food.compatibilityEvaluation?.preferenceResolution
+				.resolvedPreferences ?? []
+		) {
 			const key = `${preference.tagId}:${preference.type}`;
 			if (!unique.has(key)) unique.set(key, preference);
 		}
 		return [...unique.values()];
 	});
 	const selectedPreference = $derived(
-		reportablePreferences.find(
-			(preference) =>
-				`${preference.tagId}:${preference.type}` === selectedPreferenceKey,
+		reportablePreferences.find((preference) =>
+			`${preference.tagId}:${preference.type}` === selectedPreferenceKey
 		) ?? null,
 	);
 	const preferenceOptions = $derived(
@@ -46,9 +44,9 @@
 			label: preference.rawValue,
 		})),
 	);
-	const sourceId = $derived(
-		String(food.sourceIdentifiers?.[food.sourceKey ?? ""] ?? food.fdcId),
-	);
+	const sourceId = $derived(String(
+		food.sourceIdentifiers?.[food.sourceKey ?? ""] ?? food.fdcId,
+	));
 	const maximumObservedDate = new Date().toISOString().slice(0, 10);
 
 	$effect(() => {
@@ -65,8 +63,7 @@
 		statusMessage = "";
 
 		const formData = new FormData();
-		if (food.sharedProductId)
-			formData.set("sharedProductId", food.sharedProductId);
+		if (food.sharedProductId) formData.set("sharedProductId", food.sharedProductId);
 		if (food.sourceKey) formData.set("sourceKey", food.sourceKey);
 		formData.set("sourceId", sourceId);
 		if (food.barcode ?? food.gtinUpc) {
@@ -95,19 +92,16 @@
 					"SERVICE_UNAVAILABLE",
 				);
 			}
-			const result =
-				(await response.json()) as FoodCompatibilityFeedbackResponse;
+			const result = await response.json() as FoodCompatibilityFeedbackResponse;
 			status = "success";
-			statusMessage =
-				result.status === "already_pending"
-					? "You already sent this food and setting for review."
-					: "Thanks. We’ll compare this with the current package and product record.";
+			statusMessage = result.status === "already_pending"
+				? "You already sent this food and setting for review."
+				: "Thanks. We’ll compare this with the current package and product record.";
 		} catch (error) {
 			status = "error";
 			statusMessage = getUserFacingErrorMessage(error, {
 				fallback: "We couldn’t send this report yet. Please try again.",
-				network:
-					"We couldn’t connect right now. Check your connection and try again.",
+				network: "We couldn’t connect right now. Check your connection and try again.",
 			});
 		} finally {
 			submitting = false;
@@ -120,8 +114,8 @@
 		<CollapsibleSection title="Missing a food warning?" surface="panel">
 			<form onsubmit={submitFeedback}>
 				<p class="missing-warning-feedback__intro">
-					If this food conflicts with one of your settings but no warning
-					appeared, tell us what the current package shows.
+					If this food conflicts with one of your settings but no warning appeared,
+					tell us what the current package shows.
 				</p>
 
 				<SelectField
@@ -161,9 +155,8 @@
 					prompt="Current package label"
 					description="A clear ingredients or allergen photo helps moderators compare the exact package."
 					files={evidenceFiles}
-					capture="environment"
 					disabled={submitting}
-					onFilesChange={(files) => (evidenceFiles = [...files])}
+					onFilesChange={(files) => evidenceFiles = [...files]}
 				/>
 
 				<p class="missing-warning-feedback__note">

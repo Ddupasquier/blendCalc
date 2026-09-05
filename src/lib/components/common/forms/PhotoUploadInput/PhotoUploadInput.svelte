@@ -1,7 +1,6 @@
 <script lang="ts">
 	import Plus from "$lib/assets/icons/Plus/Plus.svelte";
 	import PillButton from "$lib/components/common/buttons/PillButton/PillButton.svelte";
-	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import type { PhotoUploadInputProps } from "./types";
 
@@ -16,14 +15,10 @@
 		capture = undefined,
 		required = false,
 		disabled = false,
-		status = undefined,
-		progress = null,
 		onFilesChange,
 	}: PhotoUploadInputProps = $props();
 
 	let input = $state<HTMLInputElement | null>(null);
-	let cameraInput = $state<HTMLInputElement | null>(null);
-	let libraryInput = $state<HTMLInputElement | null>(null);
 	let localFiles = $state<File[]>([]);
 	let error = $state("");
 
@@ -45,17 +40,8 @@
 				? "No photo selected"
 				: "No photos selected";
 		}
-		if (allowedPhotoCount === 1)
-			return selectedFiles[0]?.name ?? "1 photo selected";
+		if (allowedPhotoCount === 1) return selectedFiles[0]?.name ?? "1 photo selected";
 		return `${selectedFiles.length} of ${allowedPhotoCount} photos selected`;
-	});
-	const statusLabel = $derived.by(() => {
-		if (!status || selectedFiles.length === 0) return "";
-		if (status === "preparing") return "Preparing photo";
-		if (status === "ready") return "Ready";
-		if (status === "uploading") return "Uploading";
-		if (status === "uploaded") return "Uploaded";
-		return "Needs attention";
 	});
 
 	const updateFiles = (nextFiles: File[]) => {
@@ -78,17 +64,12 @@
 
 	const clearSelection = () => {
 		if (input) input.value = "";
-		if (cameraInput) cameraInput.value = "";
-		if (libraryInput) libraryInput.value = "";
 		error = "";
 		updateFiles([]);
 	};
 
 	$effect(() => {
-		if (files?.length !== 0) return;
-		if (input?.value) input.value = "";
-		if (cameraInput?.value) cameraInput.value = "";
-		if (libraryInput?.value) libraryInput.value = "";
+		if (files?.length === 0 && input?.value) input.value = "";
 	});
 </script>
 
@@ -99,120 +80,53 @@
 	</div>
 	<p id={descriptionId}>{description}</p>
 
-	{#if capture}
-		<div class="photo-upload-input__source-choices">
-			<div class="photo-upload-input__control">
-				<input
-					bind:this={cameraInput}
-					id={`${id}-camera`}
-					{name}
-					class="photo-upload-input__native"
-					type="file"
-					{accept}
-					{capture}
-					multiple={allowedPhotoCount > 1}
-					{disabled}
-					aria-label={`Take ${prompt.toLowerCase()}`}
-					aria-describedby={describedBy}
-					aria-required={required}
-					aria-invalid={error ? "true" : undefined}
-					onchange={handleSelection}
-				/>
-				<label class="photo-upload-input__trigger" for={`${id}-camera`}>
-					<Plus size={18} />
-					<span>{selectedFiles.length > 0 ? "Retake photo" : "Take photo"}</span
-					>
-				</label>
-			</div>
-			<div class="photo-upload-input__control">
-				<input
-					bind:this={libraryInput}
-					id={`${id}-library`}
-					{name}
-					class="photo-upload-input__native"
-					type="file"
-					{accept}
-					multiple={allowedPhotoCount > 1}
-					{disabled}
-					aria-label={`Choose existing ${prompt.toLowerCase()}`}
-					aria-describedby={describedBy}
-					aria-required={required}
-					aria-invalid={error ? "true" : undefined}
-					onchange={handleSelection}
-				/>
-				<label class="photo-upload-input__trigger" for={`${id}-library`}>
-					<Plus size={18} />
-					<span>
-						{selectedFiles.length > 0
-							? "Replace from library"
-							: "Choose existing photo"}
-					</span>
-				</label>
-			</div>
-		</div>
-	{:else}
-		<div class="photo-upload-input__control">
-			<input
-				bind:this={input}
-				{id}
-				{name}
-				class="photo-upload-input__native"
-				type="file"
-				{accept}
-				multiple={allowedPhotoCount > 1}
-				{required}
-				{disabled}
-				aria-labelledby={titleId}
-				aria-describedby={describedBy}
-				aria-invalid={error ? "true" : undefined}
-				onchange={handleSelection}
-			/>
-			<label class="photo-upload-input__trigger" for={id}>
-				<Plus size={18} />
-				<span>
-					{selectedFiles.length > 0
-						? allowedPhotoCount === 1
-							? "Replace photo"
-							: "Replace photos"
-						: allowedPhotoCount === 1
-							? "Choose photo"
-							: "Choose photos"}
-				</span>
-			</label>
-		</div>
-	{/if}
+	<div class="photo-upload-input__control">
+		<input
+			bind:this={input}
+			{id}
+			{name}
+			class="photo-upload-input__native"
+			type="file"
+			{accept}
+			{capture}
+			multiple={allowedPhotoCount > 1}
+			{required}
+			{disabled}
+			aria-labelledby={titleId}
+			aria-describedby={describedBy}
+			aria-invalid={error ? "true" : undefined}
+			onchange={handleSelection}
+		/>
+		<label class="photo-upload-input__trigger" for={id}>
+			<Plus size={18} />
+			<span>
+				{selectedFiles.length > 0
+					? allowedPhotoCount === 1
+						? "Replace photo"
+						: "Replace photos"
+					: allowedPhotoCount === 1
+						? "Choose photo"
+						: "Choose photos"}
+			</span>
+		</label>
+	</div>
 
 	<div class="photo-upload-input__selection">
-		<div class="photo-upload-input__status-copy">
-			{#if status === "preparing" || status === "uploading"}
-				<LoadingSpinner size="small" label={statusLabel} decorative />
-			{/if}
-			<p id={statusId} aria-live="polite">
-				{selectionLabel}{statusLabel ? ` · ${statusLabel}` : ""}
-			</p>
-		</div>
+		<p id={statusId} aria-live="polite">{selectionLabel}</p>
 		{#if selectedFiles.length > 0}
 			<PillButton
 				ariaLabel={`Clear ${prompt.toLowerCase()} selection`}
-				{disabled}
+				disabled={disabled}
 				onclick={clearSelection}
 			>
 				Clear
 			</PillButton>
 		{/if}
 	</div>
-	{#if status === "uploading"}
-		<progress
-			class="photo-upload-input__progress"
-			value={progress === null ? undefined : Math.max(0, Math.min(1, progress))}
-			max="1"
-			aria-label={`${prompt} upload progress`}
-		></progress>
-	{/if}
 
 	{#if selectedFiles.length > 1}
 		<ul class="photo-upload-input__files" aria-label="Selected photos">
-			{#each selectedFiles as file (`${file.name}:${file.size}:${file.lastModified}`)}
+			{#each selectedFiles as file}
 				<li>{file.name}</li>
 			{/each}
 		</ul>

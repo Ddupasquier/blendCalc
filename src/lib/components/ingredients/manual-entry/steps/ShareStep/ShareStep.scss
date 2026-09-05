@@ -2,39 +2,13 @@
 
 .share-step__summary,
 .share-step__lookup-status,
-.share-step__evidence,
-.share-step__move-confirmation {
+.share-step__evidence {
 	display: grid;
 	gap: $app-gap-md;
 	min-width: 0;
 	padding: $app-shell-card-padding;
 	background: $app-shell-surface-soft;
 	border-radius: $app-shell-radius-card;
-}
-
-.share-step__move-confirmation > div:first-child {
-	display: grid;
-	gap: $app-gap-xs;
-}
-
-.share-step__move-confirmation strong {
-	color: $app-shell-text-primary;
-	font-size: $app-font-size-md;
-	font-weight: $app-font-weight-bold;
-}
-
-.share-step__move-confirmation p {
-	margin: 0;
-	color: $app-shell-text-muted;
-	font-size: $app-font-size-sm;
-	font-weight: $app-font-weight-medium;
-	line-height: $app-line-height-ui;
-}
-
-.share-step__move-actions {
-	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: $app-gap-sm;
 }
 
 .share-step__lookup-status {
@@ -122,12 +96,10 @@
 	font-weight: $app-font-weight-medium;
 }
 
-@media (max-width: $app-breakpoint-xs),
-	(max-height: $app-breakpoint-height-compact) {
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
 	.share-step__summary,
 	.share-step__lookup-status,
-	.share-step__evidence,
-	.share-step__move-confirmation {
+	.share-step__evidence {
 		gap: $app-gap-sm;
 		padding: $app-gap-sm;
 	}
@@ -138,8 +110,7 @@
 
 	.share-step__summary p,
 	.share-step__lookup-status p,
-	.share-step__evidence p,
-	.share-step__move-confirmation p {
+	.share-step__evidence p {
 		font-size: $app-font-size-xs;
 	}
 

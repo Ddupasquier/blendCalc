@@ -40,64 +40,9 @@
 }
 
 .nutrition-label-ocr__progress,
-.nutrition-label-ocr__review,
-.nutrition-label-ocr__crop {
+.nutrition-label-ocr__review {
 	display: grid;
 	gap: $app-gap-sm;
-}
-
-.nutrition-label-ocr__crop {
-	display: grid;
-	gap: $app-gap-sm;
-}
-
-.nutrition-label-ocr__crop-preview {
-	position: relative;
-	max-height: 18rem;
-	overflow: hidden;
-	background: $app-shell-surface-control;
-	border-radius: $app-shell-radius-control;
-}
-
-.nutrition-label-ocr__crop-preview img {
-	display: block;
-	width: 100%;
-	max-height: 18rem;
-	object-fit: contain;
-}
-
-.nutrition-label-ocr__crop-frame {
-	position: absolute;
-	box-sizing: border-box;
-	pointer-events: none;
-	border: 3px solid $app-shell-accent-primary;
-}
-
-.nutrition-label-ocr__crop > p {
-	margin: 0;
-	color: $app-shell-text-muted;
-	font-size: $app-font-size-sm;
-	line-height: $app-line-height-ui;
-}
-
-.nutrition-label-ocr__crop-controls {
-	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: $app-gap-sm;
-}
-
-.nutrition-label-ocr__crop-controls label {
-	display: grid;
-	gap: $app-gap-xs;
-	min-width: 0;
-	color: $app-shell-text-primary;
-	font-size: $app-font-size-xs;
-	font-weight: $app-font-weight-bold;
-}
-
-.nutrition-label-ocr__crop-controls input {
-	width: 100%;
-	accent-color: $app-shell-accent-primary;
 }
 
 .nutrition-label-ocr__progress progress {
@@ -151,8 +96,7 @@
 	white-space: pre-wrap;
 }
 
-@media (max-width: $app-breakpoint-xs),
-	(max-height: $app-breakpoint-height-compact) {
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
 	.nutrition-label-ocr {
 		gap: $app-gap-sm;
 		padding: $app-gap-sm;
@@ -167,9 +111,5 @@
 
 	.nutrition-label-ocr__review p {
 		font-size: $app-font-size-xs;
-	}
-
-	.nutrition-label-ocr__crop-controls {
-		grid-template-columns: minmax(0, 1fr);
 	}
 }

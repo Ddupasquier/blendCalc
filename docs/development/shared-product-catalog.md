@@ -55,14 +55,6 @@ that automatic default; sharing those values requires the user to enable it agai
 The trusted route and database reject every submission without recorded sharing
 consent.
 
-Catalog evidence sources are bounded before transport so several modern camera photos
-cannot freeze the mobile interface or exceed the hosted intake boundary. The browser
-prepares role-specific WebP upload copies sequentially outside the main interface and
-keeps the combined request below 4 MB; nutrition-label evidence receives the largest
-detail budget. This is transport preparation, not a trust boundary: the intake server
-still verifies type, signature, dimensions, size, ownership, and content before writing
-to private Storage.
-
 ## Source Policy
 
 - **blendCalc shared catalog:** the active `shared_products` row plus its normalized
@@ -350,13 +342,6 @@ can change over time.
    `shared_product_revision_changes`.
 8. If another update was approved while the submission waited, approval stops as stale
    and the change must be compared again.
-
-Manual Entry exposes this existing-revision path only after an exact shared-catalog
-barcode match has meaningful label differences. If that product is already in the
-selected list, `Update and share` submits the immutable correction without adding,
-moving, or overwriting the user's saved item. An unchanged match remains `Already
-saved`, and the same user cannot create another pending proposal against the same base
-revision.
 
 Independent users may submit separate correction evidence against the same active
 revision. The system never averages conflicting values or silently chooses a provider.
