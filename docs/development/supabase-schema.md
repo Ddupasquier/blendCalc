@@ -1093,6 +1093,11 @@ Notes:
 - USDA barcode products use exact normalized GTIN matches and keep the newest active
   `Branded` record. Missing nutrient values remain missing; values from unrelated USDA
   records are not blended into the product.
+- The disposable local seed includes a focused USDA-backed El Pato jalapeno salsa
+  fixture for canonical GTIN `00072360002031` (printed UPC `072360002031`). Its raw USDA
+  observation, normalized canonical fields, reported-zero nutrient states, serving,
+  relational provenance, and separately licensed Open Food Facts front-image metadata
+  exercise Manual Entry without allowing outbound provider requests in test mode.
 - Compatibility summaries are rebuilt from compatibility facts.
 - `category_option_id` is inherited from the approved submission. A database trigger
   blocks publication when no enabled canonical category can be resolved.

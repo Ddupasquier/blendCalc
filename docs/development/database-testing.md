@@ -125,18 +125,23 @@ it does not share mutable state with browser jobs or another workflow run.
   intentionally exceeds 1,000 enabled rows so server-side category search and selection
   persistence can be tested beyond the former client-list cutoff without copying
   production data.
-- The local catalog contains 111 approved foods: nine focused package-label fixtures,
+- The local catalog contains 112 approved foods: ten focused package-label fixtures,
   nineteen generic fixtures, and eighty-three source-shaped USDA FoodData Central
   Branded snapshots. The snapshots retain their exact GTIN, FDC ID, source category,
   raw ingredient statement when reported, selected source nutrient records, source
   dates, and CC0 attribution. Every record is publishable through the local blendCalc
   API without making a live provider request.
 - The populated QA user starts with 100 distinct catalog products: 60 in Fridge and 40
-  in Shopping List. The remaining eleven catalog products stay searchable but unsaved,
+  in Shopping List. The remaining twelve catalog products stay searchable but unsaved,
   preserving add-item coverage while providing enough saved data for pagination,
   filtering, movement, and list-performance QA.
   `Tomatoes, Green, Raw` preserves USDA SR Legacy identity `170456` and provides a
   deterministic multi-word partial-search result for `green tomat`.
+- UPC `072360002031` normalizes to local catalog GTIN `00072360002031` and resolves to
+  a reviewed USDA FoodData Central snapshot for El Pato jalapeno salsa. It remains
+  unsaved for the populated account so Manual Entry can exercise initial add, unchanged
+  duplicate, and changed-product review in sequence. Its reusable front image remains a
+  separately attributed Open Food Facts asset.
 - The populated and browser-worker accounts each own the private custom fixture
   `Green Tomato Pantry Preserve`, so combined search can prove that account-only foods,
   approved catalog foods, and USDA-backed catalog records participate while every

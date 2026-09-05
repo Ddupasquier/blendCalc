@@ -34,6 +34,8 @@ describe("local QA reference seed", () => {
 		expect(seed).toContain("'00869759000149'");
 		expect(seed).toContain("'00011110904416'");
 		expect(seed).toContain("'05000159461122'");
+		expect(seed).toContain("'00072360002031'");
+		expect(seed).toContain('"fdcId": 1862061');
 		expect(seed).toContain("public.shared_product_field_provenance");
 		expect(seed).toContain("public.food_nutrients");
 		expect(seed).toContain("public.food_servings");
@@ -68,6 +70,9 @@ describe("local QA reference seed", () => {
 		);
 		expect(seed).toContain(
 			"https://images.openfoodfacts.org/images/products/880/100/552/3455/front_en.6.400.jpg",
+		);
+		expect(seed).toContain(
+			"https://images.openfoodfacts.org/images/products/007/236/000/2031/front_en.5.400.jpg",
 		);
 	});
 
