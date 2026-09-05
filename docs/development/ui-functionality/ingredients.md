@@ -123,6 +123,10 @@ barcode` and source-empty groups `Not provided`. Keep source omissions blank and
   until that lookup settles;
 - claim one submit lock before the final barcode confirmation begins, keep that lock
   through the authoritative save, and recover with editable input after failure;
+- show the selected trusted package image and its attribution in the Share summary after
+  barcode autofill is accepted, so the person can confirm the exact cached product image
+  before saving without triggering another provider request; when the evidence flow
+  already shows that image for comparison, do not duplicate it in the summary;
 - allow destination choice between Fridge and Shopping List;
 - default shared-catalog submission on only for complete, valid, unchanged exact-source
   data whose represented sources all permit canonical storage. Keep an immediate

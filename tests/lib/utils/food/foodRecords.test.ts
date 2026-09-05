@@ -29,24 +29,28 @@ describe("compact food records", () => {
 					confidence: "imported",
 				},
 			},
-			sourceEnrichmentDecisions: [{
-				field: "serving",
-				reason: "missing-current-value",
-				selectedSource: {
-					source: "open-food-facts",
-					sourceReference: "00021130493609",
-					confidence: "imported",
-					observedAt: "2026-08-01T00:00:00.000Z",
+			sourceEnrichmentDecisions: [
+				{
+					field: "serving",
+					reason: "missing-current-value",
+					selectedSource: {
+						source: "open-food-facts",
+						sourceReference: "00021130493609",
+						confidence: "imported",
+						observedAt: "2026-08-01T00:00:00.000Z",
+					},
 				},
-			}],
+			],
 		};
 
 		const storedFood = normalizeFoodForStorage(food);
 		expect(storedFood.fieldProvenance).toEqual(food.fieldProvenance);
-		expect(storedFood.sourceEnrichmentDecisions)
-			.toEqual(food.sourceEnrichmentDecisions);
-		expect(storedFood.sourceEnrichmentDecisions?.[0].selectedSource)
-			.not.toBe(food.sourceEnrichmentDecisions?.[0].selectedSource);
+		expect(storedFood.sourceEnrichmentDecisions).toEqual(
+			food.sourceEnrichmentDecisions,
+		);
+		expect(storedFood.sourceEnrichmentDecisions?.[0].selectedSource).not.toBe(
+			food.sourceEnrichmentDecisions?.[0].selectedSource,
+		);
 	});
 
 	it("keeps safe barcode capture provenance in saved food snapshots", () => {
@@ -62,7 +66,9 @@ describe("compact food records", () => {
 			},
 		};
 
-		expect(normalizeFoodForStorage(food).barcodeProvenance).toEqual(food.barcodeProvenance);
+		expect(normalizeFoodForStorage(food).barcodeProvenance).toEqual(
+			food.barcodeProvenance,
+		);
 	});
 
 	it("keeps deep-dive source and category metadata in saved food snapshots", () => {
@@ -99,23 +105,27 @@ describe("compact food records", () => {
 			sourceAttribution: food.sourceAttribution,
 			sourceAttributions: [secondAttribution],
 		});
-		expect(normalizeFoodForStorage(food).sourceAttribution)
-			.not.toBe(food.sourceAttribution);
-		expect(normalizeFoodForStorage(food).sourceAttributions?.[0])
-			.not.toBe(secondAttribution);
+		expect(normalizeFoodForStorage(food).sourceAttribution).not.toBe(
+			food.sourceAttribution,
+		);
+		expect(normalizeFoodForStorage(food).sourceAttributions?.[0]).not.toBe(
+			secondAttribution,
+		);
 	});
 
 	it("does not assume nutrients were reported when status is absent", () => {
 		const food: FoodItem = {
 			fdcId: 2,
 			description: "Unknown nutrient status",
-			foodNutrients: [{
-				nutrientId: 1004,
-				nutrientName: "Total Fat",
-				nutrientNumber: "204",
-				unitName: "G",
-				value: 0,
-			}],
+			foodNutrients: [
+				{
+					nutrientId: 1004,
+					nutrientName: "Total Fat",
+					nutrientNumber: "204",
+					unitName: "G",
+					value: 0,
+				},
+			],
 		};
 
 		expect(normalizeFoodForStorage(food).reportedNutrientIds).toEqual([]);
@@ -135,6 +145,54 @@ describe("compact food records", () => {
 		});
 	});
 
+	it("normalizes externally sourced ingredients at the storage boundary", () => {
+		const storedFood = normalizeFoodForStorage({
+			fdcId: 42,
+			description: "Provider food",
+			foodNutrients: [],
+			ingredients: "DRY ROASTED _PEANUTS_, SALT. MAY CONTAIN SOY.",
+			fieldProvenance: {
+				ingredients: { source: "open-food-facts" },
+			},
+			sourceMetadata: { language: "en" },
+		});
+
+		expect(storedFood).toMatchObject({
+			ingredients: "Dry roasted peanuts, salt",
+			ingredientList: ["Dry roasted peanuts", "salt"],
+			ingredientAnalysis: {
+				normalization: {
+					method: "external-ingredient-statement",
+					version: 1,
+				},
+			},
+			precautionaryStatements: [
+				{
+					type: "may_contain",
+					text: "MAY CONTAIN SOY",
+					allergens: ["Soy"],
+					sourceField: "ingredients",
+				},
+			],
+		});
+	});
+
+	it("does not rewrite user-authored ingredient text", () => {
+		const ingredients = "My MIX: _Peanuts_ + salt";
+		const storedFood = normalizeFoodForStorage({
+			fdcId: -42,
+			description: "Private recipe",
+			foodNutrients: [],
+			ingredients,
+			fieldProvenance: {
+				ingredients: { source: "user-label" },
+			},
+		});
+
+		expect(storedFood.ingredients).toBe(ingredients);
+		expect(storedFood.ingredientAnalysis).toBeUndefined();
+	});
+
 	it("preserves the canonical name separately from a personal list name", () => {
 		const food: FoodItem = {
 			fdcId: 3,
@@ -152,8 +210,10 @@ describe("compact food records", () => {
 	});
 
 	it("uses the current name when no separate canonical name exists", () => {
-		expect(getCanonicalFoodDescription({
-			description: "Spinach, Raw",
-		})).toBe("Spinach, Raw");
+		expect(
+			getCanonicalFoodDescription({
+				description: "Spinach, Raw",
+			}),
+		).toBe("Spinach, Raw");
 	});
 });

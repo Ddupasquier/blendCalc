@@ -1377,6 +1377,16 @@ describe("CustomIngredientForm", () => {
 			source: "usda" as const,
 			sourceLabel: "USDA FDC",
 			sourceReference: "12345",
+			image: {
+				source: "open-food-facts" as const,
+				sourceReference: "04006381333931",
+				role: "front" as const,
+				imageUrl: "https://images.example.test/source-tomato.jpg",
+				licenseName: "CC BY-SA 3.0",
+				licenseUrl: "https://creativecommons.org/licenses/by-sa/3.0/",
+				attributionText: "Open Food Facts contributors",
+				confidence: "source-verified" as const,
+			},
 		};
 		barcodeLookupMocks.lookupBarcodeProduct.mockResolvedValue({
 			status: "found",
@@ -1411,6 +1421,16 @@ describe("CustomIngredientForm", () => {
 		await waitFor(() =>
 			expect(screen.getByLabelText(/share with community/i)).toBeChecked(),
 		);
+		const trustedProductImage = screen.getByRole("img", {
+			name: "Source tomato product package image",
+		});
+		expect(trustedProductImage).toHaveAttribute(
+			"src",
+			"https://images.example.test/source-tomato.jpg",
+		);
+		expect(
+			screen.getByText("Image: Open Food Facts contributors"),
+		).toBeInTheDocument();
 		expect(screen.getByText(/sharing is on by default/i)).toBeInTheDocument();
 		await goToStep(/identity/i);
 		expect(screen.getByLabelText(/food name/i)).toHaveValue(

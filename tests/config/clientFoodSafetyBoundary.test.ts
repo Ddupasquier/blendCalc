@@ -42,16 +42,13 @@ describe("client food-safety boundary", () => {
 	});
 
 	it("keeps package declaration parsing in server-only ingestion code", () => {
-		const mapper = readSource(
-			"src/lib/utils/barcode/barcodeProductMappers.ts",
-		);
-		const clientFacade = readSource(
-			"src/lib/utils/barcode/productLookup.ts",
-		);
+		const mapper = readSource("src/lib/utils/barcode/barcodeProductMappers.ts");
+		const clientFacade = readSource("src/lib/utils/barcode/productLookup.ts");
 
 		expect(mapper).toContain(
-			"$lib/server/products/allergenDeclarations.server.js",
+			"$lib/utils/food/ingredients/ingredientStatementNormalization.js",
 		);
+		expect(mapper).not.toContain("allergenDeclarations.server.js");
 		expect(clientFacade).not.toContain("mapOpenFoodFactsProduct");
 		expect(clientFacade).not.toContain("mapFdcBarcodeFood");
 		expect(clientFacade).not.toContain("mapSharedCatalogFood");
@@ -73,14 +70,14 @@ describe("client food-safety boundary", () => {
 
 		for (const source of [browserLists, browserSavedRecipes, cloudMutations]) {
 			expect(source).not.toContain("hydrateCloudFoodListRows");
-			expect(source).not.toMatch(/\.(?:allergens|traces|compatibilitySummary)\b/);
+			expect(source).not.toMatch(
+				/\.(?:allergens|traces|compatibilitySummary)\b/,
+			);
 		}
 		expect(browserLists).not.toContain("readCloudIngredientList(");
 		expect(browserSavedRecipes).not.toContain("readCloudIngredientList(");
 		expect(
-			existsSync(
-				join(root, "src/lib/utils/storage/supabase/listHydration.ts"),
-			),
+			existsSync(join(root, "src/lib/utils/storage/supabase/listHydration.ts")),
 		).toBe(false);
 		expect(serverHydration).toContain("allergens: canonicalFood.allergens");
 		expect(serverHydration).toContain("traces: canonicalFood.traces");
