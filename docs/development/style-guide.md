@@ -651,6 +651,11 @@ option cards, and placement previews remain identical.
 - `SelectField`, `FoodCategoryPicker`, `PhotoUploadInput`, `NutritionLabelOcrInput`,
   `BarcodeAutofillSuggestion`, validation lists, toggles, and image placement are part
   of the baseline and must use their shared components rather than raw native styling.
+- Nutrition-label recognition uses an explicit `Read label` action after photo and crop
+  selection. Show real upload progress when available, an indeterminate queued/running
+  state afterward, and a visible Stop action without locking the sheet, scrolling, or
+  unrelated controls. Present only structured suggestions with opt-out checkboxes and
+  require `Use selected values` before changing the form.
 
 ### Nutrition Details
 

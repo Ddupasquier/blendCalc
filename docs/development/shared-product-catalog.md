@@ -852,8 +852,11 @@ Packaged products and generic foods use different evidence paths:
 4. A database-backed completeness profile checks whether required nutrients are
    reported. It does not change missing, trace, or unmapped values into zero.
 5. Optional label recognition may suggest missing packaged-label values, but the user
-   must review and confirm them. Confirmed values remain user-label observations and
-   follow normal moderation rules if shared.
+   must review and confirm them. A private background job receives only a bounded
+   temporary crop and retains only structured suggestions; it does not create catalog
+   evidence. Confirmed values remain user-label observations and follow normal
+   moderation rules if shared, while any required moderation photo is selected and
+   retained through the separate evidence flow.
 
 Every accepted nutrient keeps its own source and source reference. Product-level field
 provenance separately records product name, brand, nutrition, image, category, serving,

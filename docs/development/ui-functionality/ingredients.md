@@ -135,6 +135,12 @@ barcode` and source-empty groups `Not provided`. Keep source omissions blank and
 - automatically orient and frame each newly chosen product image when OCR confidently
   matches its product or brand text, while keeping the exact card preview, manual
   controls, retry, and restore available before submission;
+- prepare a bounded, user-adjustable nutrition-label crop outside the main interface,
+  then upload it to an owner-scoped private background-recognition job only after the
+  user selects `Read label`. Keep the form scrollable and interactive, show upload then
+  queued/running state, provide cancellation, and return only structured serving and
+  nutrient suggestions. Nothing changes until the user reviews and applies selected
+  suggestions; raw recognized text and the temporary OCR crop are not retained;
 - close the form after a successful add instead of opening another blank form;
 - after a successful add, an applicable reviewed food-symbol trigger may add one quiet
   broad-audience line beneath the factual outcome; unknown foods simply omit it;

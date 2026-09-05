@@ -1,34 +1,36 @@
 <script lang="ts">
 	import { onDestroy } from "svelte";
 	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
-	import DisclosureChevron from "$lib/components/common/disclosure/DisclosureChevron/DisclosureChevron.svelte";
 	import CheckboxGroup from "$lib/components/common/forms/CheckboxGroup/CheckboxGroup.svelte";
 	import PhotoUploadInput from "$lib/components/common/forms/PhotoUploadInput/PhotoUploadInput.svelte";
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
-	import { animatedDetails } from "$lib/utils/animation/animatedDetails";
 	import type { NutritionLabelOcrInputProps } from "./types";
-	import { recognizeNutritionLabelImage } from "$lib/utils/food/ocr/nutritionLabelOcr.client";
 	import {
-		parseNutritionLabelText,
-		type NutritionLabelOcrResult,
-	} from "$lib/utils/food/ocr/nutritionLabelOcr";
+		cancelNutritionLabelOcrJob,
+		runNutritionLabelOcrJob,
+	} from "$lib/utils/food/ocr/nutritionLabelOcrJobs.client";
+	import type {
+		NutritionLabelOcrJobResult,
+		NutritionLabelOcrJobStatus,
+	} from "$lib/utils/food/ocr/nutritionLabelOcrJobs";
 
 	let {
 		mappings,
 		photo,
-		recognize = recognizeNutritionLabelImage,
+		runJob = runNutritionLabelOcrJob,
 		onPhotoChange,
 		onApply,
 	}: NutritionLabelOcrInputProps = $props();
 
 	let scanning = $state(false);
-	let progress = $state(0);
+	let uploadProgress = $state<number | null>(null);
 	let progressStatus = $state("");
-	let result = $state<NutritionLabelOcrResult | null>(null);
+	let result = $state<NutritionLabelOcrJobResult | null>(null);
 	let selected = $state<(string | number)[]>([]);
 	let error = $state("");
 	let appliedMessage = $state("");
 	let abortController = $state<AbortController | null>(null);
+	let activeJobId = $state("");
 
 	const servingOptionId = "serving";
 	const qualitativeOptionId = (nutrientId: number) =>
@@ -56,41 +58,67 @@
 		})) ?? []),
 	]);
 
-	const clearScan = () => {
+	const clearScan = ({ cancelJob = false } = {}) => {
 		abortController?.abort();
 		abortController = null;
+		if (cancelJob && activeJobId) {
+			void cancelNutritionLabelOcrJob(activeJobId).catch(() => undefined);
+		}
+		activeJobId = "";
 		result = null;
 		selected = [];
 		error = "";
 		appliedMessage = "";
-		progress = 0;
+		uploadProgress = null;
 		progressStatus = "";
 	};
 
 	const handlePhotoChange = (file: File | null) => {
-		clearScan();
+		clearScan({ cancelJob: true });
 		onPhotoChange(file);
+	};
+
+	const readStatus = (status: NutritionLabelOcrJobStatus) => {
+		if (status === "queued" || status === "running") uploadProgress = null;
+		progressStatus =
+			status === "queued"
+				? "Waiting for the background label reader…"
+				: status === "running"
+					? "Reading the label in the background…"
+					: progressStatus;
+	};
+
+	const stopScan = () => {
+		const jobId = activeJobId;
+		abortController?.abort(
+			new DOMException("Label scan cancelled", "AbortError"),
+		);
+		if (jobId) void cancelNutritionLabelOcrJob(jobId).catch(() => undefined);
+		activeJobId = "";
+		scanning = false;
+		uploadProgress = null;
+		progressStatus = "";
 	};
 
 	const scanPhoto = async () => {
 		if (!photo || scanning || mappings.length === 0) return;
 		clearScan();
 		scanning = true;
+		progressStatus = "Uploading the prepared label…";
 		abortController = new AbortController();
 		try {
-			const recognition = await recognize({
+			const completed = await runJob({
 				file: photo,
 				signal: abortController.signal,
-				onProgress: (nextProgress) => {
-					progress = nextProgress.progress;
-					progressStatus = nextProgress.status;
+				onJobId: (jobId) => {
+					activeJobId = jobId;
+				},
+				onStatus: readStatus,
+				onUploadProgress: (nextProgress) => {
+					uploadProgress = nextProgress;
 				},
 			});
-			result = parseNutritionLabelText({
-				text: recognition.text,
-				confidence: recognition.confidence,
-				mappings,
-			});
+			result = completed.result;
 			selected = [
 				...(result.serving ? [servingOptionId] : []),
 				...result.candidates.map((candidate) => candidate.nutrientId),
@@ -112,6 +140,9 @@
 		} finally {
 			scanning = false;
 			abortController = null;
+			activeJobId = "";
+			uploadProgress = null;
+			progressStatus = "";
 		}
 	};
 
@@ -134,7 +165,9 @@
 	};
 
 	onDestroy(() => {
+		const jobId = activeJobId;
 		abortController?.abort();
+		if (jobId) void cancelNutritionLabelOcrJob(jobId).catch(() => undefined);
 	});
 </script>
 
@@ -157,17 +190,30 @@
 		onFilesChange={(files) => handlePhotoChange(files[0] ?? null)}
 	/>
 
-	<RoundedActionButton
-		onclick={scanPhoto}
-		busy={scanning}
-		disabled={!photo || mappings.length === 0}
-	>
-		Read label
-	</RoundedActionButton>
+	{#if scanning}
+		<RoundedActionButton variant="neutral" onclick={stopScan}>
+			Stop label scan
+		</RoundedActionButton>
+	{:else}
+		<RoundedActionButton
+			onclick={scanPhoto}
+			disabled={!photo || mappings.length === 0}
+		>
+			Read label
+		</RoundedActionButton>
+	{/if}
 
 	{#if scanning}
-		<div class="nutrition-label-ocr__progress" aria-live="polite">
-			<progress max="1" value={progress}></progress>
+		<div
+			class="nutrition-label-ocr__progress"
+			aria-live="polite"
+			aria-busy="true"
+		>
+			{#if uploadProgress === null}
+				<progress></progress>
+			{:else}
+				<progress max="1" value={uploadProgress}></progress>
+			{/if}
 			<span>{progressStatus || "Preparing label scan…"}</span>
 		</div>
 	{/if}
@@ -188,13 +234,6 @@
 		>
 			Use selected values
 		</RoundedActionButton>
-		<details class="nutrition-label-ocr__raw-text" use:animatedDetails>
-			<summary>
-				<span>View recognized text</span>
-				<DisclosureChevron />
-			</summary>
-			<pre>{result.rawText}</pre>
-		</details>
 	{/if}
 
 	{#if error}
