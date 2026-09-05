@@ -32,6 +32,8 @@ let workerIdleTimer: ReturnType<typeof setTimeout> | undefined;
 
 type NutritionLabelOcrJobRow =
 	Database["public"]["Tables"]["nutrition_label_ocr_jobs"]["Row"];
+const NUTRITION_LABEL_OCR_JOB_SELECT =
+	"id, user_id, storage_path, input_sha256, processor_version, status, attempt_count, claim_token, claimed_at, result, error_code, created_at, updated_at, completed_at, expires_at";
 
 type CreatedNutritionLabelOcrJob = {
 	job: NutritionLabelOcrJob;
@@ -85,7 +87,7 @@ export const createNutritionLabelOcrJob = async ({
 	const admin = getSupabaseAdminClient();
 	const { data: existing, error: existingError } = await admin
 		.from("nutrition_label_ocr_jobs")
-		.select("*")
+		.select(NUTRITION_LABEL_OCR_JOB_SELECT)
 		.eq("user_id", userId)
 		.eq("input_sha256", inputSha256)
 		.eq("processor_version", NUTRITION_LABEL_OCR_PROCESSOR_VERSION)
@@ -136,19 +138,19 @@ export const createNutritionLabelOcrJob = async ({
 				.update(resetValues)
 				.eq("id", id)
 				.eq("user_id", userId)
-				.select("*")
+				.select(NUTRITION_LABEL_OCR_JOB_SELECT)
 				.single()
 		: await admin
 				.from("nutrition_label_ocr_jobs")
 				.insert({ id, user_id: userId, ...resetValues })
-				.select("*")
+				.select(NUTRITION_LABEL_OCR_JOB_SELECT)
 				.single();
 	if (persistence.error || !persistence.data) {
 		await removeTemporaryImage(storagePath);
 		if (!existing && persistence.error?.code === "23505") {
 			const { data: racedJob, error: racedJobError } = await admin
 				.from("nutrition_label_ocr_jobs")
-				.select("*")
+				.select(NUTRITION_LABEL_OCR_JOB_SELECT)
 				.eq("user_id", userId)
 				.eq("input_sha256", inputSha256)
 				.eq("processor_version", NUTRITION_LABEL_OCR_PROCESSOR_VERSION)
@@ -173,7 +175,7 @@ export const readNutritionLabelOcrJob = async ({
 	const admin = getSupabaseAdminClient();
 	const { data, error } = await admin
 		.from("nutrition_label_ocr_jobs")
-		.select("*")
+		.select(NUTRITION_LABEL_OCR_JOB_SELECT)
 		.eq("id", jobId)
 		.eq("user_id", userId)
 		.maybeSingle();
