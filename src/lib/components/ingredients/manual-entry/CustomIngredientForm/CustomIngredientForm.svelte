@@ -509,6 +509,7 @@
 			hasAcceptedBarcodeNutrients,
 			fallback: validation.nutritionFieldPolicy.helper,
 		}),
+		sourceMessage: hasAcceptedBarcodeSource ? form.data.barcodeMessage : "",
 		hideUnavailableStatus: validation.hideMacroUnavailableStatus,
 		validationItems: validation.getAttemptedValidationItems(
 			validation.validationItems.filter((item) => item.step === "macros"),

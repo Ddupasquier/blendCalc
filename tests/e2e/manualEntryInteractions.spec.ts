@@ -513,9 +513,20 @@ test("@mobile a reviewed product correction reveals sharing evidence without blo
 	await dialog.getByRole("tab", { name: "Share" }).click();
 	await expect(
 		dialog.getByText(
-			/Turn on community sharing to submit the changed package details/i,
+			/Turn on community sharing to check and submit those changes/i,
 		),
 	).toBeVisible();
+
+	const destination = dialog.getByRole("combobox", {
+		name: "Add after saving",
+	});
+	const destinationStartedAt = Date.now();
+	await destination.click();
+	await expect(
+		dialog.getByRole("option", { name: "Shopping List", exact: true }),
+	).toBeVisible({ timeout: 500 });
+	expect(Date.now() - destinationStartedAt).toBeLessThan(500);
+	await page.keyboard.press("Escape");
 
 	const shareToggle = dialog.getByLabel("Share with community");
 	const revealStartedAt = Date.now();
@@ -529,14 +540,7 @@ test("@mobile a reviewed product correction reveals sharing evidence without blo
 	await expect(
 		dialog.getByRole("button", { name: "Update and share" }),
 	).toBeEnabled();
-
-	const destination = dialog.getByRole("combobox", {
-		name: "Add after saving",
-	});
-	await destination.click();
-	await expect(
-		dialog.getByRole("option", { name: "Shopping List", exact: true }),
-	).toBeVisible({ timeout: 500 });
+	await expect(destination).toHaveCount(0);
 });
 
 test("manual entry shows one message when its reference catalog response is unavailable", async ({
