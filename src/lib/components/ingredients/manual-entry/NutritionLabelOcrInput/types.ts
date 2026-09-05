@@ -1,22 +1,25 @@
-import type {
-	NutritionLabelOcrMapping,
-	NutritionLabelOcrProgress,
-	NutritionLabelOcrRecognition,
-} from "$lib/utils/food/ocr/nutritionLabelOcr";
+import type { NutritionLabelOcrMapping } from "$lib/utils/food/ocr/nutritionLabelOcr";
 import type { NutritionLabelCrop } from "$lib/utils/food/ocr/nutritionLabelOcr.client";
 import type { NutritionLabelOcrApplyPayload } from "../formTypes";
+import type {
+	NutritionLabelOcrJobResult,
+	NutritionLabelOcrJobStatus,
+} from "$lib/utils/food/ocr/nutritionLabelOcrJobs";
 
-export type NutritionLabelOcrRecognizer = (options: {
+export type NutritionLabelOcrJobRunner = (options: {
 	file: File;
 	crop: NutritionLabelCrop;
-	onProgress?: (progress: NutritionLabelOcrProgress) => void;
+	onPrepared?: () => void;
+	onJobId?: (jobId: string) => void;
+	onStatus?: (status: NutritionLabelOcrJobStatus) => void;
+	onUploadProgress?: (progress: number | null) => void;
 	signal?: AbortSignal;
-}) => Promise<NutritionLabelOcrRecognition>;
+}) => Promise<{ jobId: string; result: NutritionLabelOcrJobResult }>;
 
 export type NutritionLabelOcrInputProps = {
 	mappings: NutritionLabelOcrMapping[];
 	photo: File | null;
-	recognize?: NutritionLabelOcrRecognizer;
+	runJob?: NutritionLabelOcrJobRunner;
 	onPhotoChange: (file: File | null) => void;
 	onApply: (payload: NutritionLabelOcrApplyPayload) => void;
 };

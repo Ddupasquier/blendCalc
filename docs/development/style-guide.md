@@ -673,6 +673,11 @@ option cards, and placement previews remain identical.
 - Package-evidence photo controls present separate `Take photo` and `Choose existing
 photo` actions. Only the camera action carries the rear-camera hint; cancelling or
   denying that native camera chooser leaves the library action and current form intact.
+- Nutrition-label recognition uses an explicit `Read label` action after photo and crop
+  selection. Show real upload progress when available, an indeterminate queued/running
+  state afterward, and a visible Stop action without locking the sheet, scrolling, or
+  unrelated controls. Present only structured suggestions with opt-out checkboxes and
+  require `Use selected values` before changing the form.
 
 ### Nutrition Details
 

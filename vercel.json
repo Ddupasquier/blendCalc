@@ -1,5 +1,17 @@
 {
 	"regions": ["pdx1"],
+	"functions": {
+		"src/routes/api/internal/nutrition-label-ocr/queue/+server.ts": {
+			"experimentalTriggers": [
+				{
+					"type": "queue/v2beta",
+					"topic": "nutrition-label-ocr",
+					"retryAfterSeconds": 10,
+					"initialDelaySeconds": 0
+				}
+			]
+		}
+	},
 	"crons": [
 		{
 			"path": "/api/internal/analytics/sync",
@@ -8,6 +20,10 @@
 		{
 			"path": "/api/internal/blendCalcAPI/publication/sync",
 			"schedule": "30 5 * * *"
+		},
+		{
+			"path": "/api/internal/nutrition-label-ocr/cleanup",
+			"schedule": "45 5 * * *"
 		}
 	]
 }

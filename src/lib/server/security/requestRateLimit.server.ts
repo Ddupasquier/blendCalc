@@ -68,6 +68,16 @@ export const getRequestRateLimitPolicy = (
 		};
 	}
 	if (
+		requestMethod === "POST" &&
+		pathname === "/api/nutrition-label-ocr/jobs"
+	) {
+		return {
+			scope: "nutrition-label-ocr:create",
+			limit: 12,
+			windowSeconds: 60 * 60,
+		};
+	}
+	if (
 		requestMethod === "GET" &&
 		/^\/api\/intake\/v1\/submissions\/[^/]+$/.test(pathname)
 	) {

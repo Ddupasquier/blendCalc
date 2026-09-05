@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import NutritionLabelOcrInput from "$lib/components/ingredients/manual-entry/NutritionLabelOcrInput/NutritionLabelOcrInput.svelte";
+import type { NutritionLabelOcrJobRunner } from "$lib/components/ingredients/manual-entry/NutritionLabelOcrInput/types";
 import type { NutritionLabelOcrMapping } from "$lib/utils/food/ocr/nutritionLabelOcr";
 
 const mappings: NutritionLabelOcrMapping[] = [
@@ -24,34 +25,53 @@ const mappings: NutritionLabelOcrMapping[] = [
 	},
 ];
 
+const photo = new File(["label"], "nutrition-label.png", {
+	type: "image/png",
+});
+
 describe("NutritionLabelOcrInput", () => {
-	it("waits for explicit review before applying recognized values", async () => {
+	it("sends the adjusted crop to background recognition and waits for explicit review", async () => {
 		const onPhotoChange = vi.fn();
 		const onApply = vi.fn();
-		const recognize = vi.fn().mockResolvedValue({
-			text: "Serving size 1 cup (240g)\nCalories 120\nTotal Fat 2g",
-			confidence: 91,
-		});
-		const photo = new File(["label"], "nutrition-label.png", {
-			type: "image/png",
+		const runJob = vi.fn().mockResolvedValue({
+			jobId: "01234567-89ab-4cde-8f01-23456789abcd",
+			result: {
+				candidates: [
+					{
+						nutrientId: 1008,
+						nutrientName: "Calories",
+						value: 120,
+						unitName: "KCAL",
+					},
+					{
+						nutrientId: 1004,
+						nutrientName: "Total Fat",
+						value: 2,
+						unitName: "G",
+					},
+				],
+				qualitativeFacts: [],
+				serving: { label: "1 cup", gramWeight: 240 },
+				confidence: 91,
+			},
 		});
 
 		const { rerender } = render(NutritionLabelOcrInput, {
 			props: {
 				mappings,
 				photo: null,
-				recognize,
+				runJob,
 				onPhotoChange,
 				onApply,
 			},
 		});
-		const input = screen.getByLabelText(
-			"Choose existing nutrition facts photo",
+		await fireEvent.change(
+			screen.getByLabelText("Choose existing nutrition facts photo"),
+			{ target: { files: [photo] } },
 		);
-		await fireEvent.change(input, { target: { files: [photo] } });
 		expect(onPhotoChange).toHaveBeenCalledWith(photo);
 
-		await rerender({ mappings, photo, recognize, onPhotoChange, onApply });
+		await rerender({ mappings, photo, runJob, onPhotoChange, onApply });
 		await fireEvent.input(screen.getByLabelText("Left edge"), {
 			target: { value: "20" },
 		});
@@ -61,7 +81,7 @@ describe("NutritionLabelOcrInput", () => {
 			expect(screen.getByText("Calories: 120 kcal")).toBeInTheDocument();
 		});
 		expect(onApply).not.toHaveBeenCalled();
-		expect(recognize).toHaveBeenCalledWith(
+		expect(runJob).toHaveBeenCalledWith(
 			expect.objectContaining({
 				file: photo,
 				crop: { left: 0.2, top: 0, right: 1, bottom: 1 },
@@ -81,31 +101,43 @@ describe("NutritionLabelOcrInput", () => {
 		});
 	});
 
-	it("cancels an active scan while preserving the selected photo", async () => {
-		const photo = new File(["label"], "nutrition-label.png", {
-			type: "image/png",
-		});
-		const recognize = vi.fn(
-			({ signal }: { signal?: AbortSignal }) =>
-				new Promise<never>((_, reject) => {
+	it("keeps the crop and form available while background recognition is cancelled", async () => {
+		const runJob: NutritionLabelOcrJobRunner = ({
+			onPrepared,
+			onJobId,
+			onStatus,
+			onUploadProgress,
+			signal,
+		}) =>
+			new Promise<Awaited<ReturnType<NutritionLabelOcrJobRunner>>>(
+				(_resolve, reject) => {
+					onPrepared?.();
+					onUploadProgress?.(0.5);
+					onJobId?.("01234567-89ab-4cde-8f01-23456789abcd");
+					onStatus?.("running");
 					signal?.addEventListener("abort", () => reject(signal.reason), {
 						once: true,
 					});
-				}),
-		);
+				},
+			);
 		render(NutritionLabelOcrInput, {
 			props: {
 				mappings,
 				photo,
-				recognize,
+				runJob,
 				onPhotoChange: vi.fn(),
 				onApply: vi.fn(),
 			},
 		});
 
 		await fireEvent.click(screen.getByRole("button", { name: "Read label" }));
+		expect(
+			await screen.findByText("Reading the label in the background…"),
+		).toBeInTheDocument();
+		expect(screen.getByRole("progressbar")).not.toHaveAttribute("value");
+
 		await fireEvent.click(
-			await screen.findByRole("button", { name: "Stop label scan" }),
+			screen.getByRole("button", { name: "Stop label scan" }),
 		);
 		await waitFor(() =>
 			expect(screen.getByRole("button", { name: "Read label" })).toBeEnabled(),
@@ -116,11 +148,8 @@ describe("NutritionLabelOcrInput", () => {
 		expect(screen.queryByText(/could not be read/i)).not.toBeInTheDocument();
 	});
 
-	it("keeps manual entry available when recognition times out", async () => {
-		const photo = new File(["label"], "nutrition-label.png", {
-			type: "image/png",
-		});
-		const recognize = vi
+	it("keeps manual entry and the selected crop available after a timeout", async () => {
+		const runJob = vi
 			.fn()
 			.mockRejectedValue(
 				new DOMException("Recognition timed out", "TimeoutError"),
@@ -129,7 +158,7 @@ describe("NutritionLabelOcrInput", () => {
 			props: {
 				mappings,
 				photo,
-				recognize,
+				runJob,
 				onPhotoChange: vi.fn(),
 				onApply: vi.fn(),
 			},

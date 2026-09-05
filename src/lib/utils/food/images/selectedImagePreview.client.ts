@@ -93,11 +93,13 @@ export const prepareNutritionLabelOcrImage = (
 	file: File,
 	crop: NormalizedImageCrop,
 	signal?: AbortSignal,
+	maxBytes?: number,
 ): Promise<Blob> =>
 	prepareSelectedImage(
 		file,
 		{
 			maxDimension: MAX_NUTRITION_LABEL_OCR_DIMENSION,
+			maxBytes,
 			crop,
 			preprocessing: "grayscale-contrast",
 			quality: 0.9,

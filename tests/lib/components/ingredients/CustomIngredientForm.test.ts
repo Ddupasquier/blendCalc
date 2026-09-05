@@ -2203,16 +2203,24 @@ describe("CustomIngredientForm", () => {
 				"Prepared Pasta And Pizza Sauces",
 			),
 			source: "usda",
-			sourceLabel: "USDA FoodData Central",
-			sourceReference: "usda-food-1",
+				sourceLabel: "USDA FoodData Central",
+				sourceReference: "usda-food-1",
+			};
+		const catalogDraft = {
+			...sourceDraft,
+			source: "shared-catalog" as const,
+			sourceLabel: "blendCalc verified catalog",
+			sourceReference: "shared-product-1",
 		};
 		barcodeLookupMocks.lookupBarcodeProduct.mockResolvedValue({
 			status: "found",
 			draft: sourceDraft,
 		});
-		validateBarcodeProductForSharing.mockImplementation(
-			() => new Promise(() => {}),
-		);
+		validateBarcodeProductForSharing.mockResolvedValue({
+			status: "matched",
+			barcode: catalogDraft.barcode,
+			draft: catalogDraft,
+		});
 
 		render(CustomIngredientForm, {
 			props: {
@@ -2258,7 +2266,7 @@ describe("CustomIngredientForm", () => {
 			screen.queryByRole("button", { name: "Move to Fridge" }),
 		).not.toBeInTheDocument();
 		await fireEvent.click(shareToggle);
-		expect(validateBarcodeProductForSharing).not.toHaveBeenCalled();
+		expect(validateBarcodeProductForSharing).toHaveBeenCalledOnce();
 		expect(screen.getByText(/photos for catalog review/i)).toBeInTheDocument();
 		expect(shareToggle).toBeChecked();
 		expect(

@@ -161,6 +161,12 @@ barcode` and source-empty groups `Not provided`. Keep source omissions blank and
 - keep expected OCR progress and engine chatter out of the error console; a genuine
   failure records one privacy-safe phase and reason code while leaving the complete
   image and manual controls usable;
+- prepare a bounded, user-adjustable nutrition-label crop outside the main interface,
+  then upload it to an owner-scoped private background-recognition job only after the
+  user selects `Read label`. Keep the form scrollable and interactive, show upload then
+  queued/running state, provide cancellation, and return only structured serving and
+  nutrient suggestions. Nothing changes until the user reviews and applies selected
+  suggestions; raw recognized text and the temporary OCR crop are not retained;
 - close the form after a successful add instead of opening another blank form;
 - when an exact saved barcode matches a current shared product but meaningful entered
   package data differs, keep the existing list item and accepted catalog revision
@@ -180,13 +186,14 @@ barcode` and source-empty groups `Not provided`. Keep source omissions blank and
   analyzes, or persists the selection before its existing explicit action;
 - keep nutrition-label reading separate from the lower-resolution package-placement
   analysis: let the user frame the nutrition panel, prepare at most a 1600-pixel
-  grayscale/contrast copy in the existing image worker, and send only that bounded copy
-  to OCR. Serialize nutrition reading and package placement through one lazily created
-  Tesseract worker, reuse it for five seconds, then release it; cancellation or timeout
-  releases it immediately. Show honest preparation/recognition progress, allow an
-  immediate Stop action, retain the chosen photo and manual-entry fallback, and apply no
-  recognized value until the user reviews and confirms the suggestions. Do not add
-  OpenCV or remote image analysis without a measured need and separate approval;
+  grayscale/contrast copy in the existing image worker, and upload only that bounded
+  crop to the private durable job. Process recognition serially in the background,
+  reuse its Tesseract worker only briefly, then release it; cancellation or timeout
+  releases resources and removes the temporary crop. Show honest preparation, upload,
+  queued, and recognition progress, allow an immediate Stop action, retain the chosen
+  photo and manual-entry fallback, and apply no recognized value until the user reviews
+  and confirms the suggestions. Do not add OpenCV or remote generative image analysis
+  without a measured need and separate approval;
 - use Tesseract sparse-text page segmentation for the bounded nutrition crop. The
   September 2026 development baseline compared automatic, block, column, and sparse
   modes with color, grayscale, and contrast copies from three representative label
