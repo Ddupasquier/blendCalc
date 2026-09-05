@@ -8,6 +8,28 @@ const NON_ALLERGEN_CONTAINS_PATTERN =
 const BOILERPLATE_PATTERN =
 	/\s+(?:all products?|this product|manufactured|processed|produced|made)\b.*$/iu;
 const SUPPORTED_DECLARATION_LANGUAGE_CODES = new Set(["en"]);
+const INGREDIENT_HEADING_PATTERN = /^\s*(?:other\s+)?ingredients?\s*:\s*/iu;
+const PROTECTED_UPPERCASE_TERMS = [
+	"BHA",
+	"BHT",
+	"DNA",
+	"EDTA",
+	"FD&C",
+	"GMO",
+	"HCl",
+	"MCT",
+	"MSG",
+	"RNA",
+	"TBHQ",
+];
+
+/** @typedef {"contains" | "may_contain" | "shared_equipment" | "shared_facility" | "other_precautionary"} DeclarationType */
+/** @typedef {"may_contain" | "shared_equipment" | "shared_facility" | "other_precautionary"} PrecautionaryType */
+/** @typedef {{ type: DeclarationType; text: string; allergens: string[] }} DeclarationStatement */
+
+export const EXTERNAL_INGREDIENT_NORMALIZATION_METHOD =
+	"external-ingredient-statement";
+export const EXTERNAL_INGREDIENT_NORMALIZATION_VERSION = 1;
 
 /** @param {unknown} value */
 const getPrimaryLanguageCode = (value) =>
@@ -39,15 +61,15 @@ const formatDeclarationTerm = (value) => {
 };
 
 /** @param {string} value */
-const splitTopLevelList = (value) => {
+export const splitNormalizedIngredientStatement = (value) => {
 	/** @type {string[]} */
 	const parts = [];
 	let current = "";
 	let depth = 0;
 
 	for (const character of value) {
-		if (character === "(" || character === "[") depth += 1;
-		if (character === ")" || character === "]") depth = Math.max(0, depth - 1);
+		if ("([{\u007b".includes(character)) depth += 1;
+		if (")]\u007d".includes(character)) depth = Math.max(0, depth - 1);
 		if ((character === "," || character === ";") && depth === 0) {
 			parts.push(current);
 			current = "";
@@ -57,19 +79,32 @@ const splitTopLevelList = (value) => {
 	}
 	parts.push(current);
 
-	return parts.flatMap((part) => {
-		const trimmed = part.trim();
-		if (!trimmed) return [];
-		if (/[([]/u.test(trimmed)) return [trimmed];
-		return trimmed.split(/\s+(?:and|&)\s+/iu);
-	});
+	return parts.map((part) => part.trim()).filter(Boolean);
 };
+
+/** @param {string} value */
+const splitAllergenTerms = (value) =>
+	splitNormalizedIngredientStatement(value).flatMap((part) =>
+		/[([{]/u.test(part) ? [part] : part.split(/\s+(?:and|&)\s+/iu),
+	);
 
 /** @param {string[]} values */
 const uniqueTerms = (values) => {
 	const seen = new Set();
 	return values.flatMap((value) => {
 		const term = formatDeclarationTerm(value);
+		const key = term.toLocaleLowerCase("en-US");
+		if (!term || seen.has(key)) return [];
+		seen.add(key);
+		return [term];
+	});
+};
+
+/** @param {string[]} values */
+const uniqueTextValues = (values) => {
+	const seen = new Set();
+	return values.flatMap((value) => {
+		const term = value.trim();
 		const key = term.toLocaleLowerCase("en-US");
 		if (!term || seen.has(key)) return [];
 		seen.add(key);
@@ -94,7 +129,7 @@ const getDeclarationSegment = (source, start) => {
 const getExactStatement = (source, start, end) =>
 	source.slice(start, end).replace(/\s+/gu, " ").trim();
 
-/** @param {Array<{ type: "contains" | "may_contain" | "shared_equipment" | "shared_facility" | "other_precautionary"; text: string; allergens: string[] }>} values */
+/** @param {DeclarationStatement[]} values */
 const uniqueStatements = (values) => {
 	const seen = new Set();
 	return values.filter((value) => {
@@ -133,7 +168,7 @@ const hasExplicitDeclarationContext = (source, match) => {
  *
  * @param {unknown} value
  * @param {{ languageCode?: string | null; sourceField: string }} context
- * @returns {{ method: "bounded-ingredient-label-pattern"; sourceField: string; languageCode?: string; languageStatus: "supported" | "unsupported" | "unknown"; extractionStatus: "parsed" | "none" | "skipped"; contains: string[]; mayContain: string[]; statements: Array<{ type: "contains" | "may_contain" | "shared_equipment" | "shared_facility" | "other_precautionary"; text: string; allergens: string[] }> }}
+ * @returns {{ method: "bounded-ingredient-label-pattern"; sourceField: string; languageCode?: string; languageStatus: "supported" | "unsupported" | "unknown"; extractionStatus: "parsed" | "none" | "skipped"; contains: string[]; mayContain: string[]; statements: DeclarationStatement[] }}
  */
 export const analyzeIngredientLabelAllergenDeclarations = (value, context) => {
 	const source = String(value ?? "").trim();
@@ -162,7 +197,7 @@ export const analyzeIngredientLabelAllergenDeclarations = (value, context) => {
 	const contains = [];
 	/** @type {string[]} */
 	const mayContain = [];
-	/** @type {Array<{ type: "contains" | "may_contain" | "shared_equipment" | "shared_facility" | "other_precautionary"; text: string; allergens: string[] }>} */
+	/** @type {DeclarationStatement[]} */
 	const statements = [];
 
 	DIRECT_DECLARATION_PATTERN.lastIndex = 0;
@@ -180,7 +215,7 @@ export const analyzeIngredientLabelAllergenDeclarations = (value, context) => {
 		const destination = /^may\s+contain$/iu.test(match[1] ?? "")
 			? mayContain
 			: contains;
-		const allergens = uniqueTerms(splitTopLevelList(declaration.allergenText));
+		const allergens = uniqueTerms(splitAllergenTerms(declaration.allergenText));
 		destination.push(...allergens);
 		statements.push({
 			type: destination === mayContain ? "may_contain" : "contains",
@@ -200,7 +235,7 @@ export const analyzeIngredientLabelAllergenDeclarations = (value, context) => {
 			match.index + match[0].length,
 		);
 		if (!declaration.allergenText) continue;
-		const allergens = uniqueTerms(splitTopLevelList(declaration.allergenText));
+		const allergens = uniqueTerms(splitAllergenTerms(declaration.allergenText));
 		mayContain.push(...allergens);
 		statements.push({
 			type: /\bon\s+(?:shared\s+)?equipment\b/iu.test(match[0])
@@ -223,3 +258,121 @@ export const analyzeIngredientLabelAllergenDeclarations = (value, context) => {
 		statements: uniqueDeclarationStatements,
 	};
 };
+
+/** @param {string} value */
+const replaceControlCharacters = (value) =>
+	[...value]
+		.map((character) => {
+			const code = character.codePointAt(0) ?? 0;
+			return code <= 31 || code === 127 ? " " : character;
+		})
+		.join("");
+
+/** @param {string} value */
+const normalizeStructuralArtifacts = (value) =>
+	replaceControlCharacters(value.normalize("NFKC"))
+		.replace(/_+/gu, "")
+		.replace(/\s+/gu, " ")
+		.replace(/\s+([,.;:)]|\])/gu, "$1")
+		.replace(/([([])\s+/gu, "$1")
+		.replace(/([,;:])(?=\S)/gu, "$1 ")
+		.trim();
+
+/** @param {string} value */
+const restoreTechnicalTerms = (value) => {
+	let result = value;
+	for (const term of PROTECTED_UPPERCASE_TERMS) {
+		const escaped = term.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+		result = result.replace(new RegExp(`\\b${escaped}\\b`, "giu"), term);
+	}
+	return result
+		.replace(/\be\s*-?\s*(\d{3,4}[a-z]?)\b/giu, "E$1")
+		.replace(
+			/\bvitamin\s+([abdek])\s*(\d{1,2})?\b/giu,
+			(_match, letter, number) =>
+				`vitamin ${String(letter).toLocaleUpperCase("en-US")}${number ?? ""}`,
+		);
+};
+
+/** @param {string} value @param {string} languageCode */
+const formatAllCapsEnglish = (value, languageCode) => {
+	if (languageCode !== "en") return value;
+	const letters = value.match(/\p{L}/gu) ?? [];
+	if (letters.length === 0) return value;
+	const uppercaseLetters = letters.filter(
+		(letter) => letter === letter.toLocaleUpperCase("en-US"),
+	);
+	if (uppercaseLetters.length / letters.length < 0.9) return value;
+
+	const lowercase = value.toLocaleLowerCase("en-US");
+	const sentenceCase = lowercase.replace(
+		/(^|[.!?]\s+)(\p{L})/gu,
+		(_match, prefix, letter) => `${prefix}${letter.toLocaleUpperCase("en-US")}`,
+	);
+	return restoreTechnicalTerms(sentenceCase);
+};
+
+/**
+ * Converts provider ingredient evidence into a stable presentation/storage form.
+ * Raw provider payloads remain unchanged in the private source cache.
+ *
+ * @param {unknown} value
+ * @param {{ languageCode?: string | null; sourceField: string }} context
+ * @returns {{ ingredientText: string; ingredientList: string[]; declarationAnalysis: ReturnType<typeof analyzeIngredientLabelAllergenDeclarations>; precautionaryStatements: Array<{ type: PrecautionaryType; text: string; allergens: string[] }>; normalization: { method: "external-ingredient-statement"; version: number; sourceField: string; languageCode?: string } }}
+ */
+export const normalizeExternalIngredientStatement = (value, context) => {
+	const languageCode = getPrimaryLanguageCode(context.languageCode);
+	const structurallyNormalized = normalizeStructuralArtifacts(
+		String(value ?? ""),
+	);
+	const declarationAnalysis = analyzeIngredientLabelAllergenDeclarations(
+		structurallyNormalized,
+		context,
+	);
+	const firstDeclarationIndex = declarationAnalysis.statements.reduce(
+		(earliest, statement) => {
+			const index = structurallyNormalized
+				.toLocaleLowerCase("en-US")
+				.indexOf(statement.text.toLocaleLowerCase("en-US"));
+			return index >= 0 ? Math.min(earliest, index) : earliest;
+		},
+		structurallyNormalized.length,
+	);
+	const ingredientOnlyText = structurallyNormalized
+		.slice(0, firstDeclarationIndex)
+		.replace(INGREDIENT_HEADING_PATTERN, "")
+		.replace(/[.;:\s]+$/gu, "")
+		.trim();
+	const ingredientText = formatAllCapsEnglish(ingredientOnlyText, languageCode);
+	const ingredientList = uniqueTextValues(
+		splitNormalizedIngredientStatement(ingredientText),
+	);
+	const precautionaryStatements = declarationAnalysis.statements.flatMap(
+		(statement) => {
+			if (statement.type === "contains") return [];
+			return [
+				{
+					...statement,
+					type: /** @type {PrecautionaryType} */ (statement.type),
+				},
+			];
+		},
+	);
+
+	return {
+		ingredientText,
+		ingredientList,
+		declarationAnalysis,
+		precautionaryStatements,
+		normalization: {
+			method: /** @type {const} */ ("external-ingredient-statement"),
+			version: EXTERNAL_INGREDIENT_NORMALIZATION_VERSION,
+			sourceField: context.sourceField,
+			...(languageCode ? { languageCode } : {}),
+		},
+	};
+};
+
+/** Compatibility export for cached-only catalog backfills. */
+export const extractExplicitAllergenDeclarations =
+	analyzeIngredientLabelAllergenDeclarations;

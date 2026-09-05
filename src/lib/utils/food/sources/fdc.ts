@@ -5,6 +5,7 @@ import type {
 	FoodServing,
 } from "$lib/utils/food/types";
 import { formatSourceProductName } from "$lib/utils/products/productNameFormatting.js";
+import { normalizeExternalIngredientStatement } from "$lib/utils/food/ingredients/ingredientStatementNormalization.js";
 import {
 	INGREDIENT_SEARCH_PAGE_SIZE,
 	type IngredientSearchPage,
@@ -346,6 +347,29 @@ export const normalizeFdcFood = (food: FdcFoodResponse): FoodItem => {
 	const brandOwner = food.brandOwner?.trim() || food.brandName?.trim();
 	const sourceMetadata = normalizeSourceRecordMetadata(food);
 	const sourceReference = String(food.fdcId);
+	const normalizedIngredients = normalizeExternalIngredientStatement(
+		food.ingredients,
+		{
+			languageCode: food.sourceMetadata?.language ?? "en",
+			sourceField: "ingredients",
+		},
+	);
+	const normalizedPrecautionaryStatements = [
+		...normalizedIngredients.precautionaryStatements.map((statement) => ({
+			...statement,
+			languageCode: normalizedIngredients.declarationAnalysis.languageCode,
+			sourceField: normalizedIngredients.declarationAnalysis.sourceField,
+		})),
+		...(food.precautionaryStatements ?? []),
+	].filter(
+		(statement, index, statements) =>
+			statements.findIndex(
+				(candidate) =>
+					candidate.type === statement.type &&
+					candidate.text.toLocaleLowerCase("en-US") ===
+						statement.text.toLocaleLowerCase("en-US"),
+			) === index,
+	);
 	const hasCategory = Boolean(
 		food.foodCategory?.trim() ||
 		food.brandedFoodCategory?.trim() ||
@@ -368,6 +392,24 @@ export const normalizeFdcFood = (food: FdcFoodResponse): FoodItem => {
 		nameProvenance: "source",
 		brandOwner: brandOwner || undefined,
 		foodIdentityType: getFdcFoodIdentityType(food),
+		ingredients: normalizedIngredients.ingredientText || undefined,
+		ingredientList: normalizedIngredients.ingredientList,
+		ingredientAnalysis:
+			food.ingredients || food.ingredientAnalysis
+				? {
+						...food.ingredientAnalysis,
+						ingredientTags: food.ingredientAnalysis?.ingredientTags ?? [],
+						analysisTags: food.ingredientAnalysis?.analysisTags ?? [],
+						derivedTraceTags: food.ingredientAnalysis?.derivedTraceTags ?? [],
+						normalization: normalizedIngredients.normalization,
+						allergenDeclarationAnalysis:
+							normalizedIngredients.declarationAnalysis,
+					}
+				: undefined,
+		precautionaryStatements:
+			normalizedPrecautionaryStatements.length > 0
+				? normalizedPrecautionaryStatements
+				: undefined,
 		foodNutrients,
 		reportedNutrientIds: foodNutrients.map((nutrient) => nutrient.nutrientId),
 		foodServings,
@@ -395,6 +437,20 @@ export const normalizeFdcFood = (food: FdcFoodResponse): FoodItem => {
 			...(foodNutrients.length > 0
 				? {
 						nutrition: food.fieldProvenance?.nutrition ?? {
+							source: "usda" as const,
+							sourceReference,
+							confidence: "imported" as const,
+						},
+					}
+				: {}),
+			...(normalizedIngredients.ingredientText
+				? {
+						ingredients: food.fieldProvenance?.ingredients ?? {
+							source: "usda" as const,
+							sourceReference,
+							confidence: "imported" as const,
+						},
+						ingredientAnalysis: food.fieldProvenance?.ingredientAnalysis ?? {
 							source: "usda" as const,
 							sourceReference,
 							confidence: "imported" as const,
