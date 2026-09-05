@@ -1,6 +1,8 @@
 <script lang="ts">
 	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
+	import AssetAttribution from "$lib/components/common/display/AssetAttribution/AssetAttribution.svelte";
 	import PhotoUploadInput from "$lib/components/common/forms/PhotoUploadInput/PhotoUploadInput.svelte";
+	import ProductImageFrame from "$lib/components/common/images/ProductImageFrame/ProductImageFrame.svelte";
 	import SelectField from "$lib/components/common/forms/SelectField/SelectField.svelte";
 	import ToggleSwitch from "$lib/components/common/forms/ToggleSwitch/ToggleSwitch.svelte";
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
@@ -15,6 +17,7 @@
 	import type { ShareStepProps } from "./types";
 	import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
 	import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
+	import { pickFoodFullImageUrl } from "$lib/utils/food/images/foodImages";
 
 	let {
 		normalizedName,
@@ -82,6 +85,9 @@
 	const catalogSubmissionComplete = $derived(
 		catalogSubmissionOnly && Boolean(catalogMessage),
 	);
+	const trustedProductImageUrl = $derived(
+		pickFoodFullImageUrl(trustedProductImage),
+	);
 	const saveDestinationOptions = [
 		{ value: MIX_STORAGE_KEYS.fridge, label: "Fridge" },
 		{ value: MIX_STORAGE_KEYS.shoppingList, label: "Shopping List" },
@@ -132,6 +138,20 @@
 				<strong>{normalizedName || "Unnamed ingredient"}</strong>
 				<span>{activeCategory}</span>
 			</div>
+			{#if trustedProductImageUrl && !requiresCatalogEvidence}
+				<div class="share-step__trusted-image">
+					<ProductImageFrame
+						src={trustedProductImageUrl}
+						alt={`${normalizedName || "Ingredient"} package image`}
+						rotationDegrees={trustedProductImage?.rotationDegrees}
+					/>
+					<AssetAttribution
+						attributionText={trustedProductImage?.attributionText}
+						licenseName={trustedProductImage?.licenseName ?? ""}
+						licenseUrl={trustedProductImage?.licenseUrl}
+					/>
+				</div>
+			{/if}
 			{#if summaryNutrients.length > 0}
 				<div class="share-step__macro-row">
 					{#each summaryNutrients as nutrient (nutrient.label)}
