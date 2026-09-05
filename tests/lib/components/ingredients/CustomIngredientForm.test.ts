@@ -1132,25 +1132,7 @@ describe("CustomIngredientForm", () => {
 		await fireEvent.click(
 			screen.getByRole("button", { name: "Move to Shopping List" }),
 		);
-		expect(
-			await screen.findByRole("region", { name: "Move this ingredient?" }),
-		).toHaveTextContent(
-			"Existing barcode snack is currently in Fridge. Move it to Shopping List?",
-		);
-		expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-		const cancel = screen.getByRole("button", { name: "Cancel" });
-		await waitFor(() => expect(cancel).toHaveFocus());
-		await fireEvent.click(cancel);
-		expect(
-			screen.getByRole("button", { name: "Move to Shopping List" }),
-		).toBeInTheDocument();
-		expect(
-			ingredientListMocks.moveIngredientListItemById,
-		).not.toHaveBeenCalled();
-
-		await fireEvent.click(
-			screen.getByRole("button", { name: "Move to Shopping List" }),
-		);
+		expect(await screen.findByText(/already in Fridge/i)).toBeInTheDocument();
 		expect(customFoodMocks.saveCustomFood).not.toHaveBeenCalled();
 		await fireEvent.click(screen.getByRole("button", { name: "Move" }));
 
@@ -1163,90 +1145,6 @@ describe("CustomIngredientForm", () => {
 		expect(customFoodMocks.saveCustomFood).not.toHaveBeenCalled();
 		expect(ingredientListMocks.moveFoodToIngredientList).not.toHaveBeenCalled();
 		expect(onCreate).not.toHaveBeenCalled();
-	});
-
-	it("confirms the reverse Shopping List to Fridge move inline", async () => {
-		const identityKey = "barcode:04006381333931";
-		render(CustomIngredientForm, {
-			props: {
-				onCreate: vi.fn(),
-				moveConfirmationRouteOpen: true,
-				ingredientListIndex: {
-					[MIX_STORAGE_KEYS.fridge]: {
-						foodIds: [],
-						foodIdentityKeys: [],
-					},
-					[MIX_STORAGE_KEYS.shoppingList]: {
-						foodIds: [72],
-						foodIdentityKeys: [identityKey],
-					},
-				},
-			},
-		});
-
-		await fillRequiredCustomIngredient("Existing barcode snack", {
-			barcode: "4006381333931",
-		});
-		await fireEvent.click(
-			screen.getByRole("button", { name: "Move to Fridge" }),
-		);
-		expect(
-			await screen.findByRole("region", { name: "Move this ingredient?" }),
-		).toHaveTextContent(
-			"Existing barcode snack is currently in Shopping List. Move it to Fridge?",
-		);
-		await fireEvent.click(screen.getByRole("button", { name: "Move" }));
-
-		await waitFor(() =>
-			expect(
-				ingredientListMocks.moveIngredientListItemById,
-			).toHaveBeenCalledWith(
-				MIX_STORAGE_KEYS.shoppingList,
-				MIX_STORAGE_KEYS.fridge,
-				72,
-			),
-		);
-	});
-
-	it("cancels the inline move when browser navigation closes its route", async () => {
-		const identityKey = "barcode:04006381333931";
-		const ingredientListIndex = {
-			[MIX_STORAGE_KEYS.fridge]: {
-				foodIds: [81],
-				foodIdentityKeys: [identityKey],
-			},
-			[MIX_STORAGE_KEYS.shoppingList]: {
-				foodIds: [],
-				foodIdentityKeys: [],
-			},
-		};
-		const props = {
-			onCreate: vi.fn(),
-			moveConfirmationRouteOpen: true,
-			ingredientListIndex,
-		};
-		const view = render(CustomIngredientForm, { props });
-
-		await fillRequiredCustomIngredient("Existing barcode snack", {
-			barcode: "4006381333931",
-			destination: MIX_STORAGE_KEYS.shoppingList,
-		});
-		await fireEvent.click(
-			screen.getByRole("button", { name: "Move to Shopping List" }),
-		);
-		expect(
-			await screen.findByRole("region", { name: "Move this ingredient?" }),
-		).toBeInTheDocument();
-
-		await view.rerender({ ...props, moveConfirmationRouteOpen: false });
-		await waitFor(() =>
-			expect(
-				screen.queryByRole("region", { name: "Move this ingredient?" }),
-			).not.toBeInTheDocument(),
-		);
-		expect(
-			ingredientListMocks.moveIngredientListItemById,
-		).not.toHaveBeenCalled();
 	});
 
 	it("asks before moving an existing fridge item to shopping", async () => {
@@ -1265,9 +1163,7 @@ describe("CustomIngredientForm", () => {
 			screen.getByRole("button", { name: /add ingredient/i }),
 		);
 
-		expect(
-			await screen.findByRole("region", { name: "Move this ingredient?" }),
-		).toHaveTextContent("currently in Fridge");
+		expect(await screen.findByText(/already in Fridge/i)).toBeInTheDocument();
 		expect(screen.getByRole("button", { name: "Move" })).toBeInTheDocument();
 		expect(onCreate).not.toHaveBeenCalled();
 	});
@@ -1481,6 +1377,16 @@ describe("CustomIngredientForm", () => {
 			source: "usda" as const,
 			sourceLabel: "USDA FDC",
 			sourceReference: "12345",
+			image: {
+				source: "open-food-facts" as const,
+				sourceReference: "04006381333931",
+				role: "front" as const,
+				imageUrl: "https://images.example.test/source-tomato.jpg",
+				licenseName: "CC BY-SA 3.0",
+				licenseUrl: "https://creativecommons.org/licenses/by-sa/3.0/",
+				attributionText: "Open Food Facts contributors",
+				confidence: "source-verified" as const,
+			},
 		};
 		barcodeLookupMocks.lookupBarcodeProduct.mockResolvedValue({
 			status: "found",
@@ -1515,6 +1421,16 @@ describe("CustomIngredientForm", () => {
 		await waitFor(() =>
 			expect(screen.getByLabelText(/share with community/i)).toBeChecked(),
 		);
+		const trustedProductImage = screen.getByRole("img", {
+			name: "Source tomato product package image",
+		});
+		expect(trustedProductImage).toHaveAttribute(
+			"src",
+			"https://images.example.test/source-tomato.jpg",
+		);
+		expect(
+			screen.getByText("Image: Open Food Facts contributors"),
+		).toBeInTheDocument();
 		expect(screen.getByText(/sharing is on by default/i)).toBeInTheDocument();
 		await goToStep(/identity/i);
 		expect(screen.getByLabelText(/food name/i)).toHaveValue(
@@ -1670,7 +1586,6 @@ describe("CustomIngredientForm", () => {
 	});
 
 	it("requires complete image evidence before sharing an Open Food Facts-only match", async () => {
-		const onLookupStateChange = vi.fn();
 		const nutrients = makeTestNutrients({
 			calories: 200,
 			fat: 20,
@@ -1713,9 +1628,7 @@ describe("CustomIngredientForm", () => {
 			requiresCatalogEvidence: true,
 		});
 
-		render(CustomIngredientForm, {
-			props: { onCreate: vi.fn(), onLookupStateChange },
-		});
+		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
 		await openManualForm();
 		await fireEvent.input(screen.getByLabelText(/upc \/ barcode/i), {
 			target: { value: "00051497279929" },
@@ -1724,7 +1637,6 @@ describe("CustomIngredientForm", () => {
 			await screen.findByRole("button", { name: /autofill/i }),
 		);
 		await goToStep(/^share$/i);
-		onLookupStateChange.mockClear();
 		await fireEvent.click(screen.getByLabelText(/share with community/i));
 
 		await waitFor(() =>
@@ -1732,20 +1644,9 @@ describe("CustomIngredientForm", () => {
 				screen.getByText(/photos for catalog review/i),
 			).toBeInTheDocument(),
 		);
-		for (const label of [
-			"Take front of package",
-			"Choose existing front of package",
-			"Take nutrition facts label",
-			"Choose existing nutrition facts label",
-			"Take barcode",
-			"Choose existing barcode",
-		]) {
-			expect(screen.getByLabelText(label)).toHaveAttribute(
-				"aria-required",
-				"true",
-			);
-		}
-		expect(onLookupStateChange).not.toHaveBeenCalledWith(true);
+		expect(screen.getByLabelText(/front of package/i)).toBeRequired();
+		expect(screen.getByLabelText(/nutrition facts label/i)).toBeRequired();
+		expect(screen.getByLabelText(/^barcode$/i)).toBeRequired();
 	});
 
 	it("uses an exact catalog category and advances autofill directly to Share", async () => {
@@ -2118,21 +2019,7 @@ describe("CustomIngredientForm", () => {
 			},
 		});
 
-		render(CustomIngredientForm, {
-			props: {
-				onCreate: vi.fn(),
-				ingredientListIndex: {
-					[MIX_STORAGE_KEYS.fridge]: {
-						foodIds: [91],
-						foodIdentityKeys: ["barcode:00021130462506"],
-					},
-					[MIX_STORAGE_KEYS.shoppingList]: {
-						foodIds: [],
-						foodIdentityKeys: [],
-					},
-				},
-			},
-		});
+		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
 
 		await openManualForm();
 		await fireEvent.input(screen.getByLabelText(/upc \/ barcode/i), {
@@ -2152,13 +2039,9 @@ describe("CustomIngredientForm", () => {
 		expect(
 			screen.queryByLabelText(/share with community/i),
 		).not.toBeInTheDocument();
-		expect(
-			screen.getByRole("button", { name: "Already saved" }),
-		).toBeDisabled();
 	});
 
-	it("submits one reviewed update without changing an existing list item", async () => {
-		const onCreate = vi.fn();
+	it("allows community sharing when a non-name catalog field is edited", async () => {
 		const draft = {
 			barcode: "00021130462506",
 			name: "Strawberry Jelly, Strawberry",
@@ -2191,21 +2074,7 @@ describe("CustomIngredientForm", () => {
 			() => new Promise(() => {}),
 		);
 
-		render(CustomIngredientForm, {
-			props: {
-				onCreate,
-				ingredientListIndex: {
-					[MIX_STORAGE_KEYS.fridge]: {
-						foodIds: [91],
-						foodIdentityKeys: ["barcode:00021130462506"],
-					},
-					[MIX_STORAGE_KEYS.shoppingList]: {
-						foodIds: [],
-						foodIdentityKeys: [],
-					},
-				},
-			},
-		});
+		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
 
 		await openManualForm();
 		await fireEvent.input(screen.getByLabelText(/upc \/ barcode/i), {
@@ -2532,9 +2401,9 @@ describe("CustomIngredientForm", () => {
 			type: "image/jpeg",
 		});
 		for (const label of [
-			"Choose existing front of package",
-			"Choose existing nutrition facts label",
-			"Choose existing barcode",
+			/front of package/i,
+			/nutrition facts label/i,
+			/^barcode$/i,
 		]) {
 			await fireEvent.change(screen.getByLabelText(label), {
 				target: { files: [photo] },
@@ -2784,9 +2653,9 @@ describe("CustomIngredientForm", () => {
 			type: "image/jpeg",
 		});
 		for (const label of [
-			"Choose existing front of package",
-			"Choose existing nutrition facts label",
-			"Choose existing barcode",
+			/front of package/i,
+			/nutrition facts label/i,
+			/^barcode$/i,
 		]) {
 			await fireEvent.change(screen.getByLabelText(label), {
 				target: { files: [photo] },
@@ -2933,9 +2802,9 @@ describe("CustomIngredientForm", () => {
 			type: "image/jpeg",
 		});
 		for (const label of [
-			"Choose existing front of package",
-			"Choose existing nutrition facts label",
-			"Choose existing barcode",
+			/front of package/i,
+			/nutrition facts label/i,
+			/^barcode$/i,
 		]) {
 			await fireEvent.change(screen.getByLabelText(label), {
 				target: { files: [photo] },

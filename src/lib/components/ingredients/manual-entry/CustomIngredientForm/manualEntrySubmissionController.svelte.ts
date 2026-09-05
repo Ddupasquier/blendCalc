@@ -12,7 +12,6 @@ import type { ManualEntryBarcodeController } from "./manualEntryBarcodeControlle
 import type { ManualEntryOutcomeController } from "./manualEntryOutcomeController.svelte";
 import { applyCardImagePlacementToFoodImage } from "$lib/utils/food/images/foodImages";
 import type { ManualEntryDestinationAction } from "$lib/components/ingredients/manual-entry/utils/listMembership";
-import type { SharedProductSubmissionProgress } from "$lib/utils/products/catalog";
 
 type ManualEntrySubmissionControllerOptions = {
 	form: ManualEntryFormState;
@@ -46,13 +45,11 @@ export const createManualEntrySubmissionController = ({
 		catalogMessage: string;
 		catalogMessageTone: ManualEntryCatalogMessageTone;
 		saving: boolean;
-		evidenceProgress: SharedProductSubmissionProgress | null;
 	}>({
 		error: "",
 		catalogMessage: "",
 		catalogMessageTone: "success",
 		saving: false,
-		evidenceProgress: null,
 	});
 
 	const setError = (message: string) => {
@@ -64,16 +61,14 @@ export const createManualEntrySubmissionController = ({
 		state.error = "";
 		state.catalogMessage = "";
 		state.catalogMessageTone = "success";
-		state.evidenceProgress = null;
 		outcome.resetBeforeSubmit();
 		const catalogSubmissionOnly = getCatalogSubmissionOnly();
-		const reviewedUpdate = barcode.reviewedUpdateSelected;
 		const destinationAction = catalogSubmissionOnly
 			? null
 			: getDestinationAction();
 		if (
 			destinationAction?.kind === "checking" ||
-			(destinationAction?.kind === "duplicate" && !reviewedUpdate)
+			destinationAction?.kind === "duplicate"
 		) {
 			return;
 		}
@@ -88,7 +83,7 @@ export const createManualEntrySubmissionController = ({
 			barcode: form.data.barcode,
 			requiresCatalogEvidence: barcode.requiresCatalogEvidence,
 			requiresFreshFrontPhoto:
-				form.data.submissionIntent === "catalog_correction" || reviewedUpdate,
+				form.data.submissionIntent === "catalog_correction",
 			hasTrustedProductImage: barcode.hasTrustedProductImage,
 			frontPhoto: form.data.frontPhoto,
 			nutritionPhoto: form.data.nutritionPhoto,
@@ -202,13 +197,8 @@ export const createManualEntrySubmissionController = ({
 				},
 				reviewFlags: barcode.getReferenceReviewFlags(),
 				useIngredient: outcome.useIngredient,
-				submissionIntent: reviewedUpdate
-					? "catalog_correction"
-					: form.data.submissionIntent,
-				catalogSubmissionOnly: catalogSubmissionOnly || reviewedUpdate,
-				onCatalogProgress: (progress) => {
-					state.evidenceProgress = progress;
-				},
+				submissionIntent: form.data.submissionIntent,
+				catalogSubmissionOnly,
 			});
 
 			if (result.status === "error") {
@@ -219,7 +209,7 @@ export const createManualEntrySubmissionController = ({
 
 			state.catalogMessage = result.catalogMessage;
 			state.catalogMessageTone = result.catalogMessageTone;
-			if (catalogSubmissionOnly || reviewedUpdate) return;
+			if (catalogSubmissionOnly) return;
 			if (result.resetForm) onReset();
 		} catch {
 			state.error =

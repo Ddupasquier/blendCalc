@@ -5,6 +5,21 @@ import {
 } from "$lib/utils/products/productNameFormatting.js";
 import { resolveFoodSymbolKey } from "$lib/utils/food/reference/appReferenceCatalog";
 import type { FoodStructuredIngredient } from "$lib/utils/food/types";
+import {
+	EXTERNAL_INGREDIENT_NORMALIZATION_METHOD,
+	EXTERNAL_INGREDIENT_NORMALIZATION_VERSION,
+	normalizeExternalIngredientStatement,
+} from "$lib/utils/food/ingredients/ingredientStatementNormalization.js";
+
+const EXTERNAL_INGREDIENT_SOURCES = new Set([
+	"usda",
+	"open-food-facts",
+	"cola-cloud",
+	"health-canada-cnf",
+	"uk-cofid",
+	"fsanz-afcd",
+	"foodrepo",
+]);
 
 const cloneStructuredIngredients = (
 	ingredients: FoodStructuredIngredient[] | undefined,
@@ -29,6 +44,76 @@ export const getCanonicalFoodDescription = (
 
 export const normalizeFoodForStorage = (food: FoodItem): FoodItem => {
 	const normalizedFood = normalizeFoodProductName(food) as FoodItem;
+	const ingredientSource = food.fieldProvenance?.ingredients;
+	const normalizedExternalIngredients =
+		food.ingredients &&
+		ingredientSource &&
+		EXTERNAL_INGREDIENT_SOURCES.has(ingredientSource.source) &&
+		(food.ingredientAnalysis?.normalization?.method !==
+			EXTERNAL_INGREDIENT_NORMALIZATION_METHOD ||
+			food.ingredientAnalysis.normalization.version !==
+				EXTERNAL_INGREDIENT_NORMALIZATION_VERSION)
+			? normalizeExternalIngredientStatement(food.ingredients, {
+					languageCode:
+						food.ingredientAnalysis?.normalization?.languageCode ??
+						food.sourceMetadata?.language,
+					sourceField:
+						food.ingredientAnalysis?.normalization?.sourceField ??
+						"ingredients",
+				})
+			: null;
+	const precautionaryStatements = normalizedExternalIngredients
+		? [
+				...normalizedExternalIngredients.precautionaryStatements.map(
+					(statement) => ({
+						...statement,
+						languageCode:
+							normalizedExternalIngredients.declarationAnalysis.languageCode,
+						sourceField:
+							normalizedExternalIngredients.declarationAnalysis.sourceField,
+					}),
+				),
+				...(food.precautionaryStatements ?? []),
+			].filter(
+				(statement, index, statements) =>
+					statements.findIndex(
+						(candidate) =>
+							candidate.type === statement.type &&
+							candidate.text.toLocaleLowerCase("en-US") ===
+								statement.text.toLocaleLowerCase("en-US"),
+					) === index,
+			)
+		: food.precautionaryStatements;
+	const allergenDeclarationAnalysis = normalizedExternalIngredients
+		? normalizedExternalIngredients.declarationAnalysis
+		: food.ingredientAnalysis?.allergenDeclarationAnalysis;
+	const ingredientAnalysis =
+		food.ingredientAnalysis || normalizedExternalIngredients
+			? {
+					...food.ingredientAnalysis,
+					ingredientTags: [...(food.ingredientAnalysis?.ingredientTags ?? [])],
+					analysisTags: [...(food.ingredientAnalysis?.analysisTags ?? [])],
+					derivedTraceTags: [
+						...(food.ingredientAnalysis?.derivedTraceTags ?? []),
+					],
+					...(normalizedExternalIngredients
+						? { normalization: normalizedExternalIngredients.normalization }
+						: {}),
+					allergenDeclarationAnalysis: allergenDeclarationAnalysis
+						? {
+								...allergenDeclarationAnalysis,
+								contains: [...allergenDeclarationAnalysis.contains],
+								mayContain: [...allergenDeclarationAnalysis.mayContain],
+								statements: allergenDeclarationAnalysis.statements.map(
+									(statement) => ({
+										...statement,
+										allergens: [...statement.allergens],
+									}),
+								),
+							}
+						: undefined,
+				}
+			: undefined;
 	const acceptedFoodNutrients = food.foodNutrients.filter(
 		(nutrient) =>
 			Number.isSafeInteger(nutrient.nutrientId) &&
@@ -72,44 +157,21 @@ export const normalizeFoodForStorage = (food: FoodItem): FoodItem => {
 		hasSourceServing: food.hasSourceServing,
 		foodServings: food.foodServings?.map((serving) => ({ ...serving })),
 		gtinUpc: food.gtinUpc,
-		ingredients: food.ingredients,
-		ingredientList: food.ingredientList ? [...food.ingredientList] : undefined,
+		ingredients:
+			normalizedExternalIngredients?.ingredientText || food.ingredients,
+		ingredientList: normalizedExternalIngredients
+			? [...normalizedExternalIngredients.ingredientList]
+			: food.ingredientList
+				? [...food.ingredientList]
+				: undefined,
 		structuredIngredients: cloneStructuredIngredients(
 			food.structuredIngredients,
 		),
-		ingredientAnalysis: food.ingredientAnalysis
-			? {
-					...food.ingredientAnalysis,
-					ingredientTags: [...food.ingredientAnalysis.ingredientTags],
-					analysisTags: [...food.ingredientAnalysis.analysisTags],
-					derivedTraceTags: [...food.ingredientAnalysis.derivedTraceTags],
-					allergenDeclarationAnalysis: food.ingredientAnalysis
-						.allergenDeclarationAnalysis
-						? {
-								...food.ingredientAnalysis.allergenDeclarationAnalysis,
-								contains: [
-									...food.ingredientAnalysis.allergenDeclarationAnalysis
-										.contains,
-								],
-								mayContain: [
-									...food.ingredientAnalysis.allergenDeclarationAnalysis
-										.mayContain,
-								],
-								statements:
-									food.ingredientAnalysis.allergenDeclarationAnalysis.statements.map(
-										(statement) => ({
-											...statement,
-											allergens: [...statement.allergens],
-										}),
-									),
-							}
-						: undefined,
-				}
-			: undefined,
+		ingredientAnalysis,
 		additives: food.additives ? [...food.additives] : undefined,
 		allergens: food.allergens ? [...food.allergens] : undefined,
 		traces: food.traces ? [...food.traces] : undefined,
-		precautionaryStatements: food.precautionaryStatements?.map((statement) => ({
+		precautionaryStatements: precautionaryStatements?.map((statement) => ({
 			...statement,
 			allergens: [...statement.allergens],
 		})),

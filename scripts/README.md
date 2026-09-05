@@ -249,19 +249,28 @@ licence, catalog, nutrient, or food-safety documentation.
 
 ## Catalog Backfills
 
-| Command                                                                                               | Purpose and guardrails                                                                                                         |
-| ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `node scripts/backfills/catalog/backfill_shared_product_categories.mjs --dry-run`                     | Preview exact-identity category repair; live mode can remove invalid category links.                                           |
-| `node scripts/backfills/catalog/backfill_source_food_details.mjs --dry-run --limit=10`                | Preview exact USDA identifier or GTIN enrichment for saved snapshots without fuzzy matching or changing user names/categories. |
-| `node scripts/backfills/catalog/backfill_catalog_metadata.mjs --dry-run --cached-only`                | Preview exact-barcode canonical metadata enrichment using only licensed cached data.                                           |
-| `node scripts/backfills/images/backfill_food_images.mjs --dry-run --limit=25`                         | Preview reusable Open Food Facts image discovery and licensed asset metadata.                                                  |
-| `node scripts/backfills/images/backfill_food_image_placements.mjs --dry-run --limit=25`               | Preview OCR-based placement for untouched automatic or legacy front images.                                                    |
-| `node scripts/backfills/images/backfill_food_image_placements.mjs --dry-run --barcode=00000000119993` | Preview one exact image-placement candidate.                                                                                   |
+| Command                                                                                               | Purpose and guardrails                                                                                                                       |
+| ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `node scripts/backfills/catalog/backfill_shared_product_categories.mjs --dry-run`                     | Preview exact-identity category repair; live mode can remove invalid category links.                                                         |
+| `node scripts/backfills/catalog/backfill_source_food_details.mjs --dry-run --limit=10`                | Preview exact USDA identifier or GTIN enrichment for saved snapshots without fuzzy matching or changing user names/categories.               |
+| `node scripts/backfills/catalog/backfill_catalog_metadata.mjs --dry-run --cached-only`                | Preview exact-barcode canonical metadata enrichment using only licensed cached data.                                                         |
+| `node scripts/backfills/catalog/backfill_external_ingredient_statements.mjs --local`                  | Preview versioned external ingredient formatting from stored rows only; makes zero provider requests and never rewrites user/moderator text. |
+| `node scripts/backfills/images/backfill_food_images.mjs --dry-run --limit=25`                         | Preview reusable Open Food Facts image discovery and licensed asset metadata.                                                                |
+| `node scripts/backfills/images/backfill_food_image_placements.mjs --dry-run --limit=25`               | Preview OCR-based placement for untouched automatic or legacy front images.                                                                  |
+| `node scripts/backfills/images/backfill_food_image_placements.mjs --dry-run --barcode=00000000119993` | Preview one exact image-placement candidate.                                                                                                 |
 
 Catalog metadata backfill can recover missing USDA brand, ingredient statement,
 explicit declarations, labels, package quantity, source dates/market, and legitimate
 servings through canonical observation and enrichment RPCs. Open Food Facts metadata may
 be cached and audited but is not promoted while its canonical-storage policy is disabled.
+
+External ingredient statement normalization defaults to a read-only preview. Apply
+requires both `--apply` and
+`--confirm-apply=normalize-external-ingredients-v1`. Use `--local` for disposable QA;
+the script refuses a non-local URL in that mode. It reads stored snapshots only, skips
+user/community/moderator provenance, stops on concurrent record changes, preserves raw
+provider caches and historical revisions, and records a new revision for canonical
+products. A second preview after apply must report zero eligible changes.
 
 Image-placement backfill is idempotent. It updates only confident untouched automatic
 placements and never overwrites user adjustments, moderator-approved placement, or an

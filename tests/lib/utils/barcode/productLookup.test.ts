@@ -1151,7 +1151,7 @@ describe("barcode product mapping", () => {
 			traces: [],
 			ingredientAnalysis: {
 				allergenDeclarationAnalysis: {
-					languageStatus: "unknown",
+					languageStatus: "supported",
 					extractionStatus: "parsed",
 					contains: ["Almonds"],
 					mayContain: ["soy"],

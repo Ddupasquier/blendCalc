@@ -1462,6 +1462,25 @@ test("the Food passport keeps catalog depth optional and responsive", async ({
 	).toBe(true);
 });
 
+test("external ingredient statements are formatted before nutrition details render", async ({
+	page,
+}) => {
+	await page.goto("/ingredients/fridge/nutrition/2757275");
+	await waitForAppReady(page);
+
+	const ingredientsSection = page
+		.locator(".product-ingredients-panel")
+		.filter({ has: page.getByRole("heading", { name: "Ingredients" }) })
+		.first();
+	await expect(ingredientsSection).toContainText(
+		"Almondmilk (filtered water, almonds), calcium carbonate, sea salt",
+	);
+	await expect(ingredientsSection).not.toContainText("Other Ingredients:");
+	await expect(ingredientsSection).not.toContainText(
+		"Contains Almonds All products",
+	);
+});
+
 test("nutrition details preserve the complete source-backed food record", async ({
 	page,
 }, testInfo) => {

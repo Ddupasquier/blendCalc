@@ -132,6 +132,15 @@ blendCalc data first, requests only missing permitted fields, records field-leve
 and license information, and stores accepted data in Supabase. Public/catalog reads do
 not call external providers.
 
+External ingredient statements pass through one versioned normalization boundary before
+they enter application storage or a client-facing food model. That boundary removes
+provider markup artifacts, normalizes safe spacing and punctuation, formats confidently
+English all-caps text, keeps nested groups intact, and separates explicit allergen and
+precautionary statements without inferring warnings. Unknown or unsupported-language
+casing is preserved. Raw provider responses remain unchanged in the private cache or
+source observation, and user-, manufacturer-, community-, or moderator-authored text is
+never rewritten by the automatic formatter.
+
 The disposable local QA environment never sends provider requests. It may exercise the
 same barcode route and mapping pipeline against deterministic source-shaped records in
 its private provider cache; a cache miss remains a normal not-found result.
@@ -140,7 +149,9 @@ Product enrichment is field-based rather than provider-winner based. Exact ident
 may link records, but similar names never establish identity. Raw or restricted
 observations remain in their licensed cache/evidence boundary, while accepted canonical
 fields retain their own provenance. Existing records receive the same applicable
-backfill as future writes.
+backfill as future writes. The ingredient normalization backfill is database-only,
+defaults to preview, makes no external requests, uses optimistic whole-record matching,
+and appends a canonical revision instead of rewriting history.
 
 Database-backed nutrient relationship validation runs before external barcode nutrition
 reaches manual-entry autofill or legally permitted exact-source observation storage.

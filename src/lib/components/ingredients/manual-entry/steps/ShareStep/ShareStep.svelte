@@ -1,6 +1,8 @@
 <script lang="ts">
 	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
+	import AssetAttribution from "$lib/components/common/display/AssetAttribution/AssetAttribution.svelte";
 	import PhotoUploadInput from "$lib/components/common/forms/PhotoUploadInput/PhotoUploadInput.svelte";
+	import ProductImageFrame from "$lib/components/common/images/ProductImageFrame/ProductImageFrame.svelte";
 	import SelectField from "$lib/components/common/forms/SelectField/SelectField.svelte";
 	import ToggleSwitch from "$lib/components/common/forms/ToggleSwitch/ToggleSwitch.svelte";
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
@@ -11,11 +13,11 @@
 	import ManualEntryField from "$lib/components/ingredients/manual-entry/ManualEntryField/ManualEntryField.svelte";
 	import ManualEntryStepLayout from "$lib/components/ingredients/manual-entry/ManualEntryStepLayout/ManualEntryStepLayout.svelte";
 	import ManualEntryToggleRow from "$lib/components/ingredients/manual-entry/ManualEntryToggleRow/ManualEntryToggleRow.svelte";
-	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
 	import ProductSafetyAlerts from "$lib/components/ingredients/nutrition/ProductSafetyAlerts/ProductSafetyAlerts.svelte";
-	import { getEvidencePhotoStatus, type ShareStepProps } from "./types";
+	import type { ShareStepProps } from "./types";
 	import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
 	import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
+	import { pickFoodFullImageUrl } from "$lib/utils/food/images/foodImages";
 
 	let {
 		normalizedName,
@@ -47,14 +49,11 @@
 		usesNonstandardNutritionDisclosure,
 		saveDestination,
 		destinationAction,
-		reviewedUpdate,
-		moveConfirmation,
 		error,
 		placementMessage,
 		catalogMessage,
 		catalogMessageTone,
 		saving,
-		evidenceProgress,
 		catalogSubmissionOnly,
 		onShareChange,
 		onApplyVerifiedBarcode,
@@ -68,20 +67,15 @@
 		onBack,
 		onSubmit,
 		onCatalogSubmissionComplete,
-		onConfirmMove,
-		onCancelMove,
 		onSaveDestinationControl,
 	}: ShareStepProps = $props();
 
 	let saveDestinationControl = $state<HTMLButtonElement | null>(null);
-	let moveCancelControl = $state<HTMLButtonElement | null>(null);
+	let automaticImagePlacementBusy = $state(false);
 
 	$effect(() => {
 		if (saveDestinationControl)
 			onSaveDestinationControl?.(saveDestinationControl);
-	});
-	$effect(() => {
-		if (moveConfirmation && moveCancelControl) moveCancelControl.focus();
 	});
 
 	const formatUnit = (unitName: string) =>
@@ -89,7 +83,10 @@
 			? "kcal"
 			: unitName.trim().toLowerCase();
 	const catalogSubmissionComplete = $derived(
-		(catalogSubmissionOnly || reviewedUpdate) && Boolean(catalogMessage),
+		catalogSubmissionOnly && Boolean(catalogMessage),
+	);
+	const trustedProductImageUrl = $derived(
+		pickFoodFullImageUrl(trustedProductImage),
 	);
 	const saveDestinationOptions = [
 		{ value: MIX_STORAGE_KEYS.fridge, label: "Fridge" },
@@ -113,11 +110,6 @@
 			: hasAcceptedBarcodeNutrients
 				? `${optionalNutrientCount} barcode ${optionalNutrientCount === 1 ? "nutrient" : "nutrients"} filled`
 				: `${optionalNutrientCount} optional ${optionalNutrientCount === 1 ? "nutrient" : "nutrients"} filled`,
-	);
-	const evidenceUploadProgress = $derived(
-		evidenceProgress?.phase === "uploading" && evidenceProgress.total
-			? evidenceProgress.loaded / evidenceProgress.total
-			: null,
 	);
 </script>
 
@@ -146,6 +138,20 @@
 				<strong>{normalizedName || "Unnamed ingredient"}</strong>
 				<span>{activeCategory}</span>
 			</div>
+			{#if trustedProductImageUrl && !requiresCatalogEvidence}
+				<div class="share-step__trusted-image">
+					<ProductImageFrame
+						src={trustedProductImageUrl}
+						alt={`${normalizedName || "Ingredient"} package image`}
+						rotationDegrees={trustedProductImage?.rotationDegrees}
+					/>
+					<AssetAttribution
+						attributionText={trustedProductImage?.attributionText}
+						licenseName={trustedProductImage?.licenseName ?? ""}
+						licenseUrl={trustedProductImage?.licenseUrl}
+					/>
+				</div>
+			{/if}
 			{#if summaryNutrients.length > 0}
 				<div class="share-step__macro-row">
 					{#each summaryNutrients as nutrient (nutrient.label)}
@@ -270,14 +276,10 @@
 				category={activeCategory}
 				required
 				requireFreshPhoto={catalogSubmissionOnly}
-				uploadStatus={getEvidencePhotoStatus(
-					"front",
-					Boolean(frontPhoto),
-					evidenceProgress,
-				)}
-				uploadProgress={evidenceUploadProgress}
 				{onFrontPhotoChange}
 				onPlacementChange={onImagePlacementChange}
+				onPlacementProcessingStateChange={(busy) =>
+					(automaticImagePlacementBusy = busy)}
 			/>
 			<PhotoUploadInput
 				id="custom-product-nutrition-photo"
@@ -288,12 +290,6 @@
 				files={nutritionPhoto ? [nutritionPhoto] : []}
 				capture="environment"
 				required
-				status={getEvidencePhotoStatus(
-					"nutrition",
-					Boolean(nutritionPhoto),
-					evidenceProgress,
-				)}
-				progress={evidenceUploadProgress}
 				onFilesChange={(files) => onNutritionPhotoChange(files[0] ?? null)}
 			/>
 			<PhotoUploadInput
@@ -305,12 +301,6 @@
 				files={barcodePhoto ? [barcodePhoto] : []}
 				capture="environment"
 				required
-				status={getEvidencePhotoStatus(
-					"barcode",
-					Boolean(barcodePhoto),
-					evidenceProgress,
-				)}
-				progress={evidenceUploadProgress}
 				onFilesChange={(files) => onBarcodePhotoChange(files[0] ?? null)}
 			/>
 		</section>
@@ -323,15 +313,11 @@
 				foodName={normalizedName || "Unnamed ingredient"}
 				brandName={brandOwner}
 				category={activeCategory}
-				uploadStatus={getEvidencePhotoStatus(
-					"front",
-					Boolean(frontPhoto),
-					evidenceProgress,
-				)}
-				uploadProgress={evidenceUploadProgress}
 				description="No trusted DB/API product image was found for this barcode. You can add a front package photo now; it stays private until a moderator approves it."
 				{onFrontPhotoChange}
 				onPlacementChange={onImagePlacementChange}
+				onPlacementProcessingStateChange={(busy) =>
+					(automaticImagePlacementBusy = busy)}
 			/>
 		</section>
 	{/if}
@@ -369,48 +355,19 @@
 		<StatusMessage tone={catalogMessageTone} message={catalogMessage} />
 	{/if}
 
-	{#if moveConfirmation}
-		<section
-			class="share-step__move-confirmation"
-			aria-labelledby="manual-entry-move-title"
-		>
-			<div>
-				<strong id="manual-entry-move-title">Move this ingredient?</strong>
-				<p>
-					{moveConfirmation.foodName} is currently in
-					{moveConfirmation.sourceLabel}. Move it to
-					{moveConfirmation.destinationLabel}?
-				</p>
-			</div>
-			<div class="share-step__move-actions">
-				<RoundedActionButton
-					bind:element={moveCancelControl}
-					variant="neutral"
-					disabled={moveConfirmation.busy}
-					onclick={onCancelMove}>Cancel</RoundedActionButton
-				>
-				<RoundedActionButton
-					busy={moveConfirmation.busy}
-					onclick={onConfirmMove}>Move</RoundedActionButton
-				>
-			</div>
-		</section>
-	{:else}
-		<ManualEntryActions
-			{onBack}
-			onNext={catalogSubmissionComplete
-				? onCatalogSubmissionComplete
-				: onSubmit}
-			nextLabel={catalogSubmissionComplete
-				? "Done"
-				: catalogSubmissionOnly
-					? "Submit Correction"
-					: destinationAction.label}
-			busy={saving}
-			nextDisabled={!catalogSubmissionOnly && destinationAction.disabled}
-			showBack={!catalogSubmissionComplete}
-		/>
-	{/if}
+	<ManualEntryActions
+		{onBack}
+		onNext={catalogSubmissionComplete ? onCatalogSubmissionComplete : onSubmit}
+		nextLabel={catalogSubmissionComplete
+			? "Done"
+			: catalogSubmissionOnly
+				? "Submit Correction"
+				: destinationAction.label}
+		busy={saving}
+		nextDisabled={automaticImagePlacementBusy ||
+			(!catalogSubmissionOnly && destinationAction.disabled)}
+		showBack={!catalogSubmissionComplete}
+	/>
 </ManualEntryStepLayout>
 
 <style lang="scss">

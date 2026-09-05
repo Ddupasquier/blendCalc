@@ -30,7 +30,7 @@ import {
 import { OPEN_FOOD_FACTS_IMAGE_LICENSE } from "$lib/utils/food/images/foodImages";
 import { createFullImagePlacement } from "$lib/utils/food/images/imagePlacement";
 import { normalizeFoodCategoryValue } from "$lib/utils/food/categories/categoryNormalization.js";
-import { analyzeIngredientLabelAllergenDeclarations } from "$lib/server/products/allergenDeclarations.server.js";
+import { normalizeExternalIngredientStatement } from "$lib/utils/food/ingredients/ingredientStatementNormalization.js";
 import {
 	canonicalizeProductNutrients,
 	getCanonicalProductNutrientId,
@@ -205,8 +205,16 @@ const uniqueCleanValues = (values: Array<string | undefined>) => {
 const splitDelimitedValues = (value?: string) =>
 	uniqueCleanValues((value ?? "").split(/[;,]/));
 
-const splitIngredientList = (value?: string) =>
-	uniqueCleanValues((value ?? "").split(/,(?![^(]*\))/));
+const uniqueIngredientValues = (values: Array<string | undefined>) => {
+	const seen = new Set<string>();
+	return values.flatMap((value) => {
+		const cleaned = value?.trim();
+		const key = cleaned?.toLocaleLowerCase("en-US");
+		if (!cleaned || !key || seen.has(key)) return [];
+		seen.add(key);
+		return [cleaned];
+	});
+};
 
 const toOptionalNumber = (value: unknown) => {
 	const number = Number(value);
@@ -452,17 +460,19 @@ const getOpenFoodFactsIngredientText = (product: OpenFoodFactsProduct) => {
 };
 
 const parseOpenFoodFactsMetadata = (product: OpenFoodFactsProduct) => {
-	const ingredientText = getOpenFoodFactsIngredientText(product);
-	const ingredients = ingredientText.text;
-	const allergenDeclarationAnalysis =
-		analyzeIngredientLabelAllergenDeclarations(ingredients, {
-			languageCode: ingredientText.languageCode,
-			sourceField: ingredientText.sourceField,
-		});
+	const sourceIngredientText = getOpenFoodFactsIngredientText(product);
+	const normalizedIngredients = normalizeExternalIngredientStatement(
+		sourceIngredientText.text,
+		{
+			languageCode: sourceIngredientText.languageCode,
+			sourceField: sourceIngredientText.sourceField,
+		},
+	);
+	const ingredients = normalizedIngredients.ingredientText;
+	const allergenDeclarationAnalysis = normalizedIngredients.declarationAnalysis;
 	const reportedTraceText = product.traces?.trim();
 	const precautionaryStatements: FoodPrecautionaryStatement[] = [
-		...allergenDeclarationAnalysis.statements.flatMap((statement) => {
-			if (statement.type === "contains") return [];
+		...normalizedIngredients.precautionaryStatements.flatMap((statement) => {
 			const precautionaryStatement: FoodPrecautionaryStatement = {
 				...statement,
 				type: statement.type,
@@ -500,6 +510,7 @@ const parseOpenFoodFactsMetadata = (product: OpenFoodFactsProduct) => {
 		derivedTraceTags: uniqueCleanValues(
 			splitDelimitedValues(product.traces_from_ingredients),
 		),
+		normalization: normalizedIngredients.normalization,
 		...(ingredients ? { allergenDeclarationAnalysis } : {}),
 		...(toOptionalNumber(product.ingredients_percent_analysis) !== undefined
 			? {
@@ -527,8 +538,8 @@ const parseOpenFoodFactsMetadata = (product: OpenFoodFactsProduct) => {
 
 	return {
 		ingredients: ingredients || undefined,
-		ingredientList: uniqueCleanValues([
-			...splitIngredientList(ingredients),
+		ingredientList: uniqueIngredientValues([
+			...normalizedIngredients.ingredientList,
 			...getStructuredIngredientTexts(structuredIngredients),
 		]),
 		structuredIngredients,
@@ -591,11 +602,16 @@ const parseOpenFoodFactsImage = (
 };
 
 const parseFdcMetadata = (food: FoodItem) => {
-	const allergenDeclarationAnalysis =
-		analyzeIngredientLabelAllergenDeclarations(food.ingredients, {
-			languageCode: food.sourceMetadata?.language,
+	const normalizedIngredients = normalizeExternalIngredientStatement(
+		food.ingredients,
+		{
+			languageCode: food.sourceMetadata?.language ?? "en",
 			sourceField: "ingredients",
-		});
+		},
+	);
+	const allergenDeclarationAnalysis =
+		food.ingredientAnalysis?.allergenDeclarationAnalysis ??
+		normalizedIngredients.declarationAnalysis;
 	const ingredientAnalysis: FoodIngredientAnalysis | undefined =
 		food.ingredients || food.ingredientAnalysis
 			? {
@@ -605,21 +621,21 @@ const parseFdcMetadata = (food: FoodItem) => {
 					derivedTraceTags: [
 						...(food.ingredientAnalysis?.derivedTraceTags ?? []),
 					],
+					normalization:
+						food.ingredientAnalysis?.normalization ??
+						normalizedIngredients.normalization,
 					...(food.ingredients ? { allergenDeclarationAnalysis } : {}),
 				}
 			: undefined;
 	return {
-		ingredients: food.ingredients?.trim() || undefined,
-		ingredientList: food.ingredientList?.length
-			? uniqueCleanValues(food.ingredientList)
-			: splitIngredientList(food.ingredients),
+		ingredients: normalizedIngredients.ingredientText || undefined,
+		ingredientList: [...normalizedIngredients.ingredientList],
 		ingredientAnalysis,
 		allergens: uniqueCleanValues(food.allergens ?? []),
 		traces: uniqueCleanValues(food.traces ?? []),
 		precautionaryStatements: [
 			...(food.precautionaryStatements ?? []),
-			...allergenDeclarationAnalysis.statements.flatMap((statement) => {
-				if (statement.type === "contains") return [];
+			...normalizedIngredients.precautionaryStatements.flatMap((statement) => {
 				const precautionaryStatement: FoodPrecautionaryStatement = {
 					...statement,
 					type: statement.type,

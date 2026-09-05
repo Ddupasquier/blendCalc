@@ -12,6 +12,17 @@ import type {
 } from "$lib/utils/food/types";
 import type { FoodCompatibilityFact } from "$lib/utils/food/quality/compatibility";
 import type { FoodPreferenceWarningEvidence } from "$lib/utils/profile/foodPreferenceWarnings";
+import { normalizeExternalIngredientStatement } from "$lib/utils/food/ingredients/ingredientStatementNormalization.js";
+
+const EXTERNAL_INGREDIENT_SOURCES = new Set([
+	"usda",
+	"open-food-facts",
+	"cola-cloud",
+	"health-canada-cnf",
+	"uk-cofid",
+	"fsanz-afcd",
+	"foodrepo",
+]);
 
 const percentFormatter = new Intl.NumberFormat("en-US", {
 	maximumFractionDigits: 2,
@@ -41,35 +52,42 @@ const getPercentageLabel = (ingredient: FoodStructuredIngredient) => {
 
 const getClassifications = (
 	ingredient: FoodStructuredIngredient,
-): FoodIngredientPresentationClassification[] => ([
-	["Vegan", ingredient.vegan],
-	["Vegetarian", ingredient.vegetarian],
-] as const).flatMap(([label, value]) => {
-	const formatted = value ? formatFoodMetadataTag(value) : "";
-	return formatted ? [{ label, value: formatted }] : [];
-});
+): FoodIngredientPresentationClassification[] =>
+	(
+		[
+			["Vegan", ingredient.vegan],
+			["Vegetarian", ingredient.vegetarian],
+		] as const
+	).flatMap(([label, value]) => {
+		const formatted = value ? formatFoodMetadataTag(value) : "";
+		return formatted ? [{ label, value: formatted }] : [];
+	});
 
 const flattenIngredients = (
 	ingredients: FoodStructuredIngredient[],
 	parentPath: string[] = [],
 	depth = 0,
-): FoodIngredientPresentationRow[] => ingredients.flatMap((ingredient) => {
-	const text = ingredient.text?.trim() || formatFoodMetadataTag(ingredient.id ?? "");
-	const path = text ? [...parentPath, text] : parentPath;
-	const row = text
-		? [{
-			text,
-			depth: Math.min(depth, 3),
-			path,
-			percentageLabel: getPercentageLabel(ingredient),
-			classifications: getClassifications(ingredient),
-		}]
-		: [];
-	return [
-		...row,
-		...flattenIngredients(ingredient.ingredients ?? [], path, depth + 1),
-	];
-});
+): FoodIngredientPresentationRow[] =>
+	ingredients.flatMap((ingredient) => {
+		const text =
+			ingredient.text?.trim() || formatFoodMetadataTag(ingredient.id ?? "");
+		const path = text ? [...parentPath, text] : parentPath;
+		const row = text
+			? [
+					{
+						text,
+						depth: Math.min(depth, 3),
+						path,
+						percentageLabel: getPercentageLabel(ingredient),
+						classifications: getClassifications(ingredient),
+					},
+				]
+			: [];
+		return [
+			...row,
+			...flattenIngredients(ingredient.ingredients ?? [], path, depth + 1),
+		];
+	});
 
 const getMetric = (
 	label: string,
@@ -82,7 +100,25 @@ const getMetric = (
 export const buildFoodIngredientPresentation = (
 	food: FoodItem,
 ): FoodIngredientPresentation | undefined => {
-	const ingredientText = food.ingredients?.trim() ||
+	const ingredientSource =
+		food.fieldProvenance?.ingredients?.source ?? food.sourceKey;
+	const normalizedExternalIngredients =
+		food.ingredients &&
+		ingredientSource &&
+		EXTERNAL_INGREDIENT_SOURCES.has(ingredientSource)
+			? normalizeExternalIngredientStatement(food.ingredients, {
+					languageCode:
+						food.ingredientAnalysis?.normalization?.languageCode ??
+						food.sourceMetadata?.language ??
+						(ingredientSource === "usda" ? "en" : undefined),
+					sourceField:
+						food.ingredientAnalysis?.normalization?.sourceField ??
+						"ingredients",
+				})
+			: null;
+	const ingredientText =
+		normalizedExternalIngredients?.ingredientText ||
+		food.ingredients?.trim() ||
 		(food.ingredientList ?? [])
 			.map((ingredient) => ingredient.trim())
 			.filter(Boolean)
@@ -93,24 +129,42 @@ export const buildFoodIngredientPresentation = (
 	const analysis = food.ingredientAnalysis;
 	const metrics = analysis
 		? [
-			...getMetric("Source analysis coverage", analysis.percentAnalysis),
-			...getMetric("Known ingredient percentages", analysis.percentKnown),
-			...getMetric("Estimated ingredient percentages", analysis.percentEstimate),
-			...getMetric("Unknown ingredient percentages", analysis.percentUnknown),
-		]
+				...getMetric("Source analysis coverage", analysis.percentAnalysis),
+				...getMetric("Known ingredient percentages", analysis.percentKnown),
+				...getMetric(
+					"Estimated ingredient percentages",
+					analysis.percentEstimate,
+				),
+				...getMetric("Unknown ingredient percentages", analysis.percentUnknown),
+			]
 		: [];
 	const tagGroups = analysis
 		? [
-			{ label: "Ingredient tags", values: getUniqueFoodMetadataTags(analysis.ingredientTags) },
-			{ label: "Source analysis", values: getUniqueFoodMetadataTags(analysis.analysisTags) },
-			{ label: "Source trace analysis", values: getUniqueFoodMetadataTags(analysis.derivedTraceTags) },
-		].filter((group) => group.values.length > 0)
+				{
+					label: "Ingredient tags",
+					values: getUniqueFoodMetadataTags(analysis.ingredientTags),
+				},
+				{
+					label: "Source analysis",
+					values: getUniqueFoodMetadataTags(analysis.analysisTags),
+				},
+				{
+					label: "Source trace analysis",
+					values: getUniqueFoodMetadataTags(analysis.derivedTraceTags),
+				},
+			].filter((group) => group.values.length > 0)
 		: [];
-	const hasSourceAnalysis = metrics.length > 0 ||
+	const hasSourceAnalysis =
+		metrics.length > 0 ||
 		tagGroups.length > 0 ||
 		rows.some((row) => row.classifications.length > 0);
 
-	if (!ingredientText && rows.length === 0 && additives.length === 0 && !hasSourceAnalysis) {
+	if (
+		!ingredientText &&
+		rows.length === 0 &&
+		additives.length === 0 &&
+		!hasSourceAnalysis
+	) {
 		return undefined;
 	}
 	return {
@@ -123,14 +177,15 @@ export const buildFoodIngredientPresentation = (
 	};
 };
 
-const normalizeEvidence = (value: string) => value
-	.normalize("NFKD")
-	.replace(/[\u0300-\u036f]/g, "")
-	.toLocaleLowerCase("en-US")
-	.trim()
-	.replace(/[^a-z0-9]+/g, " ")
-	.replace(/\s+/g, " ")
-	.trim();
+const normalizeEvidence = (value: string) =>
+	value
+		.normalize("NFKD")
+		.replace(/[\u0300-\u036f]/g, "")
+		.toLocaleLowerCase("en-US")
+		.trim()
+		.replace(/[^a-z0-9]+/g, " ")
+		.replace(/\s+/g, " ")
+		.trim();
 
 export const buildFoodPreferenceWarningEvidence = (
 	fact: FoodCompatibilityFact,
@@ -139,8 +194,8 @@ export const buildFoodPreferenceWarningEvidence = (
 ): FoodPreferenceWarningEvidence => {
 	const sourceText = fact.sourceText?.trim() || fact.label.trim();
 	const normalizedSourceText = normalizeEvidence(sourceText);
-	const matchingIngredient = presentation?.rows.find((row) =>
-		normalizeEvidence(row.text) === normalizedSourceText
+	const matchingIngredient = presentation?.rows.find(
+		(row) => normalizeEvidence(row.text) === normalizedSourceText,
 	);
 	return {
 		factType: fact.factType,

@@ -55,14 +55,6 @@ that automatic default; sharing those values requires the user to enable it agai
 The trusted route and database reject every submission without recorded sharing
 consent.
 
-Catalog evidence sources are bounded before transport so several modern camera photos
-cannot freeze the mobile interface or exceed the hosted intake boundary. The browser
-prepares role-specific WebP upload copies sequentially outside the main interface and
-keeps the combined request below 4 MB; nutrition-label evidence receives the largest
-detail budget. This is transport preparation, not a trust boundary: the intake server
-still verifies type, signature, dimensions, size, ownership, and content before writing
-to private Storage.
-
 ## Source Policy
 
 - **blendCalc shared catalog:** the active `shared_products` row plus its normalized
@@ -151,13 +143,22 @@ User-linked list reads load the current accepted canonical record instead of
 rewriting those historical submissions or duplicating canonical metadata into every
 saved snapshot.
 
+Provider ingredient text is normalized before it enters the canonical food snapshot or
+client model. The stored form records the normalization method, version, source field,
+and known language under `ingredientAnalysis.normalization`; raw source wording remains
+available only in its private provider cache or exact source observation. Formatting is
+conservative: structural artifacts are safe to clean across languages, English all-caps
+statements become readable, nested lists remain intact, and explicit `Contains`, `May
+contain`, shared-equipment, and shared-facility statements remain separate evidence.
+The formatter does not infer allergens and does not rewrite user- or moderator-authored
+text.
+
 Reported ingredient evidence is also projected into relational statement and component
 rows. A structured provider tree retains its exact order, source path, nesting, source
 wording, language, source payload, and any explicitly reported percentage bounds. A
-reported list retains its order. Raw statement text is stored as one unparsed statement
-rather than being split on punctuation. The original canonical JSON and source
-observation remain the evidence authority, so the reported statement can be
-reconstructed without guessing.
+reported list retains its order. The exact provider observation retains the untouched
+statement while the canonical JSON carries the versioned normalized form; neither is
+reconstructed by splitting arbitrary punctuation.
 
 Authenticated catalog reads project that evidence through one server-owned ingredient
 presentation model. It formats nested source paths, explicit exact/estimated percentage
@@ -341,13 +342,6 @@ can change over time.
    `shared_product_revision_changes`.
 8. If another update was approved while the submission waited, approval stops as stale
    and the change must be compared again.
-
-Manual Entry exposes this existing-revision path only after an exact shared-catalog
-barcode match has meaningful label differences. If that product is already in the
-selected list, `Update and share` submits the immutable correction without adding,
-moving, or overwriting the user's saved item. An unchanged match remains `Already
-saved`, and the same user cannot create another pending proposal against the same base
-revision.
 
 Independent users may submit separate correction evidence against the same active
 revision. The system never averages conflicting values or silently chooses a provider.

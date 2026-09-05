@@ -13,26 +13,43 @@ const createFood = (overrides: Partial<FoodItem> = {}): FoodItem => ({
 });
 
 describe("food ingredient presentation", () => {
+	it("formats legacy external statements before they reach the client model", () => {
+		const presentation = buildFoodIngredientPresentation({
+			fdcId: 1,
+			description: "Imported snack",
+			foodNutrients: [],
+			sourceKey: "usda",
+			ingredients:
+				"OTHER INGREDIENTS: DRY ROASTED _PEANUTS_, SALT. CONTAINS PEANUTS.",
+		});
+
+		expect(presentation?.ingredientText).toBe("Dry roasted peanuts, salt");
+	});
+
 	it("preserves nested ingredients, explicit percentage bases, and source classifications", () => {
-		const presentation = buildFoodIngredientPresentation(createFood({
-			ingredients: "Sauce (tomatoes, olive oil), salt",
-			structuredIngredients: [{
-				text: "Sauce",
-				percent: 80,
-				ingredients: [
-					{ text: "Tomatoes", percentEstimate: 65, vegan: "yes" },
-					{ text: "Olive oil", percentMin: 10, percentMax: 15 },
+		const presentation = buildFoodIngredientPresentation(
+			createFood({
+				ingredients: "Sauce (tomatoes, olive oil), salt",
+				structuredIngredients: [
+					{
+						text: "Sauce",
+						percent: 80,
+						ingredients: [
+							{ text: "Tomatoes", percentEstimate: 65, vegan: "yes" },
+							{ text: "Olive oil", percentMin: 10, percentMax: 15 },
+						],
+					},
 				],
-			}],
-			ingredientAnalysis: {
-				ingredientTags: ["en:tomatoes", "en:olive-oil"],
-				analysisTags: ["en:vegan"],
-				derivedTraceTags: ["en:possible-nuts"],
-				percentAnalysis: 92.5,
-				percentKnown: 80,
-			},
-			additives: ["en:e330"],
-		}));
+				ingredientAnalysis: {
+					ingredientTags: ["en:tomatoes", "en:olive-oil"],
+					analysisTags: ["en:vegan"],
+					derivedTraceTags: ["en:possible-nuts"],
+					percentAnalysis: 92.5,
+					percentKnown: 80,
+				},
+				additives: ["en:e330"],
+			}),
+		);
 
 		expect(presentation).toMatchObject({
 			ingredientText: "Sauce (tomatoes, olive oil), salt",
@@ -71,27 +88,33 @@ describe("food ingredient presentation", () => {
 	});
 
 	it("does not present invalid percentages as source evidence", () => {
-		const presentation = buildFoodIngredientPresentation(createFood({
-			structuredIngredients: [{ text: "Oats", percent: 140 }],
-			ingredientAnalysis: {
-				ingredientTags: [],
-				analysisTags: [],
-				derivedTraceTags: [],
-				percentUnknown: -10,
-			},
-		}));
+		const presentation = buildFoodIngredientPresentation(
+			createFood({
+				structuredIngredients: [{ text: "Oats", percent: 140 }],
+				ingredientAnalysis: {
+					ingredientTags: [],
+					analysisTags: [],
+					derivedTraceTags: [],
+					percentUnknown: -10,
+				},
+			}),
+		);
 
 		expect(presentation?.rows[0]?.percentageLabel).toBeNull();
 		expect(presentation?.metrics).toEqual([]);
 	});
 
 	it("links warning evidence to the exact structured ingredient path", () => {
-		const presentation = buildFoodIngredientPresentation(createFood({
-			structuredIngredients: [{
-				text: "Seasoning",
-				ingredients: [{ text: "Wheat", percent: 2 }],
-			}],
-		}));
+		const presentation = buildFoodIngredientPresentation(
+			createFood({
+				structuredIngredients: [
+					{
+						text: "Seasoning",
+						ingredients: [{ text: "Wheat", percent: 2 }],
+					},
+				],
+			}),
+		);
 		const evidence = buildFoodPreferenceWarningEvidence(
 			{
 				slug: "wheat",
