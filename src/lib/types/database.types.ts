@@ -9464,6 +9464,15 @@ export type Database = {
         Args: never
         Returns: string
       }
+      apply_external_ingredient_statement_normalization: {
+        Args: {
+          p_expected_food: Json
+          p_normalized_food: Json
+          p_row_id: string
+          p_scope: string
+        }
+        Returns: string
+      }
       apply_mix_goal_template: {
         Args: { p_keep_extra_goals?: boolean; p_template_version_id: string }
         Returns: Json
