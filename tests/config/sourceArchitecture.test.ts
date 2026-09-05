@@ -1,9 +1,4 @@
-import {
-	existsSync,
-	readdirSync,
-	readFileSync,
-	statSync,
-} from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { basename, dirname, extname, join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -31,9 +26,7 @@ const walkDirectories = (directory: string): string[] => [
 
 const componentFiles = componentRoots.flatMap(walkFiles);
 const sourceFiles = walkFiles(sourceRoot).filter(
-	(path) =>
-		sourceExtensions.includes(extname(path)) &&
-		!path.endsWith(".d.ts"),
+	(path) => sourceExtensions.includes(extname(path)) && !path.endsWith(".d.ts"),
 );
 const sourceFileSet = new Set(sourceFiles);
 
@@ -66,6 +59,7 @@ const readSourceImports = (path: string): string[] => {
 	const patterns = [
 		/(?:from\s*|import\s*\()\s*["']([^"']+)["']/g,
 		/import\s*["']([^"']+)["']/g,
+		/new\s+URL\(\s*["']([^"']+)["']\s*,\s*import\.meta\.url\s*\)/g,
 	];
 
 	for (const pattern of patterns) {
@@ -115,7 +109,10 @@ describe("source architecture", () => {
 							extname(path) === ".svelte" &&
 							readFileSync(path, "utf8").includes(propName),
 					);
-					expect(consumers.length, `${propName} in ${typesPath}`).toBeGreaterThan(1);
+					expect(
+						consumers.length,
+						`${propName} in ${typesPath}`,
+					).toBeGreaterThan(1);
 				}
 				continue;
 			}
@@ -131,7 +128,8 @@ describe("source architecture", () => {
 			(path) => extname(path) === ".svelte",
 		)) {
 			const source = readFileSync(componentPath, "utf8");
-			const script = source.match(/<script[^>]*>([\s\S]*?)<\/script>/)?.[1] ?? "";
+			const script =
+				source.match(/<script[^>]*>([\s\S]*?)<\/script>/)?.[1] ?? "";
 			expect(script, componentPath).not.toMatch(
 				/}\s*:\s*{[\s\S]*?}\s*=\s*\$props\(\)/,
 			);

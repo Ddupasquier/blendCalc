@@ -159,10 +159,7 @@ export const createManualEntryBarcodeController = ({
 			form.data.barcodeReferenceSourceDraft?.source !== "shared-catalog" &&
 			!referenceHasChanges &&
 			!hasUserAuthoredCatalogValues &&
-			!validation.blockingValidation &&
-			!form.data.frontPhoto &&
-			!form.data.nutritionPhoto &&
-			!form.data.barcodePhoto
+			!validation.blockingValidation
 			? [
 					normalizedBarcode,
 					form.data.barcodeReferenceSourceDraft?.source ?? "",
@@ -554,7 +551,7 @@ export const createManualEntryBarcodeController = ({
 		}
 	};
 
-	const handleShareChange = async (checked: boolean) => {
+	const handleShareChange = (checked: boolean) => {
 		if (!checked) {
 			clearBarcodeShareValidation();
 			form.data.shareSelectionSource = "declined";
@@ -667,7 +664,8 @@ export const createManualEntryBarcodeController = ({
 	};
 
 	const getReferenceReviewFlags = () => [
-		...(form.data.submissionIntent === "catalog_correction"
+		...(form.data.submissionIntent === "catalog_correction" ||
+		reviewedUpdateSelected
 			? [
 					"The user reports that the current shared or source product information is incorrect, outdated, or incomplete. Compare only the submitted changes against the current revision and package evidence.",
 				]
@@ -697,9 +695,7 @@ export const createManualEntryBarcodeController = ({
 
 	$effect(() => {
 		onLookupStateChange(
-			state.lookingUpBarcode ||
-				barcodeReferenceLookupPending ||
-				form.data.validatingBarcodeShare,
+			state.lookingUpBarcode || barcodeReferenceLookupPending,
 		);
 	});
 
@@ -754,6 +750,12 @@ export const createManualEntryBarcodeController = ({
 		},
 		get shareUnavailableMessage() {
 			return shareUnavailableMessage;
+		},
+		get reviewedUpdateCandidate() {
+			return reviewedUpdateCandidate;
+		},
+		get reviewedUpdateSelected() {
+			return reviewedUpdateSelected;
 		},
 		get shareHelpMessage() {
 			return shareHelpMessage;
