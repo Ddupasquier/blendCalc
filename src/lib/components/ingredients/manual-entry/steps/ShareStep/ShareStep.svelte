@@ -329,20 +329,22 @@
 	{/if}
 
 	{#if !catalogSubmissionOnly}
-		<ManualEntryField
-			forId="custom-ingredient-save-destination"
-			label="Add after saving"
-		>
-			<SelectField
-				bind:element={saveDestinationControl}
-				id="custom-ingredient-save-destination"
-				name="custom-ingredient-save-destination"
-				value={saveDestination}
-				options={saveDestinationOptions}
-				onValueChange={(value) =>
-					onSaveDestinationChange(value as IngredientListKey)}
-			/>
-		</ManualEntryField>
+		{#if !reviewedUpdate}
+			<ManualEntryField
+				forId="custom-ingredient-save-destination"
+				label="Add after saving"
+			>
+				<SelectField
+					bind:element={saveDestinationControl}
+					id="custom-ingredient-save-destination"
+					name="custom-ingredient-save-destination"
+					value={saveDestination}
+					options={saveDestinationOptions}
+					onValueChange={(value) =>
+						onSaveDestinationChange(value as IngredientListKey)}
+				/>
+			</ManualEntryField>
+		{/if}
 		{#if destinationAction.message}
 			<StatusMessage
 				tone={destinationAction.messageTone}

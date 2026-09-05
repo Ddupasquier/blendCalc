@@ -160,10 +160,13 @@ barcode` and source-empty groups `Not provided`. Keep source omissions blank and
 - close the form after a successful add instead of opening another blank form;
 - when an exact saved barcode matches a current shared product but meaningful entered
   package data differs, keep the existing list item and accepted catalog revision
-  unchanged while offering one explicit `Update and share` correction with current
-  front-package, nutrition-label, and barcode evidence; unchanged entries remain
-  `Already saved`, cancellation changes nothing, and repeat submissions against the
-  same revision remain deduplicated by the server;
+  unchanged; before sharing is enabled, immediately explain that the saved entry has
+  changed and that community sharing checks those changes for review, then offer one
+  explicit `Update and share` correction with current front-package, nutrition-label,
+  and barcode evidence after the authoritative catalog check; hide the save-destination
+  choice for that correction and name the saved item's unchanged list in the status
+  message; unchanged entries remain `Already saved`, cancellation changes nothing, and
+  repeat submissions against the same revision remain deduplicated by the server;
 - after a successful add, an applicable reviewed food-symbol trigger may add one quiet
   broad-audience line beneath the factual outcome; unknown foods simply omit it;
 - reuse an existing matching private food rather than ending in a duplicate-name error;
