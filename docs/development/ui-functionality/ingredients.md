@@ -164,10 +164,13 @@ barcode` and source-empty groups `Not provided`. Keep source omissions blank and
 - close the form after a successful add instead of opening another blank form;
 - when an exact saved barcode matches a current shared product but meaningful entered
   package data differs, keep the existing list item and accepted catalog revision
-  unchanged while offering one explicit `Update and share` correction with current
-  front-package, nutrition-label, and barcode evidence; unchanged entries remain
-  `Already saved`, cancellation changes nothing, and repeat submissions against the
-  same revision remain deduplicated by the server;
+  unchanged; before sharing is enabled, immediately explain that the saved entry has
+  changed and that community sharing checks those changes for review, then offer one
+  explicit `Update and share` correction with current front-package, nutrition-label,
+  and barcode evidence after the authoritative catalog check; hide the save-destination
+  choice for that correction and name the saved item's unchanged list in the status
+  message; unchanged entries remain `Already saved`, cancellation changes nothing, and
+  repeat submissions against the same revision remain deduplicated by the server;
 - confirm cross-list moves inside the Share step rather than opening a nested dialog;
   name both the current and destination lists, focus Cancel first, keep Cancel and Move
   visible at compact heights, and change list membership exactly once only after Move;

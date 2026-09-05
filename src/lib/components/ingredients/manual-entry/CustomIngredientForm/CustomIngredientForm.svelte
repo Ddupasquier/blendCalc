@@ -142,22 +142,32 @@
 		}),
 	);
 	const displayedDestinationAction = $derived(
-		destinationAction.kind !== "duplicate" || !barcode.reviewedUpdateCandidate
-			? destinationAction
-			: barcode.reviewedUpdateSelected
+		barcode.reviewedUpdateSelected &&
+			(destinationAction.kind === "duplicate" ||
+				destinationAction.kind === "move")
+			? {
+					...destinationAction,
+					kind: "add" as const,
+					label: "Update and share",
+					disabled: false,
+					message: `Your saved ingredient will stay in ${getDestinationLabel(
+						destinationAction.kind === "move"
+							? (destinationAction.source ?? outcome.state.saveDestination)
+							: outcome.state.saveDestination,
+					)} unchanged while moderators review the current package details.`,
+				}
+			: barcode.reviewedUpdateCandidate &&
+				  (destinationAction.kind === "duplicate" ||
+						destinationAction.kind === "move")
 				? {
 						...destinationAction,
-						kind: "add" as const,
-						label: "Update and share",
-						disabled: false,
+						kind: "duplicate" as const,
+						label: "Already saved",
+						disabled: true,
 						message:
-							"Your saved ingredient will stay in this list unchanged while moderators review the current package details.",
+							"You changed package details for this saved ingredient. Turn on community sharing to check and submit those changes for review without adding a duplicate or moving the saved item.",
 					}
-				: {
-						...destinationAction,
-						message:
-							"This ingredient is already saved. Turn on community sharing to submit the changed package details for review without adding a duplicate.",
-					},
+				: destinationAction,
 	);
 	const hasAcceptedBarcodeSource = $derived(
 		Boolean(form.data.barcodeReferenceAcceptedBarcode),
