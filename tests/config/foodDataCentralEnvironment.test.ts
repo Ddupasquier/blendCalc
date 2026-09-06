@@ -1,12 +1,12 @@
 import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const collectTrackedSourceFiles = (): string[] =>
 	execFileSync("git", ["ls-files", "src", "scripts"], { encoding: "utf8" })
 		.trim()
 		.split("\n")
-		.filter((path) => /\.(?:ts|svelte|mjs)$/.test(path));
+		.filter((path) => existsSync(path) && /\.(?:ts|svelte|mjs)$/.test(path));
 
 describe("FoodData Central environment configuration", () => {
 	it("documents the server-owned key in each environment that uses USDA lookups", () => {
