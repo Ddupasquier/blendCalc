@@ -1,7 +1,9 @@
 {
 	"regions": ["pdx1"],
 	"functions": {
-		"src/routes/api/internal/nutrition-label-ocr/queue/+server.ts": {
+		"api/nutrition-label-ocr-queue.ts": {
+			"maxDuration": 60,
+			"memory": 1024,
 			"experimentalTriggers": [
 				{
 					"type": "queue/v2beta",

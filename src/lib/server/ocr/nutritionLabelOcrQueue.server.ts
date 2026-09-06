@@ -2,13 +2,11 @@ import { dev } from "$app/environment";
 import { env } from "$env/dynamic/private";
 import { send } from "@vercel/queue";
 import { processNutritionLabelOcrJob } from "$lib/server/ocr/nutritionLabelOcrJobs.server";
+import {
+	NUTRITION_LABEL_OCR_QUEUE_TOPIC,
+	type NutritionLabelOcrQueueMessage,
+} from "$lib/server/ocr/nutritionLabelOcrQueueContract";
 import { NUTRITION_LABEL_OCR_JOB_RETENTION_SECONDS } from "$lib/utils/food/ocr/nutritionLabelOcrJobs";
-
-export const NUTRITION_LABEL_OCR_QUEUE_TOPIC = "nutrition-label-ocr";
-
-export type NutritionLabelOcrQueueMessage = {
-	jobId: string;
-};
 
 const runLocalNutritionLabelOcrJob = (jobId: string) => {
 	setTimeout(() => {
