@@ -7,6 +7,9 @@ test(
 		await context.clearCookies();
 		await page.goto("/auth");
 		await waitForAppReady(page);
+		await page
+			.getByRole("switch", { name: "Test the real sign-in flow" })
+			.click();
 
 		const emailField = page.getByLabel("Email");
 		const passwordField = page.getByLabel("Password", { exact: true });
@@ -34,6 +37,75 @@ test(
 		await expect(
 			page.getByRole("button", { name: "Forgot your password?" }),
 		).toBeVisible();
+	},
+);
+
+test("local QA sign-in chooses a seeded account without requesting a password", async ({
+	context,
+	page,
+}) => {
+	await context.clearCookies();
+	await page.goto("/auth?next=%2Fingredients%2Ffridge");
+	await waitForAppReady(page);
+
+	await expect(
+		page.getByRole("heading", { name: "Choose a QA account." }),
+	).toBeVisible();
+	await expect(
+		page.getByRole("switch", { name: "Test the real sign-in flow" }),
+	).not.toBeChecked();
+	await expect(page.getByLabel("Password", { exact: true })).toHaveCount(0);
+
+	const accountPicker = page.getByRole("combobox", { name: "QA account" });
+	await accountPicker.click();
+	await expect(page.getByRole("option")).toHaveCount(10);
+	await page
+		.getByRole("option", { name: /QA Empty State · qa-empty@blendcalc\.local/ })
+		.click();
+	await expect(
+		page.getByText(
+			/Authenticated empty states without onboarding interruption/,
+		),
+	).toBeVisible();
+
+	await page
+		.getByRole("button", { name: "Continue as QA Empty State" })
+		.click();
+	await expect(page).toHaveURL(/\/ingredients\/fridge$/);
+});
+
+test(
+	"local QA sign-in keeps the real credential flow usable on a compact screen",
+	{ tag: "@mobile" },
+	async ({ context, page }) => {
+		await context.clearCookies();
+		await page.setViewportSize({ width: 360, height: 740 });
+		await page.goto("/auth");
+		await waitForAppReady(page);
+
+		const realFlowSwitch = page.getByRole("switch", {
+			name: "Test the real sign-in flow",
+		});
+		await realFlowSwitch.focus();
+		await realFlowSwitch.press("Space");
+		await expect(realFlowSwitch).toBeChecked();
+		await expect(page.getByLabel("Email")).toBeVisible();
+		await expect(page.getByLabel("Password", { exact: true })).toBeVisible();
+
+		await page.getByLabel("Email").fill("qa-user@blendcalc.local");
+		await page.getByLabel("Password", { exact: true }).fill("not-the-password");
+		await page.getByRole("button", { name: "Sign in", exact: true }).click();
+		await expect(
+			page.getByText("Email or password was not accepted."),
+		).toBeVisible();
+		await expect(realFlowSwitch).toBeChecked();
+		await expect
+			.poll(() =>
+				page.evaluate(
+					() => document.documentElement.scrollWidth <= window.innerWidth,
+				),
+			)
+			.toBe(true);
 	},
 );
 

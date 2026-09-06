@@ -178,8 +178,8 @@ select is(
 	(
 		select count(*)::integer
 		from public.search_blendcalc_api_products_v1(
-			'no serving',
-			array['no', 'serving'],
+			'blue agave light golden syrup',
+			array['blue', 'agave', 'light', 'golden', 'syrup'],
 			50,
 			0
 		)

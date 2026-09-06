@@ -27,12 +27,15 @@ describe("Auth Turnstile integration", () => {
 	beforeEach(() => vi.clearAllMocks());
 
 	it("provides the configured site key without exposing a provider secret", async () => {
-		await expect(load({
-			locals: { getVerifiedUser: vi.fn().mockResolvedValue(null) },
-			request: new Request("http://localhost:5173/auth"),
-			url: new URL("http://localhost:5173/auth"),
-		} as never)).resolves.toEqual({
+		await expect(
+			load({
+				locals: { getVerifiedUser: vi.fn().mockResolvedValue(null) },
+				request: new Request("http://localhost:5173/auth"),
+				url: new URL("http://localhost:5173/auth"),
+			} as never),
+		).resolves.toEqual({
 			authError: "",
+			localQaSignIn: null,
 			turnstileSiteKey: "test-site-key",
 			next: "/",
 		});

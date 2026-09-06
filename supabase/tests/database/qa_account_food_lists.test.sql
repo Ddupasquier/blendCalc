@@ -1,6 +1,6 @@
 begin;
 
-select plan(35);
+select plan(40);
 
 select is(
 	(select count(*) from auth.users where email like 'qa-%@blendcalc.local'),
@@ -373,7 +373,7 @@ select is(
 			or product.source_reference like 'package-label:%:local-qa-fixture'
 			or product.source = 'usda'
 	),
-	119::bigint,
+	120::bigint,
 	'the local catalog contains all focused and source-shaped QA foods'
 );
 
@@ -411,8 +411,8 @@ select ok(
 
 select is(
 	(select count(*) from public.blendcalc_api_v1_product_readiness where publishable),
-	2::bigint,
-	'only the fully evidenced QA products are searchable through public blendCalc API v1'
+	3::bigint,
+	'only the three fully evidenced QA products are searchable through public blendCalc API v1'
 );
 
 select ok(
@@ -574,6 +574,104 @@ select ok(
 			and provenance.field_path in ('allergens', 'traces', 'dietaryTags', 'labels')
 	),
 	'the pasta-sauce fixture does not fabricate unsupported USDA safety or diet fields'
+);
+
+select ok(
+	exists (
+		select 1
+		from public.shared_products product
+		join public.shared_product_observations observation
+			on observation.id = (product.canonical_provenance ->> 'observationId')::uuid
+		where product.barcode = '00072360002031'
+			and product.product_name = 'Jalapeno Sauce, Jalapeno'
+			and product.brand_owner = 'Walker Foods Inc.'
+			and product.food ->> 'brandName' = 'El Pato'
+			and product.food ->> 'ingredients' = 'Tomato puree, water, jalapeno, onion, garlic, salt and spices.'
+			and observation.source = 'usda'
+			and observation.source_reference = '1862061'
+			and observation.source_license = 'CC0-1.0'
+			and observation.raw_payload ->> 'ingredients' = 'TOMATO PUREE, WATER, JALAPENO, ONION, GARLIC, SALT AND SPICES'
+	),
+	'the El Pato fixture keeps normalized display text separate from its exact USDA observation'
+);
+
+select ok(
+	exists (
+		select 1
+		from public.shared_products product
+		where product.barcode = '00072360002031'
+			and (
+				select count(*)
+				from public.food_nutrients nutrient
+				where nutrient.shared_product_id = product.id
+					and nutrient.source = 'usda'
+					and nutrient.source_reference = '1862061'
+			) = 15
+			and exists (
+				select 1
+				from public.food_nutrients nutrient
+				where nutrient.shared_product_id = product.id
+					and nutrient.nutrient_id = 1093
+					and nutrient.amount_per_100g = 643
+					and nutrient.value_status = 'reported'
+			)
+			and exists (
+				select 1
+				from public.food_nutrients nutrient
+				where nutrient.shared_product_id = product.id
+					and nutrient.nutrient_id = 1004
+					and nutrient.amount_per_100g = 0
+					and nutrient.value_status = 'reported-zero'
+			)
+	),
+	'the El Pato fixture retains all fifteen USDA nutrients and reported-zero semantics'
+);
+
+select ok(
+	exists (
+		select 1
+		from public.shared_products product
+		join public.food_servings serving on serving.shared_product_id = product.id
+		where product.barcode = '00072360002031'
+			and serving.label = '1 oz (28 g)'
+			and serving.gram_weight = 28
+			and serving.amount = 1
+			and serving.unit_key = 'oz'
+			and serving.origin = 'package-label'
+			and serving.source = 'usda'
+			and serving.source_reference = '1862061'
+	),
+	'the El Pato fixture retains its exact source-backed 28 gram package serving'
+);
+
+select ok(
+	exists (
+		select 1
+		from public.shared_products product
+		join public.food_image_assets image on image.shared_product_id = product.id
+		where product.barcode = '00072360002031'
+			and image.source = 'open-food-facts'
+			and image.source_reference = 'https://world.openfoodfacts.org/product/0072360002031'
+			and image.license_name = 'CC BY-SA 3.0'
+			and image.attribution_text = 'Open Food Facts contributors'
+	),
+	'the El Pato front image retains separate Open Food Facts attribution'
+);
+
+select ok(
+	exists (
+		select 1
+		from public.shared_products product
+		where product.barcode = '00072360002031'
+			and not exists (
+				select 1
+				from public.user_food_list_items item
+				join auth.users user_row on user_row.id = item.user_id
+				where user_row.email = 'qa-user@blendcalc.local'
+					and item.shared_product_id = product.id
+			)
+	),
+	'the El Pato fixture starts unsaved so Manual Entry can exercise add and revision paths'
 );
 
 select * from finish();
