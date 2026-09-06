@@ -1020,12 +1020,15 @@ on its own locally reviewable feature branch and run its focused checks while it
 For a multi-ticket feature, use one parent ticket and parent feature branch. After the
 user approves each child branch, merge it into the parent and run only the affected
 checks. Complete combined visual and manual review on the assembled parent. After
-approval, promote that exact tree to `mock-staging` and run the complete hosted source
-and bounded browser checks once. If the candidate fails, fix or reopen the child that
-owns the failure and invalidate the candidate result. Use an auxiliary worktree only
+approval, promote that exact tree directly to `staging` and run the complete hosted
+source and bounded browser checks once. Reserve `mock-staging` for an unusual,
+dangerous, conflict-prone, or otherwise disposable integration that should not touch
+`staging` until its combined tree is proven; ticket count alone does not justify it.
+If the candidate fails, fix or reopen the child that owns the failure and invalidate
+the candidate result. Use an auxiliary worktree only
 when unrelated uncommitted work makes a normal branch switch unsafe. The final report
 must list every quota branch, its focused evidence, the assembled parent, and the exact
-`mock-staging` candidate result. The exhaustive Nightly Check remains separate unless
+candidate result. The exhaustive Nightly Check remains separate unless
 the user explicitly requests it or the release scope requires it.
 
 **22.** At the start of every request, compare the requested outcome with the active
@@ -1039,10 +1042,11 @@ reuse long-lived view branches or combine unrelated work merely because it touch
 same page.
 
 **22a.** Promote an explicitly approved responsibility branch to `staging` only after
-its maintained local and remote checks pass. Use `mock-staging` when a large, risky, or
-conflict-prone batch benefits from a disposable integration checkpoint; use it for an
-assembled multi-ticket parent so the complete hosted checks run once. For an ordinary
-single-branch promotion, `staging` is the candidate. Source and browser jobs may run
+its maintained local and remote checks pass. `staging` is the normal candidate for
+single branches, assembled parent branches, and ordinary release batches. Use
+`mock-staging` only when an unusual, dangerous, or conflict-prone merge needs a
+disposable integration checkpoint before it can safely touch `staging`; size or ticket
+count alone is not sufficient. Source and browser jobs may run
 concurrently because their environments are isolated. Reuse a candidate result only
 when the next promotion preserves the identical Git tree and passes the maintained
 Promotion Check; any dirty tree, content mismatch, or failed check requires a fresh

@@ -5,9 +5,8 @@
 		getFoodCompatibilityEvaluationMessage,
 		getRegulatedAlcoholMissingSafetyDetailsMessage,
 	} from "$lib/utils/food/quality/foodCompatibilityEvaluationMessages";
-	import {
-		getUniqueFoodMetadataTags,
-	} from "$lib/utils/food/records/foodMetadataPresentation";
+	import { getUniqueFoodMetadataTags } from "$lib/utils/food/records/foodMetadataPresentation";
+	import { isLanguageCodeOnlyDisclosureText } from "$lib/utils/food/ingredients/ingredientStatementNormalization.js";
 	import type { ProductCompatibilityPanelProps } from "./types";
 
 	let { food, mode = "all" }: ProductCompatibilityPanelProps = $props();
@@ -15,21 +14,37 @@
 	const showDetails = $derived(mode !== "summary");
 
 	const allergenDisplay = $derived(food.allergenDisclosure);
+	const containsAllergens = $derived(
+		(allergenDisplay?.contains ?? []).filter(
+			(value) => !isLanguageCodeOnlyDisclosureText(value),
+		),
+	);
+	const mayContainAllergens = $derived(
+		(allergenDisplay?.mayContain ?? []).filter(
+			(value) => !isLanguageCodeOnlyDisclosureText(value),
+		),
+	);
 	const precautionaryStatements = $derived(
-		(food.precautionaryStatements ?? []).filter((statement) => statement.text.trim()),
+		(food.precautionaryStatements ?? []).filter(
+			(statement) =>
+				statement.text.trim() &&
+				!isLanguageCodeOnlyDisclosureText(statement.text),
+		),
 	);
 	const dietaryLabels = $derived(
 		getUniqueFoodMetadataTags(
-			(food.compatibilitySummary?.dietaryClaims ?? [])
-				.map((fact) => fact.label),
+			(food.compatibilitySummary?.dietaryClaims ?? []).map(
+				(fact) => fact.label,
+			),
 		),
 	);
 	const dietaryConsiderations = $derived(
 		getUniqueFoodMetadataTags(
 			(food.compatibilitySummary?.allFacts ?? [])
-				.filter((fact) =>
-					fact.category === "avoidance" &&
-					fact.factType === "dietary_conflict"
+				.filter(
+					(fact) =>
+						fact.category === "avoidance" &&
+						fact.factType === "dietary_conflict",
 				)
 				.map((fact) => fact.label),
 		),
@@ -46,30 +61,33 @@
 		food.compatibilityEvaluation?.regulatoryContext ?? null,
 	);
 	const unresolvedPreferences = $derived(
-		food.compatibilityEvaluation?.preferenceResolution?.unresolvedPreferences ?? [],
+		food.compatibilityEvaluation?.preferenceResolution?.unresolvedPreferences ??
+			[],
 	);
-	const showEvaluationMessage = $derived(Boolean(
-		evaluationMessage &&
-		!regulatedAlcoholSafetyMessage &&
-		(
-			food.compatibilityEvaluation?.status !== "conflict" ||
-			(food.preferenceWarnings ?? []).length === 0
+	const showEvaluationMessage = $derived(
+		Boolean(
+			evaluationMessage &&
+			!regulatedAlcoholSafetyMessage &&
+			(food.compatibilityEvaluation?.status !== "conflict" ||
+				(food.preferenceWarnings ?? []).length === 0),
 		),
-	));
-	const hasCheckDetails = $derived(Boolean(
-		unresolvedPreferences.length ||
-		regulatoryContext?.status === "applied" ||
-		regulatoryContext?.status === "unsupported",
-	));
+	);
+	const hasCheckDetails = $derived(
+		Boolean(
+			unresolvedPreferences.length ||
+			regulatoryContext?.status === "applied" ||
+			regulatoryContext?.status === "unsupported",
+		),
+	);
 	const hasSummaryContent = $derived(
 		Boolean(
 			regulatedAlcoholSafetyMessage ||
 			showEvaluationMessage ||
-			allergenDisplay?.contains.length ||
-			allergenDisplay?.mayContain.length ||
+			containsAllergens.length ||
+			mayContainAllergens.length ||
 			precautionaryStatements.length ||
-				dietaryLabels.length ||
-				dietaryConsiderations.length,
+			dietaryLabels.length ||
+			dietaryConsiderations.length,
 		),
 	);
 </script>
@@ -92,30 +110,32 @@
 			/>
 		{/if}
 
-		{#if allergenDisplay?.contains.length}
+		{#if containsAllergens.length}
 			<section class="product-compatibility-panel__group">
 				<h2>Contains</h2>
-				<p>{allergenDisplay.contains.join(", ")}</p>
+				<p>{containsAllergens.join(", ")}</p>
 			</section>
 		{/if}
 
 		{#if precautionaryStatements.length}
 			{#each precautionaryStatements as statement (`${statement.type}:${statement.text}`)}
 				<section class="product-compatibility-panel__group">
-					<h2>{statement.type === "shared_equipment"
-						? "Shared equipment"
-						: statement.type === "shared_facility"
-							? "Shared facility"
-							: statement.type === "may_contain"
-								? "May contain"
-								: "Package advisory"}</h2>
+					<h2>
+						{statement.type === "shared_equipment"
+							? "Shared equipment"
+							: statement.type === "shared_facility"
+								? "Shared facility"
+								: statement.type === "may_contain"
+									? "May contain"
+									: "Package advisory"}
+					</h2>
 					<p>{statement.text}</p>
 				</section>
 			{/each}
-		{:else if allergenDisplay?.mayContain.length}
+		{:else if mayContainAllergens.length}
 			<section class="product-compatibility-panel__group">
 				<h2>May contain</h2>
-				<p>{allergenDisplay.mayContain.join(", ")}</p>
+				<p>{mayContainAllergens.join(", ")}</p>
 			</section>
 		{/if}
 
@@ -139,54 +159,55 @@
 	<div class="product-compatibility-panel">
 		<CollapsibleSection title="Food check details" surface="panel">
 			<div class="product-compatibility-panel__check-details">
-					{#if unresolvedPreferences.length}
-						<StatusMessage
-							tone="warning"
-							title="Some settings are waiting for review"
-							message={`${unresolvedPreferences.map((item) => item.label).join(", ")} ${unresolvedPreferences.length === 1 ? "is" : "are"} saved, but not included in automated checks until there is one exact reviewed match.`}
-						/>
-					{/if}
+				{#if unresolvedPreferences.length}
+					<StatusMessage
+						tone="warning"
+						title="Some settings are waiting for review"
+						message={`${unresolvedPreferences.map((item) => item.label).join(", ")} ${unresolvedPreferences.length === 1 ? "is" : "are"} saved, but not included in automated checks until there is one exact reviewed match.`}
+					/>
+				{/if}
 
-					{#if regulatoryContext?.status === "applied" && regulatoryContext.profile}
-						<section class="product-compatibility-panel__group">
-							<h2>Regional label context</h2>
+				{#if regulatoryContext?.status === "applied" && regulatoryContext.profile}
+					<section class="product-compatibility-panel__group">
+						<h2>Regional label context</h2>
+						<p>
+							Uses {regulatoryContext.profile.displayName} guidance from
+							{regulatoryContext.profile.authority}. Regulated allergens are
+							expected to use the listed label terms, while all of your personal
+							warnings stay active.
+						</p>
+						{#if regulatoryContext.coveredPreferences.length}
 							<p>
-								Uses {regulatoryContext.profile.displayName} guidance from
-								{regulatoryContext.profile.authority}. Regulated allergens are expected
-								to use the listed label terms, while all of your personal warnings stay active.
+								Covered settings:
+								{regulatoryContext.coveredPreferences
+									.map((item) => `${item.preference} (${item.regulatedLabel})`)
+									.join(", ")}.
 							</p>
-							{#if regulatoryContext.coveredPreferences.length}
-								<p>
-									Covered settings:
-									{regulatoryContext.coveredPreferences.map((item) =>
-										`${item.preference} (${item.regulatedLabel})`,
-									).join(", ")}.
-								</p>
-							{/if}
-							{#if regulatoryContext.uncoveredPreferences.length}
-								<p>
-									Not defined by this regional profile:
-									{regulatoryContext.uncoveredPreferences.join(", ")}. Personal checks
-									still continue.
-								</p>
-							{/if}
-							<a
-								href={regulatoryContext.profile.sourceUrl}
-								target="_blank"
-								rel="noreferrer"
-							>
-								View official labeling guidance
-							</a>
-						</section>
-					{:else if regulatoryContext?.status === "unsupported"}
-						<section class="product-compatibility-panel__group">
-							<h2>Regional label context unavailable</h2>
+						{/if}
+						{#if regulatoryContext.uncoveredPreferences.length}
 							<p>
-								Your personal warnings still apply, but no regional label profile was
-								checked for {regulatoryContext.requestedRegionCode}.
+								Not defined by this regional profile:
+								{regulatoryContext.uncoveredPreferences.join(", ")}. Personal
+								checks still continue.
 							</p>
-						</section>
-					{/if}
+						{/if}
+						<a
+							href={regulatoryContext.profile.sourceUrl}
+							target="_blank"
+							rel="noreferrer"
+						>
+							View official labeling guidance
+						</a>
+					</section>
+				{:else if regulatoryContext?.status === "unsupported"}
+					<section class="product-compatibility-panel__group">
+						<h2>Regional label context unavailable</h2>
+						<p>
+							Your personal warnings still apply, but no regional label profile
+							was checked for {regulatoryContext.requestedRegionCode}.
+						</p>
+					</section>
+				{/if}
 			</div>
 		</CollapsibleSection>
 	</div>

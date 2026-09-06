@@ -177,6 +177,27 @@ describe("compact food records", () => {
 		});
 	});
 
+	it("drops language-only precautionary placeholders before storage", () => {
+		const storedFood = normalizeFoodForStorage({
+			fdcId: 43,
+			description: "Provider food",
+			foodNutrients: [],
+			traces: ["(en)"],
+			precautionaryStatements: [
+				{
+					type: "may_contain",
+					text: "(en)",
+					allergens: [],
+					languageCode: "en",
+					sourceField: "traces",
+				},
+			],
+		});
+
+		expect(storedFood.precautionaryStatements).toEqual([]);
+		expect(storedFood.traces).toEqual([]);
+	});
+
 	it("does not rewrite user-authored ingredient text", () => {
 		const ingredients = "My MIX: _Peanuts_ + salt";
 		const storedFood = normalizeFoodForStorage({

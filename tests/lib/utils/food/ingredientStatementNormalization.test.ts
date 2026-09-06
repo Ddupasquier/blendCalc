@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { normalizeExternalIngredientStatement } from "$lib/utils/food/ingredients/ingredientStatementNormalization.js";
+import {
+	isLanguageCodeOnlyDisclosureText,
+	normalizeExternalIngredientStatement,
+} from "$lib/utils/food/ingredients/ingredientStatementNormalization.js";
 
 const normalizeEnglish = (value: string) =>
 	normalizeExternalIngredientStatement(value, {
@@ -97,5 +100,17 @@ describe("external ingredient statement normalization", () => {
 
 		expect(second.ingredientText).toBe(first.ingredientText);
 		expect(second.ingredientList).toEqual(first.ingredientList);
+	});
+
+	it("keeps language codes as metadata instead of allergen disclosure content", () => {
+		expect(isLanguageCodeOnlyDisclosureText("(en)")).toBe(true);
+		expect(isLanguageCodeOnlyDisclosureText("en-US")).toBe(true);
+		expect(isLanguageCodeOnlyDisclosureText("May contain soy")).toBe(false);
+
+		const result = normalizeEnglish("Ingredients: oats. May contain: (en).");
+		expect(result.ingredientText).toBe("oats");
+		expect(result.declarationAnalysis.languageCode).toBe("en");
+		expect(result.declarationAnalysis.mayContain).toEqual([]);
+		expect(result.precautionaryStatements).toEqual([]);
 	});
 });
