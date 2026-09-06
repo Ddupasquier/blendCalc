@@ -47,9 +47,11 @@
 	const geometryStyle = $derived(
 		getImagePlacementGeometryCssVars(geometry, "image-placement-viewport"),
 	);
-	const syncFrameSize = () => {
-		if (!frameElement) return;
-		const bounds = frameElement.getBoundingClientRect();
+	const syncFrameSize = ({
+		width,
+		height,
+	}: Pick<DOMRectReadOnly, "width" | "height">) => {
+		const bounds = { width, height };
 		frameWidth = bounds.width;
 		frameHeight = bounds.height;
 	};
@@ -63,9 +65,14 @@
 	$effect(() => {
 		const frame = frameElement;
 		if (!frame) return;
-		syncFrameSize();
-		if (typeof ResizeObserver === "undefined") return;
-		const observer = new ResizeObserver(syncFrameSize);
+		if (typeof ResizeObserver === "undefined") {
+			syncFrameSize(frame.getBoundingClientRect());
+			return;
+		}
+		const observer = new ResizeObserver((entries) => {
+			const entry = entries.find(({ target }) => target === frame);
+			if (entry) syncFrameSize(entry.contentRect);
+		});
 		observer.observe(frame);
 		return () => observer.disconnect();
 	});
@@ -88,13 +95,9 @@
 		lastGeometrySignature = signature;
 		onGeometryChange?.(geometry);
 	});
-
 </script>
 
-<span
-	bind:this={frameElement}
-	class="image-placement-viewport"
->
+<span bind:this={frameElement} class="image-placement-viewport">
 	<img
 		bind:this={imageElement}
 		class:image-placement-viewport__image--legacy={value.placementVersion <= 1}

@@ -78,6 +78,14 @@ An exact provider match does not remove the evidence step when that provider can
 populate the canonical catalog. If the user opts to share that product, the Share step
 requires front-package, nutrition-label, and barcode photos before submission.
 
+Front-package evidence becomes usable as soon as the file is selected. Automatic card
+placement is optional background assistance: it uses one bounded, downscaled recognition
+pass, never enlarges the source photo, stops after a short time limit, and provides an
+immediate Stop action. It must not disable Share-step scrolling, evidence inputs,
+placement controls, navigation, or submission. Replacing the photo, editing placement,
+leaving the surface, or completing the submission cancels unfinished recognition and
+late results never replace the user's newer choice.
+
 Sparse labels remain honest. A nutrient omitted from an alcohol, kombucha, exempt, or
 otherwise limited package disclosure stays unknown; it never becomes reported zero or
 an estimated value. Users may save the available facts and complete only fields the
@@ -126,16 +134,80 @@ barcode` and source-empty groups `Not provided`. Keep source omissions blank and
 - show the selected trusted package image and its attribution in the Share summary after
   barcode autofill is accepted, so the person can confirm the exact cached product image
   before saving without triggering another provider request; when the evidence flow
-  already shows that image for comparison, do not duplicate it in the summary;
+  already shows that image for comparison, do not duplicate it in the summary; when a
+  nutrition-only correction has an eligible trusted image, use that image and its saved
+  placement by default while offering `Replace product image`; selecting a replacement
+  exposes its editable card placement;
 - allow destination choice between Fridge and Shopping List;
 - default shared-catalog submission on only for complete, valid, unchanged exact-source
   data whose represented sources all permit canonical storage. Keep an immediate
   opt-out, and turn sharing off whenever the user enters values, edits imported facts,
   or selects private evidence until they explicitly enable it again;
-- automatically orient and frame each newly chosen product image when OCR confidently
-  matches its product or brand text, while keeping the exact card preview, manual
-  controls, retry, and restore available before submission;
+- prepare a bounded display copy of each newly chosen product image in a dedicated
+  browser worker without mounting the full-resolution source or blocking another
+  interaction; keep the source selection intact, show preparation status until the
+  complete frame is ready, and do not
+  start OCR until the user selects `Place automatically`; when requested, frame the
+  image only when OCR confidently matches its product or brand text, while keeping the
+  exact card preview, manual controls, retry, and restore available before submission;
+  use the photo's stored orientation and a bounded analysis copy, with the visible
+  Rotate control handling sideways package art without an expensive automatic
+  orientation pass;
+- before a catalog submission, prepare front-package, nutrition-label, and barcode
+  upload copies one at a time in a worker so mobile image decoding cannot compete for
+  memory; accept JPEG, PNG, and WebP sources only up to 20 MB and 40 megapixels, retain
+  the largest detail budget for nutrition text, keep the combined multipart request
+  below the deployment boundary, and let the server independently validate and
+  normalize every result before private storage; show each selected input as
+  `Preparing photo`, `Ready`, `Uploading`, `Uploaded`, or `Needs attention`, use real
+  uploaded-byte progress when available, and never manufacture a percentage;
+- keep expected OCR progress and engine chatter out of the error console; a genuine
+  failure records one privacy-safe phase and reason code while leaving the complete
+  image and manual controls usable;
+- prepare a bounded, user-adjustable nutrition-label crop outside the main interface,
+  then upload it to an owner-scoped private background-recognition job only after the
+  user selects `Read label`. Keep the form scrollable and interactive, show upload then
+  queued/running state, provide cancellation, and return only structured serving and
+  nutrient suggestions. Nothing changes until the user reviews and applies selected
+  suggestions; raw recognized text and the temporary OCR crop are not retained;
 - close the form after a successful add instead of opening another blank form;
+- when an exact saved barcode matches a current shared product but meaningful entered
+  package data differs, keep the existing list item and accepted catalog revision
+  unchanged; before sharing is enabled, immediately explain that the saved entry has
+  changed and that community sharing checks those changes for review, then offer one
+  explicit `Update and share` correction after the authoritative catalog check; require
+  nutrition-label and barcode evidence, reuse an eligible unchanged trusted front image,
+  and require a current front-package photo when no eligible image exists or the image is
+  being replaced; hide the save-destination choice and name the saved item's unchanged list in the status
+  message; while sharing remains off, choosing the other destination may move the
+  existing saved version but must explain that the edited package details are not
+  applied; unchanged entries remain `Already saved`, cancellation changes nothing, and
+  repeat submissions against the same revision remain deduplicated by the server;
+- confirm cross-list moves inside the Share step rather than opening a nested dialog;
+  name both the current and destination lists, focus Cancel first, keep Cancel and Move
+  visible at compact heights, and change list membership exactly once only after Move;
+- offer separate native `Take photo` and `Choose existing photo` actions for package
+  front, nutrition-label reading/evidence, barcode evidence, and package-warning
+  evidence; only the camera action requests the rear camera, and neither choice uploads,
+  analyzes, or persists the selection before its existing explicit action;
+- keep nutrition-label reading separate from the lower-resolution package-placement
+  analysis: let the user frame the nutrition panel, prepare at most a 1600-pixel
+  grayscale/contrast copy in the existing image worker, and upload only that bounded
+  crop to the private durable job. Process recognition serially in the background,
+  reuse its Tesseract worker only briefly, then release it; cancellation or timeout
+  releases resources and removes the temporary crop. Show honest preparation, upload,
+  queued, and recognition progress, allow an immediate Stop action, retain the chosen
+  photo and manual-entry fallback, and apply no recognized value until the user reviews
+  and confirms the suggestions. Do not add OpenCV or remote generative image analysis
+  without a measured need and separate approval;
+- use Tesseract sparse-text page segmentation for the bounded nutrition crop. The
+  September 2026 development baseline compared automatic, block, column, and sparse
+  modes with color, grayscale, and contrast copies from three representative label
+  captures plus a derived faint-label case. Bounded grayscale/contrast with sparse-text
+  segmentation tied the best observed parse accuracy and had the fastest median warm
+  recognition time (about 190 ms). Treat that result as a regression baseline, not as
+  proof for every physical package; direct mobile review must still include clear,
+  sideways, skewed, faint, low-contrast, dense, and partial labels;
 - after a successful add, an applicable reviewed food-symbol trigger may add one quiet
   broad-audience line beneath the factual outcome; unknown foods simply omit it;
 - reuse an existing matching private food rather than ending in a duplicate-name error;

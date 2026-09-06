@@ -68,7 +68,7 @@ future public API.
 | Australian Food Composition Database Release 3 | Candidate generic-food dataset                               | FSANZ agreement based on CC BY-SA 3.0 Australia                                                                                 | Import and canonical use blocked                                                                                                                                                        |
 | UCUM                                           | Reviewed local unit reference standard                       | UCUM Licence v1.1                                                                                                               | Active as bounded database reference data; no NLM service request                                                                                                                       |
 | GS1 Digital Link                               | Local GTIN extraction from supported QR identifiers          | GS1 standards terms and trademark/IP notices                                                                                    | Identifier parsing only; no GS1 product-data redistribution                                                                                                                             |
-| Tesseract.js label OCR                         | On-device label text recognition                             | Apache License 2.0                                                                                                              | Allowed as a software dependency; output remains user-confirmed label data                                                                                                              |
+| Tesseract.js label OCR                         | Private background label text recognition                    | Apache License 2.0                                                                                                              | Allowed as a software dependency; temporary crops stay private and output remains user-confirmed label data                                                                             |
 | Wikimedia Commons                              | Schema-supported image source                                | Per-file licence and attribution                                                                                                | No general import approval; each asset must be reviewed individually                                                                                                                    |
 | FoodRepo                                       | Retired source candidate                                     | Provider terms                                                                                                                  | Disabled; no production traffic                                                                                                                                                         |
 | Community/user label submissions               | Moderated product corrections and additions                  | User consent plus future blendCalc submission terms                                                                             | Private evidence is protected; public API grant must be finalized before launch                                                                                                         |
@@ -444,12 +444,17 @@ Current status: no GS1 product database is ingested or redistributed.
 
 ### Current blendCalc Handling
 
-- OCR runs on-device in the browser.
+- The browser prepares a bounded crop, and an authenticated private background job runs
+  OCR without blocking the Manual Entry interface.
+- The temporary crop is deleted after completion, cancellation, terminal failure, or
+  expiry cleanup. Raw recognized text is not stored; the job retains only bounded
+  structured suggestions until expiry.
 - Recognized text is presented as a suggestion and is not accepted until the user
   confirms it.
 - Confirmed values are stored as `user-label`, not as Tesseract-owned nutrition data.
-- Label photos remain private moderation evidence unless separately approved under the
-  product-image rules.
+- A separately selected label photo remains private moderation evidence under the
+  product-image rules. The OCR crop is transient processing input, not moderation
+  evidence and not a reusable product image.
 
 Current status: the data boundary is appropriate. Before public distribution, confirm
 that the built application's third-party software notices preserve Apache-2.0 notices.

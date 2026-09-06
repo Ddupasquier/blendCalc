@@ -42,6 +42,16 @@ describe("request rate-limit policies", () => {
 		});
 	});
 
+	it("limits nutrition-label OCR job creation", () => {
+		expect(
+			getRequestRateLimitPolicy("POST", "/api/nutrition-label-ocr/jobs"),
+		).toEqual({
+			scope: "nutrition-label-ocr:create",
+			limit: 12,
+			windowSeconds: 3600,
+		});
+	});
+
 	it("allows normal search traffic without leaving it unbounded", () => {
 		expect(getRequestRateLimitPolicy("GET", "/api/foods/search")).toMatchObject(
 			{

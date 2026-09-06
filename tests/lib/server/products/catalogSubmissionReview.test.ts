@@ -46,4 +46,32 @@ describe("catalog submission evidence review", () => {
 			requiresSourceEvidenceReview: false,
 		});
 	});
+
+	it("reuses a canonical front image when source facts changed", () => {
+		expect(
+			evaluateCatalogSubmissionEvidence({
+				hasSourceMatch: true,
+				sourceCanAutoPublish: true,
+				needsSourceComparisonReview: true,
+				hasCanonicalImage: true,
+				evidencePaths: {
+					nutrition: "nutrition.jpg",
+					barcode: "barcode.jpg",
+				},
+			}).evidenceComplete,
+		).toBe(true);
+		expect(
+			evaluateCatalogSubmissionEvidence({
+				hasSourceMatch: true,
+				sourceCanAutoPublish: true,
+				needsSourceComparisonReview: true,
+				hasCanonicalImage: true,
+				evidencePaths: {
+					front: "front.jpg",
+					nutrition: "nutrition.jpg",
+					barcode: "barcode.jpg",
+				},
+			}).evidenceComplete,
+		).toBe(true);
+	});
 });

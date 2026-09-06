@@ -40,9 +40,64 @@
 }
 
 .nutrition-label-ocr__progress,
-.nutrition-label-ocr__review {
+.nutrition-label-ocr__review,
+.nutrition-label-ocr__crop {
 	display: grid;
 	gap: $app-gap-sm;
+}
+
+.nutrition-label-ocr__crop {
+	display: grid;
+	gap: $app-gap-sm;
+}
+
+.nutrition-label-ocr__crop-preview {
+	position: relative;
+	max-height: 18rem;
+	overflow: hidden;
+	background: $app-shell-surface-control;
+	border-radius: $app-shell-radius-control;
+}
+
+.nutrition-label-ocr__crop-preview img {
+	display: block;
+	width: 100%;
+	max-height: 18rem;
+	object-fit: contain;
+}
+
+.nutrition-label-ocr__crop-frame {
+	position: absolute;
+	box-sizing: border-box;
+	pointer-events: none;
+	border: 3px solid $app-shell-accent-primary;
+}
+
+.nutrition-label-ocr__crop > p {
+	margin: 0;
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+	line-height: $app-line-height-ui;
+}
+
+.nutrition-label-ocr__crop-controls {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: $app-gap-sm;
+}
+
+.nutrition-label-ocr__crop-controls label {
+	display: grid;
+	gap: $app-gap-xs;
+	min-width: 0;
+	color: $app-shell-text-primary;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-bold;
+}
+
+.nutrition-label-ocr__crop-controls input {
+	width: 100%;
+	accent-color: $app-shell-accent-primary;
 }
 
 .nutrition-label-ocr__progress progress {
@@ -63,40 +118,8 @@
 	border: 0;
 }
 
-.nutrition-label-ocr__raw-text summary {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: $app-gap-sm;
-	color: $app-shell-text-primary;
-	font-size: $app-font-size-sm;
-	font-weight: $app-font-weight-bold;
-	list-style: none;
-	cursor: pointer;
-}
-
-.nutrition-label-ocr__raw-text summary::-webkit-details-marker {
-	display: none;
-}
-
-.nutrition-label-ocr__raw-text summary:focus-visible {
-	outline: $app-focus-outline;
-	outline-offset: $app-focus-outline-offset;
-}
-
-.nutrition-label-ocr__raw-text pre {
-	max-height: 9.5rem;
-	margin: $app-gap-sm 0 0;
-	padding: $app-gap-sm;
-	overflow: auto;
-	color: $app-shell-text-primary;
-	background: $app-shell-surface-panel;
-	border-radius: $app-shell-radius-card;
-	font-size: $app-font-size-xs;
-	white-space: pre-wrap;
-}
-
-@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
 	.nutrition-label-ocr {
 		gap: $app-gap-sm;
 		padding: $app-gap-sm;
@@ -104,12 +127,15 @@
 
 	.nutrition-label-ocr__heading strong,
 	.nutrition-label-ocr__review legend,
-	.nutrition-label-ocr__progress span,
-	.nutrition-label-ocr__raw-text summary {
+	.nutrition-label-ocr__progress span {
 		font-size: $app-font-size-sm;
 	}
 
 	.nutrition-label-ocr__review p {
 		font-size: $app-font-size-xs;
+	}
+
+	.nutrition-label-ocr__crop-controls {
+		grid-template-columns: minmax(0, 1fr);
 	}
 }

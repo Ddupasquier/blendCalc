@@ -1,34 +1,48 @@
 <script lang="ts">
 	import { onDestroy } from "svelte";
 	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
-	import DisclosureChevron from "$lib/components/common/disclosure/DisclosureChevron/DisclosureChevron.svelte";
 	import CheckboxGroup from "$lib/components/common/forms/CheckboxGroup/CheckboxGroup.svelte";
 	import PhotoUploadInput from "$lib/components/common/forms/PhotoUploadInput/PhotoUploadInput.svelte";
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
-	import { animatedDetails } from "$lib/utils/animation/animatedDetails";
 	import type { NutritionLabelOcrInputProps } from "./types";
-	import { recognizeNutritionLabelImage } from "$lib/utils/food/ocr/nutritionLabelOcr.client";
+	import type { NutritionLabelCrop } from "$lib/utils/food/ocr/nutritionLabelOcr.client";
 	import {
-		parseNutritionLabelText,
-		type NutritionLabelOcrResult,
-	} from "$lib/utils/food/ocr/nutritionLabelOcr";
+		cancelNutritionLabelOcrJob,
+		runNutritionLabelOcrJob,
+	} from "$lib/utils/food/ocr/nutritionLabelOcrJobs.client";
+	import type {
+		NutritionLabelOcrJobResult,
+		NutritionLabelOcrJobStatus,
+	} from "$lib/utils/food/ocr/nutritionLabelOcrJobs";
 
 	let {
 		mappings,
 		photo,
-		recognize = recognizeNutritionLabelImage,
+		runJob = runNutritionLabelOcrJob,
 		onPhotoChange,
 		onApply,
 	}: NutritionLabelOcrInputProps = $props();
 
 	let scanning = $state(false);
-	let progress = $state(0);
+	let uploadProgress = $state<number | null>(null);
 	let progressStatus = $state("");
-	let result = $state<NutritionLabelOcrResult | null>(null);
+	let result = $state<NutritionLabelOcrJobResult | null>(null);
 	let selected = $state<(string | number)[]>([]);
 	let error = $state("");
 	let appliedMessage = $state("");
 	let abortController = $state<AbortController | null>(null);
+	let previewUrl = $state("");
+	let cropLeft = $state(0);
+	let cropTop = $state(0);
+	let cropRight = $state(100);
+	let cropBottom = $state(100);
+	const crop = $derived<NutritionLabelCrop>({
+		left: cropLeft / 100,
+		top: cropTop / 100,
+		right: cropRight / 100,
+		bottom: cropBottom / 100,
+	});
+	let activeJobId = $state("");
 
 	const servingOptionId = "serving";
 	const qualitativeOptionId = (nutrientId: number) =>
@@ -56,41 +70,75 @@
 		})) ?? []),
 	]);
 
-	const clearScan = () => {
+	const clearScan = ({ cancelJob = false } = {}) => {
 		abortController?.abort();
 		abortController = null;
+		if (cancelJob && activeJobId) {
+			void cancelNutritionLabelOcrJob(activeJobId).catch(() => undefined);
+		}
+		activeJobId = "";
 		result = null;
 		selected = [];
 		error = "";
 		appliedMessage = "";
-		progress = 0;
+		uploadProgress = null;
 		progressStatus = "";
 	};
 
 	const handlePhotoChange = (file: File | null) => {
-		clearScan();
+		clearScan({ cancelJob: true });
+		cropLeft = 0;
+		cropTop = 0;
+		cropRight = 100;
+		cropBottom = 100;
 		onPhotoChange(file);
+	};
+
+	const readStatus = (status: NutritionLabelOcrJobStatus) => {
+		if (status === "queued" || status === "running") uploadProgress = null;
+		progressStatus =
+			status === "queued"
+				? "Waiting for the background label reader…"
+				: status === "running"
+					? "Reading the label in the background…"
+					: progressStatus;
+	};
+
+	const stopScan = () => {
+		const jobId = activeJobId;
+		abortController?.abort(
+			new DOMException("Label scan cancelled", "AbortError"),
+		);
+		if (jobId) void cancelNutritionLabelOcrJob(jobId).catch(() => undefined);
+		activeJobId = "";
+		scanning = false;
+		uploadProgress = null;
+		progressStatus = "";
 	};
 
 	const scanPhoto = async () => {
 		if (!photo || scanning || mappings.length === 0) return;
 		clearScan();
 		scanning = true;
+		progressStatus = "Preparing the label image…";
 		abortController = new AbortController();
 		try {
-			const recognition = await recognize({
+			const completed = await runJob({
 				file: photo,
+				crop,
 				signal: abortController.signal,
-				onProgress: (nextProgress) => {
-					progress = nextProgress.progress;
-					progressStatus = nextProgress.status;
+				onPrepared: () => {
+					progressStatus = "Uploading the prepared label…";
+				},
+				onJobId: (jobId) => {
+					activeJobId = jobId;
+				},
+				onStatus: readStatus,
+				onUploadProgress: (nextProgress) => {
+					uploadProgress = nextProgress;
 				},
 			});
-			result = parseNutritionLabelText({
-				text: recognition.text,
-				confidence: recognition.confidence,
-				mappings,
-			});
+			result = completed.result;
 			selected = [
 				...(result.serving ? [servingOptionId] : []),
 				...result.candidates.map((candidate) => candidate.nutrientId),
@@ -103,7 +151,13 @@
 					"No safe nutrition values were found. Enter the label values manually.";
 			}
 		} catch (scanError) {
-			if (!(
+			if (
+				scanError instanceof DOMException &&
+				scanError.name === "TimeoutError"
+			) {
+				error =
+					"The label scan took too long and was stopped. Adjust the crop or enter the values manually.";
+			} else if (!(
 				scanError instanceof DOMException && scanError.name === "AbortError"
 			)) {
 				error =
@@ -112,8 +166,22 @@
 		} finally {
 			scanning = false;
 			abortController = null;
+			activeJobId = "";
+			uploadProgress = null;
+			progressStatus = "";
 		}
 	};
+
+	$effect(() => {
+		const selectedPhoto = photo;
+		if (!selectedPhoto) {
+			previewUrl = "";
+			return;
+		}
+		const nextUrl = URL.createObjectURL(selectedPhoto);
+		previewUrl = nextUrl;
+		return () => URL.revokeObjectURL(nextUrl);
+	});
 
 	const applySelected = () => {
 		if (!result) return;
@@ -134,7 +202,9 @@
 	};
 
 	onDestroy(() => {
+		const jobId = activeJobId;
 		abortController?.abort();
+		if (jobId) void cancelNutritionLabelOcrJob(jobId).catch(() => undefined);
 	});
 </script>
 
@@ -156,18 +226,83 @@
 		capture="environment"
 		onFilesChange={(files) => handlePhotoChange(files[0] ?? null)}
 	/>
-
-	<RoundedActionButton
-		onclick={scanPhoto}
-		busy={scanning}
-		disabled={!photo || mappings.length === 0}
-	>
-		Read label
-	</RoundedActionButton>
+	{#if previewUrl}
+		<div class="nutrition-label-ocr__crop" aria-label="Nutrition label crop">
+			<div class="nutrition-label-ocr__crop-preview">
+				<img src={previewUrl} alt="Selected nutrition label crop preview" />
+				<div
+					class="nutrition-label-ocr__crop-frame"
+					style={`left:${cropLeft}%;top:${cropTop}%;width:${cropRight - cropLeft}%;height:${cropBottom - cropTop}%`}
+				></div>
+			</div>
+			<p>
+				Move the four edges around the nutrition facts panel before reading.
+			</p>
+			<div class="nutrition-label-ocr__crop-controls">
+				<label>
+					<span>Left edge</span>
+					<input
+						type="range"
+						min="0"
+						max={cropRight - 10}
+						bind:value={cropLeft}
+					/>
+				</label>
+				<label>
+					<span>Right edge</span>
+					<input
+						type="range"
+						min={cropLeft + 10}
+						max="100"
+						bind:value={cropRight}
+					/>
+				</label>
+				<label>
+					<span>Top edge</span>
+					<input
+						type="range"
+						min="0"
+						max={cropBottom - 10}
+						bind:value={cropTop}
+					/>
+				</label>
+				<label>
+					<span>Bottom edge</span>
+					<input
+						type="range"
+						min={cropTop + 10}
+						max="100"
+						bind:value={cropBottom}
+					/>
+				</label>
+			</div>
+		</div>
+	{/if}
 
 	{#if scanning}
-		<div class="nutrition-label-ocr__progress" aria-live="polite">
-			<progress max="1" value={progress}></progress>
+		<RoundedActionButton variant="neutral" onclick={stopScan}>
+			Stop label scan
+		</RoundedActionButton>
+	{:else}
+		<RoundedActionButton
+			onclick={scanPhoto}
+			disabled={!photo || mappings.length === 0}
+		>
+			Read label
+		</RoundedActionButton>
+	{/if}
+
+	{#if scanning}
+		<div
+			class="nutrition-label-ocr__progress"
+			aria-live="polite"
+			aria-busy="true"
+		>
+			{#if uploadProgress === null}
+				<progress></progress>
+			{:else}
+				<progress max="1" value={uploadProgress}></progress>
+			{/if}
 			<span>{progressStatus || "Preparing label scan…"}</span>
 		</div>
 	{/if}
@@ -188,13 +323,6 @@
 		>
 			Use selected values
 		</RoundedActionButton>
-		<details class="nutrition-label-ocr__raw-text" use:animatedDetails>
-			<summary>
-				<span>View recognized text</span>
-				<DisclosureChevron />
-			</summary>
-			<pre>{result.rawText}</pre>
-		</details>
 	{/if}
 
 	{#if error}
