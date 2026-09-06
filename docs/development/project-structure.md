@@ -58,7 +58,6 @@ later commits.
 ## Application Source
 
 ```text
-api/                       Provider-required thin Vercel function entrypoints only
 src/
 ├── app.scss                 Global base styles only
 ├── hooks.server.ts          App-wide server hooks
@@ -78,11 +77,11 @@ src/
     └── _variables.scss      App-wide SCSS design-token roles only
 ```
 
-The top-level `api/` directory is reserved for thin Vercel Node entrypoints that the
-deployment platform must address as source functions, such as queue consumers. These
-files may adapt provider request and environment contracts, but application policy and
-processing remain under `src/lib/server/<domain>` so local and hosted paths share the
-same behavior.
+SvelteKit owns every application and API route. Do not add a top-level Vercel `api/`
+source-function directory: it can shadow parameterized SvelteKit API routes in the
+deployed routing table. Route-specific Vercel runtime limits belong in the owning
+SvelteKit route configuration, while application policy and processing remain under
+`src/lib/server/<domain>` so local and hosted paths share the same behavior.
 
 ## Components
 

@@ -107,6 +107,7 @@ intentionally omitted.
 | `npm run dev`                                          | Start the normal development server on port `5173`.                       |
 | `npm run dev:test`                                     | Start port `5174` with disposable Supabase and Quick QA login.            |
 | `npm run build`                                        | Create the production build.                                              |
+| `npm run verify:vercel-routes`                         | Verify generated parameterized API routes after a production build.       |
 | `npm run preview`                                      | Preview the production build.                                             |
 | `npm run check`                                        | Run TypeScript and Svelte diagnostics.                                    |
 | `npm run check:watch`                                  | Keep TypeScript and Svelte diagnostics running while editing.             |

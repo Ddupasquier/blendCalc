@@ -166,12 +166,11 @@ Vercel-owned operations. Configure each value in the narrowest required environm
   credentials by default.
 - Vercel automatically supplies system values such as `VERCEL_PROJECT_ID` when System
   Environment Variables are enabled.
-- Vercel supplies `VERCEL_OIDC_TOKEN` to deployed functions. Nutrition-label OCR uses
-  that token through Vercel Queues; local development without it runs the same durable
-  job processor asynchronously in the local Node process. Neither path requires a new
-  application secret. The queue trigger targets the thin provider entrypoint at
-  `api/nutrition-label-ocr-queue.ts`; processing remains in the shared server OCR
-  service used by local development.
+- Nutrition-label OCR uses Vercel's request-scoped `waitUntil` background boundary so
+  the job route returns without waiting for recognition. Local development schedules
+  the same durable job processor asynchronously in the local Node process. Neither path
+  requires a new application secret. Do not add a top-level Vercel `api/` function for
+  this work because that deployment shape shadows parameterized SvelteKit API routes.
 - Pulls into `.env.vercel.*.local` are snapshots for local verification, not a mechanism
   for changing Vercel.
 - Vercel does not return the values of variables stored as Secret. Its pull command
@@ -186,9 +185,9 @@ daily cron as an independent fallback; GitHub owns the 15-minute cadence because
 Hobby supports only daily cron schedules.
 
 The daily `/api/internal/nutrition-label-ocr/cleanup` cron uses the existing
-`CRON_SECRET` and removes expired temporary OCR objects and job rows. Queue callbacks
-are authenticated by Vercel's queue integration rather than by a public application
-credential.
+`CRON_SECRET` and removes expired temporary OCR objects and job rows. Background
+recognition starts only from the authenticated job-creation route and receives only the
+server-owned job identifier.
 
 ## Supabase Edge Functions
 

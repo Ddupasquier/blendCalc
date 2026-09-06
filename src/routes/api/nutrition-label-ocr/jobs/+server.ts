@@ -3,13 +3,21 @@ import type { RequestHandler } from "./$types";
 import { appIssueJson } from "$lib/server/errors/appError.server";
 import {
 	createNutritionLabelOcrJob,
-	failNutritionLabelOcrJobEnqueue,
+	failNutritionLabelOcrJobScheduling,
 	NUTRITION_LABEL_OCR_SOURCE_MAX_BYTES,
 } from "$lib/server/ocr/nutritionLabelOcrJobs.server";
-import { enqueueNutritionLabelOcrJob } from "$lib/server/ocr/nutritionLabelOcrQueue.server";
+import { scheduleNutritionLabelOcrJob } from "$lib/server/ocr/nutritionLabelOcrBackground.server";
 import { readLimitedFormData } from "$lib/server/security/requestBody.server";
 
 const OCR_FORM_OVERHEAD_BYTES = 256 * 1024;
+
+export const config = {
+	runtime: "nodejs24.x",
+	regions: ["pdx1"],
+	maxDuration: 60,
+	memory: 1024,
+	split: true,
+};
 
 export const POST: RequestHandler = async ({ locals, request }) => {
 	const user = await locals.getVerifiedUser();
@@ -43,9 +51,9 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 
 	if (created.shouldEnqueue) {
 		try {
-			await enqueueNutritionLabelOcrJob(created.job.id);
+			await scheduleNutritionLabelOcrJob(created.job.id);
 		} catch {
-			await failNutritionLabelOcrJobEnqueue(created.job.id);
+			await failNutritionLabelOcrJobScheduling(created.job.id);
 			return appIssueJson(503, "SERVICE_UNAVAILABLE");
 		}
 	}

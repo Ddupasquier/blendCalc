@@ -1,19 +1,5 @@
 {
 	"regions": ["pdx1"],
-	"functions": {
-		"api/nutrition-label-ocr-queue.ts": {
-			"maxDuration": 60,
-			"memory": 1024,
-			"experimentalTriggers": [
-				{
-					"type": "queue/v2beta",
-					"topic": "nutrition-label-ocr",
-					"retryAfterSeconds": 10,
-					"initialDelaySeconds": 0
-				}
-			]
-		}
-	},
 	"crons": [
 		{
 			"path": "/api/internal/analytics/sync",
