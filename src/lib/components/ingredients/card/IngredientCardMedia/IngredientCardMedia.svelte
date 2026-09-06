@@ -3,17 +3,16 @@
 	import IngredientCardMediaLane from "$lib/components/ingredients/card/IngredientCardMediaLane/IngredientCardMediaLane.svelte";
 	import {
 		getFoodImageAltText,
+		pickFoodImageUrl,
 		pickFoodFullImageUrl,
 	} from "$lib/utils/food/images/foodImages";
 	import { getStoredImagePlacement } from "$lib/utils/food/images/imagePlacement";
 	import type { IngredientCardMediaProps } from "./types";
 
-	let {
-		food,
-		decorative = true,
-	}: IngredientCardMediaProps = $props();
+	let { food, decorative = true }: IngredientCardMediaProps = $props();
 
-	const imageUrl = $derived(pickFoodFullImageUrl(food.image));
+	const thumbnailUrl = $derived(pickFoodImageUrl(food.image));
+	const fullImageUrl = $derived(pickFoodFullImageUrl(food.image));
 	const imageAlt = $derived(
 		getFoodImageAltText({
 			foodName: food.description,
@@ -34,13 +33,27 @@
 		...food,
 		image: undefined,
 	});
-	let failedImageUrl = $state("");
+	let failedImageUrls = $state<string[]>([]);
+	let lastImageSignature = $state("");
 	const renderImageUrl = $derived(
-		imageUrl && failedImageUrl !== imageUrl ? imageUrl : undefined,
+		[thumbnailUrl, fullImageUrl].find(
+			(imageUrl, index, urls) =>
+				Boolean(imageUrl) &&
+				urls.indexOf(imageUrl) === index &&
+				!failedImageUrls.includes(imageUrl),
+		),
 	);
 
+	$effect(() => {
+		const signature = `${thumbnailUrl}\n${fullImageUrl}`;
+		if (signature === lastImageSignature) return;
+		lastImageSignature = signature;
+		failedImageUrls = [];
+	});
+
 	const handleImageError = () => {
-		failedImageUrl = imageUrl;
+		if (!renderImageUrl || failedImageUrls.includes(renderImageUrl)) return;
+		failedImageUrls = [...failedImageUrls, renderImageUrl];
 	};
 </script>
 
