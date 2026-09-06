@@ -58,6 +58,7 @@ later commits.
 ## Application Source
 
 ```text
+api/                       Provider-required thin Vercel function entrypoints only
 src/
 ├── app.scss                 Global base styles only
 ├── hooks.server.ts          App-wide server hooks
@@ -76,6 +77,12 @@ src/
     ├── _themes.scss         Runtime light/dark semantic color values
     └── _variables.scss      App-wide SCSS design-token roles only
 ```
+
+The top-level `api/` directory is reserved for thin Vercel Node entrypoints that the
+deployment platform must address as source functions, such as queue consumers. These
+files may adapt provider request and environment contracts, but application policy and
+processing remain under `src/lib/server/<domain>` so local and hosted paths share the
+same behavior.
 
 ## Components
 

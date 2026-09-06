@@ -169,7 +169,9 @@ Vercel-owned operations. Configure each value in the narrowest required environm
 - Vercel supplies `VERCEL_OIDC_TOKEN` to deployed functions. Nutrition-label OCR uses
   that token through Vercel Queues; local development without it runs the same durable
   job processor asynchronously in the local Node process. Neither path requires a new
-  application secret.
+  application secret. The queue trigger targets the thin provider entrypoint at
+  `api/nutrition-label-ocr-queue.ts`; processing remains in the shared server OCR
+  service used by local development.
 - Pulls into `.env.vercel.*.local` are snapshots for local verification, not a mechanism
   for changing Vercel.
 - Vercel does not return the values of variables stored as Secret. Its pull command

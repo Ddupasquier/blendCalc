@@ -2,7 +2,7 @@ import type {
 	NutritionLabelOcrCandidate,
 	NutritionLabelOcrQualitativeFact,
 	NutritionLabelServingCandidate,
-} from "$lib/utils/food/ocr/nutritionLabelOcr";
+} from "./nutritionLabelOcr.js";
 
 export const NUTRITION_LABEL_OCR_PROCESSOR_VERSION =
 	"nutrition-label-tesseract-v2";

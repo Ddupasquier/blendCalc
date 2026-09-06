@@ -1,6 +1,6 @@
-import type { Database } from "$lib/types/database.types";
-import type { NutritionLabelOcrMapping } from "$lib/utils/food/ocr/nutritionLabelOcr";
-export type { NutritionLabelOcrMapping } from "$lib/utils/food/ocr/nutritionLabelOcr";
+import type { Database } from "../../../types/database.types.js";
+import type { NutritionLabelOcrMapping } from "./nutritionLabelOcr.js";
+export type { NutritionLabelOcrMapping } from "./nutritionLabelOcr.js";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 type SourceMappingRow = Pick<
