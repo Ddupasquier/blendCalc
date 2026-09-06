@@ -661,6 +661,25 @@ describe("barcode product mapping", () => {
 		});
 	});
 
+	it("does not turn an Open Food Facts language marker into a trace disclosure", () => {
+		const draft = mapOpenFoodFactsProduct(
+			{
+				product_name: "Language metadata placeholder",
+				lang: "en",
+				traces: "(en)",
+				traces_lc: "en",
+				nutriments: { "energy-kcal_100g": 100 },
+			},
+			"049000042566",
+			productReferenceCatalogFixture,
+		);
+
+		expect(draft?.sourceMetadata?.language).toBe("en");
+		expect(draft?.traces).toEqual([]);
+		expect(draft?.precautionaryStatements).toEqual([]);
+		expect(draft?.fieldProvenance?.traces).toBeUndefined();
+	});
+
 	it("preserves structured Open Food Facts package and quality metadata", () => {
 		const draft = mapOpenFoodFactsProduct(
 			{

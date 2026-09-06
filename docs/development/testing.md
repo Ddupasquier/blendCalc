@@ -153,11 +153,12 @@ after documentation, comments, or unrelated source-only edits.
 
 Run `npm run verify:feature` on child branches. After approved children are merged into
 their parent feature branch, run the combined affected checks and complete the feature's
-visual or manual review there. For a multi-ticket feature, promote that exact tree to
-`mock-staging` as the release candidate and let GitHub run the complete source and
-bounded browser confidence once. The source job and independent browser jobs start
-together; desktop Chromium is split into two shards. For an ordinary single-branch
-change that does not need `mock-staging`, `staging` itself is the release candidate.
+visual or manual review there. Promote the approved parent directly to `staging` as the
+normal release candidate and let GitHub run the complete source and bounded browser
+confidence once. The source job and independent browser jobs start together; desktop
+Chromium is split into two shards. Reserve `mock-staging` for an unusual, dangerous, or
+conflict-prone integration that needs a disposable checkpoint before `staging`; a
+multi-ticket feature does not require it merely because it has multiple children.
 
 Use `npm run verify:release` locally only when the hosted candidate run is unavailable,
 the candidate includes uncommitted work that cannot yet be published, or a fresh local
@@ -181,9 +182,11 @@ source responsibilities. For a large feature, use one parent ticket and parent f
 branch, with focused child branches for independently reviewable work. Run Feature Check
 on each child. After the user approves a child, merge it into the parent branch and
 rerun only checks affected by the combined change. Complete visual and manual feature
-review on the assembled parent, then promote its exact tree to `mock-staging` for one
-complete hosted candidate run. If that run fails, reopen or repair the child that owns
-the failure and create a new candidate result.
+review on the assembled parent, then promote its exact tree directly to `staging` for
+one complete hosted candidate run. Use `mock-staging` first only for a genuinely
+dangerous, unusual, or conflict-prone integration that should remain disposable until
+proven. If that run fails, reopen or repair the child that owns the failure and create
+a new candidate result.
 
 Use an auxiliary worktree only when unrelated uncommitted work makes a normal branch
 switch unsafe. The quota handoff must include every branch, focused evidence, the exact

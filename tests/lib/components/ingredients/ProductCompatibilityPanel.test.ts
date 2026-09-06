@@ -81,6 +81,36 @@ describe("ProductCompatibilityPanel", () => {
 		).not.toBeInTheDocument();
 	});
 
+	it.each(["en", undefined])(
+		"does not present a language-only placeholder when language metadata is %s",
+		(languageCode) => {
+			render(ProductCompatibilityPanel, {
+				props: {
+					food: createFood({
+						allergenDisclosure: {
+							contains: [],
+							mayContain: ["(en)"],
+						},
+						precautionaryStatements: [
+							{
+								type: "may_contain",
+								text: "(en)",
+								allergens: [],
+								...(languageCode ? { languageCode } : {}),
+								sourceField: "traces",
+							},
+						],
+					}),
+				},
+			});
+
+			expect(
+				screen.queryByRole("heading", { name: "May contain" }),
+			).not.toBeInTheDocument();
+			expect(screen.queryByText("(en)")).not.toBeInTheDocument();
+		},
+	);
+
 	it("shows reviewed dietary labels and considerations without policy jargon", () => {
 		render(ProductCompatibilityPanel, {
 			props: {

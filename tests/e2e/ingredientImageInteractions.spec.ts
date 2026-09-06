@@ -21,6 +21,83 @@ const representativeImageProducts = [
 	},
 ] as const;
 
+test("@mobile ingredient cards use thumbnails while visible details prioritize the full image", async ({
+	page,
+}, testInfo) => {
+	test.skip(
+		!new Set(["desktop-chromium", "mobile-chromium"]).has(
+			testInfo.project.name,
+		),
+		"Chromium desktop and compact layouts own image request selection and bounds.",
+	);
+
+	const product = representativeImageProducts[0];
+	await page.goto("/ingredients/fridge");
+	await waitForAppReady(page);
+	const card = await findSavedIngredientCard(page, product.name);
+	const cardImage = card.locator(".ingredient-card-media-lane img");
+	await expect(cardImage).toHaveAttribute("src", /front_en\.5\.200\.jpg$/);
+	await expect(cardImage).toHaveAttribute("loading", "lazy");
+	await expect(cardImage).toHaveAttribute("fetchpriority", "auto");
+	const cardBounds = await card.boundingBox();
+	const mediaLaneBounds = await card
+		.locator(".ingredient-card-media-lane")
+		.boundingBox();
+	expect(cardBounds).not.toBeNull();
+	expect(mediaLaneBounds).not.toBeNull();
+	expect(mediaLaneBounds!.x).toBeGreaterThanOrEqual(cardBounds!.x);
+	expect(mediaLaneBounds!.y).toBeGreaterThanOrEqual(cardBounds!.y);
+	expect(mediaLaneBounds!.x + mediaLaneBounds!.width).toBeLessThanOrEqual(
+		cardBounds!.x + cardBounds!.width,
+	);
+	expect(mediaLaneBounds!.y + mediaLaneBounds!.height).toBeLessThanOrEqual(
+		cardBounds!.y + cardBounds!.height,
+	);
+
+	const nutritionDetails = await openNutritionDetails(page, product);
+	const detailImage = nutritionDetails.getByRole("img", {
+		name: `${product.name} package image`,
+	});
+	await expect(detailImage).toHaveAttribute("src", /front_en\.5\.400\.jpg$/);
+	await expect(detailImage).toHaveAttribute("loading", "eager");
+	await expect(detailImage).toHaveAttribute("fetchpriority", "high");
+	await expect(detailImage).toHaveAttribute("width", "288");
+	await expect(detailImage).toHaveAttribute("height", "224");
+
+	await page.goto("/mix");
+	await waitForAppReady(page);
+	await page
+		.getByRole("searchbox", { name: "Find ingredients", exact: true })
+		.fill(product.name);
+	const mixOption = page
+		.locator(".mix-ingredient-option")
+		.filter({ hasText: product.name });
+	await expect(mixOption).toBeVisible();
+	const mixImage = mixOption.locator(".ingredient-card-media-lane img");
+	await expect(mixImage).toHaveAttribute("src", /front_en\.5\.200\.jpg$/);
+	await expect(mixImage).toHaveAttribute("loading", "lazy");
+	await expect(mixImage).toHaveAttribute("fetchpriority", "auto");
+});
+
+const findSavedIngredientCard = async (page: Page, productName: string) => {
+	const previewButton = page.getByRole("button", {
+		name: `Preview ${productName}`,
+		exact: true,
+	});
+	for (
+		let attempt = 0;
+		attempt < 10 && !(await previewButton.isVisible().catch(() => false));
+		attempt += 1
+	) {
+		const loadMoreButton = page.getByRole("button", { name: "Load more" });
+		if (!(await loadMoreButton.isVisible().catch(() => false))) break;
+		await expect(loadMoreButton).toBeEnabled();
+		await loadMoreButton.click();
+	}
+	await expect(previewButton).toBeVisible();
+	return page.locator(".saved-ingredient-card").filter({ has: previewButton });
+};
+
 const openNutritionDetails = async (
 	page: Page,
 	product: (typeof representativeImageProducts)[number],

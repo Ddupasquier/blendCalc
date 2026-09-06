@@ -196,6 +196,8 @@
 			<ProductImageFrame
 				src={imageUrl}
 				alt={imageAlt}
+				loading="eager"
+				fetchPriority="high"
 				rotationDegrees={savedPlacement.rotationDegrees}
 				onError={() => (imageFailed = true)}
 			/>

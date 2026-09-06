@@ -30,7 +30,10 @@ import {
 import { OPEN_FOOD_FACTS_IMAGE_LICENSE } from "$lib/utils/food/images/foodImages";
 import { createFullImagePlacement } from "$lib/utils/food/images/imagePlacement";
 import { normalizeFoodCategoryValue } from "$lib/utils/food/categories/categoryNormalization.js";
-import { normalizeExternalIngredientStatement } from "$lib/utils/food/ingredients/ingredientStatementNormalization.js";
+import {
+	isLanguageCodeOnlyDisclosureText,
+	normalizeExternalIngredientStatement,
+} from "$lib/utils/food/ingredients/ingredientStatementNormalization.js";
 import {
 	canonicalizeProductNutrients,
 	getCanonicalProductNutrientId,
@@ -194,7 +197,7 @@ const uniqueCleanValues = (values: Array<string | undefined>) => {
 	const seen = new Set<string>();
 	return values.flatMap((value) => {
 		const cleaned = cleanTag(value ?? "");
-		if (!cleaned) return [];
+		if (!cleaned || isLanguageCodeOnlyDisclosureText(cleaned)) return [];
 		const key = cleaned.toLocaleLowerCase();
 		if (seen.has(key)) return [];
 		seen.add(key);
@@ -477,6 +480,9 @@ const parseOpenFoodFactsMetadata = (product: OpenFoodFactsProduct) => {
 	const ingredients = normalizedIngredients.ingredientText;
 	const allergenDeclarationAnalysis = normalizedIngredients.declarationAnalysis;
 	const reportedTraceText = product.traces?.trim();
+	const hasReportedTraceText = Boolean(
+		reportedTraceText && !isLanguageCodeOnlyDisclosureText(reportedTraceText),
+	);
 	const precautionaryStatements: FoodPrecautionaryStatement[] = [
 		...normalizedIngredients.precautionaryStatements.flatMap((statement) => {
 			const precautionaryStatement: FoodPrecautionaryStatement = {
@@ -487,11 +493,11 @@ const parseOpenFoodFactsMetadata = (product: OpenFoodFactsProduct) => {
 			};
 			return [precautionaryStatement];
 		}),
-		...(reportedTraceText
+		...(hasReportedTraceText
 			? [
 					{
 						type: "may_contain" as const,
-						text: reportedTraceText,
+						text: reportedTraceText!,
 						allergens: uniqueCleanValues([
 							...splitDelimitedValues(product.traces),
 							...(product.traces_tags ?? []),
