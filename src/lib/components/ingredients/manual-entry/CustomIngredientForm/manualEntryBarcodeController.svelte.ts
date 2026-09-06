@@ -7,7 +7,10 @@ import {
 	getBarcodeProductSourceDisplayLabel,
 	type BarcodeProductDraft,
 } from "$lib/utils/barcode/productLookup";
-import { barcodeDraftHasEntryChanges } from "$lib/utils/barcode/barcodeDraftComparison";
+import {
+	barcodeDraftHasEntryChanges,
+	barcodeDraftNameMatchesEntry,
+} from "$lib/utils/barcode/barcodeDraftComparison";
 import type { BarcodeScanResult } from "$lib/utils/barcode/types";
 import {
 	getBarcodeDraftState,
@@ -101,6 +104,22 @@ export const createManualEntryBarcodeController = ({
 	const sharedCatalogMatchIsUnchanged = $derived(
 		Boolean(hasSharedCatalogReference && !referenceHasChanges),
 	);
+	const reviewedUpdateCandidate = $derived(
+		Boolean(hasSharedCatalogReference && referenceHasChanges),
+	);
+	const reviewedUpdateCanSkipValidation = $derived(
+		Boolean(
+			reviewedUpdateCandidate &&
+			form.data.barcodeReferenceSourceDraft &&
+			barcodeDraftNameMatchesEntry(
+				form.data.barcodeReferenceSourceDraft,
+				currentReferenceEntry,
+			),
+		),
+	);
+	const reviewedUpdateSelected = $derived(
+		reviewedUpdateCandidate && form.data.shareWithCatalog,
+	);
 	const canShareWithCatalog = $derived(
 		Boolean(normalizedBarcode) && !sharedCatalogMatchIsUnchanged,
 	);
@@ -140,10 +159,7 @@ export const createManualEntryBarcodeController = ({
 			form.data.barcodeReferenceSourceDraft?.source !== "shared-catalog" &&
 			!referenceHasChanges &&
 			!hasUserAuthoredCatalogValues &&
-			!validation.blockingValidation &&
-			!form.data.frontPhoto &&
-			!form.data.nutritionPhoto &&
-			!form.data.barcodePhoto
+			!validation.blockingValidation
 			? [
 					normalizedBarcode,
 					form.data.barcodeReferenceSourceDraft?.source ?? "",
@@ -535,13 +551,20 @@ export const createManualEntryBarcodeController = ({
 		}
 	};
 
-	const handleShareChange = async (checked: boolean) => {
+	const handleShareChange = (checked: boolean) => {
 		if (!checked) {
 			clearBarcodeShareValidation();
 			form.data.shareSelectionSource = "declined";
 			return;
 		}
-		await validateCatalogSharing("user");
+		if (reviewedUpdateCanSkipValidation) {
+			clearBarcodeShareValidation();
+			form.data.shareWithCatalog = true;
+			form.data.shareSelectionSource = "user";
+			onError("");
+			return;
+		}
+		void validateCatalogSharing("user");
 	};
 
 	const applyVerifiedBarcodeForSharing = async () => {
@@ -641,7 +664,8 @@ export const createManualEntryBarcodeController = ({
 	};
 
 	const getReferenceReviewFlags = () => [
-		...(form.data.submissionIntent === "catalog_correction"
+		...(form.data.submissionIntent === "catalog_correction" ||
+		reviewedUpdateSelected
 			? [
 					"The user reports that the current shared or source product information is incorrect, outdated, or incomplete. Compare only the submitted changes against the current revision and package evidence.",
 				]
@@ -671,9 +695,7 @@ export const createManualEntryBarcodeController = ({
 
 	$effect(() => {
 		onLookupStateChange(
-			state.lookingUpBarcode ||
-				barcodeReferenceLookupPending ||
-				form.data.validatingBarcodeShare,
+			state.lookingUpBarcode || barcodeReferenceLookupPending,
 		);
 	});
 
@@ -728,6 +750,12 @@ export const createManualEntryBarcodeController = ({
 		},
 		get shareUnavailableMessage() {
 			return shareUnavailableMessage;
+		},
+		get reviewedUpdateCandidate() {
+			return reviewedUpdateCandidate;
+		},
+		get reviewedUpdateSelected() {
+			return reviewedUpdateSelected;
 		},
 		get shareHelpMessage() {
 			return shareHelpMessage;

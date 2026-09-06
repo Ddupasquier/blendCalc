@@ -21,6 +21,7 @@ describe("barcode normalization", () => {
 
 	it("stores equivalent codes as a canonical GTIN-14", () => {
 		expect(normalizeBarcode("4006381333931")).toBe("04006381333931");
+		expect(normalizeBarcode("072360002031")).toBe("00072360002031");
 		expect(getBarcodeLookupCandidates("4006381333931")).toEqual(
 			expect.arrayContaining(["4006381333931", "04006381333931"]),
 		);

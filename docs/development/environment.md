@@ -121,6 +121,14 @@ label. The local database manager writes private keys and seeded account credent
 Playwright uses port `5174` and the disposable local Supabase stack. Test credentials
 must never point at production.
 
+After `npm run db:test:reset`, `npm run dev:test` serves the local test sign-in page with
+a Quick QA login dropdown. The dropdown reads the maintained seeded persona catalog and
+uses the generated password only on the server. Turn on **Test the real sign-in flow**
+when the password, Google, registration, recovery, CAPTCHA, or MFA experience is the
+subject of the test. The quick path is unavailable unless the app, database mode,
+Supabase endpoint, and generated credential all match the isolated loopback test
+environment.
+
 ## Local Resource Safety
 
 Run `npm run resources:check` before a long local session. Maintained builds, complete
@@ -158,6 +166,10 @@ Vercel-owned operations. Configure each value in the narrowest required environm
   credentials by default.
 - Vercel automatically supplies system values such as `VERCEL_PROJECT_ID` when System
   Environment Variables are enabled.
+- Vercel supplies `VERCEL_OIDC_TOKEN` to deployed functions. Nutrition-label OCR uses
+  that token through Vercel Queues; local development without it runs the same durable
+  job processor asynchronously in the local Node process. Neither path requires a new
+  application secret.
 - Pulls into `.env.vercel.*.local` are snapshots for local verification, not a mechanism
   for changing Vercel.
 - Vercel does not return the values of variables stored as Secret. Its pull command
@@ -170,6 +182,11 @@ public production synchronization endpoint as the Actions variable
 `BLENDCALC_API_SYNC_URL`. The URL is configuration rather than a secret. Keep Vercel's
 daily cron as an independent fallback; GitHub owns the 15-minute cadence because Vercel
 Hobby supports only daily cron schedules.
+
+The daily `/api/internal/nutrition-label-ocr/cleanup` cron uses the existing
+`CRON_SECRET` and removes expired temporary OCR objects and job rows. Queue callbacks
+are authenticated by Vercel's queue integration rather than by a public application
+credential.
 
 ## Supabase Edge Functions
 

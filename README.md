@@ -105,7 +105,7 @@ intentionally omitted.
 | Command                                                | Purpose                                                                   |
 | ------------------------------------------------------ | ------------------------------------------------------------------------- |
 | `npm run dev`                                          | Start the normal development server on port `5173`.                       |
-| `npm run dev:test`                                     | Start the app on port `5174` against disposable local Supabase.           |
+| `npm run dev:test`                                     | Start port `5174` with disposable Supabase and Quick QA login.            |
 | `npm run build`                                        | Create the production build.                                              |
 | `npm run preview`                                      | Preview the production build.                                             |
 | `npm run check`                                        | Run TypeScript and Svelte diagnostics.                                    |

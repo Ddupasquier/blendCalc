@@ -866,6 +866,7 @@ removes those aliases after all application callers switch to the canonical
 | Table                                      | Primary Key             | Owner Scope                     | Purpose                                                                                                                    | Key Relationships                                                                     |
 | ------------------------------------------ | ----------------------- | ------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
 | `shared_product_submissions`               | `id`                    | Submitted by one auth user      | Community product submissions awaiting review or already reviewed                                                          | `submitted_by → auth.users.id`, optional reviewer                                     |
+| `nutrition_label_ocr_jobs`                 | `id`                    | One authenticated user          | Temporary queued/running state and bounded structured suggestions for an explicit nutrition-label scan                     | `user_id → auth.users.id`; private temporary Storage object                           |
 | `catalog_intake_requests`                  | `id`                    | One actor-scoped request key    | Service-only idempotency ledger for catalog intake retries                                                                 | `actor_user_id → auth.users.id`                                                       |
 | `shared_product_submission_field_evidence` | `id`                    | Private proposed-field evidence | Exact value, unit, basis, source observation, timestamp, confidence, and evidence references for each submitted field      | `submission_id`, matching `source_observation_id`                                     |
 | `shared_products`                          | `id`                    | Shared catalog                  | Approved active shared products searchable by all authenticated users                                                      | Optional approved submission/reviewer                                                 |
@@ -978,6 +979,25 @@ Notes:
 - A user may have only one pending correction against a specific base revision.
   Different users may independently submit supporting or conflicting package evidence;
   approving one correction makes the others stale through the existing revision guard.
+
+### `nutrition_label_ocr_jobs`
+
+Stores short-lived state for user-requested nutrition-label recognition. Browser roles
+have no table or function access; authenticated application routes use the service role
+and always bind reads and cancellation to the verified `user_id`.
+
+- `storage_path` is exactly `<user_id>/<job_id>.webp` in the private
+  `nutrition-label-ocr-temporary` bucket.
+- `(user_id, input_sha256, processor_version)` is unique so an identical current scan
+  reuses its queued, running, or completed result instead of starting duplicate work.
+- Claims are atomic, become reclaimable after 75 seconds (beyond the worker's 60-second
+  hard limit), and allow at most three processing attempts. Claim, completion, and
+  failure functions are service-role only.
+- `result` may contain only bounded structured nutrient, qualitative, serving, and
+  confidence suggestions. Raw OCR text and image bytes never enter the table.
+- Jobs expire after 24 hours. The worker removes the image after completion or terminal
+  failure, cancellation removes it immediately, and the daily cleanup removes expired
+  orphaned images before deleting their rows.
 
 ### `catalog_intake_requests`
 
@@ -1093,6 +1113,11 @@ Notes:
 - USDA barcode products use exact normalized GTIN matches and keep the newest active
   `Branded` record. Missing nutrient values remain missing; values from unrelated USDA
   records are not blended into the product.
+- The disposable local seed includes a focused USDA-backed El Pato jalapeno salsa
+  fixture for canonical GTIN `00072360002031` (printed UPC `072360002031`). Its raw USDA
+  observation, normalized canonical fields, reported-zero nutrient states, serving,
+  relational provenance, and separately licensed Open Food Facts front-image metadata
+  exercise Manual Entry without allowing outbound provider requests in test mode.
 - Compatibility summaries are rebuilt from compatibility facts.
 - `category_option_id` is inherited from the approved submission. A database trigger
   blocks publication when no enabled canonical category can be resolved.
@@ -2244,16 +2269,18 @@ category, or serving fields.
 
 ## Storage Buckets
 
-| Bucket                        | Public | Purpose                                                     | Access Pattern                                                        |
-| ----------------------------- | ------ | ----------------------------------------------------------- | --------------------------------------------------------------------- |
-| `profile-avatars`             | No     | User avatar files                                           | Owner-scoped read; verified server actions write and delete           |
-| `product-submission-evidence` | No     | Product label/evidence images for shared catalog moderation | Owner-scoped read; verified server submission flow writes and deletes |
-| `food-image-assets`           | Yes    | Moderator-approved public product images                    | Public read; service-role publication and metadata persistence        |
+| Bucket                          | Public | Purpose                                                     | Access Pattern                                                                     |
+| ------------------------------- | ------ | ----------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `profile-avatars`               | No     | User avatar files                                           | Owner-scoped read; verified server actions write and delete                        |
+| `product-submission-evidence`   | No     | Product label/evidence images for shared catalog moderation | Owner-scoped read; verified server submission flow writes and deletes              |
+| `nutrition-label-ocr-temporary` | No     | Short-lived normalized nutrition-label OCR crops            | Service-only write/read/delete; owner access only through authenticated app routes |
+| `food-image-assets`             | Yes    | Moderator-approved public product images                    | Public read; service-role publication and metadata persistence                     |
 
-Uploaded profile and product-evidence images are byte-bounded, signature-checked,
-decoded, orientation-normalized, dimension-bounded, metadata-stripped, and re-encoded
-as WebP before storage. Moderator publication repeats normalization so older evidence
-cannot bypass the public-image boundary.
+Uploaded profile, product-evidence, and temporary OCR images are byte-bounded,
+signature-checked, decoded, orientation-normalized, dimension-bounded, metadata-stripped,
+and re-encoded as WebP before storage. Moderator publication repeats normalization so
+older evidence cannot bypass the public-image boundary. Temporary OCR images never
+become moderation evidence or public image assets.
 
 ## Update Checklist
 

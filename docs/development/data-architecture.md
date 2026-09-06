@@ -88,6 +88,17 @@ Durable writes use narrowly scoped Supabase functions. The database function:
 
 Client checks may provide faster feedback, but they are never the final authority.
 
+Nutrition-label OCR is a separate asynchronous processing boundary. After explicit user
+action, the browser prepares a bounded crop and uploads it through an authenticated app
+route. The server normalizes it again, stores it in a private temporary bucket, creates
+an owner-scoped durable job, and sends only the job ID to the background queue. The
+browser polls a bounded status response and remains usable throughout; cancellation is
+an authenticated owner action. The worker reads DB-backed mappings, persists only
+structured suggestions, and deletes the temporary crop. Raw recognized text, OCR image
+bytes, and moderation evidence never enter the queue message or job result. One
+Tesseract worker is used at a time within each function runtime, reused briefly for a
+nearby scan, and terminated after a short idle period to release memory.
+
 ## Browser State
 
 Browser storage is limited to data that can be discarded safely:

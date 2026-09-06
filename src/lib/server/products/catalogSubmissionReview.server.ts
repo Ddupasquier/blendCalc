@@ -23,6 +23,10 @@ import {
 import type { CatalogSourceAssessment } from "./catalogSourceAssessment.server";
 import type { ProductEvidencePaths } from "./productEvidence.server";
 import { hasCompleteProductEvidence } from "./productEvidence.server";
+import {
+	describeProductEvidencePhotos,
+	getMissingProductEvidenceRoles,
+} from "$lib/utils/products/productEvidenceRequirements";
 import type { FoodImagePlacementValues } from "./foodImages.server";
 import type { ProductSourceFieldMetricIncrement } from "./sourceMetrics.server";
 import { findSubmittedLabelDisagreementMetrics } from "./catalogSourceAccuracy.server";
@@ -234,19 +238,22 @@ export const prepareCatalogSubmissionReview = (input: {
 		hasCanonicalImage: Boolean(canonicalSubmissionFood.image?.imageUrl),
 		evidencePaths: input.evidencePaths,
 	});
+	const missingEvidenceDescription = describeProductEvidencePhotos(
+		getMissingProductEvidenceRoles(input.evidencePaths),
+	);
 	if (!matchedDraft && !evidenceComplete) {
 		throw new Error(
-			"Unknown products need front package, nutrition label, and barcode photos for verification.",
+			`Unknown products need ${missingEvidenceDescription} for verification.`,
 		);
 	}
 	if (needsSourceComparisonReview && !evidenceComplete) {
 		throw new Error(
-			"Source comparison reviews need front package, nutrition label, and barcode photos for verification.",
+			`Source comparison reviews need ${missingEvidenceDescription} for verification.`,
 		);
 	}
 	if (requiresSourceEvidenceReview && !evidenceComplete) {
 		throw new Error(
-			"Sources that cannot populate the canonical catalog need front package, nutrition label, and barcode photos for verification.",
+			`Sources that cannot populate the canonical catalog need ${missingEvidenceDescription} for verification.`,
 		);
 	}
 	const sourceLabelDisagreementMetrics = evidenceComplete
