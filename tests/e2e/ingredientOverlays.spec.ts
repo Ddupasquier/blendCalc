@@ -1007,19 +1007,46 @@ test(
 			await resultsPanel.evaluate((element) => element.scrollTop),
 		).toBeGreaterThanOrEqual(scrollTopBeforeAppend - 2);
 
-		loadMoreButton = searchDialog.getByRole("button", { name: "Load more" });
-		await loadMoreButton.scrollIntoViewIfNeeded();
-		const finalPageResponsePromise = waitForSearchPage("food", 30);
-		await loadMoreButton.click();
-		const finalPageResponse = await finalPageResponsePromise;
-		expect(finalPageResponse.status()).toBe(200);
-		const finalPage = (await finalPageResponse.json()) as {
-			foods: Array<{ fdcId: number }>;
-			hasMore: boolean;
-			nextOffset: number | null;
-			total: number;
-		};
-		expect(finalPage).toMatchObject({
+		let lastPage = secondPage;
+		while (lastPage.hasMore) {
+			const nextOffset = lastPage.nextOffset;
+			expect(nextOffset).not.toBeNull();
+			if (nextOffset === null) {
+				throw new Error(
+					"A search page with more results must provide an offset.",
+				);
+			}
+
+			loadMoreButton = searchDialog.getByRole("button", { name: "Load more" });
+			await loadMoreButton.scrollIntoViewIfNeeded();
+			const nextPageResponsePromise = waitForSearchPage("food", nextOffset);
+			await loadMoreButton.click();
+			const nextPageResponse = await nextPageResponsePromise;
+			expect(nextPageResponse.status()).toBe(200);
+			const nextPage = (await nextPageResponse.json()) as {
+				foods: Array<{ fdcId: number }>;
+				hasMore: boolean;
+				nextOffset: number | null;
+				total: number;
+			};
+			const expectedPageLength = Math.min(15, firstPage.total - nextOffset);
+			const loadedThrough = nextOffset + expectedPageLength;
+			expect(nextPage.foods).toHaveLength(expectedPageLength);
+			expect(nextPage).toMatchObject({
+				hasMore: loadedThrough < firstPage.total,
+				nextOffset: loadedThrough < firstPage.total ? loadedThrough : null,
+				total: firstPage.total,
+			});
+			await expect(searchResults.getByRole("row")).toHaveCount(loadedThrough);
+			expect(
+				searchRequests.filter(
+					({ query, offset }) => query === "food" && offset === nextOffset,
+				),
+			).toHaveLength(1);
+			lastPage = nextPage;
+		}
+
+		expect(lastPage).toMatchObject({
 			hasMore: false,
 			nextOffset: null,
 			total: firstPage.total,
