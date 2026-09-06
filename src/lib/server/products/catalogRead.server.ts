@@ -1,5 +1,6 @@
 import type { Database, Json } from "$lib/types/database.types";
 import { normalizeBarcode } from "$lib/utils/barcode/barcode";
+import { isLanguageCodeOnlyDisclosureText } from "$lib/utils/food/ingredients/ingredientStatementNormalization.js";
 import type { FoodCompatibilitySummary } from "$lib/utils/food/quality/compatibility";
 import { hydrateFoodWithNormalizedNutrients } from "$lib/utils/food/nutrients/normalizedNutrients";
 import { hydrateFoodWithNormalizedServings } from "$lib/utils/food/servings/normalizedServings";
@@ -339,6 +340,7 @@ const readPrecautionaryStatements = async (
 	const statementsByProduct = new Map<string, FoodPrecautionaryStatement[]>();
 	for (const row of (data ?? []) as PrecautionaryStatementRow[]) {
 		if (!row.shared_product_id) continue;
+		if (isLanguageCodeOnlyDisclosureText(row.statement_text)) continue;
 		const statements = statementsByProduct.get(row.shared_product_id) ?? [];
 		statements.push({
 			type: row.statement_type as FoodPrecautionaryStatement["type"],
