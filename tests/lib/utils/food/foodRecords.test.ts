@@ -214,6 +214,65 @@ describe("compact food records", () => {
 		expect(storedFood.ingredientAnalysis).toBeUndefined();
 	});
 
+	it("canonicalizes provider serving units before storage", () => {
+		const storedFood = normalizeFoodForStorage({
+			fdcId: 1862061,
+			description: "Jalapeno Sauce, Jalapeno",
+			foodNutrients: [
+				{
+					nutrientId: 1008,
+					nutrientName: "Energy",
+					nutrientNumber: "208",
+					unitName: "KCAL",
+					value: 10.1,
+					measurementBasis: {
+						kind: "serving",
+						quantity: 1,
+						unitKey: "serving",
+						servingLabel: "1 ONZ",
+					},
+					source: "usda",
+				},
+			],
+			householdServingFullText: "1 ONZ",
+			foodServings: [
+				{
+					label: "1 ONZ",
+					gramWeight: 28,
+					isPrimary: true,
+					source: "usda",
+				},
+			],
+		});
+
+		expect(storedFood.householdServingFullText).toBe("1 oz");
+		expect(storedFood.foodServings?.[0]?.label).toBe("1 oz");
+		expect(storedFood.foodNutrients[0].measurementBasis).toMatchObject({
+			servingLabel: "1 oz",
+		});
+	});
+
+	it("preserves user-authored serving labels before storage", () => {
+		const storedFood = normalizeFoodForStorage({
+			fdcId: -1,
+			description: "Private food",
+			foodNutrients: [],
+			householdServingFullText: "My ONZ scoop",
+			foodServings: [
+				{
+					label: "My ONZ scoop",
+					gramWeight: 28,
+					isPrimary: true,
+					source: "user-label",
+				},
+			],
+			fieldProvenance: { serving: { source: "user-label" } },
+		});
+
+		expect(storedFood.householdServingFullText).toBe("My ONZ scoop");
+		expect(storedFood.foodServings?.[0]?.label).toBe("My ONZ scoop");
+	});
+
 	it("preserves the canonical name separately from a personal list name", () => {
 		const food: FoodItem = {
 			fdcId: 3,

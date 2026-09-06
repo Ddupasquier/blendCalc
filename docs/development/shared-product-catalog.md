@@ -478,6 +478,13 @@ any measured calculation basis. Count/package servings preserve labels such as
 The product JSON remains a compatibility snapshot, but normalized rows are what
 nutrition and Mix consume.
 
+Provider adapters canonicalize reviewed foreign or malformed unit tokens before those
+labels enter product snapshots, normalized serving rows, nutrient measurement bases, or
+client responses. Thus a source label such as `1 ONZ` is represented as `1 oz` in the
+application while the immutable source observation or raw provider payload retains `1
+ONZ`. The map is deliberately narrow: it does not translate arbitrary descriptive
+serving text, and it never changes a private user-authored label.
+
 When a provider supplies an exact package volume but no separate serving, the package
 volume can become the primary native serving with evidence from that exact observation.
 It remains volume-only. A gram value may be calculated only through an enabled,

@@ -1,4 +1,5 @@
 import type { FoodItem, FoodTrustStatus } from "$lib/utils/food/types";
+import { getFoodServings } from "$lib/utils/food/servings/foodServings";
 
 export type FoodPassportAvailabilityRow = {
 	label: string;
@@ -122,7 +123,7 @@ const getReportedNutrientCount = (food: FoodItem) => {
 };
 
 const getServingCount = (food: FoodItem) =>
-	(food.foodServings ?? []).filter(
+	getFoodServings(food).filter(
 		(serving) =>
 			(Number.isFinite(serving.gramWeight) && Number(serving.gramWeight) > 0) ||
 			(Number.isFinite(serving.milliliterVolume) &&

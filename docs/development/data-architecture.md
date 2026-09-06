@@ -430,7 +430,14 @@ source household measure, a direct reported weight or volume, or unknown evidenc
 Manual values are explicitly user-entered. Bare provider quantities never inherit the
 interactive form's default gram unit.
 
-Normalized `food_servings` rows retain the exact observation, source measure metadata,
+Before a provider serving reaches application storage or a client response, the server
+canonicalizes only reviewed unit vocabulary to the application's English display units
+(for example, USDA `ONZ` and Spanish `onza` become `oz`). This is a bounded unit map,
+not free-text machine translation: unknown descriptive text remains unchanged, and
+user-authored serving labels are never rewritten. Immutable provider observations and
+private raw payload evidence retain the source's original text.
+
+Normalized `food_servings` rows retain the canonical display label, source measure metadata,
 serving origin, gram-weight method, and measured calculation basis.
 `food_nutrient_measurements` retains nutrients on the exact mass, volume, or
 source-serving basis. Nutrition presents that information in Product details. Mix may
