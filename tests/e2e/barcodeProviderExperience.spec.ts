@@ -36,6 +36,17 @@ const currentExactRecallBarcodes = [
 
 const representativeBarcodeExperiences = [
 	{
+		barcode: "00072360002031",
+		inputBarcode: "072360002031",
+		name: "Jalapeno Sauce, Jalapeno",
+		brand: "Walker Foods Inc.",
+		expectedAlcoholByVolume: null,
+		expectedAllergen: null,
+		expectedAutofillStep: "Share",
+		expectedSourceServing: true,
+		minimumNutrientCount: 15,
+	},
+	{
 		barcode: "00021130493609",
 		name: "Roasted Onion & Garlic Pasta Sauce",
 		brand: "Safeway, Inc.",
@@ -125,7 +136,11 @@ test("representative DB-first barcode results produce consistent manual-entry ex
 						.url()
 						.endsWith(`/api/products/barcode/${expectedProduct.barcode}`),
 			);
-			await barcodeInput.fill(expectedProduct.barcode);
+			await barcodeInput.fill(
+				"inputBarcode" in expectedProduct
+					? expectedProduct.inputBarcode
+					: expectedProduct.barcode,
+			);
 			await barcodeInput.press("Tab");
 
 			const response = await responsePromise;

@@ -68,6 +68,59 @@
 	gap: $app-gap-sm;
 }
 
+.quick-qa-form {
+	display: grid;
+	gap: $app-gap-md;
+}
+
+.local-qa-mode {
+	display: grid;
+	gap: $app-gap-sm;
+	padding: $app-shell-card-padding-compact;
+	background: $app-shell-surface-control;
+	border: 1px solid $app-shell-border-subtle;
+	border-radius: $app-shell-radius-card;
+}
+
+.local-qa-mode__badge {
+	width: fit-content;
+	padding: $app-gap-inline-compact $app-gap-sm;
+	color: $app-shell-text-primary;
+	background: $app-shell-accent-soft;
+	border-radius: $app-shell-radius-pill;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-heavy;
+	letter-spacing: $app-letter-spacing-wide;
+	line-height: $app-line-height-ui;
+	text-transform: uppercase;
+}
+
+.local-qa-mode__toggle {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	gap: $app-gap-md;
+	align-items: center;
+	cursor: pointer;
+
+	> span {
+		display: grid;
+		gap: $app-gap-2xs;
+		min-width: 0;
+	}
+
+	strong {
+		color: $app-shell-text-primary;
+		font-size: $app-font-size-sm;
+		line-height: $app-line-height-ui;
+	}
+
+	small {
+		color: $app-shell-text-muted;
+		font-size: $app-font-size-xs;
+		line-height: $app-line-height-body;
+	}
+}
+
 .email-form__actions {
 	display: grid;
 	grid-template-columns: repeat(2, minmax(0, 1fr));

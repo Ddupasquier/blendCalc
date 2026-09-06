@@ -5,7 +5,9 @@
 	import TurnstileChallenge from "$lib/components/auth/TurnstileChallenge/TurnstileChallenge.svelte";
 	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
+	import SelectField from "$lib/components/common/forms/SelectField/SelectField.svelte";
 	import TextField from "$lib/components/common/forms/TextField/TextField.svelte";
+	import ToggleSwitch from "$lib/components/common/forms/ToggleSwitch/ToggleSwitch.svelte";
 	import { APP_NAME } from "$lib/config/brand";
 	import { formatDocumentTitle } from "$lib/config/pageMetadata";
 	import { PASSWORD_MIN_LENGTH } from "$lib/utils/auth/passwordPolicy";
@@ -20,6 +22,30 @@
 	let authMode = $state<AuthMode>("signIn");
 	let isSubmitting = $state(false);
 	let captchaResetVersion = $state(0);
+	let realSignInFlowOverride = $state<boolean | null>(null);
+	let qaAccountOverride = $state<string | null>(null);
+	const useRealSignInFlow = $derived(
+		realSignInFlowOverride ?? !data.localQaSignIn,
+	);
+	const qaAccount = $derived(
+		qaAccountOverride ??
+			data.localQaSignIn?.accounts.find(({ key }) => key === "user")?.key ??
+			data.localQaSignIn?.accounts[0]?.key ??
+			"",
+	);
+
+	const selectedQaAccount = $derived(
+		data.localQaSignIn?.accounts.find(({ key }) => key === qaAccount) ?? null,
+	);
+	const qaAccountOptions = $derived(
+		data.localQaSignIn?.accounts.map((account) => ({
+			value: account.key,
+			label: `${account.displayName} · ${account.email}`,
+		})) ?? [],
+	);
+	const quickQaSignInActive = $derived(
+		Boolean(data.localQaSignIn) && !useRealSignInFlow,
+	);
 
 	const preventDuplicateSubmit = createPendingSubmit(
 		(pending) => (isSubmitting = pending),
@@ -46,6 +72,17 @@
 		if (form?.mode === "signUp" || form?.mode === "signIn") {
 			authMode = form.mode;
 		}
+		if (form?.signInExperience === "quickQa" && data.localQaSignIn) {
+			realSignInFlowOverride = false;
+		}
+		if (
+			form &&
+			"qaAccount" in form &&
+			typeof form.qaAccount === "string" &&
+			data.localQaSignIn?.accounts.some(({ key }) => key === form.qaAccount)
+		) {
+			qaAccountOverride = form.qaAccount;
+		}
 	});
 
 	const switchAuthMode = (mode: AuthMode) => {
@@ -59,7 +96,11 @@
 <svelte:head>
 	<title
 		>{formatDocumentTitle(
-			authMode === "signUp" ? "Create Account" : "Sign In",
+			quickQaSignInActive
+				? "Local QA Sign In"
+				: authMode === "signUp"
+					? "Create Account"
+					: "Sign In",
 		)}</title
 	>
 </svelte:head>
@@ -70,14 +111,46 @@
 			<a class="auth-brand" href="/">{APP_NAME}</a>
 			<p class="auth-eyebrow">Your food awareness workspace</p>
 			<h1>
-				{authMode === "signUp" ? "Create your account." : "Welcome back."}
+				{quickQaSignInActive
+					? "Choose a QA account."
+					: authMode === "signUp"
+						? "Create your account."
+						: "Welcome back."}
 			</h1>
 			<p>
-				{authMode === "signUp"
-					? "Save your ingredients, recipes, food preferences, and nutrition goals securely to your account."
-					: "Sign in to access your ingredients, recipes, food preferences, and nutrition goals."}
+				{quickQaSignInActive
+					? "Start a real session in the isolated test database without typing its disposable password."
+					: authMode === "signUp"
+						? "Save your ingredients, recipes, food preferences, and nutrition goals securely to your account."
+						: "Sign in to access your ingredients, recipes, food preferences, and nutrition goals."}
 			</p>
 		</div>
+
+		{#if data.localQaSignIn}
+			<section class="local-qa-mode" aria-labelledby="local-qa-mode-title">
+				<span class="local-qa-mode__badge">Local test only</span>
+				<label class="local-qa-mode__toggle" for="use-real-sign-in-flow">
+					<span>
+						<strong id="local-qa-mode-title">Test the real sign-in flow</strong>
+						<small>
+							{useRealSignInFlow
+								? "On — use the normal Google or email sign-in experience."
+								: "Off — choose a seeded QA account for quick login."}
+						</small>
+					</span>
+					<ToggleSwitch
+						id="use-real-sign-in-flow"
+						checked={useRealSignInFlow}
+						disabled={isSubmitting}
+						ariaLabel="Test the real sign-in flow"
+						onChange={(checked) => {
+							realSignInFlowOverride = checked;
+							authMode = "signIn";
+						}}
+					/>
+				</label>
+			</section>
+		{/if}
 
 		{#if data.authError}
 			<StatusMessage
@@ -93,127 +166,157 @@
 			<StatusMessage tone="success" message={form.success} />
 		{/if}
 
-		<form
-			class="google-form"
-			method="POST"
-			action="?/google"
-			use:enhance={preventDuplicateSubmit}
-			aria-busy={isSubmitting}
-		>
-			<input type="hidden" name="next" value={form?.next ?? data.next} />
-			<RoundedActionButton
-				type="submit"
-				variant="neutral"
-				fullWidth
-				busy={isSubmitting}
+		{#if quickQaSignInActive}
+			<form
+				class="quick-qa-form"
+				method="POST"
+				action="?/quickQaSignIn"
+				use:enhance={preventDuplicateSubmit}
+				aria-busy={isSubmitting}
 			>
-				<span class="google-button__icon" aria-hidden="true">G</span>
-				Continue with Google
-			</RoundedActionButton>
-		</form>
-
-		<div class="auth-divider" aria-hidden="true">
-			<span></span>
-			<em>or use email</em>
-			<span></span>
-		</div>
-
-		<form
-			class="email-form"
-			method="POST"
-			action={authMode === "signUp" ? "?/emailSignUp" : "?/emailSignIn"}
-			use:enhance={preventDuplicateSubmit}
-			aria-busy={isSubmitting}
-		>
-			<input type="hidden" name="next" value={form?.next ?? data.next} />
-			<TextField
-				id="authentication-email"
-				name="email"
-				label="Email"
-				type="email"
-				autocomplete="email"
-				placeholder="you@example.com"
-				required
-				disabled={isSubmitting}
-				value={email}
-				oninput={(event) => (email = event.currentTarget.value)}
-			/>
-			<TextField
-				id="authentication-password"
-				name="password"
-				label="Password"
-				type="password"
-				autocomplete={authMode === "signUp"
-					? "new-password"
-					: "current-password"}
-				placeholder={authMode === "signUp"
-					? "Use a long passphrase"
-					: "Your password"}
-				aria-describedby={authMode === "signUp"
-					? "password-requirements"
-					: undefined}
-				required
-				disabled={isSubmitting}
-				minlength={authMode === "signUp" ? PASSWORD_MIN_LENGTH : undefined}
-				value={password}
-				oninput={(event) => (password = event.currentTarget.value)}
-			/>
-			{#if authMode === "signUp"}
-				<TextField
-					id="authentication-password-confirmation"
-					name="passwordConfirmation"
-					label="Confirm password"
-					type="password"
-					autocomplete="new-password"
-					placeholder="Enter it again"
+				<input type="hidden" name="next" value={form?.next ?? data.next} />
+				<SelectField
+					id="local-qa-account"
+					name="qaAccount"
+					label="QA account"
+					value={qaAccount}
+					options={qaAccountOptions}
+					helper={selectedQaAccount
+						? `${selectedQaAccount.role} — ${selectedQaAccount.purpose}`
+						: "Choose the test state you need."}
 					required
 					disabled={isSubmitting}
-					minlength={PASSWORD_MIN_LENGTH}
-					value={passwordConfirmation}
-					oninput={(event) =>
-						(passwordConfirmation = event.currentTarget.value)}
+					onValueChange={(value) => (qaAccountOverride = value)}
 				/>
-				<PasswordRequirements
-					{password}
-					{email}
-					confirmation={passwordConfirmation}
-				/>
-			{/if}
-			{#if data.turnstileSiteKey}
-				<TurnstileChallenge
-					siteKey={data.turnstileSiteKey}
-					resetVersion={captchaResetVersion}
-				/>
-			{/if}
-			<div class="email-form__actions">
 				<RoundedActionButton type="submit" fullWidth busy={isSubmitting}>
-					{authMode === "signUp" ? "Create account" : "Sign in"}
+					{selectedQaAccount
+						? `Continue as ${selectedQaAccount.displayName}`
+						: "Continue with QA account"}
 				</RoundedActionButton>
+			</form>
+		{:else}
+			<form
+				class="google-form"
+				method="POST"
+				action="?/google"
+				use:enhance={preventDuplicateSubmit}
+				aria-busy={isSubmitting}
+			>
+				<input type="hidden" name="next" value={form?.next ?? data.next} />
 				<RoundedActionButton
-					type="button"
+					type="submit"
 					variant="neutral"
 					fullWidth
-					onclick={() =>
-						switchAuthMode(authMode === "signUp" ? "signIn" : "signUp")}
-					disabled={isSubmitting}
+					busy={isSubmitting}
 				>
-					{authMode === "signUp" ? "Back to sign in" : "Create account"}
+					<span class="google-button__icon" aria-hidden="true">G</span>
+					Continue with Google
 				</RoundedActionButton>
+			</form>
+
+			<div class="auth-divider" aria-hidden="true">
+				<span></span>
+				<em>or use email</em>
+				<span></span>
 			</div>
-			{#if authMode === "signIn"}
-				<div class="password-reset-action">
+
+			<form
+				class="email-form"
+				method="POST"
+				action={authMode === "signUp" ? "?/emailSignUp" : "?/emailSignIn"}
+				use:enhance={preventDuplicateSubmit}
+				aria-busy={isSubmitting}
+			>
+				<input type="hidden" name="next" value={form?.next ?? data.next} />
+				<TextField
+					id="authentication-email"
+					name="email"
+					label="Email"
+					type="email"
+					autocomplete="email"
+					placeholder="you@example.com"
+					required
+					disabled={isSubmitting}
+					value={email}
+					oninput={(event) => (email = event.currentTarget.value)}
+				/>
+				<TextField
+					id="authentication-password"
+					name="password"
+					label="Password"
+					type="password"
+					autocomplete={authMode === "signUp"
+						? "new-password"
+						: "current-password"}
+					placeholder={authMode === "signUp"
+						? "Use a long passphrase"
+						: "Your password"}
+					aria-describedby={authMode === "signUp"
+						? "password-requirements"
+						: undefined}
+					required
+					disabled={isSubmitting}
+					minlength={authMode === "signUp" ? PASSWORD_MIN_LENGTH : undefined}
+					value={password}
+					oninput={(event) => (password = event.currentTarget.value)}
+				/>
+				{#if authMode === "signUp"}
+					<TextField
+						id="authentication-password-confirmation"
+						name="passwordConfirmation"
+						label="Confirm password"
+						type="password"
+						autocomplete="new-password"
+						placeholder="Enter it again"
+						required
+						disabled={isSubmitting}
+						minlength={PASSWORD_MIN_LENGTH}
+						value={passwordConfirmation}
+						oninput={(event) =>
+							(passwordConfirmation = event.currentTarget.value)}
+					/>
+					<PasswordRequirements
+						{password}
+						{email}
+						confirmation={passwordConfirmation}
+					/>
+				{/if}
+				{#if data.turnstileSiteKey}
+					<TurnstileChallenge
+						siteKey={data.turnstileSiteKey}
+						resetVersion={captchaResetVersion}
+					/>
+				{/if}
+				<div class="email-form__actions">
+					<RoundedActionButton type="submit" fullWidth busy={isSubmitting}>
+						{authMode === "signUp" ? "Create account" : "Sign in"}
+					</RoundedActionButton>
 					<RoundedActionButton
-						type="submit"
-						variant="quiet"
-						formAction="?/requestPasswordReset"
-						formNoValidate
+						type="button"
+						variant="neutral"
+						fullWidth
+						onclick={() =>
+							switchAuthMode(authMode === "signUp" ? "signIn" : "signUp")}
 						disabled={isSubmitting}
 					>
-						Forgot your password?
+						{authMode === "signUp" ? "Back to sign in" : "Create account"}
 					</RoundedActionButton>
 				</div>
-			{/if}
-		</form>
+				{#if authMode === "signIn"}
+					<div class="password-reset-action">
+						<RoundedActionButton
+							type="submit"
+							variant="quiet"
+							formAction="?/requestPasswordReset"
+							formNoValidate
+							disabled={isSubmitting}
+						>
+							Forgot your password?
+						</RoundedActionButton>
+					</div>
+				{/if}
+			</form>
+		{/if}
 
 		<p class="auth-note">
 			<span aria-hidden="true">●</span>

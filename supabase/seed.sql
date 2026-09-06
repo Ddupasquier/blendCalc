@@ -861,6 +861,63 @@ values
 			"trustStatus": "imported",
 			"sharedProductConfidence": "imported"
 		}'::jsonb
+	),
+	(
+		'81000000-0000-4000-8000-000000000061',
+		'81000000-0000-4000-8000-000000000062',
+		'81000000-0000-4000-8000-000000000063',
+		'00072360002031',
+		'Jalapeno Sauce, Jalapeno',
+		'Walker Foods Inc.',
+		'qa-dips',
+		'package-label:00072360002031:local-qa-fixture',
+		'{
+			"fdcId": 1862061,
+			"description": "Jalapeno Sauce, Jalapeno",
+			"nameProvenance": "source",
+			"brandOwner": "Walker Foods Inc.",
+			"brandName": "El Pato",
+			"foodNutrients": [
+				{"nutrientId":1005,"nutrientName":"Carbohydrate, by difference","nutrientNumber":"205","unitName":"G","value":7.14,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical","sourceNutrientKey":"1005","derivationCode":"LCCS","derivationDescription":"Calculated from value per serving size measure"},
+				{"nutrientId":2000,"nutrientName":"Total Sugars","nutrientNumber":"269","unitName":"G","value":3.57,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical","sourceNutrientKey":"2000","derivationCode":"LCCS","derivationDescription":"Calculated from value per serving size measure"},
+				{"nutrientId":1110,"nutrientName":"Vitamin D (D2 + D3), International Units","nutrientNumber":"324","unitName":"IU","value":0,"valueOrigin":"reported","valueStatus":"reported-zero","mappingStatus":"canonical","sourceNutrientKey":"1110","derivationCode":"LCCD","derivationDescription":"Calculated from a daily value percentage per serving size measure"},
+				{"nutrientId":1087,"nutrientName":"Calcium, Ca","nutrientNumber":"301","unitName":"MG","value":14,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical","sourceNutrientKey":"1087","derivationCode":"LCCS","derivationDescription":"Calculated from value per serving size measure"},
+				{"nutrientId":1079,"nutrientName":"Fiber, total dietary","nutrientNumber":"291","unitName":"G","value":0,"valueOrigin":"reported","valueStatus":"reported-zero","mappingStatus":"canonical","sourceNutrientKey":"1079","derivationCode":"LCCD","derivationDescription":"Calculated from a daily value percentage per serving size measure"},
+				{"nutrientId":1093,"nutrientName":"Sodium, Na","nutrientNumber":"307","unitName":"MG","value":643,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical","sourceNutrientKey":"1093","derivationCode":"LCCS","derivationDescription":"Calculated from value per serving size measure"},
+				{"nutrientId":1008,"nutrientName":"Energy","nutrientNumber":"208","unitName":"KCAL","value":36,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical","sourceNutrientKey":"1008","derivationCode":"LCCS","derivationDescription":"Calculated from value per serving size measure"},
+				{"nutrientId":1235,"nutrientName":"Sugars, added","nutrientNumber":"539","unitName":"G","value":0,"valueOrigin":"reported","valueStatus":"reported-zero","mappingStatus":"canonical","sourceNutrientKey":"1235","derivationCode":"LCCD","derivationDescription":"Calculated from a daily value percentage per serving size measure"},
+				{"nutrientId":1092,"nutrientName":"Potassium, K","nutrientNumber":"306","unitName":"MG","value":296,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical","sourceNutrientKey":"1092","derivationCode":"LCCS","derivationDescription":"Calculated from value per serving size measure"},
+				{"nutrientId":1004,"nutrientName":"Total lipid (fat)","nutrientNumber":"204","unitName":"G","value":0,"valueOrigin":"reported","valueStatus":"reported-zero","mappingStatus":"canonical","sourceNutrientKey":"1004","derivationCode":"LCCD","derivationDescription":"Calculated from a daily value percentage per serving size measure"},
+				{"nutrientId":1003,"nutrientName":"Protein","nutrientNumber":"203","unitName":"G","value":0,"valueOrigin":"reported","valueStatus":"reported-zero","mappingStatus":"canonical","sourceNutrientKey":"1003","derivationCode":"LCCS","derivationDescription":"Calculated from value per serving size measure"},
+				{"nutrientId":1089,"nutrientName":"Iron, Fe","nutrientNumber":"303","unitName":"MG","value":1.29,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical","sourceNutrientKey":"1089","derivationCode":"LCCD","derivationDescription":"Calculated from a daily value percentage per serving size measure"},
+				{"nutrientId":1258,"nutrientName":"Fatty acids, total saturated","nutrientNumber":"606","unitName":"G","value":0,"valueOrigin":"reported","valueStatus":"reported-zero","mappingStatus":"canonical","sourceNutrientKey":"1258","derivationCode":"LCCD","derivationDescription":"Calculated from a daily value percentage per serving size measure"},
+				{"nutrientId":1257,"nutrientName":"Fatty acids, total trans","nutrientNumber":"605","unitName":"G","value":0,"valueOrigin":"reported","valueStatus":"reported-zero","mappingStatus":"canonical","sourceNutrientKey":"1257","derivationCode":"LCCS","derivationDescription":"Calculated from value per serving size measure"},
+				{"nutrientId":1253,"nutrientName":"Cholesterol","nutrientNumber":"601","unitName":"MG","value":0,"valueOrigin":"reported","valueStatus":"reported-zero","mappingStatus":"canonical","sourceNutrientKey":"1253","derivationCode":"LCCD","derivationDescription":"Calculated from a daily value percentage per serving size measure"}
+			],
+			"reportedNutrientIds": [1005,2000,1110,1087,1079,1093,1008,1235,1092,1004,1003,1089,1258,1257,1253],
+			"dataType": "Branded",
+			"foodIdentityType": "packaged",
+			"servingSize": 28,
+			"servingSizeUnit": "g",
+			"householdServingFullText": "1 oz (28 g)",
+			"hasSourceServing": true,
+			"foodServings": [{"label":"1 oz (28 g)","gramWeight":28,"amount":1,"unitKey":"oz","isPrimary":true,"measureType":"Package serving","isHouseholdMeasure":true,"sourceMeasureKey":"usda:1862061:serving","origin":"package-label","gramWeightMethod":"source-reported"}],
+			"gtinUpc": "00072360002031",
+			"barcode": "00072360002031",
+			"ingredients": "Tomato puree, water, jalapeno, onion, garlic, salt and spices.",
+			"ingredientList": ["Tomato puree","Water","Jalapeno","Onion","Garlic","Salt","Spices"],
+			"packageQuantity": {"label":"7.75 oz/220 g"},
+			"sourceMetadata": {"language":"en","marketCountries":["United States"],"revision":1,"schemaVersion":1,"sourcePublishedDate":"2021-07-29","sourceAvailableDate":"2018-08-11","sourceModifiedDate":"2018-08-11","sourceCategory":"Ketchup, Mustard, BBQ & Cheese Sauce","sourceDataType":"Branded","sourceServing":{"amount":28,"unit":"g","label":"1 ONZ"}},
+			"categories": ["Dips and Salsa"],
+			"sourceCategories": ["Ketchup, Mustard, BBQ & Cheese Sauce"],
+			"categoryOptionId": "qa-dips",
+			"barcodeSource": "usda",
+			"sourceKey": "usda",
+			"sourceLabel": "USDA FoodData Central",
+			"sourceDataType": "Branded",
+			"trustStatus": "imported",
+			"sharedProductConfidence": "imported"
+		}'::jsonb
 	);
 
 update private.qa_catalog_product_fixtures
@@ -934,6 +991,53 @@ set
 		"fixtureSnapshotVersion":1
 	}'::jsonb
 where barcode = '00021130493609';
+
+update private.qa_catalog_product_fixtures
+set
+	evidence_source = 'usda',
+	evidence_reference = '1862061',
+	evidence_license = 'CC0-1.0',
+	evidence_confidence = 'imported',
+	evidence_method = 'exact-barcode',
+	source_category = 'Ketchup, Mustard, BBQ & Cheese Sauce',
+	raw_source_payload = '{
+		"source":"USDA FoodData Central",
+		"fdcId":1862061,
+		"description":"JALAPENO SAUCE, JALAPENO",
+		"dataType":"Branded",
+		"gtinUpc":"072360002031",
+		"publicationDate":"2021-07-29",
+		"availableDate":"2018-08-11",
+		"modifiedDate":"2018-08-11",
+		"brandOwner":"Walker Foods Inc.",
+		"brandName":"EL PATO",
+		"ingredients":"TOMATO PUREE, WATER, JALAPENO, ONION, GARLIC, SALT AND SPICES",
+		"marketCountry":"United States",
+		"brandedFoodCategory":"Ketchup, Mustard, BBQ & Cheese Sauce",
+		"servingSize":28,
+		"servingSizeUnit":"g",
+		"householdServingFullText":"1 ONZ",
+		"packageWeight":"7.75 oz/220 g",
+		"foodNutrients":[
+			{"nutrientId":1005,"nutrientName":"Carbohydrate, by difference","nutrientNumber":"205","unitName":"g","value":7.14,"derivationCode":"LCCS"},
+			{"nutrientId":2000,"nutrientName":"Total Sugars","nutrientNumber":"269","unitName":"g","value":3.57,"derivationCode":"LCCS"},
+			{"nutrientId":1110,"nutrientName":"Vitamin D (D2 + D3), International Units","nutrientNumber":"324","unitName":"IU","value":0,"derivationCode":"LCCD"},
+			{"nutrientId":1087,"nutrientName":"Calcium, Ca","nutrientNumber":"301","unitName":"mg","value":14,"derivationCode":"LCCS"},
+			{"nutrientId":1079,"nutrientName":"Fiber, total dietary","nutrientNumber":"291","unitName":"g","value":0,"derivationCode":"LCCD"},
+			{"nutrientId":1093,"nutrientName":"Sodium, Na","nutrientNumber":"307","unitName":"mg","value":643,"derivationCode":"LCCS"},
+			{"nutrientId":1008,"nutrientName":"Energy","nutrientNumber":"208","unitName":"kcal","value":36,"derivationCode":"LCCS"},
+			{"nutrientId":1235,"nutrientName":"Sugars, added","nutrientNumber":"539","unitName":"g","value":0,"derivationCode":"LCCD"},
+			{"nutrientId":1092,"nutrientName":"Potassium, K","nutrientNumber":"306","unitName":"mg","value":296,"derivationCode":"LCCS"},
+			{"nutrientId":1004,"nutrientName":"Total lipid (fat)","nutrientNumber":"204","unitName":"g","value":0,"derivationCode":"LCCD"},
+			{"nutrientId":1003,"nutrientName":"Protein","nutrientNumber":"203","unitName":"g","value":0,"derivationCode":"LCCS"},
+			{"nutrientId":1089,"nutrientName":"Iron, Fe","nutrientNumber":"303","unitName":"mg","value":1.29,"derivationCode":"LCCD"},
+			{"nutrientId":1258,"nutrientName":"Fatty acids, total saturated","nutrientNumber":"606","unitName":"g","value":0,"derivationCode":"LCCD"},
+			{"nutrientId":1257,"nutrientName":"Fatty acids, total trans","nutrientNumber":"605","unitName":"g","value":0,"derivationCode":"LCCS"},
+			{"nutrientId":1253,"nutrientName":"Cholesterol","nutrientNumber":"601","unitName":"mg","value":0,"derivationCode":"LCCD"}
+		],
+		"fixtureSnapshotVersion":1
+	}'::jsonb
+where barcode = '00072360002031';
 
 -- Synthetic local-only alcohol-label fixtures exercise regulated disclosure,
 -- incomplete allergen evidence, explicit package declarations, and a non-alcoholic
@@ -2317,6 +2421,13 @@ from (
 			'https://world.openfoodfacts.org/product/8801005523455',
 			'https://images.openfoodfacts.org/images/products/880/100/552/3455/front_en.6.400.jpg',
 			'https://images.openfoodfacts.org/images/products/880/100/552/3455/front_en.6.200.jpg'
+		),
+		(
+			'85000000-0000-4000-8000-000000000003'::uuid,
+			'00072360002031',
+			'https://world.openfoodfacts.org/product/0072360002031',
+			'https://images.openfoodfacts.org/images/products/007/236/000/2031/front_en.5.400.jpg',
+			'https://images.openfoodfacts.org/images/products/007/236/000/2031/front_en.5.200.jpg'
 		)
 ) as image_fixture(id, barcode, source_reference, image_url, thumbnail_url)
 join private.qa_catalog_product_fixtures fixture

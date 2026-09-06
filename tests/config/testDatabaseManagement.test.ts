@@ -119,6 +119,22 @@ describe("local test database management", () => {
 		expect(personas).toContain('name: "QA Export Berry Mix"');
 	});
 
+	it("generates the private quick-login catalog from every maintained persona", () => {
+		expect(script).toContain("const accountSummaries = testAccounts.map");
+		expect(script).toContain("BLENDCALC_TEST_ACCOUNTS_BASE64");
+		for (const persona of localQaPersonas) {
+			expect(persona).toEqual(
+				expect.objectContaining({
+					key: expect.any(String),
+					displayName: expect.any(String),
+					email: expect.stringMatching(/@blendcalc\.local$/),
+					role: expect.any(String),
+					purpose: expect.any(String),
+				}),
+			);
+		}
+	});
+
 	it("gives every Playwright worker equivalent isolated account state", () => {
 		const browserWorkerPersonas = localQaPersonas.filter(({ key }) =>
 			key.startsWith("browserWorker"),

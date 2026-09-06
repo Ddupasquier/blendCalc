@@ -21,13 +21,19 @@ import {
 import { readLimitedFormData } from "$lib/server/security/requestBody.server";
 import { trackServerAppInteraction } from "$lib/server/analytics/appInteractionTracking.server";
 import { APP_INTERACTION_METRICS } from "$lib/utils/analytics/appInteractionMetrics";
+import {
+	getLocalQaSignInCredentials,
+	getLocalQaSignInPageData,
+} from "$lib/server/auth/localQaSignIn.server";
 import { env as publicEnvironment } from "$env/dynamic/public";
 
 const AUTH_FORM_MAX_BYTES = 32 * 1024;
 
 const getEmailAuthFields = async (request: Request) => {
 	const formData = await readLimitedFormData(request, AUTH_FORM_MAX_BYTES);
-	const email = String(formData.get("email") ?? "").trim().toLowerCase();
+	const email = String(formData.get("email") ?? "")
+		.trim()
+		.toLowerCase();
 	const password = String(formData.get("password") ?? "");
 	const passwordConfirmation = String(
 		formData.get("passwordConfirmation") ?? "",
@@ -41,8 +47,18 @@ const getEmailAuthFields = async (request: Request) => {
 const getEmailField = async (request: Request) => {
 	const formData = await readLimitedFormData(request, AUTH_FORM_MAX_BYTES);
 	return {
-		email: String(formData.get("email") ?? "").trim().toLowerCase(),
+		email: String(formData.get("email") ?? "")
+			.trim()
+			.toLowerCase(),
 		captchaToken: String(formData.get("captchaToken") ?? "").trim(),
+		next: getSafeAuthNextPath(formData.get("next")),
+	};
+};
+
+const getQuickQaSignInFields = async (request: Request) => {
+	const formData = await readLimitedFormData(request, AUTH_FORM_MAX_BYTES);
+	return {
+		accountKey: String(formData.get("qaAccount") ?? "").trim(),
 		next: getSafeAuthNextPath(formData.get("next")),
 	};
 };
@@ -97,12 +113,55 @@ export const load: PageServerLoad = async ({ locals, request, url }) => {
 
 	return {
 		authError: url.searchParams.get("error") ?? "",
+		localQaSignIn: getLocalQaSignInPageData({ appUrl: url }),
 		turnstileSiteKey: getTurnstileSiteKey(),
 		next,
 	};
 };
 
 export const actions: Actions = {
+	quickQaSignIn: async ({ locals, request, url, cookies }) => {
+		const { accountKey, next } = await getQuickQaSignInFields(request);
+		redirectToCanonicalAuthPage(request, url, next);
+		const localQaSignIn = getLocalQaSignInPageData({ appUrl: url });
+		if (!localQaSignIn) {
+			return fail(404, {
+				message: "Quick QA login is not available in this environment.",
+				next,
+				signInExperience: "quickQa" as const,
+			});
+		}
+
+		const credentials = getLocalQaSignInCredentials(accountKey, {
+			appUrl: url,
+		});
+		if (!credentials) {
+			return fail(400, {
+				message: "Choose a QA account and try again.",
+				next,
+				signInExperience: "quickQa" as const,
+			});
+		}
+
+		const { error } =
+			await locals.supabase.auth.signInWithPassword(credentials);
+		if (error) {
+			return fail(400, {
+				message:
+					"That local QA account is unavailable. Reset the test database and try again.",
+				qaAccount: accountKey,
+				next,
+				signInExperience: "quickQa" as const,
+			});
+		}
+
+		clearPasswordUpgrade(cookies);
+		await trackServerAppInteraction(
+			APP_INTERACTION_METRICS.LOGIN_SUCCESS,
+			request,
+		);
+		throw redirect(303, next);
+	},
 	emailSignIn: async ({ locals, request, url, cookies }) => {
 		const { email, password, captchaToken, next } =
 			await getEmailAuthFields(request);
@@ -151,7 +210,10 @@ export const actions: Actions = {
 		}
 
 		clearPasswordUpgrade(cookies);
-		if (data.user?.user_metadata.password_policy_version !== PASSWORD_POLICY_VERSION) {
+		if (
+			data.user?.user_metadata.password_policy_version !==
+			PASSWORD_POLICY_VERSION
+		) {
 			const { error: metadataError } = await locals.supabase.auth.updateUser({
 				data: {
 					...data.user?.user_metadata,
@@ -242,8 +304,7 @@ export const actions: Actions = {
 		redirectToCanonicalAuthPage(request, url, next);
 
 		const validationError =
-			getEmailValidationError(email) ||
-			getCaptchaValidationError(captchaToken);
+			getEmailValidationError(email) || getCaptchaValidationError(captchaToken);
 		if (validationError) {
 			return fail(400, {
 				message: validationError,

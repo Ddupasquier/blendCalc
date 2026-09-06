@@ -241,13 +241,14 @@ select is(
 		where barcode in (
 			'00021130462506',
 			'00021130493609',
+			'00072360002031',
 			'08801005523455',
 			'00869759000149',
 			'00011110904416'
 		)
 			and publishable
 	),
-	2,
+	3,
 	'the fully evidenced local QA catalog fixtures are publishable through blendCalc API v1'
 );
 select is(
@@ -256,7 +257,7 @@ select is(
 		from public.blendcalc_api_v1_product_readiness
 		where publishable
 	),
-	2,
+	3,
 	'the strict publication profile withholds incomplete local QA catalog fixtures'
 );
 select ok(
