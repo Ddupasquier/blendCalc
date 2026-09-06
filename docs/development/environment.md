@@ -121,6 +121,14 @@ label. The local database manager writes private keys and seeded account credent
 Playwright uses port `5174` and the disposable local Supabase stack. Test credentials
 must never point at production.
 
+After `npm run db:test:reset`, `npm run dev:test` serves the local test sign-in page with
+a Quick QA login dropdown. The dropdown reads the maintained seeded persona catalog and
+uses the generated password only on the server. Turn on **Test the real sign-in flow**
+when the password, Google, registration, recovery, CAPTCHA, or MFA experience is the
+subject of the test. The quick path is unavailable unless the app, database mode,
+Supabase endpoint, and generated credential all match the isolated loopback test
+environment.
+
 ## Local Resource Safety
 
 Run `npm run resources:check` before a long local session. Maintained builds, complete

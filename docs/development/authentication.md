@@ -26,6 +26,7 @@ backups, recovery, hosted audits, and incident response live in
 | ------------------------------- | --------------------------------------------------------------------------------------------------- |
 | Configure local and hosted Auth | [Environment Variables](#environment-variables) and [Supabase Dashboard](#supabase-dashboard)       |
 | Enforce account security        | [Account Security Settings](#account-security-settings) and [Database Security](#database-security) |
+| Use disposable QA accounts      | [Local QA Sign-In](#local-qa-sign-in)                                                               |
 | Prove the complete setup        | [Verification](#verification)                                                                       |
 
 ## Environment Variables
@@ -170,6 +171,29 @@ Application permissions are mapped in `app_role_permissions`. The
 `authorize_app_permission` function is available for RLS policies, but destructive
 moderation boundaries still check the current assignment rather than trusting a
 potentially stale JWT alone.
+
+## Local QA Sign-In
+
+The isolated test app at `http://localhost:5174` defaults to a Quick QA login panel.
+Choose any maintained seeded persona and continue; the server resolves that selection
+to the generated disposable credential without sending the password to the browser.
+The account descriptions identify populated, empty, onboarding, warning,
+browser-worker, moderator, administrator, and developer states.
+
+Turn on **Test the real sign-in flow** to use the ordinary Google and email/password
+controls. Use that mode whenever authentication itself, credential errors, password
+recovery, account creation, OAuth, CAPTCHA, or MFA is under review.
+
+Quick QA login fails closed unless all of these conditions hold at the same time:
+
+- `BLENDCALC_DATABASE_ENVIRONMENT` is `test`;
+- the requested application origin is loopback HTTP on port `5174`;
+- the configured Supabase endpoint is loopback HTTP on port `54321`; and
+- `npm run db:test:start` generated the disposable QA password in `.env.test.local`.
+
+The selector is absent on ordinary local development, previews, staging, and
+production. It creates a normal local Supabase session and does not bypass role checks,
+account blocks, password policies, or privileged MFA requirements.
 
 ## Verification
 

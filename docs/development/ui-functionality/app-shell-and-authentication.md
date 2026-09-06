@@ -29,6 +29,9 @@ welcome, and guided tutorial. Auth configuration and security details remain in
 - Render the explicit Cloudflare Turnstile challenge only when its public site key is
   configured, and submit its one-time token with supported Supabase email Auth calls.
 - Keep authenticated routes unavailable to signed-out visitors.
+- In the isolated local test app only, default to a maintained QA-account picker and
+  provide an explicit toggle back to the unchanged real sign-in flow. Never expose that
+  quick path in ordinary development or any hosted environment.
 
 ## Privileged Identity Verification
 
