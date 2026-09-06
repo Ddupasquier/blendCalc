@@ -2202,10 +2202,20 @@ describe("CustomIngredientForm", () => {
 				"prepared-pasta-and-pizza-sauces",
 				"Prepared Pasta And Pizza Sauces",
 			),
+			image: {
+				source: "open-food-facts" as const,
+				sourceReference: "00021130493609",
+				role: "front" as const,
+				imageUrl: "https://images.example.test/pasta-sauce.jpg",
+				licenseName: "CC BY-SA 3.0",
+				licenseUrl: "https://creativecommons.org/licenses/by-sa/3.0/",
+				attributionText: "Open Food Facts contributors",
+				confidence: "source-verified" as const,
+			},
 			source: "usda",
-				sourceLabel: "USDA FoodData Central",
-				sourceReference: "usda-food-1",
-			};
+			sourceLabel: "USDA FoodData Central",
+			sourceReference: "usda-food-1",
+		};
 		const catalogDraft = {
 			...sourceDraft,
 			source: "shared-catalog" as const,
@@ -2260,11 +2270,11 @@ describe("CustomIngredientForm", () => {
 			screen.getByText(/changed package details for this saved ingredient/i),
 		).toBeInTheDocument();
 		expect(
-			screen.getByRole("button", { name: "Already saved" }),
-		).toBeDisabled();
+			screen.getByRole("button", { name: "Move to Fridge" }),
+		).toBeEnabled();
 		expect(
-			screen.queryByRole("button", { name: "Move to Fridge" }),
-		).not.toBeInTheDocument();
+			screen.getByText(/moving it uses the saved version only/i),
+		).toBeInTheDocument();
 		await fireEvent.click(shareToggle);
 		expect(validateBarcodeProductForSharing).toHaveBeenCalledOnce();
 		expect(screen.getByText(/photos for catalog review/i)).toBeInTheDocument();
@@ -2280,12 +2290,17 @@ describe("CustomIngredientForm", () => {
 		expect(
 			screen.queryByLabelText(/add after saving/i),
 		).not.toBeInTheDocument();
+		expect(
+			screen.getByRole("button", { name: "Replace product image" }),
+		).toBeEnabled();
+		expect(
+			screen.queryByLabelText("Choose existing front of package"),
+		).not.toBeInTheDocument();
 
 		const photo = new File([new Uint8Array([0xff, 0xd8, 0xff])], "label.jpg", {
 			type: "image/jpeg",
 		});
 		for (const label of [
-			"Choose existing front of package",
 			"Choose existing nutrition facts label",
 			"Choose existing barcode",
 		]) {
@@ -2863,6 +2878,33 @@ describe("CustomIngredientForm", () => {
 		expect(screen.getByRole("alert")).toHaveTextContent(
 			"Add front package, nutrition label, and barcode photos",
 		);
+
+		const photo = new File([new Uint8Array([0xff, 0xd8, 0xff])], "label.jpg", {
+			type: "image/jpeg",
+		});
+		await fireEvent.change(
+			screen.getByLabelText("Choose existing front of package"),
+			{ target: { files: [photo] } },
+		);
+		await fireEvent.click(
+			screen.getByRole("button", { name: /add ingredient/i }),
+		);
+		expect(
+			screen.getByText(
+				"Add nutrition label and barcode photos before sharing this product.",
+			),
+		).toBeInTheDocument();
+
+		await fireEvent.change(
+			screen.getByLabelText("Choose existing nutrition facts label"),
+			{ target: { files: [photo] } },
+		);
+		await fireEvent.click(
+			screen.getByRole("button", { name: /add ingredient/i }),
+		);
+		expect(
+			screen.getByText("Add barcode photo before sharing this product."),
+		).toBeInTheDocument();
 		expect(submitSharedProduct).not.toHaveBeenCalled();
 	});
 

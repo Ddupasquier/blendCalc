@@ -157,17 +157,21 @@
 					)} unchanged while moderators review the current package details.`,
 				}
 			: barcode.reviewedUpdateCandidate &&
-				  (destinationAction.kind === "duplicate" ||
-						destinationAction.kind === "move")
+				  destinationAction.kind === "duplicate"
 				? {
 						...destinationAction,
 						kind: "duplicate" as const,
 						label: "Already saved",
 						disabled: true,
 						message:
-							"You changed package details for this saved ingredient. Turn on community sharing to check and submit those changes for review without adding a duplicate or moving the saved item.",
+							"You changed package details for this saved ingredient. Turn on community sharing to submit those changes for review, or choose the other list to move the saved ingredient without applying the edits.",
 					}
-				: destinationAction,
+				: barcode.reviewedUpdateCandidate && destinationAction.kind === "move"
+					? {
+							...destinationAction,
+							message: `You changed package details for this saved ingredient. ${destinationAction.message} Moving it uses the saved version only; edited package details are not applied unless you share them for review.`,
+						}
+					: destinationAction,
 	);
 	const hasAcceptedBarcodeSource = $derived(
 		Boolean(form.data.barcodeReferenceAcceptedBarcode),

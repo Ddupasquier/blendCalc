@@ -673,6 +673,11 @@ option cards, and placement previews remain identical.
 - Package-evidence photo controls present separate `Take photo` and `Choose existing
 photo` actions. Only the camera action carries the rear-camera hint; cancelling or
   denying that native camera chooser leaves the library action and current form intact.
+- An eligible trusted catalog image satisfies front-image evidence when the product image
+  itself is unchanged, including a nutrition-only correction. Show its saved placement
+  and offer `Replace product image`; only a selected replacement unlocks the shared
+  placement editor. Blocking evidence feedback names only the photo roles that are
+  actually missing.
 - Nutrition-label recognition uses an explicit `Read label` action after photo and crop
   selection. Show real upload progress when available, an indeterminate queued/running
   state afterward, and a visible Stop action without locking the sheet, scrolling, or

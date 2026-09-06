@@ -1,4 +1,10 @@
-import { act, render, screen, waitFor } from "@testing-library/svelte";
+import {
+	act,
+	fireEvent,
+	render,
+	screen,
+	waitFor,
+} from "@testing-library/svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import ProductImageEvidenceInput from "$lib/components/ingredients/manual-entry/ProductImageEvidenceInput/ProductImageEvidenceInput.svelte";
 import { createFullImagePlacement } from "$lib/utils/food/images/imagePlacement";
@@ -61,8 +67,82 @@ describe("ProductImageEvidenceInput", () => {
 			screen.getByRole("link", { name: /Example image license/ }),
 		).toHaveAttribute("href", "https://example.com/license");
 		expect(screen.queryByLabelText("Front of package")).not.toBeInTheDocument();
+		expect(
+			screen.getByRole("button", { name: "Replace product image" }),
+		).toBeEnabled();
 		expect(screen.getByText("Blue Diamond Almond Milk")).toBeInTheDocument();
 		expect(screen.getByText("Dairy Alternatives")).toBeInTheDocument();
+	});
+
+	it("lets a user replace a trusted image or return to it", async () => {
+		const onFrontPhotoChange = vi.fn();
+		const onPlacementChange = vi.fn();
+		render(ProductImageEvidenceInput, {
+			props: {
+				trustedImage: {
+					source: "open-food-facts",
+					sourceReference: "00072360002031",
+					role: "front",
+					imageUrl: "https://example.com/el-pato.jpg",
+					licenseName: "CC BY-SA 3.0",
+					attributionText: "Open Food Facts contributors",
+					confidence: "source-verified",
+					cropX: 12,
+				},
+				frontPhoto: null,
+				placement: createFullImagePlacement(),
+				onFrontPhotoChange,
+				onPlacementChange,
+			},
+		});
+
+		await fireEvent.click(
+			screen.getByRole("button", { name: "Replace product image" }),
+		);
+		expect(
+			screen.getByLabelText("Choose existing front of package"),
+		).toBeEnabled();
+		await fireEvent.click(
+			screen.getByRole("button", { name: "Use existing product image" }),
+		);
+		expect(onFrontPhotoChange).toHaveBeenCalledWith(null);
+		expect(onPlacementChange).toHaveBeenCalledWith(
+			expect.objectContaining({ cropX: 12 }),
+		);
+		expect(
+			screen.queryByLabelText("Choose existing front of package"),
+		).not.toBeInTheDocument();
+	});
+
+	it("requests an adjustable current package photo for a correction", () => {
+		render(ProductImageEvidenceInput, {
+			props: {
+				trustedImage: {
+					source: "open-food-facts",
+					sourceReference: "00072360002031",
+					role: "front",
+					imageUrl: "https://example.com/el-pato.jpg",
+					licenseName: "CC BY-SA 3.0",
+					licenseUrl: "https://creativecommons.org/licenses/by-sa/3.0/",
+					attributionText: "Open Food Facts contributors",
+					confidence: "source-verified",
+				},
+				frontPhoto: null,
+				placement: createFullImagePlacement(),
+				foodName: "Jalapeno Sauce, Jalapeno",
+				category: "Dips and Salsa",
+				requireFreshPhoto: true,
+				onFrontPhotoChange: vi.fn(),
+				onPlacementChange: vi.fn(),
+			},
+		});
+
+		expect(
+			screen.getByText(/add a current front package photo/i),
+		).toBeInTheDocument();
+		expect(
+			screen.getByLabelText("Choose existing front of package"),
+		).toBeEnabled();
 	});
 
 	it("prepares a bounded preview without replacing the original photo", async () => {

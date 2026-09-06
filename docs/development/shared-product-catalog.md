@@ -354,9 +354,11 @@ can change over time.
 Manual Entry exposes this existing-revision path only after an exact shared-catalog
 barcode match has meaningful label differences. If that product is already in the
 selected list, `Update and share` submits the immutable correction without adding,
-moving, or overwriting the user's saved item. An unchanged match remains `Already
-saved`, and the same user cannot create another pending proposal against the same base
-revision.
+moving, or overwriting the user's saved item. A nutrition-only correction may reuse an
+eligible trusted front image and its saved placement while requiring current nutrition
+label and barcode evidence; replacing that image or lacking one requires a current
+front-package photo. An unchanged match remains `Already saved`, and the same user
+cannot create another pending proposal against the same base revision.
 
 Independent users may submit separate correction evidence against the same active
 revision. The system never averages conflicting values or silently chooses a provider.
@@ -684,8 +686,9 @@ in [`moderation.md`](moderation.md).
 ## Moderation
 
 Pending product submissions appear on `/moderation` for moderators and admins. Review
-all three evidence photos against the entered serving and nutrient values before
-approval.
+every required evidence photo against the entered serving and nutrient values before
+approval. A reused trusted front image remains visible with its attribution and saved
+placement beside the current nutrition-label and barcode evidence.
 
 - **Approve:** publishes the submitted label as `community-reviewed` and appends a
   revision. Existing-product updates also preserve the superseded revision and

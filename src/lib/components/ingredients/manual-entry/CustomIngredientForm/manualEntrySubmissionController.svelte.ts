@@ -87,8 +87,7 @@ export const createManualEntrySubmissionController = ({
 			servingMeasureAmountRequiredMessage,
 			barcode: form.data.barcode,
 			requiresCatalogEvidence: barcode.requiresCatalogEvidence,
-			requiresFreshFrontPhoto:
-				form.data.submissionIntent === "catalog_correction" || reviewedUpdate,
+			requiresFreshFrontPhoto: catalogSubmissionOnly,
 			hasTrustedProductImage: barcode.hasTrustedProductImage,
 			frontPhoto: form.data.frontPhoto,
 			nutritionPhoto: form.data.nutritionPhoto,

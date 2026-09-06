@@ -512,9 +512,7 @@ test("@mobile a reviewed product correction reveals sharing evidence without blo
 	await dialog.getByLabel(/^Total Fat \(g\)/).fill("0");
 	await dialog.getByRole("tab", { name: "Share" }).click();
 	await expect(
-		dialog.getByText(
-			/Turn on community sharing to check and submit those changes/i,
-		),
+		dialog.getByText(/You changed package details for this saved ingredient/i),
 	).toBeVisible();
 
 	const destination = dialog.getByRole("combobox", {
@@ -526,11 +524,35 @@ test("@mobile a reviewed product correction reveals sharing evidence without blo
 		dialog.getByRole("option", { name: "Shopping List", exact: true }),
 	).toBeVisible({ timeout: 500 });
 	expect(Date.now() - destinationStartedAt).toBeLessThan(500);
-	await page.keyboard.press("Escape");
+	await dialog
+		.getByRole("option", { name: "Shopping List", exact: true })
+		.click();
+	await expect(
+		dialog.getByRole("button", { name: "Move to Shopping List" }),
+	).toBeEnabled();
+	await expect(
+		dialog.getByText(/moving it uses the saved version only/i),
+	).toBeVisible();
 
 	const shareToggle = dialog.getByLabel("Share with community");
 	const revealStartedAt = Date.now();
 	await shareToggle.click();
+	await expect(
+		dialog.getByRole("button", { name: "Replace product image" }),
+	).toBeVisible({ timeout: 500 });
+	await expect(
+		dialog.getByLabel("Choose existing front of package"),
+	).toHaveCount(0);
+	await dialog.getByRole("button", { name: "Replace product image" }).click();
+	await expect(
+		dialog.getByLabel("Choose existing front of package"),
+	).toBeVisible();
+	await dialog
+		.getByRole("button", { name: "Use existing product image" })
+		.click();
+	await expect(
+		dialog.getByLabel("Choose existing front of package"),
+	).toHaveCount(0);
 	await expect(
 		dialog.getByLabel("Choose existing nutrition facts label"),
 	).toBeVisible({ timeout: 500 });
@@ -909,15 +931,20 @@ test("an optional source product photo enters moderation", async ({
 		).toBeVisible();
 		await dialog.getByRole("button", { name: "Autofill" }).click();
 		const shareTab = dialog.getByRole("tab", { name: "Share" });
-		await shareTab.click();
 		const relationshipRulesLoading = dialog.getByText(
 			"Nutrition validation rules are still loading. Try again in a moment.",
 		);
-		if (await relationshipRulesLoading.isVisible()) {
-			await expect(relationshipRulesLoading).toBeHidden();
-			await shareTab.click();
-		}
-		await expect(shareTab).toHaveAttribute("aria-selected", "true");
+		await expect(async () => {
+			if (await relationshipRulesLoading.isVisible()) {
+				await expect(relationshipRulesLoading).toBeHidden();
+			}
+			if ((await shareTab.getAttribute("aria-selected")) !== "true") {
+				await shareTab.click();
+			}
+			await expect(shareTab).toHaveAttribute("aria-selected", "true", {
+				timeout: 1_000,
+			});
+		}).toPass({ timeout: 20_000 });
 		const publicShareToggle = dialog.getByLabel("Share with community");
 		await publicShareToggle.click();
 		await expect(publicShareToggle).toBeChecked({ timeout: 30_000 });

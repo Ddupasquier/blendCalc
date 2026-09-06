@@ -134,7 +134,10 @@ barcode` and source-empty groups `Not provided`. Keep source omissions blank and
 - show the selected trusted package image and its attribution in the Share summary after
   barcode autofill is accepted, so the person can confirm the exact cached product image
   before saving without triggering another provider request; when the evidence flow
-  already shows that image for comparison, do not duplicate it in the summary;
+  already shows that image for comparison, do not duplicate it in the summary; when a
+  nutrition-only correction has an eligible trusted image, use that image and its saved
+  placement by default while offering `Replace product image`; selecting a replacement
+  exposes its editable card placement;
 - allow destination choice between Fridge and Shopping List;
 - default shared-catalog submission on only for complete, valid, unchanged exact-source
   data whose represented sources all permit canonical storage. Keep an immediate
@@ -172,10 +175,13 @@ barcode` and source-empty groups `Not provided`. Keep source omissions blank and
   package data differs, keep the existing list item and accepted catalog revision
   unchanged; before sharing is enabled, immediately explain that the saved entry has
   changed and that community sharing checks those changes for review, then offer one
-  explicit `Update and share` correction with current front-package, nutrition-label,
-  and barcode evidence after the authoritative catalog check; hide the save-destination
-  choice for that correction and name the saved item's unchanged list in the status
-  message; unchanged entries remain `Already saved`, cancellation changes nothing, and
+  explicit `Update and share` correction after the authoritative catalog check; require
+  nutrition-label and barcode evidence, reuse an eligible unchanged trusted front image,
+  and require a current front-package photo when no eligible image exists or the image is
+  being replaced; hide the save-destination choice and name the saved item's unchanged list in the status
+  message; while sharing remains off, choosing the other destination may move the
+  existing saved version but must explain that the edited package details are not
+  applied; unchanged entries remain `Already saved`, cancellation changes nothing, and
   repeat submissions against the same revision remain deduplicated by the server;
 - confirm cross-list moves inside the Share step rather than opening a nested dialog;
   name both the current and destination lists, focus Cancel first, keep Cancel and Move

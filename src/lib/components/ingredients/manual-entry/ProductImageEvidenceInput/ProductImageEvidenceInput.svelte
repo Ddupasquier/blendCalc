@@ -1,11 +1,15 @@
 <script lang="ts">
 	import { onDestroy, untrack } from "svelte";
 	import AssetAttribution from "$lib/components/common/display/AssetAttribution/AssetAttribution.svelte";
+	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
 	import PhotoUploadInput from "$lib/components/common/forms/PhotoUploadInput/PhotoUploadInput.svelte";
 	import ImagePlacementEditor from "$lib/components/common/images/ImagePlacementEditor/ImagePlacementEditor.svelte";
 	import ProductImageFrame from "$lib/components/common/images/ProductImageFrame/ProductImageFrame.svelte";
 	import type { ProductImageEvidenceInputProps } from "./types";
-	import { createFullImagePlacement } from "$lib/utils/food/images/imagePlacement";
+	import {
+		createFullImagePlacement,
+		getStoredImagePlacement,
+	} from "$lib/utils/food/images/imagePlacement";
 	import { pickFoodFullImageUrl } from "$lib/utils/food/images/foodImages";
 	import { prepareSelectedImagePreview } from "$lib/utils/food/images/selectedImagePreview.client";
 
@@ -29,6 +33,7 @@
 	let selectedPreviewUrl = $state("");
 	let isPreparingPreview = $state(false);
 	let previewPreparationFailed = $state(false);
+	let replacingTrustedImage = $state(false);
 	let lastPreparedPhoto = $state<File | null>(null);
 	let activePreviewController: AbortController | null = null;
 	let activePreparedUrl = "";
@@ -72,6 +77,15 @@
 	onDestroy(clearActivePreview);
 
 	const trustedImageUrl = $derived(pickFoodFullImageUrl(trustedImage));
+	const showPhotoInput = $derived(
+		!trustedImageUrl ||
+			requireFreshPhoto ||
+			replacingTrustedImage ||
+			Boolean(frontPhoto),
+	);
+	const photoInputRequired = $derived(
+		required && (!trustedImageUrl || requireFreshPhoto),
+	);
 	const previewUrl = $derived(
 		selectedPreviewUrl || (!frontPhoto ? trustedImageUrl : ""),
 	);
@@ -80,15 +94,25 @@
 			? "preparing"
 			: (uploadStatus ?? (frontPhoto ? "ready" : undefined)),
 	);
+	const useExistingProductImage = () => {
+		onFrontPhotoChange(null);
+		onPlacementChange(getStoredImagePlacement(trustedImage));
+		replacingTrustedImage = false;
+	};
 </script>
 
 <section class="product-image-evidence" aria-labelledby="product-image-title">
 	<div>
 		<strong id="product-image-title">Product image</strong>
-		{#if trustedImageUrl && !requireFreshPhoto}
+		{#if trustedImageUrl && !requireFreshPhoto && !showPhotoInput}
 			<p>
-				Using a trusted DB/API image. User photo upload is hidden so moderation
-				does not need to review a duplicate image.
+				Using the existing trusted product image and its saved placement.
+				Replace it only when the package image has changed.
+			</p>
+		{:else if trustedImageUrl && !requireFreshPhoto}
+			<p>
+				Choose a current front-package photo only if you want moderators to
+				review a replacement image.
 			</p>
 		{:else if trustedImageUrl}
 			<p>
@@ -102,6 +126,18 @@
 			</p>
 		{/if}
 	</div>
+	{#if trustedImageUrl && !requireFreshPhoto}
+		<RoundedActionButton
+			variant="outline"
+			fullWidth
+			onclick={() => {
+				if (showPhotoInput) useExistingProductImage();
+				else replacingTrustedImage = true;
+			}}
+		>
+			{showPhotoInput ? "Use existing product image" : "Replace product image"}
+		</RoundedActionButton>
+	{/if}
 	{#if isPreparingPreview}
 		<p class="product-image-evidence__preview-status" role="status">
 			Preparing the photo preview. You can keep working while it loads.
@@ -140,7 +176,7 @@
 		{/if}
 	{/if}
 
-	{#if !trustedImageUrl || requireFreshPhoto}
+	{#if showPhotoInput}
 		<PhotoUploadInput
 			id="custom-product-front-photo"
 			name="custom-product-front-photo"
@@ -149,7 +185,7 @@
 			photoCount={1}
 			files={frontPhoto ? [frontPhoto] : []}
 			capture="environment"
-			{required}
+			required={photoInputRequired}
 			status={resolvedUploadStatus}
 			progress={uploadProgress}
 			onFilesChange={(files) => onFrontPhotoChange(files[0] ?? null)}
