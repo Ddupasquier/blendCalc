@@ -9,6 +9,8 @@ const BOILERPLATE_PATTERN =
 	/\s+(?:all products?|this product|manufactured|processed|produced|made)\b.*$/iu;
 const SUPPORTED_DECLARATION_LANGUAGE_CODES = new Set(["en"]);
 const INGREDIENT_HEADING_PATTERN = /^\s*(?:other\s+)?ingredients?\s*:\s*/iu;
+const LANGUAGE_ONLY_DECLARATION_PATTERN =
+	/\b(?:may\s+contain|contains)\s*:?\s*(?:\(\s*)?[a-z]{2}(?:[-_](?:[a-z]{2}|\d{3}))?(?:\s*\))?\s*[.;]?\s*$/iu;
 const PROTECTED_UPPERCASE_TERMS = [
 	"BHA",
 	"BHT",
@@ -38,6 +40,21 @@ const getPrimaryLanguageCode = (value) =>
 		.toLocaleLowerCase()
 		.split("-")[0];
 
+/**
+ * Provider fields sometimes contain a language marker instead of disclosure text.
+ * The language remains useful in its dedicated metadata field, but it is not an
+ * ingredient, allergen, or package advisory.
+ *
+ * @param {unknown} value
+ */
+export const isLanguageCodeOnlyDisclosureText = (value) => {
+	const text = String(value ?? "").trim();
+	if (!text) return false;
+	const wrappedCode = text.match(/^[([{]\s*([^\])}]+)\s*[\])}]$/u)?.[1];
+	const candidate = (wrappedCode ?? text).trim().replace(/:$/u, "");
+	return /^[a-z]{2}(?:[-_](?:[a-z]{2}|\d{3}))?$/iu.test(candidate);
+};
+
 /** @param {string} value */
 const formatDeclarationTerm = (value) => {
 	const normalized = value
@@ -45,7 +62,7 @@ const formatDeclarationTerm = (value) => {
 		.replace(/^(?:the\s+following|any\s+of\s+the\s+following)\s*:?\s*/iu, "")
 		.replace(/\s+/gu, " ")
 		.trim();
-	if (!normalized) return "";
+	if (!normalized || isLanguageCodeOnlyDisclosureText(normalized)) return "";
 
 	const letters = normalized.match(/\p{L}/gu) ?? [];
 	const isAllCaps =
@@ -329,6 +346,9 @@ export const normalizeExternalIngredientStatement = (value, context) => {
 		structurallyNormalized,
 		context,
 	);
+	const languageOnlyDeclarationIndex = structurallyNormalized.search(
+		LANGUAGE_ONLY_DECLARATION_PATTERN,
+	);
 	const firstDeclarationIndex = declarationAnalysis.statements.reduce(
 		(earliest, statement) => {
 			const index = structurallyNormalized
@@ -336,7 +356,9 @@ export const normalizeExternalIngredientStatement = (value, context) => {
 				.indexOf(statement.text.toLocaleLowerCase("en-US"));
 			return index >= 0 ? Math.min(earliest, index) : earliest;
 		},
-		structurallyNormalized.length,
+		languageOnlyDeclarationIndex >= 0
+			? languageOnlyDeclarationIndex
+			: structurallyNormalized.length,
 	);
 	const ingredientOnlyText = structurallyNormalized
 		.slice(0, firstDeclarationIndex)
