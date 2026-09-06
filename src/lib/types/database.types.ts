@@ -5795,6 +5795,60 @@ export type Database = {
           },
         ]
       }
+      nutrition_label_ocr_jobs: {
+        Row: {
+          attempt_count: number
+          claim_token: string | null
+          claimed_at: string | null
+          completed_at: string | null
+          created_at: string
+          error_code: string | null
+          expires_at: string
+          id: string
+          input_sha256: string
+          processor_version: string
+          result: Json | null
+          status: string
+          storage_path: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          attempt_count?: number
+          claim_token?: string | null
+          claimed_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+          error_code?: string | null
+          expires_at?: string
+          id?: string
+          input_sha256: string
+          processor_version: string
+          result?: Json | null
+          status?: string
+          storage_path: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          attempt_count?: number
+          claim_token?: string | null
+          claimed_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+          error_code?: string | null
+          expires_at?: string
+          id?: string
+          input_sha256?: string
+          processor_version?: string
+          result?: Json | null
+          status?: string
+          storage_path?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       official_food_safety_alert_identifiers: {
         Row: {
           alert_id: string
@@ -9606,6 +9660,32 @@ export type Database = {
         }
         Returns: Json
       }
+      claim_nutrition_label_ocr_job: {
+        Args: { p_claim_token: string; p_job_id: string }
+        Returns: {
+          attempt_count: number
+          claim_token: string | null
+          claimed_at: string | null
+          completed_at: string | null
+          created_at: string
+          error_code: string | null
+          expires_at: string
+          id: string
+          input_sha256: string
+          processor_version: string
+          result: Json | null
+          status: string
+          storage_path: string
+          updated_at: string
+          user_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "nutrition_label_ocr_jobs"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       claim_product_api_request_lease: {
         Args: {
           p_cache_key: string
@@ -9663,6 +9743,10 @@ export type Database = {
           p_result: string
         }
         Returns: undefined
+      }
+      complete_nutrition_label_ocr_job: {
+        Args: { p_claim_token: string; p_job_id: string; p_result: Json }
+        Returns: boolean
       }
       complete_safety_alert_ingestion_source: {
         Args: {
@@ -9735,6 +9819,10 @@ export type Database = {
           p_shared_product_submission_id?: string
         }
         Returns: undefined
+      }
+      fail_nutrition_label_ocr_job: {
+        Args: { p_claim_token: string; p_error_code: string; p_job_id: string }
+        Returns: string
       }
       food_alcohol_disclosure_is_valid: {
         Args: { p_food: Json }
