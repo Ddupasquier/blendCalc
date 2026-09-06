@@ -16,6 +16,7 @@
 		value,
 		horizontalMovement = "symmetric",
 		loading = "lazy",
+		fetchPriority = "auto",
 		onGeometryChange,
 		onError,
 	}: ImagePlacementViewportProps = $props();
@@ -107,6 +108,7 @@
 		style={value.placementVersion <= 1 ? legacyStyle : geometryStyle}
 		draggable="false"
 		{loading}
+		fetchpriority={fetchPriority}
 		decoding="async"
 	/>
 </span>

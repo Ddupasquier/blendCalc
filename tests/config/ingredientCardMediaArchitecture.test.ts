@@ -37,6 +37,18 @@ const mixIngredientOption = readFileSync(
 	"src/lib/components/mix/ingredients/MixIngredientOption/MixIngredientOption.svelte",
 	"utf8",
 );
+const mixIngredientAmountCard = readFileSync(
+	"src/lib/components/mix/ingredients/MixIngredientAmountCard/MixIngredientAmountCard.svelte",
+	"utf8",
+);
+const nutrientAdjustmentSuggestions = readFileSync(
+	"src/lib/components/mix/insights/NutrientAdjustmentSuggestions/NutrientAdjustmentSuggestions.svelte",
+	"utf8",
+);
+const foodSymbol = readFileSync(
+	"src/lib/assets/icons/FoodSymbol/FoodSymbol.svelte",
+	"utf8",
+);
 const savedCardStyles = readFileSync(
 	"src/lib/components/ingredients/list/SavedIngredientCard/SavedIngredientCard.scss",
 	"utf8",
@@ -91,6 +103,25 @@ describe("ingredient card media architecture", () => {
 		expect(cardMedia).toContain("<FoodSymbol food={fallbackFood} />");
 		expect(savedCard).not.toContain("CircularMediaFrame");
 		expect(searchCard).not.toContain("CircularMediaFrame");
+	});
+
+	it("uses card-sized images across Ingredients and Mix without reducing inspection quality", () => {
+		expect(cardMedia).toContain("pickFoodImageUrl");
+		expect(cardMedia).toContain("pickFoodFullImageUrl");
+		expect(cardMedia).toContain("failedImageUrls");
+		expect(mixIngredientOption).toContain("<IngredientCardMedia {food} />");
+		expect(foodSymbol).toContain("pickFoodImageUrl");
+		expect(mixIngredientAmountCard).toContain("<FoodSymbol {food} />");
+		expect(nutrientAdjustmentSuggestions).toContain(
+			"<FoodSymbol food={suggestion.food} />",
+		);
+		expect(productImagePanel).toContain("pickFoodFullImageUrl");
+		expect(productImagePanel).toContain('loading="eager"');
+		expect(productImagePanel).toContain('fetchPriority="high"');
+		expect(productImageEvidenceInput).toContain("pickFoodFullImageUrl");
+		expect(productSubmissionReviewList).toContain(
+			"imageUrl={submission.frontEvidenceUrl}",
+		);
 	});
 
 	it("keeps saved, search, Mix, and placement-preview geometry identical", () => {

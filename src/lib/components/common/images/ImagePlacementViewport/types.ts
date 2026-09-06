@@ -10,6 +10,7 @@ export type ImagePlacementViewportProps = {
 	value: ImagePlacementValue;
 	horizontalMovement?: ImageHorizontalMovement;
 	loading?: "eager" | "lazy";
+	fetchPriority?: "high" | "low" | "auto";
 	onGeometryChange?: (geometry: ImagePlacementGeometry) => void;
 	onError?: () => void;
 };

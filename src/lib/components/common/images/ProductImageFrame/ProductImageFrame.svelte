@@ -11,6 +11,7 @@
 		src,
 		alt,
 		loading = "lazy",
+		fetchPriority = "auto",
 		rotationDegrees = 0,
 		onError,
 	}: ProductImageFrameProps = $props();
@@ -40,6 +41,9 @@
 			{src}
 			{alt}
 			{loading}
+			fetchpriority={fetchPriority}
+			width="288"
+			height="224"
 			decoding="async"
 		/>
 	{:else}
@@ -52,6 +56,7 @@
 				{alt}
 				value={rotatedPlacement}
 				{loading}
+				{fetchPriority}
 				{onError}
 			/>
 		</span>
