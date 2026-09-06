@@ -724,6 +724,31 @@ test(
 	},
 );
 
+test(
+	"@mobile the header reliably leaves nutrition details and preserves browser history",
+	{ tag: "@compatibility" },
+	async ({ page }) => {
+		for (let attempt = 0; attempt < 3; attempt += 1) {
+			await page.goto("/ingredients/fridge/nutrition/9200001");
+			await waitForAppReady(page);
+			await expect(page.locator("#nutrition-detail-view-title")).toBeVisible();
+
+			await page
+				.getByRole("link", { name: "Open blendCalc ingredients" })
+				.click();
+			await expect(page).toHaveURL(/\/ingredients\/fridge$/);
+			await expect(page.locator("#nutrition-detail-view-title")).toBeHidden();
+			await expect(page.locator(".app-error")).toHaveCount(0);
+
+			await page.goBack();
+			await expect(page).toHaveURL(
+				/\/ingredients\/fridge\/nutrition\/9200001$/,
+			);
+			await expect(page.locator("#nutrition-detail-view-title")).toBeVisible();
+		}
+	},
+);
+
 test("partial ingredient words combine every eligible source and remain selectable", async ({
 	page,
 }) => {
