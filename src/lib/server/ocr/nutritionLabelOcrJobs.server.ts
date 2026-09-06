@@ -203,13 +203,13 @@ export const processNutritionLabelOcrJob = async (jobId: string) => {
 	return processNutritionLabelOcrJobWithClient(jobId, admin);
 };
 
-export const failNutritionLabelOcrJobEnqueue = async (jobId: string) => {
+export const failNutritionLabelOcrJobScheduling = async (jobId: string) => {
 	const admin = getSupabaseAdminClient();
 	const { data, error } = await admin
 		.from("nutrition_label_ocr_jobs")
 		.update({
 			status: "failed",
-			error_code: "queue-unavailable",
+			error_code: "background-processing-unavailable",
 			claim_token: null,
 			claimed_at: null,
 		})
