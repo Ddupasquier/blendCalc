@@ -344,6 +344,7 @@ deployments.
 | `npm run check:auth`                                   | Validate Auth-related environment values and endpoint health                        |
 | `npm run auth:configure-hosted -- --turnstile\|--smtp` | Apply one explicit hosted Supabase Auth configuration safely                        |
 | `npm run version:check`                                | Verify Node, app, build, API, OpenAPI, tests, and documentation version consistency |
+| `npm run verify:vercel-routes`                         | Reject root-function collisions and missing generated dynamic API functions         |
 | `npm run version:bump -- patch\|minor\|major`          | Update application release files without committing or tagging                      |
 
 The API generator may call providers and read stored query terms but never mutates
