@@ -52,6 +52,10 @@ describe("app interaction analytics", () => {
 				path: "/api/internal/blendCalcAPI/publication/sync",
 				schedule: "30 5 * * *",
 			},
+			{
+				path: "/api/internal/nutrition-label-ocr/cleanup",
+				schedule: "45 5 * * *",
+			},
 		]);
 		expect(publicationSyncWorkflow).toContain('cron: "*/15 * * * *"');
 		expect(publicationSyncWorkflow).toContain(

@@ -9,7 +9,6 @@
 	import type { BarcodeScanResult } from "$lib/utils/barcode/types";
 	import type { FoodCategoryPickerOption } from "$lib/utils/food/categories/categoryPicker";
 	import BarcodeScannerDialog from "$lib/components/ingredients/barcode/BarcodeScannerDialog/BarcodeScannerDialog.svelte";
-	import ConfirmationDialog from "$lib/components/common/dialogs/ConfirmationDialog/ConfirmationDialog.svelte";
 	import ManualEntryFormShell from "$lib/components/ingredients/manual-entry/ManualEntryFormShell/ManualEntryFormShell.svelte";
 	import ManualEntryScanOption from "$lib/components/ingredients/manual-entry/ManualEntryScanOption/ManualEntryScanOption.svelte";
 	import ManualEntryStepContent from "$lib/components/ingredients/manual-entry/ManualEntryStepContent/ManualEntryStepContent.svelte";
@@ -95,6 +94,7 @@
 	let lastCloseManualSignal: number | null = null;
 	let lastScanSignal: number | null = null;
 	let lastMovePromptOpen: boolean | null = null;
+	let lastMoveConfirmationRouteOpen: boolean | null = null;
 	let draftRestored = $state(false);
 	let listIdentityState = $state<ManualEntryListIdentityState>({
 		status: "idle",
@@ -140,6 +140,38 @@
 			listIndex: ingredientListIndex,
 			destination: outcome.state.saveDestination,
 		}),
+	);
+	const displayedDestinationAction = $derived(
+		barcode.reviewedUpdateSelected &&
+			(destinationAction.kind === "duplicate" ||
+				destinationAction.kind === "move")
+			? {
+					...destinationAction,
+					kind: "add" as const,
+					label: "Update and share",
+					disabled: false,
+					message: `Your saved ingredient will stay in ${getDestinationLabel(
+						destinationAction.kind === "move"
+							? (destinationAction.source ?? outcome.state.saveDestination)
+							: outcome.state.saveDestination,
+					)} unchanged while moderators review the current package details.`,
+				}
+			: barcode.reviewedUpdateCandidate &&
+				  destinationAction.kind === "duplicate"
+				? {
+						...destinationAction,
+						kind: "duplicate" as const,
+						label: "Already saved",
+						disabled: true,
+						message:
+							"You changed package details for this saved ingredient. Turn on community sharing to submit those changes for review, or choose the other list to move the saved ingredient without applying the edits.",
+					}
+				: barcode.reviewedUpdateCandidate && destinationAction.kind === "move"
+					? {
+							...destinationAction,
+							message: `You changed package details for this saved ingredient. ${destinationAction.message} Moving it uses the saved version only; edited package details are not applied unless you share them for review.`,
+						}
+					: destinationAction,
 	);
 	const hasAcceptedBarcodeSource = $derived(
 		Boolean(form.data.barcodeReferenceAcceptedBarcode),
@@ -194,7 +226,7 @@
 	});
 
 	const handleDestinationSubmit = async () => {
-		if (destinationAction.kind !== "move") {
+		if (destinationAction.kind !== "move" || barcode.reviewedUpdateSelected) {
 			await submission.handleSubmit();
 			return;
 		}
@@ -245,6 +277,34 @@
 			preflightMovePrompt = null;
 		}
 	};
+
+	const activeMoveConfirmation = $derived(
+		preflightMovePrompt
+			? {
+					foodName: validation.normalizedName,
+					sourceLabel: getDestinationLabel(preflightMovePrompt.source),
+					destinationLabel: getDestinationLabel(
+						preflightMovePrompt.destination,
+					),
+					busy: preflightMoveBusy,
+				}
+			: outcome.state.listMovePrompt
+				? {
+						foodName: outcome.state.listMovePrompt.food.description,
+						sourceLabel: getDestinationLabel(
+							outcome.state.listMovePrompt.source,
+						),
+						destinationLabel: getDestinationLabel(
+							outcome.state.listMovePrompt.destination,
+						),
+						busy: false,
+					}
+				: null,
+	);
+	const resolveActiveMoveConfirmation = (confirmed: boolean) =>
+		preflightMovePrompt
+			? resolvePreflightMovePrompt(confirmed)
+			: outcome.resolveListMovePrompt(confirmed);
 
 	const goToStep = async (step: string) => {
 		await validation.goToStep(step, barcode.checkManualBarcodeReference);
@@ -453,6 +513,7 @@
 			hasAcceptedBarcodeNutrients,
 			fallback: validation.nutritionFieldPolicy.helper,
 		}),
+		sourceMessage: hasAcceptedBarcodeSource ? form.data.barcodeMessage : "",
 		hideUnavailableStatus: validation.hideMacroUnavailableStatus,
 		validationItems: validation.getAttemptedValidationItems(
 			validation.validationItems.filter((item) => item.step === "macros"),
@@ -529,12 +590,18 @@
 		usesNonstandardNutritionDisclosure:
 			!validation.disclosurePolicy.requiresStandardNutrition,
 		saveDestination: outcome.state.saveDestination,
-		destinationAction,
+		destinationAction: displayedDestinationAction,
+		reviewedUpdate: barcode.reviewedUpdateSelected,
+		moveConfirmation:
+			activeMoveConfirmation && moveConfirmationRouteOpen
+				? activeMoveConfirmation
+				: null,
 		error: submission.state.error,
 		placementMessage: outcome.state.placementMessage,
 		catalogMessage: submission.state.catalogMessage,
 		catalogMessageTone: submission.state.catalogMessageTone,
 		saving: submission.state.saving,
+		evidenceProgress: submission.state.evidenceProgress,
 		catalogSubmissionOnly,
 		onShareChange: barcode.handleShareChange,
 		onApplyVerifiedBarcode: barcode.applyVerifiedBarcodeForSharing,
@@ -542,18 +609,15 @@
 			barcode.detachMismatchedBarcodeForPrivateSave,
 		onSubmitBarcodeCorrection: barcode.beginBarcodeCorrectionForSharing,
 		onFrontPhotoChange: (file) => {
-			form.clearAutomaticCatalogSharing();
 			form.data.frontPhoto = file;
 		},
 		onImagePlacementChange: (value) => {
 			form.data.imagePlacement = value;
 		},
 		onNutritionPhotoChange: (file) => {
-			form.clearAutomaticCatalogSharing();
 			form.data.nutritionPhoto = file;
 		},
 		onBarcodePhotoChange: (file) => {
-			form.clearAutomaticCatalogSharing();
 			form.data.barcodePhoto = file;
 		},
 		onSaveDestinationChange: (destination) => {
@@ -565,6 +629,8 @@
 		onBack: validation.goBack,
 		onSubmit: handleDestinationSubmit,
 		onCatalogSubmissionComplete: () => onClose?.(),
+		onConfirmMove: () => resolveActiveMoveConfirmation(true),
+		onCancelMove: () => resolveActiveMoveConfirmation(false),
 	});
 
 	onMount(() => {
@@ -612,6 +678,22 @@
 			return;
 		}
 		void refreshListIdentity(name, barcodeValue);
+	});
+
+	$effect(() => {
+		const routeOpen = moveConfirmationRouteOpen;
+		if (lastMoveConfirmationRouteOpen === null) {
+			lastMoveConfirmationRouteOpen = routeOpen;
+			return;
+		}
+		if (
+			lastMoveConfirmationRouteOpen &&
+			!routeOpen &&
+			(activeMoveConfirmation || outcome.state.listMovePrompt)
+		) {
+			void resolveActiveMoveConfirmation(false);
+		}
+		lastMoveConfirmationRouteOpen = routeOpen;
 	});
 
 	onDestroy(() => {
@@ -710,27 +792,6 @@
 		onClose={barcode.closeBarcodeScanner}
 	/>
 {/if}
-
-<ConfirmationDialog
-	open={Boolean(outcome.state.listMovePrompt || preflightMovePrompt) &&
-		moveConfirmationRouteOpen}
-	busy={preflightMoveBusy}
-	title="Move ingredient?"
-	description={preflightMovePrompt
-		? `${validation.normalizedName} is already in ${getDestinationLabel(preflightMovePrompt.source)}. Move it to ${getDestinationLabel(preflightMovePrompt.destination)}?`
-		: outcome.state.listMovePrompt
-			? `${outcome.state.listMovePrompt.food.description} is already in ${getDestinationLabel(outcome.state.listMovePrompt.source)}. Move it to ${getDestinationLabel(outcome.state.listMovePrompt.destination)}?`
-			: ""}
-	confirmLabel="Move"
-	onConfirm={() =>
-		preflightMovePrompt
-			? resolvePreflightMovePrompt(true)
-			: outcome.resolveListMovePrompt(true)}
-	onCancel={() =>
-		preflightMovePrompt
-			? resolvePreflightMovePrompt(false)
-			: outcome.resolveListMovePrompt(false)}
-/>
 
 <style lang="scss">
 	@use "./CustomIngredientForm.scss";

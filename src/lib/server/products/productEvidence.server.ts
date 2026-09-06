@@ -4,12 +4,16 @@ import {
 	normalizePrivateImageEvidence,
 	PRIVATE_PRODUCT_EVIDENCE_BUCKET,
 } from "$lib/server/uploads/privateImageEvidence.server";
+import {
+	PRODUCT_EVIDENCE_ROLES,
+	type ProductEvidenceRole,
+} from "$lib/utils/products/productEvidenceRequirements";
 
 export const PRODUCT_EVIDENCE_BUCKET = PRIVATE_PRODUCT_EVIDENCE_BUCKET;
-export const PRODUCT_EVIDENCE_ROLES = ["front", "nutrition", "barcode"] as const;
 export const PRODUCT_EVIDENCE_MAX_BYTES = 8 * 1024 * 1024;
 
-export type ProductEvidenceRole = (typeof PRODUCT_EVIDENCE_ROLES)[number];
+export { PRODUCT_EVIDENCE_ROLES };
+export type { ProductEvidenceRole };
 export type ProductEvidencePaths = Partial<Record<ProductEvidenceRole, string>>;
 export type ProductEvidenceFiles = Partial<Record<ProductEvidenceRole, File>>;
 
@@ -74,10 +78,12 @@ export const uploadProductEvidence = async (
 };
 
 export const deleteProductEvidence = async (paths: ProductEvidencePaths) => {
-	const values = Object.values(paths).filter((path): path is string => Boolean(path));
+	const values = Object.values(paths).filter((path): path is string =>
+		Boolean(path),
+	);
 	if (values.length === 0) return;
-	await getSupabaseAdminClient().storage
-		.from(PRODUCT_EVIDENCE_BUCKET)
+	await getSupabaseAdminClient()
+		.storage.from(PRODUCT_EVIDENCE_BUCKET)
 		.remove(values);
 };
 
@@ -87,31 +93,30 @@ export const createProductEvidenceSignedUrlBatches = async (
 	const uniquePaths = [
 		...new Set(
 			pathGroups.flatMap((paths) =>
-				Object.values(paths).filter((path): path is string => Boolean(path))
+				Object.values(paths).filter((path): path is string => Boolean(path)),
 			),
 		),
 	];
 	if (uniquePaths.length === 0) {
-		return pathGroups.map(() =>
-			({}) as Partial<Record<ProductEvidenceRole, string | null>>
+		return pathGroups.map(
+			() => ({}) as Partial<Record<ProductEvidenceRole, string | null>>,
 		);
 	}
 
-	const { data, error } = await getSupabaseAdminClient().storage
-		.from(PRODUCT_EVIDENCE_BUCKET)
+	const { data, error } = await getSupabaseAdminClient()
+		.storage.from(PRODUCT_EVIDENCE_BUCKET)
 		.createSignedUrls(uniquePaths, 10 * 60);
 	if (error) throw error;
 	const signedUrlByPath = new Map(
 		(data ?? []).map((item) => [item.path, item.signedUrl ?? null]),
 	);
 
-	return pathGroups.map((paths) =>
-		Object.fromEntries(
-			Object.entries(paths).flatMap(([role, path]) =>
-				path
-					? [[role, signedUrlByPath.get(path) ?? null]]
-					: [],
-			),
-		) as Partial<Record<ProductEvidenceRole, string | null>>
+	return pathGroups.map(
+		(paths) =>
+			Object.fromEntries(
+				Object.entries(paths).flatMap(([role, path]) =>
+					path ? [[role, signedUrlByPath.get(path) ?? null]] : [],
+				),
+			) as Partial<Record<ProductEvidenceRole, string | null>>,
 	);
 };

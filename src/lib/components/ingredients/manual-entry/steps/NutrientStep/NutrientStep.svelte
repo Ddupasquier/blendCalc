@@ -13,6 +13,7 @@
 		loading,
 		error,
 		helper,
+		sourceMessage = "",
 		validationItems = [],
 		accordion = true,
 		defaultOpenFirst = true,
@@ -33,6 +34,9 @@
 
 <ManualEntryStepLayout>
 	<ManualEntryHelpText>{helper}</ManualEntryHelpText>
+	{#if sourceMessage}
+		<StatusMessage message={sourceMessage} />
+	{/if}
 
 	{#if labelOcrMappings && onNutritionPhotoChange && onApplyNutritionLabelOcr}
 		<NutritionLabelOcrInput

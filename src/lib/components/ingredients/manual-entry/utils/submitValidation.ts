@@ -3,6 +3,10 @@ import type {
 	ManualEntryStepId,
 	StepValidationItem,
 } from "$lib/components/ingredients/manual-entry/formTypes";
+import {
+	describeProductEvidencePhotos,
+	getMissingProductEvidenceRoles,
+} from "$lib/utils/products/productEvidenceRequirements";
 
 export type ManualEntrySubmitBlock = {
 	message: string;
@@ -85,19 +89,26 @@ export const getManualEntrySubmitState = ({
 		};
 	}
 
-	if (
-		requiresCatalogEvidence &&
-		(((!hasTrustedProductImage || requiresFreshFrontPhoto) && !frontPhoto) ||
-			!nutritionPhoto ||
-			!barcodePhoto)
-	) {
+	const missingEvidenceRoles = requiresCatalogEvidence
+		? getMissingProductEvidenceRoles(
+				{
+					front: frontPhoto,
+					nutrition: nutritionPhoto,
+					barcode: barcodePhoto,
+				},
+				{
+					requireFront: !hasTrustedProductImage || requiresFreshFrontPhoto,
+				},
+			)
+		: [];
+
+	if (missingEvidenceRoles.length > 0) {
 		return {
 			normalizedBarcode,
 			block: {
-				message:
-					hasTrustedProductImage && !requiresFreshFrontPhoto
-						? "Add nutrition label and barcode photos before sharing this product."
-						: "Add front package, nutrition label, and barcode photos before sharing this product.",
+				message: `Add ${describeProductEvidencePhotos(
+					missingEvidenceRoles,
+				)} before sharing this product.`,
 				step: "share",
 			},
 		};

@@ -55,6 +55,14 @@ that automatic default; sharing those values requires the user to enable it agai
 The trusted route and database reject every submission without recorded sharing
 consent.
 
+Catalog evidence sources are bounded before transport so several modern camera photos
+cannot freeze the mobile interface or exceed the hosted intake boundary. The browser
+prepares role-specific WebP upload copies sequentially outside the main interface and
+keeps the combined request below 4 MB; nutrition-label evidence receives the largest
+detail budget. This is transport preparation, not a trust boundary: the intake server
+still verifies type, signature, dimensions, size, ownership, and content before writing
+to private Storage.
+
 ## Source Policy
 
 - **blendCalc shared catalog:** the active `shared_products` row plus its normalized
@@ -342,6 +350,15 @@ can change over time.
    `shared_product_revision_changes`.
 8. If another update was approved while the submission waited, approval stops as stale
    and the change must be compared again.
+
+Manual Entry exposes this existing-revision path only after an exact shared-catalog
+barcode match has meaningful label differences. If that product is already in the
+selected list, `Update and share` submits the immutable correction without adding,
+moving, or overwriting the user's saved item. A nutrition-only correction may reuse an
+eligible trusted front image and its saved placement while requiring current nutrition
+label and barcode evidence; replacing that image or lacking one requires a current
+front-package photo. An unchanged match remains `Already saved`, and the same user
+cannot create another pending proposal against the same base revision.
 
 Independent users may submit separate correction evidence against the same active
 revision. The system never averages conflicting values or silently chooses a provider.
@@ -669,8 +686,9 @@ in [`moderation.md`](moderation.md).
 ## Moderation
 
 Pending product submissions appear on `/moderation` for moderators and admins. Review
-all three evidence photos against the entered serving and nutrient values before
-approval.
+every required evidence photo against the entered serving and nutrient values before
+approval. A reused trusted front image remains visible with its attribution and saved
+placement beside the current nutrition-label and barcode evidence.
 
 - **Approve:** publishes the submitted label as `community-reviewed` and appends a
   revision. Existing-product updates also preserve the superseded revision and
@@ -852,8 +870,11 @@ Packaged products and generic foods use different evidence paths:
 4. A database-backed completeness profile checks whether required nutrients are
    reported. It does not change missing, trace, or unmapped values into zero.
 5. Optional label recognition may suggest missing packaged-label values, but the user
-   must review and confirm them. Confirmed values remain user-label observations and
-   follow normal moderation rules if shared.
+   must review and confirm them. A private background job receives only a bounded
+   temporary crop and retains only structured suggestions; it does not create catalog
+   evidence. Confirmed values remain user-label observations and follow normal
+   moderation rules if shared, while any required moderation photo is selected and
+   retained through the separate evidence flow.
 
 Every accepted nutrient keeps its own source and source reference. Product-level field
 provenance separately records product name, brand, nutrition, image, category, serving,

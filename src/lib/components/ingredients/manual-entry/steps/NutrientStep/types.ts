@@ -13,6 +13,7 @@ export type NutrientStepProps = {
 	loading: boolean;
 	error: string;
 	helper: string;
+	sourceMessage?: string;
 	validationItems?: ManualEntryValidationItem[];
 	accordion?: boolean;
 	defaultOpenFirst?: boolean;

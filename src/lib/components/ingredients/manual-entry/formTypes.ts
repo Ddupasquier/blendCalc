@@ -66,7 +66,10 @@ export type ManualEntryListMovePromptState = {
 };
 
 export type NutritionLabelOcrApplyPayload = {
-	candidates: NutritionLabelOcrCandidate[];
+	candidates: Pick<
+		NutritionLabelOcrCandidate,
+		"nutrientId" | "nutrientName" | "value" | "unitName"
+	>[];
 	qualitativeFacts: NutritionLabelOcrQualitativeFact[];
 	serving: NutritionLabelServingCandidate | null;
 };

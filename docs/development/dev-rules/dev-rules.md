@@ -1651,15 +1651,20 @@ classification.
 
 #### Rule 30j — Confirmed Label OCR
 
-Nutrition-label text recognition is an
-optional data-entry aid, not an authority. Run recognition only after the user
-deliberately selects a label photo and starts the action. Parse against database-backed
-nutrient aliases and conversions, show the recognized amounts and serving for review,
-and apply only values the user explicitly confirms. Never mistake `% Daily Value` for a
-nutrient amount, never turn unreadable text into zero, and never publish unconfirmed
-recognition output. Confirmed values remain `user-label` data with user-reported
-confidence; original photos remain private moderation evidence unless separately
-approved under the image rules.
+Nutrition-label text recognition is an optional data-entry aid, not an authority. Run
+recognition only after the user deliberately selects a label photo and starts the
+action. Prepare a bounded user-reviewed crop without blocking the browser, upload that
+crop to an owner-scoped private temporary job, and keep the form usable while the
+background worker runs. Show upload and recognition state, allow cancellation, and
+retry only through the bounded job contract. Delete the temporary crop after completion,
+cancellation, terminal failure, or expiry cleanup, and retain only bounded structured
+suggestions—never raw recognized text. Parse against database-backed nutrient aliases
+and conversions, show the recognized amounts and serving for review, and apply only
+values the user explicitly confirms. Never mistake `% Daily Value` for a nutrient
+amount, never turn unreadable text into zero, and never publish unconfirmed recognition
+output. Confirmed values remain `user-label` data with user-reported confidence. A
+separately selected nutrition-label evidence photo remains private moderation evidence
+under the image rules; the temporary OCR crop is not moderation evidence.
 
 <a id="rule-gs1-digital-link"></a>
 
