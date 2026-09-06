@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { goto } from "$app/navigation";
 	import BrandCup from "$lib/assets/icons/BrandCup/BrandCup.svelte";
 	import PrivilegedActionBadge from "$lib/components/common/badges/PrivilegedActionBadge/PrivilegedActionBadge.svelte";
 	import CircularMediaFrame from "$lib/components/common/images/CircularMediaFrame/CircularMediaFrame.svelte";
@@ -20,6 +21,22 @@
 			.map((part) => part[0]?.toLocaleUpperCase())
 			.join("") || "U",
 	);
+
+	const navigateToIngredients = (event: MouseEvent) => {
+		if (
+			event.defaultPrevented ||
+			event.button !== 0 ||
+			event.metaKey ||
+			event.ctrlKey ||
+			event.shiftKey ||
+			event.altKey
+		) {
+			return;
+		}
+
+		event.preventDefault();
+		void goto("/ingredients/fridge", { state: {} });
+	};
 </script>
 
 <header class="app-header">
@@ -27,6 +44,7 @@
 		<a
 			class="app-header__brand"
 			href="/ingredients/fridge"
+			onclick={navigateToIngredients}
 			aria-label={`Open ${APP_NAME} ingredients`}
 		>
 			<span class="app-header__mark" aria-hidden="true">
@@ -54,7 +72,8 @@
 				{#if avatarUrl}
 					<img src={avatarUrl} alt={avatarAltText ?? ""} />
 				{:else}
-					<span class="app-header__initials" aria-hidden="true">{initials}</span>
+					<span class="app-header__initials" aria-hidden="true">{initials}</span
+					>
 				{/if}
 			</CircularMediaFrame>
 		</a>
