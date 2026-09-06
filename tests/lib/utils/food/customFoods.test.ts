@@ -381,6 +381,63 @@ describe("custom foods", () => {
 		expect(food.foodServings).toEqual([]);
 	});
 
+	it("preserves an explicit 100g source basis without inventing a serving", () => {
+		const food = createCustomFood({
+			name: "Nutella",
+			barcode: "03017620422003",
+			barcodeSource: "open-food-facts",
+			hasSourceServing: false,
+			nutrients: [
+				{
+					nutrientId: NUTRIENT_IDS.CALORIES,
+					nutrientName: "Energy",
+					nutrientNumber: "208",
+					unitName: "KCAL",
+					value: 539,
+					measurementBasis: {
+						kind: "mass",
+						quantity: 100,
+						unitKey: "g",
+					},
+					source: "open-food-facts",
+				},
+			],
+		});
+
+		expect(food.hasSourceServing).toBe(false);
+		expect(food.servingSize).toBeUndefined();
+		expect(food.servingSizeUnit).toBeUndefined();
+		expect(food.foodServings).toEqual([]);
+		expect(food.foodNutrients).toEqual([
+			expect.objectContaining({
+				nutrientId: NUTRIENT_IDS.CALORIES,
+				value: 539,
+				measurementBasis: {
+					kind: "mass",
+					quantity: 100,
+					unitKey: "g",
+				},
+			}),
+		]);
+	});
+
+	it("still rejects missing serving context without an explicit 100g basis", () => {
+		expect(() =>
+			createCustomFood({
+				name: "Ambiguous nutrition",
+				hasSourceServing: false,
+				nutrients: makeTestNutrients({
+					calories: 100,
+					fat: 1,
+					carbs: 10,
+					fiber: 1,
+					sugar: 2,
+					protein: 3,
+				}),
+			}),
+		).toThrow("Add an exact serving weight");
+	});
+
 	it("rejects an invalid serving weight instead of replacing it", () => {
 		expect(() =>
 			createCustomFood({

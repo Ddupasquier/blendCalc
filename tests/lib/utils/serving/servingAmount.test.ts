@@ -389,6 +389,42 @@ describe("serving amount conversion", () => {
 		).toBeCloseTo(266.667, 3);
 	});
 
+	it("removes floating-point artifacts from exact serving nutrient amounts", () => {
+		const food = {
+			fdcId: 12,
+			description: "Sempio sauce",
+			foodNutrients: [
+				{
+					nutrientId: 2000,
+					nutrientName: "Total Sugars",
+					nutrientNumber: "269",
+					unitName: "G",
+					value: 27.7777777777778,
+					measurementBasis: {
+						kind: "mass" as const,
+						quantity: 100,
+						unitKey: "g",
+					},
+				},
+			],
+		} satisfies FoodItem;
+
+		expect(
+			getFoodNutrientAmountForServingConversion(food, 2000, {
+				grams: 18,
+				milliliters: null,
+				servings: 1,
+				servingLabel: "1 tbsp (18 g)",
+				dimension: "weight",
+				density: null,
+				available: true,
+				warning: null,
+				method: "source-reported",
+				basis: "1 tbsp (18 g)",
+			}),
+		).toBe(5);
+	});
+
 	it("does not derive 100g nutrition from a count serving with an unknown weight basis", () => {
 		const cookieFood = {
 			fdcId: 11,
