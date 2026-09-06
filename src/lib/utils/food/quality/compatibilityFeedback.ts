@@ -1,13 +1,11 @@
 import type { AppIssueCode, AppIssueParams } from "$lib/utils/errors/appIssues";
 import type { FoodItem } from "$lib/utils/food/types";
+import { getCanonicalFoodDescription } from "$lib/utils/food/records/foodRecords";
 import type { FoodPreferenceWarning } from "$lib/utils/profile/foodPreferenceWarnings";
 import type { FoodCompatibilityFact } from "./compatibility";
 
 export type FoodCompatibilityFeedbackReason =
-	| "incorrect_match"
-	| "outdated_source_data"
-	| "wrong_evidence_type"
-	| "other";
+	"incorrect_match" | "outdated_source_data" | "wrong_evidence_type" | "other";
 
 export type FoodCompatibilityFeedbackRequest = {
 	sharedProductId: string | null;
@@ -28,14 +26,9 @@ export type FoodCompatibilityFeedbackResponse = {
 };
 
 const normalizeComparable = (value: unknown) =>
-	typeof value === "string"
-		? value.trim().toLocaleLowerCase()
-		: "";
+	typeof value === "string" ? value.trim().toLocaleLowerCase() : "";
 
-const getWarningFacts = (
-	food: FoodItem,
-	warning: FoodPreferenceWarning,
-) => {
+const getWarningFacts = (food: FoodItem, warning: FoodPreferenceWarning) => {
 	const factLabel = normalizeComparable(warning.params.factLabel);
 	if (!factLabel) return [];
 
@@ -44,7 +37,7 @@ const getWarningFacts = (
 			normalizeComparable(fact.slug),
 			normalizeComparable(fact.label),
 			normalizeComparable(fact.sourceText),
-		].includes(factLabel)
+		].includes(factLabel),
 	);
 };
 
@@ -57,11 +50,10 @@ export const createFoodCompatibilityFeedbackRequest = (
 	sharedProductId: food.sharedProductId ?? null,
 	sourceKey: food.sourceKey ?? null,
 	sourceId: String(
-		food.sourceIdentifiers?.[food.sourceKey ?? ""] ??
-		food.fdcId,
+		food.sourceIdentifiers?.[food.sourceKey ?? ""] ?? food.fdcId,
 	),
 	barcode: food.barcode ?? food.gtinUpc ?? null,
-	foodDescription: food.canonicalDescription ?? food.description,
+	foodDescription: getCanonicalFoodDescription(food),
 	warningId: warning.id,
 	issueCode: warning.code,
 	issueParams: warning.params,

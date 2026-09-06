@@ -230,6 +230,21 @@ describe("compact food records", () => {
 		expect(getCanonicalFoodDescription(food)).toBe("Spinach, Raw");
 	});
 
+	it("uses a private custom food's user-owned name instead of a stale original name", () => {
+		const food: FoodItem = {
+			fdcId: -3,
+			description: "MY PRIVATE TEST FOOD",
+			canonicalDescription: "Original Private Food",
+			nameProvenance: "user",
+			customFood: true,
+			foodIdentityType: "private-custom",
+			sourceKey: "custom",
+			foodNutrients: [],
+		};
+
+		expect(getCanonicalFoodDescription(food)).toBe("MY PRIVATE TEST FOOD");
+	});
+
 	it("uses the current name when no separate canonical name exists", () => {
 		expect(
 			getCanonicalFoodDescription({

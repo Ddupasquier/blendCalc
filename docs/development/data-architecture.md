@@ -552,6 +552,10 @@ live outside the public schema so database helpers do not silently expand the Da
   observation time are compared. Private foods and user-label fields remain owned by
   the user, and every accepted change stores its field, source, and selection reason in
   the saved snapshot.
+- `rename_user_food_list_item`: treats a private custom food name as owner-authored
+  canonical data and updates its custom-food record plus active list snapshot atomically.
+  For catalog-backed, verified, or external-source food, the same action remains a
+  personal list alias and preserves the source-owned canonical description.
 - `src/lib/server/food-safety`: cached DB policy loading, compatibility evaluation,
   allergen disclosure normalization, and personalized warning annotation.
 - `src/lib/utils/storage/supabase`: browser-safe identity reads and authoritative RPC

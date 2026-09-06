@@ -61,6 +61,30 @@ describe("NutritionDetailView", () => {
 		expect(screen.queryByText("My Greens")).not.toBeInTheDocument();
 	});
 
+	it("shows the current user-owned name for a private custom food", () => {
+		render(NutritionDetailView, {
+			props: {
+				food: {
+					...spinach,
+					fdcId: -168462,
+					description: "MY PRIVATE TEST FOOD",
+					canonicalDescription: "Original Private Food",
+					nameProvenance: "user",
+					customFood: true,
+					foodIdentityType: "private-custom",
+					sourceKey: "custom",
+				},
+				onClose: vi.fn(),
+				showListActions: false,
+			},
+		});
+
+		expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+			"MY PRIVATE TEST FOOD",
+		);
+		expect(screen.queryByText("Original Private Food")).not.toBeInTheDocument();
+	});
+
 	it("shows a source-backed product image when available", () => {
 		render(NutritionDetailView, {
 			props: {

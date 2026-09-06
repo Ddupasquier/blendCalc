@@ -1,4 +1,5 @@
 import type { FoodItem } from "$lib/utils/food/types";
+import { isPrivateCustomFood } from "$lib/utils/food/records/foodClassification";
 import {
 	formatSourceProductName,
 	normalizeFoodProductName,
@@ -33,15 +34,32 @@ const cloneStructuredIngredients = (
 export const getCanonicalFoodDescription = (
 	food: Pick<
 		FoodItem,
-		"canonicalDescription" | "description" | "foodIdentityType"
+		| "barcodeSource"
+		| "canonicalDescription"
+		| "customFood"
+		| "description"
+		| "sharedProductId"
+		| "sharedProductSubmissionId"
+		| "sourceKey"
 	>,
 ) => {
+	if (isPrivateCustomFood(food)) return food.description.trim();
 	const canonicalDescription = food.canonicalDescription?.trim();
 	if (!canonicalDescription) return food.description.trim();
-	return food.foodIdentityType === "private-custom"
-		? canonicalDescription
-		: formatSourceProductName(canonicalDescription);
+	return formatSourceProductName(canonicalDescription);
 };
+
+export const applyUserFoodName = (
+	food: FoodItem,
+	description: string,
+): FoodItem => ({
+	...food,
+	description,
+	canonicalDescription: isPrivateCustomFood(food)
+		? description
+		: (food.canonicalDescription ?? food.description),
+	nameProvenance: "user",
+});
 
 export const normalizeFoodForStorage = (food: FoodItem): FoodItem => {
 	const normalizedFood = normalizeFoodProductName(food) as FoodItem;

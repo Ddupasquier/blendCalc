@@ -1,5 +1,14 @@
 import type { FoodItem } from "$lib/utils/food/types";
 
+type FoodClassificationInput = Pick<
+	FoodItem,
+	| "barcodeSource"
+	| "customFood"
+	| "sharedProductId"
+	| "sharedProductSubmissionId"
+	| "sourceKey"
+>;
+
 const SOURCE_BACKED_KEYS = new Set([
 	"fdc",
 	"usda",
@@ -13,15 +22,15 @@ const SOURCE_BACKED_KEYS = new Set([
 	"community",
 ]);
 
-export const isSourceBackedFood = (food: FoodItem) =>
+export const isSourceBackedFood = (food: FoodClassificationInput) =>
 	Boolean(
 		food.sharedProductId ||
-			food.sharedProductSubmissionId ||
-			(food.sourceKey && SOURCE_BACKED_KEYS.has(food.sourceKey)) ||
-			(food.barcodeSource && food.barcodeSource !== "manual"),
+		food.sharedProductSubmissionId ||
+		(food.sourceKey && SOURCE_BACKED_KEYS.has(food.sourceKey)) ||
+		(food.barcodeSource && food.barcodeSource !== "manual"),
 	);
 
-export const isPrivateCustomFood = (food: FoodItem) =>
+export const isPrivateCustomFood = (food: FoodClassificationInput) =>
 	food.customFood === true && !isSourceBackedFood(food);
 
 export const normalizePrivateCustomFoodFlag = (food: FoodItem): FoodItem => ({

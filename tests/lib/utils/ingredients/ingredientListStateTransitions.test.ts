@@ -122,6 +122,28 @@ describe("ingredient list state transitions", () => {
 		).toBe("Spinach");
 	});
 
+	it("renames a private custom food's user-owned canonical name in view state", () => {
+		const food = {
+			...createFood(-10, "Original private food"),
+			canonicalDescription: "Original private food",
+			customFood: true,
+			foodIdentityType: "private-custom" as const,
+			sourceKey: "custom",
+		};
+		const nextState = renameFoodInIngredientListViewState(
+			createListViewState({ fridgeFoods: [food] }),
+			MIX_STORAGE_KEYS.fridge,
+			food.fdcId,
+			"MY PRIVATE TEST FOOD",
+		);
+
+		expect(nextState.foodsByList[MIX_STORAGE_KEYS.fridge][0]).toMatchObject({
+			description: "MY PRIVATE TEST FOOD",
+			canonicalDescription: "MY PRIVATE TEST FOOD",
+			nameProvenance: "user",
+		});
+	});
+
 	it("moves an exact barcode identity and reports every removed source id", () => {
 		const savedFood = createFood(10, "Old label", "123456789012");
 		const searchFood = createFood(20, "Current label", "123456789012");

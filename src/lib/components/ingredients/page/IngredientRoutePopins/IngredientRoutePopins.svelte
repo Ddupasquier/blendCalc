@@ -7,6 +7,7 @@
 	import ManualEntrySheet from "$lib/components/ingredients/sheets/ManualEntrySheet/ManualEntrySheet.svelte";
 	import IngredientSearchView from "$lib/components/ingredients/search/IngredientSearchView/IngredientSearchView.svelte";
 	import NutritionDetailView from "$lib/components/ingredients/nutrition/NutritionDetailView/NutritionDetailView.svelte";
+	import { isPrivateCustomFood } from "$lib/utils/food/records/foodClassification";
 	import { getIngredientListLabel } from "$lib/utils/ingredients/ingredientListUi";
 	import type { IngredientRoutePopinsProps } from "./types";
 
@@ -64,6 +65,12 @@
 		onSearchSelect,
 		onImagePlacementSave,
 	}: IngredientRoutePopinsProps = $props();
+
+	const renameDescription = $derived(
+		renamingItem && isPrivateCustomFood(renamingItem.food)
+			? "This changes the name of your private food everywhere it appears."
+			: "This only changes the display label in your lists. Original source data is preserved.",
+	);
 </script>
 
 <IngredientActionSheet
@@ -117,7 +124,7 @@
 <TextInputDialog
 	open={renamingItem !== null}
 	title="Rename ingredient"
-	description="This only changes the display label in your lists. Original data is preserved."
+	description={renameDescription}
 	label="Ingredient name"
 	initialValue={renamingItem?.food.description ?? ""}
 	error={renameError}
