@@ -16,6 +16,70 @@ export type FoodCompatibilityEvaluationMessage = {
 export const CURRENT_PACKAGE_LABEL_REMINDER =
 	"Ingredients and labels can change. The current package label is the final authority—check it before eating.";
 
+type FoodCompatibilityCoverage = FoodCompatibilityEvaluation["coverage"];
+
+const PACKAGE_EVIDENCE_LABELS: ReadonlyArray<{
+	key: "identity" | "ingredients" | "allergens" | "traces";
+	label: string;
+}> = [
+	{ key: "identity", label: "product identity" },
+	{ key: "ingredients", label: "ingredient list" },
+	{ key: "allergens", label: "allergen declaration" },
+	{ key: "traces", label: "cross-contact statement" },
+];
+
+const formatReadableList = (values: string[]) => {
+	if (values.length <= 1) return values[0] ?? "";
+	if (values.length === 2) return `${values[0]} and ${values[1]}`;
+	return `${values.slice(0, -1).join(", ")}, and ${values.at(-1)}`;
+};
+
+const getMissingPackageEvidenceLabels = (coverage: FoodCompatibilityCoverage) =>
+	PACKAGE_EVIDENCE_LABELS.filter(({ key }) => coverage[key] === "missing").map(
+		({ label }) => label,
+	);
+
+const getMissingPackageEvidenceSentence = (
+	coverage: FoodCompatibilityCoverage,
+) => {
+	const missingLabels = getMissingPackageEvidenceLabels(coverage);
+	if (!missingLabels.length) return null;
+
+	return `The ${formatReadableList(missingLabels)} ${missingLabels.length === 1 ? "is" : "are"} missing.`;
+};
+
+const getMissingPolicyCoverageSentence = (
+	evaluation: FoodCompatibilityEvaluation,
+) => {
+	if (evaluation.coverage.policy !== "missing") return null;
+
+	const unresolvedLabels = evaluation.preferenceResolution.unresolvedPreferences
+		.map(({ label }) => label.trim())
+		.filter(Boolean);
+	if (unresolvedLabels.length) {
+		return `An exact reviewed food-check rule is unavailable for ${formatReadableList(unresolvedLabels)}.`;
+	}
+
+	return "An exact reviewed food-check rule is unavailable for one or more saved food settings.";
+};
+
+const getIncompleteEvaluationMessage = (
+	evaluation: FoodCompatibilityEvaluation,
+) => {
+	const missingDetails = [
+		getMissingPackageEvidenceSentence(evaluation.coverage),
+		getMissingPolicyCoverageSentence(evaluation),
+	].filter((detail): detail is string => Boolean(detail));
+
+	return [
+		"No conflict was found in the information available.",
+		...missingDetails,
+		missingDetails.length
+			? CURRENT_PACKAGE_LABEL_REMINDER
+			: "The stored food-check result is incomplete. Check the current package label before eating.",
+	].join(" ");
+};
+
 const messages: Record<
 	FoodCompatibilityEvaluationStatus,
 	FoodCompatibilityEvaluationMessage
@@ -35,7 +99,7 @@ const messages: Record<
 		tone: "warning",
 		title: "Some food details could not be checked",
 		message:
-			"No conflict was found in the information available, but required ingredient, allergen, or cross-contact details are missing. Check the current package label when this food is packaged.",
+			"The stored food-check result is incomplete. Check the current package label before eating.",
 	},
 	not_checked: {
 		tone: "info",
@@ -47,7 +111,13 @@ const messages: Record<
 
 export const getFoodCompatibilityEvaluationMessage = (
 	evaluation: FoodCompatibilityEvaluation,
-) => messages[evaluation.status];
+) =>
+	evaluation.status === "incomplete"
+		? {
+				...messages.incomplete,
+				message: getIncompleteEvaluationMessage(evaluation),
+			}
+		: messages[evaluation.status];
 
 export const getRegulatedAlcoholMissingSafetyDetailsMessage = (
 	food: FoodItem,
@@ -58,17 +128,17 @@ export const getRegulatedAlcoholMissingSafetyDetailsMessage = (
 	const coverage =
 		food.compatibilityEvaluation?.coverage ??
 		getFoodCompatibilityEvidenceCoverage(food);
-	const isSafetyDetailMissing = [
-		coverage.ingredients,
-		coverage.allergens,
-		coverage.traces,
-	].some((state) => state === "missing");
-	if (!isSafetyDetailMissing) return null;
+	const safetyCoverage = {
+		...coverage,
+		identity: "not_required" as const,
+	};
+	const missingSafetyDetails =
+		getMissingPackageEvidenceSentence(safetyCoverage);
+	if (!missingSafetyDetails) return null;
 
 	return {
 		tone: "warning",
 		title: "Federal alcohol labels leave gaps",
-		message:
-			"Federal alcohol-label rules let most alcoholic beverages skip major-allergen disclosure, and we couldn't verify every ingredient, allergen, or cross-contact detail for this drink. Check the current package and contact the maker before drinking.",
+		message: `Federal alcohol-label rules let most alcoholic beverages skip major-allergen disclosure. ${missingSafetyDetails} Check the current package and contact the maker before drinking.`,
 	};
 };

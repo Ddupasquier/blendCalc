@@ -231,9 +231,10 @@ describe("ProductCompatibilityPanel", () => {
 		).toBeInTheDocument();
 		expect(
 			screen.getByText(
-				/required ingredient, allergen, or cross-contact details are missing/i,
+				/the allergen declaration and cross-contact statement are missing/i,
 			),
 		).toBeInTheDocument();
+		expect(screen.queryByText(/ingredient list/i)).not.toBeInTheDocument();
 		unmount();
 
 		render(ProductCompatibilityPanel, {
@@ -297,6 +298,11 @@ describe("ProductCompatibilityPanel", () => {
 		).toBeInTheDocument();
 		expect(
 			screen.getByText(/skip major-allergen disclosure/i),
+		).toBeInTheDocument();
+		expect(
+			screen.getByText(
+				/the ingredient list, allergen declaration, and cross-contact statement are missing/i,
+			),
 		).toBeInTheDocument();
 		expect(
 			screen.queryByText("Not checked against food settings"),
