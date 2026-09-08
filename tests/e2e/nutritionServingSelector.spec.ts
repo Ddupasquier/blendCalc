@@ -93,9 +93,18 @@ test("serving choices update the viewing amount and normalized nutrition values"
 		.filter({ hasText: "CALORIES" })
 		.first();
 
-	await expect(amountSection.locator("strong")).toHaveText("1 tbsp (20g)");
+	await expect(amountSection.locator("strong")).toHaveText("20g");
 	await expect(servingTrigger).toContainText("1 tbsp (20g) · Package label");
 	await expect(caloriesRow).toContainText("50");
+
+	await page.getByRole("tab", { name: "Servings" }).click();
+	await expect(amountSection.locator("strong")).toHaveText(
+		"1 serving (1 tbsp)",
+	);
+	await expect(caloriesRow).toContainText("50");
+
+	await page.getByRole("tab", { name: "Weight" }).click();
+	await expect(amountSection.locator("strong")).toHaveText("20g");
 
 	await servingTrigger.click();
 	await page.getByRole("option", { name: "100g standard" }).click();
@@ -107,8 +116,12 @@ test("serving choices update the viewing amount and normalized nutrition values"
 	await page
 		.getByRole("option", { name: "1 tbsp (20g) · Package label" })
 		.click();
-	await expect(amountSection.locator("strong")).toHaveText("1 tbsp (20g)");
+	await expect(amountSection.locator("strong")).toHaveText("20g");
 	await expect(caloriesRow).toContainText("50");
+	await page.getByRole("tab", { name: "Servings" }).click();
+	await expect(amountSection.locator("strong")).toHaveText(
+		"1 serving (1 tbsp)",
+	);
 	await expect(
 		page.locator(".nf-label").getByText("1 tbsp (20g)", { exact: true }),
 	).toBeVisible();
