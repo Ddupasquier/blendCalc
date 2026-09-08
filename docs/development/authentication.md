@@ -134,7 +134,8 @@ Before public launch, also:
 - Enroll every moderator, administrator, and developer account in TOTP and complete
   one protected-action challenge before depending on those accounts operationally.
 - Review Auth rate limits; lower them if automated abuse appears.
-- Configure custom SMTP before depending on confirmation or recovery emails.
+- Configure custom SMTP and verify the exact sender domain with the provider before
+  depending on confirmation or recovery emails.
 - Keep the recovery request response account-neutral. A provider-accepted request may
   say that an email is on the way if the account exists; a rejected CAPTCHA, SMTP, rate
   limit, or provider request must instead show actionable retry guidance.
@@ -146,7 +147,11 @@ environment with `npm run auth:configure-hosted -- --turnstile` or `--smtp`. Alw
 the matching `--dry-run` first, then repeat the command with the exact
 `--confirm-project=<project-ref>` value it reports. The operation accepts only
 `SUPABASE_AUTH_*` inputs, updates only the selected hosted Auth fields, and never prints
-protected values.
+protected values. Supabase may return stored SMTP passwords only as opaque protected
+markers, so confirmation requires that marker to remain present while matching the
+sender, host, port, user, and sender name exactly. The read-only hosted-security audit
+separately verifies provider sender-domain readiness; a successful configuration write
+does not claim that email delivery is ready.
 
 CAPTCHA requires dashboard secrets and a public site key, so it must not be enabled in
 Supabase until both values are configured and the deployed token flow has passed a

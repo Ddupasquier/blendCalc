@@ -49,9 +49,11 @@ describe("hosted Auth configuration", () => {
 				security_captcha_secret: "provider-returned-secret-hmac",
 				...Object.fromEntries(
 					Object.entries(expectedPatch).filter(
-						([field]) => field !== "security_captcha_secret",
+						([field]) =>
+							field !== "security_captcha_secret" && field !== "smtp_pass",
 					),
 				),
+				smtp_pass: "provider-returned-protected-value",
 			},
 			{ turnstile: true, smtp: true },
 			expectedPatch,
@@ -62,6 +64,55 @@ describe("hosted Auth configuration", () => {
 			customSmtpConfigured: true,
 		});
 		expect(JSON.stringify(summary)).not.toContain("never-report-this");
+	});
+
+	it.each([
+		"smtp_admin_email",
+		"smtp_host",
+		"smtp_port",
+		"smtp_user",
+		"smtp_sender_name",
+	])("rejects an SMTP %s mismatch", (field) => {
+		const expectedPatch = {
+			smtp_admin_email: "auth@example.test",
+			smtp_host: "smtp.example.test",
+			smtp_port: "587",
+			smtp_user: "blendcalc",
+			smtp_pass: "protected-request-value",
+			smtp_sender_name: "blendCalc",
+		};
+		const authConfiguration = {
+			...expectedPatch,
+			smtp_pass: "provider-returned-protected-value",
+			[field]: "unexpected-value",
+		};
+
+		expect(
+			summarizeHostedAuthConfiguration(
+				authConfiguration,
+				{ smtp: true },
+				expectedPatch,
+			),
+		).toEqual({ customSmtpConfigured: false });
+	});
+
+	it("requires a non-empty stored SMTP credential marker", () => {
+		const expectedPatch = {
+			smtp_admin_email: "auth@example.test",
+			smtp_host: "smtp.example.test",
+			smtp_port: "587",
+			smtp_user: "blendcalc",
+			smtp_pass: "protected-request-value",
+			smtp_sender_name: "blendCalc",
+		};
+
+		expect(
+			summarizeHostedAuthConfiguration(
+				{ ...expectedPatch, smtp_pass: "" },
+				{ smtp: true },
+				expectedPatch,
+			),
+		).toEqual({ customSmtpConfigured: false });
 	});
 
 	it("recognizes Cloudflare's safe valid-secret probe response", () => {

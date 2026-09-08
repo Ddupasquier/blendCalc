@@ -61,17 +61,17 @@ The linked production project was verified on **August 11, 2026**:
   current privileged application and database boundary.
 - Production, local development, isolated browser testing, and restricted Vercel
   preview Auth callbacks are allowed.
+- Authentication controls were reverified on **September 8, 2026**: Turnstile is
+  enabled, the elevated account has a verified TOTP factor, and custom SMTP uses the
+  provider-verified `noreply.blendcalc.food` sender domain.
 
-The following launch gates remain intentionally blocked rather than partially enabled:
+The following direct or operational launch checks remain active:
 
-- Cloudflare Turnstile still needs production site/secret keys and a deployed-origin
-  verification pass before hosted CAPTCHA can be enabled. The browser token flow and
-  Auth-screen presentation are implemented.
-- Custom SMTP needs verified provider credentials before confirmation and recovery
-  email delivery can be treated as production-ready.
-- Every elevated production account must complete TOTP enrollment and one protected
-  challenge before launch. Lost-factor removal remains a trusted, identity-verified
-  administrator recovery procedure rather than a password-only self-service action.
+- Complete the full real-inbox desktop/mobile registration, confirmation, recovery,
+  and Turnstile corpus even while the provider reports the sender ready.
+- Complete one protected-action challenge for every elevated production account before
+  launch. Lost-factor removal remains a trusted, identity-verified administrator
+  recovery procedure rather than a password-only self-service action.
 - Hosted Auth log retention must be confirmed against the active Supabase plan.
 
 ## Read-Only Hosted Audit
@@ -87,7 +87,12 @@ The default report is diagnostic. `--strict` exits unsuccessfully while required
 controls fail or remain blocked. Add `--json` for a secret-safe machine-readable
 snapshot. The report includes only network entry counts; it never prints trusted
 addresses, CAPTCHA secrets, SMTP passwords, service-role keys, database passwords, or
-Supabase access tokens.
+Supabase access tokens. SMTP credentials and a non-empty protected password marker prove
+configuration only. When the configured host is Resend, the audit derives the sender
+domain from the hosted Auth sender address and checks Resend's domain inventory; the
+email control passes only when that exact domain is `verified` with sending enabled.
+An unavailable provider check is blocked, and an explicitly unready or missing domain
+fails.
 
 The script reads `SUPABASE_ACCESS_TOKEN` when provided. On macOS it can otherwise use
 the existing Supabase CLI Keychain credential. Never place an access token in a tracked

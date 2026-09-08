@@ -1979,6 +1979,11 @@ Notes:
 - `get_pending_profile_image_review_count()` returns the number of distinct exact images
   requiring action rather than loading private report rows or counting duplicate reports
   as separate moderator tasks. Only the service role can execute it.
+- `get_privileged_tool_action_summary()` returns exact AAL2, live-role-aware Profile
+  counts for product submissions, combined catalog-review decisions, food-warning
+  reports, distinct reported profile images, and deduplicated data-operation subjects.
+  It excludes search-only Account access and sums only the counts permitted for the
+  current database role assignment.
 - `app_role_assignments` is the authority for application roles. The `app_role` enum
   contains `user`, `moderator`, `admin`, and `developer`, while assignments store only
   elevated roles. `app_role_permissions` maps those roles to database-owned
@@ -2260,6 +2265,7 @@ category, or serving fields.
 | `get_catalog_review_work_summary`                      | Returns bounded material conflicts, provider changes, and possible recall matches after exact AAL2 catalog-review authorization                                                                        |
 | `get_moderator_data_health`                            | Temporary compatibility wrapper for the previous combined data-health interface                                                                                                                        |
 | `get_pending_profile_image_review_count`               | Service-role-only count of distinct exact profile images with one or more pending reports                                                                                                              |
+| `get_privileged_tool_action_summary`                   | Returns exact live-role-aware actionable Profile counts after AAL2 verification, deduplicating data-operations work by affected subject and excluding search-only account access                       |
 | `claim_catalog_revalidation_jobs`                      | Service-only bounded claim of due product/provider jobs using expiring claim tokens                                                                                                                    |
 | `complete_catalog_revalidation_job`                    | Service-only completion and retry scheduling for one claimed product check                                                                                                                             |
 | `record_catalog_provider_snapshot`                     | Service-only immutable observation/snapshot write that creates a review for material changes                                                                                                           |

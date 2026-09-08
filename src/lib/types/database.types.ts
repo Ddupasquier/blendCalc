@@ -9935,6 +9935,7 @@ export type Database = {
         Returns: Json
       }
       get_pending_profile_image_review_count: { Args: never; Returns: number }
+      get_privileged_tool_action_summary: { Args: never; Returns: Json }
       get_product_api_cache_health: { Args: never; Returns: Json }
       is_valid_gtin: { Args: { p_value: string }; Returns: boolean }
       jsonb_text_array_search_text: { Args: { p_value: Json }; Returns: string }

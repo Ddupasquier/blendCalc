@@ -143,7 +143,11 @@ const evaluatePrivilegedMfaEnrollment = (privilegedMfaSummary) => {
 	);
 };
 
-const evaluateAuthConfiguration = (authConfiguration, privilegedMfaSummary) => {
+const evaluateAuthConfiguration = (
+	authConfiguration,
+	privilegedMfaSummary,
+	smtpProviderReadiness,
+) => {
 	const redirectUrls = splitRedirectUrls(authConfiguration?.uri_allow_list);
 	const missingRedirectUrls = REQUIRED_REDIRECT_URLS.filter(
 		(requiredUrl) => !redirectUrls.includes(requiredUrl),
@@ -164,9 +168,25 @@ const evaluateAuthConfiguration = (authConfiguration, privilegedMfaSummary) => {
 	const customSmtpIsConfigured = [
 		authConfiguration?.smtp_admin_email,
 		authConfiguration?.smtp_host,
+		authConfiguration?.smtp_port,
 		authConfiguration?.smtp_pass,
 		authConfiguration?.smtp_user,
+		authConfiguration?.smtp_sender_name,
 	].every((value) => String(value ?? "").trim().length > 0);
+	const smtpReadinessStatus = !customSmtpIsConfigured
+		? "blocked"
+		: smtpProviderReadiness?.checked !== true
+			? "blocked"
+			: smtpProviderReadiness.ready === true
+				? "pass"
+				: "fail";
+	const smtpReadinessDetail = !customSmtpIsConfigured
+		? "Custom SMTP provider credentials are not configured in hosted Auth."
+		: smtpProviderReadiness?.checked !== true
+			? "Custom SMTP credentials are configured, but provider delivery readiness could not be verified."
+			: smtpProviderReadiness.ready === true
+				? "Custom SMTP credentials are configured, and the provider reports the sender domain verified with sending enabled."
+				: "Custom SMTP credentials are configured, but the provider does not report the sender domain verified with sending enabled.";
 
 	return [
 		createFinding(
@@ -233,11 +253,9 @@ const evaluateAuthConfiguration = (authConfiguration, privilegedMfaSummary) => {
 		evaluatePrivilegedMfaEnrollment(privilegedMfaSummary),
 		createFinding(
 			"custom-smtp",
-			"Production email delivery",
-			customSmtpIsConfigured ? "pass" : "blocked",
-			customSmtpIsConfigured
-				? "Custom SMTP is configured for confirmation and recovery messages."
-				: "Custom SMTP provider credentials are not configured in hosted Auth.",
+			"Production email sender readiness",
+			smtpReadinessStatus,
+			smtpReadinessDetail,
 		),
 	];
 };
@@ -249,6 +267,7 @@ export const evaluateHostedSecuritySnapshot = (
 		backupConfiguration,
 		authConfiguration,
 		privilegedMfaSummary,
+		smtpProviderReadiness,
 	},
 	{ now = new Date() } = {},
 ) => {
@@ -256,7 +275,11 @@ export const evaluateHostedSecuritySnapshot = (
 		evaluateProjectHealth(project),
 		evaluateNetworkRestrictions(networkRestrictions),
 		...evaluateBackups(backupConfiguration, now),
-		...evaluateAuthConfiguration(authConfiguration, privilegedMfaSummary),
+		...evaluateAuthConfiguration(
+			authConfiguration,
+			privilegedMfaSummary,
+			smtpProviderReadiness,
+		),
 		createFinding(
 			"auth-audit-events",
 			"Authentication audit events",
@@ -281,6 +304,7 @@ export const getSerializableHostedSecuritySnapshot = ({
 	backupConfiguration,
 	authConfiguration,
 	privilegedMfaSummary,
+	smtpProviderReadiness,
 }) => ({
 	project: {
 		id: project?.id ?? null,
@@ -329,8 +353,10 @@ export const getSerializableHostedSecuritySnapshot = ({
 		customSmtpConfigured: [
 			authConfiguration?.smtp_admin_email,
 			authConfiguration?.smtp_host,
+			authConfiguration?.smtp_port,
 			authConfiguration?.smtp_pass,
 			authConfiguration?.smtp_user,
+			authConfiguration?.smtp_sender_name,
 		].every((value) => String(value ?? "").trim().length > 0),
 	},
 	privilegedMfaSummary: {
@@ -343,5 +369,14 @@ export const getSerializableHostedSecuritySnapshot = ({
 			privilegedMfaSummary?.checked === true
 				? Number(privilegedMfaSummary.verifiedTotpAccountCount)
 				: null,
+	},
+	smtpProviderReadiness: {
+		checked: smtpProviderReadiness?.checked === true,
+		provider: smtpProviderReadiness?.provider ?? null,
+		senderDomain: smtpProviderReadiness?.senderDomain ?? null,
+		domainStatus: smtpProviderReadiness?.domainStatus ?? null,
+		sendingCapability: smtpProviderReadiness?.sendingCapability ?? null,
+		ready: smtpProviderReadiness?.ready === true,
+		reason: smtpProviderReadiness?.reason ?? null,
 	},
 });

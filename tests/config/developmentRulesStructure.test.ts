@@ -58,6 +58,26 @@ describe("development rules documentation", () => {
 		);
 	});
 
+	it("requires status-first Project triage and delivery-class ownership", () => {
+		expect(rules).toContain("##### Required Project Management Flow");
+		for (const requirement of [
+			"Triage Inbox before pickup",
+			"Move the ticket before doing the work",
+			"Classify before approval handling",
+			"Deliver according to ownership",
+			"Reconcile before selecting the next ticket",
+			"Correct lifecycle mistakes before continuing",
+		]) {
+			expect(rules).toContain(requirement);
+		}
+		expect(rules).toContain(
+			"Never leave actively worked content in\n   `Inbox`, `Ready`, or an unrelated lifecycle state",
+		);
+		expect(rules).toContain(
+			"Verification-only work already proven on `main`\n   goes directly to `Done`",
+		);
+	});
+
 	it("keeps every individual rule available in the document outline", () => {
 		const outlinedRuleCount = [
 			...rules.matchAll(
