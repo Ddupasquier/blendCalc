@@ -16,6 +16,8 @@
 		"dev": "vite dev --host localhost --port 5173 --strictPort",
 		"predev:test": "npm run free:test-port && npm run version:check && npm run db:test:start",
 		"dev:test": "BLENDCALC_DATABASE_ENVIRONMENT=test vite dev --mode test --host localhost --port 5174 --strictPort",
+		"predev:test:auth": "npm run predev:test",
+		"dev:test:auth": "PUBLIC_TURNSTILE_SITE_KEY=1x00000000000000000000AA BLENDCALC_DATABASE_ENVIRONMENT=test vite dev --mode test --host localhost --port 5174 --strictPort",
 		"build:test:e2e": "BLENDCALC_DATABASE_ENVIRONMENT=test node scripts/operations/quality/run_with_resource_limits.mjs vite build --mode test",
 		"preview:test:e2e": "BLENDCALC_DATABASE_ENVIRONMENT=test vite preview --mode test --host localhost --port 5174 --strictPort",
 		"test:e2e:server": "npm run build:test:e2e && npm run preview:test:e2e",

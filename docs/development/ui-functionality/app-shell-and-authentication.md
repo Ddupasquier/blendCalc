@@ -17,17 +17,39 @@ welcome, and guided tutorial. Auth configuration and security details remain in
 ## Sign-In
 
 - Support Google OAuth and email/password sign-in and registration.
+- Use Google's standard full-color `G` inside the Google action boundary; do not
+  substitute an app-colored letter or a monochrome approximation.
 - Ask Google to show its account chooser for every OAuth attempt so the user controls
   which Google profile is connected.
 - Return authentication to the origin that started it: localhost, production, or the
   exact preview deployment.
 - Use `/auth/callback` for the callback route.
+- Password-recovery emails must return to the exact allow-listed `/auth/callback` URL;
+  keep the subsequent `/auth/update-password` destination in the protected auth-flow
+  context rather than adding it to the provider redirect URL.
+- Every password and password-confirmation field provides an adjacent eye control that
+  toggles only that field between concealed and visible text without clearing its value.
+  The control must expose its current `Show` or `Hide` action to assistive technology.
+- Account-creation and password-update confirmations validate against their paired
+  password immediately. A mismatch is visibly and accessibly identified, and the
+  submit action remains unavailable until the values match and the password policy is
+  satisfied; the server repeats the same validation.
 - Show password requirements during registration and route legacy weak-password
   accounts through the required update flow.
 - Disable duplicate submissions while a request is pending.
 - Translate failures into clear, nontechnical guidance.
-- Render the explicit Cloudflare Turnstile challenge only when its public site key is
-  configured, and submit its one-time token with supported Supabase email Auth calls.
+- Present password recovery as a compact link directly beneath the password field,
+  separate from the primary sign-in and account-creation actions.
+- Use the established guest shell, shared fields, buttons, status messages, spacing
+  tokens, and responsive tiers. Keep the provider action, divider, credentials,
+  challenge, primary actions, and privacy note in an even readable sequence without
+  empty reserved challenge space.
+- Keep account existence private, but do not report that a recovery email is on the way
+  when CAPTCHA, rate limiting, SMTP, or another provider boundary rejected the request.
+- Render the explicit Cloudflare Turnstile challenge before the email actions whenever
+  its public site key is configured. Do not hide the required control until after a
+  failed submission or add redundant prose explaining that automated sign-ins are
+  blocked. Submit its one-time token with supported Supabase email Auth calls.
 - Keep authenticated routes unavailable to signed-out visitors.
 - In the isolated local test app only, default to a maintained QA-account picker and
   provide an explicit toggle back to the unchanged real sign-in flow. Never expose that

@@ -5,7 +5,10 @@
 	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import TextField from "$lib/components/common/forms/TextField/TextField.svelte";
-	import { PASSWORD_MIN_LENGTH } from "$lib/utils/auth/passwordPolicy";
+	import {
+		isPasswordPolicyCompliant,
+		PASSWORD_MIN_LENGTH,
+	} from "$lib/utils/auth/passwordPolicy";
 	import { createPendingSubmit } from "$lib/utils/forms/pendingSubmit";
 	import type { UpdatePasswordPageProps } from "./types";
 
@@ -13,6 +16,14 @@
 	let password = $state("");
 	let passwordConfirmation = $state("");
 	let isSubmitting = $state(false);
+	let passwordConfirmationInvalid = $derived(
+		passwordConfirmation.length > 0 && password !== passwordConfirmation,
+	);
+	let passwordUpdateReady = $derived(
+		isPasswordPolicyCompliant(password, data.email) &&
+			passwordConfirmation.length > 0 &&
+			password === passwordConfirmation,
+	);
 	const preventDuplicateSubmit = createPendingSubmit(
 		(pending) => (isSubmitting = pending),
 	);
@@ -58,6 +69,8 @@
 			autocomplete="new-password"
 			minlength={PASSWORD_MIN_LENGTH}
 			placeholder="Enter it again"
+			aria-describedby="password-match-requirement"
+			aria-invalid={passwordConfirmationInvalid}
 			required
 			disabled={isSubmitting}
 			value={passwordConfirmation}
@@ -68,7 +81,12 @@
 			email={data.email}
 			confirmation={passwordConfirmation}
 		/>
-		<RoundedActionButton type="submit" fullWidth busy={isSubmitting}>
+		<RoundedActionButton
+			type="submit"
+			fullWidth
+			busy={isSubmitting}
+			disabled={!passwordUpdateReady}
+		>
 			Update password
 		</RoundedActionButton>
 	</form>

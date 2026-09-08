@@ -113,7 +113,24 @@
 	);
 }
 
-@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+.rounded-action-button[data-variant="link"] {
+	justify-content: flex-start;
+	min-height: $app-shell-control-height-narrow;
+	padding-inline: $app-gap-inline-compact;
+	color: $app-shell-accent-primary;
+	background: transparent;
+	border-color: transparent;
+	font-size: $app-font-size-sm;
+	text-decoration: underline;
+	text-underline-offset: 0.18em;
+
+	&:hover:not(:disabled) {
+		color: $app-shell-text-primary;
+	}
+}
+
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
 	.rounded-action-button {
 		min-height: $app-shell-control-height-narrow;
 		padding-inline: $app-shell-control-padding-x-compact;

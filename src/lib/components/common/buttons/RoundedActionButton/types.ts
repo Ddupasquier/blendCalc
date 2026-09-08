@@ -5,7 +5,7 @@ import type {
 } from "$lib/components/common/buttons/types";
 
 export type RoundedActionButtonVariant =
-	"primary" | "outline" | "quiet" | "soft" | "neutral" | "dashed";
+	"primary" | "outline" | "quiet" | "soft" | "neutral" | "dashed" | "link";
 
 export type RoundedActionButtonContentAlign =
 	"center" | "start" | "space-between";

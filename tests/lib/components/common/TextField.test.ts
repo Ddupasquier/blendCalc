@@ -60,4 +60,34 @@ describe("TextField", () => {
 		expect(screen.getByText("11 / 150")).toBeVisible();
 		expect(textarea).toHaveAccessibleDescription("139 characters remaining");
 	});
+
+	it("toggles password visibility without changing the entered value", async () => {
+		render(TextField, {
+			props: {
+				id: "account-password",
+				name: "password",
+				label: "Password",
+				type: "password",
+				value: "one long private passphrase",
+			},
+		});
+
+		const input = screen.getByLabelText("Password");
+		const toggle = screen.getByRole("button", { name: "Show password" });
+		expect(input).toHaveAttribute("type", "password");
+		expect(toggle).toHaveAttribute("aria-pressed", "false");
+
+		await fireEvent.click(toggle);
+		expect(input).toHaveAttribute("type", "text");
+		expect(input).toHaveValue("one long private passphrase");
+		expect(
+			screen.getByRole("button", { name: "Hide password" }),
+		).toHaveAttribute("aria-pressed", "true");
+
+		await fireEvent.click(
+			screen.getByRole("button", { name: "Hide password" }),
+		);
+		expect(input).toHaveAttribute("type", "password");
+		expect(input).toHaveValue("one long private passphrase");
+	});
 });
