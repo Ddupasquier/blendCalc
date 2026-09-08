@@ -22,7 +22,10 @@
 	} from "$lib/utils/food/nutrients/nutritionViewingAmount";
 	import NutritionPanel from "../NutritionPanel/NutritionPanel.svelte";
 	import NutritionServingSelect from "../NutritionServingSelect/NutritionServingSelect.svelte";
-	import type { NutritionDetailViewProps } from "./types";
+	import type {
+		NutritionDetailViewProps,
+		ServingViewingSelection,
+	} from "./types";
 	import { getCanonicalFoodDescription } from "$lib/utils/food/records/foodRecords";
 
 	let {
@@ -36,10 +39,6 @@
 		onReportIncorrectInformation,
 	}: NutritionDetailViewProps = $props();
 
-	type ServingViewingSelection = Extract<
-		NutritionViewingSelection,
-		{ kind: "serving" }
-	>;
 	const hasExactServingWeight = (selection: ServingViewingSelection | null) => {
 		if (!selection || !canViewFoodNutritionByMass(food)) return false;
 		const grams = getNutritionViewingConversion(food, {
