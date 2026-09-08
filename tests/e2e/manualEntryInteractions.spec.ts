@@ -1647,7 +1647,7 @@ test("canonical categories persist across saved cards and nutrition details", as
 			{
 				fdcId: 9_100_003,
 				name: "Gochu Jang Hot & Sweet Chili Sauce",
-				category: "Dips and Salsa",
+				category: "Gochujang",
 			},
 		];
 
