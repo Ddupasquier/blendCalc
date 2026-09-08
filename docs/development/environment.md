@@ -94,7 +94,9 @@ Add only the requested `SUPABASE_AUTH_*` values, run the dry run, then apply tha
 operation with the reported project confirmation. The command updates only the selected
 hosted Auth fields and reports status without printing values. Leave unavailable inputs
 as commented empty names in the ignored file; never rename a secret with a `PUBLIC_`
-prefix.
+prefix. For Resend SMTP, the hosted-security audit reuses the protected SMTP credential
+inside this same privileged process to read only provider domain readiness. It does not
+introduce a duplicate provider-key variable or serialize the credential.
 
 ## blendCalcAPI Database
 

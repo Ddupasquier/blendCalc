@@ -25,6 +25,13 @@ const CONFIGURATION_VARIABLES = {
 };
 const PROJECT_CONFIRMATION_PREFIX = "--confirm-project=";
 const allowedArguments = new Set(["--turnstile", "--smtp", "--dry-run"]);
+const SMTP_EXACT_MATCH_FIELDS = [
+	"smtp_admin_email",
+	"smtp_host",
+	"smtp_port",
+	"smtp_user",
+	"smtp_sender_name",
+];
 
 const readRequiredValues = (environment, names) => {
 	const values = Object.fromEntries(
@@ -91,18 +98,14 @@ export const summarizeHostedAuthConfiguration = (
 		: {}),
 	...(smtp
 		? {
-				customSmtpConfigured: [
-					"smtp_admin_email",
-					"smtp_host",
-					"smtp_port",
-					"smtp_user",
-					"smtp_pass",
-					"smtp_sender_name",
-				].every(
-					(field) =>
-						String(authConfiguration?.[field] ?? "") ===
-						String(expectedPatch[field] ?? ""),
-				),
+				customSmtpConfigured:
+					SMTP_EXACT_MATCH_FIELDS.every(
+						(field) =>
+							String(authConfiguration?.[field] ?? "") ===
+							String(expectedPatch[field] ?? ""),
+					) &&
+					String(authConfiguration?.smtp_pass ?? "").trim().length > 0 &&
+					String(expectedPatch.smtp_pass ?? "").trim().length > 0,
 			}
 		: {}),
 });

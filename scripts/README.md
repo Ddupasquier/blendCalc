@@ -303,6 +303,10 @@ exact project reference on apply, updates only those hosted fields, and never pr
 protected values. Before a Turnstile update, it confirms that Cloudflare recognizes
 the protected secret; afterward it verifies that Supabase accepted and retained an
 opaque secret value without attempting to compare that protected value as plaintext.
+For SMTP, it requires the returned protected password marker to remain present and
+matches every non-secret field exactly. The separate hosted-security audit checks the
+configured Resend sender domain through the provider API; configured credentials alone
+remain blocked rather than being reported as delivery-ready.
 
 Create and verify a protected backup outside the repository:
 

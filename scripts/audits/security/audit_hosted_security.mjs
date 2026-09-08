@@ -15,6 +15,7 @@ import {
 	evaluateHostedSecuritySnapshot,
 	getSerializableHostedSecuritySnapshot,
 } from "../../lib/security/hosted_security_audit.mjs";
+import { checkSmtpProviderReadiness } from "../../lib/security/smtp_provider_readiness.mjs";
 
 config({ path: ".env.moderation.local", quiet: true });
 
@@ -169,12 +170,19 @@ const [
 	readPrivilegedMfaSummary(),
 ]);
 
+const smtpProviderReadiness = await checkSmtpProviderReadiness({
+	smtpHost: authConfiguration.smtp_host,
+	smtpAdminEmail: authConfiguration.smtp_admin_email,
+	providerCredential: process.env.SUPABASE_AUTH_SMTP_PASS,
+});
+
 const snapshot = {
 	project,
 	networkRestrictions,
 	backupConfiguration,
 	authConfiguration,
 	privilegedMfaSummary,
+	smtpProviderReadiness,
 };
 const report = evaluateHostedSecuritySnapshot(snapshot);
 
