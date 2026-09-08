@@ -300,7 +300,9 @@ npm run auth:configure-hosted -- --smtp --confirm-project=<project-ref>
 This command reads only the selected `SUPABASE_AUTH_*` inputs from the ignored
 `.env.moderation.local`, identifies the linked project during dry run, requires that
 exact project reference on apply, updates only those hosted fields, and never prints
-protected values.
+protected values. Before a Turnstile update, it confirms that Cloudflare recognizes
+the protected secret; afterward it verifies that Supabase accepted and retained an
+opaque secret value without attempting to compare that protected value as plaintext.
 
 Create and verify a protected backup outside the repository:
 

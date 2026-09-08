@@ -23,6 +23,12 @@ const createRequest = (fields: Record<string, string>) => {
 	});
 };
 
+const createCookies = () => ({
+	get: vi.fn(),
+	set: vi.fn(),
+	delete: vi.fn(),
+});
+
 describe("Auth Turnstile integration", () => {
 	beforeEach(() => vi.clearAllMocks());
 
@@ -84,6 +90,88 @@ describe("Auth Turnstile integration", () => {
 			email: "qa-user@blendcalc.local",
 			password: "BlendCalc-Local-QA-2026!",
 			options: { captchaToken: "one-time-turnstile-token" },
+		});
+	});
+
+	it("does not claim a recovery email was sent when CAPTCHA rejects the request", async () => {
+		const resetPasswordForEmail = vi.fn().mockResolvedValue({
+			error: {
+				code: "unexpected_failure",
+				message:
+					"captcha protection: request disallowed (invalid-input-secret)",
+				status: 400,
+			},
+		});
+
+		const result = await actions.requestPasswordReset({
+			locals: { supabase: { auth: { resetPasswordForEmail } } },
+			request: createRequest({
+				email: "qa-user@blendcalc.local",
+				captchaToken: "one-time-turnstile-token",
+			}),
+			url: new URL("http://localhost:5173/auth"),
+			cookies: createCookies(),
+		} as never);
+
+		expect(result).toMatchObject({
+			status: 400,
+			data: {
+				message: "The security check was not accepted. Try it again.",
+			},
+		});
+	});
+
+	it("reports other recovery delivery failures without revealing account existence", async () => {
+		const resetPasswordForEmail = vi.fn().mockResolvedValue({
+			error: {
+				code: "email_provider_failure",
+				message: "delivery unavailable",
+				status: 503,
+			},
+		});
+
+		const result = await actions.requestPasswordReset({
+			locals: { supabase: { auth: { resetPasswordForEmail } } },
+			request: createRequest({
+				email: "qa-user@blendcalc.local",
+				captchaToken: "one-time-turnstile-token",
+			}),
+			url: new URL("http://localhost:5173/auth"),
+			cookies: createCookies(),
+		} as never);
+
+		expect(result).toMatchObject({
+			status: 400,
+			data: {
+				message:
+					"Unable to request a password reset right now. Try again in a moment.",
+			},
+		});
+	});
+
+	it("reports account-neutral success only after the recovery provider accepts the request", async () => {
+		const resetPasswordForEmail = vi.fn().mockResolvedValue({ error: null });
+
+		const result = await actions.requestPasswordReset({
+			locals: { supabase: { auth: { resetPasswordForEmail } } },
+			request: createRequest({
+				email: "qa-user@blendcalc.local",
+				captchaToken: "one-time-turnstile-token",
+			}),
+			url: new URL("http://localhost:5173/auth"),
+			cookies: createCookies(),
+		} as never);
+
+		expect(resetPasswordForEmail).toHaveBeenCalledWith(
+			"qa-user@blendcalc.local",
+			{
+				captchaToken: "one-time-turnstile-token",
+				redirectTo: "http://localhost:5173/auth/callback",
+			},
+		);
+		expect(result).toMatchObject({
+			success:
+				"If that email has an account, a password reset link is on the way.",
 		});
 	});
 });

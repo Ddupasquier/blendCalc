@@ -73,6 +73,22 @@ The legacy `https://blendcalc.vercel.app` production alias remains reachable for
 links, while authentication requests from it move to the canonical custom domain before
 provider handoff. It is a compatibility entry point, not a second canonical origin.
 
+Password recovery passes the exact origin-specific `/auth/callback` URL to Supabase.
+The fixed `/auth/update-password` destination stays in the short-lived, HTTP-only auth
+flow cookie instead of being appended as a callback query parameter. This keeps the
+provider redirect on the exact allow-listed URL; an unrecognized redirect would fall
+back to the Site URL and strand the PKCE verifier on the originating browser.
+
+All password inputs use the shared visibility control: an eye button toggles the
+current field between concealed and visible text while preserving the entered value,
+autocomplete contract, and independent state of confirmation fields. Its accessible
+name changes from `Show …` to `Hide …` with the visible state.
+
+Account creation and password updates validate the confirmation field as the person
+types. A mismatch is announced, marks the confirmation field invalid, and keeps the
+submission action unavailable until both values match and the password satisfies the
+application policy. Server validation remains authoritative for every submission.
+
 In **Authentication → Sign In / Providers → Google**, use the Google client ID and
 secret. In Google Cloud, configure:
 
@@ -119,6 +135,9 @@ Before public launch, also:
   one protected-action challenge before depending on those accounts operationally.
 - Review Auth rate limits; lower them if automated abuse appears.
 - Configure custom SMTP before depending on confirmation or recovery emails.
+- Keep the recovery request response account-neutral. A provider-accepted request may
+  say that an email is on the way if the account exists; a rejected CAPTCHA, SMTP, rate
+  limit, or provider request must instead show actionable retry guidance.
 - Keep refresh-token reuse detection enabled.
 - Review Auth audit logs after failed or suspicious sign-ins.
 
@@ -183,6 +202,12 @@ browser-worker, moderator, administrator, and developer states.
 Turn on **Test the real sign-in flow** to use the ordinary Google and email/password
 controls. Use that mode whenever authentication itself, credential errors, password
 recovery, account creation, OAuth, CAPTCHA, or MFA is under review.
+
+Start the app with `npm run dev:test:auth` when the visible Turnstile interaction is part
+of that review. This uses Cloudflare's public always-pass test site key on localhost
+without authorizing localhost on the production widget. The resulting local token proves
+the rendered challenge and form integration only; hosted enforcement and real email
+delivery still require staging or production verification.
 
 Quick QA login fails closed unless all of these conditions hold at the same time:
 

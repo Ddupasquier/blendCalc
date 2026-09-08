@@ -2,12 +2,17 @@
 
 .auth-content {
 	display: grid;
-	gap: $app-gap-md;
+	gap: $app-gap-lg;
 }
 
 .auth-content__header {
 	display: grid;
 	gap: $app-gap-sm;
+
+	.auth-content__intro {
+		display: grid;
+		gap: $app-gap-xs;
+	}
 
 	h1 {
 		color: $app-shell-text-primary;
@@ -64,6 +69,12 @@
 }
 
 .email-form {
+	display: grid;
+	gap: $app-gap-md;
+}
+
+.email-form__credentials,
+.email-form__password {
 	display: grid;
 	gap: $app-gap-sm;
 }
@@ -129,18 +140,18 @@
 }
 
 .password-reset-action {
-	justify-self: center;
+	justify-self: start;
+	margin-top: -$app-gap-sm;
 }
 
 .google-button__icon {
-	display: grid;
+	display: inline-grid;
+	flex: 0 0 auto;
 	place-items: center;
-	width: $app-shell-control-icon-size;
-	height: $app-shell-control-icon-size;
-	color: $app-shell-text-on-accent;
-	background: $app-shell-accent-primary;
+	width: 1.5rem;
+	height: 1.5rem;
+	background: $app-brand-google-surface;
 	border-radius: $app-shell-radius-pill;
-	font-weight: $app-font-weight-heavy;
 }
 
 .auth-divider {
@@ -168,7 +179,9 @@
 	display: flex;
 	gap: $app-gap-sm;
 	align-items: flex-start;
+	padding-top: $app-gap-sm;
 	color: $app-shell-text-muted;
+	border-top: 1px solid $app-shell-border-subtle;
 	font-size: $app-font-size-xs;
 	line-height: $app-line-height-ui;
 
@@ -196,6 +209,6 @@
 
 @media (max-height: $app-breakpoint-height-compact) {
 	.auth-content {
-		gap: $app-gap-sm;
+		gap: $app-gap-md;
 	}
 }

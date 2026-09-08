@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
+	import GoogleG from "$lib/assets/icons/GoogleG/GoogleG.svelte";
 	import GuestAccessPageShell from "$lib/components/auth/GuestAccessPageShell/GuestAccessPageShell.svelte";
 	import PasswordRequirements from "$lib/components/auth/PasswordRequirements/PasswordRequirements.svelte";
 	import TurnstileChallenge from "$lib/components/auth/TurnstileChallenge/TurnstileChallenge.svelte";
@@ -10,7 +11,10 @@
 	import ToggleSwitch from "$lib/components/common/forms/ToggleSwitch/ToggleSwitch.svelte";
 	import { APP_NAME } from "$lib/config/brand";
 	import { formatDocumentTitle } from "$lib/config/pageMetadata";
-	import { PASSWORD_MIN_LENGTH } from "$lib/utils/auth/passwordPolicy";
+	import {
+		isPasswordPolicyCompliant,
+		PASSWORD_MIN_LENGTH,
+	} from "$lib/utils/auth/passwordPolicy";
 	import { createPendingSubmit } from "$lib/utils/forms/pendingSubmit";
 	import type { AuthMode, AuthPageProps } from "./types";
 
@@ -45,6 +49,14 @@
 	);
 	const quickQaSignInActive = $derived(
 		Boolean(data.localQaSignIn) && !useRealSignInFlow,
+	);
+	const passwordConfirmationInvalid = $derived(
+		passwordConfirmation.length > 0 && password !== passwordConfirmation,
+	);
+	const signUpPasswordReady = $derived(
+		isPasswordPolicyCompliant(password, email) &&
+			passwordConfirmation.length > 0 &&
+			password === passwordConfirmation,
 	);
 
 	const preventDuplicateSubmit = createPendingSubmit(
@@ -107,24 +119,26 @@
 
 <GuestAccessPageShell>
 	<div class="auth-content">
-		<div class="auth-content__header">
+		<header class="auth-content__header">
 			<a class="auth-brand" href="/">{APP_NAME}</a>
-			<p class="auth-eyebrow">Your food awareness workspace</p>
-			<h1>
-				{quickQaSignInActive
-					? "Choose a QA account."
-					: authMode === "signUp"
-						? "Create your account."
-						: "Welcome back."}
-			</h1>
-			<p>
-				{quickQaSignInActive
-					? "Start a real session in the isolated test database without typing its disposable password."
-					: authMode === "signUp"
-						? "Save your ingredients, recipes, food preferences, and nutrition goals securely to your account."
-						: "Sign in to access your ingredients, recipes, food preferences, and nutrition goals."}
-			</p>
-		</div>
+			<div class="auth-content__intro">
+				<p class="auth-eyebrow">Your food awareness workspace</p>
+				<h1>
+					{quickQaSignInActive
+						? "Choose a QA account."
+						: authMode === "signUp"
+							? "Create your account."
+							: "Welcome back."}
+				</h1>
+				<p>
+					{quickQaSignInActive
+						? "Start a real session in the isolated test database without typing its disposable password."
+						: authMode === "signUp"
+							? "Save your ingredients, recipes, food preferences, and nutrition goals securely to your account."
+							: "Sign in to access your ingredients, recipes, food preferences, and nutrition goals."}
+				</p>
+			</div>
+		</header>
 
 		{#if data.localQaSignIn}
 			<section class="local-qa-mode" aria-labelledby="local-qa-mode-title">
@@ -209,7 +223,13 @@
 					fullWidth
 					busy={isSubmitting}
 				>
-					<span class="google-button__icon" aria-hidden="true">G</span>
+					<span
+						class="google-button__icon"
+						data-google-brand-icon
+						aria-hidden="true"
+					>
+						<GoogleG />
+					</span>
 					Continue with Google
 				</RoundedActionButton>
 			</form>
@@ -228,59 +248,80 @@
 				aria-busy={isSubmitting}
 			>
 				<input type="hidden" name="next" value={form?.next ?? data.next} />
-				<TextField
-					id="authentication-email"
-					name="email"
-					label="Email"
-					type="email"
-					autocomplete="email"
-					placeholder="you@example.com"
-					required
-					disabled={isSubmitting}
-					value={email}
-					oninput={(event) => (email = event.currentTarget.value)}
-				/>
-				<TextField
-					id="authentication-password"
-					name="password"
-					label="Password"
-					type="password"
-					autocomplete={authMode === "signUp"
-						? "new-password"
-						: "current-password"}
-					placeholder={authMode === "signUp"
-						? "Use a long passphrase"
-						: "Your password"}
-					aria-describedby={authMode === "signUp"
-						? "password-requirements"
-						: undefined}
-					required
-					disabled={isSubmitting}
-					minlength={authMode === "signUp" ? PASSWORD_MIN_LENGTH : undefined}
-					value={password}
-					oninput={(event) => (password = event.currentTarget.value)}
-				/>
-				{#if authMode === "signUp"}
+				<div class="email-form__credentials">
 					<TextField
-						id="authentication-password-confirmation"
-						name="passwordConfirmation"
-						label="Confirm password"
-						type="password"
-						autocomplete="new-password"
-						placeholder="Enter it again"
+						id="authentication-email"
+						name="email"
+						label="Email"
+						type="email"
+						autocomplete="email"
+						placeholder="you@example.com"
 						required
 						disabled={isSubmitting}
-						minlength={PASSWORD_MIN_LENGTH}
-						value={passwordConfirmation}
-						oninput={(event) =>
-							(passwordConfirmation = event.currentTarget.value)}
+						value={email}
+						oninput={(event) => (email = event.currentTarget.value)}
 					/>
-					<PasswordRequirements
-						{password}
-						{email}
-						confirmation={passwordConfirmation}
-					/>
-				{/if}
+					<div class="email-form__password">
+						<TextField
+							id="authentication-password"
+							name="password"
+							label="Password"
+							type="password"
+							autocomplete={authMode === "signUp"
+								? "new-password"
+								: "current-password"}
+							placeholder={authMode === "signUp"
+								? "Use a long passphrase"
+								: "Your password"}
+							aria-describedby={authMode === "signUp"
+								? "password-requirements"
+								: undefined}
+							required
+							disabled={isSubmitting}
+							minlength={authMode === "signUp"
+								? PASSWORD_MIN_LENGTH
+								: undefined}
+							value={password}
+							oninput={(event) => (password = event.currentTarget.value)}
+						/>
+						{#if authMode === "signIn"}
+							<div class="password-reset-action">
+								<RoundedActionButton
+									type="submit"
+									variant="link"
+									formAction="?/requestPasswordReset"
+									formNoValidate
+									disabled={isSubmitting}
+								>
+									Forgot your password?
+								</RoundedActionButton>
+							</div>
+						{/if}
+					</div>
+					{#if authMode === "signUp"}
+						<TextField
+							id="authentication-password-confirmation"
+							name="passwordConfirmation"
+							label="Confirm password"
+							type="password"
+							autocomplete="new-password"
+							placeholder="Enter it again"
+							aria-describedby="password-match-requirement"
+							aria-invalid={passwordConfirmationInvalid}
+							required
+							disabled={isSubmitting}
+							minlength={PASSWORD_MIN_LENGTH}
+							value={passwordConfirmation}
+							oninput={(event) =>
+								(passwordConfirmation = event.currentTarget.value)}
+						/>
+						<PasswordRequirements
+							{password}
+							{email}
+							confirmation={passwordConfirmation}
+						/>
+					{/if}
+				</div>
 				{#if data.turnstileSiteKey}
 					<TurnstileChallenge
 						siteKey={data.turnstileSiteKey}
@@ -288,7 +329,12 @@
 					/>
 				{/if}
 				<div class="email-form__actions">
-					<RoundedActionButton type="submit" fullWidth busy={isSubmitting}>
+					<RoundedActionButton
+						type="submit"
+						fullWidth
+						busy={isSubmitting}
+						disabled={authMode === "signUp" && !signUpPasswordReady}
+					>
 						{authMode === "signUp" ? "Create account" : "Sign in"}
 					</RoundedActionButton>
 					<RoundedActionButton
@@ -302,19 +348,6 @@
 						{authMode === "signUp" ? "Back to sign in" : "Create account"}
 					</RoundedActionButton>
 				</div>
-				{#if authMode === "signIn"}
-					<div class="password-reset-action">
-						<RoundedActionButton
-							type="submit"
-							variant="quiet"
-							formAction="?/requestPasswordReset"
-							formNoValidate
-							disabled={isSubmitting}
-						>
-							Forgot your password?
-						</RoundedActionButton>
-					</div>
-				{/if}
 			</form>
 		{/if}
 
