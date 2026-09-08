@@ -1,143 +1,88 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-
-const mocks = vi.hoisted(() => ({
-	getSupabaseAdminClient: vi.fn(),
-}));
-
-vi.mock("$lib/supabase/admin.server", () => ({
-	getSupabaseAdminClient: mocks.getSupabaseAdminClient,
-}));
-
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { describe, expect, it, vi } from "vitest";
 import {
 	getIdentityVerificationRequiredPrivilegedToolReviewSummary,
 	getUnavailablePrivilegedToolReviewSummary,
 	readPrivilegedToolReviewSummary,
 } from "$lib/server/moderation/privilegedToolReviewSummary.server";
+import type { Database } from "$lib/types/database.types";
 
-const createCountQuery = (count: number | null, error: unknown = null) => {
-	const query = {
-		select: vi.fn(),
-		not: vi.fn(),
-		eq: vi.fn(),
-	};
-	query.select.mockReturnValue(query);
-	query.not.mockReturnValue(query);
-	query.eq.mockResolvedValue({ count, error });
-	return query;
+const completeCounts = {
+	pendingProductSubmissions: 3,
+	pendingCatalogReviewItems: 4,
+	pendingFoodWarningReports: 2,
+	pendingProfileImageReviews: 1,
+	pendingCatalogDataOperations: 5,
+	totalActionableItems: 15,
 };
 
-describe("Profile privileged tool review summary", () => {
-	beforeEach(() => vi.clearAllMocks());
-	const reviewPermissions = [
-		"moderation.accounts.manage",
-		"moderation.catalog.review",
-		"moderation.warnings.review",
-	] as const;
+const createSupabase = (data: unknown, error: unknown = null) => {
+	const rpc = vi.fn().mockResolvedValue({ data, error });
+	return {
+		supabase: { rpc } as unknown as SupabaseClient<Database>,
+		rpc,
+	};
+};
 
-	it("counts pending queues and groups duplicate reports about one exact image", async () => {
-		const queries = {
-			shared_product_submissions: createCountQuery(3),
-			food_compatibility_feedback: createCountQuery(2),
-		};
-		const from = vi.fn((table: keyof typeof queries) => queries[table]);
-		const rpc = vi.fn().mockResolvedValue({ data: 1, error: null });
-		mocks.getSupabaseAdminClient.mockReturnValue({ from, rpc });
+describe("Profile privileged tool action summary", () => {
+	it("reads every exact actionable count through one role-aware RPC", async () => {
+		const { supabase, rpc } = createSupabase(completeCounts);
 
-		await expect(
-			readPrivilegedToolReviewSummary(reviewPermissions),
-		).resolves.toEqual({
-			pendingProductSubmissions: 3,
-			pendingFoodWarningReports: 2,
-			pendingProfileImageReviews: 1,
-			totalPendingReviews: 6,
+		await expect(readPrivilegedToolReviewSummary(supabase)).resolves.toEqual({
+			...completeCounts,
 			unavailable: false,
 			identityVerificationRequired: false,
 		});
-		expect(from).toHaveBeenCalledTimes(2);
-		for (const query of Object.values(queries)) {
-			expect(query.select).toHaveBeenCalledWith(expect.any(String), {
-				count: "exact",
-				head: true,
-			});
-		}
-		expect(rpc).toHaveBeenCalledWith("get_pending_profile_image_review_count");
+		expect(rpc).toHaveBeenCalledOnce();
+		expect(rpc).toHaveBeenCalledWith("get_privileged_tool_action_summary");
 	});
 
-	it("rejects an incomplete privileged count read", async () => {
-		const queries = {
-			shared_product_submissions: createCountQuery(0),
-			food_compatibility_feedback: createCountQuery(null, { code: "42501" }),
-		};
-		mocks.getSupabaseAdminClient.mockReturnValue({
-			from: vi.fn((table: keyof typeof queries) => queries[table]),
-			rpc: vi.fn().mockResolvedValue({ data: 0, error: null }),
-		});
+	it("rejects a database error instead of presenting incomplete counts", async () => {
+		const error = { code: "42501" };
+		const { supabase } = createSupabase(null, error);
 
-		await expect(
-			readPrivilegedToolReviewSummary(reviewPermissions),
-		).rejects.toEqual({ code: "42501" });
+		await expect(readPrivilegedToolReviewSummary(supabase)).rejects.toBe(error);
 	});
 
-	it("keeps Profile usable while the additive report table is rolling out", async () => {
-		const queries = {
-			shared_product_submissions: createCountQuery(1),
-			food_compatibility_feedback: createCountQuery(1),
-		};
-		mocks.getSupabaseAdminClient.mockReturnValue({
-			from: vi.fn((table: keyof typeof queries) => queries[table]),
-			rpc: vi.fn().mockResolvedValue({
-				data: null,
-				error: {
-					code: "PGRST202",
-					message:
-						"Could not find public.get_pending_profile_image_review_count in the schema cache",
-				},
-			}),
-		});
+	it.each([
+		[
+			"a missing count",
+			{ ...completeCounts, pendingCatalogReviewItems: undefined },
+		],
+		["a negative count", { ...completeCounts, pendingFoodWarningReports: -1 }],
+		["a fractional count", { ...completeCounts, totalActionableItems: 1.5 }],
+		["a non-object response", null],
+	])("rejects %s", async (_label, data) => {
+		const { supabase } = createSupabase(data);
 
-		await expect(
-			readPrivilegedToolReviewSummary(reviewPermissions),
-		).resolves.toMatchObject({
-			pendingProfileImageReviews: 0,
-			totalPendingReviews: 2,
-			unavailable: false,
-		});
-	});
-
-	it("does not read review queues that the role cannot access", async () => {
-		const from = vi.fn();
-		const rpc = vi.fn();
-		mocks.getSupabaseAdminClient.mockReturnValue({ from, rpc });
-
-		await expect(readPrivilegedToolReviewSummary([])).resolves.toMatchObject({
-			pendingProductSubmissions: 0,
-			pendingFoodWarningReports: 0,
-			pendingProfileImageReviews: 0,
-			totalPendingReviews: 0,
-		});
-		expect(from).not.toHaveBeenCalled();
-		expect(rpc).not.toHaveBeenCalled();
+		await expect(readPrivilegedToolReviewSummary(supabase)).rejects.toThrow(
+			"Privileged action summary",
+		);
 	});
 
 	it("represents unavailable counts without pretending they are zero", () => {
 		expect(getUnavailablePrivilegedToolReviewSummary()).toEqual({
 			pendingProductSubmissions: null,
+			pendingCatalogReviewItems: null,
 			pendingFoodWarningReports: null,
 			pendingProfileImageReviews: null,
-			totalPendingReviews: null,
+			pendingCatalogDataOperations: null,
+			totalActionableItems: null,
 			unavailable: true,
 			identityVerificationRequired: false,
 		});
 	});
 
-	it("withholds privileged review counts until identity verification", () => {
+	it("withholds all privileged action counts until identity verification", () => {
 		expect(
 			getIdentityVerificationRequiredPrivilegedToolReviewSummary(),
 		).toEqual({
 			pendingProductSubmissions: null,
+			pendingCatalogReviewItems: null,
 			pendingFoodWarningReports: null,
 			pendingProfileImageReviews: null,
-			totalPendingReviews: null,
+			pendingCatalogDataOperations: null,
+			totalActionableItems: null,
 			unavailable: false,
 			identityVerificationRequired: true,
 		});

@@ -22,9 +22,13 @@ compact bottom sheet containing only destinations granted by that role's current
 one focused responsibility: product submissions, food-warning reports, profile images,
 account access, catalog review work, or data operations. Review work and data operations
 appear under separate headings and only when the current database permission grants
-them. The focused route retains its own server and
+them. Product submissions, the combined catalog-review decision queue, food-warning
+reports, exact reported profile images, and deduplicated data-operation subjects expose
+their real actionable counts. Account access remains unbadged because it is search-led,
+not a pending queue. The launcher aggregate sums only those genuine actions without
+double-counting. The focused route retains its own server and
 database authorization, evidence, mutations, browser title, history entry, and direct-
-load behavior. Queue rows remain visible and disabled at zero; standing account,
+load behavior. Pure queue rows remain visible and disabled at zero; standing account,
 catalog-review, and permitted data-operation tools remain available. The bottom-sheet title and each right-sheet heading
 own one crown without repeating the same visible label inside their content.
 
@@ -118,6 +122,10 @@ Keep automated monitoring, source activity, dataset/licence state, food-warning 
 coverage, blendCalcAPI publication gaps, nutrient mapping gaps, and revision gaps in closed
 shared disclosures. Do not render product submissions, warning reports, provider-change
 decisions, recall decisions, or catalog-conflict decisions in this workspace.
+Its Profile badge counts each distinct affected subject once when that subject has one
+or more open enabled `app_issue_codes` rows owned by `data_operations`. Informational
+metrics, disabled issue codes, and multiple open issues on the same subject do not add
+extra actions.
 
 The legacy `/moderation/data-health` route redirects to the Profile privileged-tools
 gateway. `/profile/privileged-tools/catalog-data-health` redirects to data operations

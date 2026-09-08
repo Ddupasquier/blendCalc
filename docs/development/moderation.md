@@ -95,8 +95,11 @@ current tool without mixing instructions into every record.
 
 Product submissions, food-warning reports, and reported profile images share the same
 review-list and card shells. Account access remains search-led and keeps account evidence
-plus destructive controls behind deliberate disclosures. Catalog review work contains
-only decisions a reviewer can make. Data operations keeps its bounded operational
+plus destructive controls behind deliberate disclosures, so it has no action badge and
+does not contribute to the Profile aggregate. Catalog review work contains only
+decisions a reviewer can make and badges their exact combined total. Data operations
+badges distinct affected subjects with open enabled issues assigned to that work group,
+rather than summing overlapping dashboard metrics. It keeps its bounded operational
 sections collapsed until requested and never duplicates review queues. The
 visual consistency never replaces each route's independent server, database, AAL2, and
 permission checks.

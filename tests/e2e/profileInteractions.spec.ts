@@ -812,12 +812,12 @@ test("privileged tools stay hidden from regular accounts and use the shared shee
 	}
 	await expect(
 		privilegedToolsSheet.getByText(
-			"Verify with your authenticator when you open a protected tool. Review counts stay private until then.",
+			"Verify with your authenticator when you open a protected tool. Action counts stay private until then.",
 		),
 	).toBeVisible();
 	await expect(
 		privilegedToolsSheet.getByText("Verify your identity to check this queue"),
-	).toHaveCount(3);
+	).toHaveCount(4);
 
 	await privilegedToolsSheet
 		.getByRole("button", { name: /Product submissions/ })
@@ -933,6 +933,46 @@ test("privileged tools stay hidden from regular accounts and use the shared shee
 			approvalForm.locator('input[name="imageFitMode"]'),
 		).toHaveValue("custom");
 
+		await page.goto("/profile");
+		await waitForAppReady(page);
+		const verifiedLauncher = page.getByRole("button", {
+			name: /Moderator tools/,
+		});
+		const aggregateBadge = verifiedLauncher.locator(
+			".action-required-count-badge",
+		);
+		await expect(aggregateBadge).toBeVisible();
+		const aggregateCount = Number(await aggregateBadge.textContent());
+		expect(aggregateCount).toBeGreaterThan(0);
+
+		await verifiedLauncher.click();
+		const verifiedToolsSheet = page.getByRole("dialog", {
+			name: "Moderator tools",
+		});
+		const actionCounts = await verifiedToolsSheet
+			.locator(".bottom-sheet-action .action-required-count-badge")
+			.evaluateAll((badges) =>
+				badges.map((badge) => Number(badge.textContent ?? "0")),
+			);
+		expect(actionCounts.reduce((sum, count) => sum + count, 0)).toBe(
+			aggregateCount,
+		);
+		const emptyCatalogReviewAction = verifiedToolsSheet.getByRole("button", {
+			name: /Catalog review work/,
+		});
+		await expect(emptyCatalogReviewAction).toBeEnabled();
+		await expect(emptyCatalogReviewAction).toContainText(
+			"Nothing is waiting for review",
+		);
+		await expect(
+			emptyCatalogReviewAction.locator(".action-required-count-badge"),
+		).toHaveCount(0);
+		await expect(
+			verifiedToolsSheet
+				.getByRole("button", { name: /Account access/ })
+				.locator(".action-required-count-badge"),
+		).toHaveCount(0);
+
 		for (const protectedTool of [
 			{
 				path: "/profile/privileged-tools/catalog-review-work",
@@ -1009,6 +1049,21 @@ test("administrators can open data operations after direct AAL2 verification", a
 		await expect(
 			dataOperationsSheet.getByText("Automated catalog monitoring"),
 		).toBeVisible();
+
+		await page.goto("/profile");
+		await waitForAppReady(page);
+		await page.getByRole("button", { name: /Admin tools/ }).click();
+		const adminToolsSheet = page.getByRole("dialog", { name: "Admin tools" });
+		await expect(
+			adminToolsSheet
+				.getByRole("button", { name: /Catalog data operations/ })
+				.locator(".action-required-count-badge"),
+		).toBeVisible();
+		await expect(
+			adminToolsSheet
+				.getByRole("button", { name: /Account access/ })
+				.locator(".action-required-count-badge"),
+		).toHaveCount(0);
 	} finally {
 		await deleteLocalQaAuthenticatorFactorsForEmail(adminEmail);
 	}

@@ -2,9 +2,11 @@ import type { AppPermission, AppRole } from "./moderation";
 
 export type PrivilegedReviewSummary = {
 	pendingProductSubmissions: number | null;
+	pendingCatalogReviewItems: number | null;
 	pendingFoodWarningReports: number | null;
 	pendingProfileImageReviews: number | null;
-	totalPendingReviews: number | null;
+	pendingCatalogDataOperations: number | null;
+	totalActionableItems: number | null;
 	unavailable: boolean;
 	identityVerificationRequired: boolean;
 };
