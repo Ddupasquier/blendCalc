@@ -1,6 +1,6 @@
 # Development Rules
 
-Last reviewed: 2026-08-09
+Last reviewed: 2026-09-07
 
 ## Purpose
 
@@ -141,7 +141,7 @@ when you already know the rule you need.
 | [Atomic Bulk Ingredient Moves](#rule-bulk-list-moves)                            | [Long-Press Ingredient Selection](#rule-long-press-selection)            | [Sheets, Views, And URL State](#rule-bottom-sheet-flows)                           |
 | [Readable URLs And Browser Titles](#rule-page-metadata)                          | [Privileged Actions](#rule-privileged-action-badges)                     | [QA Process](#rule-qa-process)                                                     |
 | [QA Task Consistency](#rule-qa-task-consistency)                                 | [MVP QA Priorities](#rule-qa-priorities)                                 | [Unfinished Work Ownership](#rule-unfinished-work-ownership)                       |
-| [Development Audit Method](dev-rules-audit.md)                                   |                                                                          |                                                                                    |
+| [Issue Discovery And Ticket Authority](#rule-ticket-creation-authority)          | [Development Audit Method](dev-rules-audit.md)                           |                                                                                    |
 
 ## Rules
 
@@ -2196,6 +2196,31 @@ with a stable ID, evidence, affected ownership, next action, and exact completio
 condition. Every active observable QA group is represented there once by its stable
 group ID. Do not mirror active task lists in tracked documentation, audit findings, or a
 second general TODO system.
+
+<a id="rule-ticket-creation-authority"></a>
+
+#### Rule 41d — Issue Discovery And Ticket Creation Authority
+
+The project owner and the engineering agent are both authorized to create private
+Project tickets. When the agent discovers a concrete defect, regression, security or
+privacy risk, data-integrity problem, accessibility failure, maintainability issue, or
+other actionable gap while performing authorized work, it must preserve that finding in
+the Project rather than relying on memory or leaving it only in chat. The owner may add,
+revise, prioritize, or close tickets at any time.
+
+Before creating a ticket, search every active and completed Project item plus the legacy
+completed archive for the same behavior, ownership, and expected outcome. Update or link
+the existing item when one already represents the finding; never create duplicate,
+contradictory, or speculative queue noise. A new ticket must include observable evidence,
+affected ownership, impact and priority, an exact next action, a concrete completion
+condition, and reciprocal links to any explicit dependency or related ticket.
+
+Creating or updating a ticket is administrative tracking. It does not expand the active
+implementation scope, move the item to `In Progress`, create a feature branch, authorize
+an external mutation, or grant commit, push, merge, deployment, or database-push
+permission. Fix a small discovery in the active ticket only when it belongs to the same
+responsibility and is required for that ticket's correct outcome; otherwise record it
+once and continue the authorized task.
 
 <a id="rule-qa-clearance"></a>
 
