@@ -669,7 +669,7 @@ test("manual barcode entry shows input-bound progress until lookup finishes", as
 	await expect(continueButton).toBeEnabled();
 });
 
-test("barcode autofill explains unmapped source nutrition without using it in the form", async ({
+test("barcode autofill keeps internal unmapped source nutrition out of user copy and calculations", async ({
 	page,
 }) => {
 	const barcode = "00000000000123";
@@ -744,9 +744,8 @@ test("barcode autofill explains unmapped source nutrition without using it in th
 		"1 nutrition value was accepted and retained from the source",
 	);
 	await expect(dialog).toContainText("Review 1 in Macros");
-	await expect(dialog).toContainText(
-		"1 additional source value needs mapping review and is not used in nutrition calculations",
-	);
+	await expect(dialog).not.toContainText("mapping review");
+	await expect(dialog).not.toContainText("nutrition calculations");
 	await dialog.getByRole("tab", { name: "Macros" }).click();
 	await expect(dialog.getByLabel("Calories (kcal)")).toHaveValue("100");
 });

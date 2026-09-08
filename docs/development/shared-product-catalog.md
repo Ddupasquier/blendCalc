@@ -256,8 +256,9 @@ unchanged.
 - Open Food Facts barcode imports account for every usable numeric nutrient fact. An
   exact reviewed key, unit, and conversion may enter canonical nutrition; an unfamiliar
   key, mismatched unit, or unavailable conversion is retained in private
-  `nutrientSourceReview` evidence and called out during Manual Entry without being used
-  in calculations. Successful existing provider-cache refreshes also add only the
+  `nutrientSourceReview` evidence without being used in calculations or exposed as
+  internal review work during ordinary Manual Entry. Successful existing provider-cache
+  refreshes also add only the
   anonymous exact key/unit identity, count, and first/last-seen times to
   `nutrient_source_mapping_observations`; they add no provider request and retain no
   user, barcode, product, amount, or raw payload. The complete provider taxonomy is
