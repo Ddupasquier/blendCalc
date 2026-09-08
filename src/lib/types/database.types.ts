@@ -1989,6 +1989,42 @@ export type Database = {
           },
         ]
       }
+      food_category_resolution_guidance: {
+        Row: {
+          created_at: string
+          disposition: string
+          enabled: boolean
+          review_reference: string
+          reviewed_at: string
+          selection_reason: string
+          source_normalized_value: string
+          specificity_rank: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          disposition: string
+          enabled?: boolean
+          review_reference: string
+          reviewed_at: string
+          selection_reason: string
+          source_normalized_value: string
+          specificity_rank?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          disposition?: string
+          enabled?: boolean
+          review_reference?: string
+          reviewed_at?: string
+          selection_reason?: string
+          source_normalized_value?: string
+          specificity_rank?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       food_compatibility_feedback: {
         Row: {
           barcode: string | null
