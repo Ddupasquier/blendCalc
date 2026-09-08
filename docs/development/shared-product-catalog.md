@@ -272,7 +272,19 @@ unchanged.
 - Canonical categories are resolved through database options and mappings; they are not
   replaced with a generic packaged-food label during publication.
 - Raw USDA and Open Food Facts category values remain attached to the food payload so
-  mappings can improve without losing source information.
+  mappings can improve without losing source information. Resolution guidance ranks
+  exact source-observed candidates by specificity and rejects provider navigation noise
+  such as `Groceries`; it does not remap products into a different broad semantic family.
+  Broad categories remain fallbacks when the source provides no credible specific
+  candidate. If no confident source-backed category exists, the user or moderator must
+  choose rather than accepting an asserted classification.
+- A presentation family may group a category for symbols or navigation, but it never
+  replaces the product's evidence-backed primary category. For example, `Gochujang` may
+  use the sauces-and-condiments symbol family while remaining categorized as
+  `Gochujang`.
+- Open Food Facts may return several comma-separated brand tags. The normalized product
+  uses the provider's first declared brand while the complete raw response remains in
+  the private source cache.
 - Authoritative generic-food identities are typed separately from packaged products.
   Their reviewed taxonomy may identify an intrinsic allergen such as shellfish for
   shrimp. Packaged names, brands, descriptions, and categories never supply that

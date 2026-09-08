@@ -88,7 +88,7 @@ export const getBarcodeInputValidationMessage = (value: string) => {
 		return `Barcode is too long. ${getGtinLengthHelp()}`;
 	}
 
-	if (!hasValidGtinCheckDigit(digits)) {
+	if (!hasValidGtinCheckDigit(digits) && !expandUpcEBarcode(digits)) {
 		return "Barcode check digit does not look valid. Check the digits before continuing.";
 	}
 

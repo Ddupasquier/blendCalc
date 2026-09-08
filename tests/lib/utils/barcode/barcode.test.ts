@@ -37,6 +37,7 @@ describe("barcode normalization", () => {
 
 	it("expands UPC-E aliases without confusing their check digits", () => {
 		expect(expandUpcEBarcode("03431209")).toBe("034000003129");
+		expect(getBarcodeInputValidationMessage("03431209")).toBe("");
 		expect(getBarcodeLookupCandidates("03431209")).toEqual(
 			expect.arrayContaining(["03431209", "034000003129", "00034000003129"]),
 		);

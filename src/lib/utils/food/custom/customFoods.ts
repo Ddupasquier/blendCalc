@@ -108,6 +108,7 @@ const createNutrients = (
 	servingMeasureQuantity: number | null,
 	servingMeasureUnit: ServingMeasureUnit | null,
 	servingLabel: string,
+	usesInternal100GramBasis: boolean,
 ): FoodNutrient[] => {
 	const seenIds = new Set<number>();
 	return nutrients.flatMap((nutrient) => {
@@ -125,22 +126,24 @@ const createNutrients = (
 		const measureOption = servingMeasureUnit
 			? getServingMeasureOption(servingMeasureUnit)
 			: null;
-		const measurementBasis = servingWeightGrams
+		const measurementBasis = usesInternal100GramBasis
 			? { kind: "mass" as const, quantity: 100, unitKey: "g" }
-			: measureOption?.dimension === "volume" && servingMeasureQuantity
-				? {
-						kind: "volume" as const,
-						quantity: servingMeasureQuantity,
-						unitKey: servingMeasureUnit ?? "ml",
-					}
-				: servingMeasureQuantity
+			: servingWeightGrams
+				? { kind: "mass" as const, quantity: 100, unitKey: "g" }
+				: measureOption?.dimension === "volume" && servingMeasureQuantity
 					? {
-							kind: "serving" as const,
-							quantity: 1,
-							unitKey: "serving",
-							servingLabel,
+							kind: "volume" as const,
+							quantity: servingMeasureQuantity,
+							unitKey: servingMeasureUnit ?? "ml",
 						}
-					: null;
+					: servingMeasureQuantity
+						? {
+								kind: "serving" as const,
+								quantity: 1,
+								unitKey: "serving",
+								servingLabel,
+							}
+						: null;
 		if (!measurementBasis) return [];
 		return [
 			{
@@ -148,9 +151,10 @@ const createNutrients = (
 				nutrientName: nutrient.nutrientName,
 				nutrientNumber: String(nutrient.nutrientNumber ?? ""),
 				unitName: nutrient.unitName,
-				value: servingWeightGrams
-					? getPer100GramValue(nutrientValue, servingWeightGrams)
-					: nutrientValue,
+				value:
+					servingWeightGrams && !usesInternal100GramBasis
+						? getPer100GramValue(nutrientValue, servingWeightGrams)
+						: nutrientValue,
 				measurementBasis,
 				valueOrigin: nutrient.valueOrigin,
 				source: nutrient.source,
@@ -284,9 +288,21 @@ export const createCustomFood = (input: CustomFoodInput): FoodItem => {
 		input.servingMeasureUnit?.trim() ||
 		(inputServingAmount ? inputServing?.unitKey?.trim() : "") ||
 		(inputServingMilliliters ? "ml" : null);
+	const usesInternal100GramBasis =
+		input.hasSourceServing === false &&
+		normalizedServingWeightGrams === null &&
+		servingMeasureQuantity === null &&
+		input.nutrients.length > 0 &&
+		input.nutrients.every(
+			(nutrient) =>
+				nutrient.measurementBasis?.kind === "mass" &&
+				nutrient.measurementBasis.quantity === 100 &&
+				nutrient.measurementBasis.unitKey.toLocaleLowerCase() === "g",
+		);
 	if (
 		normalizedServingWeightGrams === null &&
-		(servingMeasureQuantity === null || !servingMeasureUnit)
+		(servingMeasureQuantity === null || !servingMeasureUnit) &&
+		!usesInternal100GramBasis
 	) {
 		throw new TypeError(
 			"Add an exact serving weight or the package's serving amount and unit.",
@@ -322,6 +338,7 @@ export const createCustomFood = (input: CustomFoodInput): FoodItem => {
 		servingMeasureQuantity,
 		servingMeasureUnit,
 		servingLabel,
+		usesInternal100GramBasis,
 	);
 	const hasSourceServing =
 		input.hasSourceServing === true ||

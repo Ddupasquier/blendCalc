@@ -208,6 +208,12 @@ const uniqueCleanValues = (values: Array<string | undefined>) => {
 const splitDelimitedValues = (value?: string) =>
 	uniqueCleanValues((value ?? "").split(/[;,]/));
 
+const getOpenFoodFactsPrimaryBrand = (value?: string) =>
+	(value ?? "")
+		.split(/[;,]/)
+		.map((brand) => brand.trim())
+		.find(Boolean) ?? "";
+
 const uniqueIngredientValues = (values: Array<string | undefined>) => {
 	const seen = new Set<string>();
 	return values.flatMap((value) => {
@@ -1045,6 +1051,7 @@ export const mapOpenFoodFactsProduct = (
 			: { kind: "mass" as const, quantity: 100, unitKey: "g" },
 	).map((entry) => ({ ...entry, sourceReference: canonicalBarcode }));
 	const metadata = parseOpenFoodFactsMetadata(product);
+	const brandOwner = getOpenFoodFactsPrimaryBrand(product.brands);
 	const image = parseOpenFoodFactsImage(product, canonicalBarcode);
 	const alcoholByVolume = parseOpenFoodFactsAlcoholByVolume(product.nutriments);
 	const volumeEquivalent = hasExactGramWeight
@@ -1102,7 +1109,7 @@ export const mapOpenFoodFactsProduct = (
 		barcode: canonicalBarcode,
 		name,
 		nameProvenance: "source",
-		brandOwner: product.brands?.trim() ?? "",
+		brandOwner,
 		servingLabel,
 		servingWeightGrams,
 		hasSourceServing: Boolean(exactServing),
@@ -1124,7 +1131,7 @@ export const mapOpenFoodFactsProduct = (
 			image,
 			metadata,
 			hasSourceServing: Boolean(exactServing),
-			hasBrandOwner: Boolean(product.brands?.trim()),
+			hasBrandOwner: Boolean(brandOwner),
 			alcoholByVolume,
 		}),
 		volumeEquivalent,

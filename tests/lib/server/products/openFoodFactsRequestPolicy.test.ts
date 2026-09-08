@@ -72,12 +72,21 @@ describe("Open Food Facts request policy", () => {
 		const fields = getOpenFoodFactsRequestedFields(
 			getBarcodeProductDesiredSourceFieldPaths(),
 		);
-		expect(
+		const getCacheKey = (barcode: string) =>
 			getProductApiCacheKey("barcode-product", {
 				apiVersion: OPEN_FOOD_FACTS_PRODUCT_API_VERSION,
-				barcode: "0030000581728",
+				barcode,
 				fields,
-			}),
-		).toBe("0e23d67b7eff5e4c3c4b23f6361d5d8926a60630ec04a114d2e02e231f38b733");
+			});
+
+		expect(getCacheKey("0030000581728")).toBe(
+			"0e23d67b7eff5e4c3c4b23f6361d5d8926a60630ec04a114d2e02e231f38b733",
+		);
+		expect(getCacheKey("3017620422003")).toBe(
+			"ba7576c00c230ec7214aea6b9a4b05c58331ec1f6b7a7d9118cc4c5650bc6516",
+		);
+		expect(getCacheKey("0034000003129")).toBe(
+			"acd008e0b598ad0379501234f8676ce218d888c5c4728d1c2525a05e32b9ee0a",
+		);
 	});
 });

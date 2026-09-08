@@ -17,40 +17,20 @@ const createDraft = (categories: string[]): BarcodeProductDraft => ({
 	sourceReference: "00021130462506",
 });
 
-const createSupabaseMock = () => ({
+const createSupabaseMock = (
+	resolved = {
+		source_normalized_value: "fruit and vegetable preserves",
+		category_option_id: "fruit-and-vegetable-preserves",
+		category_option_label: "Fruit And Vegetable Preserves",
+		confidence: "exact",
+		symbol_key: "fruit",
+	},
+) => ({
 	rpc: async () => ({
-		data: [
-			{
-				source_normalized_value: "fruit and vegetable preserves",
-				category_option_id: "fruit-and-vegetable-preserves",
-				category_option_label: "Fruit And Vegetable Preserves",
-				confidence: "exact",
-				symbol_key: "fruit",
-			},
-		],
+		data: [resolved],
 		error: null,
 	}),
 });
-
-const createExactOptionSupabaseMock = () => {
-	const query = {
-		select: () => query,
-		in: () => query,
-		eq: async () => ({
-			data: [{
-				id: "nut-seed-butters",
-				label: "Nut & Seed Butters",
-				normalized_value: "nut and seed butters",
-				symbol_key: "nuts-seeds",
-			}],
-			error: null,
-		}),
-	};
-	return {
-		rpc: async () => ({ data: [], error: null }),
-		from: () => query,
-	};
-};
 
 describe("barcode category mapping", () => {
 	it("uses the category ranked by the database resolver", async () => {
@@ -66,18 +46,49 @@ describe("barcode category mapping", () => {
 		});
 	});
 
-	it("uses an exact enabled DB category when no source mapping exists", async () => {
+	it("uses the specific exact category selected from source evidence", async () => {
 		const draft = await resolveBarcodeDraftCategory(
-			createExactOptionSupabaseMock() as never,
-			createDraft(["Nut & Seed Butters"]),
+			createSupabaseMock({
+				source_normalized_value: "chocolate sauce",
+				category_option_id: "chocolate-sauce",
+				category_option_label: "Chocolate Sauce",
+				confidence: "exact",
+				symbol_key: "sauces-condiments",
+			}) as never,
+			createDraft([
+				"en:dressings-and-sauces",
+				"en:syrups",
+				"en:chocolate-sauce",
+			]),
 		);
 
-		expect(draft.resolvedCategory).toBe("Nut & Seed Butters");
+		expect(draft.resolvedCategory).toBe("Chocolate Sauce");
 		expect(draft.categoryResolution).toMatchObject({
-			categoryOptionId: "nut-seed-butters",
-			sourceValue: "nut and seed butters",
+			categoryOptionId: "chocolate-sauce",
+			sourceValue: "chocolate sauce",
 			confidence: "exact",
-			symbolKey: "nuts-seeds",
+			symbolKey: "sauces-condiments",
+		});
+	});
+
+	it("uses the exact Gochujang category instead of a merchandising dip bucket", async () => {
+		const draft = await resolveBarcodeDraftCategory(
+			createSupabaseMock({
+				source_normalized_value: "gochujang",
+				category_option_id: "gochujang",
+				category_option_label: "Gochujang",
+				confidence: "exact",
+				symbol_key: "sauces-condiments",
+			}) as never,
+			createDraft(["Dips and Salsa", "en:sauces", "en:gochujang"]),
+		);
+
+		expect(draft.resolvedCategory).toBe("Gochujang");
+		expect(draft.categoryResolution).toMatchObject({
+			categoryOptionId: "gochujang",
+			sourceValue: "gochujang",
+			confidence: "exact",
+			symbolKey: "sauces-condiments",
 		});
 	});
 });

@@ -1755,8 +1755,16 @@ reviewed.
 Barcode and manual-entry category autofill
 must preserve raw API category observations, then resolve the visible app category
 through database-backed category options/mappings. Do not choose the first raw API
-category string as the user-facing category. If no confident DB mapping exists, keep the
-raw source data for moderation/provenance and ask the user to choose a category. Catalog
+category string as the user-facing category. Product categories must ring true to the
+observed product; they must not be forced into a broad app-authored family merely to
+make the taxonomy look consistent. Resolution may normalize spelling, translation,
+synonyms, hierarchy, and provider navigation noise, but it may select only a semantic
+category supported by preserved source evidence or an explicit user choice. Treat broad
+groups as fallbacks, not preferred answers, when a credible specific category is
+available. Keep presentation families used for icons or navigation separate from the
+product's primary category. If sources conflict or no confident exact/equivalent DB
+mapping exists, keep the raw source data for moderation/provenance and ask the user to
+choose a category instead of asserting one. Catalog
 submission, automatic publication, moderator approval, and revision creation must
 preserve the canonical category foreign key and the raw source categories; they must
 never replace either with a generic placeholder category. The compatibility
@@ -1779,7 +1787,9 @@ raw provider labels as canonical choices, invent a client fallback list, or fetc
 sort every category in the browser. Persist both the chosen canonical category id and
 label while retaining the raw source observations separately. A user's one-time choice
 must not silently create or promote a global source mapping; mapping changes require the
-normal evidence and review path.
+normal evidence and review path. Never infer a preferred category from a product name,
+brand, nutrient profile, or an app narrative when the product evidence does not state or
+unambiguously imply it.
 
 <a id="rule-source-backed-food-images"></a>
 
