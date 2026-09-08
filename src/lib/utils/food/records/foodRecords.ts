@@ -1,4 +1,5 @@
 import type { FoodItem } from "$lib/utils/food/types";
+import { isPrivateCustomFood } from "$lib/utils/food/records/foodClassification";
 import {
 	formatSourceProductName,
 	normalizeFoodProductName,
@@ -11,6 +12,10 @@ import {
 	isLanguageCodeOnlyDisclosureText,
 	normalizeExternalIngredientStatement,
 } from "$lib/utils/food/ingredients/ingredientStatementNormalization.js";
+import {
+	canonicalizeExternalProviderServingLabel,
+	isExternalProviderServingSource,
+} from "$lib/utils/food/servings/providerServingLabels.js";
 
 const EXTERNAL_INGREDIENT_SOURCES = new Set([
 	"usda",
@@ -33,18 +38,49 @@ const cloneStructuredIngredients = (
 export const getCanonicalFoodDescription = (
 	food: Pick<
 		FoodItem,
-		"canonicalDescription" | "description" | "foodIdentityType"
+		| "barcodeSource"
+		| "canonicalDescription"
+		| "customFood"
+		| "description"
+		| "sharedProductId"
+		| "sharedProductSubmissionId"
+		| "sourceKey"
 	>,
 ) => {
+	if (isPrivateCustomFood(food)) return food.description.trim();
 	const canonicalDescription = food.canonicalDescription?.trim();
 	if (!canonicalDescription) return food.description.trim();
-	return food.foodIdentityType === "private-custom"
-		? canonicalDescription
-		: formatSourceProductName(canonicalDescription);
+	return formatSourceProductName(canonicalDescription);
 };
+
+export const applyUserFoodName = (
+	food: FoodItem,
+	description: string,
+): FoodItem => ({
+	...food,
+	description,
+	canonicalDescription: isPrivateCustomFood(food)
+		? description
+		: (food.canonicalDescription ?? food.description),
+	nameProvenance: "user",
+});
 
 export const normalizeFoodForStorage = (food: FoodItem): FoodItem => {
 	const normalizedFood = normalizeFoodProductName(food) as FoodItem;
+	const servingSource =
+		food.fieldProvenance?.serving?.source ??
+		food.foodServings?.find((serving) => serving.isPrimary)?.source ??
+		food.foodServings?.[0]?.source ??
+		food.barcodeSource ??
+		food.sourceKey;
+	const externalServingSource = isExternalProviderServingSource(servingSource)
+		? servingSource
+		: undefined;
+	const normalizeServingLabel = (label: string, source?: string) =>
+		canonicalizeExternalProviderServingLabel(
+			label,
+			source ?? externalServingSource,
+		);
 	const ingredientSource = food.fieldProvenance?.ingredients;
 	const normalizedExternalIngredients =
 		food.ingredients &&
@@ -156,10 +192,20 @@ export const normalizeFoodForStorage = (food: FoodItem): FoodItem => {
 		availableDate: food.availableDate,
 		discontinuedDate: food.discontinuedDate,
 		servingSize: food.servingSize,
-		servingSizeUnit: food.servingSizeUnit,
-		householdServingFullText: food.householdServingFullText,
+		servingSizeUnit: food.servingSizeUnit
+			? normalizeServingLabel(food.servingSizeUnit)
+			: undefined,
+		householdServingFullText: food.householdServingFullText
+			? normalizeServingLabel(food.householdServingFullText)
+			: undefined,
 		hasSourceServing: food.hasSourceServing,
-		foodServings: food.foodServings?.map((serving) => ({ ...serving })),
+		foodServings: food.foodServings?.map((serving) => ({
+			...serving,
+			label: normalizeServingLabel(serving.label, serving.source),
+			unitKey: serving.unitKey
+				? normalizeServingLabel(serving.unitKey, serving.source)
+				: undefined,
+		})),
 		gtinUpc: food.gtinUpc,
 		ingredients:
 			normalizedExternalIngredients?.ingredientText || food.ingredients,
@@ -290,7 +336,17 @@ export const normalizeFoodForStorage = (food: FoodItem): FoodItem => {
 			unitName: nutrient.unitName,
 			value: nutrient.value,
 			measurementBasis: nutrient.measurementBasis
-				? { ...nutrient.measurementBasis }
+				? {
+						...nutrient.measurementBasis,
+						...(nutrient.measurementBasis.kind === "serving"
+							? {
+									servingLabel: normalizeServingLabel(
+										nutrient.measurementBasis.servingLabel,
+										nutrient.source,
+									),
+								}
+							: {}),
+					}
 				: undefined,
 			valueOrigin: nutrient.valueOrigin,
 			source: nutrient.source,
@@ -308,12 +364,32 @@ export const normalizeFoodForStorage = (food: FoodItem): FoodItem => {
 		})),
 		nutrientQualitativeFacts: food.nutrientQualitativeFacts?.map((fact) => ({
 			...fact,
-			measurementBasis: { ...fact.measurementBasis },
+			measurementBasis: {
+				...fact.measurementBasis,
+				...(fact.measurementBasis.kind === "serving"
+					? {
+							servingLabel: normalizeServingLabel(
+								fact.measurementBasis.servingLabel,
+								fact.source,
+							),
+						}
+					: {}),
+			},
 		})),
 		nutrientSourceReview: food.nutrientSourceReview?.map((entry) => ({
 			...entry,
 			measurementBasis: entry.measurementBasis
-				? { ...entry.measurementBasis }
+				? {
+						...entry.measurementBasis,
+						...(entry.measurementBasis.kind === "serving"
+							? {
+									servingLabel: normalizeServingLabel(
+										entry.measurementBasis.servingLabel,
+										entry.source,
+									),
+								}
+							: {}),
+					}
 				: undefined,
 		})),
 	};

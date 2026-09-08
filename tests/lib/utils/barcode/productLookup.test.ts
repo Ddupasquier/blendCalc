@@ -271,6 +271,60 @@ describe("barcode product mapping", () => {
 		);
 	});
 
+	it("keeps Nutella nutrition on its reported 100g basis when no serving exists", () => {
+		const draft = mapOpenFoodFactsProduct(
+			{
+				code: "3017620422003",
+				product_name: "Nutella",
+				brands: "Nutella, Ferrero, Yum yum",
+				food_groups: "en:sweets",
+				food_groups_tags: ["en:sugary-snacks", "en:sweets"],
+				categories:
+					"en:Confectionary based spreads, en:Petit-déjeuners, en:Produits à tartiner, en:Produits à tartiner sucrés, en:Pâtes à tartiner",
+				allergens_tags: ["en:milk", "en:nuts", "en:soybeans"],
+				nutriments: {
+					"energy-kcal_100g": 539,
+					fat_100g: 30.9,
+					carbohydrates_100g: 57.5,
+					sugars_100g: 56.3,
+					"added-sugars_100g": 52.13,
+					proteins_100g: 6.3,
+					sodium_100g: 0.0428,
+				},
+			},
+			"03017620422003",
+			productReferenceCatalogFixture,
+		);
+
+		expect(draft).toMatchObject({
+			barcode: "03017620422003",
+			name: "Nutella",
+			brandOwner: "Nutella",
+			servingLabel: "100 g reference",
+			servingWeightGrams: null,
+			hasSourceServing: false,
+			serving: undefined,
+			allergens: ["milk", "nuts", "soybeans"],
+		});
+		expect(draft?.categories?.[0]).toBe("sweets");
+		expect(draft?.categories).toEqual(
+			expect.arrayContaining(["sugary snacks", "Pâtes à tartiner"]),
+		);
+		expect(draft?.nutrients).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					nutrientId: NUTRIENT_IDS.CALORIES,
+					value: 539,
+					measurementBasis: {
+						kind: "mass",
+						quantity: 100,
+						unitKey: "g",
+					},
+				}),
+			]),
+		);
+	});
+
 	it("autofills every nutrient reported for barcode 00011110129505", () => {
 		const draft = mapOpenFoodFactsProduct(
 			{
@@ -987,6 +1041,26 @@ describe("barcode product mapping", () => {
 				ingredients: { source: "usda", confidence: "unknown" },
 				allergens: { source: "usda", confidence: "unknown" },
 			},
+		});
+	});
+
+	it("canonicalizes USDA ONZ labels in barcode drafts", () => {
+		const draft = mapFdcBarcodeFood(
+			{
+				fdcId: 1862061,
+				description: "Jalapeno Sauce, Jalapeno",
+				servingSize: 28,
+				servingSizeUnit: "g",
+				householdServingFullText: "1 ONZ",
+				foodNutrients: [],
+			},
+			"072360002031",
+			productReferenceCatalogFixture,
+		);
+
+		expect(draft).toMatchObject({
+			servingLabel: "1 oz",
+			serving: { label: "1 oz", gramWeight: 28 },
 		});
 	});
 

@@ -305,7 +305,7 @@ const reachManualEntryExtendedStep = async (dialog: Locator) => {
 		.first()
 		.click();
 	await dialog.getByRole("button", { name: "Continue" }).click();
-	await dialog.getByLabel("Weight (g)").fill("100");
+	await dialog.getByLabel("Gram weight (g)").fill("100");
 	await dialog.getByRole("button", { name: "Continue" }).click();
 
 	const macroInputs = dialog.locator(".manual-nutrients__fields input");
@@ -1714,7 +1714,7 @@ test("nutrition details preserve the complete source-backed food record", async 
 		for (const expectedText of [
 			"Sempio Foods Company",
 			"08801005523455",
-			"Dips and Salsa",
+			"Gochujang, Dips and Salsa, Sauces, Hot sauces",
 			"500 g",
 			"Packaged product",
 			"1 Tbsp (18 g)",

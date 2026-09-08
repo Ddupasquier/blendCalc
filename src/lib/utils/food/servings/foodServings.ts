@@ -5,9 +5,16 @@ import {
 	parseSourceServingMeasure,
 } from "$lib/utils/serving/servingAmount";
 import { toFinitePositiveNumber } from "$lib/utils/numbers/finiteNumbers";
+import { canonicalizeExternalProviderServingLabel } from "$lib/utils/food/servings/providerServingLabels";
 
-const normalizeServing = (serving: FoodServing): FoodServing | null => {
-	const label = serving.label.trim();
+const normalizeServing = (
+	serving: FoodServing,
+	fallbackSource?: FoodServing["source"],
+): FoodServing | null => {
+	const label = canonicalizeExternalProviderServingLabel(
+		serving.label,
+		serving.source ?? fallbackSource,
+	);
 	const gramWeight = toFinitePositiveNumber(serving.gramWeight);
 	const milliliterVolume = toFinitePositiveNumber(serving.milliliterVolume);
 	const amount = toFinitePositiveNumber(serving.amount);
@@ -147,8 +154,12 @@ const getLegacyServing = (food: FoodItem): FoodServing | null => {
 				? `${parsedServing.quantity} ${parsedServing.unit}`
 				: "Serving");
 	const lineage = getLegacyServingLineage(food);
-	return {
+	const normalizedLabel = canonicalizeExternalProviderServingLabel(
 		label,
+		lineage.source,
+	);
+	return {
+		label: normalizedLabel,
 		gramWeight: gramWeight ?? undefined,
 		milliliterVolume: milliliterVolume ?? undefined,
 		amount: parsedServing?.quantity,
@@ -171,8 +182,9 @@ const getLegacyServing = (food: FoodItem): FoodServing | null => {
 
 export const getFoodServings = (food?: FoodItem): FoodServing[] => {
 	if (!food) return [];
+	const fallbackSource = getLegacyServingLineage(food).source;
 	const explicit = (food.foodServings ?? []).flatMap((serving) => {
-		const normalized = normalizeServing(serving);
+		const normalized = normalizeServing(serving, fallbackSource);
 		return normalized ? [normalized] : [];
 	});
 	if (explicit.length > 0) {

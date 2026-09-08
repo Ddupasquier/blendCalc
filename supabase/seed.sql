@@ -83,6 +83,98 @@ on conflict (provider, cache_key) do update set
 	expires_at = excluded.expires_at,
 	etag = excluded.etag;
 
+-- Source-only product used to verify that an unchanged exact provider result can
+-- reuse its trusted image and omit redundant package evidence. This intentionally
+-- remains only in the private provider cache; it is not a shared-catalog fixture.
+insert into public.product_api_cache (
+	provider,
+	cache_key,
+	request_kind,
+	status_code,
+	response,
+	fetched_at,
+	expires_at,
+	etag
+)
+values (
+	'open-food-facts',
+	'd76dee64fed90e1d404d15eac49222ee0ad2e4003d7367b554e5c7f0f9ba0d59',
+	'barcode-product',
+	200,
+	$json${
+		"code": "0897922002775",
+		"product": {
+			"code": "0897922002775",
+			"product_name": "Organic Plant Protein Pea & Quinoa Protein Powder",
+			"brands": "Better Body Foods",
+			"categories": "Dehydrated beverages",
+			"categories_tags": [
+				"en:beverages-and-beverages-preparations",
+				"en:beverages",
+				"en:dried-products",
+				"en:dried-products-to-be-rehydrated",
+				"en:dehydrated-beverages"
+			],
+			"serving_size": "3 tbsp (21 g)",
+			"serving_quantity": 21,
+			"serving_quantity_unit": "g",
+			"nutrition_data_per": "100g",
+			"nutriments": {
+				"energy-kcal_100g": 380.952380952381,
+				"energy-kcal_serving": 80,
+				"energy-kcal_unit": "kcal",
+				"fat_100g": 4.76190476190476,
+				"fat_serving": 1,
+				"fat_unit": "g",
+				"carbohydrates_100g": 9.52380952380952,
+				"carbohydrates_serving": 2,
+				"carbohydrates_unit": "g",
+				"fiber_100g": 4.76190476190476,
+				"fiber_serving": 1,
+				"fiber_unit": "g",
+				"added-sugars_100g": 0,
+				"added-sugars_serving": 0,
+				"added-sugars_unit": "g",
+				"proteins_100g": 76.1904761904762,
+				"proteins_serving": 16,
+				"proteins_unit": "g",
+				"sodium_100g": 0.547619047619048,
+				"sodium_serving": 0.115,
+				"sodium_unit": "g",
+				"calcium_100g": 0.266666666666667,
+				"calcium_serving": 0.056,
+				"calcium_unit": "g",
+				"iron_100g": 0.0238095238095238,
+				"iron_serving": 0.005,
+				"iron_unit": "g"
+			},
+			"ingredients_text": "Organic pea protein, organic quinoa protein and organic agave inulin.",
+			"allergens": "",
+			"allergens_tags": [],
+			"traces": "",
+			"traces_tags": [],
+			"labels": "Organic, Vegan, Non GMO project",
+			"labels_tags": ["en:vegetarian", "en:organic", "en:no-gmos", "en:vegan", "en:non-gmo-project"],
+			"countries": "United States, world",
+			"countries_tags": ["en:united-states", "en:world"],
+			"lang": "en",
+			"image_front_url": "https://images.openfoodfacts.org/images/products/089/792/200/2775/front_en.9.400.jpg",
+			"image_front_small_url": "https://images.openfoodfacts.org/images/products/089/792/200/2775/front_en.9.200.jpg",
+			"image_front_thumb_url": "https://images.openfoodfacts.org/images/products/089/792/200/2775/front_en.9.100.jpg"
+		}
+	}$json$::jsonb,
+	'2026-09-07T00:00:00Z',
+	'2099-01-01T00:00:00Z',
+	null
+)
+on conflict (provider, cache_key) do update set
+	request_kind = excluded.request_kind,
+	status_code = excluded.status_code,
+	response = excluded.response,
+	fetched_at = excluded.fetched_at,
+	expires_at = excluded.expires_at,
+	etag = excluded.etag;
+
 -- Evidence-bounded category-resolution QA fixtures. These source-shaped records keep the
 -- Nutella, Hershey syrup, and Gochujang verification corpus available even
 -- while local development intentionally blocks outbound provider requests.

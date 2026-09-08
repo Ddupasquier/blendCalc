@@ -100,7 +100,16 @@
 							tone="info"
 						/>
 					{/if}
-					<TextBadge label="Needs review" tone="warning" />
+					<TextBadge
+						label={submission.trustDisposition ===
+						"conflicts-with-trusted-evidence"
+							? "Trusted evidence conflict"
+							: submission.trustDisposition ===
+								  "trusted-evidence-check-incomplete"
+								? "Evidence check incomplete"
+								: "Needs review"}
+						tone="warning"
+					/>
 				{/snippet}
 
 				<dl class="product-submission-review__facts">

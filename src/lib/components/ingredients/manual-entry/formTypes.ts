@@ -88,4 +88,4 @@ export const emptyManualEntryNutrientGroups: ManualEntryNutrientGroupsByStep = {
 };
 
 export const servingMeasureAmountRequiredMessage =
-	"Enter the amount printed on the package or turn off Package measure.";
+	"Enter the amount printed on the package or turn off Volume or item amount.";

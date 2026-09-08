@@ -32,58 +32,81 @@ describe("food servings", () => {
 	});
 
 	it("does not invent a serving when the source explicitly had none", () => {
-		expect(getFoodServings({
-			...baseFood,
-			servingSize: 100,
-			servingSizeUnit: "g",
-			hasSourceServing: false,
-		})).toEqual([]);
+		expect(
+			getFoodServings({
+				...baseFood,
+				servingSize: 100,
+				servingSizeUnit: "g",
+				hasSourceServing: false,
+			}),
+		).toEqual([]);
 	});
 
 	it("does not turn a provider name into verified serving evidence", () => {
-		expect(getFoodServings({
-			...baseFood,
-			barcodeSource: "usda",
-			servingSize: 30,
-			servingSizeUnit: "g",
-			hasSourceServing: true,
-		})[0]?.confidence).toBe("unknown");
+		expect(
+			getFoodServings({
+				...baseFood,
+				barcodeSource: "usda",
+				servingSize: 30,
+				servingSizeUnit: "g",
+				hasSourceServing: true,
+			})[0]?.confidence,
+		).toBe("unknown");
 	});
 
 	it("does not invent USDA provenance for a source-less legacy serving", () => {
-		expect(getFoodServings({
-			...baseFood,
-			servingSize: 30,
-			servingSizeUnit: "g",
-			hasSourceServing: true,
-		})[0]).toMatchObject({
+		expect(
+			getFoodServings({
+				...baseFood,
+				servingSize: 30,
+				servingSizeUnit: "g",
+				hasSourceServing: true,
+			})[0],
+		).toMatchObject({
 			source: "unknown",
 			sourceReference: undefined,
 			confidence: "unknown",
 		});
 	});
 
+	it("canonicalizes legacy external labels before display", () => {
+		expect(
+			getFoodServings({
+				...baseFood,
+				servingSize: 28,
+				servingSizeUnit: "g",
+				householdServingFullText: "1 ONZ",
+				hasSourceServing: true,
+				fieldProvenance: { serving: { source: "usda" } },
+			})[0]?.label,
+		).toBe("1 oz");
+	});
+
 	it("does not interpret a source quantity without an explicit unit", () => {
-		expect(getFoodServings({
-			...baseFood,
-			servingSize: 30,
-			hasSourceServing: true,
-		})).toEqual([]);
+		expect(
+			getFoodServings({
+				...baseFood,
+				servingSize: 30,
+				hasSourceServing: true,
+			}),
+		).toEqual([]);
 	});
 
 	it("preserves explicit user serving lineage without reading food identity", () => {
-		expect(getFoodServings({
-			...baseFood,
-			servingSize: 30,
-			servingSizeUnit: "g",
-			hasSourceServing: true,
-			fieldProvenance: {
-				serving: {
-					source: "user-label",
-					confidence: "user-reported",
+		expect(
+			getFoodServings({
+				...baseFood,
+				servingSize: 30,
+				servingSizeUnit: "g",
+				hasSourceServing: true,
+				fieldProvenance: {
+					serving: {
+						source: "user-label",
+						confidence: "user-reported",
+					},
 				},
-			},
-		})[0]).toMatchObject({
+			})[0],
+		).toMatchObject({
 			source: "user-label",
 			origin: "user-entered",
 			gramWeightMethod: "user-reported",
@@ -92,22 +115,28 @@ describe("food servings", () => {
 	});
 
 	it("formats nutrition-label serving sizes with grams in trailing parentheses", () => {
-		expect(formatNutritionServingSize({
-			label: "1/2 cup (125g)",
-			gramWeight: 125,
-			amount: 0.5,
-			unitKey: "cup",
-			isPrimary: true,
-		})).toBe("1/2 cup (125g)");
-		expect(formatNutritionServingSize({
-			label: "30 g serving",
-			gramWeight: 30,
-			isPrimary: true,
-		})).toBe("30g");
-		expect(formatNutritionServingSize({
-			label: "1 oz",
-			gramWeight: 28.35,
-			isPrimary: true,
-		})).toBe("1 oz (28.35g)");
+		expect(
+			formatNutritionServingSize({
+				label: "1/2 cup (125g)",
+				gramWeight: 125,
+				amount: 0.5,
+				unitKey: "cup",
+				isPrimary: true,
+			}),
+		).toBe("1/2 cup (125g)");
+		expect(
+			formatNutritionServingSize({
+				label: "30 g serving",
+				gramWeight: 30,
+				isPrimary: true,
+			}),
+		).toBe("30g");
+		expect(
+			formatNutritionServingSize({
+				label: "1 oz",
+				gramWeight: 28.35,
+				isPrimary: true,
+			}),
+		).toBe("1 oz (28.35g)");
 	});
 });

@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { assessCatalogProductSources } from "$lib/server/products/catalogSourceAssessment.server";
 import type { Database } from "$lib/types/database.types";
 import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
+import type { FoodItem } from "$lib/utils/food/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { PRODUCT_RESOLUTION_POLICY_FIXTURE } from "../../../fixtures/productResolutionPolicy";
 
@@ -48,6 +49,7 @@ const supabase = {} as SupabaseClient<Database>;
 const resolveCategory = vi.fn(
 	async (_supabase, draft: BarcodeProductDraft) => draft,
 );
+const readNoRetainedObservations = vi.fn().mockResolvedValue([]);
 
 describe("catalog source assessment", () => {
 	it("merges independently useful fields from both exact-barcode sources", async () => {
@@ -70,6 +72,7 @@ describe("catalog source assessment", () => {
 					}),
 				),
 				resolveCategory,
+				retainedObservations: readNoRetainedObservations,
 				policy: PRODUCT_RESOLUTION_POLICY_FIXTURE,
 			},
 		);
@@ -78,6 +81,8 @@ describe("catalog source assessment", () => {
 			usdaLookupStatus: "exact-match",
 			openFoodFactsLookupStatus: "exact-match",
 			externalLookupFailed: false,
+			retainedEvidenceLookupFailed: false,
+			retainedExactObservations: [],
 			mergedDraft: {
 				ingredients: "Tomatoes, onions",
 				allergens: ["milk"],
@@ -122,6 +127,7 @@ describe("catalog source assessment", () => {
 					}),
 				),
 				resolveCategory,
+				retainedObservations: readNoRetainedObservations,
 				policy: PRODUCT_RESOLUTION_POLICY_FIXTURE,
 			},
 		);
@@ -147,6 +153,7 @@ describe("catalog source assessment", () => {
 				),
 				openFoodFacts: vi.fn().mockResolvedValue(makeDraft("open-food-facts")),
 				resolveCategory,
+				retainedObservations: readNoRetainedObservations,
 				policy: PRODUCT_RESOLUTION_POLICY_FIXTURE,
 			},
 		);
@@ -162,6 +169,7 @@ describe("catalog source assessment", () => {
 				usda: vi.fn().mockRejectedValue(new Error("Unavailable")),
 				openFoodFacts: vi.fn().mockResolvedValue(makeDraft("open-food-facts")),
 				resolveCategory,
+				retainedObservations: readNoRetainedObservations,
 				policy: PRODUCT_RESOLUTION_POLICY_FIXTURE,
 			},
 		);
@@ -172,5 +180,61 @@ describe("catalog source assessment", () => {
 			externalLookupFailed: true,
 			mergedDraft: { source: "open-food-facts" },
 		});
+	});
+
+	it("loads retained exact-barcode evidence alongside live providers", async () => {
+		const retainedFood: FoodItem = {
+			fdcId: -1,
+			description: "Roasted Onion & Garlic Pasta Sauce",
+			brandOwner: "Signature Select",
+			customServingWeightGrams: 28,
+			foodNutrients: [],
+		};
+		const assessment = await assessCatalogProductSources(
+			supabase,
+			"00021130493609",
+			{
+				usda: vi.fn().mockResolvedValue(null),
+				openFoodFacts: vi.fn().mockResolvedValue(null),
+				resolveCategory,
+				retainedObservations: vi.fn().mockResolvedValue([
+					{
+						id: "observation-1",
+						source: "usda",
+						sourceReference: "2658692",
+						observedAt: "2026-09-01T00:00:00.000Z",
+						food: retainedFood,
+					},
+				]),
+				policy: PRODUCT_RESOLUTION_POLICY_FIXTURE,
+			},
+		);
+
+		expect(assessment.retainedEvidenceLookupFailed).toBe(false);
+		expect(assessment.retainedExactObservations).toEqual([
+			expect.objectContaining({
+				id: "observation-1",
+				food: retainedFood,
+			}),
+		]);
+	});
+
+	it("fails closed when retained exact-barcode evidence cannot be read", async () => {
+		const assessment = await assessCatalogProductSources(
+			supabase,
+			"00021130493609",
+			{
+				usda: vi.fn().mockResolvedValue(makeDraft("usda")),
+				openFoodFacts: vi.fn().mockResolvedValue(null),
+				resolveCategory,
+				retainedObservations: vi
+					.fn()
+					.mockRejectedValue(new Error("Database unavailable")),
+				policy: PRODUCT_RESOLUTION_POLICY_FIXTURE,
+			},
+		);
+
+		expect(assessment.retainedExactObservations).toEqual([]);
+		expect(assessment.retainedEvidenceLookupFailed).toBe(true);
 	});
 });

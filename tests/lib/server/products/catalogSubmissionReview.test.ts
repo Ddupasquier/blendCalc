@@ -1,8 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { evaluateCatalogSubmissionEvidence } from "$lib/server/products/catalogSubmissionReview.server";
+import {
+	buildProductSubmissionReviewFlags,
+	evaluateCatalogSubmissionEvidence,
+	resolveCatalogSubmissionTrust,
+} from "$lib/server/products/catalogSubmissionReview.server";
 
 describe("catalog submission evidence review", () => {
-	it("requires all three label photos for a noncanonical source match", () => {
+	it("accepts an unchanged exact source match without duplicate photos", () => {
 		expect(
 			evaluateCatalogSubmissionEvidence({
 				hasSourceMatch: true,
@@ -12,7 +16,7 @@ describe("catalog submission evidence review", () => {
 				evidencePaths: { front: "front.jpg" },
 			}),
 		).toEqual({
-			evidenceComplete: false,
+			evidenceComplete: true,
 			hasSourceMatchedImageEvidence: false,
 			requiresSourceEvidenceReview: true,
 		});
@@ -73,5 +77,64 @@ describe("catalog submission evidence review", () => {
 				},
 			}).evidenceComplete,
 		).toBe(true);
+	});
+
+	it("marks an extreme retained-evidence serving disagreement as untrusted", () => {
+		const servingMessage =
+			"Submitted serving weight (1,814.37 g) differs from the trusted comparison value (28 g).";
+		const issues = buildProductSubmissionReviewFlags({
+			retainedEvidenceComparisons: [
+				{
+					source: "usda",
+					sourceReference: "el-pato-serving-observation",
+					comparison: {
+						matchesExisting: false,
+						hasBlockingIdentityMismatch: false,
+						changedFields: ["servingWeightGrams"],
+						changes: [
+							{
+								field: "servingWeightGrams",
+								label: "Serving weight",
+								message: servingMessage,
+								severity: "high",
+								changeType: "changed",
+								previousValue: 28,
+								submittedValue: 1814.37,
+							},
+						],
+						issues: [servingMessage],
+						severeDifferences: [servingMessage],
+					},
+				},
+			],
+		});
+
+		expect(issues).toEqual([
+			"Stored exact-barcode evidence from usda (el-pato-serving-observation) conflicts with the submitted package data.",
+			servingMessage,
+		]);
+		expect(
+			resolveCatalogSubmissionTrust({
+				hasTrustedEvidenceConflict: true,
+				retainedEvidenceLookupFailed: false,
+				hasSourceMatch: false,
+			}),
+		).toEqual({
+			valid: false,
+			trustDisposition: "conflicts-with-trusted-evidence",
+		});
+	});
+
+	it("blocks automatic trust when the retained evidence bank is unavailable", () => {
+		expect(
+			resolveCatalogSubmissionTrust({
+				hasTrustedEvidenceConflict: false,
+				retainedEvidenceLookupFailed: true,
+				hasSourceMatch: true,
+			}),
+		).toEqual({
+			valid: false,
+			trustDisposition: "trusted-evidence-check-incomplete",
+		});
 	});
 });

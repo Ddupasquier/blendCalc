@@ -26,6 +26,7 @@ import { hasCompleteProductEvidence } from "./productEvidence.server";
 import {
 	describeProductEvidencePhotos,
 	getMissingProductEvidenceRoles,
+	getTrustedSourceEvidencePolicy,
 } from "$lib/utils/products/productEvidenceRequirements";
 import type { FoodImagePlacementValues } from "./foodImages.server";
 import type { ProductSourceFieldMetricIncrement } from "./sourceMetrics.server";
@@ -34,6 +35,11 @@ import type { CatalogSourceAccuracyConflict } from "./catalogSourceAccuracy.serv
 
 export type CatalogSubmissionValidationReport = {
 	valid: boolean;
+	trustDisposition?:
+		| "source-aligned"
+		| "unverified"
+		| "conflicts-with-trusted-evidence"
+		| "trusted-evidence-check-incomplete";
 	issues: string[];
 	usdaMatch?: boolean;
 	openFoodFactsMatch?: boolean;
@@ -46,8 +52,26 @@ export type CatalogSubmissionValidationReport = {
 	imageCrop?: FoodImagePlacementValues | null;
 	sourceLabelDisagreementMetrics?: ProductSourceFieldMetricIncrement[];
 	sourceAccuracyConflicts?: CatalogSourceAccuracyConflict[];
+	retainedEvidenceConflictCount?: number;
+	retainedEvidenceLookupFailed?: boolean;
 	sourceAutoPublishEligible?: boolean;
 };
+
+export const resolveCatalogSubmissionTrust = (input: {
+	hasTrustedEvidenceConflict: boolean;
+	retainedEvidenceLookupFailed: boolean;
+	hasSourceMatch: boolean;
+}) => ({
+	valid:
+		!input.hasTrustedEvidenceConflict && !input.retainedEvidenceLookupFailed,
+	trustDisposition: input.retainedEvidenceLookupFailed
+		? ("trusted-evidence-check-incomplete" as const)
+		: input.hasTrustedEvidenceConflict
+			? ("conflicts-with-trusted-evidence" as const)
+			: input.hasSourceMatch
+				? ("source-aligned" as const)
+				: ("unverified" as const),
+});
 
 const sanitizeReviewFlags = (reviewFlags: string[] = []) =>
 	Array.from(
@@ -64,11 +88,19 @@ export const buildProductSubmissionReviewFlags = ({
 	existingComparison,
 	sourceComparison,
 	sourceAccuracyFlags = [],
+	retainedEvidenceComparisons = [],
+	retainedEvidenceLookupFailed = false,
 }: {
 	requestedFlags?: string[];
 	existingComparison?: CatalogSubmissionComparison | null;
 	sourceComparison?: CatalogSubmissionComparison | null;
 	sourceAccuracyFlags?: string[];
+	retainedEvidenceComparisons?: Array<{
+		source: string;
+		sourceReference: string;
+		comparison: CatalogSubmissionComparison;
+	}>;
+	retainedEvidenceLookupFailed?: boolean;
 }) =>
 	sanitizeReviewFlags([
 		...requestedFlags,
@@ -79,7 +111,20 @@ export const buildProductSubmissionReviewFlags = ({
 				]
 			: []),
 		...(sourceComparison?.issues ?? []),
+		...retainedEvidenceComparisons.flatMap(
+			({ source, sourceReference, comparison }) => [
+				`Stored exact-barcode evidence from ${source} (${sourceReference}) conflicts with the submitted package data.`,
+				...comparison.changes
+					.filter((change) => change.severity !== "low")
+					.map((change) => change.message),
+			],
+		),
 		...sourceAccuracyFlags,
+		...(retainedEvidenceLookupFailed
+			? [
+					"Stored exact-barcode evidence could not be checked. Automatic publication is blocked until review.",
+				]
+			: []),
 	]);
 
 export type PreparedCatalogSubmissionReview = {
@@ -111,8 +156,12 @@ export const evaluateCatalogSubmissionEvidence = (input: {
 		!input.hasCanonicalImage &&
 		input.evidencePaths.front,
 	);
-	const evidenceComplete = requiresSourceEvidenceReview
-		? hasCompleteProductEvidence(input.evidencePaths)
+	const sourceEvidencePolicy = getTrustedSourceEvidencePolicy({
+		hasExactSourceMatch: input.hasSourceMatch,
+		hasSourceChanges: input.needsSourceComparisonReview,
+	});
+	const evidenceComplete = !sourceEvidencePolicy.requiresCatalogEvidence
+		? true
 		: hasSourceMatchedImageEvidence
 			? true
 			: input.hasCanonicalImage
@@ -176,6 +225,26 @@ export const prepareCatalogSubmissionReview = (input: {
 				resolutionPolicy,
 			)
 		: null;
+	const retainedEvidenceComparisons = input.existingCatalogFood
+		? []
+		: input.sourceAssessment.retainedExactObservations.flatMap(
+				(observation) => {
+					const comparison = compareCatalogSubmissionToExistingProduct(
+						canonicalSubmissionFood,
+						observation.food,
+						resolutionPolicy,
+					);
+					return comparison.changes.some((change) => change.severity !== "low")
+						? [
+								{
+									source: observation.source,
+									sourceReference: observation.sourceReference,
+									comparison,
+								},
+							]
+						: [];
+				},
+			);
 	const reviewFlags = buildProductSubmissionReviewFlags({
 		requestedFlags: [
 			...(input.requestedReviewFlags ?? []),
@@ -184,8 +253,24 @@ export const prepareCatalogSubmissionReview = (input: {
 		existingComparison: input.existingComparison,
 		sourceComparison,
 		sourceAccuracyFlags: input.sourceAssessment.sourceAccuracy.reviewFlags,
+		retainedEvidenceComparisons,
+		retainedEvidenceLookupFailed:
+			input.sourceAssessment.retainedEvidenceLookupFailed,
 	});
 	const needsSourceComparisonReview = reviewFlags.length > 0;
+	const hasTrustedEvidenceConflict = Boolean(
+		input.existingComparison?.changes.some(
+			(change) => change.severity !== "low",
+		) ||
+		sourceComparison?.changes.some((change) => change.severity !== "low") ||
+		retainedEvidenceComparisons.length > 0 ||
+		input.sourceAssessment.sourceAccuracy.conflicts.some(
+			(conflict) => conflict.severity !== "low",
+		),
+	);
+	const sourceCanAutoPublish =
+		input.sourceCanAutoPublish &&
+		!input.sourceAssessment.retainedEvidenceLookupFailed;
 	const catalogUpdateSummary =
 		input.existingComparison && input.existingCatalogFood && input.updateTarget
 			? createCatalogUpdateSummary({
@@ -227,17 +312,14 @@ export const prepareCatalogSubmissionReview = (input: {
 					],
 				})
 			: null;
-	const {
-		evidenceComplete,
-		hasSourceMatchedImageEvidence,
-		requiresSourceEvidenceReview,
-	} = evaluateCatalogSubmissionEvidence({
-		hasSourceMatch: Boolean(matchedDraft),
-		sourceCanAutoPublish: input.sourceCanAutoPublish,
-		needsSourceComparisonReview,
-		hasCanonicalImage: Boolean(canonicalSubmissionFood.image?.imageUrl),
-		evidencePaths: input.evidencePaths,
-	});
+	const { evidenceComplete, hasSourceMatchedImageEvidence } =
+		evaluateCatalogSubmissionEvidence({
+			hasSourceMatch: Boolean(matchedDraft),
+			sourceCanAutoPublish,
+			needsSourceComparisonReview,
+			hasCanonicalImage: Boolean(canonicalSubmissionFood.image?.imageUrl),
+			evidencePaths: input.evidencePaths,
+		});
 	const missingEvidenceDescription = describeProductEvidencePhotos(
 		getMissingProductEvidenceRoles(input.evidencePaths),
 	);
@@ -251,12 +333,9 @@ export const prepareCatalogSubmissionReview = (input: {
 			`Source comparison reviews need ${missingEvidenceDescription} for verification.`,
 		);
 	}
-	if (requiresSourceEvidenceReview && !evidenceComplete) {
-		throw new Error(
-			`Sources that cannot populate the canonical catalog need ${missingEvidenceDescription} for verification.`,
-		);
-	}
-	const sourceLabelDisagreementMetrics = evidenceComplete
+	const sourceLabelDisagreementMetrics = hasCompleteProductEvidence(
+		input.evidencePaths,
+	)
 		? [usdaDraft, openFoodFactsDraft].flatMap((sourceDraft) =>
 				sourceDraft
 					? findSubmittedLabelDisagreementMetrics(
@@ -280,15 +359,29 @@ export const prepareCatalogSubmissionReview = (input: {
 				input.sourceAssessment.sourceAccuracy.conflicts,
 			)
 		: null;
+	const trust = resolveCatalogSubmissionTrust({
+		hasTrustedEvidenceConflict,
+		retainedEvidenceLookupFailed:
+			input.sourceAssessment.retainedEvidenceLookupFailed,
+		hasSourceMatch: Boolean(matchedDraft),
+	});
+	const retainedEvidenceConflictCount = retainedEvidenceComparisons.reduce(
+		(total, { comparison }) =>
+			total +
+			comparison.changes.filter((change) => change.severity !== "low").length,
+		0,
+	);
 	const report: CatalogSubmissionValidationReport = {
-		valid: true,
+		...trust,
 		issues: reviewFlags,
 		usdaMatch: Boolean(usdaDraft),
 		openFoodFactsMatch: Boolean(openFoodFactsDraft),
 		externalLookupFailed: input.sourceAssessment.externalLookupFailed,
 		evidenceComplete,
-		conflictCount: verificationBundle?.conflicts.length ?? 0,
-		sourceAutoPublishEligible: input.sourceCanAutoPublish,
+		conflictCount:
+			(verificationBundle?.conflicts.length ?? 0) +
+			retainedEvidenceConflictCount,
+		sourceAutoPublishEligible: sourceCanAutoPublish,
 		existingCatalogMatch: Boolean(input.existingComparison),
 		existingCatalogAction: input.existingComparison
 			? "update_review"
@@ -297,6 +390,9 @@ export const prepareCatalogSubmissionReview = (input: {
 		imageCrop: input.frontImageCrop ?? null,
 		sourceLabelDisagreementMetrics,
 		sourceAccuracyConflicts: input.sourceAssessment.sourceAccuracy.conflicts,
+		retainedEvidenceConflictCount,
+		retainedEvidenceLookupFailed:
+			input.sourceAssessment.retainedEvidenceLookupFailed,
 	};
 
 	return {
@@ -307,7 +403,7 @@ export const prepareCatalogSubmissionReview = (input: {
 		hasSourceMatchedImageEvidence,
 		matchedDraft,
 		needsSourceComparisonReview,
-		sourceCanAutoPublish: input.sourceCanAutoPublish,
+		sourceCanAutoPublish,
 		report,
 		verificationBundle,
 	};

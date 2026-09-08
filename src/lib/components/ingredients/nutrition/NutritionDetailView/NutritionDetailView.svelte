@@ -5,6 +5,8 @@
 	import Plus from "$lib/assets/icons/Plus/Plus.svelte";
 	import BackButton from "$lib/components/common/buttons/BackButton/BackButton.svelte";
 	import AcceleratingStepButton from "$lib/components/common/buttons/AcceleratingStepButton/AcceleratingStepButton.svelte";
+	import SegmentedControl from "$lib/components/common/buttons/SegmentedControl/SegmentedControl.svelte";
+	import type { SegmentedControlButtonOption } from "$lib/components/common/buttons/SegmentedControl/types";
 	import ViewBody from "$lib/components/common/view/ViewBody/ViewBody.svelte";
 	import ViewFrame from "$lib/components/common/view/ViewFrame/ViewFrame.svelte";
 	import ViewTop from "$lib/components/common/view/ViewTop/ViewTop.svelte";
@@ -14,11 +16,16 @@
 		getNutritionViewingConversion,
 		getNutritionViewingServing,
 		stepNutritionViewingSelection,
+		canViewFoodNutritionByMass,
+		type NutritionViewingMode,
 		type NutritionViewingSelection,
 	} from "$lib/utils/food/nutrients/nutritionViewingAmount";
 	import NutritionPanel from "../NutritionPanel/NutritionPanel.svelte";
 	import NutritionServingSelect from "../NutritionServingSelect/NutritionServingSelect.svelte";
-	import type { NutritionDetailViewProps } from "./types";
+	import type {
+		NutritionDetailViewProps,
+		ServingViewingSelection,
+	} from "./types";
 	import { getCanonicalFoodDescription } from "$lib/utils/food/records/foodRecords";
 
 	let {
@@ -32,52 +39,159 @@
 		onReportIncorrectInformation,
 	}: NutritionDetailViewProps = $props();
 
+	const hasExactServingWeight = (selection: ServingViewingSelection | null) => {
+		if (!selection || !canViewFoodNutritionByMass(food)) return false;
+		const grams = getNutritionViewingConversion(food, {
+			...selection,
+			multiplier: 1,
+		}).grams;
+		return typeof grams === "number" && Number.isFinite(grams) && grams > 0;
+	};
+	const getDefaultViewingMode = (
+		selection: NutritionViewingSelection,
+	): NutritionViewingMode =>
+		selection.kind === "serving" && !hasExactServingWeight(selection)
+			? "servings"
+			: "weight";
+	const initialViewingSelection = untrack(() =>
+		getInitialNutritionViewingSelection(food),
+	);
 	let viewingSelection = $state<NutritionViewingSelection>(
-		untrack(() => getInitialNutritionViewingSelection(food)),
+		initialViewingSelection,
+	);
+	let servingSelection = $state<ServingViewingSelection | null>(
+		initialViewingSelection.kind === "serving" ? initialViewingSelection : null,
+	);
+	let viewingMode = $state<NutritionViewingMode>(
+		untrack(() => getDefaultViewingMode(initialViewingSelection)),
 	);
 	let currentFoodId = $state(untrack(() => food.fdcId));
+	const viewingModeOptions = [
+		{ value: "weight", label: "Weight" },
+		{ value: "servings", label: "Servings" },
+	] satisfies SegmentedControlButtonOption[];
+	const canSelectViewingMode = $derived(
+		hasExactServingWeight(servingSelection),
+	);
 	const foodName = $derived(getCanonicalFoodDescription(food));
+	const resolvedViewingSelection = $derived.by<NutritionViewingSelection>(
+		() => {
+			if (viewingMode !== "weight" || viewingSelection.kind !== "serving")
+				return viewingSelection;
+			const grams = getNutritionViewingConversion(food, viewingSelection).grams;
+			return typeof grams === "number" && Number.isFinite(grams) && grams > 0
+				? { kind: "mass", grams }
+				: viewingSelection;
+		},
+	);
 	const viewingServing = $derived(
-		getNutritionViewingServing(food, viewingSelection),
+		getNutritionViewingServing(food, resolvedViewingSelection),
 	);
 	const viewingConversion = $derived(
-		getNutritionViewingConversion(food, viewingSelection),
+		getNutritionViewingConversion(food, resolvedViewingSelection),
 	);
 	const viewingLabel = $derived(
-		formatNutritionViewingSelection(food, viewingSelection),
+		formatNutritionViewingSelection(food, resolvedViewingSelection),
 	);
 
 	$effect(() => {
 		if (food.fdcId === currentFoodId) return;
 		currentFoodId = food.fdcId;
-		viewingSelection = getInitialNutritionViewingSelection(food);
+		const selection = getInitialNutritionViewingSelection(food);
+		viewingSelection = selection;
+		servingSelection = selection.kind === "serving" ? selection : null;
+		viewingMode = getDefaultViewingMode(selection);
 	});
 
 	const decreaseViewingAmountLabel = $derived(
-		viewingSelection.kind === "mass"
+		viewingMode === "weight"
 			? "Decrease viewing amount by 1g; press and hold to accelerate"
 			: "Decrease viewing amount by 1 serving; press and hold to accelerate",
 	);
 	const increaseViewingAmountLabel = $derived(
-		viewingSelection.kind === "mass"
+		viewingMode === "weight"
 			? "Increase viewing amount by 1g; press and hold to accelerate"
 			: "Increase viewing amount by 1 serving; press and hold to accelerate",
 	);
 
+	const setViewingSelection = (selection: NutritionViewingSelection) => {
+		viewingSelection = selection;
+		if (selection.kind === "serving") servingSelection = selection;
+	};
+
 	const decreaseViewingAmount = (step: number) => {
-		viewingSelection = stepNutritionViewingSelection(
-			viewingSelection,
-			"decrease",
-			step,
+		setViewingSelection(
+			stepNutritionViewingSelection(
+				food,
+				viewingSelection,
+				"decrease",
+				step,
+				viewingMode,
+			),
 		);
 	};
 
 	const increaseViewingAmount = (step: number) => {
-		viewingSelection = stepNutritionViewingSelection(
-			viewingSelection,
-			"increase",
-			step,
+		setViewingSelection(
+			stepNutritionViewingSelection(
+				food,
+				viewingSelection,
+				"increase",
+				step,
+				viewingMode,
+			),
 		);
+	};
+
+	const selectViewingMode = (value: string) => {
+		if (
+			(value !== "weight" && value !== "servings") ||
+			value === viewingMode ||
+			!servingSelection
+		)
+			return;
+		if (value === "weight") {
+			if (
+				viewingSelection.kind === "serving" &&
+				viewingSelection.multiplier > 1
+			) {
+				const grams = getNutritionViewingConversion(
+					food,
+					viewingSelection,
+				).grams;
+				if (typeof grams === "number" && Number.isFinite(grams))
+					viewingSelection = { kind: "mass", grams };
+			}
+			viewingMode = "weight";
+			return;
+		}
+		if (viewingSelection.kind === "mass") {
+			const servingGrams = getNutritionViewingConversion(food, {
+				...servingSelection,
+				multiplier: 1,
+			}).grams;
+			if (
+				typeof servingGrams === "number" &&
+				Number.isFinite(servingGrams) &&
+				servingGrams > 0
+			) {
+				servingSelection = {
+					...servingSelection,
+					multiplier: Math.max(
+						1,
+						Math.round(viewingSelection.grams / servingGrams),
+					),
+				};
+			}
+		}
+		viewingSelection = servingSelection;
+		viewingMode = "servings";
+	};
+
+	const selectServing = (selection: NutritionViewingSelection) => {
+		viewingSelection = selection;
+		servingSelection = selection.kind === "serving" ? selection : null;
+		viewingMode = getDefaultViewingMode(selection);
 	};
 </script>
 
@@ -107,15 +221,31 @@
 				class="nutrition-detail-view__amount"
 				aria-label="Viewing amount"
 			>
-				<h2>Viewing Amount</h2>
+				<div class="nutrition-detail-view__amount-heading">
+					<h2>Viewing Amount</h2>
+					{#if canSelectViewingMode}
+						<div class="nutrition-detail-view__mode">
+							<SegmentedControl
+								label="Adjust viewing amount by"
+								options={viewingModeOptions}
+								value={viewingMode}
+								onSelect={selectViewingMode}
+							/>
+						</div>
+					{/if}
+				</div>
 				<div class="nutrition-detail-view__amount-controls">
 					<AcceleratingStepButton
 						label={decreaseViewingAmountLabel}
 						variant="soft"
 						size="small"
-						disabled={viewingSelection.kind === "mass"
-							? viewingSelection.grams <= 1
-							: viewingSelection.multiplier <= 1}
+						disabled={viewingMode === "weight"
+							? viewingSelection.kind === "mass"
+								? viewingSelection.grams <= 1
+								: false
+							: viewingSelection.kind === "serving"
+								? viewingSelection.multiplier <= 1
+								: false}
 						onStep={decreaseViewingAmount}
 					>
 						<Minus size={18} strokeWidth={2.6} />
@@ -135,7 +265,7 @@
 			<NutritionServingSelect
 				{food}
 				selection={viewingSelection}
-				onSelect={(selection) => (viewingSelection = selection)}
+				onSelect={selectServing}
 			/>
 		</div>
 	</ViewTop>

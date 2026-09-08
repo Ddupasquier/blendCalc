@@ -50,6 +50,7 @@ import {
 } from "$lib/utils/serving/servingAmount";
 import { getNutrientAmountForServingConversion } from "$lib/utils/food/nutrients/foodNutrients";
 import { normalizeFoodServingIdentityLabel } from "$lib/utils/food/servings/foodServings";
+import { canonicalizeProviderServingLabel } from "$lib/utils/food/servings/providerServingLabels";
 import { formatSourceProductName } from "$lib/utils/products/productNameFormatting.js";
 import { toFiniteNonnegativeNumber } from "$lib/utils/numbers/finiteNumbers";
 
@@ -207,6 +208,12 @@ const uniqueCleanValues = (values: Array<string | undefined>) => {
 
 const splitDelimitedValues = (value?: string) =>
 	uniqueCleanValues((value ?? "").split(/[;,]/));
+
+const getOpenFoodFactsPrimaryBrand = (value?: string) =>
+	(value ?? "")
+		.split(/[;,]/)
+		.map((brand) => brand.trim())
+		.find(Boolean) ?? "";
 
 const uniqueIngredientValues = (values: Array<string | undefined>) => {
 	const seen = new Set<string>();
@@ -914,7 +921,10 @@ const parseSourceWeight = (value: string) => {
 
 const parseServingBasis = (product: OpenFoodFactsProduct) => {
 	const servingQuantity = toNumber(product.serving_quantity);
-	const parsedServing = parseSourceWeight(product.serving_size ?? "");
+	const canonicalServingLabel = canonicalizeProviderServingLabel(
+		product.serving_size ?? "",
+	);
+	const parsedServing = parseSourceWeight(canonicalServingLabel);
 	if (parsedServing) {
 		return {
 			servingWeightGrams: parsedServing.grams,
@@ -928,7 +938,9 @@ const parseServingBasis = (product: OpenFoodFactsProduct) => {
 		servingQuantity === null
 			? null
 			: parseSourceWeight(
-					`${servingQuantity} ${product.serving_quantity_unit ?? ""}`,
+					canonicalizeProviderServingLabel(
+						`${servingQuantity} ${product.serving_quantity_unit ?? ""}`,
+					),
 				);
 	if (servingQuantity !== null && servingQuantity > 0 && parsedQuantity) {
 		return {
@@ -940,10 +952,12 @@ const parseServingBasis = (product: OpenFoodFactsProduct) => {
 		};
 	}
 	const parsedMeasure =
-		parseSourceServingMeasure(product.serving_size ?? "") ??
+		parseSourceServingMeasure(canonicalServingLabel) ??
 		(servingQuantity !== null && servingQuantity > 0
 			? parseSourceServingMeasure(
-					`${servingQuantity} ${product.serving_quantity_unit ?? ""}`,
+					canonicalizeProviderServingLabel(
+						`${servingQuantity} ${product.serving_quantity_unit ?? ""}`,
+					),
 				)
 			: null);
 	if (parsedMeasure) {
@@ -986,6 +1000,9 @@ export const mapOpenFoodFactsProduct = (
 		parsedServing,
 		milliliterVolume,
 	} = parseServingBasis(product);
+	const canonicalServingLabel = canonicalizeProviderServingLabel(
+		product.serving_size ?? "",
+	);
 	const nutrients = mapOpenFoodFactsNutrients(
 		product.nutriments ?? {},
 		servingWeightGrams,
@@ -1002,7 +1019,7 @@ export const mapOpenFoodFactsProduct = (
 						kind: "serving" as const,
 						quantity: 1,
 						unitKey: "serving",
-						servingLabel: product.serving_size?.trim() || "Serving",
+						servingLabel: canonicalServingLabel || "Serving",
 					}
 			: { kind: "mass" as const, quantity: 100, unitKey: "g" },
 	).map((nutrient) => ({ ...nutrient, sourceReference: canonicalBarcode }));
@@ -1021,7 +1038,7 @@ export const mapOpenFoodFactsProduct = (
 						kind: "serving" as const,
 						quantity: 1,
 						unitKey: "serving",
-						servingLabel: product.serving_size?.trim() || "Serving",
+						servingLabel: canonicalServingLabel || "Serving",
 					}
 			: { kind: "mass" as const, quantity: 100, unitKey: "g" },
 	).map((fact) => ({ ...fact, sourceReference: canonicalBarcode }));
@@ -1040,11 +1057,12 @@ export const mapOpenFoodFactsProduct = (
 						kind: "serving" as const,
 						quantity: 1,
 						unitKey: "serving",
-						servingLabel: product.serving_size?.trim() || "Serving",
+						servingLabel: canonicalServingLabel || "Serving",
 					}
 			: { kind: "mass" as const, quantity: 100, unitKey: "g" },
 	).map((entry) => ({ ...entry, sourceReference: canonicalBarcode }));
 	const metadata = parseOpenFoodFactsMetadata(product);
+	const brandOwner = getOpenFoodFactsPrimaryBrand(product.brands);
 	const image = parseOpenFoodFactsImage(product, canonicalBarcode);
 	const alcoholByVolume = parseOpenFoodFactsAlcoholByVolume(product.nutriments);
 	const volumeEquivalent = hasExactGramWeight
@@ -1052,7 +1070,7 @@ export const mapOpenFoodFactsProduct = (
 		: undefined;
 	const parsedHouseholdEquivalent = hasExactGramWeight
 		? parseSourceServingMeasure(
-				normalizeFoodServingIdentityLabel(product.serving_size ?? ""),
+				normalizeFoodServingIdentityLabel(canonicalServingLabel),
 			)
 		: null;
 	const householdEquivalent =
@@ -1072,7 +1090,7 @@ export const mapOpenFoodFactsProduct = (
 	const exactServing: FoodServing | undefined = useServingValues
 		? {
 				label:
-					product.serving_size?.trim() ||
+					canonicalServingLabel ||
 					(servingWeightGrams ? `${servingWeightGrams} g` : "Package serving"),
 				gramWeight: servingWeightGrams ?? undefined,
 				milliliterVolume: milliliterVolume ?? undefined,
@@ -1102,7 +1120,7 @@ export const mapOpenFoodFactsProduct = (
 		barcode: canonicalBarcode,
 		name,
 		nameProvenance: "source",
-		brandOwner: product.brands?.trim() ?? "",
+		brandOwner,
 		servingLabel,
 		servingWeightGrams,
 		hasSourceServing: Boolean(exactServing),
@@ -1124,7 +1142,7 @@ export const mapOpenFoodFactsProduct = (
 			image,
 			metadata,
 			hasSourceServing: Boolean(exactServing),
-			hasBrandOwner: Boolean(product.brands?.trim()),
+			hasBrandOwner: Boolean(brandOwner),
 			alcoholByVolume,
 		}),
 		volumeEquivalent,
@@ -1145,11 +1163,22 @@ export const mapFdcBarcodeFood = (
 	const canonicalBarcode = normalizeBarcode(barcode);
 	if (!canonicalBarcode || !food.description) return null;
 
-	const normalizedServing =
+	const sourceServing =
 		food.foodServings?.find((serving) => serving.isPrimary) ??
 		food.foodServings?.[0];
+	const normalizedServing = sourceServing
+		? {
+				...sourceServing,
+				label: canonicalizeProviderServingLabel(sourceServing.label),
+			}
+		: undefined;
+	const canonicalHouseholdServingLabel = food.householdServingFullText
+		? canonicalizeProviderServingLabel(food.householdServingFullText)
+		: undefined;
 	const parsedServing = parseSourceWeight(
-		`${food.servingSize ?? ""} ${food.servingSizeUnit ?? ""}`,
+		canonicalizeProviderServingLabel(
+			`${food.servingSize ?? ""} ${food.servingSizeUnit ?? ""}`,
+		),
 	);
 	const hasSourceServing = Boolean(normalizedServing || parsedServing);
 	const servingWeightGrams =
@@ -1158,8 +1187,7 @@ export const mapFdcBarcodeFood = (
 		normalizedServing ??
 		(parsedServing
 			? {
-					label:
-						food.householdServingFullText?.trim() || `${servingWeightGrams} g`,
+					label: canonicalHouseholdServingLabel || `${servingWeightGrams} g`,
 					gramWeight: servingWeightGrams ?? undefined,
 					amount: parsedServing.quantity,
 					unitKey: parsedServing.unit,
@@ -1223,7 +1251,7 @@ export const mapFdcBarcodeFood = (
 		brandOwner: food.brandOwner ?? "",
 		servingLabel:
 			normalizedServing?.label ||
-			(hasSourceServing && food.householdServingFullText) ||
+			(hasSourceServing && canonicalHouseholdServingLabel) ||
 			(servingWeightGrams ? `${servingWeightGrams} g` : "100 g reference"),
 		servingWeightGrams,
 		hasSourceServing,

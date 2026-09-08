@@ -472,7 +472,7 @@ export type FoodPrecautionaryStatement = {
 export interface FoodItem {
 	fdcId: number;
 	description: string;
-	/** Source/catalog name retained when a user assigns a personal list name. */
+	/** Source/catalog name retained for non-private foods when a user assigns a personal list name. */
 	canonicalDescription?: string;
 	sourceIdentifiers?: Record<string, string>;
 	nameProvenance?: "source" | "barcode" | "user";

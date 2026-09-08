@@ -23,10 +23,13 @@
 	}: NutritionFactsLabelProps = $props();
 	const nutritionBasis = $derived(
 		viewingServing
-			? "Amount per serving"
+			? typeof viewingConversion.servings === "number" &&
+				viewingConversion.servings > 1
+				? `Amount for ${viewingConversion.servings} servings`
+				: "Amount per serving"
 			: viewingLabel === "100g"
 				? "Per 100g food data"
-				: `Amount for ${viewingLabel}`,
+				: `Per ${viewingLabel} viewing amount`,
 	);
 	const foodName = $derived(food ? getCanonicalFoodDescription(food) : "");
 
