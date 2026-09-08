@@ -223,6 +223,25 @@ describe("catalog submission comparison", () => {
 		);
 	});
 
+	it("classifies a wildly false serving claim as a high-severity evidence conflict", () => {
+		const comparison = compareCatalogSubmissionToExistingProduct(
+			createFood({ customServingWeightGrams: 1814.37 }),
+			createFood({ customServingWeightGrams: 28 }),
+		);
+
+		expect(comparison.changes).toContainEqual(
+			expect.objectContaining({
+				field: "servingWeightGrams",
+				severity: "high",
+				previousValue: 28,
+				submittedValue: 1814.37,
+			}),
+		);
+		expect(comparison.severeDifferences).toContain(
+			"Submitted serving weight (1,814.37 g) differs from the trusted comparison value (28 g).",
+		);
+	});
+
 	it("does not treat an unreported submitted nutrient as a removal", () => {
 		const existingFood = createFood({
 			foodNutrients: [

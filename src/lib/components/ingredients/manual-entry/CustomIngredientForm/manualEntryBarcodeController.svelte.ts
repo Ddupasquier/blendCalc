@@ -177,7 +177,6 @@ export const createManualEntryBarcodeController = ({
 		Boolean(
 			normalizedBarcode &&
 			hasAcceptedSourceBarcode &&
-			!hasTrustedProductImage &&
 			(form.data.barcodeSource === "open-food-facts" ||
 				form.data.barcodeSource === "cola-cloud" ||
 				form.data.barcodeSource === "usda"),
@@ -190,7 +189,7 @@ export const createManualEntryBarcodeController = ({
 	);
 	const shareHelpMessage = $derived(
 		form.data.shareSelectionSource === "automatic"
-			? "This complete product matches reusable source data, so sharing is on by default. Turn it off to keep this save private."
+			? "This unchanged product matches trusted source data, so sharing is on by default. Turn it off to keep this save private."
 			: form.data.submissionIntent === "catalog_correction"
 				? "Show us what changed and add clear package photos. Your correction will be reviewed before the shared product changes."
 				: hasSharedCatalogReference && referenceHasChanges

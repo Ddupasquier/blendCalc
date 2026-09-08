@@ -156,9 +156,10 @@ it does not share mutable state with browser jobs or another workflow run.
   intentionally reports no serving.
 - `npm run dev:test` disables outbound USDA and Open Food Facts requests. The real
   barcode route may read source-shaped responses already stored in the disposable local
-  provider cache; UPC `00030000581728` is the maintained end-to-end Open Food Facts
-  example. Any other barcode missing from the local catalog and local provider cache
-  returns the normal not-found result without spending provider or hosted-database
+  provider cache. UPC `00030000581728` is the maintained general Open Food Facts example;
+  UPC `00897922002775` is the source-only sharing control and deliberately has no local
+  shared-catalog row. Any other barcode missing from the local catalog and local provider
+  cache returns the normal not-found result without spending provider or hosted-database
   quota. Provider adapters also remain covered through injected unit tests and separate
   explicit live-source audits. Open Food Facts records are not silently republished
   through the blendCalcAPI because their redistribution model remains separate from

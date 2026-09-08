@@ -193,9 +193,10 @@ export const createManualEntrySubmissionController = ({
 				shareWithCatalog: form.data.shareWithCatalog,
 				photos: {
 					frontPhoto: form.data.frontPhoto,
-					frontImageCrop: form.data.frontPhoto
-						? form.data.imagePlacement
-						: null,
+					frontImageCrop:
+						form.data.frontPhoto || form.data.image
+							? form.data.imagePlacement
+							: null,
 					nutritionPhoto: form.data.nutritionPhoto,
 					barcodePhoto: form.data.barcodePhoto,
 				},

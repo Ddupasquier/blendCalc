@@ -205,7 +205,7 @@ describe("sparse alcohol barcode form state", () => {
 		);
 	});
 
-	it("carries mapping-review evidence into the form and explains that it is excluded from math", () => {
+	it("carries mapping-review evidence into the form without exposing internal review work", () => {
 		const draft = makeSparseDraft({
 			nutrientSourceReview: [
 				{
@@ -222,8 +222,11 @@ describe("sparse alcohol barcode form state", () => {
 
 		const state = getBarcodeDraftState(draft);
 		expect(state.nutrientSourceReview).toHaveLength(1);
-		expect(getBarcodeImportMessage(draft, [], "autofill")).toContain(
-			"1 additional source value needs mapping review and is not used in nutrition calculations",
+		const message = getBarcodeImportMessage(draft, [], "autofill");
+		expect(message).toContain(
+			"No nutrition values from this source could be accepted and retained",
 		);
+		expect(message).not.toContain("mapping review");
+		expect(message).not.toContain("nutrition calculations");
 	});
 });

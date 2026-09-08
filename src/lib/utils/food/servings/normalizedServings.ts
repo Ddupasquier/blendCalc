@@ -1,6 +1,7 @@
 import { normalizeFoodForStorage } from "$lib/utils/food/records/foodRecords";
 import type { FoodItem, FoodServing } from "$lib/utils/food/types";
 import { toFinitePositiveNumber } from "$lib/utils/numbers/finiteNumbers";
+import { canonicalizeExternalProviderServingLabel } from "$lib/utils/food/servings/providerServingLabels";
 
 export type NormalizedServingRow = {
 	servingOrder: number;
@@ -26,7 +27,10 @@ export const normalizedRowsToServings = (
 ): FoodServing[] =>
 	rows
 		.flatMap((row) => {
-			const label = row.label.trim();
+			const label = canonicalizeExternalProviderServingLabel(
+				row.label,
+				row.source,
+			);
 			const gramWeight = toFinitePositiveNumber(row.gramWeight);
 			const milliliterVolume = toFinitePositiveNumber(row.milliliterVolume);
 			const amount = toFinitePositiveNumber(row.amount);

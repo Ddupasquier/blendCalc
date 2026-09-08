@@ -9,6 +9,7 @@
 		getUserFacingErrorMessage,
 	} from "$lib/utils/errors/userFacingErrors";
 	import type { FoodCompatibilityFeedbackResponse } from "$lib/utils/food/quality/compatibilityFeedback";
+	import { getCanonicalFoodDescription } from "$lib/utils/food/records/foodRecords";
 	import type { MissingFoodWarningFeedbackProps } from "./types";
 
 	let { food }: MissingFoodWarningFeedbackProps = $props();
@@ -72,10 +73,7 @@
 		if (food.barcode ?? food.gtinUpc) {
 			formData.set("barcode", food.barcode ?? food.gtinUpc ?? "");
 		}
-		formData.set(
-			"foodDescription",
-			food.canonicalDescription ?? food.description,
-		);
+		formData.set("foodDescription", getCanonicalFoodDescription(food));
 		formData.set("preferenceTagId", selectedPreference.tagId);
 		formData.set("preferenceType", selectedPreference.type);
 		if (observedLabelDate) {

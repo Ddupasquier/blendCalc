@@ -75,6 +75,32 @@ describe("manual entry barcode flow", () => {
 		});
 	});
 
+	it("keeps an ounce-and-gram serving as package wording instead of an empty volume control", () => {
+		const state = getBarcodeDraftState(
+			createDraft({
+				servingLabel: "1 oz (28 g)",
+				servingWeightGrams: 28,
+				serving: {
+					label: "1 oz (28 g)",
+					gramWeight: 28,
+					amount: 1,
+					unitKey: "oz",
+					isPrimary: true,
+					measureType: "Package serving",
+					isHouseholdMeasure: true,
+				},
+			}),
+		);
+
+		expect(state).toMatchObject({
+			servingLabel: "1 oz (28 g)",
+			servingWeightGrams: 28,
+			useServingMeasure: false,
+			servingMeasureQuantity: 1,
+			servingMeasureUnit: "oz",
+		});
+	});
+
 	it("uses the DB-resolved category for the visible manual-entry category", () => {
 		const state = getBarcodeDraftState(
 			createDraft({

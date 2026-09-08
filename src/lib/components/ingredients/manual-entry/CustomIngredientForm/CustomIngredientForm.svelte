@@ -369,6 +369,14 @@
 			form.data.servingWeightGrams = null;
 			form.data.servingLabel = "";
 		}
+		if (
+			value &&
+			!servingMeasureOptions.some(
+				(option) => option.value === form.data.servingMeasureUnit,
+			)
+		) {
+			form.data.servingMeasureUnit = servingMeasureOptions[0]?.value ?? "";
+		}
 		form.data.useServingMeasure = value;
 		form.markFieldAsUserEntered("serving");
 	};

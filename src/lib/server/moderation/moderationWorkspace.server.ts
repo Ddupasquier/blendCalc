@@ -375,6 +375,11 @@ export const loadModerationWorkspaceData = async (
 		const food = submission.food as unknown as FoodItem;
 		const validationReport = submission.validation_report as {
 			valid?: boolean;
+			trustDisposition?:
+				| "source-aligned"
+				| "unverified"
+				| "conflicts-with-trusted-evidence"
+				| "trusted-evidence-check-incomplete";
 			issues?: unknown;
 			evidenceComplete?: boolean;
 			conflictCount?: number;
@@ -440,6 +445,9 @@ export const loadModerationWorkspaceData = async (
 			conflictCount: validationReport.conflictCount ?? 0,
 			externalLookupFailed: validationReport.externalLookupFailed ?? false,
 			validationIssues,
+			trustDisposition:
+				validationReport.trustDisposition ??
+				(validationReport.valid === false ? "unverified" : "source-aligned"),
 			isQaFixture: validationReport.qaSeed === true,
 			submissionKind: submission.submission_kind,
 			submissionIntent: submission.submission_intent,

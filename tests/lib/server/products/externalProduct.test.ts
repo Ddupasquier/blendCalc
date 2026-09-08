@@ -652,4 +652,51 @@ describe("external barcode product lookup", () => {
 			true,
 		);
 	});
+
+	it("accepts source nutrition with a 100g basis and no package serving", async () => {
+		const openFoodFactsDraft = makeDraft("open-food-facts", undefined, {
+			barcode: "03017620422003",
+			name: "Nutella",
+			brandOwner: "Ferrero",
+			servingLabel: "100 g reference",
+			servingWeightGrams: null,
+			hasSourceServing: false,
+			serving: undefined,
+			nutrients: [
+				{
+					nutrientId: 1008,
+					nutrientName: "Energy",
+					nutrientNumber: "208",
+					unitName: "KCAL",
+					value: 539,
+					measurementBasis: {
+						kind: "mass",
+						quantity: 100,
+						unitKey: "g",
+					},
+					source: "open-food-facts",
+				},
+			],
+			reportedNutrientIds: [1008],
+		});
+
+		const result = await lookupExternalBarcodeProduct(
+			openFoodFactsDraft.barcode,
+			{
+				usda: vi.fn().mockResolvedValue(null),
+				openFoodFacts: vi.fn().mockResolvedValue(openFoodFactsDraft),
+				colaCloud: vi.fn().mockResolvedValue(null),
+				getProductReferenceCatalog,
+				nutrientRelationshipRules: [],
+			},
+		);
+
+		expect(result).toMatchObject({
+			barcode: "03017620422003",
+			name: "Nutella",
+			servingWeightGrams: null,
+			hasSourceServing: false,
+			nutrients: [expect.objectContaining({ nutrientId: 1008, value: 539 })],
+		});
+	});
 });

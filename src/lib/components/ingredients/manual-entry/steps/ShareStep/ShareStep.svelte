@@ -152,7 +152,7 @@
 				<strong>{normalizedName || "Unnamed ingredient"}</strong>
 				<span>{activeCategory}</span>
 			</div>
-			{#if trustedProductImageUrl && !requiresCatalogEvidence}
+			{#if trustedProductImageUrl && !requiresCatalogEvidence && !showOptionalProductImageUpload}
 				<div class="share-step__trusted-image">
 					<ProductImageFrame
 						src={trustedProductImageUrl}
@@ -349,7 +349,9 @@
 					evidenceProgress,
 				)}
 				uploadProgress={evidenceUploadProgress}
-				description="No trusted DB/API product image was found for this barcode. You can add a front package photo now; it stays private until a moderator approves it."
+				description={trustedProductImageUrl
+					? "Adjust the trusted product image for ingredient cards, or replace it only when the package image has changed."
+					: "No trusted DB/API product image was found for this barcode. You can add a front package photo now; it stays private until a moderator approves it."}
 				{onFrontPhotoChange}
 				onPlacementChange={onImagePlacementChange}
 			/>

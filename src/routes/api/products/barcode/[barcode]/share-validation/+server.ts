@@ -7,8 +7,7 @@ import { normalizeBarcode } from "$lib/utils/barcode/barcode";
 import { productNamesDiffer } from "$lib/utils/products/productIdentity";
 import { readLimitedJson } from "$lib/server/security/requestBody.server";
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
-import { getProductReferenceCatalog } from "$lib/server/products/productReferenceCatalog.server";
-import { barcodeDraftUsesOnlyCanonicalSources } from "$lib/utils/products/catalogSourcePolicy";
+import { getTrustedSourceEvidencePolicy } from "$lib/utils/products/productEvidenceRequirements";
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 
@@ -45,12 +44,11 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
 			requiresCatalogEvidence: true,
 		});
 	}
-	const requiresCatalogEvidence = !barcodeDraftUsesOnlyCanonicalSources(
-		draft,
-		await getProductReferenceCatalog(),
-	);
-
 	if (productNamesDiffer(productName, draft.name)) {
+		const evidencePolicy = getTrustedSourceEvidencePolicy({
+			hasExactSourceMatch: true,
+			hasSourceChanges: true,
+		});
 		return json({
 			status: "name-mismatch",
 			barcode,
@@ -59,15 +57,18 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
 				code: "PRODUCT_NAME_CONFLICT",
 				params: { productName: draft.name },
 			},
-			requiresCatalogEvidence,
+			...evidencePolicy,
 		});
 	}
+	const evidencePolicy = getTrustedSourceEvidencePolicy({
+		hasExactSourceMatch: true,
+		hasSourceChanges: false,
+	});
 
 	return json({
 		status: "matched",
 		barcode,
 		draft,
-		defaultSharingAllowed: !requiresCatalogEvidence,
-		requiresCatalogEvidence,
+		...evidencePolicy,
 	});
 };

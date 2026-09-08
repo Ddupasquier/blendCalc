@@ -122,7 +122,9 @@ export const getNutrientAmountForServingConversion = (
 		conversion,
 		food,
 	);
-	return conversionFactor === null ? null : nutrient.value * conversionFactor;
+	return conversionFactor === null
+		? null
+		: Number((nutrient.value * conversionFactor).toPrecision(12));
 };
 
 export const getNutrientStandardErrorForServingConversion = (

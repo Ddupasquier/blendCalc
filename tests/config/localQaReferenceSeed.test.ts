@@ -41,6 +41,13 @@ describe("local QA reference seed", () => {
 		expect(seed).toContain("public.food_servings");
 	});
 
+	it("provides the source-only evidence-sharing control without cataloging it", () => {
+		expect(seed).toContain('"code": "0897922002775"');
+		expect(seed).toContain(
+			"d76dee64fed90e1d404d15eac49222ee0ad2e4003d7367b554e5c7f0f9ba0d59",
+		);
+	});
+
 	it("retains the exact packaged ingredient and allergen deep-dive corpus", () => {
 		expect(seed).toContain('"brandOwner": "Sempio Foods Company"');
 		expect(seed).toContain('"description": "Snickers"');

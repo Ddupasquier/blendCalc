@@ -17,16 +17,23 @@ signed-in user without exposing the account that submitted it.
 
 1. A user scans or enters a valid UPC/EAN barcode.
 2. The ingredient is always saved to that user's private custom-food list first.
-3. Complete, unchanged exact-source data defaults to sharing only when every represented
-   product-data source is approved for canonical storage. User-entered values, edits,
-   corrections, and photos still require an explicit opt-in.
+3. Complete, unchanged exact-source data defaults to sharing when the provider confirms
+   the product. User-entered values, edits, corrections, and photos still require an
+   explicit opt-in. Publication remains a separate server decision: source data that is
+   not approved for canonical storage stays pending and cannot bypass that boundary.
 4. The server validates the barcode, exact serving basis, nutrient values, and basic
    macro relationships.
+   Before any automatic publication decision, it checks the active canonical product,
+   both maintained exact-barcode providers, and—when no active canonical product
+   exists—retained legally storable exact-barcode observations. A failed retained-
+   evidence read fails closed into review rather than allowing automatic publication.
 5. An exact, legally reusable USDA FoodData Central barcode match may publish or improve
    the blendCalc canonical product; the stored blendCalc record becomes the source used
    by later app and public-API reads while USDA remains recorded as field evidence.
-6. Unknown labels and exact matches from sources that cannot populate the canonical
-   catalog require front-package, nutrition-label, and barcode photos.
+6. Unknown labels require front-package, nutrition-label, and barcode photos. An
+   unchanged exact-source match does not ask the user to re-photograph facts the source
+   already supplied; source licensing and canonical publication eligibility are handled
+   independently by the server.
 7. Unknown labels stay pending until a moderator approves or rejects them.
 8. Approved products appear in ingredient text search and are checked before outside
    barcode services.
@@ -48,10 +55,12 @@ unknowns remain absent rather than becoming zero. Enabling community sharing mak
 catalog nutrient and evidence requirements blocking, and the server independently
 rejects incomplete submissions.
 Private saves and user-authored values or photos never create catalog intake by
-themselves. When an exact provider-backed product is complete, unchanged, and uses only
-sources approved for canonical storage, the Share step enables sharing by default and
-clearly allows the user to turn it off. Any user edit or selected evidence file clears
-that automatic default; sharing those values requires the user to enable it again.
+themselves. When an exact provider-backed product is complete and unchanged, the Share
+step enables sharing by default and clearly allows the user to turn it off. Any user edit
+or selected evidence file clears that automatic default; sharing those values requires
+the user to enable it again. This default expresses submission consent, not automatic
+publication eligibility; the server still withholds data that cannot enter the canonical
+catalog.
 The trusted route and database reject every submission without recorded sharing
 consent.
 
@@ -256,8 +265,9 @@ unchanged.
 - Open Food Facts barcode imports account for every usable numeric nutrient fact. An
   exact reviewed key, unit, and conversion may enter canonical nutrition; an unfamiliar
   key, mismatched unit, or unavailable conversion is retained in private
-  `nutrientSourceReview` evidence and called out during Manual Entry without being used
-  in calculations. Successful existing provider-cache refreshes also add only the
+  `nutrientSourceReview` evidence without being used in calculations or exposed as
+  internal review work during ordinary Manual Entry. Successful existing provider-cache
+  refreshes also add only the
   anonymous exact key/unit identity, count, and first/last-seen times to
   `nutrient_source_mapping_observations`; they add no provider request and retain no
   user, barcode, product, amount, or raw payload. The complete provider taxonomy is
@@ -272,13 +282,32 @@ unchanged.
 - Canonical categories are resolved through database options and mappings; they are not
   replaced with a generic packaged-food label during publication.
 - Raw USDA and Open Food Facts category values remain attached to the food payload so
-  mappings can improve without losing source information.
+  mappings can improve without losing source information. Resolution guidance ranks
+  exact source-observed candidates by specificity and rejects provider navigation noise
+  such as `Groceries`; it does not remap products into a different broad semantic family.
+  Broad categories remain fallbacks when the source provides no credible specific
+  candidate. If no confident source-backed category exists, the user or moderator must
+  choose rather than accepting an asserted classification.
+- A presentation family may group a category for symbols or navigation, but it never
+  replaces the product's evidence-backed primary category. For example, `Gochujang` may
+  use the sauces-and-condiments symbol family while remaining categorized as
+  `Gochujang`.
+- Open Food Facts may return several comma-separated brand tags. The normalized product
+  uses the provider's first declared brand while the complete raw response remains in
+  the private source cache.
 - Authoritative generic-food identities are typed separately from packaged products.
   Their reviewed taxonomy may identify an intrinsic allergen such as shellfish for
   shrimp. Packaged names, brands, descriptions, and categories never supply that
   evidence and never create `May contain`.
 - Material serving, brand, unit, or nutrient disagreements are recorded as conflicts for
   review.
+- A submitted serving that materially conflicts with active catalog or exact-barcode
+  evidence is explicitly untrusted. It never auto-publishes or becomes selected field
+  provenance. Complete current package evidence may preserve it only as a correction
+  proposal for moderator review; the moderator must verify the serving against that
+  evidence before it can replace the accepted value. This keeps legitimate label
+  revisions possible without treating claims such as `64 oz` against an evidence-backed
+  `1 oz (28 g)` serving as valid package information.
 - Moderator-reviewed labels remain identified as community-reviewed rather than
   source-verified.
 - Normalized nutrient and serving rows retain an exact source observation when one
@@ -342,6 +371,9 @@ can change over time.
    workflow metadata; a changed proposal requires a new comparison and submission.
 5. USDA and Open Food Facts are checked for exact-barcode support. Their results are
    stored as research context; neither provider silently replaces the canonical row.
+   When no active canonical product exists, retained exact USDA, Open Food Facts,
+   manufacturer, and GS1 observations are also compared so a temporary provider outage
+   cannot erase previously collected serving or nutrient evidence.
 6. Moderation shows the old and proposed values, source-check results, and private label
    evidence before approval.
 7. Approval succeeds only if the base revision is still current. It merges only the
@@ -477,6 +509,13 @@ any measured calculation basis. Count/package servings preserve labels such as
 `food_nutrient_measurements` on their reported mass, volume, or source-serving basis.
 The product JSON remains a compatibility snapshot, but normalized rows are what
 nutrition and Mix consume.
+
+Provider adapters canonicalize reviewed foreign or malformed unit tokens before those
+labels enter product snapshots, normalized serving rows, nutrient measurement bases, or
+client responses. Thus a source label such as `1 ONZ` is represented as `1 oz` in the
+application while the immutable source observation or raw provider payload retains `1
+ONZ`. The map is deliberately narrow: it does not translate arbitrary descriptive
+serving text, and it never changes a private user-authored label.
 
 When a provider supplies an exact package volume but no separate serving, the package
 volume can become the primary native serving with evidence from that exact observation.

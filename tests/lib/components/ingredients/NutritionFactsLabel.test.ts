@@ -67,6 +67,28 @@ describe("NutritionFactsLabel", () => {
 		expect(screen.queryByText("My Test Food")).not.toBeInTheDocument();
 	});
 
+	it("prints the current user-owned name for a private custom food", () => {
+		render(NutritionFactsLabel, {
+			props: {
+				food: {
+					...food,
+					fdcId: -1,
+					description: "MY PRIVATE TEST FOOD",
+					canonicalDescription: "Original Private Food",
+					nameProvenance: "user",
+					customFood: true,
+					foodIdentityType: "private-custom",
+					sourceKey: "custom",
+				},
+				viewingConversion: DEFAULT_NUTRITION_VIEWING_CONVERSION,
+				viewingLabel: "100g",
+			},
+		});
+
+		expect(screen.getByText("MY PRIVATE TEST FOOD")).toBeInTheDocument();
+		expect(screen.queryByText("Original Private Food")).not.toBeInTheDocument();
+	});
+
 	it("distinguishes unavailable nutrients from reported zero and bounded label evidence", () => {
 		render(NutritionFactsLabel, {
 			props: {

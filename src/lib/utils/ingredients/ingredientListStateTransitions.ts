@@ -1,4 +1,5 @@
 import { getFoodIdentityKey } from "$lib/utils/food/records/foodIdentity";
+import { applyUserFoodName } from "$lib/utils/food/records/foodRecords";
 import type { FoodItem } from "$lib/utils/food/types";
 import { getOppositeIngredientListKey } from "$lib/utils/ingredients/ingredientListUi";
 import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
@@ -99,14 +100,7 @@ export const renameFoodInIngredientListViewState = (
 	foodsByList: {
 		...state.foodsByList,
 		[listKey]: state.foodsByList[listKey].map((food) =>
-			food.fdcId === foodId
-				? {
-						...food,
-						canonicalDescription: food.canonicalDescription ?? food.description,
-						description,
-						nameProvenance: "user" as const,
-					}
-				: food,
+			food.fdcId === foodId ? applyUserFoodName(food, description) : food,
 		),
 	},
 });

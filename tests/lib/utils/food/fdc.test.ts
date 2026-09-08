@@ -6,6 +6,20 @@ afterEach(() => {
 });
 
 describe("FoodData Central normalization", () => {
+	it("canonicalizes malformed provider units before returning food", () => {
+		const food = normalizeFdcFood({
+			fdcId: 1862061,
+			description: "JALAPENO SAUCE, JALAPENO",
+			dataType: "Branded",
+			servingSize: 28,
+			servingSizeUnit: "g",
+			householdServingFullText: "1 ONZ",
+			foodNutrients: [],
+		});
+
+		expect(food.householdServingFullText).toBe("1 oz");
+	});
+
 	it("normalizes full food-detail nutrient records", () => {
 		const food = normalizeFdcFood({
 			fdcId: 123,

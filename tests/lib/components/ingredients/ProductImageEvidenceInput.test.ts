@@ -38,7 +38,8 @@ describe("ProductImageEvidenceInput", () => {
 		revokeObjectUrlSpy.mockRestore();
 	});
 
-	it("attributes a stored trusted image and hides duplicate upload", () => {
+	it("attributes and exposes placement for a stored trusted image without duplicate upload", async () => {
+		const onPlacementChange = vi.fn();
 		render(ProductImageEvidenceInput, {
 			props: {
 				trustedImage: {
@@ -56,7 +57,7 @@ describe("ProductImageEvidenceInput", () => {
 				foodName: "Blue Diamond Almond Milk",
 				category: "Dairy Alternatives",
 				onFrontPhotoChange: vi.fn(),
-				onPlacementChange: vi.fn(),
+				onPlacementChange,
 			},
 		});
 
@@ -72,6 +73,15 @@ describe("ProductImageEvidenceInput", () => {
 		).toBeEnabled();
 		expect(screen.getByText("Blue Diamond Almond Milk")).toBeInTheDocument();
 		expect(screen.getByText("Dairy Alternatives")).toBeInTheDocument();
+		expect(
+			screen.getByText(/drag the trusted image in the card preview/i),
+		).toBeInTheDocument();
+		await fireEvent.click(
+			screen.getByRole("button", { name: "Rotate 90° clockwise" }),
+		);
+		expect(onPlacementChange).toHaveBeenCalledWith(
+			expect.objectContaining({ rotationDegrees: 90 }),
+		);
 	});
 
 	it("lets a user replace a trusted image or return to it", async () => {

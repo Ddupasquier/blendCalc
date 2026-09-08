@@ -5,6 +5,7 @@ import {
 	normalizeBarcode,
 } from "$lib/utils/barcode/barcode";
 import { normalizeFoodForStorage } from "$lib/utils/food/records/foodRecords";
+import { applyCardImagePlacementToFoodImage } from "$lib/utils/food/images/foodImages";
 import type { FoodItem } from "$lib/utils/food/types";
 import type { IngredientProvenanceFilters } from "$lib/utils/ingredients/ingredientProvenance";
 import type { SharedProductSubmissionResult } from "$lib/utils/products/catalog";
@@ -40,6 +41,7 @@ import {
 } from "./catalogSubmissionReview.server";
 import {
 	createProductEvidenceSignedUrlBatches,
+	hasCompleteProductEvidence,
 	type ProductEvidencePaths,
 } from "./productEvidence.server";
 import {
@@ -270,6 +272,16 @@ export const submitProductForCatalog = async (
 			brandOwner: sourceAssessment.openFoodFactsDraft.brandOwner || null,
 		});
 	}
+	if (!existingCatalogFood) {
+		for (const observation of sourceAssessment.retainedExactObservations) {
+			exactSourceRecords.push({
+				source: observation.source,
+				sourceReference: observation.sourceReference,
+				productName: observation.food.description,
+				brandOwner: observation.food.brandOwner?.trim() || null,
+			});
+		}
+	}
 	const identityValidation = validateCatalogIntakeIdentity({
 		submittedFood: submissionFood,
 		canonicalRecord: existingCatalogFood
@@ -306,6 +318,7 @@ export const submitProductForCatalog = async (
 		labelObservedAt,
 		sourceCanAutoPublish: Boolean(
 			sourceAssessment.mergedDraft &&
+			!sourceAssessment.retainedEvidenceLookupFailed &&
 			barcodeDraftUsesOnlyCanonicalSources(
 				sourceAssessment.mergedDraft,
 				productReferenceCatalog,
@@ -382,7 +395,13 @@ export const submitProductForCatalog = async (
 				conflicts: verificationBundle.conflicts,
 			});
 			await persistFoodImageAsset({
-				image: matchedDraft.image,
+				image:
+					matchedDraft.image && context.frontImageCrop
+						? applyCardImagePlacementToFoodImage(
+								matchedDraft.image,
+								context.frontImageCrop,
+							)
+						: matchedDraft.image,
 				barcode: validation.barcode,
 				sharedProductId,
 				productName: matchedDraft.name,
@@ -457,6 +476,17 @@ export const approveCommunityProductSubmission = async (
 	if (!submission.evidence_complete) {
 		throw new Error("Complete label evidence is required before approval.");
 	}
+	const evidencePaths = submission.evidence_paths as ProductEvidencePaths;
+	const validationReport =
+		submission.validation_report as CatalogSubmissionValidationReport;
+	if (
+		validationReport.sourceAutoPublishEligible === false &&
+		!hasCompleteProductEvidence(evidencePaths)
+	) {
+		throw new Error(
+			"This source-only submission cannot be approved as user-label evidence without complete package photos.",
+		);
+	}
 
 	const submittedFood = normalizeFoodForStorage(
 		submission.food as unknown as FoodItem,
@@ -522,9 +552,6 @@ export const approveCommunityProductSubmission = async (
 		provenance: verificationBundle.provenance,
 		conflicts: verificationBundle.conflicts,
 	});
-	const evidencePaths = submission.evidence_paths as ProductEvidencePaths;
-	const validationReport =
-		submission.validation_report as CatalogSubmissionValidationReport;
 	await recordProductSourceFieldMetrics(
 		(validationReport.sourceLabelDisagreementMetrics ?? []).map((metric) => ({
 			sourceKey: metric.sourceKey,

@@ -20,7 +20,10 @@
 		type FoodSafetyFilter,
 	} from "$lib/utils/food/safety/foodSafetyFilters";
 	import { getFoodIdentityKey } from "$lib/utils/food/records/foodIdentity";
-	import { getCanonicalFoodDescription } from "$lib/utils/food/records/foodRecords";
+	import {
+		applyUserFoodName,
+		getCanonicalFoodDescription,
+	} from "$lib/utils/food/records/foodRecords";
 	import {
 		areFoodIdsEqual,
 		getIngredientActionKey,
@@ -924,13 +927,7 @@
 
 			const description = name.trim().replace(/\s+/g, " ");
 			if (selectedFood?.fdcId === food.fdcId) {
-				selectedFood = {
-					...selectedFood,
-					canonicalDescription:
-						selectedFood.canonicalDescription ?? selectedFood.description,
-					description,
-					nameProvenance: "user",
-				};
+				selectedFood = applyUserFoodName(selectedFood, description);
 			}
 			renameFoodInListState(key, food.fdcId, description);
 			renamingItem = null;
