@@ -1,4 +1,9 @@
-import { expect, test, waitForVisualStability } from "./support/browserTest";
+import {
+	expect,
+	test,
+	waitForAppReady,
+	waitForVisualStability,
+} from "./support/browserTest";
 
 const stableViewSnapshots = [
 	{ route: "/mix", snapshotName: "mix.png", rootSelector: ".view-frame" },
@@ -22,11 +27,23 @@ const stableViewSnapshots = [
 const guestAccessSnapshots = [
 	{ route: "/", snapshotName: "guest-landing.png", theme: "light" },
 	{ route: "/auth", snapshotName: "guest-authentication.png", theme: "light" },
+	{
+		route: "/auth",
+		snapshotName: "guest-authentication-sign-in.png",
+		theme: "light",
+		realSignIn: true,
+	},
 	{ route: "/", snapshotName: "guest-landing-dark.png", theme: "dark" },
 	{
 		route: "/auth",
 		snapshotName: "guest-authentication-dark.png",
 		theme: "dark",
+	},
+	{
+		route: "/auth",
+		snapshotName: "guest-authentication-sign-in-dark.png",
+		theme: "dark",
+		realSignIn: true,
 	},
 ] as const;
 
@@ -62,7 +79,9 @@ for (const view of stableViewSnapshots) {
 
 for (const view of guestAccessSnapshots) {
 	test(
-		`${view.route} keeps the shared ${view.theme} guest access composition`,
+		`${view.route} keeps the shared ${view.theme} ${
+			"realSignIn" in view && view.realSignIn ? "real sign-in" : "guest access"
+		} composition`,
 		{ tag: "@mobile" },
 		async ({ context, page }, testInfo) => {
 			test.skip(
@@ -85,6 +104,17 @@ for (const view of guestAccessSnapshots) {
 				},
 			]);
 			await page.goto(view.route);
+			if ("realSignIn" in view && view.realSignIn) {
+				await waitForAppReady(page);
+				const realSignInSwitch = page.getByRole("switch", {
+					name: "Test the real sign-in flow",
+				});
+				await realSignInSwitch.click();
+				await expect(realSignInSwitch).toBeChecked();
+				await expect(
+					page.getByRole("heading", { name: "Welcome back." }),
+				).toBeVisible();
+			}
 			await waitForVisualStability(page);
 
 			await expect(

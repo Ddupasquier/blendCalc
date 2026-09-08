@@ -129,6 +129,14 @@ subject of the test. The quick path is unavailable unless the app, database mode
 Supabase endpoint, and generated credential all match the isolated loopback test
 environment.
 
+Use `npm run dev:test:auth` when Turnstile itself is under direct review. It keeps the
+same isolated database and port but supplies Cloudflare's official always-pass test site
+key only to that process. The ordinary `dev:test` and automated Playwright runtime keep
+the key cleared so provider UI cannot make unrelated browser tests nondeterministic.
+Local Supabase does not prove hosted CAPTCHA enforcement; use this mode to verify the
+visible widget and token-carrying form flow, then verify enforcement and real email
+delivery on an approved hosted origin.
+
 ## Local Resource Safety
 
 Run `npm run resources:check` before a long local session. Maintained builds, complete

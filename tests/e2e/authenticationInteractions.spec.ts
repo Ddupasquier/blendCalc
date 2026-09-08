@@ -16,6 +16,12 @@ test(
 
 		await emailField.fill("qa-user@blendcalc.local");
 		await passwordField.fill("temporary credential");
+		await expect(passwordField).toHaveAttribute("type", "password");
+		await page.getByRole("button", { name: "Show password" }).click();
+		await expect(passwordField).toHaveAttribute("type", "text");
+		await expect(passwordField).toHaveValue("temporary credential");
+		await page.getByRole("button", { name: "Hide password" }).click();
+		await expect(passwordField).toHaveAttribute("type", "password");
 		await page
 			.getByRole("button", { name: "Create account", exact: true })
 			.click();
@@ -25,18 +31,63 @@ test(
 		).toBeVisible();
 		await expect(emailField).toHaveValue("qa-user@blendcalc.local");
 		await expect(passwordField).toHaveValue("");
-		await expect(page.getByLabel("Confirm password")).toBeVisible();
+		await expect(
+			page.getByLabel("Confirm password", { exact: true }),
+		).toBeVisible();
+		await expect(
+			page.getByRole("button", { name: "Show confirm password" }),
+		).toBeVisible();
 		await expect(passwordField).toHaveAttribute("minlength", "15");
+		const confirmationField = page.getByLabel("Confirm password", {
+			exact: true,
+		});
+		const createAccountButton = page.getByRole("button", {
+			name: "Create account",
+			exact: true,
+		});
+		await passwordField.fill("a sufficiently long passphrase");
+		await confirmationField.fill("a different long passphrase");
+		await expect(confirmationField).toHaveAttribute("aria-invalid", "true");
+		await expect(page.getByText("Passwords do not match")).toBeVisible();
+		await expect(createAccountButton).toBeDisabled();
+		await confirmationField.fill("a sufficiently long passphrase");
+		await expect(confirmationField).toHaveAttribute("aria-invalid", "false");
+		await expect(page.getByText("Passwords match")).toBeVisible();
+		await expect(createAccountButton).toBeEnabled();
+		await passwordField.fill("a newly changed long passphrase");
+		await expect(confirmationField).toHaveAttribute("aria-invalid", "true");
+		await expect(page.getByText("Passwords do not match")).toBeVisible();
+		await expect(createAccountButton).toBeDisabled();
+		await passwordField.fill("a sufficiently long passphrase");
+		await expect(createAccountButton).toBeEnabled();
 
 		await page.getByRole("button", { name: "Back to sign in" }).click();
 
 		await expect(
 			page.getByRole("heading", { name: "Welcome back." }),
 		).toBeVisible();
+		const googleButton = page.getByRole("button", {
+			name: "Continue with Google",
+		});
+		await expect(
+			googleButton.locator("[data-google-brand-icon] svg"),
+		).toHaveCount(1);
 		await expect(page.getByLabel("Confirm password")).toHaveCount(0);
 		await expect(
 			page.getByRole("button", { name: "Forgot your password?" }),
 		).toBeVisible();
+		const passwordBounds = await passwordField.boundingBox();
+		const recoveryLink = page.getByRole("button", {
+			name: "Forgot your password?",
+		});
+		const recoveryBounds = await recoveryLink.boundingBox();
+		expect(passwordBounds).not.toBeNull();
+		expect(recoveryBounds).not.toBeNull();
+		expect(recoveryBounds!.y).toBeGreaterThanOrEqual(
+			passwordBounds!.y + passwordBounds!.height,
+		);
+		expect(recoveryBounds!.x).toBeLessThan(passwordBounds!.x + 16);
+		expect(recoveryBounds!.height).toBeGreaterThanOrEqual(44);
 	},
 );
 
@@ -116,8 +167,10 @@ test(
 		await page.goto("/auth/update-password?reason=recovery");
 		await waitForAppReady(page);
 
-		const passwordField = page.getByLabel("New password");
-		const confirmationField = page.getByLabel("Confirm password");
+		const passwordField = page.getByLabel("New password", { exact: true });
+		const confirmationField = page.getByLabel("Confirm password", {
+			exact: true,
+		});
 
 		await expect(passwordField).toHaveAttribute("autocomplete", "new-password");
 		await expect(passwordField).toHaveAttribute("minlength", "15");
@@ -130,7 +183,29 @@ test(
 			"Enter it again",
 		);
 		await passwordField.fill("long temporary passphrase");
+		await confirmationField.fill("different temporary phrase");
+		await expect(confirmationField).toHaveAttribute("aria-invalid", "true");
+		await expect(page.getByText("Passwords do not match")).toBeVisible();
+		await expect(
+			page.getByRole("button", { name: "Update password" }),
+		).toBeDisabled();
 		await confirmationField.fill("long temporary passphrase");
+		await expect(confirmationField).toHaveAttribute("aria-invalid", "false");
+		await expect(page.getByText("Passwords match")).toBeVisible();
+		await passwordField.fill("newly changed temporary passphrase");
+		await expect(confirmationField).toHaveAttribute("aria-invalid", "true");
+		await expect(
+			page.getByRole("button", { name: "Update password" }),
+		).toBeDisabled();
+		await passwordField.fill("long temporary passphrase");
+		await page.getByRole("button", { name: "Show new password" }).click();
+		await expect(passwordField).toHaveAttribute("type", "text");
+		await expect(passwordField).toHaveValue("long temporary passphrase");
+		await page.getByRole("button", { name: "Hide new password" }).click();
+		await expect(passwordField).toHaveAttribute("type", "password");
+		await page.getByRole("button", { name: "Show confirm password" }).click();
+		await expect(confirmationField).toHaveAttribute("type", "text");
+		await expect(confirmationField).toHaveValue("long temporary passphrase");
 		await expect(
 			page.getByRole("button", { name: "Update password" }),
 		).toBeEnabled();

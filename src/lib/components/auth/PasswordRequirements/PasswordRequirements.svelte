@@ -17,9 +17,20 @@
 
 	let length = $derived(getPasswordLength(password));
 	let issueCodes = $derived(
-		new Set(getPasswordPolicyIssues(password, email).map((issue) => issue.code)),
+		new Set(
+			getPasswordPolicyIssues(password, email).map((issue) => issue.code),
+		),
 	);
 	let hasInput = $derived(password.length > 0);
+	let confirmationHasInput = $derived(
+		confirmation !== undefined && confirmation.length > 0,
+	);
+	let confirmationMatches = $derived(
+		confirmationHasInput && password === confirmation,
+	);
+	let confirmationMismatches = $derived(
+		confirmationHasInput && password !== confirmation,
+	);
 </script>
 
 {#snippet requirementStatus(valid: boolean)}
@@ -35,8 +46,16 @@
 <div class="password-requirements" id="password-requirements">
 	<p>Use a long, unique password or passphrase.</p>
 	<ul>
-		<li class:valid={hasInput && !issueCodes.has("too_short") && !issueCodes.has("too_long")}>
-			{@render requirementStatus(hasInput && length >= PASSWORD_MIN_LENGTH && length <= PASSWORD_MAX_LENGTH)}
+		<li
+			class:valid={hasInput &&
+				!issueCodes.has("too_short") &&
+				!issueCodes.has("too_long")}
+		>
+			{@render requirementStatus(
+				hasInput &&
+					length >= PASSWORD_MIN_LENGTH &&
+					length <= PASSWORD_MAX_LENGTH,
+			)}
 			{PASSWORD_MIN_LENGTH}–{PASSWORD_MAX_LENGTH} characters
 		</li>
 		<li class:valid={hasInput && !issueCodes.has("common")}>
@@ -48,9 +67,14 @@
 			Does not contain your email name
 		</li>
 		{#if confirmation !== undefined}
-			<li class:valid={confirmation.length > 0 && password === confirmation}>
-				{@render requirementStatus(confirmation.length > 0 && password === confirmation)}
-				Passwords match
+			<li
+				id="password-match-requirement"
+				class:valid={confirmationMatches}
+				class:invalid={confirmationMismatches}
+				aria-live="polite"
+			>
+				{@render requirementStatus(confirmationMatches)}
+				{confirmationMismatches ? "Passwords do not match" : "Passwords match"}
 			</li>
 		{/if}
 	</ul>

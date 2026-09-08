@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
 	assertHostedAuthProjectConfirmation,
 	buildHostedAuthPatch,
+	isValidTurnstileSecretProbe,
 	summarizeHostedAuthConfiguration,
 } from "../../scripts/operations/auth/configure_hosted_auth.mjs";
 
@@ -45,7 +46,12 @@ describe("hosted Auth configuration", () => {
 			{
 				security_captcha_enabled: true,
 				security_captcha_provider: "turnstile",
-				...expectedPatch,
+				security_captcha_secret: "provider-returned-secret-hmac",
+				...Object.fromEntries(
+					Object.entries(expectedPatch).filter(
+						([field]) => field !== "security_captcha_secret",
+					),
+				),
 			},
 			{ turnstile: true, smtp: true },
 			expectedPatch,
@@ -56,6 +62,21 @@ describe("hosted Auth configuration", () => {
 			customSmtpConfigured: true,
 		});
 		expect(JSON.stringify(summary)).not.toContain("never-report-this");
+	});
+
+	it("recognizes Cloudflare's safe valid-secret probe response", () => {
+		expect(
+			isValidTurnstileSecretProbe({
+				success: false,
+				"error-codes": ["missing-input-response"],
+			}),
+		).toBe(true);
+		expect(
+			isValidTurnstileSecretProbe({
+				success: false,
+				"error-codes": ["invalid-input-secret"],
+			}),
+		).toBe(false);
 	});
 
 	it("requires the dry-run project reference before a hosted write", () => {
