@@ -32,9 +32,7 @@ h1 {
 }
 
 .nutrition-detail-view__amount {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
+	display: grid;
 	gap: $app-gap-md;
 	min-height: $app-shell-control-height;
 	padding-block: $app-gap-sm;
@@ -51,9 +49,33 @@ h1 {
 	}
 }
 
+.nutrition-detail-view__amount-heading {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: $app-gap-sm;
+}
+
+.nutrition-detail-view__mode {
+	width: min(13rem, 60%);
+}
+.nutrition-detail-view__mode :global(.segmented-control) {
+	padding: 0.125rem;
+}
+.nutrition-detail-view__mode :global(.segmented-control__selection) {
+	inset-block: 0.125rem;
+	inset-inline-start: 0.125rem;
+	width: calc(50% - 0.125rem);
+}
+.nutrition-detail-view__mode :global(.segmented-control__button) {
+	min-height: 2rem;
+	font-size: $app-font-size-xs;
+}
+
 .nutrition-detail-view__amount-controls {
 	display: inline-flex;
 	align-items: center;
+	justify-self: end;
 	gap: $app-gap-md;
 	color: $app-shell-text-primary;
 
@@ -79,7 +101,8 @@ h1 {
 	scrollbar-gutter: stable;
 }
 
-@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
 	.nutrition-detail-view__header {
 		gap: $app-gap-xs;
 		min-height: $app-shell-control-height-narrow;
@@ -106,6 +129,15 @@ h1 {
 		strong {
 			font-size: $app-font-size-sm;
 		}
+	}
+
+	.nutrition-detail-view__mode {
+		width: 100%;
+	}
+
+	.nutrition-detail-view__amount-heading {
+		align-items: stretch;
+		flex-direction: column;
 	}
 
 	.nutrition-detail-view__panel {

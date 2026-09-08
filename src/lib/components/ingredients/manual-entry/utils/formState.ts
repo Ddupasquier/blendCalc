@@ -1,5 +1,6 @@
 import {
 	getDefaultServingMeasureUnit,
+	isVolumeOrCountServingMeasureUnit,
 	type ServingMeasureUnit,
 } from "$lib/utils/serving/servingMeasureCatalog";
 import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
@@ -223,7 +224,7 @@ export const getManualEntryFormStateFromFood = (
 		useServingMeasure:
 			Number.isFinite(servingMeasureQuantity) &&
 			Number(servingMeasureQuantity) > 0 &&
-			Boolean(servingMeasureUnit),
+			isVolumeOrCountServingMeasureUnit(servingMeasureUnit),
 		importedNutrients: nutrientsPerServing,
 		nutrientQualitativeFacts: [...(food.nutrientQualitativeFacts ?? [])],
 		nutrientSourceReview: [...(food.nutrientSourceReview ?? [])],

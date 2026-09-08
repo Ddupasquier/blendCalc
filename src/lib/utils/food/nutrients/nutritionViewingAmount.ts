@@ -17,11 +17,13 @@ import {
 	getFoodServings,
 	prioritizeFoodServingsForUserDisplay,
 } from "$lib/utils/food/servings/foodServings";
-import { formatNutritionServingSize } from "$lib/utils/food/servings/servingDisplay";
+import { getNutritionServingHouseholdLabel } from "$lib/utils/food/servings/servingDisplay";
 
 export type NutritionViewingSelection =
 	| { kind: "mass"; grams: number }
 	| { kind: "serving"; servingIndex: number; multiplier: number };
+
+export type NutritionViewingMode = "weight" | "servings";
 
 export const DEFAULT_NUTRITION_VIEWING_CONVERSION: ServingConversion = {
 	grams: DEFAULT_NUTRITION_VIEWING_GRAMS,
@@ -119,16 +121,27 @@ export const formatNutritionViewingSelection = (
 	if (selection.kind === "mass") return formatViewingGrams(selection.grams);
 	const serving = getNutritionViewingServing(food, selection);
 	if (!serving) return "Serving unavailable";
-	const servingLabel = formatNutritionServingSize(serving);
-	return selection.multiplier === 1
-		? servingLabel
-		: `${selection.multiplier} × ${servingLabel}`;
+	if (selection.multiplier === 1) {
+		const householdLabel = getNutritionServingHouseholdLabel(serving);
+		return householdLabel ? `1 serving (${householdLabel})` : "1 serving";
+	}
+	const conversion = convertFoodServingMultiplier(
+		serving,
+		selection.multiplier,
+	);
+	const totalWeight =
+		typeof conversion.grams === "number" && Number.isFinite(conversion.grams)
+			? ` · ${formatViewingGrams(conversion.grams)}`
+			: "";
+	return `${selection.multiplier} servings${totalWeight}`;
 };
 
 export const stepNutritionViewingSelection = (
+	food: FoodItem,
 	selection: NutritionViewingSelection,
 	direction: "increase" | "decrease",
 	step: number,
+	mode: NutritionViewingMode = "weight",
 ): NutritionViewingSelection => {
 	if (selection.kind === "mass") {
 		return {
@@ -137,11 +150,29 @@ export const stepNutritionViewingSelection = (
 		};
 	}
 
+	if (mode === "weight") {
+		const serving = getNutritionViewingServing(food, selection);
+		const servingConversion = serving
+			? convertFoodServingMultiplier(serving, selection.multiplier)
+			: null;
+		const servingGrams = servingConversion?.grams;
+		if (
+			typeof servingGrams === "number" &&
+			Number.isFinite(servingGrams) &&
+			canViewFoodNutritionByMass(food)
+		) {
+			return {
+				kind: "mass",
+				grams: stepNutritionViewingGrams(servingGrams, direction, step),
+			};
+		}
+	}
+
 	return {
 		...selection,
 		multiplier: Math.max(
 			1,
-			selection.multiplier + (direction === "increase" ? 1 : -1),
+			selection.multiplier + (direction === "increase" ? step : -step),
 		),
 	};
 };

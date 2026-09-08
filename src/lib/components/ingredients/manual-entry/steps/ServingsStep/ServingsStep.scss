@@ -40,6 +40,17 @@
 	gap: $app-gap-md;
 }
 
+.servings-step__summary {
+	margin: 0;
+	padding: $app-gap-sm $app-gap-md;
+	color: $app-shell-text-primary;
+	background: $app-shell-surface-control;
+	border-radius: $app-shell-radius-control;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-medium;
+	line-height: $app-line-height-ui;
+}
+
 @media (max-width: $app-breakpoint-xs) {
 	.servings-step__card {
 		gap: $app-gap-sm;

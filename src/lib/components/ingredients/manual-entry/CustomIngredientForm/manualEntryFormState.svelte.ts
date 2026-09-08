@@ -9,6 +9,7 @@ import {
 	setManualNutrientState,
 } from "$lib/components/ingredients/manual-entry/utils/nutrientValues";
 import { getManualEntryFormResetState } from "$lib/components/ingredients/manual-entry/utils/formState";
+import { isVolumeOrCountServingMeasureUnit } from "$lib/utils/serving/servingMeasureCatalog";
 
 export const createManualEntryFormState = () => {
 	const data = $state(getManualEntryFormResetState());
@@ -21,6 +22,9 @@ export const createManualEntryFormState = () => {
 		savedData: Partial<ReturnType<typeof getManualEntryFormResetState>>,
 	) => {
 		Object.assign(data, getManualEntryFormResetState(), savedData, {
+			useServingMeasure:
+				savedData.useServingMeasure === true &&
+				isVolumeOrCountServingMeasureUnit(savedData.servingMeasureUnit),
 			shareSelectionSource:
 				savedData.shareSelectionSource ??
 				(savedData.shareWithCatalog ? "user" : "none"),

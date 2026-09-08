@@ -87,5 +87,13 @@ export const getDefaultServingMeasureUnit = (
 export const getServingMeasureOption = (unit: ServingMeasureUnit) =>
 	SERVING_MEASURE_OPTIONS.find((option) => option.value === unit) ?? null;
 
+export const isVolumeOrCountServingMeasureUnit = (
+	unit: ServingMeasureUnit | null | undefined,
+) => {
+	if (!unit) return false;
+	const option = getServingMeasureOption(unit);
+	return option?.dimension === "volume" || option?.dimension === "count";
+};
+
 export const getDefaultCountMeasureUnit = () =>
 	getDefaultServingMeasureUnit("count") ?? DEFAULT_COUNT_MEASURE_KEY;

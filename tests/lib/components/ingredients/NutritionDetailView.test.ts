@@ -220,6 +220,10 @@ describe("NutritionDetailView", () => {
 			},
 		});
 
+		expect(screen.getByText("32g")).toBeInTheDocument();
+		expect(screen.getByText("Per 32g viewing amount")).toBeInTheDocument();
+		await fireEvent.click(screen.getByRole("tab", { name: "Servings" }));
+		expect(screen.getByText("1 serving (2 tbsp)")).toBeInTheDocument();
 		expect(screen.getAllByText("2 tbsp (32g)")).not.toHaveLength(0);
 		expect(screen.getByText("Serving Size")).toBeInTheDocument();
 		expect(screen.getByText("Amount per serving")).toBeInTheDocument();
@@ -227,12 +231,89 @@ describe("NutritionDetailView", () => {
 		await fireEvent.click(
 			screen.getByRole("option", { name: "100g standard" }),
 		);
-		expect(screen.getByText("100g")).toBeInTheDocument();
+		expect(screen.getAllByText("100g")).not.toHaveLength(0);
 		expect(screen.getByText("Per 100g food data")).toBeInTheDocument();
 		expect(screen.queryByText("Serving Size")).not.toBeInTheDocument();
 	});
 
-	it("renders legacy USDA ONZ servings with the canonical ounce label", () => {
+	it("offers exact weight and serving multiplier modes that both rescale nutrition", async () => {
+		render(NutritionDetailView, {
+			props: {
+				food: {
+					...spinach,
+					foodNutrients: [
+						{
+							nutrientId: 1008,
+							nutrientName: "Energy",
+							nutrientNumber: "208",
+							unitName: "KCAL",
+							value: 100,
+						},
+					],
+					hasSourceServing: true,
+					foodServings: [
+						{
+							label: "2 tbsp",
+							gramWeight: 32,
+							amount: 2,
+							unitKey: "tbsp",
+							isPrimary: true,
+							source: "user-label",
+							confidence: "user-reported",
+						},
+					],
+				},
+				onClose: vi.fn(),
+				showListActions: false,
+			},
+		});
+
+		expect(screen.getByText("32g")).toBeInTheDocument();
+		expect(screen.getByText("32")).toBeInTheDocument();
+		expect(screen.getByText("Per 32g viewing amount")).toBeInTheDocument();
+		expect(screen.queryByText("Serving Size")).not.toBeInTheDocument();
+		expect(screen.getByRole("tab", { name: "Weight" })).toHaveAttribute(
+			"aria-selected",
+			"true",
+		);
+		await fireEvent.click(
+			screen.getByRole("button", {
+				name: /increase viewing amount by 1g/i,
+			}),
+		);
+
+		expect(screen.getByText("33g")).toBeInTheDocument();
+		expect(screen.getByText("33")).toBeInTheDocument();
+		expect(screen.getByText("Per 33g viewing amount")).toBeInTheDocument();
+		expect(screen.queryByText("Serving Size")).not.toBeInTheDocument();
+		expect(
+			screen.getByRole("button", {
+				name: /increase viewing amount by 1g/i,
+			}),
+		).toBeInTheDocument();
+
+		await fireEvent.click(screen.getByRole("tab", { name: "Servings" }));
+		expect(screen.getByText("1 serving (2 tbsp)")).toBeInTheDocument();
+		expect(screen.getAllByText("2 tbsp (32g)")).not.toHaveLength(0);
+		expect(screen.getByText("32")).toBeInTheDocument();
+		expect(screen.getByText("Amount per serving")).toBeInTheDocument();
+		await fireEvent.click(
+			screen.getByRole("button", {
+				name: /increase viewing amount by 1 serving/i,
+			}),
+		);
+		expect(screen.getByText("2 servings · 64g")).toBeInTheDocument();
+		expect(screen.getByText("64")).toBeInTheDocument();
+		expect(screen.getByText("Amount for 2 servings")).toBeInTheDocument();
+		expect(screen.getByText("Serving Size")).toBeInTheDocument();
+		await fireEvent.click(screen.getByRole("tab", { name: "Weight" }));
+		expect(screen.getByText("64g")).toBeInTheDocument();
+		expect(screen.getByText("64")).toBeInTheDocument();
+		expect(screen.getByText("Per 64g viewing amount")).toBeInTheDocument();
+		expect(screen.queryByText("Serving Size")).not.toBeInTheDocument();
+	});
+
+	it("renders legacy USDA ONZ servings with the canonical ounce label", async () => {
 		render(NutritionDetailView, {
 			props: {
 				food: {
@@ -253,6 +334,9 @@ describe("NutritionDetailView", () => {
 			},
 		});
 
+		expect(screen.getByText("28g")).toBeInTheDocument();
+		await fireEvent.click(screen.getByRole("tab", { name: "Servings" }));
+		expect(screen.getByText("1 serving (1 oz)")).toBeInTheDocument();
 		expect(screen.getAllByText("1 oz (28g)")).not.toHaveLength(0);
 		expect(screen.queryByText(/ONZ/)).not.toBeInTheDocument();
 	});
@@ -295,6 +379,10 @@ describe("NutritionDetailView", () => {
 			},
 		});
 
+		expect(screen.getByText("30g")).toBeInTheDocument();
+		expect(screen.getByText("Per 30g viewing amount")).toBeInTheDocument();
+		await fireEvent.click(screen.getByRole("tab", { name: "Servings" }));
+		expect(screen.getByText("1 serving (1 cookie)")).toBeInTheDocument();
 		expect(screen.getAllByText("1 cookie (30g)")).not.toHaveLength(0);
 		expect(screen.getByText("Amount per serving")).toBeInTheDocument();
 		expect(screen.getByText("80")).toBeInTheDocument();
@@ -307,7 +395,7 @@ describe("NutritionDetailView", () => {
 		expect(screen.getByText("267")).toBeInTheDocument();
 	});
 
-	it("prefers a verified household measure over a primary 100g source row", () => {
+	it("prefers a verified household measure over a primary 100g source row", async () => {
 		render(NutritionDetailView, {
 			props: {
 				food: {
@@ -339,6 +427,10 @@ describe("NutritionDetailView", () => {
 			},
 		});
 
+		expect(screen.getAllByText("100g")).not.toHaveLength(0);
+		expect(screen.getByText("Per 100g food data")).toBeInTheDocument();
+		await fireEvent.click(screen.getByRole("tab", { name: "Servings" }));
+		expect(screen.getByText("1 serving (2 cups)")).toBeInTheDocument();
 		expect(screen.getAllByText("2 cups (100g)")).not.toHaveLength(0);
 		expect(screen.getByText("Amount per serving")).toBeInTheDocument();
 		expect(screen.getByText("23")).toBeInTheDocument();
@@ -448,6 +540,10 @@ describe("NutritionDetailView", () => {
 		});
 
 		expect(screen.getByText("1/2 cup · 125g")).toBeInTheDocument();
+		expect(screen.getByText("125g")).toBeInTheDocument();
+		expect(screen.getByText("Per 125g viewing amount")).toBeInTheDocument();
+		await fireEvent.click(screen.getByRole("tab", { name: "Servings" }));
+		expect(screen.getByText("1 serving (1/2 cup)")).toBeInTheDocument();
 		expect(screen.getAllByText("1/2 cup (125g)")).not.toHaveLength(0);
 		expect(screen.getByText("Amount per serving")).toBeInTheDocument();
 		expect(screen.getByText("75")).toBeInTheDocument();
