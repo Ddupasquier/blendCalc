@@ -1714,7 +1714,7 @@ test("nutrition details preserve the complete source-backed food record", async 
 		for (const expectedText of [
 			"Sempio Foods Company",
 			"08801005523455",
-			"Gochujang",
+			"Gochujang, Dips and Salsa, Sauces, Hot sauces",
 			"500 g",
 			"Packaged product",
 			"1 Tbsp (18 g)",
