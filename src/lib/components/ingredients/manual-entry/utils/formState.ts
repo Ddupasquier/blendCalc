@@ -36,6 +36,7 @@ import { getPrimaryFoodServing } from "$lib/utils/food/servings/foodServings";
 import { getFoodNutrientAmountForServingConversion } from "$lib/utils/food/nutrients/foodNutrients";
 import { convertFoodServingMultiplier } from "$lib/utils/serving/servingAmount";
 import { resolveFoodIdentityType } from "$lib/utils/food/identity/foodIdentity";
+import { getCanonicalFoodDescription } from "$lib/utils/food/records/foodRecords";
 
 export type ManualEntryFormResetState = {
 	activeStep: ManualEntryStepId;
@@ -202,7 +203,7 @@ export const getManualEntryFormStateFromFood = (
 
 	return {
 		...state,
-		name: food.canonicalDescription ?? food.description,
+		name: getCanonicalFoodDescription(food),
 		nameProvenance: food.nameProvenance ?? "barcode",
 		brandOwner: food.brandOwner ?? "",
 		category: primaryCategory,

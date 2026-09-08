@@ -218,11 +218,14 @@ Notes:
   barcode-assisted, or explicitly user-owned. Source and barcode names use the shared
   title-style formatter and replace standalone `and` with `&`; personal renames keep the
   user's exact wording and casing.
-- `food.canonicalDescription` retains the source, shared-catalog, generic-dataset, or
-  original private-food name when `food.description` is replaced by a personal list
-  name. Ingredient cards use the personal name; nutrition details use the canonical
-  name. Existing rows are backfilled from exact shared-product, generic-food, or
-  private-food identity links when available.
+- `food.canonicalDescription` retains the source, shared-catalog, or generic-dataset name
+  when `food.description` is replaced by a personal list alias. Ingredient cards use the
+  alias while nutrition details use the canonical name. A private custom food has no
+  separately owned canonical source name: renaming it updates both descriptions in the
+  saved-list snapshot and its owning `custom_foods` row so lists, search, manual editing,
+  and nutrition details remain consistent. Existing unambiguous private aliases are
+  synchronized forward by migration; conflicting legacy private names retain their
+  unique custom-food identity until the user chooses a unique rename.
 - `food_identity_key` is generated from the normalized barcode when available, otherwise
   from the FDC id.
 - `shared_product_id` links the saved item to the active approved catalog product for
@@ -284,7 +287,9 @@ Notes:
   but it rejects user-authored provenance and preserves every unrelated private field.
 - The `food` JSON stores `nameProvenance`. Valid-barcode and autofilled names are
   normalized before saving, including standalone `and` → `&`; barcode-free private names
-  and later personal renames preserve the user's exact wording.
+  and later personal renames preserve the user's exact wording. Renaming a private food
+  through a saved-list action updates this owning record, its normalized name key and
+  search text, and the active saved-list snapshot atomically.
 
 ### `saved_drinks`
 

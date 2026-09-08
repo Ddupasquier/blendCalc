@@ -272,7 +272,8 @@ The nutrition view is the food deep dive. Keep the first reading path focused on
 
 Display all useful accepted data without guessing or showing empty sections:
 
-- canonical product name rather than a personal rename;
+- the user-owned current name for a private custom food, or the canonical product name
+  rather than a personal list alias for catalog-backed and external-source foods;
 - brand, barcode, format, category, package quantity, labels, market, and food type;
 - every normalized serving and its origin, source measure, gram-weight method,
   calculation basis, and confidence;
@@ -425,8 +426,11 @@ Both lists share the same card and list behavior:
 - The shared fallback catalog covers common ingredients and recognizable prepared-food
   forms across produce, proteins, seafood, drinks, pantry foods, meals, and desserts.
   Compound foods use the recognizable final form rather than an incidental ingredient.
-- User renames remain personal. Nutrition details continue to show the canonical food
-  name.
+- Renaming a private custom food changes its user-owned name across saved lists, search,
+  manual editing, and Nutrition details. Renaming a catalog-backed or external-source
+  food remains a personal list alias; Nutrition details continue to show that food's
+  canonical source name. The rename dialog explains which behavior applies before the
+  user saves the change.
 - Remove uses the shared two-step confirmation. Rename and item actions use the shared
   routed overlays.
 - A truly empty Fridge may show one optional DB-backed meal-prep line beneath the normal
