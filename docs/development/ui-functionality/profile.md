@@ -162,18 +162,28 @@ matching.
   selected responsibility in its own route-backed `RightSheet`. Closing a focused
   view returns to the destination list. Never use hash jumps into one crowded page as
   the primary Profile moderation flow.
-- Show one aggregate red count on the Profile launcher only when one or more review
-  items are waiting.
+- Show one aggregate red count on the Profile launcher only when one or more genuine
+  actions are waiting across the current role's permitted queues. The aggregate is the
+  sum of product submissions, catalog-review decisions, food-warning reports, exact
+  reported profile images, and deduplicated catalog data-operation subjects.
 - Keep every permitted option visible in the sheet. Product submissions,
   food-warning reports, and profile-image review rows are disabled when their verified
-  queue count is zero; a nonzero queue displays its own red count in the row's top-right
-  corner.
+  queue count is zero; a nonzero actionable queue displays its own red count in the
+  row's top-right corner. Catalog review and Catalog data operations retain their
+  standing entry points even at zero while displaying a count when action exists.
 - Count only exact profile images with pending user reports. Ordinary profile-image
   uploads remain active and never create moderator work by themselves.
 - Group catalog decisions under **Review work** and source/dataset/readiness operations
   under **Data operations**. Catalog reviewers can resolve conflicts, provider changes,
   and possible recalls without receiving permission to run or inspect admin/developer
   operations.
+- Count Catalog review work as the exact sum of open catalog conflicts, pending provider
+  changes, and possible recall matches requiring review. Count Catalog data operations
+  once per distinct affected subject with one or more open enabled issue codes owned by
+  `data_operations`; multiple issues on the same subject must not inflate the badge.
+- Do not badge Account access while it remains a search-driven tool without a genuine
+  pending-action queue. It stays available to permitted roles and is excluded from the
+  launcher aggregate.
 - Show one crown beside the role-aware tools sheet title. The action region retains its
   accessible group name without repeating the title as a second visible
   heading.
@@ -188,7 +198,7 @@ matching.
   review rows available as entry points into the authenticator flow. Explain that
   verification is required instead of making the actions look permanently unavailable.
 - Keep standing tools such as Account access, Catalog review work, and permitted Catalog
-  data operations enabled because they remain useful without a pending queue.
+  data operations enabled because they remain useful without pending work.
 - If queue counts cannot be read, preserve unknown as unknown, disable queue actions,
   explain the temporary limitation with friendly copy, and leave standing tools
   available. Never present an unavailable count as zero.

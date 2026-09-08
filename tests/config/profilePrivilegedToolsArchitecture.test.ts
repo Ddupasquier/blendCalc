@@ -72,15 +72,21 @@ describe("Profile privileged tools architecture", () => {
 		expect(dataOperationsServer).not.toContain("moderation.catalog.review");
 	});
 
-	it("counts only reported profile images instead of ordinary uploads", () => {
+	it("loads every role-aware actionable count through one guarded RPC", () => {
 		const summaryReader = readSource(
 			"src/lib/server/moderation/privilegedToolReviewSummary.server.ts",
 		);
-
-		expect(summaryReader).toContain(
-			'admin.rpc("get_pending_profile_image_review_count")',
+		const migration = readSource(
+			"supabase/migrations/20260908220000_privileged_tool_action_summary.sql",
 		);
-		expect(summaryReader).not.toContain('.from("profiles")');
+
+		expect(summaryReader).toContain('"get_privileged_tool_action_summary"');
+		expect(summaryReader).not.toContain("getSupabaseAdminClient");
+		expect(migration).toContain("auth.jwt() ->> 'aal'");
+		expect(migration).toContain("public.app_role_assignments");
+		expect(migration).toContain("public.profile_image_reports");
+		expect(migration).toContain("public.catalog_health_issue_occurrences");
+		expect(migration).not.toContain("from public.profiles");
 	});
 
 	it("keeps profile-image reports separate from account moderation", () => {

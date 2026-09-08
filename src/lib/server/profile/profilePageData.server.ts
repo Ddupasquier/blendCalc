@@ -59,7 +59,7 @@ export const loadProfilePageData = async ({
 					reviewSummary: await readMfaSecurityStatus(supabase)
 						.then((status) =>
 							status.currentLevel === "aal2"
-								? readPrivilegedToolReviewSummary(permissions).catch(() =>
+								? readPrivilegedToolReviewSummary(supabase).catch(() =>
 										getUnavailablePrivilegedToolReviewSummary(),
 									)
 								: getIdentityVerificationRequiredPrivilegedToolReviewSummary(),
