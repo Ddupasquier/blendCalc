@@ -232,6 +232,31 @@ describe("NutritionDetailView", () => {
 		expect(screen.queryByText("Serving Size")).not.toBeInTheDocument();
 	});
 
+	it("renders legacy USDA ONZ servings with the canonical ounce label", () => {
+		render(NutritionDetailView, {
+			props: {
+				food: {
+					...spinach,
+					description: "Jalapeno Sauce, Jalapeno",
+					hasSourceServing: true,
+					foodServings: [
+						{
+							label: "1 ONZ",
+							gramWeight: 28,
+							isPrimary: true,
+							source: "usda",
+						},
+					],
+				},
+				onClose: vi.fn(),
+				showListActions: false,
+			},
+		});
+
+		expect(screen.getAllByText("1 oz (28g)")).not.toHaveLength(0);
+		expect(screen.queryByText(/ONZ/)).not.toBeInTheDocument();
+	});
+
 	it("defaults to an exact package count serving and keeps derived 100g secondary", async () => {
 		render(NutritionDetailView, {
 			props: {

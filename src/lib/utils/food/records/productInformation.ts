@@ -15,6 +15,7 @@ import {
 	formatServingGramWeightMethod,
 	formatServingOrigin,
 } from "$lib/utils/food/servings/servingDisplay";
+import { getFoodServings } from "$lib/utils/food/servings/foodServings";
 import { resolveFoodIdentityType } from "$lib/utils/food/identity/foodIdentity";
 import { getProductRegulatoryDisclosureProfile } from "$lib/utils/food/quality/nutritionCompletenessCatalog";
 
@@ -175,7 +176,7 @@ const getProductRows = (food: FoodItem) => {
 };
 
 const getServingRows = (food: FoodItem) => {
-	const normalizedServings = [...(food.foodServings ?? [])]
+	const normalizedServings = getFoodServings(food)
 		.filter(
 			(serving) =>
 				(Number.isFinite(serving.gramWeight) &&

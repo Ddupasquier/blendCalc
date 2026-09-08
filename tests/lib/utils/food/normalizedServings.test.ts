@@ -81,4 +81,18 @@ describe("normalized food servings", () => {
 			]),
 		).toEqual([]);
 	});
+
+	it("canonicalizes legacy provider rows while preserving user labels", () => {
+		expect(
+			normalizedRowsToServings([
+				{ ...normalizedServing, label: "1 ONZ", source: "usda" },
+				{
+					...normalizedServing,
+					servingOrder: 1,
+					label: "My ONZ scoop",
+					source: "user-label",
+				},
+			]).map((serving) => serving.label),
+		).toEqual(["1 oz", "My ONZ scoop"]);
+	});
 });

@@ -13,6 +13,7 @@ import {
 } from "$lib/utils/ingredients/ingredientSearchPagination";
 import { toFiniteNonnegativeNumber } from "$lib/utils/numbers/finiteNumbers";
 import { parseSourceServingMeasure } from "$lib/utils/serving/servingAmount";
+import { canonicalizeProviderServingLabel } from "$lib/utils/food/servings/providerServingLabels";
 
 type FdcDetailNutrient = {
 	amount?: number;
@@ -192,12 +193,17 @@ const normalizeFoodServings = (food: FdcFoodResponse): FoodServing[] => {
 	const origin = getFdcServingOrigin(food);
 	const rows = [
 		...(food.foodPortions ?? []).flatMap((portion) => {
-			const label = getDetailPortionLabel(portion);
+			const label = canonicalizeProviderServingLabel(
+				getDetailPortionLabel(portion),
+			);
 			const gramWeight = toPositiveNumber(portion.gramWeight);
 			const amount = toPositiveNumber(portion.amount);
-			const sourceUnit =
+			const rawSourceUnit =
 				portion.measureUnit?.abbreviation?.trim() ||
 				portion.measureUnit?.name?.trim();
+			const sourceUnit = rawSourceUnit
+				? canonicalizeProviderServingLabel(rawSourceUnit)
+				: undefined;
 			const parsedMeasure =
 				amount !== null && sourceUnit
 					? parseSourceServingMeasure(`${amount} ${sourceUnit}`)
@@ -223,10 +229,14 @@ const normalizeFoodServings = (food: FdcFoodResponse): FoodServing[] => {
 				: [];
 		}),
 		...(food.foodMeasures ?? []).flatMap((measure) => {
-			const label = getSearchMeasureLabel(measure);
+			const label = canonicalizeProviderServingLabel(
+				getSearchMeasureLabel(measure),
+			);
 			const gramWeight = toPositiveNumber(measure.gramWeight);
 			const amount = toPositiveNumber(measure.amount);
-			const sourceUnit = measure.measureUnitName?.trim();
+			const sourceUnit = measure.measureUnitName
+				? canonicalizeProviderServingLabel(measure.measureUnitName)
+				: undefined;
 			const parsedMeasure =
 				amount !== null && sourceUnit
 					? parseSourceServingMeasure(`${amount} ${sourceUnit}`)
@@ -412,6 +422,12 @@ export const normalizeFdcFood = (food: FdcFoodResponse): FoodItem => {
 				: undefined,
 		foodNutrients,
 		reportedNutrientIds: foodNutrients.map((nutrient) => nutrient.nutrientId),
+		servingSizeUnit: food.servingSizeUnit
+			? canonicalizeProviderServingLabel(food.servingSizeUnit)
+			: undefined,
+		householdServingFullText: food.householdServingFullText
+			? canonicalizeProviderServingLabel(food.householdServingFullText)
+			: undefined,
 		foodServings,
 		hasSourceServing: foodServings.length > 0,
 		packageQuantity:

@@ -1044,6 +1044,26 @@ describe("barcode product mapping", () => {
 		});
 	});
 
+	it("canonicalizes USDA ONZ labels in barcode drafts", () => {
+		const draft = mapFdcBarcodeFood(
+			{
+				fdcId: 1862061,
+				description: "Jalapeno Sauce, Jalapeno",
+				servingSize: 28,
+				servingSizeUnit: "g",
+				householdServingFullText: "1 ONZ",
+				foodNutrients: [],
+			},
+			"072360002031",
+			productReferenceCatalogFixture,
+		);
+
+		expect(draft).toMatchObject({
+			servingLabel: "1 oz",
+			serving: { label: "1 oz", gramWeight: 28 },
+		});
+	});
+
 	it("uses the database-derived USDA GRM serving alias", () => {
 		const draft = mapFdcBarcodeFood(
 			{
