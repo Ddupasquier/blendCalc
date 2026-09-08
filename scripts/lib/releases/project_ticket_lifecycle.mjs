@@ -1,3 +1,9 @@
+/**
+ * Purpose: Classify private Project tickets by delivery responsibility and enforce
+ * valid lifecycle transitions, homogeneous release batches, and ticket references.
+ * Do not run directly; this shared module is consumed by the private Project sync tool.
+ */
+
 export const PROJECT_TICKET_DELIVERY_CLASS = Object.freeze({
 	implementation: "implementation-delivery",
 	operational: "operational-manual",
