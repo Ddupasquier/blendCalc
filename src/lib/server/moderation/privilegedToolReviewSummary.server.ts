@@ -1,84 +1,49 @@
-import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
-import type { AppPermission } from "$lib/utils/moderation/moderation";
-import {
-	hasAppPermission,
-	PROFILE_PRIVILEGED_TOOL_PERMISSIONS,
-	type PrivilegedReviewSummary,
-} from "$lib/utils/moderation/profilePrivilegedTools";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "$lib/types/database.types";
+import type { PrivilegedReviewSummary } from "$lib/utils/moderation/profilePrivilegedTools";
 
-const readCount = (result: { count: number | null; error: unknown }) => {
-	if (result.error) throw result.error;
-	return result.count ?? 0;
-};
+const COUNT_KEYS = [
+	"pendingProductSubmissions",
+	"pendingCatalogReviewItems",
+	"pendingFoodWarningReports",
+	"pendingProfileImageReviews",
+	"pendingCatalogDataOperations",
+	"totalActionableItems",
+] as const;
 
-type DatabaseError = {
-	code?: string | null;
-	message?: string | null;
-};
+type PrivilegedActionCountKey = (typeof COUNT_KEYS)[number];
+type PrivilegedActionCounts = Record<PrivilegedActionCountKey, number>;
 
-const readPendingProfileImageReviewCount = (result: {
-	data: number | null;
-	error: DatabaseError | null;
-}) => {
-	if (
-		result.error &&
-		(result.error.code === "42883" || result.error.code === "PGRST202") &&
-		result.error.message?.includes("get_pending_profile_image_review_count")
-	) {
-		return 0;
+const parsePrivilegedActionCounts = (
+	value: unknown,
+): PrivilegedActionCounts => {
+	if (!value || typeof value !== "object" || Array.isArray(value)) {
+		throw new Error("Privileged action summary was not an object.");
 	}
-	if (result.error) throw result.error;
-	return result.data ?? 0;
+
+	const record = value as Record<string, unknown>;
+	return Object.fromEntries(
+		COUNT_KEYS.map((key) => {
+			const count = record[key];
+			if (!Number.isSafeInteger(count) || (count as number) < 0) {
+				throw new Error(`Privileged action summary has an invalid ${key}.`);
+			}
+			return [key, count];
+		}),
+	) as PrivilegedActionCounts;
 };
 
 export const readPrivilegedToolReviewSummary = async (
-	permissions: readonly AppPermission[],
+	supabase: SupabaseClient<Database>,
 ): Promise<PrivilegedReviewSummary> => {
-	const admin = getSupabaseAdminClient();
-	const canReviewProducts = hasAppPermission(
-		permissions,
-		PROFILE_PRIVILEGED_TOOL_PERMISSIONS.catalogReview,
+	const { data, error } = await supabase.rpc(
+		"get_privileged_tool_action_summary",
 	);
-	const canReviewWarnings = hasAppPermission(
-		permissions,
-		PROFILE_PRIVILEGED_TOOL_PERMISSIONS.warningReview,
-	);
-	const canManageAccounts = hasAppPermission(
-		permissions,
-		PROFILE_PRIVILEGED_TOOL_PERMISSIONS.accountManagement,
-	);
-	const [productSubmissions, foodWarningReports, profileImageReviews] =
-		await Promise.all([
-			canReviewProducts
-				? admin
-						.from("shared_product_submissions")
-						.select("id", { count: "exact", head: true })
-						.eq("status", "pending")
-				: Promise.resolve({ count: 0, error: null }),
-			canReviewWarnings
-				? admin
-						.from("food_compatibility_feedback")
-						.select("id", { count: "exact", head: true })
-						.eq("status", "pending")
-				: Promise.resolve({ count: 0, error: null }),
-			canManageAccounts
-				? admin.rpc("get_pending_profile_image_review_count")
-				: Promise.resolve({ data: 0, error: null }),
-		]);
-
-	const pendingProductSubmissions = readCount(productSubmissions);
-	const pendingFoodWarningReports = readCount(foodWarningReports);
-	const pendingProfileImageReviews =
-		readPendingProfileImageReviewCount(profileImageReviews);
+	if (error) throw error;
+	const counts = parsePrivilegedActionCounts(data);
 
 	return {
-		pendingProductSubmissions,
-		pendingFoodWarningReports,
-		pendingProfileImageReviews,
-		totalPendingReviews:
-			pendingProductSubmissions +
-			pendingFoodWarningReports +
-			pendingProfileImageReviews,
+		...counts,
 		unavailable: false,
 		identityVerificationRequired: false,
 	};
@@ -87,9 +52,11 @@ export const readPrivilegedToolReviewSummary = async (
 export const getUnavailablePrivilegedToolReviewSummary =
 	(): PrivilegedReviewSummary => ({
 		pendingProductSubmissions: null,
+		pendingCatalogReviewItems: null,
 		pendingFoodWarningReports: null,
 		pendingProfileImageReviews: null,
-		totalPendingReviews: null,
+		pendingCatalogDataOperations: null,
+		totalActionableItems: null,
 		unavailable: true,
 		identityVerificationRequired: false,
 	});
@@ -97,9 +64,11 @@ export const getUnavailablePrivilegedToolReviewSummary =
 export const getIdentityVerificationRequiredPrivilegedToolReviewSummary =
 	(): PrivilegedReviewSummary => ({
 		pendingProductSubmissions: null,
+		pendingCatalogReviewItems: null,
 		pendingFoodWarningReports: null,
 		pendingProfileImageReviews: null,
-		totalPendingReviews: null,
+		pendingCatalogDataOperations: null,
+		totalActionableItems: null,
 		unavailable: false,
 		identityVerificationRequired: true,
 	});

@@ -292,6 +292,10 @@ catalog state controls whether blendCalc can search and use a canonical product;
 readiness independently controls whether that product may be redistributed publicly.
 Operational gaps are normalized through `catalog_health_issue_occurrences` and stable
 `app_issue_codes`, rather than reconstructed independently in each dashboard.
+The privileged Profile summary projects that normalized model into one data-operations
+action per distinct issue subject whose enabled code is owned by `data_operations`.
+This prevents several gaps on one product, mapping, source, or dataset from inflating the
+launcher badge while leaving the detailed issue rows available inside the workspace.
 The product-readiness passport is the bounded per-product projection of that model for
 privileged review and operations. It exposes status and coverage summaries while raw
 evidence remains behind its existing server and database boundaries.

@@ -10,13 +10,24 @@ const moderatorPermissions: ProfilePrivilegedToolAccess["permissions"] = [
 	"moderation.warnings.review",
 ];
 
+const emptyReviewSummary: ProfilePrivilegedToolAccess["reviewSummary"] = {
+	pendingProductSubmissions: 0,
+	pendingCatalogReviewItems: 0,
+	pendingFoodWarningReports: 0,
+	pendingProfileImageReviews: 0,
+	pendingCatalogDataOperations: 0,
+	totalActionableItems: 0,
+	unavailable: false,
+	identityVerificationRequired: false,
+};
+
 const createAccess = (
-	reviewSummary: ProfilePrivilegedToolAccess["reviewSummary"],
+	reviewSummary: Partial<ProfilePrivilegedToolAccess["reviewSummary"]>,
 	overrides: Partial<ProfilePrivilegedToolAccess> = {},
 ): ProfilePrivilegedToolAccess => ({
 	role: "moderator",
 	permissions: moderatorPermissions,
-	reviewSummary,
+	reviewSummary: { ...emptyReviewSummary, ...reviewSummary },
 	...overrides,
 });
 
@@ -29,11 +40,10 @@ describe("Profile privileged tools sheet", () => {
 				open: true,
 				access: createAccess({
 					pendingProductSubmissions: 4,
+					pendingCatalogReviewItems: 2,
 					pendingFoodWarningReports: 0,
 					pendingProfileImageReviews: 0,
-					totalPendingReviews: 4,
-					unavailable: false,
-					identityVerificationRequired: false,
+					totalActionableItems: 6,
 				}),
 				onClose,
 				onNavigate,
@@ -60,6 +70,9 @@ describe("Profile privileged tools sheet", () => {
 		).not.toBeInTheDocument();
 		expect(
 			screen.getByLabelText("4 product submissions requiring review"),
+		).toBeVisible();
+		expect(
+			screen.getByLabelText("2 catalog decisions requiring review"),
 		).toBeVisible();
 		expect(
 			screen.getAllByRole("heading", { name: "Moderator tools" }),
@@ -93,10 +106,11 @@ describe("Profile privileged tools sheet", () => {
 				open: true,
 				access: createAccess({
 					pendingProductSubmissions: null,
+					pendingCatalogReviewItems: null,
 					pendingFoodWarningReports: null,
 					pendingProfileImageReviews: null,
-					totalPendingReviews: null,
-					unavailable: false,
+					pendingCatalogDataOperations: null,
+					totalActionableItems: null,
 					identityVerificationRequired: true,
 				}),
 				onClose,
@@ -106,6 +120,7 @@ describe("Profile privileged tools sheet", () => {
 
 		for (const actionName of [
 			"Product submissions",
+			"Catalog review work",
 			"Food warning reports",
 			"Profile images",
 		]) {
@@ -115,7 +130,7 @@ describe("Profile privileged tools sheet", () => {
 		}
 		expect(
 			screen.getAllByText("Verify your identity to check this queue"),
-		).toHaveLength(3);
+		).toHaveLength(4);
 		expect(screen.queryByLabelText(/requiring review/)).not.toBeInTheDocument();
 
 		await fireEvent.click(
@@ -133,11 +148,12 @@ describe("Profile privileged tools sheet", () => {
 				open: true,
 				access: createAccess({
 					pendingProductSubmissions: null,
+					pendingCatalogReviewItems: null,
 					pendingFoodWarningReports: null,
 					pendingProfileImageReviews: null,
-					totalPendingReviews: null,
+					pendingCatalogDataOperations: null,
+					totalActionableItems: null,
 					unavailable: true,
-					identityVerificationRequired: false,
 				}),
 				onClose: vi.fn(),
 				onNavigate: vi.fn(),
@@ -168,11 +184,10 @@ describe("Profile privileged tools sheet", () => {
 				open: true,
 				access: createAccess({
 					pendingProductSubmissions: 1,
+					pendingCatalogReviewItems: 2,
 					pendingFoodWarningReports: 1,
 					pendingProfileImageReviews: 1,
-					totalPendingReviews: 3,
-					unavailable: false,
-					identityVerificationRequired: false,
+					totalActionableItems: 5,
 				}),
 				onClose: vi.fn(),
 				onNavigate,
@@ -204,12 +219,8 @@ describe("Profile privileged tools sheet", () => {
 				open: true,
 				access: createAccess(
 					{
-						pendingProductSubmissions: 0,
-						pendingFoodWarningReports: 0,
-						pendingProfileImageReviews: 0,
-						totalPendingReviews: 0,
-						unavailable: false,
-						identityVerificationRequired: false,
+						pendingCatalogDataOperations: 7,
+						totalActionableItems: 7,
 					},
 					{
 						role: "admin",
@@ -228,6 +239,9 @@ describe("Profile privileged tools sheet", () => {
 		expect(
 			screen.getByRole("button", { name: /Catalog data operations/ }),
 		).toBeEnabled();
+		expect(
+			screen.getByLabelText("7 catalog subjects requiring data operations"),
+		).toBeVisible();
 		expect(
 			screen.queryByRole("button", { name: /Account access/ }),
 		).not.toBeInTheDocument();

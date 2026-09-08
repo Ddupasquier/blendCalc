@@ -61,8 +61,7 @@
 	};
 
 	const isQueueActionDisabled = (count: number | null) =>
-		summary.unavailable ||
-		(!summary.identityVerificationRequired && count === 0);
+		!summary.identityVerificationRequired && (count === null || count === 0);
 
 	const openPrivilegedToolDestination = (href: string) => {
 		onClose();
@@ -84,12 +83,12 @@
 		{#if summary.identityVerificationRequired}
 			<StatusMessage
 				tone="info"
-				message="Verify with your authenticator when you open a protected tool. Review counts stay private until then."
+				message="Verify with your authenticator when you open a protected tool. Action counts stay private until then."
 			/>
 		{:else if summary.unavailable}
 			<StatusMessage
 				tone="warning"
-				message="Review counts are temporarily unavailable. Account and data-operation tools still work."
+				message="Action counts are temporarily unavailable. Standing privileged tools still work."
 			/>
 		{/if}
 
@@ -117,7 +116,9 @@
 					</BottomSheetAction>
 					<BottomSheetAction
 						label="Catalog review work"
-						description="Resolve product conflicts, provider changes, and possible recalls"
+						description={describeQueue(summary.pendingCatalogReviewItems)}
+						actionRequiredCount={summary.pendingCatalogReviewItems ?? 0}
+						actionRequiredLabel="catalog decisions requiring review"
 						onSelect={() =>
 							openPrivilegedToolDestination(
 								getProfileSettingsRouteHref(
@@ -185,7 +186,9 @@
 				<PrivilegedActionGroup title="Data operations" showHeader={false}>
 					<BottomSheetAction
 						label="Catalog data operations"
-						description="Inspect publication readiness, mappings, revisions, sources, datasets, and policy coverage"
+						description={describeQueue(summary.pendingCatalogDataOperations)}
+						actionRequiredCount={summary.pendingCatalogDataOperations ?? 0}
+						actionRequiredLabel="catalog subjects requiring data operations"
 						onSelect={() =>
 							openPrivilegedToolDestination(
 								getProfileSettingsRouteHref(
