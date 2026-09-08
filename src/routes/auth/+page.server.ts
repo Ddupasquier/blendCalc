@@ -71,8 +71,16 @@ const getCaptchaValidationError = (captchaToken: string) =>
 		? "Complete the security check and try again."
 		: "";
 
-const isCaptchaAuthError = (code: string | undefined) =>
-	Boolean(code?.toLocaleLowerCase().includes("captcha"));
+const isCaptchaAuthError = (
+	error: { code?: string; message?: string } | null,
+) =>
+	[error?.code, error?.message].some((value) => {
+		const normalized = value?.toLocaleLowerCase() ?? "";
+		return (
+			normalized.includes("captcha") ||
+			normalized.includes("invalid-input-secret")
+		);
+	});
 
 const getEmailValidationError = (email: string) => {
 	if (!email) return "Enter your email address.";
@@ -187,7 +195,7 @@ export const actions: Actions = {
 
 		if (error) {
 			return fail(400, {
-				message: isCaptchaAuthError(error.code)
+				message: isCaptchaAuthError(error)
 					? "The security check was not accepted. Try it again."
 					: "Email or password was not accepted.",
 				email,
@@ -271,7 +279,7 @@ export const actions: Actions = {
 				status: error.status,
 			});
 			return fail(400, {
-				message: isCaptchaAuthError(error.code)
+				message: isCaptchaAuthError(error)
 					? "The security check was not accepted. Try it again."
 					: error.code === "weak_password"
 						? "That password was rejected as too weak. Choose a longer, unique passphrase."
@@ -314,17 +322,13 @@ export const actions: Actions = {
 		}
 
 		const callbackUrl = getAuthCallbackUrl(request, url);
-		const redirectTo = addNextToCallbackUrl(
-			callbackUrl,
-			"/auth/update-password",
-		);
 		const flowId = storeAuthFlowContext(
 			cookies,
 			"/auth/update-password",
 			new URL(callbackUrl),
 		);
 		const { error } = await locals.supabase.auth.resetPasswordForEmail(email, {
-			redirectTo,
+			redirectTo: callbackUrl,
 			...(captchaToken ? { captchaToken } : {}),
 		});
 
@@ -334,6 +338,13 @@ export const actions: Actions = {
 				flowId,
 				code: error.code,
 				status: error.status,
+			});
+			return fail(400, {
+				message: isCaptchaAuthError(error)
+					? "The security check was not accepted. Try it again."
+					: "Unable to request a password reset right now. Try again in a moment.",
+				email,
+				next,
 			});
 		}
 

@@ -16,6 +16,12 @@
 	text-transform: uppercase;
 }
 
+.text-field__control {
+	position: relative;
+	display: grid;
+	min-width: 0;
+}
+
 input,
 textarea {
 	width: 100%;
@@ -37,6 +43,41 @@ input {
 	padding-block: 0;
 }
 
+.text-field__input--with-visibility-toggle {
+	padding-inline-end: $app-shell-control-height;
+}
+
+.text-field__visibility-toggle {
+	position: absolute;
+	top: 0;
+	right: 0;
+	display: inline-grid;
+	place-items: center;
+	width: $app-shell-control-height;
+	height: $app-shell-control-height;
+	padding: 0;
+	color: $app-shell-text-muted;
+	background: transparent;
+	border: 0;
+	border-radius: $app-shell-radius-control;
+	cursor: pointer;
+
+	&:hover:not(:disabled),
+	&[aria-pressed="true"] {
+		color: $app-shell-accent-primary;
+	}
+
+	&:focus-visible {
+		outline: $app-focus-outline;
+		outline-offset: calc(-1 * $app-focus-outline-offset);
+	}
+
+	&:disabled {
+		cursor: not-allowed;
+		opacity: 0.65;
+	}
+}
+
 textarea {
 	resize: vertical;
 }
@@ -46,6 +87,11 @@ textarea:hover:not(:disabled),
 input:focus,
 textarea:focus {
 	border-color: $app-shell-accent-primary;
+}
+
+input[aria-invalid="true"],
+textarea[aria-invalid="true"] {
+	border-color: $app-shell-accent-danger;
 }
 
 input:focus-visible,
@@ -90,6 +136,11 @@ textarea:disabled {
 	(max-height: $app-breakpoint-height-compact) {
 	input {
 		min-height: $app-shell-control-height-narrow;
+	}
+
+	.text-field__visibility-toggle {
+		width: $app-shell-control-height-narrow;
+		height: $app-shell-control-height-narrow;
 	}
 
 	input,

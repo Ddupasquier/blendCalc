@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from "svelte";
+	import Check from "$lib/assets/icons/Check/Check.svelte";
 	import {
 		loadTurnstileClient,
 		type TurnstileClient,
@@ -14,6 +15,7 @@
 	let widgetId = $state<TurnstileWidgetId | null>(null);
 	let token = $state("");
 	let loadError = $state("");
+	let challengeComplete = $state(false);
 	let appliedResetVersion = $state(0);
 
 	onMount(() => {
@@ -27,20 +29,23 @@
 				widgetId = loadedClient.render(container, {
 					sitekey: siteKey,
 					action: "blendcalc_auth",
-					appearance: "interaction-only",
+					appearance: "always",
 					responseField: false,
 					size: "flexible",
 					theme: "auto",
 					callback: (nextToken) => {
 						token = nextToken;
 						loadError = "";
+						challengeComplete = true;
 					},
 					"error-callback": () => {
 						token = "";
+						challengeComplete = false;
 						loadError = "The security check needs another try.";
 					},
 					"expired-callback": () => {
 						token = "";
+						challengeComplete = false;
 					},
 				});
 			})
@@ -62,16 +67,26 @@
 		appliedResetVersion = resetVersion;
 		token = "";
 		loadError = "";
+		challengeComplete = false;
 		client.reset(widgetId);
 	});
 </script>
 
 <div class="turnstile-challenge">
 	<input type="hidden" name="captchaToken" value={token} />
-	<div class="turnstile-challenge__widget" bind:this={container}></div>
-	<p class="turnstile-challenge__note">
-		Protected against automated sign-ins.
-	</p>
+	<div
+		class:turnstile-challenge__widget--hidden={challengeComplete}
+		class="turnstile-challenge__widget"
+		bind:this={container}
+	></div>
+	{#if challengeComplete}
+		<div class="turnstile-challenge__complete" role="status">
+			<span class="turnstile-challenge__complete-icon"
+				><Check size="1em" /></span
+			>
+			<span>Security check complete</span>
+		</div>
+	{/if}
 	{#if loadError}
 		<p class="turnstile-challenge__error" role="alert">{loadError}</p>
 	{/if}

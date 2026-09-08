@@ -1,5 +1,7 @@
 <script lang="ts">
 	import type { FormEventHandler } from "svelte/elements";
+	import Eye from "$lib/assets/icons/Eye/Eye.svelte";
+	import EyeOff from "$lib/assets/icons/EyeOff/EyeOff.svelte";
 	import type { TextFieldProps } from "./types";
 
 	let {
@@ -37,6 +39,10 @@
 			.join(" ") || undefined,
 	);
 	let characterCount = $state(0);
+	let passwordVisible = $state(false);
+	const inputType = $derived(
+		type === "password" && passwordVisible ? "text" : type,
+	);
 
 	$effect(() => {
 		characterCount = String(value ?? "").length;
@@ -73,22 +79,41 @@
 			{onkeydown}>{value ?? ""}</textarea
 		>
 	{:else}
-		<input
-			{id}
-			{name}
-			{type}
-			{placeholder}
-			{required}
-			{disabled}
-			{minlength}
-			{maxlength}
-			{autocomplete}
-			aria-describedby={describedBy}
-			aria-invalid={ariaInvalid}
-			value={value ?? ""}
-			oninput={handleInput}
-			{onkeydown}
-		/>
+		<div class="text-field__control">
+			<input
+				{id}
+				{name}
+				type={inputType}
+				class:text-field__input--with-visibility-toggle={type === "password"}
+				{placeholder}
+				{required}
+				{disabled}
+				{minlength}
+				{maxlength}
+				{autocomplete}
+				aria-describedby={describedBy}
+				aria-invalid={ariaInvalid}
+				value={value ?? ""}
+				oninput={handleInput}
+				{onkeydown}
+			/>
+			{#if type === "password"}
+				<button
+					class="text-field__visibility-toggle"
+					type="button"
+					aria-label={`${passwordVisible ? "Hide" : "Show"} ${label.toLowerCase()}`}
+					aria-pressed={passwordVisible}
+					{disabled}
+					onclick={() => (passwordVisible = !passwordVisible)}
+				>
+					{#if passwordVisible}
+						<EyeOff />
+					{:else}
+						<Eye />
+					{/if}
+				</button>
+			{/if}
+		</div>
 	{/if}
 	{#if helper || characterCountId}
 		<div class="text-field__support">

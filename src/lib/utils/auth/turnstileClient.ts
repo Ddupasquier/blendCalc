@@ -7,7 +7,7 @@ export type TurnstileWidgetId = string;
 export type TurnstileRenderOptions = {
 	sitekey: string;
 	action: string;
-	appearance: "interaction-only";
+	appearance: "always";
 	responseField: false;
 	size: "flexible";
 	theme: "auto";

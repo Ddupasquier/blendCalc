@@ -86,8 +86,7 @@ export const summarizeHostedAuthConfiguration = (
 				turnstileConfigured:
 					authConfiguration?.security_captcha_enabled === true &&
 					authConfiguration?.security_captcha_provider === "turnstile" &&
-					authConfiguration?.security_captcha_secret ===
-						expectedPatch.security_captcha_secret,
+					String(authConfiguration?.security_captcha_secret ?? "").length > 0,
 			}
 		: {}),
 	...(smtp
@@ -107,6 +106,15 @@ export const summarizeHostedAuthConfiguration = (
 			}
 		: {}),
 });
+
+export const isValidTurnstileSecretProbe = (result) => {
+	const errorCodes = Array.isArray(result?.["error-codes"])
+		? result["error-codes"]
+		: [];
+	return (
+		result?.success === false && errorCodes.includes("missing-input-response")
+	);
+};
 
 export const assertHostedAuthProjectConfirmation = ({
 	projectReference,
@@ -163,6 +171,23 @@ const updateHostedAuth = async ({ projectReference, accessToken, patch }) => {
 	return response.json();
 };
 
+const verifyTurnstileSecret = async (secret) => {
+	const response = await fetch(
+		"https://challenges.cloudflare.com/turnstile/v0/siteverify",
+		{
+			method: "POST",
+			headers: { "Content-Type": "application/x-www-form-urlencoded" },
+			body: new URLSearchParams({ secret }),
+			signal: AbortSignal.timeout(30_000),
+		},
+	);
+	if (!response.ok || !isValidTurnstileSecretProbe(await response.json())) {
+		throw new Error(
+			"Cloudflare did not recognize the protected Turnstile secret.",
+		);
+	}
+};
+
 const run = async () => {
 	const loadedEnvironment = config({
 		path: ".env.moderation.local",
@@ -213,6 +238,9 @@ const run = async () => {
 			`Hosted Auth configuration is ready for project ${projectReference}: ${requestedNames.join(", ")}. Repeat with --confirm-project=${projectReference} to apply.`,
 		);
 		return;
+	}
+	if (operations.turnstile) {
+		await verifyTurnstileSecret(patch.security_captcha_secret);
 	}
 
 	const authConfiguration = await updateHostedAuth({
