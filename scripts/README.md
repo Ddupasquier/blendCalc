@@ -127,6 +127,9 @@ state and writes complete diagnostics only for failed stages under ignored
 supported files against the maintained Prettier contract.
 `scripts/operations/quality/run_affected_tests.mjs` maps changed paths to the smallest
 maintained Vitest and Playwright ownership groups used by Quick and Feature checks.
+`scripts/lib/releases/project_ticket_lifecycle.mjs` classifies verification-only,
+implementation-delivery, and operational/manual Project work before release batching;
+it rejects mixed delivery classes and ticket-specific shared evidence.
 
 | Command                    | Scope                                                                                                 |
 | -------------------------- | ----------------------------------------------------------------------------------------------------- |

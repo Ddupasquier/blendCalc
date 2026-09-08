@@ -2222,6 +2222,96 @@ permission. Fix a small discovery in the active ticket only when it belongs to t
 responsibility and is required for that ticket's correct outcome; otherwise record it
 once and continue the authorized task.
 
+<a id="rule-ticket-delivery-classification"></a>
+
+#### Rule 41e — Classify Tickets Before Lifecycle Mutation
+
+Before changing one or more approved tickets, write a compact pre-mutation table with
+the ticket ID, exactly one delivery classification, any unpublished commit or deployment
+delta, the evidence-bearing environment, and the next valid status. Use only these
+classifications:
+
+- **Verification-only** records observation of behavior owned and delivered elsewhere.
+  It never creates a Git release. When the user approves and the reviewed behavior is
+  already in the verified `main` tree, complete the ticket directly with that evidence.
+  When the behavior is not yet in `main`, keep the ticket approved and link its owning
+  implementation ticket instead of moving the QA ticket through staging or main.
+- **Implementation delivery** owns an unpublished code, schema, configuration, script,
+  or documentation delta on a dedicated branch. It alone follows commit, staging,
+  Ready for Main, main promotion, deployment, and post-merge verification.
+- **Operational/manual** owns an external action or direct observation rather than a Git
+  delta. Advance it only from its own completion evidence; never attach another ticket's
+  release path merely because both are approved at the same time.
+
+Never place different classifications in one lifecycle batch. Shared batch evidence
+must describe the common result without naming an unrelated ticket; ticket-specific
+evidence belongs on that ticket. A staging-review QA approval is verification-only, not
+implicit proof of an unpublished implementation. Confirm the classification and target
+status before the first Project mutation, then run lifecycle doctor immediately after.
+
+##### Required Project Management Flow
+
+Use this sequence for every work session and every ticket. Status is an operational
+fact, not a label to repair after work has started.
+
+1. **Recover and validate the queue.** Pull the private Project, run `doctor`, and use
+   `resume` only after validation passes. Reconcile an externally changed status before
+   selecting work. Stop on stale ownership, an invalid lifecycle combination, a missing
+   active branch, or an uninspectable working tree.
+2. **Triage Inbox before pickup.** Compare each Work Queue Inbox item with the current
+   implementation, current `main`, deployment evidence, its dependencies, and active
+   and completed Project items. Move an already completed and fully proven item to
+   `Done`; move an unblocked actionable item to `Ready`; move an item waiting on a real
+   prerequisite or direct user input to `Blocked` with the correct owner and exact
+   unblock action; mark a duplicate, superseded, or obsolete item `Stale` with evidence;
+   and leave deliberately deferred discovery or future-policy work in `Inbox` only when
+   its deferral condition and selection trigger are explicit. Do not triage Personal
+   Notes as implementation work.
+3. **Select only an eligible ticket.** Choose the highest-priority eligible `Ready`
+   item unless the user explicitly selects another item. Recheck duplicates, scope,
+   dependencies, priority, and the current branch responsibility before claiming it.
+4. **Move the ticket before doing the work.** A newly selected Inbox item first moves to
+   `Ready`. Before implementation or active verification begins, create and publish the
+   required dedicated branch when the work owns a repository delta, then atomically
+   move the ticket to `In Progress` with `start`. Never leave actively worked content in
+   `Inbox`, `Ready`, or an unrelated lifecycle state, and never restart a `Done` ticket;
+   create or reopen the correct active responsibility instead.
+5. **Execute one owned responsibility.** Read the complete ticket and applicable source
+   contracts, classify the outcome and ownership, inspect current implementation and
+   tests, implement only the coherent scope, and record discovered unrelated work once
+   through the duplicate-aware ticket process. Keep the active branch and Project item
+   mutually inspectable throughout the work.
+6. **Verify the stated outcome.** Run the narrowest authoritative checks while
+   iterating, broaden according to risk, and record exact evidence and the representative
+   corpus. Deterministic automation that proves the complete ticket closes it
+   immediately when no delivery remains. Observable browser, device, permission, or
+   subjective visual behavior moves to `User Verification` with an exact branch,
+   starting location, setup, numbered repro, boundaries, expected outcome, and pass or
+   fail follow-up.
+7. **Classify before approval handling.** Before mutating any approved item, write the
+   pre-mutation table required by this rule. Process verification-only,
+   implementation-delivery, and operational/manual items separately. Never infer that
+   adjacent approval, a shared test run, or another ticket's branch changes what the
+   approved ticket owns.
+8. **Deliver according to ownership.** Verification-only work already proven on `main`
+   goes directly to `Done`; if its behavior is not yet in `main`, it remains approved
+   and links to the implementation owner. Implementation delivery alone follows
+   approved feature commit and push, staging integration, integrated verification,
+   `Ready for Main`, separate production-promotion approval, main promotion,
+   post-merge verification, and `Done`. Operational/manual work closes only from its
+   own external or observational evidence.
+9. **Reconcile before selecting the next ticket.** Pull the Project and run `doctor`
+   after lifecycle mutations and before moving on. Recheck Inbox and Ready items whose
+   prerequisites changed during the completed work. Update the active recovery context
+   and durable decision log, remove obsolete local artifacts, and leave every remaining
+   item with an honest owner and next action. Shipping adjacent work never advances a
+   ticket by association.
+10. **Correct lifecycle mistakes before continuing.** If a ticket entered the wrong
+    state, stop the queue, return every affected item to the state supported by its own
+    evidence, remove false shared evidence or relationships, rerun link reconciliation
+    and `doctor`, and only then resume. Never hide a transition error by weakening the
+    ticket contract or inventing a dependency.
+
 <a id="rule-qa-clearance"></a>
 
 #### Rule 42 — QA Clearance
