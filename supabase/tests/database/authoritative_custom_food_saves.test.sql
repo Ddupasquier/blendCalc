@@ -1,6 +1,6 @@
 begin;
 
-select plan(12);
+select plan(22);
 
 insert into auth.users (id, aud, role, email)
 values (
@@ -207,6 +207,122 @@ select ok(
 			and food.fdc_id = -730004
 	),
 	'the normalized serving projection retains exact user-entered lineage'
+);
+
+select is(
+	public.place_user_food_list_item(
+		'fridge',
+		-730001,
+		(
+			select food.food
+			from public.custom_foods food
+			where food.user_id = auth.uid()
+				and food.fdc_id = -730001
+		),
+		false
+	),
+	'added',
+	'a private custom food can be placed in the Fridge before rename verification'
+);
+
+select is(
+	public.rename_user_food_list_item(
+		'fridge',
+		-730001,
+		'MY PRIVATE TEST FOOD'
+	),
+	'renamed',
+	'a private custom food accepts an owner-authored rename'
+);
+
+select ok(
+	(
+		select food.food ->> 'description' = 'MY PRIVATE TEST FOOD'
+			and food.food ->> 'canonicalDescription' = 'MY PRIVATE TEST FOOD'
+			and food.food ->> 'nameProvenance' = 'user'
+			and food.name_key = 'my private test food'
+			and food.search_text like '%my private test food%'
+			and food.search_text not like '%backend qa apple%'
+		from public.custom_foods food
+		where food.user_id = auth.uid()
+			and food.fdc_id = -730001
+	),
+	'the private food rename updates its owning record, canonical name, and search index'
+);
+
+select ok(
+	(
+		select item.food ->> 'description' = 'MY PRIVATE TEST FOOD'
+			and item.food ->> 'canonicalDescription' = 'MY PRIVATE TEST FOOD'
+			and item.food ->> 'nameProvenance' = 'user'
+		from public.user_food_list_items item
+		where item.user_id = auth.uid()
+			and item.list_type = 'fridge'
+			and item.fdc_id = -730001
+	),
+	'the active private saved-list snapshot receives the same user-owned name'
+);
+
+select is(
+	public.move_user_food_list_items('fridge', 'shopping', array[-730001]::bigint[]),
+	1,
+	'the renamed private food moves to Shopping List'
+);
+
+select is(
+	public.move_user_food_list_items('shopping', 'fridge', array[-730001]::bigint[]),
+	1,
+	'the renamed private food moves back to Fridge'
+);
+
+select ok(
+	(
+		select item.food ->> 'description' = 'MY PRIVATE TEST FOOD'
+			and item.food ->> 'canonicalDescription' = 'MY PRIVATE TEST FOOD'
+		from public.user_food_list_items item
+		where item.user_id = auth.uid()
+			and item.list_type = 'fridge'
+			and item.fdc_id = -730001
+	),
+	'the private name survives the complete Fridge and Shopping List round trip'
+);
+
+select is(
+	public.place_user_food_list_item(
+		'fridge',
+		730010,
+		jsonb_build_object(
+			'fdcId', 730010,
+			'description', 'Catalog Source Food',
+			'canonicalDescription', 'Catalog Source Food',
+			'customFood', false,
+			'foodIdentityType', 'generic',
+			'sourceKey', 'usda',
+			'foodNutrients', '[]'::jsonb
+		),
+		false
+	),
+	'added',
+	'a source-backed control can be placed before assigning a personal alias'
+);
+
+select is(
+	public.rename_user_food_list_item('fridge', 730010, 'My Catalog Alias'),
+	'renamed',
+	'a source-backed food accepts a personal list alias'
+);
+
+select ok(
+	(
+		select item.food ->> 'description' = 'My Catalog Alias'
+			and item.food ->> 'canonicalDescription' = 'Catalog Source Food'
+			and item.food ->> 'nameProvenance' = 'user'
+		from public.user_food_list_items item
+		where item.user_id = auth.uid()
+			and item.list_type = 'fridge'
+			and item.fdc_id = 730010
+	),
+	'the source-backed control preserves its canonical source name separately'
 );
 
 reset role;

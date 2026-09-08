@@ -218,11 +218,14 @@ Notes:
   barcode-assisted, or explicitly user-owned. Source and barcode names use the shared
   title-style formatter and replace standalone `and` with `&`; personal renames keep the
   user's exact wording and casing.
-- `food.canonicalDescription` retains the source, shared-catalog, generic-dataset, or
-  original private-food name when `food.description` is replaced by a personal list
-  name. Ingredient cards use the personal name; nutrition details use the canonical
-  name. Existing rows are backfilled from exact shared-product, generic-food, or
-  private-food identity links when available.
+- `food.canonicalDescription` retains the source, shared-catalog, or generic-dataset name
+  when `food.description` is replaced by a personal list alias. Ingredient cards use the
+  alias while nutrition details use the canonical name. A private custom food has no
+  separately owned canonical source name: renaming it updates both descriptions in the
+  saved-list snapshot and its owning `custom_foods` row so lists, search, manual editing,
+  and nutrition details remain consistent. Existing unambiguous private aliases are
+  synchronized forward by migration; conflicting legacy private names retain their
+  unique custom-food identity until the user chooses a unique rename.
 - `food_identity_key` is generated from the normalized barcode when available, otherwise
   from the FDC id.
 - `shared_product_id` links the saved item to the active approved catalog product for
@@ -284,7 +287,9 @@ Notes:
   but it rejects user-authored provenance and preserves every unrelated private field.
 - The `food` JSON stores `nameProvenance`. Valid-barcode and autofilled names are
   normalized before saving, including standalone `and` → `&`; barcode-free private names
-  and later personal renames preserve the user's exact wording.
+  and later personal renames preserve the user's exact wording. Renaming a private food
+  through a saved-list action updates this owning record, its normalized name key and
+  search text, and the active saved-list snapshot atomically.
 
 ### `saved_drinks`
 
@@ -557,12 +562,21 @@ FoodData Central and Open Food Facts products.
 | `product_data_sources`               | `key`                                                                     | Canonical identity, display name, URLs, terms, and observation history for each external API, standards API, or internal catalog | Referenced by all source-specific mapping and serving tables                                                          |
 | `product_source_daily_metrics`       | `(metric_date, source_key, source_data_type, lookup_kind, lookup_origin)` | Privacy-safe daily API usage, reliability, match, nutrient-depth, metadata-coverage, cache, and timing counters                  | `source_key → product_data_sources.key`                                                                               |
 | `product_source_field_daily_metrics` | `(metric_date, source_key, field_path, evaluation_origin)`                | Privacy-safe field selection, validity, disagreement, and confirmed-correction counters                                          | `source_key → product_data_sources.key`                                                                               |
+| `food_category_resolution_guidance`  | `source_normalized_value`                                                 | Reviewed specificity and exclusion bumpers for selecting among exact source-observed categories                                  | Same normalized value resolves through `custom_food_category_options`; no semantic target mapping                     |
 | `nutrient_source_mappings`           | `(source_key, source_nutrient_key, source_unit_name)`                     | Maps a source API nutrient key and unit to the app's canonical nutrient; immutable UUID `id` identifies review work              | `source_key → product_data_sources.key`, `nutrient_id → nutrient_definitions.nutrient_id`                             |
 | `nutrient_mapping_review_decisions`  | `id`                                                                      | Records immutable evidence-backed approval or exclusion decisions for ambiguous nutrient mappings                                | `mapping_id → nutrient_source_mappings.id`, selected and previous nutrient definitions, `reviewed_by → auth.users.id` |
 | `nutrient_unit_conversions`          | `(source_key, nutrient_id, from_unit_name, to_unit_name)`                 | Stores source- and nutrient-specific conversion multipliers                                                                      | `source_key → product_data_sources.key`, `nutrient_id → nutrient_definitions.nutrient_id`                             |
 | `serving_measure_units`              | `key`                                                                     | App-ready weight, volume, and count units, labels, dimensions, ordering, and same-dimension conversions                          | `source_key → product_data_sources.key`                                                                               |
 | `serving_measure_aliases`            | `(unit_key, normalized_alias)`                                            | Recognizes API and label spellings such as `tbsp`, `tablespoon`, and `tablespoons`                                               | `unit_key → serving_measure_units.key`, `source_key → product_data_sources.key`                                       |
 | `food_servings`                      | `id`                                                                      | Exact reported weight, volume, or count/package serving sizes used by nutrition and Mix                                          | Exactly one food parent; optional `unit_key → serving_measure_units.key`                                              |
+
+`food_category_resolution_guidance` keeps provider taxonomy evidence separate from
+selection policy. Guidance may prefer a specific exact candidate, retain a broad
+candidate only as a fallback, or exclude non-category navigation buckets. It has no
+target-category column and cannot semantically remap a product into an app-authored
+family. Current provider-derived products and private copies are repaired only when the
+new category is literally present in their preserved source evidence; user-selected
+categories and immutable historical revisions remain untouched.
 
 ### `product_data_sources`
 

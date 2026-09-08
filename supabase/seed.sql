@@ -83,6 +83,123 @@ on conflict (provider, cache_key) do update set
 	expires_at = excluded.expires_at,
 	etag = excluded.etag;
 
+-- Evidence-bounded category-resolution QA fixtures. These source-shaped records keep the
+-- Nutella, Hershey syrup, and Gochujang verification corpus available even
+-- while local development intentionally blocks outbound provider requests.
+insert into public.product_api_cache (
+	provider,
+	cache_key,
+	request_kind,
+	status_code,
+	response,
+	fetched_at,
+	expires_at,
+	etag
+)
+values
+	(
+		'open-food-facts',
+		'ba7576c00c230ec7214aea6b9a4b05c58331ec1f6b7a7d9118cc4c5650bc6516',
+		'barcode-product',
+		200,
+		$json${
+			"code": "3017620422003",
+			"product": {
+				"code": "3017620422003",
+				"product_name": "Nutella",
+				"brands": "Nutella, Ferrero, Yum yum",
+				"image_front_url": "https://images.openfoodfacts.org/images/products/301/762/042/2003/front_en.879.400.jpg",
+				"image_front_small_url": "https://images.openfoodfacts.org/images/products/301/762/042/2003/front_en.879.200.jpg",
+				"image_front_thumb_url": "https://images.openfoodfacts.org/images/products/301/762/042/2003/front_en.879.100.jpg",
+				"categories": "en:Confectionary based spreads, en:Petit-déjeuners, en:Produits à tartiner, en:Produits à tartiner sucrés, en:Pâtes à tartiner",
+				"categories_tags": ["en:breakfasts", "en:spreads", "en:sweet-spreads", "en:confectionary-based-spreads", "en:Petit-déjeuners", "en:Produits à tartiner", "en:Produits à tartiner sucrés", "en:Pâtes à tartiner"],
+				"food_groups": "en:sweets",
+				"food_groups_tags": ["en:sugary-snacks", "en:sweets"],
+				"serving_quantity_unit": "g",
+				"nutrition_data_per": "100g",
+				"nutriments": {
+					"energy-kj_100g": 2252,
+					"energy-kj_unit": "kJ",
+					"energy-kcal_100g": 539,
+					"energy-kcal_unit": "kcal",
+					"fat_100g": 30.9,
+					"fat_unit": "g",
+					"carbohydrates_100g": 57.5,
+					"carbohydrates_unit": "g",
+					"sugars_100g": 56.3,
+					"sugars_unit": "g",
+					"added-sugars_100g": 52.13,
+					"added-sugars_unit": "g",
+					"proteins_100g": 6.3,
+					"proteins_unit": "g",
+					"sodium_100g": 0.0428,
+					"sodium_unit": "g",
+					"salt_100g": 0.107,
+					"salt_unit": "g",
+					"saturated-fat_100g": 10.6,
+					"saturated-fat_unit": "g"
+				},
+				"ingredients_text": "Sucre, huile de palme, NOISETTES 13%, cacao maigre 7,4%, LAIT écrémé en poudre 6,6%, LACTOSERUM en poudre, émulsifiants: lécithines [SOJA), vanilline. Sans gluten.",
+				"allergens": "lait, fruits à coque, soja",
+				"allergens_tags": ["en:milk", "en:nuts", "en:soybeans"]
+			}
+		}$json$::jsonb,
+		'2026-09-06T19:00:00Z',
+		'2099-01-01T00:00:00Z',
+		null
+	),
+	(
+		'open-food-facts',
+		'acd008e0b598ad0379501234f8676ce218d888c5c4728d1c2525a05e32b9ee0a',
+		'barcode-product',
+		200,
+		$json${
+			"code": "0034000003129",
+			"product": {
+				"code": "0034000003129",
+				"product_name": "HERSHEYS SYRUP CHOC",
+				"brands": "Hershey's",
+				"categories": "Syrups, Chocolate sauce, Groceries",
+				"categories_tags": ["en:condiments", "en:syrups", "en:sauces", "en:dessert-sauces", "en:chocolate-sauce", "en:Groceries"],
+				"food_groups": "en:dressings-and-sauces",
+				"food_groups_tags": ["en:fats-and-sauces", "en:dressings-and-sauces"],
+				"serving_size": "19g",
+				"serving_quantity": 19,
+				"serving_quantity_unit": "g",
+				"nutrition_data_per": "100g",
+				"nutriments": {
+					"energy-kcal_100g": 237,
+					"energy-kcal_unit": "kcal",
+					"fat_100g": 1,
+					"fat_unit": "g",
+					"carbohydrates_100g": 63.1,
+					"carbohydrates_unit": "g",
+					"sugars_100g": 52.6,
+					"sugars_unit": "g",
+					"proteins_100g": 1.6,
+					"proteins_unit": "g",
+					"sodium_100g": 0.038,
+					"sodium_unit": "g",
+					"saturated-fat_100g": 0.6,
+					"saturated-fat_unit": "g"
+				},
+				"ingredients_text": "HIGH FRUCTOSE CORN SYRUP, CORN SYRUP, WATER, SUGAR, COCOA POWDER (8%), EMULSIFIER (471), PRESERVATIVE (202), SALT, THICKENER (415), ARTIFICIAL FLAVOUR.",
+				"allergens": "",
+				"allergens_tags": []
+			}
+		}$json$::jsonb,
+		'2026-09-06T19:00:00Z',
+		'2099-01-01T00:00:00Z',
+		null
+	)
+on conflict (provider, cache_key) do update set
+	request_kind = excluded.request_kind,
+	status_code = excluded.status_code,
+	response = excluded.response,
+	fetched_at = excluded.fetched_at,
+	expires_at = excluded.expires_at,
+	etag = excluded.etag;
+
 insert into public.serving_measure_units (
 	key,
 	display_label,
@@ -350,6 +467,12 @@ with categories(id, label, normalized_value, symbol_key) as (
 		('qa-protein-powders', 'Protein Powders', 'protein powders', 'protein-powder'),
 		('qa-nut-seed-butters', 'Nut & Seed Butters', 'nut and seed butters', 'nuts-seeds'),
 		('qa-dips', 'Dips and Salsa', 'dips and salsa', 'sauces-condiments'),
+		('sauces', 'Sauces', 'sauces', 'sauces-condiments'),
+		('hot-sauces', 'Hot Sauces', 'hot sauces', 'sauces-condiments'),
+		('gochujang', 'Gochujang', 'gochujang', 'sauces-condiments'),
+		('spreads', 'Spreads', 'spreads', 'spreads-preserves'),
+		('sweet-spreads', 'Sweet Spreads', 'sweet spreads', 'spreads-preserves'),
+		('syrups', 'Syrups', 'syrups', 'sauces-condiments'),
 		('qa-preserves', 'Jams and Preserves', 'jams and preserves', 'spreads-preserves'),
 		('jams', 'Jams', 'jams', 'spreads-preserves')
 )
@@ -654,7 +777,7 @@ values
 		'08801005523455',
 		'Gochu Jang Hot & Sweet Chili Sauce',
 		'Sempio Foods Company',
-		'qa-dips',
+		'gochujang',
 		'package-label:08801005523455:local-qa-fixture',
 		'{
 			"fdcId": 9100003,
@@ -692,8 +815,8 @@ values
 			"labels": ["Local QA fixture"],
 			"packageQuantity": {"label":"500 g","amount":500,"unit":"g"},
 			"sourceMetadata": {"language":"en","marketCountries":["United States"],"revision":1,"schemaVersion":1,"completeness":1},
-			"categories": ["Dips and Salsa"],
-			"categoryOptionId": "qa-dips",
+			"categories": ["Gochujang", "Dips and Salsa", "sauces", "hot sauces", "gochujang"],
+			"categoryOptionId": "gochujang",
 			"barcodeSource": "community",
 			"sourceKey": "shared-catalog",
 			"sourceLabel": "blendCalc Community",
