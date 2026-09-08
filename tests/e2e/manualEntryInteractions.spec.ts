@@ -389,7 +389,9 @@ test("manual entry shows duplicate and move actions for the selected list", asyn
 		await dialog.getByLabel("UPC / Barcode").press("Tab");
 		await expect(dialog.getByText(/No source match found/i)).toBeVisible();
 		await dialog.getByRole("button", { name: "Category" }).click();
-		await dialog.getByRole("searchbox", { name: "Search categories" }).fill("Jams");
+		await dialog
+			.getByRole("searchbox", { name: "Search categories" })
+			.fill("Jams");
 		await dialog.getByRole("button", { name: "Jams", exact: true }).click();
 		await dialog.getByRole("button", { name: "Continue" }).click();
 		await dialog.getByLabel("Gram weight (g)").fill("34");
