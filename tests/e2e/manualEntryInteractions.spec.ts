@@ -391,7 +391,7 @@ test("manual entry shows duplicate and move actions for the selected list", asyn
 		await dialog.getByRole("button", { name: "Category" }).click();
 		await dialog.getByRole("button", { name: "Jams", exact: true }).click();
 		await dialog.getByRole("button", { name: "Continue" }).click();
-		await dialog.getByLabel("Weight (g)").fill("34");
+		await dialog.getByLabel("Gram weight (g)").fill("34");
 		await dialog.getByRole("button", { name: "Continue" }).click();
 
 		for (const nutrient of [
@@ -602,7 +602,7 @@ test("manual entry shows one message when its reference catalog response is unav
 		.first()
 		.click();
 	await dialog.getByRole("button", { name: "Continue" }).click();
-	await dialog.getByLabel("Weight (g)").fill("100");
+	await dialog.getByLabel("Gram weight (g)").fill("100");
 	await dialog.getByRole("button", { name: "Continue" }).click();
 
 	await expect(
@@ -1254,7 +1254,7 @@ test("regulated alcohol lookup keeps sparse nutrition honest before Share", asyn
 		"Alcohol beverage label",
 	);
 	await expect(dialog.getByLabel("Alcohol by volume (%) *")).toHaveValue("20");
-	await expect(dialog.getByLabel("Weight (g) optional")).toHaveValue("");
+	await expect(dialog.getByLabel("Gram weight (g) optional")).toHaveValue("");
 	await expect(
 		dialog.getByText("No package serving was reported"),
 	).toBeVisible();
@@ -1484,9 +1484,9 @@ test("manual entry renders every approved DB nutrient group and field", async ({
 		.first()
 		.click();
 	await dialog.getByRole("button", { name: "Continue" }).click();
-	await dialog.getByLabel("Weight (g)").fill("100");
+	await dialog.getByLabel("Gram weight (g)").fill("100");
 	await expect(
-		dialog.getByRole("switch", { name: "Package measure" }),
+		dialog.getByRole("switch", { name: "Volume or item amount" }),
 	).not.toBeChecked();
 	await dialog.getByRole("button", { name: "Continue" }).click();
 	const privateMacroGroups = nutrientCatalog.macros.map((group) => ({
@@ -1683,7 +1683,7 @@ test("canonical categories persist across saved cards and nutrition details", as
 			.first()
 			.click();
 		await dialog.getByRole("button", { name: "Continue" }).click();
-		await dialog.getByLabel("Weight (g)").fill("50");
+		await dialog.getByLabel("Gram weight (g)").fill("50");
 		await dialog.getByRole("button", { name: "Continue" }).click();
 
 		const requiredNutrients = [

@@ -34,6 +34,7 @@ const productSubmission = {
 	conflictCount: 1,
 	externalLookupFailed: false,
 	validationIssues: ["Serving size differs from the current catalog record."],
+	trustDisposition: "conflicts-with-trusted-evidence",
 	isQaFixture: false,
 	submissionKind: "packaged_product",
 	submissionIntent: "new_product",
@@ -91,6 +92,7 @@ describe("focused moderator review lists", () => {
 		expect(
 			screen.getByText("Serving size differs from the current catalog record."),
 		).toBeVisible();
+		expect(screen.getByText("Trusted evidence conflict")).toBeVisible();
 		expect(screen.getByText("Nutrition facts")).not.toBeVisible();
 		expect(
 			screen.getByRole("button", { name: "Approve submission" }),

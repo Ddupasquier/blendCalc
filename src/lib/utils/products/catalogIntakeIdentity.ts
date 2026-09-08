@@ -3,7 +3,7 @@ import type { CatalogSubmissionIntent } from "$lib/utils/products/catalog";
 import { productNamesAreUnrelated } from "$lib/utils/products/productIdentity";
 
 export type CatalogIntakeIdentityRecord = {
-	source: "canonical" | "usda" | "open-food-facts";
+	source: "canonical" | "usda" | "open-food-facts" | "manufacturer" | "gs1";
 	sourceReference: string | null;
 	productName: string;
 	brandOwner: string | null;

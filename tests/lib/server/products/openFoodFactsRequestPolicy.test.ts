@@ -88,5 +88,8 @@ describe("Open Food Facts request policy", () => {
 		expect(getCacheKey("0034000003129")).toBe(
 			"acd008e0b598ad0379501234f8676ce218d888c5c4728d1c2525a05e32b9ee0a",
 		);
+		expect(getCacheKey("0897922002775")).toBe(
+			"d76dee64fed90e1d404d15eac49222ee0ad2e4003d7367b554e5c7f0f9ba0d59",
+		);
 	});
 });

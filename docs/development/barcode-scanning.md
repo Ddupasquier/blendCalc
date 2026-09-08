@@ -41,15 +41,20 @@ barcode and nutrition label manually.
 ## Data And Accuracy
 
 - Barcode and custom-food name uniqueness are enforced per user, not globally.
-- Complete, unchanged exact-source data may default to community sharing only when all
-  represented sources are approved for canonical storage. User-entered labels, edits,
-  corrections, and photos can be submitted only through an explicit opt-in, and any
-  such change clears an automatic sharing default.
+- Complete, unchanged exact-source data may default to community submission. This
+  consent decision is separate from canonical publication: represented sources must
+  still pass storage and licensing policy before automatic publication. User-entered
+  labels, edits, corrections, and photos require explicit opt-in, and any such change
+  clears an automatic sharing default.
 - GS1 lot, serial, expiration, query, and fragment values are not persisted.
 - Random, HTTP, credential-bearing, compressed/unsupported, and invalid-GTIN QR links
   are rejected instead of opened or guessed.
 - Unknown products require package, nutrition-label, and barcode photos before catalog
   review.
+- Community intake compares a barcode against the active blendCalc catalog, maintained
+  live providers, and retained exact-barcode observations before automatic publication.
+  Material conflicts remain explicitly untrusted and evidence-backed review-only;
+  failure to read retained evidence blocks automatic publication.
 - Sparse package disclosures are not converted into zeroes or estimates. This matters
   for alcohol, kombucha, exempt products, and other packages that may legally provide
   less nutrition information than an ordinary Nutrition Facts panel. Store only the

@@ -305,7 +305,7 @@ const reachManualEntryExtendedStep = async (dialog: Locator) => {
 		.first()
 		.click();
 	await dialog.getByRole("button", { name: "Continue" }).click();
-	await dialog.getByLabel("Weight (g)").fill("100");
+	await dialog.getByLabel("Gram weight (g)").fill("100");
 	await dialog.getByRole("button", { name: "Continue" }).click();
 
 	const macroInputs = dialog.locator(".manual-nutrients__fields input");

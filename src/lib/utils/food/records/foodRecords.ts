@@ -9,7 +9,6 @@ import type { FoodStructuredIngredient } from "$lib/utils/food/types";
 import {
 	EXTERNAL_INGREDIENT_NORMALIZATION_METHOD,
 	EXTERNAL_INGREDIENT_NORMALIZATION_VERSION,
-	isLanguageCodeOnlyDisclosureText,
 	normalizeExternalIngredientStatement,
 } from "$lib/utils/food/ingredients/ingredientStatementNormalization.js";
 import {
@@ -99,7 +98,7 @@ export const normalizeFoodForStorage = (food: FoodItem): FoodItem => {
 						"ingredients",
 				})
 			: null;
-	const combinedPrecautionaryStatements = normalizedExternalIngredients
+	const precautionaryStatements = normalizedExternalIngredients
 		? [
 				...normalizedExternalIngredients.precautionaryStatements.map(
 					(statement) => ({
@@ -121,9 +120,6 @@ export const normalizeFoodForStorage = (food: FoodItem): FoodItem => {
 					) === index,
 			)
 		: food.precautionaryStatements;
-	const precautionaryStatements = combinedPrecautionaryStatements?.filter(
-		(statement) => !isLanguageCodeOnlyDisclosureText(statement.text),
-	);
 	const allergenDeclarationAnalysis = normalizedExternalIngredients
 		? normalizedExternalIngredients.declarationAnalysis
 		: food.ingredientAnalysis?.allergenDeclarationAnalysis;
@@ -220,9 +216,7 @@ export const normalizeFoodForStorage = (food: FoodItem): FoodItem => {
 		ingredientAnalysis,
 		additives: food.additives ? [...food.additives] : undefined,
 		allergens: food.allergens ? [...food.allergens] : undefined,
-		traces: food.traces?.filter(
-			(value) => !isLanguageCodeOnlyDisclosureText(value),
-		),
+		traces: food.traces ? [...food.traces] : undefined,
 		precautionaryStatements: precautionaryStatements?.map((statement) => ({
 			...statement,
 			allergens: [...statement.allergens],

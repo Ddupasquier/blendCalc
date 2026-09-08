@@ -5,12 +5,16 @@ import {
 	type ProductDifferenceValue,
 } from "$lib/utils/products/productDifferenceEngine";
 import {
+	getNumericProductDifferenceSeverity,
 	getProductDifferenceThresholds,
 	type ProductDifferenceSeverity,
 	type ProductResolutionPolicy,
 } from "$lib/utils/products/productResolutionPolicy";
 
 type DifferenceSeverity = ProductDifferenceSeverity;
+
+const formatGrams = (value: number) =>
+	new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(value);
 
 export type CatalogSubmissionFieldChange = {
 	field: string;
@@ -100,13 +104,22 @@ const getDifferences = (
 				? difference.textRelationship === "unrelated"
 					? "high"
 					: "medium"
-				: difference.field === "category"
-					? difference.textRelationship === "unrelated"
-						? "high"
-						: "low"
-					: difference.field === "householdServing"
-						? "low"
-						: "medium";
+				: difference.field === "servingWeightGrams" &&
+					  typeof difference.submittedValue === "number" &&
+					  typeof difference.previousValue === "number"
+					? (getNumericProductDifferenceSeverity(
+							policy,
+							"catalog-verification-numeric",
+							difference.submittedValue,
+							difference.previousValue,
+						) ?? "medium")
+					: difference.field === "category"
+						? difference.textRelationship === "unrelated"
+							? "high"
+							: "low"
+						: difference.field === "householdServing"
+							? "low"
+							: "medium";
 		if (!severity) return [];
 		const [label, defaultMessage] = isNutrient
 			? [
@@ -115,7 +128,14 @@ const getDifferences = (
 						? `${nutrientLabel} was added to the submitted label data.`
 						: `${nutrientLabel} differs from the active catalog item.`,
 				]
-			: metadata[difference.field as keyof typeof metadata];
+			: difference.field === "servingWeightGrams" &&
+				  typeof difference.submittedValue === "number" &&
+				  typeof difference.previousValue === "number"
+				? [
+						"Serving weight",
+						`Submitted serving weight (${formatGrams(difference.submittedValue)} g) differs from the trusted comparison value (${formatGrams(difference.previousValue)} g).`,
+					]
+				: metadata[difference.field as keyof typeof metadata];
 		return [
 			{
 				field: difference.field,

@@ -83,7 +83,7 @@ describe("barcode share-validation privacy boundary", () => {
 		);
 	});
 
-	it("requires complete evidence for a source that cannot populate the catalog", async () => {
+	it("accepts an unchanged exact source match without duplicate photos", async () => {
 		mocks.lookupBarcodeProductDraft.mockResolvedValue({
 			name: "Alabama White Sauce",
 			source: "open-food-facts",
@@ -105,11 +105,12 @@ describe("barcode share-validation privacy boundary", () => {
 
 		expect(await response.json()).toMatchObject({
 			status: "matched",
-			requiresCatalogEvidence: true,
+			defaultSharingAllowed: true,
+			requiresCatalogEvidence: false,
 		});
 	});
 
-	it("does not default sharing on for a restricted or mixed source", async () => {
+	it("defaults an unchanged mixed-source match on without weakening publication policy", async () => {
 		mocks.getProductReferenceCatalog.mockResolvedValue({
 			sources: {
 				usda: {
@@ -148,7 +149,8 @@ describe("barcode share-validation privacy boundary", () => {
 
 		expect(await response.json()).toMatchObject({
 			status: "matched",
-			defaultSharingAllowed: false,
+			defaultSharingAllowed: true,
+			requiresCatalogEvidence: false,
 		});
 	});
 });

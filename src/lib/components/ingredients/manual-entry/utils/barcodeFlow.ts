@@ -1,5 +1,6 @@
 import {
 	getDefaultServingMeasureUnit,
+	isVolumeOrCountServingMeasureUnit,
 	type ServingMeasureUnit,
 } from "$lib/utils/serving/servingMeasureCatalog";
 import { normalizeBarcode } from "$lib/utils/barcode/barcode";
@@ -258,7 +259,7 @@ export const getBarcodeDraftState = (
 		useServingMeasure: Boolean(
 			draft.serving?.isHouseholdMeasure &&
 			draft.serving.amount &&
-			draft.serving.unitKey,
+			isVolumeOrCountServingMeasureUnit(draft.serving.unitKey),
 		),
 		servingMeasureQuantity: draft.serving?.amount ?? null,
 		servingMeasureUnit:

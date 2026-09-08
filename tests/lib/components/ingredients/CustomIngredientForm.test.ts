@@ -1526,7 +1526,7 @@ describe("CustomIngredientForm", () => {
 			expect(screen.getByLabelText(/share with community/i)).toBeChecked(),
 		);
 		const trustedProductImage = screen.getByRole("img", {
-			name: "Source tomato product package image",
+			name: "Full product package preview",
 		});
 		expect(trustedProductImage).toHaveAttribute(
 			"src",
@@ -1536,6 +1536,16 @@ describe("CustomIngredientForm", () => {
 			screen.getByText("Image: Open Food Facts contributors"),
 		).toBeInTheDocument();
 		expect(screen.getByText(/sharing is on by default/i)).toBeInTheDocument();
+		expect(
+			screen.queryByLabelText(/nutrition facts label/i),
+		).not.toBeInTheDocument();
+		expect(screen.queryByLabelText(/^barcode$/i)).not.toBeInTheDocument();
+		expect(
+			screen.getByRole("button", { name: "Replace product image" }),
+		).toBeEnabled();
+		await fireEvent.click(
+			screen.getByRole("button", { name: "Rotate 90° clockwise" }),
+		);
 		await goToStep(/identity/i);
 		expect(screen.getByLabelText(/food name/i)).toHaveValue(
 			"Source tomato product",
@@ -1548,9 +1558,16 @@ describe("CustomIngredientForm", () => {
 		);
 		await waitFor(() => expect(onCreate).toHaveBeenCalledOnce());
 		expect(submitSharedProduct).toHaveBeenCalledOnce();
+		expect(submitSharedProduct.mock.calls[0][1]).toMatchObject({
+			frontPhoto: null,
+			nutritionPhoto: null,
+			barcodePhoto: null,
+			frontImageCrop: expect.objectContaining({ rotationDegrees: 90 }),
+		});
 		expect(onCreate.mock.calls[0][0]).toMatchObject({
 			customFood: false,
 			sourceKey: "usda",
+			image: expect.objectContaining({ rotationDegrees: 90 }),
 		});
 	});
 
@@ -2627,15 +2644,39 @@ describe("CustomIngredientForm", () => {
 		expect(screen.queryByLabelText(/^amount/i)).not.toBeInTheDocument();
 
 		await fireEvent.click(
-			screen.getByRole("switch", { name: "Package measure" }),
+			screen.getByRole("switch", { name: "Volume or item amount" }),
 		);
-		expect(screen.getByLabelText("Serving label")).toBeInTheDocument();
-		expect(screen.getByLabelText(/^amount/i)).toBeInTheDocument();
-		expect(screen.getByRole("combobox", { name: "Unit" })).toBeInTheDocument();
+		expect(
+			screen.getByLabelText("Package wording (optional)"),
+		).toBeInTheDocument();
+		const amount = screen.getByLabelText(/^amount/i);
+		const wording = screen.getByLabelText("Package wording (optional)");
+		expect(
+			amount.compareDocumentPosition(wording) &
+				Node.DOCUMENT_POSITION_FOLLOWING,
+		).toBeTruthy();
+		const unit = screen.getByRole("combobox", { name: "Unit" });
+		expect(unit).toBeInTheDocument();
 		expect(
 			screen.getByText(
-				/without grams, nutrition stays on this package measure/i,
+				/enter the serving's gram weight, or add the volume or item amount/i,
 			),
+		).toBeInTheDocument();
+
+		await fireEvent.click(unit);
+		await fireEvent.click(
+			screen.getByRole("option", { name: "tablespoons (tbsp)" }),
+		);
+		await fireEvent.input(amount, { target: { value: "2" } });
+		await waitFor(() =>
+			expect(
+				screen.getByText(
+					/^BlendCalc will save one serving as 2 tbsp\. Nutrition will stay/,
+				),
+			).toBeInTheDocument(),
+		);
+		expect(
+			screen.getByText(/leave blank to use “2 tbsp.”/i),
 		).toBeInTheDocument();
 	});
 
@@ -2646,7 +2687,7 @@ describe("CustomIngredientForm", () => {
 		await fillIdentityStep("Liquid yogurt");
 		await continueToNextStep();
 		await fireEvent.click(
-			screen.getByRole("switch", { name: "Package measure" }),
+			screen.getByRole("switch", { name: "Volume or item amount" }),
 		);
 		await fireEvent.input(screen.getByLabelText(/weight \(g\)/i), {
 			target: { value: "245" },
@@ -2654,7 +2695,7 @@ describe("CustomIngredientForm", () => {
 		await continueToNextStep();
 
 		const warning = screen.getByText(
-			/enter the amount printed on the package or turn off package measure/i,
+			/enter the amount printed on the package or turn off volume or item amount/i,
 		);
 		expect(warning).toBeInTheDocument();
 		expect(warning.closest(".warning-popup")).toHaveClass(
@@ -2674,7 +2715,7 @@ describe("CustomIngredientForm", () => {
 			target: { value: "32" },
 		});
 		await fireEvent.click(
-			screen.getByRole("switch", { name: "Package measure" }),
+			screen.getByRole("switch", { name: "Volume or item amount" }),
 		);
 		await fireEvent.input(screen.getByLabelText(/^amount/i), {
 			target: { value: "2" },
@@ -2683,7 +2724,7 @@ describe("CustomIngredientForm", () => {
 		await fireEvent.click(
 			screen.getByRole("option", { name: "tablespoons (tbsp)" }),
 		);
-		await fireEvent.input(screen.getByLabelText("Serving label"), {
+		await fireEvent.input(screen.getByLabelText("Package wording (optional)"), {
 			target: { value: "2 tbsp" },
 		});
 

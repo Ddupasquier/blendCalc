@@ -17,16 +17,23 @@ signed-in user without exposing the account that submitted it.
 
 1. A user scans or enters a valid UPC/EAN barcode.
 2. The ingredient is always saved to that user's private custom-food list first.
-3. Complete, unchanged exact-source data defaults to sharing only when every represented
-   product-data source is approved for canonical storage. User-entered values, edits,
-   corrections, and photos still require an explicit opt-in.
+3. Complete, unchanged exact-source data defaults to sharing when the provider confirms
+   the product. User-entered values, edits, corrections, and photos still require an
+   explicit opt-in. Publication remains a separate server decision: source data that is
+   not approved for canonical storage stays pending and cannot bypass that boundary.
 4. The server validates the barcode, exact serving basis, nutrient values, and basic
    macro relationships.
+   Before any automatic publication decision, it checks the active canonical product,
+   both maintained exact-barcode providers, and—when no active canonical product
+   exists—retained legally storable exact-barcode observations. A failed retained-
+   evidence read fails closed into review rather than allowing automatic publication.
 5. An exact, legally reusable USDA FoodData Central barcode match may publish or improve
    the blendCalc canonical product; the stored blendCalc record becomes the source used
    by later app and public-API reads while USDA remains recorded as field evidence.
-6. Unknown labels and exact matches from sources that cannot populate the canonical
-   catalog require front-package, nutrition-label, and barcode photos.
+6. Unknown labels require front-package, nutrition-label, and barcode photos. An
+   unchanged exact-source match does not ask the user to re-photograph facts the source
+   already supplied; source licensing and canonical publication eligibility are handled
+   independently by the server.
 7. Unknown labels stay pending until a moderator approves or rejects them.
 8. Approved products appear in ingredient text search and are checked before outside
    barcode services.
@@ -48,10 +55,12 @@ unknowns remain absent rather than becoming zero. Enabling community sharing mak
 catalog nutrient and evidence requirements blocking, and the server independently
 rejects incomplete submissions.
 Private saves and user-authored values or photos never create catalog intake by
-themselves. When an exact provider-backed product is complete, unchanged, and uses only
-sources approved for canonical storage, the Share step enables sharing by default and
-clearly allows the user to turn it off. Any user edit or selected evidence file clears
-that automatic default; sharing those values requires the user to enable it again.
+themselves. When an exact provider-backed product is complete and unchanged, the Share
+step enables sharing by default and clearly allows the user to turn it off. Any user edit
+or selected evidence file clears that automatic default; sharing those values requires
+the user to enable it again. This default expresses submission consent, not automatic
+publication eligibility; the server still withholds data that cannot enter the canonical
+catalog.
 The trusted route and database reject every submission without recorded sharing
 consent.
 
@@ -292,6 +301,13 @@ unchanged.
   evidence and never create `May contain`.
 - Material serving, brand, unit, or nutrient disagreements are recorded as conflicts for
   review.
+- A submitted serving that materially conflicts with active catalog or exact-barcode
+  evidence is explicitly untrusted. It never auto-publishes or becomes selected field
+  provenance. Complete current package evidence may preserve it only as a correction
+  proposal for moderator review; the moderator must verify the serving against that
+  evidence before it can replace the accepted value. This keeps legitimate label
+  revisions possible without treating claims such as `64 oz` against an evidence-backed
+  `1 oz (28 g)` serving as valid package information.
 - Moderator-reviewed labels remain identified as community-reviewed rather than
   source-verified.
 - Normalized nutrient and serving rows retain an exact source observation when one
@@ -355,6 +371,9 @@ can change over time.
    workflow metadata; a changed proposal requires a new comparison and submission.
 5. USDA and Open Food Facts are checked for exact-barcode support. Their results are
    stored as research context; neither provider silently replaces the canonical row.
+   When no active canonical product exists, retained exact USDA, Open Food Facts,
+   manufacturer, and GS1 observations are also compared so a temporary provider outage
+   cannot erase previously collected serving or nutrient evidence.
 6. Moderation shows the old and proposed values, source-check results, and private label
    evidence before approval.
 7. Approval succeeds only if the base revision is still current. It merges only the

@@ -74,9 +74,11 @@ Preserve every source-supported field that the application can legally retain:
 - source record identifiers, dates, quality metadata, confidence, and field lineage;
 - private package, nutrition-label, and barcode evidence when moderation requires it.
 
-An exact provider match does not remove the evidence step when that provider cannot
-populate the canonical catalog. If the user opts to share that product, the Share step
-requires front-package, nutrition-label, and barcode photos before submission.
+An unchanged exact provider match does not ask the user to duplicate source-supplied
+product evidence with nutrition-label or barcode photos. Source licensing and automatic
+publication eligibility remain independent server decisions. Unknown products,
+identity conflicts, and user corrections still request the evidence required for their
+actual uncertainty or changed field families.
 
 Front-package evidence becomes usable as soon as the file is selected. Automatic card
 placement is optional background assistance: it uses one bounded, downscaled recognition
@@ -112,6 +114,13 @@ Required behavior:
   retain required serving and nutrient fields. Reviewed alcohol, kombucha, exempt, and
   case-specific profiles allow legal omissions to remain unknown; regulated alcohol
   still requires the explicit package ABV;
+- present one package serving as a readable sequence: optional printed gram weight,
+  optional volume-or-item amount and unit, then optional package wording. Keep the
+  wording field after the structured measure, explain that blank wording uses the
+  selected amount and unit, and show a plain-language summary of the exact serving that
+  will be saved before the user continues. A source-reported weight unit such as ounces
+  remains package wording rather than activating the volume-or-item controls, and the
+  summary never repeats a gram weight already present in that wording;
 - keep a provider's technical per-100g normalization basis internal when no package
   serving was reported. Never display it as a package serving, and require an exact gram
   serving before normalizing any new user-entered nutrient value;
@@ -139,10 +148,14 @@ barcode` and source-empty groups `Not provided`. Keep source omissions blank and
   placement by default while offering `Replace product image`; selecting a replacement
   exposes its editable card placement;
 - allow destination choice between Fridge and Shopping List;
-- default shared-catalog submission on only for complete, valid, unchanged exact-source
-  data whose represented sources all permit canonical storage. Keep an immediate
-  opt-out, and turn sharing off whenever the user enters values, edits imported facts,
-  or selects private evidence until they explicitly enable it again;
+- default shared-catalog submission on for complete, valid, unchanged exact-source
+  data. Keep an immediate opt-out, and turn sharing off whenever the user enters values,
+  edits imported facts, or selects private evidence until they explicitly enable it
+  again. Treat submission consent separately from the server's canonical-publication
+  and source-licensing decision;
+- show an accepted trusted product image in the Share step with editable card-placement
+  controls before submission. Persist the chosen placement even when the user keeps the
+  source image instead of uploading a replacement;
 - prepare a bounded display copy of each newly chosen product image in a dedicated
   browser worker without mounting the full-resolution source or blocking another
   interaction; keep the source selection intact, show preparation status until the
@@ -292,6 +305,16 @@ Serving behavior:
 - When a serving has a household label and weight, display the household label first
   and grams in trailing parentheses. Preserve native volume and count labels such as
   `30mL`, `1 cookie`, `2 crackers`, or `1 bottle` when no gram weight is reported.
+- When the selected serving has an exact gram weight, show an explicit `Weight` /
+  `Servings` viewing mode. Default to `Weight`: minus and plus adjust by one gram and
+  accelerate while held. `Servings` adjusts by complete serving multiples and shows the
+  resulting total weight. Format the amount for the selected mode from its first render:
+  `Weight` uses grams, while one complete serving uses
+  `1 serving (household measure)` and larger multiples use the serving count plus total
+  weight. The Nutrition Facts values and basis update with every step;
+  a multiple keeps the package serving size and says `Amount for N servings`. Do not
+  show the mode switch when only one basis is valid, and never let the same control
+  silently change meaning.
 - Never present 100g as a package serving unless the source reports it.
 - Never infer density from food name, category, provider, or a water-like default.
 

@@ -159,9 +159,9 @@
 			{category}
 			title="Card image preview"
 			description={trustedImageUrl && !selectedPreviewUrl
-				? "Trusted images use the saved placement."
+				? "Drag the trusted image in the card preview or use the controls below."
 				: "Drag the image in the card preview or use the controls below."}
-			editable={Boolean(selectedPreviewUrl)}
+			editable={Boolean(previewUrl)}
 			smartPlacementSource={selectedPreviewUrl || previewUrl}
 			{onPlacementProcessingStateChange}
 			value={placement}

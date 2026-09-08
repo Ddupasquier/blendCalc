@@ -6,6 +6,20 @@ export const PRODUCT_EVIDENCE_ROLES = [
 
 export type ProductEvidenceRole = (typeof PRODUCT_EVIDENCE_ROLES)[number];
 
+export const getTrustedSourceEvidencePolicy = ({
+	hasExactSourceMatch,
+	hasSourceChanges,
+}: {
+	hasExactSourceMatch: boolean;
+	hasSourceChanges: boolean;
+}) => {
+	const requiresCatalogEvidence = !hasExactSourceMatch || hasSourceChanges;
+	return {
+		defaultSharingAllowed: hasExactSourceMatch && !hasSourceChanges,
+		requiresCatalogEvidence,
+	};
+};
+
 const PRODUCT_EVIDENCE_LABELS: Record<ProductEvidenceRole, string> = {
 	front: "front package",
 	nutrition: "nutrition label",

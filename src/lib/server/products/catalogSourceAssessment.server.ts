@@ -22,6 +22,10 @@ import {
 	assessCatalogSourceAccuracy,
 	type CatalogSourceAccuracyAssessment,
 } from "./catalogSourceAccuracy.server";
+import {
+	readRetainedExactProductObservations,
+	type RetainedExactProductObservation,
+} from "./productSourceObservation.server";
 
 export type CatalogSourceLookupStatus = "exact-match" | "not-found" | "error";
 
@@ -33,6 +37,8 @@ export type CatalogSourceAssessment = {
 	usdaLookupStatus: CatalogSourceLookupStatus;
 	openFoodFactsLookupStatus: CatalogSourceLookupStatus;
 	externalLookupFailed: boolean;
+	retainedExactObservations: RetainedExactProductObservation[];
+	retainedEvidenceLookupFailed: boolean;
 	sourceAccuracy: CatalogSourceAccuracyAssessment;
 };
 
@@ -40,8 +46,24 @@ type CatalogSourceLookupDependencies = {
 	usda?: typeof lookupUsdaBarcodeProduct;
 	openFoodFacts?: typeof lookupOpenFoodFactsBarcodeProduct;
 	resolveCategory?: typeof resolveBarcodeDraftCategory;
+	retainedObservations?: typeof readRetainedExactProductObservations;
 	policy?: ProductResolutionPolicy;
 	nutrientRelationshipRules?: readonly NutrientRelationshipRule[];
+};
+
+const resolveRetainedObservations = async (
+	supabase: SupabaseClient<Database>,
+	barcode: string,
+	readObservations: typeof readRetainedExactProductObservations,
+) => {
+	try {
+		return {
+			observations: await readObservations(supabase, barcode),
+			failed: false,
+		};
+	} catch {
+		return { observations: [], failed: true };
+	}
 };
 
 const hasFreshProductNotFoundCoverage = async (
@@ -111,7 +133,7 @@ export const assessCatalogProductSources = async (
 	await ensureServerServingMeasureCatalog();
 	const policy =
 		dependencies.policy ?? (await getDefaultProductResolutionPolicy());
-	const [usda, openFoodFacts] = await Promise.all([
+	const [usda, openFoodFacts, retainedEvidence] = await Promise.all([
 		resolveLookup(
 			supabase,
 			barcode,
@@ -130,6 +152,11 @@ export const assessCatalogProductSources = async (
 				),
 			dependencies.resolveCategory ?? resolveBarcodeDraftCategory,
 			policy,
+		),
+		resolveRetainedObservations(
+			supabase,
+			barcode,
+			dependencies.retainedObservations ?? readRetainedExactProductObservations,
 		),
 	]);
 	const sourceAccuracy = assessCatalogSourceAccuracy({
@@ -152,6 +179,8 @@ export const assessCatalogProductSources = async (
 		openFoodFactsLookupStatus: openFoodFacts.status,
 		externalLookupFailed:
 			usda.status === "error" || openFoodFacts.status === "error",
+		retainedExactObservations: retainedEvidence.observations,
+		retainedEvidenceLookupFailed: retainedEvidence.failed,
 		sourceAccuracy: {
 			...sourceAccuracy,
 			metricIncrements: addSelectedSourceFieldMetrics(
