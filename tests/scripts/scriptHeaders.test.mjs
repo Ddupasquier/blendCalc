@@ -40,6 +40,7 @@ const executableDomainsByOperation = {
 	seeds: ["catalog", "food-safety", "nutrition"],
 };
 const sharedLibraryDomains = [
+	"auth",
 	"barcode",
 	"catalog",
 	"images",
