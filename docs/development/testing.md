@@ -155,8 +155,9 @@ Run `npm run verify:feature` on child branches. After approved children are merg
 their parent feature branch, run the combined affected checks and complete the feature's
 visual or manual review there. Promote the approved parent directly to `staging` as the
 normal release candidate and let GitHub run the complete source and bounded browser
-confidence once. The source job and independent browser jobs start together; desktop
-Chromium is split into two shards. Reserve `mock-staging` for an unusual, dangerous, or
+confidence once. The source job starts with a parallel security/repository-policy
+preflight; expensive browser jobs begin only after that short preflight succeeds, and
+desktop Chromium is split into two shards. Reserve `mock-staging` for an unusual, dangerous, or
 conflict-prone integration that needs a disposable checkpoint before `staging`; a
 multi-ticket feature does not require it merely because it has multiple children.
 
@@ -168,12 +169,17 @@ validates that receipt; `npm run verify:promotion -- --against <candidate-ref>` 
 an exact Git-tree promotion without rerunning the suite. Both paths fail closed on a
 dirty or changed tree. `--force-full` deliberately bypasses local reuse.
 
-GitHub runs affected Vitest and browser coverage on ordinary feature branches. The
-selected candidate runs the complete Vitest and bounded browser tiers once. An unchanged
-promotion reuses that result: `staging` must match `mock-staging` when the disposable
-checkpoint was used, and `main` must match `staging`. Database verification runs only
+GitHub runs affected Vitest and browser coverage on ordinary feature branches. `Ship`
+may dispatch `Verify` with `scope=full` on the exact assembled candidate before staging;
+when the later staging tree is identical and that dispatched run succeeded, staging
+reuses it. Otherwise staging runs the complete Vitest and bounded browser tiers once.
+An unchanged main promotion reuses staging. Database verification runs only
 when database-owned files changed. Hosted Auth health runs only when Auth-owned files
 changed, plus its daily drift check and manual runs.
+
+The scheduled Dependency Audit checks the lockfile daily at moderate-or-higher severity
+so advisory drift is found before a release candidate. The same audit runs in the fast
+preflight whenever a complete candidate or dependency-changing branch is verified.
 
 #### Work-Quota Closeout
 

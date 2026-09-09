@@ -39,4 +39,18 @@ describe("code quality tooling", () => {
 		expect(workflow).toContain("run: npm run format:check");
 		expect(workflow).toContain("FORMAT_BASE_REF:");
 	});
+
+	it("fails fast on security and repository-policy regressions", () => {
+		const workflow = readText(".github/workflows/verify.yml");
+
+		expect(workflow).toContain("Security And Repository Policy Preflight");
+		expect(workflow).toContain("tests/scripts/scriptHeaders.test.mjs");
+		expect(workflow).toContain(
+			"tests/config/developmentRulesStructure.test.ts",
+		);
+		expect(workflow.indexOf("preflight:")).toBeLessThan(
+			workflow.indexOf("browser:"),
+		);
+		expect(workflow).toContain("- preflight");
+	});
 });

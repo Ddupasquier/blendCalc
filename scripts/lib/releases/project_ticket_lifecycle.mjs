@@ -158,3 +158,36 @@ export const assertReadyForMainBatchEligible = (tickets, evidence) => {
 		}
 	}
 };
+
+export const assertShipReadyBatchEligible = (tickets, evidence) => {
+	assertHomogeneousProjectTicketBatch(tickets);
+	assertTicketNeutralBatchEvidence(tickets, evidence);
+	const shippableStatuses = new Set([
+		"In Progress",
+		"User Verification",
+		"Approved",
+		"In Staging",
+		"Ready for Main",
+	]);
+
+	for (const ticket of tickets) {
+		if (ticket.branch === "main") {
+			throw new Error(
+				`${ticket.taskId} is already attached to main and cannot re-enter the Ship fast lane.`,
+			);
+		}
+		if (
+			classifyProjectTicketDelivery(ticket) !==
+			PROJECT_TICKET_DELIVERY_CLASS.implementation
+		) {
+			throw new Error(
+				`${ticket.taskId} is ${classifyProjectTicketDelivery(ticket)} and cannot use the implementation Ship fast lane.`,
+			);
+		}
+		if (!shippableStatuses.has(value(ticket.status))) {
+			throw new Error(
+				`${ticket.taskId} must own active or approved implementation work before Ship can record a green staging result.`,
+			);
+		}
+	}
+};
