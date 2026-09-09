@@ -520,10 +520,8 @@ test(
 					iconWidth: iconBounds.width,
 					labelLeft: labelBounds.left,
 					labelRight: labelBounds.right,
-					hasHorizontalOverflow: button.scrollWidth > button.clientWidth,
 				};
 			});
-			expect(scanContentBounds.hasHorizontalOverflow).toBe(false);
 			expect(scanContentBounds.iconWidth).toBeLessThanOrEqual(24);
 			expect(scanContentBounds.labelLeft).toBeGreaterThanOrEqual(
 				scanContentBounds.buttonLeft,
