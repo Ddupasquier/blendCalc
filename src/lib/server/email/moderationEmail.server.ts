@@ -1,6 +1,13 @@
 import { env } from "$env/dynamic/private";
 import { APP_NAME } from "$lib/config/brand";
-import { fetchWithExternalRequestPolicy } from "$lib/server/http/externalRequest.server";
+import {
+	escapeEmailHtml,
+	isApprovedTransactionalSender,
+	renderTransactionalEmail,
+	sendTransactionalEmail,
+	TRANSACTIONAL_EMAIL_ADDRESSES,
+	type TransactionalEmailResult,
+} from "$lib/server/email/transactionalEmail.server";
 
 export type ModerationReason =
 	| "profile_image_policy_violation"
@@ -15,11 +22,12 @@ type BlockEmailInput = {
 	reason: ModerationReason;
 };
 
-export type BlockEmailResult =
-	| { status: "sent"; providerMessageId: string }
-	| { status: "failed"; errorCode: string; errorMessage: string };
+export type BlockEmailResult = TransactionalEmailResult;
 
-const REASON_DETAILS: Record<ModerationReason, { label: string; explanation: string }> = {
+const REASON_DETAILS: Record<
+	ModerationReason,
+	{ label: string; explanation: string }
+> = {
 	profile_image_policy_violation: {
 		label: "Profile image policy violation",
 		explanation:
@@ -37,22 +45,8 @@ const REASON_DETAILS: Record<ModerationReason, { label: string; explanation: str
 	},
 	terms_violation: {
 		label: "Terms violation",
-		explanation:
-			`Activity associated with your account violated the ${APP_NAME} community rules or terms of use.`,
+		explanation: `Activity associated with your account violated the ${APP_NAME} community rules or terms of use.`,
 	},
-};
-
-const escapeHtml = (value: string) => {
-	return value.replace(/[&<>'"]/g, (character) => {
-		const entities: Record<string, string> = {
-			"&": "&amp;",
-			"<": "&lt;",
-			">": "&gt;",
-			"'": "&#39;",
-			'"': "&quot;",
-		};
-		return entities[character] ?? character;
-	});
 };
 
 const getEmailConfiguration = () => {
@@ -60,11 +54,17 @@ const getEmailConfiguration = () => {
 	const from = env.MODERATION_EMAIL_FROM?.trim();
 	const supportEmail = env.MODERATION_SUPPORT_EMAIL?.trim();
 
-	if (!apiKey || !from) {
+	if (
+		!apiKey ||
+		!from ||
+		!isApprovedTransactionalSender(
+			from,
+			TRANSACTIONAL_EMAIL_ADDRESSES.moderation,
+		)
+	) {
 		return {
 			configured: false as const,
-			errorMessage:
-				"RESEND_API_KEY and MODERATION_EMAIL_FROM must be configured on the server.",
+			errorMessage: `RESEND_API_KEY must be configured and MODERATION_EMAIL_FROM must use ${TRANSACTIONAL_EMAIL_ADDRESSES.moderation}.`,
 		};
 	}
 
@@ -109,68 +109,27 @@ export const sendAccountBlockedEmail = async ({
 		"",
 		`${APP_NAME} moderation`,
 	].join("\n");
-	const safeName = escapeHtml(greetingName);
-	const safeReasonLabel = escapeHtml(reasonDetails.label);
-	const safeExplanation = escapeHtml(reasonDetails.explanation);
-	const safeSupportText = escapeHtml(supportText);
-	let response: Response;
-	try {
-		response = await fetchWithExternalRequestPolicy(
-			"https://api.resend.com/emails",
-			{
-				method: "POST",
-				headers: {
-					Authorization: `Bearer ${configuration.apiKey}`,
-					"Content-Type": "application/json",
-					"Idempotency-Key": `moderation-ban-${moderationActionId}`,
-				},
-				body: JSON.stringify({
-					from: configuration.from,
-					to: [email],
-					subject: `Your ${APP_NAME} account was blocked`,
-					text,
-					html: `
-					<div style="margin:0 auto;max-width:560px;padding:24px;font-family:Arial,sans-serif;color:#514a45;line-height:1.55">
-					<p>Hello ${safeName},</p>
-					<h1 style="font-size:24px;line-height:1.2">Your ${APP_NAME} account has been blocked</h1>
-					<div style="margin:20px 0;padding:16px;border-left:4px solid #a96647;background:#fcf9f4">
-						<strong>Reason: ${safeReasonLabel}</strong>
-						<p style="margin:8px 0 0">${safeExplanation}</p>
-					</div>
-					<p>You can no longer sign in or create another account with this email address.</p>
-					<p>${safeSupportText}</p>
-					<p style="margin-top:28px;color:#766f69">${APP_NAME} moderation</p>
+	return sendTransactionalEmail({
+		apiKey: configuration.apiKey,
+		from: configuration.from,
+		to: [email],
+		subject: `Your ${APP_NAME} account was blocked`,
+		text,
+		html: renderTransactionalEmail({
+			eyebrow: "Account notice",
+			title: `Your ${APP_NAME} account was blocked`,
+			bodyHtml: `
+				<p style="margin:0 0 16px">Hello ${escapeEmailHtml(greetingName)},</p>
+				<div style="margin:20px 0;padding:16px;border-left:4px solid #9c5f46;background:#fff4f1;border-radius:8px">
+					<strong>Reason: ${escapeEmailHtml(reasonDetails.label)}</strong>
+					<p style="margin:8px 0 0">${escapeEmailHtml(reasonDetails.explanation)}</p>
 				</div>
-				`,
-					reply_to: configuration.supportEmail,
-					tags: [{ name: "category", value: "account_blocked" }],
-				}),
-				timeoutMilliseconds: 10_000,
-				maxAttempts: 2,
-			},
-		);
-	} catch (error) {
-		return {
-			status: "failed",
-			errorCode: "email_network_error",
-			errorMessage: error instanceof Error ? error.message : "Email request failed.",
-		};
-	}
-
-	const responseBody = (await response.json().catch(() => null)) as {
-		id?: string;
-		name?: string;
-		message?: string;
-	} | null;
-
-	if (!response.ok || !responseBody?.id) {
-		return {
-			status: "failed",
-			errorCode: responseBody?.name ?? `email_http_${response.status}`,
-			errorMessage:
-				responseBody?.message ?? "The email provider returned no message ID.",
-		};
-	}
-
-	return { status: "sent", providerMessageId: responseBody.id };
+				<p>You can no longer sign in or create another account with this email address.</p>
+				<p style="margin-bottom:0">${escapeEmailHtml(supportText)}</p>`,
+			footer: `${APP_NAME} moderation · This message concerns your account.`,
+		}),
+		idempotencyKey: `moderation-ban-${moderationActionId}`,
+		replyTo: configuration.supportEmail,
+		tags: [{ name: "category", value: "account_blocked" }],
+	});
 };

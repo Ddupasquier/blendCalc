@@ -117,19 +117,21 @@ notes.
 The implementation uses Resend from server code. Before enabling it:
 
 1. Create a Resend account and API key.
-2. Add and verify a sending domain. Prefer a dedicated subdomain such as
-   `updates.example.com` so transactional mail has an isolated sending reputation.
+2. Verify the dedicated `noreply.blendcalc.food` transactional sending subdomain in
+   Resend. Keep open and click tracking disabled for account and moderation messages.
 3. Add these sensitive Production environment variables in Vercel and redeploy:
 
 ```dotenv
 RESEND_API_KEY=re_...
-MODERATION_EMAIL_FROM="blendCalc <moderation@updates.example.com>"
-MODERATION_SUPPORT_EMAIL=support@example.com
+MODERATION_EMAIL_FROM="blendCalc <moderation@noreply.blendcalc.food>"
+MODERATION_SUPPORT_EMAIL=support@blendcalc.food
 ```
 
 `MODERATION_SUPPORT_EMAIL` is optional. When present, it is used as the reply-to address
 and is named in the appeal instructions. `RESEND_API_KEY` and `MODERATION_EMAIL_FROM`
-are required for delivery and must never use a `PUBLIC_` prefix.
+are required for delivery and must never use a `PUBLIC_` prefix. Runtime delivery
+rejects a From address outside the verified transactional subdomain before contacting
+Resend.
 
 Each attempt is appended to `moderation_email_deliveries` using only a SHA-256 hash of
 the recipient address. Provider message IDs and failures are retained for operational

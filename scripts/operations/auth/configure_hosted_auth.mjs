@@ -11,6 +11,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { config } from "dotenv";
+import { getAuthEmailTemplatePatch } from "../../lib/auth/auth_email_templates.mjs";
 
 const CONFIGURATION_VARIABLES = {
 	turnstile: ["SUPABASE_AUTH_TURNSTILE_SECRET"],
@@ -24,7 +25,12 @@ const CONFIGURATION_VARIABLES = {
 	],
 };
 const PROJECT_CONFIRMATION_PREFIX = "--confirm-project=";
-const allowedArguments = new Set(["--turnstile", "--smtp", "--dry-run"]);
+const allowedArguments = new Set([
+	"--turnstile",
+	"--smtp",
+	"--templates",
+	"--dry-run",
+]);
 const SMTP_EXACT_MATCH_FIELDS = [
 	"smtp_admin_email",
 	"smtp_host",
@@ -32,6 +38,7 @@ const SMTP_EXACT_MATCH_FIELDS = [
 	"smtp_user",
 	"smtp_sender_name",
 ];
+const AUTH_SMTP_SENDER = "accounts@noreply.blendcalc.food";
 
 const readRequiredValues = (environment, names) => {
 	const values = Object.fromEntries(
@@ -46,10 +53,13 @@ const readRequiredValues = (environment, names) => {
 
 export const buildHostedAuthPatch = (
 	environment,
-	{ turnstile = false, smtp = false } = {},
+	{ turnstile = false, smtp = false, templates = false } = {},
+	templatePatch = {},
 ) => {
-	if (!turnstile && !smtp) {
-		throw new Error("Choose --turnstile, --smtp, or both.");
+	if (!turnstile && !smtp && !templates) {
+		throw new Error(
+			"Choose --turnstile, --smtp, --templates, or a combination.",
+		);
 	}
 
 	const patch = {};
@@ -70,6 +80,13 @@ export const buildHostedAuthPatch = (
 			environment,
 			CONFIGURATION_VARIABLES.smtp,
 		);
+		if (
+			values.SUPABASE_AUTH_SMTP_ADMIN_EMAIL.toLowerCase() !== AUTH_SMTP_SENDER
+		) {
+			throw new Error(
+				`SUPABASE_AUTH_SMTP_ADMIN_EMAIL must use ${AUTH_SMTP_SENDER}.`,
+			);
+		}
 		Object.assign(patch, {
 			smtp_admin_email: values.SUPABASE_AUTH_SMTP_ADMIN_EMAIL,
 			smtp_host: values.SUPABASE_AUTH_SMTP_HOST,
@@ -80,12 +97,21 @@ export const buildHostedAuthPatch = (
 		});
 	}
 
+	if (templates) {
+		if (Object.keys(templatePatch).length === 0) {
+			throw new Error(
+				"The source-controlled Auth email template patch is empty.",
+			);
+		}
+		Object.assign(patch, templatePatch);
+	}
+
 	return patch;
 };
 
 export const summarizeHostedAuthConfiguration = (
 	authConfiguration,
-	{ turnstile = false, smtp = false } = {},
+	{ turnstile = false, smtp = false, templates = false } = {},
 	expectedPatch = {},
 ) => ({
 	...(turnstile
@@ -106,6 +132,23 @@ export const summarizeHostedAuthConfiguration = (
 					) &&
 					String(authConfiguration?.smtp_pass ?? "").trim().length > 0 &&
 					String(expectedPatch.smtp_pass ?? "").trim().length > 0,
+			}
+		: {}),
+	...(templates
+		? {
+				authEmailTemplatesConfigured: Object.entries(expectedPatch)
+					.filter(
+						([field]) =>
+							field.startsWith("mailer_subjects_") ||
+							field.startsWith("mailer_templates_") ||
+							field.startsWith("mailer_notifications_"),
+					)
+					.every(([field, expectedValue]) =>
+						typeof expectedValue === "boolean"
+							? authConfiguration?.[field] === expectedValue
+							: String(authConfiguration?.[field] ?? "") ===
+								String(expectedValue),
+					),
 			}
 		: {}),
 });
@@ -214,8 +257,16 @@ const run = async () => {
 	const operations = {
 		turnstile: argumentsSet.has("--turnstile"),
 		smtp: argumentsSet.has("--smtp"),
+		templates: argumentsSet.has("--templates"),
 	};
-	const patch = buildHostedAuthPatch(privilegedEnvironment, operations);
+	const templatePatch = operations.templates
+		? getAuthEmailTemplatePatch()
+		: undefined;
+	const patch = buildHostedAuthPatch(
+		privilegedEnvironment,
+		operations,
+		templatePatch,
+	);
 	const requestedNames = Object.entries(operations)
 		.filter(([, requested]) => requested)
 		.map(([name]) => name);

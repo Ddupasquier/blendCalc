@@ -16,6 +16,7 @@ import {
 	getSerializableHostedSecuritySnapshot,
 } from "../../lib/security/hosted_security_audit.mjs";
 import { checkSmtpProviderReadiness } from "../../lib/security/smtp_provider_readiness.mjs";
+import { getAuthEmailTemplatePatch } from "../../lib/auth/auth_email_templates.mjs";
 
 config({ path: ".env.moderation.local", quiet: true });
 
@@ -183,6 +184,7 @@ const snapshot = {
 	authConfiguration,
 	privilegedMfaSummary,
 	smtpProviderReadiness,
+	authEmailTemplatePatch: getAuthEmailTemplatePatch(),
 };
 const report = evaluateHostedSecuritySnapshot(snapshot);
 
