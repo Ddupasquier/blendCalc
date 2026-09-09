@@ -306,6 +306,10 @@ The checked-in workflows use Node.js 24 and a clean dependency install:
   installing dependencies. The publishable browser key is public configuration; the
   workflow receives no database password, service-role key, management token, or other
   protected credential.
+- `.github/workflows/blendcalc-api-alerts.yml` calls the protected operational-alert
+  route every 15 minutes and on manual request. The route owns alert evaluation and
+  email delivery; the workflow owns scheduling and becomes a secondary visible failure
+  signal when the route, metrics, or delivery provider is unavailable.
 
 The stable required conclusions are `Source, Tests, And Build`, `Browser Matrix`,
 `Database Verification`, and `Hosted Auth Health`. Every pushed branch reports the

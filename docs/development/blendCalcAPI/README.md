@@ -318,12 +318,25 @@ documented unavailable response.
 Operational monitoring is stored separately in the isolated publication project and
 is never required to complete a public read. In the blendCalcAPI Supabase SQL Editor,
 use `blendcalc_api.api_request_operations_dashboard` for request volume, p50/p95
-latency, database time, result counts, errors, rate limits, and cache effectiveness;
+latency, database time, explicit database failures, result counts, errors, rate limits,
+and cache effectiveness;
 `blendcalc_api.api_shadow_parity_dashboard` for source/isolated parity failures; and
 `blendcalc_api.publication_operations_dashboard` for active-generation age, count/hash
 parity, synchronization duration and failures, additions/removals, and the database
 currently serving reads. The protected `/api/internal/blendCalcAPI/operations` route
 returns the same bounded operational summary for automation.
+
+The protected `POST /api/internal/blendCalcAPI/alerts` route evaluates one centralized,
+privacy-safe alert contract every 15 minutes. It alerts configured owners about
+sustained server errors or latency, repeated database failures, pseudonymous API-key
+request/denial anomalies, catalog-intake backlog or stuck idempotent work, stale or
+failed publication synchronization, count/hash or removal parity failure, unexpected
+zero-product generations, recent shadow-read divergence, and unsuccessful cutover or
+rollback verification. Healthy checks send nothing. One combined message is
+idempotent per alert set and UTC hour; provider failure returns `503` so the scheduled
+GitHub workflow also fails visibly. Thresholds require a meaningful request sample and
+recent time window, preventing lifetime counters or isolated errors from paging the
+owner indefinitely.
 
 The request boundary applies endpoint-specific burst and sustained quotas to each
 available client identity: network address, authenticated account, and presented API
