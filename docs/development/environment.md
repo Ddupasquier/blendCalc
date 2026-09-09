@@ -194,6 +194,14 @@ public production synchronization endpoint as the Actions variable
 daily cron as an independent fallback; GitHub owns the 15-minute cadence because Vercel
 Hobby supports only daily cron schedules.
 
+The API operational-alert scheduler reuses `CRON_SECRET` and stores the public protected
+route as the Actions variable `BLENDCALC_API_ALERT_URL`. The Vercel application owns
+`RESEND_API_KEY`, `API_ALERT_EMAIL_FROM`, and secret `API_ALERT_EMAIL_TO`; the recipient
+may contain a comma-separated owner list. The scheduled workflow receives neither the
+email credential nor recipient addresses. Alert delivery and evaluation stay inside the
+protected application route, and a delivery failure fails the workflow as a secondary
+operator signal.
+
 The daily `/api/internal/nutrition-label-ocr/cleanup` cron uses the existing
 `CRON_SECRET` and removes expired temporary OCR objects and job rows. Background
 recognition starts only from the authenticated job-creation route and receives only the

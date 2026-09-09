@@ -228,6 +228,7 @@ describe("blendCalcAPI v1 server request boundary", () => {
 			resolve: vi.fn().mockImplementation(async () => {
 				event.locals.blendCalcAPIDatabaseObservation = {
 					databaseDurationMs: 12,
+					failed: false,
 					resultCount: 4,
 				};
 				return new Response(null, { status: 304 });
@@ -241,6 +242,7 @@ describe("blendCalcAPI v1 server request boundary", () => {
 				cacheValidation: true,
 				databaseObservation: {
 					databaseDurationMs: 12,
+					failed: false,
 					resultCount: 4,
 				},
 			}),
