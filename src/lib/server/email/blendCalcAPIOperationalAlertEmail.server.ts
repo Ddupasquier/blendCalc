@@ -1,25 +1,17 @@
 import { createHash } from "node:crypto";
 import { env } from "$env/dynamic/private";
 import { APP_NAME } from "$lib/config/brand";
-import { fetchWithExternalRequestPolicy } from "$lib/server/http/externalRequest.server";
+import {
+	escapeEmailHtml,
+	isApprovedTransactionalSender,
+	renderTransactionalEmail,
+	sendTransactionalEmail,
+	TRANSACTIONAL_EMAIL_ADDRESSES,
+	type TransactionalEmailResult,
+} from "$lib/server/email/transactionalEmail.server";
 import type { BlendCalcAPIOperationalAlert } from "$lib/server/blendCalcAPI/operations/blendCalcAPIOperationalAlerts.server";
 
-type AlertEmailResult =
-	| { status: "sent"; providerMessageId: string }
-	| { status: "failed"; errorCode: string; errorMessage: string };
-
-const escapeHtml = (value: string) =>
-	value.replace(
-		/[&<>'"]/g,
-		(character) =>
-			({
-				"&": "&amp;",
-				"<": "&lt;",
-				">": "&gt;",
-				"'": "&#39;",
-				'"': "&quot;",
-			})[character] ?? character,
-	);
+type AlertEmailResult = TransactionalEmailResult;
 
 const configuration = () => {
 	const apiKey = env.RESEND_API_KEY?.trim();
@@ -28,11 +20,18 @@ const configuration = () => {
 		.split(",")
 		.map((value) => value.trim())
 		.filter(Boolean);
-	if (!apiKey || !from || to.length === 0) {
+	if (
+		!apiKey ||
+		!from ||
+		!isApprovedTransactionalSender(
+			from,
+			TRANSACTIONAL_EMAIL_ADDRESSES.operations,
+		) ||
+		to.length === 0
+	) {
 		return {
 			configured: false as const,
-			errorMessage:
-				"RESEND_API_KEY, API_ALERT_EMAIL_FROM, and API_ALERT_EMAIL_TO must be configured.",
+			errorMessage: `RESEND_API_KEY and API_ALERT_EMAIL_TO must be configured, and API_ALERT_EMAIL_FROM must use ${TRANSACTIONAL_EMAIL_ADDRESSES.operations}.`,
 		};
 	}
 	return { configured: true as const, apiKey, from, to };
@@ -62,7 +61,7 @@ export const sendBlendCalcAPIOperationalAlertEmail = async (input: {
 	const html = input.alerts
 		.map(
 			(alert) =>
-				`<li style="margin:0 0 16px"><strong>${escapeHtml(alert.title)}</strong><br><span>${escapeHtml(alert.summary)}</span></li>`,
+				`<li style="margin:0 0 16px"><strong>${escapeEmailHtml(alert.title)}</strong><br><span>${escapeEmailHtml(alert.summary)}</span></li>`,
 		)
 		.join("");
 	const bucket = input.checkedAt.slice(0, 13).replace(/\D/g, "");
@@ -76,48 +75,19 @@ export const sendBlendCalcAPIOperationalAlertEmail = async (input: {
 		.digest("hex")
 		.slice(0, 24);
 
-	try {
-		const response = await fetchWithExternalRequestPolicy(
-			"https://api.resend.com/emails",
-			{
-				method: "POST",
-				headers: {
-					Authorization: `Bearer ${email.apiKey}`,
-					"Content-Type": "application/json",
-					"Idempotency-Key": `api-alert-${bucket}-${fingerprint}`,
-				},
-				body: JSON.stringify({
-					from: email.from,
-					to: email.to,
-					subject: `${criticalCount > 0 ? "Critical" : "Warning"}: ${APP_NAME} API operations (${input.alerts.length})`,
-					text: `${text}\n\nChecked at ${input.checkedAt}.`,
-					html: `<div style="margin:0 auto;max-width:640px;padding:24px;font-family:Arial,sans-serif;color:#29252f;line-height:1.5"><h1 style="font-size:24px">${escapeHtml(APP_NAME)} API operations</h1><ol>${html}</ol><p style="color:#6b6474">Checked at ${escapeHtml(input.checkedAt)}.</p></div>`,
-					tags: [{ name: "category", value: "api_operations" }],
-				}),
-				timeoutMilliseconds: 10_000,
-				maxAttempts: 2,
-			},
-		);
-		const responseBody = (await response.json().catch(() => null)) as {
-			id?: string;
-			name?: string;
-			message?: string;
-		} | null;
-		if (!response.ok || !responseBody?.id) {
-			return {
-				status: "failed",
-				errorCode: responseBody?.name ?? `email_http_${response.status}`,
-				errorMessage:
-					responseBody?.message ?? "The email provider returned no message ID.",
-			};
-		}
-		return { status: "sent", providerMessageId: responseBody.id };
-	} catch (error) {
-		return {
-			status: "failed",
-			errorCode: "email_network_error",
-			errorMessage:
-				error instanceof Error ? error.message : "Email request failed.",
-		};
-	}
+	return sendTransactionalEmail({
+		apiKey: email.apiKey,
+		from: email.from,
+		to: email.to,
+		subject: `${criticalCount > 0 ? "Critical" : "Warning"}: ${APP_NAME} API operations (${input.alerts.length})`,
+		text: `${text}\n\nChecked at ${input.checkedAt}.`,
+		html: renderTransactionalEmail({
+			eyebrow: "Operations alert",
+			title: `${APP_NAME} API operations`,
+			bodyHtml: `<ol style="margin:0;padding-left:22px">${html}</ol><p style="margin:24px 0 0;color:#70758d">Checked at ${escapeEmailHtml(input.checkedAt)}.</p>`,
+			footer: `${APP_NAME} operations · Internal service notification.`,
+		}),
+		idempotencyKey: `api-alert-${bucket}-${fingerprint}`,
+		tags: [{ name: "category", value: "api_operations" }],
+	});
 };

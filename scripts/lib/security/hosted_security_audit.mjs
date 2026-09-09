@@ -12,6 +12,7 @@ const REQUIRED_REDIRECT_URLS = [
 ];
 const WORLD_OPEN_NETWORKS = new Set(["0.0.0.0/0", "::/0"]);
 const MAXIMUM_BACKUP_AGE_MILLISECONDS = 36 * 60 * 60 * 1000;
+const AUTH_SMTP_SENDER = "accounts@noreply.blendcalc.food";
 
 const createFinding = (id, label, status, detail) => ({
 	id,
@@ -147,6 +148,7 @@ const evaluateAuthConfiguration = (
 	authConfiguration,
 	privilegedMfaSummary,
 	smtpProviderReadiness,
+	authEmailTemplatePatch,
 ) => {
 	const redirectUrls = splitRedirectUrls(authConfiguration?.uri_allow_list);
 	const missingRedirectUrls = REQUIRED_REDIRECT_URLS.filter(
@@ -165,14 +167,17 @@ const evaluateAuthConfiguration = (
 		authConfiguration?.rate_limit_token_refresh,
 		authConfiguration?.rate_limit_verify,
 	].every((value) => Number.isFinite(Number(value)) && Number(value) > 0);
-	const customSmtpIsConfigured = [
-		authConfiguration?.smtp_admin_email,
-		authConfiguration?.smtp_host,
-		authConfiguration?.smtp_port,
-		authConfiguration?.smtp_pass,
-		authConfiguration?.smtp_user,
-		authConfiguration?.smtp_sender_name,
-	].every((value) => String(value ?? "").trim().length > 0);
+	const customSmtpIsConfigured =
+		[
+			authConfiguration?.smtp_admin_email,
+			authConfiguration?.smtp_host,
+			authConfiguration?.smtp_port,
+			authConfiguration?.smtp_pass,
+			authConfiguration?.smtp_user,
+			authConfiguration?.smtp_sender_name,
+		].every((value) => String(value ?? "").trim().length > 0) &&
+		String(authConfiguration?.smtp_admin_email ?? "").toLowerCase() ===
+			AUTH_SMTP_SENDER;
 	const smtpReadinessStatus = !customSmtpIsConfigured
 		? "blocked"
 		: smtpProviderReadiness?.checked !== true
@@ -181,12 +186,19 @@ const evaluateAuthConfiguration = (
 				? "pass"
 				: "fail";
 	const smtpReadinessDetail = !customSmtpIsConfigured
-		? "Custom SMTP provider credentials are not configured in hosted Auth."
+		? `Custom SMTP is incomplete or does not use ${AUTH_SMTP_SENDER}.`
 		: smtpProviderReadiness?.checked !== true
 			? "Custom SMTP credentials are configured, but provider delivery readiness could not be verified."
 			: smtpProviderReadiness.ready === true
 				? "Custom SMTP credentials are configured, and the provider reports the sender domain verified with sending enabled."
 				: "Custom SMTP credentials are configured, but the provider does not report the sender domain verified with sending enabled.";
+	const authEmailTemplatesMatch =
+		authEmailTemplatePatch &&
+		Object.entries(authEmailTemplatePatch).every(([field, expectedValue]) =>
+			typeof expectedValue === "boolean"
+				? authConfiguration?.[field] === expectedValue
+				: String(authConfiguration?.[field] ?? "") === String(expectedValue),
+		);
 
 	return [
 		createFinding(
@@ -257,6 +269,14 @@ const evaluateAuthConfiguration = (
 			smtpReadinessStatus,
 			smtpReadinessDetail,
 		),
+		createFinding(
+			"auth-email-templates",
+			"Authentication email templates",
+			authEmailTemplatesMatch ? "pass" : "fail",
+			authEmailTemplatesMatch
+				? "Hosted Auth subjects, branded templates, and security notification toggles match the source-controlled catalog."
+				: "Hosted Auth email subjects, templates, or security notification toggles differ from the source-controlled catalog.",
+		),
 	];
 };
 
@@ -268,6 +288,7 @@ export const evaluateHostedSecuritySnapshot = (
 		authConfiguration,
 		privilegedMfaSummary,
 		smtpProviderReadiness,
+		authEmailTemplatePatch,
 	},
 	{ now = new Date() } = {},
 ) => {
@@ -279,6 +300,7 @@ export const evaluateHostedSecuritySnapshot = (
 			authConfiguration,
 			privilegedMfaSummary,
 			smtpProviderReadiness,
+			authEmailTemplatePatch,
 		),
 		createFinding(
 			"auth-audit-events",
@@ -305,6 +327,7 @@ export const getSerializableHostedSecuritySnapshot = ({
 	authConfiguration,
 	privilegedMfaSummary,
 	smtpProviderReadiness,
+	authEmailTemplatePatch,
 }) => ({
 	project: {
 		id: project?.id ?? null,
@@ -350,14 +373,17 @@ export const getSerializableHostedSecuritySnapshot = ({
 		totpVerificationEnabled:
 			authConfiguration?.mfa_totp_verify_enabled === true,
 		lowAssuranceMfaAllowed: authConfiguration?.mfa_allow_low_aal === true,
-		customSmtpConfigured: [
-			authConfiguration?.smtp_admin_email,
-			authConfiguration?.smtp_host,
-			authConfiguration?.smtp_port,
-			authConfiguration?.smtp_pass,
-			authConfiguration?.smtp_user,
-			authConfiguration?.smtp_sender_name,
-		].every((value) => String(value ?? "").trim().length > 0),
+		customSmtpConfigured:
+			[
+				authConfiguration?.smtp_admin_email,
+				authConfiguration?.smtp_host,
+				authConfiguration?.smtp_port,
+				authConfiguration?.smtp_pass,
+				authConfiguration?.smtp_user,
+				authConfiguration?.smtp_sender_name,
+			].every((value) => String(value ?? "").trim().length > 0) &&
+			String(authConfiguration?.smtp_admin_email ?? "").toLowerCase() ===
+				AUTH_SMTP_SENDER,
 	},
 	privilegedMfaSummary: {
 		checked: privilegedMfaSummary?.checked === true,
@@ -378,5 +404,15 @@ export const getSerializableHostedSecuritySnapshot = ({
 		sendingCapability: smtpProviderReadiness?.sendingCapability ?? null,
 		ready: smtpProviderReadiness?.ready === true,
 		reason: smtpProviderReadiness?.reason ?? null,
+	},
+	authEmailTemplates: {
+		checked: Boolean(authEmailTemplatePatch),
+		match:
+			Boolean(authEmailTemplatePatch) &&
+			Object.entries(authEmailTemplatePatch).every(([field, expectedValue]) =>
+				typeof expectedValue === "boolean"
+					? authConfiguration?.[field] === expectedValue
+					: String(authConfiguration?.[field] ?? "") === String(expectedValue),
+			),
 	},
 });
