@@ -1,10 +1,26 @@
 name: Verify
 
+run-name: Verify (${{ github.event_name == 'workflow_dispatch' && inputs.scope || github.ref_name }})
+
 on:
   pull_request:
   push:
     branches:
       - "**"
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: Verification scope for an explicitly selected candidate
+        required: true
+        default: full
+        type: choice
+        options:
+          - full
+          - feature
+
+permissions:
+  actions: read
+  contents: read
 
 concurrency:
   group: verify-${{ github.workflow }}-${{ github.ref }}
@@ -33,13 +49,17 @@ jobs:
         env:
           BEFORE_SHA: ${{ github.event.before }}
           EVENT_NAME: ${{ github.event_name }}
+          GH_TOKEN: ${{ github.token }}
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
           REF_NAME: ${{ github.ref_name }}
+          REQUESTED_SCOPE: ${{ inputs.scope }}
         run: |
           mode=feature
           comparison_base="$PR_BASE_SHA"
 
-          if [[ "$EVENT_NAME" == "push" && "$REF_NAME" == "main" ]]; then
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            mode="${REQUESTED_SCOPE:-full}"
+          elif [[ "$EVENT_NAME" == "push" && "$REF_NAME" == "main" ]]; then
             git fetch origin staging:refs/remotes/origin/staging
             node scripts/operations/quality/verify_release_promotion.mjs --against origin/staging
             mode=reuse
@@ -50,9 +70,25 @@ jobs:
               mode=reuse
               comparison_base=origin/mock-staging
             else
-              echo "No identical verified mock-staging candidate; running the full staging checks."
               mode=full
               comparison_base="$BEFORE_SHA"
+              for candidate in HEAD $(git show -s --format=%P HEAD); do
+                if ! node scripts/operations/quality/verify_release_promotion.mjs --against "$candidate" >/dev/null 2>&1; then
+                  continue
+                fi
+                verified_runs=$(gh api \
+                  "repos/${GITHUB_REPOSITORY}/actions/workflows/verify.yml/runs?head_sha=${candidate}&status=success&per_page=20" \
+                  --jq '[.workflow_runs[] | select(.event == "workflow_dispatch" and .display_title == "Verify (full)")] | length')
+                if [[ "$verified_runs" -gt 0 ]]; then
+                  echo "Reusing the successful full verification for identical candidate ${candidate}."
+                  mode=reuse
+                  comparison_base="$candidate"
+                  break
+                fi
+              done
+              if [[ "$mode" != "reuse" ]]; then
+                echo "No identical fully verified candidate; running the full staging checks."
+              fi
             fi
           elif [[ "$EVENT_NAME" == "push" && "$REF_NAME" == "mock-staging" ]]; then
             mode=full
@@ -77,6 +113,33 @@ jobs:
           echo "comparison-base=$comparison_base" >> "$GITHUB_OUTPUT"
           echo "dependencies=$dependencies" >> "$GITHUB_OUTPUT"
           echo "mode=$mode" >> "$GITHUB_OUTPUT"
+
+  preflight:
+    name: Security And Repository Policy Preflight
+    if: needs.verification-plan.outputs.mode != 'reuse'
+    needs: verification-plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+      - name: Use Node.js 24
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install policy-test dependencies
+        run: npm ci --ignore-scripts
+      - name: Audit dependencies before expensive browser work
+        if: needs.verification-plan.outputs.dependencies == 'true'
+        run: npm audit --audit-level=moderate
+      - name: Run release policy contracts
+        run: >-
+          npm run test:focused --
+          tests/scripts/scriptHeaders.test.mjs
+          tests/scripts/projectTicketLifecycle.test.mjs
+          tests/config/developmentRulesStructure.test.ts
+          tests/config/playwrightTestingArchitecture.test.ts
 
   source:
     name: Source, Tests, And Build
@@ -107,9 +170,6 @@ jobs:
       - name: Verify versions
         if: needs.verification-plan.outputs.mode != 'reuse'
         run: npm run version:check
-      - name: Audit dependencies
-        if: needs.verification-plan.outputs.dependencies == 'true'
-        run: npm audit --audit-level=high
       - name: Lint TypeScript, Svelte, and SCSS
         if: needs.verification-plan.outputs.mode != 'reuse'
         run: npm run lint
@@ -134,7 +194,9 @@ jobs:
   browser:
     name: Browser / ${{ matrix.label }}
     if: needs.verification-plan.outputs.mode == 'full'
-    needs: verification-plan
+    needs:
+      - verification-plan
+      - preflight
     runs-on: ubuntu-latest
     timeout-minutes: 35
     strategy:
@@ -206,7 +268,9 @@ jobs:
   browser-affected:
     name: Affected Browser Flows
     if: needs.verification-plan.outputs.mode == 'feature'
-    needs: verification-plan
+    needs:
+      - verification-plan
+      - preflight
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -231,6 +295,7 @@ jobs:
     if: always()
     needs:
       - verification-plan
+      - preflight
       - source
       - browser
       - browser-affected
@@ -243,6 +308,7 @@ jobs:
           BROWSER_RESULT: ${{ needs.browser.result }}
           MODE: ${{ needs.verification-plan.outputs.mode }}
           PLAN_RESULT: ${{ needs.verification-plan.result }}
+          PREFLIGHT_RESULT: ${{ needs.preflight.result }}
           SOURCE_RESULT: ${{ needs.source.result }}
         run: |
           if [[ "$PLAN_RESULT" != "success" || "$SOURCE_RESULT" != "success" ]]; then
@@ -250,11 +316,11 @@ jobs:
             exit 1
           fi
           if [[ "$MODE" == "reuse" ]]; then
-            [[ "$BROWSER_RESULT" == "skipped" && "$AFFECTED_RESULT" == "skipped" ]]
+            [[ "$PREFLIGHT_RESULT" == "skipped" && "$BROWSER_RESULT" == "skipped" && "$AFFECTED_RESULT" == "skipped" ]]
           elif [[ "$MODE" == "full" ]]; then
-            [[ "$BROWSER_RESULT" == "success" && "$AFFECTED_RESULT" == "skipped" ]]
+            [[ "$PREFLIGHT_RESULT" == "success" && "$BROWSER_RESULT" == "success" && "$AFFECTED_RESULT" == "skipped" ]]
           elif [[ "$MODE" == "feature" ]]; then
-            [[ "$BROWSER_RESULT" == "skipped" && "$AFFECTED_RESULT" == "success" ]]
+            [[ "$PREFLIGHT_RESULT" == "success" && "$BROWSER_RESULT" == "skipped" && "$AFFECTED_RESULT" == "success" ]]
           else
             echo "Unknown verification mode: $MODE"
             exit 1
