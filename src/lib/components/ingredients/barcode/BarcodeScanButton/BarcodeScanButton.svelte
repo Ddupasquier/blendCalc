@@ -8,6 +8,7 @@
 		scanning = false,
 		disabled = false,
 		compact = false,
+		label = "Scan",
 		onclick,
 	}: BarcodeScanButtonProps = $props();
 </script>
@@ -30,7 +31,7 @@
 		{/if}
 	</CenteredIcon>
 	{#if !compact}
-		<span class="barcode-scan-button__label">Scan</span>
+		<span class="barcode-scan-button__label">{label}</span>
 	{/if}
 </button>
 

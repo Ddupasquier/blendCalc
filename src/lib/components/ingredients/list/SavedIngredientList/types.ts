@@ -19,6 +19,7 @@ export type SavedIngredientListProps = {
 	moving?: boolean;
 	revealPaused?: boolean;
 	resetKey?: number;
+	scanning?: boolean;
 	allowPlayfulMessages?: boolean;
 	onSelectAll: () => void;
 	onEnterSelection: (foodId?: number) => void;
@@ -30,5 +31,6 @@ export type SavedIngredientListProps = {
 	onActions: (food: FoodItem) => void;
 	onRemove: (foodId: number) => void;
 	onRevealMore: () => void | Promise<void>;
+	onScan?: (event?: MouseEvent) => void;
 	onScrollDirectionChange?: (direction: ScrollDirection) => void;
 };

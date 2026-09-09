@@ -3,5 +3,7 @@ import type { IngredientListKey } from "$lib/utils/storage/client/ingredientList
 export type IngredientEmptyStateProps = {
 	activeList: IngredientListKey;
 	hasItems: boolean;
+	scanning?: boolean;
 	allowPlayfulMessages?: boolean;
+	onScan: (event?: MouseEvent) => void;
 };

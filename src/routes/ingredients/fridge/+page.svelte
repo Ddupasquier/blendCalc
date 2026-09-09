@@ -1374,6 +1374,7 @@
 				moving={movingItem !== null}
 				revealPaused={ingredientOverlayOpen}
 				resetKey={listViewResetKey}
+				scanning={barcodeLookupBusy}
 				{allowPlayfulMessages}
 				onSelectAll={selectAllActiveItems}
 				onEnterSelection={enterSelectionMode}
@@ -1385,6 +1386,7 @@
 				onActions={(food) => openActionSheet(activeList, food)}
 				onRemove={(foodId) => removeFromList(activeList, foodId)}
 				onRevealMore={revealMoreActiveItems}
+				onScan={startBarcodeScan}
 				onScrollDirectionChange={handleListScrollDirectionChange}
 			/>
 		</SavedIngredientListLayout>
