@@ -27,6 +27,7 @@ describe("blendCalcAPI operational observations", () => {
 		);
 		expect(result.products).toHaveLength(2);
 		expect(locals.blendCalcAPIDatabaseObservation).toMatchObject({
+			failed: false,
 			resultCount: 2,
 		});
 		expect(
@@ -46,6 +47,7 @@ describe("blendCalcAPI operational observations", () => {
 			),
 		).rejects.toThrow("database unavailable");
 		expect(locals.blendCalcAPIDatabaseObservation).toMatchObject({
+			failed: true,
 			resultCount: 0,
 		});
 	});

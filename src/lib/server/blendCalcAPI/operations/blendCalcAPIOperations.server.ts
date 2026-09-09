@@ -1,4 +1,5 @@
 import type { BlendCalcAPIIsolatedClient } from "../v1/blendCalcAPIIsolatedClient.server";
+import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
 import {
 	getBlendCalcAPIIsolatedClient,
 	readBlendCalcAPIReadMode,
@@ -9,6 +10,7 @@ export type BlendCalcAPIOperation =
 
 export type BlendCalcAPIDatabaseObservation = {
 	databaseDurationMs: number;
+	failed: boolean;
 	resultCount: number;
 };
 
@@ -49,12 +51,14 @@ export const observeBlendCalcAPIDatabaseRead = async <Result>(
 		const result = await read();
 		locals.blendCalcAPIDatabaseObservation = {
 			databaseDurationMs: performance.now() - startedAt,
+			failed: false,
 			resultCount: Math.max(0, readResultCount(result)),
 		};
 		return result;
 	} catch (error) {
 		locals.blendCalcAPIDatabaseObservation = {
 			databaseDurationMs: performance.now() - startedAt,
+			failed: true,
 			resultCount: 0,
 		};
 		throw error;
@@ -70,12 +74,13 @@ export const recordBlendCalcAPIRequestObservation = async (input: {
 }) => {
 	try {
 		const client = getBlendCalcAPIIsolatedClient();
-		const { error } = await client.rpc("record_api_request_observation", {
+		const { error } = await client.rpc("record_api_request_observation_v2", {
 			p_operation: readBlendCalcAPIOperation(input.pathname),
 			p_read_mode: readBlendCalcAPIReadMode(),
 			p_response_status: input.responseStatus,
 			p_total_duration_ms: Math.max(0, input.totalDurationMs),
 			p_database_duration_ms: input.databaseObservation?.databaseDurationMs,
+			p_database_failed: input.databaseObservation?.failed ?? false,
 			p_result_count: input.databaseObservation?.resultCount ?? 0,
 			p_cache_validation: input.cacheValidation,
 			p_cache_not_modified: input.responseStatus === 304,
@@ -190,7 +195,21 @@ export const failBlendCalcAPIPublicationRun = async (
 
 export const readBlendCalcAPIOperationsDashboard = async () => {
 	const client = getBlendCalcAPIIsolatedClient();
-	const [publication, requests, parity, runs] = await Promise.all([
+	const admin = getSupabaseAdminClient();
+	const staleIntakeCutoff = new Date(
+		Date.now() - 15 * 60 * 1_000,
+	).toISOString();
+	const [
+		publication,
+		requests,
+		parity,
+		parityAlerts,
+		keyUsage,
+		runs,
+		pendingSubmissions,
+		oldestPendingSubmission,
+		stuckIntakeRequests,
+	] = await Promise.all([
 		client
 			.from("publication_operations_dashboard")
 			.select(
@@ -200,7 +219,7 @@ export const readBlendCalcAPIOperationsDashboard = async () => {
 		client
 			.from("api_request_operations_dashboard")
 			.select(
-				"average_result_count, cache_effectiveness, cache_not_modified_count, cache_validation_count, client_error_count, last_observed_at, max_database_duration_ms, max_result_count, max_total_duration_ms, operation, p50_database_duration_ms, p50_total_duration_ms, p95_database_duration_ms, p95_total_duration_ms, rate_limited_count, read_mode, request_count, server_error_count, total_result_count, window_name",
+				"average_result_count, cache_effectiveness, cache_not_modified_count, cache_validation_count, client_error_count, database_failure_count, last_observed_at, max_database_duration_ms, max_result_count, max_total_duration_ms, operation, p50_database_duration_ms, p50_total_duration_ms, p95_database_duration_ms, p95_total_duration_ms, rate_limited_count, read_mode, request_count, server_error_count, total_result_count, window_name",
 			)
 			.order("window_name")
 			.order("operation"),
@@ -211,14 +230,53 @@ export const readBlendCalcAPIOperationsDashboard = async () => {
 			)
 			.order("operation"),
 		client
+			.from("api_shadow_parity_alert_dashboard")
+			.select(
+				"comparison_count, failure_count, last_failure_at, last_observed_at, operation, window_name",
+			)
+			.order("window_name")
+			.order("operation"),
+		client
+			.from("api_key_usage_operations_dashboard")
+			.select(
+				"active_key_count, denied_count, max_denied_per_key, max_requests_per_key, rate_limited_count, request_count, window_name",
+			)
+			.order("window_name"),
+		client
 			.from("publication_sync_runs")
 			.select(
 				"added_product_count, completed_at, duration_ms, failure_code, generation_id, id, operation, outcome, read_mode, removed_product_count, source_catalog_hash, source_product_count, started_at, status, target_catalog_hash, target_product_count",
 			)
 			.order("started_at", { ascending: false })
 			.limit(25),
+		admin
+			.from("shared_product_submissions")
+			.select("id", { count: "exact", head: true })
+			.eq("status", "pending"),
+		admin
+			.from("shared_product_submissions")
+			.select("created_at")
+			.eq("status", "pending")
+			.order("created_at", { ascending: true })
+			.limit(1)
+			.maybeSingle(),
+		admin
+			.from("catalog_intake_requests")
+			.select("id", { count: "exact", head: true })
+			.eq("status", "processing")
+			.lt("created_at", staleIntakeCutoff),
 	]);
-	for (const result of [publication, requests, parity, runs]) {
+	for (const result of [
+		publication,
+		requests,
+		parity,
+		parityAlerts,
+		keyUsage,
+		runs,
+		pendingSubmissions,
+		oldestPendingSubmission,
+		stuckIntakeRequests,
+	]) {
 		if (result.error) throw result.error;
 	}
 	return {
@@ -226,6 +284,16 @@ export const readBlendCalcAPIOperationsDashboard = async () => {
 		publication: publication.data,
 		requests: requests.data ?? [],
 		shadowParity: parity.data ?? [],
+		alertWindows: {
+			keyUsage: keyUsage.data ?? [],
+			shadowParity: parityAlerts.data ?? [],
+		},
+		intake: {
+			oldestPendingSubmissionAt:
+				oldestPendingSubmission.data?.created_at ?? null,
+			pendingSubmissionCount: pendingSubmissions.count ?? 0,
+			stuckRequestCount: stuckIntakeRequests.count ?? 0,
+		},
 		recentPublicationRuns: runs.data ?? [],
 	};
 };

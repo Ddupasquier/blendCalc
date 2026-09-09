@@ -1,0 +1,44 @@
+name: blendCalcAPI Operational Alerts
+
+on:
+  schedule:
+    - cron: "7,22,37,52 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: blendcalc-api-operational-alerts
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Check API operations and notify owner
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Evaluate operational alerts
+        env:
+          ALERT_URL: ${{ vars.BLENDCALC_API_ALERT_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          test -n "$ALERT_URL"
+          test -n "$CRON_SECRET"
+          response_file="$(mktemp)"
+          status_code="$(curl \
+            --silent \
+            --show-error \
+            --retry 3 \
+            --retry-all-errors \
+            --connect-timeout 10 \
+            --max-time 240 \
+            --request POST \
+            --output "$response_file" \
+            --write-out "%{http_code}" \
+            --header "Authorization: Bearer $CRON_SECRET" \
+            "$ALERT_URL")"
+          test "$status_code" = "200"
+          jq --exit-status \
+            '(.action == "checked" or .action == "sent") and (.alertCount | type == "number")' \
+            "$response_file"

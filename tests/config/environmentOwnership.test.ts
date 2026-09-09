@@ -9,6 +9,8 @@ const readEnvironmentKeys = (path: string): string[] =>
 
 const expectedEnvironmentKeys = {
 	".env.example": [
+		"API_ALERT_EMAIL_FROM",
+		"API_ALERT_EMAIL_TO",
 		"BLENDCALC_API_READ_MODE",
 		"BLENDCALC_API_SUPABASE_SERVICE_ROLE_KEY",
 		"BLENDCALC_API_SUPABASE_URL",
@@ -50,6 +52,8 @@ const expectedEnvironmentKeys = {
 		"PUBLIC_TURNSTILE_SITE_KEY",
 	],
 	".env.vercel.example": [
+		"API_ALERT_EMAIL_FROM",
+		"API_ALERT_EMAIL_TO",
 		"BLENDCALC_API_READ_MODE",
 		"BLENDCALC_API_SUPABASE_SERVICE_ROLE_KEY",
 		"BLENDCALC_API_SUPABASE_URL",
