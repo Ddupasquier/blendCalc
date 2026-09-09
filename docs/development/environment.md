@@ -12,6 +12,7 @@ the variables consumed by that environment. Secrets never belong in tracked file
 | --------------------------- | ----------------------------------------------------------- |
 | Choose an example file      | [Environment Files](#environment-files)                     |
 | Configure local development | [Local Application](#local-application)                     |
+| Build native app shells     | [Native Application](#native-application)                   |
 | Run privileged scripts      | [Privileged Local Operations](#privileged-local-operations) |
 | Operate the API database    | [blendCalcAPI Database](#blendcalcapi-database)             |
 | Run tests                   | [Test Environment](#test-environment)                       |
@@ -66,6 +67,27 @@ Only variables beginning with `PUBLIC_` may be read by browser code. `FDC_API_KE
 credentials, email credentials, and relay secrets must remain server-only. Set
 `BLENDCALC_API_READ_MODE` to `source`, `shadow`, or `isolated`; local development uses
 `source` unless the isolated read path is under direct test.
+
+## Native Application
+
+The Capacitor iOS and Android projects use the bundled local bootstrap in `mobile/web`.
+Production native builds must not set Capacitor `server.url`, enable cleartext traffic,
+or allow arbitrary navigation. The authenticated native client will connect through an
+explicit app API and deep-link boundary rather than embedding the hosted SvelteKit site.
+
+Install Xcode for iOS and Android Studio plus JDK 17 or newer for Android. On macOS with
+Homebrew, select the installed JDK only for the current terminal before Android commands:
+
+```bash
+export JAVA_HOME="$(brew --prefix openjdk@21)/libexec/openjdk.jdk/Contents/Home"
+npm run mobile:sync
+npm run mobile:doctor
+```
+
+Use `npm run mobile:open:ios` or `npm run mobile:open:android` to continue in the native
+IDE. The iOS project declares its camera usage message; Android declares camera access
+and API 26 as its minimum SDK for the barcode scanner. OAuth deep links and live barcode
+scanning remain physical-device verification gates.
 
 ## Privileged Local Operations
 

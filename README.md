@@ -49,6 +49,8 @@ without becoming blanket authorities.
 - **npm.** The committed `package-lock.json` is the dependency source of truth.
 - **Docker and the Supabase CLI** only when running the disposable local database or
   authenticated browser tests.
+- **Xcode, Android Studio, and JDK 17 or newer** only when building the native iOS or
+  Android shells.
 
 ### 1. Install Dependencies
 
@@ -107,6 +109,10 @@ intentionally omitted.
 | `npm run dev`                                          | Start the normal development server on port `5173`.                       |
 | `npm run dev:test`                                     | Start port `5174` with disposable Supabase and Quick QA login.            |
 | `npm run dev:test:auth`                                | Start port `5174` with the official local Turnstile test widget.          |
+| `npm run mobile:sync`                                  | Copy the bundled mobile bootstrap and synchronize both native projects.   |
+| `npm run mobile:open:ios`                              | Open the generated iOS project in Xcode.                                  |
+| `npm run mobile:open:android`                          | Open the generated Android project in Android Studio.                     |
+| `npm run mobile:doctor`                                | Check the local Capacitor and native toolchains.                          |
 | `npm run build`                                        | Create the production build.                                              |
 | `npm run verify:vercel-routes`                         | Verify generated parameterized API routes after a production build.       |
 | `npm run preview`                                      | Preview the production build.                                             |
@@ -215,6 +221,9 @@ privileged operations, or direct `node scripts/...` workflows.
 | `supabase/migrations/` | Immutable migration history and forward-only schema changes          |
 | `tests/`               | Vitest, Playwright, architecture, route, and database tests          |
 | `scripts/`             | Audits, imports, seeds, backfills, QA data, and protected operations |
+| `mobile/web/`          | Bundled local bootstrap for the native application shells            |
+| `ios/` and `android/`  | Capacitor-managed native Xcode and Gradle projects                   |
+| `capacitor.config.ts`  | Shared native application identifier and secure webview config       |
 | `docs/user/`           | Product-facing help and feature guidance                             |
 | `docs/development/`    | Tracked engineering rules, contracts, architecture, and operations   |
 

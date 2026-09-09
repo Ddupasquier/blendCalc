@@ -218,6 +218,12 @@ not duplicate the same assertion across runners.
 
 ## Infrastructure
 
+`capacitor.config.ts` owns shared native shell configuration. `mobile/web/` contains the
+bundled local bootstrap copied into each platform, while `ios/` and `android/` contain
+the Capacitor-managed Xcode and Gradle projects. Platform permissions and build settings
+stay in their native project; cross-platform application behavior stays in shared source
+or a versioned app API rather than being duplicated in platform controllers.
+
 `infrastructure/blendCalcAPI/supabase/` owns the separate publication-read-model
 project, its immutable migration history, database policy tests, and project-specific
 Supabase configuration. Its generated `database.types.ts` remains beside that isolated

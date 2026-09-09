@@ -18,6 +18,12 @@
 		"dev:test": "BLENDCALC_DATABASE_ENVIRONMENT=test vite dev --mode test --host localhost --port 5174 --strictPort",
 		"predev:test:auth": "npm run predev:test",
 		"dev:test:auth": "PUBLIC_TURNSTILE_SITE_KEY=1x00000000000000000000AA BLENDCALC_DATABASE_ENVIRONMENT=test vite dev --mode test --host localhost --port 5174 --strictPort",
+		"mobile:sync": "cap sync",
+		"mobile:sync:ios": "cap sync ios",
+		"mobile:sync:android": "cap sync android",
+		"mobile:open:ios": "cap open ios",
+		"mobile:open:android": "cap open android",
+		"mobile:doctor": "cap doctor",
 		"build:test:e2e": "BLENDCALC_DATABASE_ENVIRONMENT=test node scripts/operations/quality/run_with_resource_limits.mjs vite build --mode test",
 		"preview:test:e2e": "BLENDCALC_DATABASE_ENVIRONMENT=test vite preview --mode test --host localhost --port 5174 --strictPort",
 		"test:e2e:server": "npm run build:test:e2e && npm run preview:test:e2e",
@@ -118,6 +124,7 @@
 	},
 	"devDependencies": {
 		"@axe-core/playwright": "^4.12.1",
+		"@capacitor/cli": "8.4.3",
 		"@eslint/js": "^10.0.1",
 		"@playwright/test": "^1.62.1",
 		"@sveltejs/adapter-vercel": "^6.3.4",
@@ -151,8 +158,10 @@
 		"vitest": "^4.1.10"
 	},
 	"dependencies": {
-		"@capacitor/barcode-scanner": "^3.1.0",
-		"@capacitor/core": "^8.4.2",
+		"@capacitor/android": "^8.5.1",
+		"@capacitor/barcode-scanner": "^3.1.2",
+		"@capacitor/core": "^8.5.1",
+		"@capacitor/ios": "^8.5.1",
 		"@jsquash/jpeg": "^1.6.0",
 		"@jsquash/png": "^3.1.1",
 		"@jsquash/resize": "^2.1.1",
