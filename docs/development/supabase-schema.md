@@ -928,11 +928,16 @@ application source until a runtime consumer imports it.
 The isolated schema also owns `api_request_observations`,
 `api_shadow_parity_observations`, and `publication_sync_runs`. Browser roles have no
 access. Privacy-safe request and parity observations retain only operation names,
-status, timing, counts, cache state, read mode, and hashes for 35 days; they never
+status, timing, counts, an explicit database-failure flag, cache state, read mode, and
+hashes for 35 days; they never
 retain request identifiers or payloads. Service-role-only operational views expose
 request p50/p95, database time, errors, rate limits, cache effectiveness, shadow parity,
 generation state and age, source/target count and hash parity, sync duration/failures,
-product additions/removals, and the latest production read mode.
+product additions/removals, and the latest production read mode. Recent alert views add
+15-minute and one-hour windows plus aggregate pseudonymous API-key request and denial
+maxima without returning a key or actor hash. The additive
+`record_api_request_observation_v2` function records whether the database boundary
+failed while the original function remains available during schema-first rollout.
 
 Only `service_role` has schema usage or table/function privileges. `anon` and
 `authenticated` cannot access this project through the Data API. A generation becomes
