@@ -18,6 +18,7 @@ describe("Playwright browser-testing architecture", () => {
 	it("runs authenticated desktop and mobile projects with isolated parallel workers", () => {
 		const playwrightConfig = readSource("playwright.config.ts");
 		const browserTestSupport = readSource("tests/e2e/support/browserTest.ts");
+		const serverHooks = readSource("src/hooks.server.ts");
 		const localQaAccounts = readSource("tests/e2e/support/localQaAccounts.ts");
 		const localQaPersonas = readSource("scripts/lib/qa/local_qa_personas.mjs");
 		for (const project of [
@@ -49,6 +50,14 @@ describe("Playwright browser-testing architecture", () => {
 		expect(browserTestSupport).toContain(
 			"cookie.expires > minimumReusableExpirySeconds",
 		);
+		expect(browserTestSupport).toContain(
+			'name: "blendcalc-local-qa-browser-partition"',
+		);
+		expect(browserTestSupport).toContain("context.addCookies");
+		expect(
+			browserTestSupport.match(/getLocalQaBrowserRateLimitPartition/g),
+		).toHaveLength(3);
+		expect(serverHooks).toContain("getLocalQaBrowserRateLimitClientAddress");
 		expect(browserTestSupport).toContain(
 			'"/api/user-food-lists/fridge?limit=1&offset=0&sort=recent&source=all&trust=any"',
 		);
