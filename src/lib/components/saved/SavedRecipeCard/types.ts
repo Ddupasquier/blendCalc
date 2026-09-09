@@ -5,6 +5,7 @@ export type SavedRecipeCardProps = {
 	loading?: boolean;
 	deleting?: boolean;
 	disabled?: boolean;
+	tutorialTarget?: string;
 	onLoad: (recipe: SavedRecipe) => void;
 	onDelete: (recipe: SavedRecipe) => void;
 };

@@ -71,7 +71,8 @@ const createDisclosure = (open = false) => {
 describe("animatedDetails", () => {
 	it("animates the complete disclosure and keeps content mounted through closing", () => {
 		const { animations, content, details, summary } = createDisclosure();
-		const action = animatedDetails(details);
+		const onOpenChange = vi.fn();
+		const action = animatedDetails(details, { onOpenChange });
 
 		setAnimatedDetailsOpen(details, true);
 
@@ -79,6 +80,7 @@ describe("animatedDetails", () => {
 		expect(details).toHaveAttribute("data-expanded", "true");
 		expect(summary).toHaveAttribute("aria-expanded", "true");
 		expect(content.querySelector("input")).toHaveValue("Unsaved value");
+		expect(onOpenChange).not.toHaveBeenCalled();
 		expect(animations[0].keyframes).toEqual([
 			{ height: "48px", overflow: "hidden" },
 			{ height: "240px", overflow: "hidden" },
@@ -105,6 +107,7 @@ describe("animatedDetails", () => {
 		expect(animations).toHaveLength(2);
 		animations[1].onfinish?.();
 		expect(details.open).toBe(false);
+		expect(onOpenChange).not.toHaveBeenCalled();
 
 		action.destroy?.();
 	});

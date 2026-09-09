@@ -18,6 +18,7 @@ export type CircleIconButtonProps = {
 	disabled?: boolean;
 	pressed?: boolean;
 	class?: string;
+	tutorialTarget?: string;
 	"aria-describedby"?: string;
 	"aria-expanded"?: boolean | "true" | "false";
 	"aria-controls"?: string;

@@ -1,16 +1,31 @@
 export type TutorialStepIconName = "ingredients" | "goals" | "graph" | "save";
 
+export type TutorialTargetId =
+	| "ingredient-search"
+	| "ingredient-barcode"
+	| "ingredient-card"
+	| "ingredient-actions"
+	| "mix-ingredient-option"
+	| "mix-goal-input"
+	| "mix-result-chart"
+	| "saved-recipe"
+	| "food-preference-search";
+
+export type TutorialRevealId =
+	| "mix-add-ingredients"
+	| "mix-goals"
+	| "mix-nutrient-shape"
+	| "profile-allergens";
+
 export type TutorialStep = {
 	title: string;
 	description: string;
 	points: string[];
 	icon: TutorialStepIconName;
 	route:
-		| "/ingredients/fridge"
-		| "/mix"
-		| "/saved"
-		| "/profile/food-preferences";
-	target: string;
+		"/ingredients/fridge" | "/mix" | "/saved" | "/profile/food-preferences";
+	targetId: TutorialTargetId;
+	revealId?: TutorialRevealId;
 	targetLabel: string;
 };
 

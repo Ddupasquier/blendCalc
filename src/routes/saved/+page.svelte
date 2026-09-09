@@ -292,14 +292,10 @@
 					{#if visibleRecipes.length > 0}
 						<ul class="saved-page__list" aria-label="Saved recipes">
 							{#each visibleRecipes as recipe, index (recipe.id)}
-								<li
-									data-tutorial-target={index === 0
-										? "saved-recipe"
-										: undefined}
-									animate:flip={{ duration: getListReflowDuration() }}
-								>
+								<li animate:flip={{ duration: getListReflowDuration() }}>
 									<SavedRecipeCard
 										{recipe}
+										tutorialTarget={index === 0 ? "saved-recipe" : undefined}
 										loading={loadingRecipeId === recipe.id}
 										deleting={deletingRecipeId === recipe.id}
 										disabled={loadingRecipeId !== null ||

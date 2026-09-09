@@ -4,7 +4,12 @@ import type { Database, Tables } from "$lib/types/database.types";
 import { CURRENT_TUTORIAL_VERSION } from "$lib/utils/tutorial/tutorial";
 import { tutorialSteps } from "$lib/utils/tutorial/steps";
 import { expect, test, waitForAppReady } from "./support/browserTest";
-import { getAuthenticatedLocalQaDatabaseClient } from "./support/localQaDatabase";
+import {
+	captureLocalQaMixSectionPreferences,
+	getAuthenticatedLocalQaDatabaseClient,
+	restoreLocalQaMixSectionPreferences,
+	saveLocalQaMixSectionPreferences,
+} from "./support/localQaDatabase";
 
 type TutorialPreference = Tables<"user_tutorial_preferences">;
 
@@ -228,6 +233,118 @@ test("Profile replay visits every direct tutorial target without changing comple
 		await writeTutorialPreference(
 			fixture.databaseClient,
 			fixture.originalPreference,
+		);
+	}
+});
+
+test("tutorial reveals reordered Mix targets without saving disclosure changes", async ({
+	page,
+}, testInfo) => {
+	test.skip(
+		testInfo.project.name !== "desktop-chromium",
+		"One isolated database-backed browser owns the temporary Mix preference mutation.",
+	);
+
+	const originalPreferences = await captureLocalQaMixSectionPreferences(
+		testInfo.parallelIndex,
+	);
+	const reorderedSections = [
+		"add-ingredients",
+		"selected-ingredients",
+		"warnings",
+		"goals",
+		"suggested-adjustments",
+		"nutrient-contributions",
+		"nutrient-shape",
+	];
+	const closedDisclosures = Object.fromEntries(
+		reorderedSections.map((sectionId) => [sectionId, false]),
+	);
+
+	try {
+		await saveLocalQaMixSectionPreferences(testInfo.parallelIndex, {
+			order: reorderedSections,
+			disclosureState: closedDisclosures,
+		});
+		await page.emulateMedia({ reducedMotion: "reduce" });
+		await page.goto("/profile");
+		await waitForAppReady(page);
+		await page.getByRole("link", { name: "Open guided tutorial" }).click();
+		const dialog = page.getByRole("dialog");
+
+		for (let step = 0; step < 4; step += 1) {
+			await dialog.getByRole("button", { name: "Next" }).click();
+		}
+
+		await expect(page).toHaveURL(/\/mix$/);
+		const addIngredients = page.locator(
+			"details[data-tutorial-reveal='mix-add-ingredients']",
+		);
+		const goals = page.locator("details[data-tutorial-reveal='mix-goals']");
+		const nutrientShape = page.locator(
+			"details[data-tutorial-reveal='mix-nutrient-shape']",
+		);
+		expect(
+			await page
+				.locator("details[data-tutorial-reveal]")
+				.evaluateAll((elements) =>
+					elements.map((element) =>
+						element.getAttribute("data-tutorial-reveal"),
+					),
+				),
+		).toEqual(["mix-add-ingredients", "mix-goals", "mix-nutrient-shape"]);
+		await expect(addIngredients).toHaveAttribute("data-expanded", "true");
+		await expect(
+			page.locator("[data-tutorial-target='mix-ingredient-option']"),
+		).toHaveAttribute("data-tutorial-active", "true");
+		await expectSpotlightAroundDirectTarget(page);
+		expect(
+			(await captureLocalQaMixSectionPreferences(testInfo.parallelIndex))
+				.disclosureState,
+		).toEqual(closedDisclosures);
+
+		await dialog.getByRole("button", { name: "Next" }).click();
+		await expect(addIngredients).toHaveAttribute("data-expanded", "false");
+		await expect(goals).toHaveAttribute("data-expanded", "true");
+		await expect(
+			page.locator("[data-tutorial-target='mix-goal-input']"),
+		).toHaveAttribute("data-tutorial-active", "true");
+		await expectSpotlightAroundDirectTarget(page);
+
+		await dialog.getByRole("button", { name: "Next" }).click();
+		await expect(goals).toHaveAttribute("data-expanded", "false");
+		await expect(nutrientShape).toHaveAttribute("data-expanded", "true");
+		await expectSpotlightAroundDirectTarget(page);
+
+		await page.setViewportSize({ width: 360, height: 740 });
+		await expectSpotlightAroundDirectTarget(page);
+		await dialog.getByRole("button", { name: "Previous" }).click();
+		await expect(nutrientShape).toHaveAttribute("data-expanded", "false");
+		await expect(goals).toHaveAttribute("data-expanded", "true");
+		await expectSpotlightAroundDirectTarget(page);
+		await dialog.getByRole("button", { name: "Exit tour" }).click();
+
+		await page.goto("/mix");
+		await waitForAppReady(page);
+		await page.reload();
+		await waitForAppReady(page);
+		await expect(
+			page.locator("details[data-tutorial-reveal='mix-add-ingredients']"),
+		).toHaveAttribute("data-expanded", "false");
+		await expect(
+			page.locator("details[data-tutorial-reveal='mix-goals']"),
+		).toHaveAttribute("data-expanded", "false");
+		await expect(
+			page.locator("details[data-tutorial-reveal='mix-nutrient-shape']"),
+		).toHaveAttribute("data-expanded", "false");
+		expect(
+			(await captureLocalQaMixSectionPreferences(testInfo.parallelIndex))
+				.disclosureState,
+		).toEqual(closedDisclosures);
+	} finally {
+		await restoreLocalQaMixSectionPreferences(
+			testInfo.parallelIndex,
+			originalPreferences,
 		);
 	}
 });

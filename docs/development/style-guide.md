@@ -513,6 +513,11 @@ Overlay rules:
 - A tutorial target is one direct control, card, input, chart, or disclosure summary.
   Do not spotlight a full page section when a single representative child can teach
   the behavior. Use consecutive steps to move from a card into its specific action.
+  Bind that direct element to a stable semantic tutorial ID; never encode its screen
+  position, ordinal position, visible copy, or descendant selector in the step model.
+- A step may name a stable disclosure owner. The tour opens that owner transiently,
+  waits for its layout motion to settle, and restores its prior state afterward without
+  running the disclosure's persistence callback.
 - Tutorial route changes scroll the target into view without resetting route data.
   Each step marks and visually focuses its current target automatically, while keyboard
   focus remains inside the tutorial card. The app header, navigation, and route content

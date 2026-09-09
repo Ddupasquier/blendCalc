@@ -9,6 +9,7 @@
 		trapDialogFocus,
 	} from "$lib/utils/accessibility/dialogFocus";
 	import { getMotionSafeScrollBehavior } from "$lib/utils/animation/motion";
+	import { setAnimatedDetailsOpen } from "$lib/utils/animation/animatedDetails";
 	import {
 		getTutorialBorderRadius,
 		getTutorialCardPosition,
@@ -46,6 +47,10 @@
 	let previouslyOpen = false;
 	let releaseFocus: (() => void) | null = null;
 	let activationId = 0;
+	let revealedDisclosure: {
+		element: HTMLDetailsElement;
+		wasOpen: boolean;
+	} | null = null;
 
 	const currentStep = $derived(tutorialSteps[currentStepIndex]);
 	const isFirstStep = $derived(currentStepIndex === 0);
@@ -77,6 +82,64 @@
 		if (targetElement) {
 			targetElement.setAttribute("data-tutorial-active", "true");
 		}
+	};
+
+	const findTutorialTarget = () =>
+		Array.from(
+			document.querySelectorAll<HTMLElement>("[data-tutorial-target]"),
+		).find(
+			(element) => element.dataset.tutorialTarget === currentStep.targetId,
+		) ?? null;
+
+	const findTutorialDisclosure = () => {
+		if (!currentStep.revealId) return null;
+		return (
+			Array.from(
+				document.querySelectorAll<HTMLDetailsElement>(
+					"details[data-tutorial-reveal]",
+				),
+			).find(
+				(element) => element.dataset.tutorialReveal === currentStep.revealId,
+			) ?? null
+		);
+	};
+
+	const restoreRevealedDisclosure = () => {
+		if (revealedDisclosure?.element.isConnected) {
+			setAnimatedDetailsOpen(
+				revealedDisclosure.element,
+				revealedDisclosure.wasOpen,
+			);
+		}
+		revealedDisclosure = null;
+	};
+
+	const waitForNextFrame = () =>
+		new Promise<void>((resolve) => {
+			window.requestAnimationFrame(() => resolve());
+		});
+
+	const revealCurrentDisclosure = async () => {
+		const disclosure = findTutorialDisclosure();
+		if (!disclosure) return;
+		if (revealedDisclosure?.element === disclosure) return;
+
+		restoreRevealedDisclosure();
+		const wasOpen =
+			disclosure.dataset.expanded === undefined
+				? disclosure.open
+				: disclosure.dataset.expanded === "true";
+		revealedDisclosure = { element: disclosure, wasOpen };
+		if (!wasOpen) setAnimatedDetailsOpen(disclosure, true);
+
+		await tick();
+		await waitForNextFrame();
+		const animations =
+			typeof disclosure.getAnimations === "function"
+				? disclosure.getAnimations({ subtree: true })
+				: [];
+		await Promise.allSettled(animations.map((animation) => animation.finished));
+		await waitForNextFrame();
 	};
 
 	const centerCard = () => {
@@ -166,11 +229,13 @@
 		);
 	};
 
-	const findCurrentTarget = async () => {
+	const findCurrentTarget = async (expectedActivationId = activationId) => {
 		if (!open || typeof document === "undefined") return;
 
 		await tick();
-		setTargetElement(document.querySelector<HTMLElement>(currentStep.target));
+		await revealCurrentDisclosure();
+		if (expectedActivationId !== activationId) return;
+		setTargetElement(findTutorialTarget());
 
 		if (!targetElement) {
 			spotlightRect = null;
@@ -192,6 +257,7 @@
 		if (controlsBusy) return;
 
 		const nextActivationId = ++activationId;
+		restoreRevealedDisclosure();
 		currentStepIndex = Math.min(
 			tutorialSteps.length - 1,
 			Math.max(0, nextStepIndex),
@@ -208,7 +274,7 @@
 				await onNavigate(nextStep.route);
 			}
 			if (nextActivationId !== activationId) return;
-			await findCurrentTarget();
+			await findCurrentTarget(nextActivationId);
 		} catch {
 			if (nextActivationId === activationId) {
 				error =
@@ -256,6 +322,7 @@
 			void activateStep(0);
 		} else if (!open && previouslyOpen) {
 			activationId += 1;
+			restoreRevealedDisclosure();
 			setTargetElement(null);
 			spotlightRect = null;
 			spotlightRadii = null;
@@ -269,7 +336,7 @@
 
 	$effect(() => {
 		pathname;
-		if (!open || pathname !== currentStep.route) return;
+		if (!open || moving || pathname !== currentStep.route) return;
 		void findCurrentTarget();
 	});
 
@@ -402,7 +469,7 @@
 					</p>
 				</div>
 				<div class="tutorial__dots" aria-hidden="true">
-					{#each tutorialSteps as tutorialStep, index (tutorialStep.target)}
+					{#each tutorialSteps as tutorialStep, index (tutorialStep.targetId)}
 						<span class:active={index === currentStepIndex}></span>
 					{/each}
 				</div>

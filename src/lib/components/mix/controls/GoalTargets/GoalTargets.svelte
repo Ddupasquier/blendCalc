@@ -13,9 +13,7 @@
 	import ToggleSwitch from "$lib/components/common/forms/ToggleSwitch/ToggleSwitch.svelte";
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import NutrientPicker from "$lib/components/mix/controls/NutrientPicker/NutrientPicker.svelte";
-	import {
-		evaluateMixGoal,
-	} from "$lib/utils/mix/goals/goalEvaluation";
+	import { evaluateMixGoal } from "$lib/utils/mix/goals/goalEvaluation";
 	import { formatMixGoalTarget } from "$lib/utils/mix/formatting/mixGoalPresentation";
 	import { formatMixQuantity } from "$lib/utils/mix/formatting/mixQuantity";
 	import type { MixGoalType } from "$lib/utils/mix/goals/types";
@@ -107,7 +105,7 @@
 
 <MixPanelSection
 	class="goals-panel"
-	dataTutorialTarget="mix-goals"
+	tutorialReveal="mix-goals"
 	title="Goals"
 	badge={`${selectedNutrients.length} tracked`}
 	{open}
@@ -188,14 +186,15 @@
 			<StatusMessage tone="danger" message={error} />
 		{/if}
 		<div class="goal-grid" aria-label="Nutrient goals">
-			{#each selectedNutrients as nutrient}
+			{#each selectedNutrients as nutrient, index}
 				{@const total = getTotal(Number(nutrient.id))}
 				{@const defaultGoal = getGoal(nutrient)}
 				{@const goal = nutrientGoals[Number(nutrient.id)]}
 				{@const nutrientUnit =
 					nutrient.unit ?? getNutrientUnit(Number(nutrient.id))}
 				{#if goal}
-					{@const baselineTarget = defaultGoal?.targetAmount ?? goal.targetAmount}
+					{@const baselineTarget =
+						defaultGoal?.targetAmount ?? goal.targetAmount}
 					{@const status = getStatus(total, goal)}
 					{@const sliderStep = getSliderStep(baselineTarget)}
 					{@const sliderMax = getSliderMax(
@@ -207,15 +206,18 @@
 						class="goal-input"
 						data-status={status}
 						data-nutrient-label={nutrient.label}
+						data-tutorial-target={index === 0 ? "mix-goal-input" : undefined}
 					>
 						<div class="goal-input__header">
 							<div class="goal-input__heading">
 								<span class="goal-label">{nutrient.label}</span>
 								<span class="goal-current">
 									<span>Current</span>
-									<strong>{formatMixQuantity(total, {
-										unit: nutrientUnit,
-									})}</strong>
+									<strong
+										>{formatMixQuantity(total, {
+											unit: nutrientUnit,
+										})}</strong
+									>
 								</span>
 							</div>
 							<CircleIconButton
@@ -257,9 +259,8 @@
 									onValueCommit={(value) => onUpdateGoal(nutrient.id, value)}
 								/>
 								{#if goal.goalType === "range"}
-									<span
-										class="goal-input__range-divider"
-										aria-hidden="true">–</span
+									<span class="goal-input__range-divider" aria-hidden="true"
+										>–</span
 									>
 									<NumberInput
 										id={`goal-${nutrient.id}-upper`}

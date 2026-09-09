@@ -13,6 +13,8 @@ export type SavedIngredientCardProps = {
 	category: string;
 	warning?: string | null;
 	provenanceOptions?: readonly IngredientProvenanceOption[];
+	tutorialCardTarget?: string;
+	tutorialActionsTarget?: string;
 	onToggle: () => void;
 	onEnterSelection: () => void;
 	onPreview: () => void;

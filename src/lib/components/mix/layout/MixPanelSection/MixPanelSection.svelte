@@ -10,7 +10,7 @@
 		attentionTone = "neutral",
 		class: className = "",
 		ariaLabel,
-		dataTutorialTarget,
+		tutorialReveal,
 		onOpenChange,
 		summaryEnd,
 		children,
@@ -20,7 +20,6 @@
 <section
 	class={`mix-panel-section ${className}`.trim()}
 	data-attention-tone={attentionTone}
-	data-tutorial-target={dataTutorialTarget}
 	aria-label={ariaLabel}
 >
 	<CollapsibleSection
@@ -28,6 +27,7 @@
 		{titleId}
 		{badge}
 		{open}
+		{tutorialReveal}
 		{onOpenChange}
 		{summaryEnd}
 		surface="panel"

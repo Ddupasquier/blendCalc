@@ -12,6 +12,8 @@
 		surface = "accent",
 		tone = "neutral",
 		class: className = "",
+		tutorialTarget,
+		tutorialReveal,
 		onOpenChange,
 		summaryEnd,
 		children,
@@ -22,16 +24,19 @@
 	class={`collapsible-section ${className}`.trim()}
 	data-surface={surface}
 	data-tone={tone}
+	data-tutorial-reveal={tutorialReveal}
 	use:animatedDetails={{ open, onOpenChange }}
 	{open}
 >
-	<summary>
+	<summary data-tutorial-target={tutorialTarget}>
 		<span class="collapsible-section__heading">
 			<DisclosureChevron class="collapsible-section__chevron" />
 			<span id={titleId} class="collapsible-section__title">
 				{title}
 				{#if tone === "danger"}
-					<span class="collapsible-section__attention">Urgent attention needed.</span>
+					<span class="collapsible-section__attention"
+						>Urgent attention needed.</span
+					>
 				{:else if tone === "warning"}
 					<span class="collapsible-section__attention">Attention needed.</span>
 				{/if}

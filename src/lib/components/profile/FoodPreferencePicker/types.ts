@@ -15,4 +15,5 @@ export type FoodPreferencePickerProps = {
 	labelledBy: string;
 	unresolvedValues?: string[];
 	referenceDataUnavailable?: boolean;
+	tutorialTarget?: string;
 };

@@ -22,7 +22,7 @@ const escapeRegularExpression = (value: string) =>
 	value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 const openMixGoals = async (page: import("@playwright/test").Page) => {
-	const goalsSection = page.locator("[data-tutorial-target='mix-goals']");
+	const goalsSection = page.locator(".goals-panel");
 	const details = goalsSection.locator(":scope > details");
 	const summary = details.locator(":scope > summary");
 	if ((await details.getAttribute("open")) === null) await summary.click();

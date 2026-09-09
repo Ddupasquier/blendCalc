@@ -10,7 +10,7 @@ export type MixPanelSectionProps = {
 	attentionTone?: MixPanelAttentionTone;
 	class?: string;
 	ariaLabel?: string;
-	dataTutorialTarget?: string;
+	tutorialReveal?: string;
 	onOpenChange?: (open: boolean) => void;
 	summaryEnd?: Snippet;
 	children: Snippet;

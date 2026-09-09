@@ -21,6 +21,7 @@ export type TextFieldProps = {
 	multiline?: boolean;
 	rows?: number;
 	labelVisibility?: "visible" | "sr-only";
+	tutorialTarget?: string;
 	"aria-describedby"?: string;
 	"aria-invalid"?: HTMLInputAttributes["aria-invalid"];
 	oninput?: FormEventHandler<HTMLInputElement | HTMLTextAreaElement>;

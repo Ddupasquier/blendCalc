@@ -276,6 +276,47 @@ export const saveLocalQaMixState = async (
 	if (error) throw error;
 };
 
+export type LocalQaMixSectionPreferencesSnapshot = {
+	order: string[];
+	disclosureState: Json;
+};
+
+export const captureLocalQaMixSectionPreferences = async (
+	parallelWorkerIndex: number,
+): Promise<LocalQaMixSectionPreferencesSnapshot> => {
+	const supabase =
+		await getAuthenticatedLocalQaDatabaseClient(parallelWorkerIndex);
+	const { data, error } = await supabase
+		.from("mix_preferences")
+		.select("section_order, section_disclosure_state")
+		.single();
+	if (error) throw error;
+	return {
+		order: data.section_order,
+		disclosureState: data.section_disclosure_state,
+	};
+};
+
+export const saveLocalQaMixSectionPreferences = async (
+	parallelWorkerIndex: number,
+	preferences: LocalQaMixSectionPreferencesSnapshot,
+) => {
+	const supabase =
+		await getAuthenticatedLocalQaDatabaseClient(parallelWorkerIndex);
+	const orderResult = await supabase.rpc("save_mix_section_order", {
+		p_section_order: preferences.order,
+	});
+	if (orderResult.error) throw orderResult.error;
+	const disclosureResult = await supabase.rpc(
+		"save_mix_section_disclosure_state",
+		{ p_section_disclosure_state: preferences.disclosureState },
+	);
+	if (disclosureResult.error) throw disclosureResult.error;
+};
+
+export const restoreLocalQaMixSectionPreferences =
+	saveLocalQaMixSectionPreferences;
+
 export const captureAndClearLocalQaIngredientLists = async (
 	parallelWorkerIndex: number,
 ): Promise<LocalQaIngredientListItem[]> => {

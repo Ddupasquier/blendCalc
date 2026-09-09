@@ -12,6 +12,7 @@
 		disabled = false,
 		pressed = undefined,
 		class: className = "",
+		tutorialTarget,
 		"aria-describedby": ariaDescribedBy = undefined,
 		"aria-expanded": ariaExpanded = undefined,
 		"aria-controls": ariaControls = undefined,
@@ -34,6 +35,7 @@
 	class={`circle-icon-button ${className}`.trim()}
 	data-variant={variant}
 	data-size={size}
+	data-tutorial-target={tutorialTarget}
 	aria-label={label}
 	aria-busy={busy}
 	aria-pressed={pressed}

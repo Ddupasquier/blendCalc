@@ -24,6 +24,7 @@
 		labelledBy,
 		unresolvedValues = [],
 		referenceDataUnavailable = false,
+		tutorialTarget,
 	}: FoodPreferencePickerProps = $props();
 
 	let customEntry = $state("");
@@ -123,6 +124,7 @@
 				type="search"
 				value={reviewedChoiceSearch}
 				placeholder={`Search and add ${title.toLocaleLowerCase()}`}
+				{tutorialTarget}
 				{disabled}
 				oninput={(event) =>
 					(reviewedChoiceSearch = (event.currentTarget as HTMLInputElement)

@@ -303,7 +303,6 @@
 					<li
 						data-food-id={food.fdcId}
 						data-bulk-selected={isChecked}
-						data-tutorial-target={index === 0 ? "ingredient-card" : undefined}
 						animate:flip={{ duration: getListReflowDuration() }}
 						class:saved-ingredient-list__card--moving={(bulkMoveBusy &&
 							isChecked) ||
@@ -325,6 +324,10 @@
 							category={getFoodDisplayCategory(food)}
 							{warning}
 							{provenanceOptions}
+							tutorialCardTarget={index === 0 ? "ingredient-card" : undefined}
+							tutorialActionsTarget={index === 0
+								? "ingredient-actions"
+								: undefined}
 							onToggle={() => onToggle(food.fdcId)}
 							onEnterSelection={() => enterSelectionMode(food.fdcId)}
 							onPreview={() => onPreview(food)}

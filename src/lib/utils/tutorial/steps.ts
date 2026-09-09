@@ -10,7 +10,7 @@ export const tutorialSteps: TutorialStep[] = [
 		],
 		icon: "ingredients",
 		route: "/ingredients/fridge",
-		target: "[data-tutorial-target='ingredient-search']",
+		targetId: "ingredient-search",
 		targetLabel: "ingredient search",
 	},
 	{
@@ -23,7 +23,7 @@ export const tutorialSteps: TutorialStep[] = [
 		],
 		icon: "ingredients",
 		route: "/ingredients/fridge",
-		target: "[data-tutorial-target='ingredient-barcode']",
+		targetId: "ingredient-barcode",
 		targetLabel: "barcode scanner",
 	},
 	{
@@ -36,7 +36,7 @@ export const tutorialSteps: TutorialStep[] = [
 		],
 		icon: "ingredients",
 		route: "/ingredients/fridge",
-		target: "[data-tutorial-target='ingredient-card'] > .saved-ingredient-card",
+		targetId: "ingredient-card",
 		targetLabel: "one saved ingredient card",
 	},
 	{
@@ -48,8 +48,7 @@ export const tutorialSteps: TutorialStep[] = [
 		],
 		icon: "ingredients",
 		route: "/ingredients/fridge",
-		target:
-			"[data-tutorial-target='ingredient-card'] button[aria-label^='Open actions for']",
+		targetId: "ingredient-actions",
 		targetLabel: "the ingredient actions button",
 	},
 	{
@@ -61,8 +60,8 @@ export const tutorialSteps: TutorialStep[] = [
 		],
 		icon: "ingredients",
 		route: "/mix",
-		target:
-			"[data-tutorial-target='mix-ingredient-options'] .mix-ingredient-option:first-child",
+		targetId: "mix-ingredient-option",
+		revealId: "mix-add-ingredients",
 		targetLabel: "one Mix ingredient option",
 	},
 	{
@@ -74,7 +73,8 @@ export const tutorialSteps: TutorialStep[] = [
 		],
 		icon: "goals",
 		route: "/mix",
-		target: "[data-tutorial-target='mix-goals'] .goal-input input",
+		targetId: "mix-goal-input",
+		revealId: "mix-goals",
 		targetLabel: "one nutrient goal input",
 	},
 	{
@@ -86,7 +86,8 @@ export const tutorialSteps: TutorialStep[] = [
 		],
 		icon: "graph",
 		route: "/mix",
-		target: "[data-tutorial-target='mix-result-chart']",
+		targetId: "mix-result-chart",
+		revealId: "mix-nutrient-shape",
 		targetLabel: "the Mix comparison chart",
 	},
 	{
@@ -98,7 +99,7 @@ export const tutorialSteps: TutorialStep[] = [
 		],
 		icon: "save",
 		route: "/saved",
-		target: "[data-tutorial-target='saved-recipe'] .saved-recipe-card summary",
+		targetId: "saved-recipe",
 		targetLabel: "one saved recipe",
 	},
 	{
@@ -111,8 +112,8 @@ export const tutorialSteps: TutorialStep[] = [
 		],
 		icon: "goals",
 		route: "/profile/food-preferences",
-		target:
-			"[data-tutorial-target='food-preferences'] .preference-reviewed-options:first-of-type label:first-child",
+		targetId: "food-preference-search",
+		revealId: "profile-allergens",
 		targetLabel: "one food-safety preference editor",
 	},
 ];

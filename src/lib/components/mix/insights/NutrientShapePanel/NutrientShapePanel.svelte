@@ -23,11 +23,11 @@
 		open = true,
 		onOpenChange,
 	}: NutrientShapePanelProps = $props();
-
 </script>
 
 <MixPanelSection
 	class="nutrient-shape-panel"
+	tutorialReveal="mix-nutrient-shape"
 	ariaLabel="Nutrient shape"
 	title="Nutrient shape"
 	{open}
@@ -63,10 +63,7 @@
 			aria-label="Nutrient goal status"
 		>
 			{#each nutrientGoalDifferences as diff}
-				<span
-					data-nutrient-label={diff.label}
-					data-goal-status={diff.status}
-				>
+				<span data-nutrient-label={diff.label} data-goal-status={diff.status}>
 					<MetadataPill
 						label={diff.label.replace("Total ", "")}
 						value={formatMixGoalValueComparison(

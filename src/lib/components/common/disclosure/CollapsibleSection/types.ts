@@ -11,6 +11,8 @@ export type CollapsibleSectionProps = {
 	surface?: CollapsibleSectionSurface;
 	tone?: CollapsibleSectionTone;
 	class?: string;
+	tutorialTarget?: string;
+	tutorialReveal?: string;
 	onOpenChange?: (open: boolean) => void;
 	summaryEnd?: Snippet;
 	children: Snippet;

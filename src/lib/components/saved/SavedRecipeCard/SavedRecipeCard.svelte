@@ -20,6 +20,7 @@
 		loading = false,
 		deleting = false,
 		disabled = false,
+		tutorialTarget,
 		onLoad,
 		onDelete,
 	}: SavedRecipeCardProps = $props();
@@ -46,6 +47,7 @@
 		{titleId}
 		surface="panel"
 		class="saved-recipe-card__collapse"
+		{tutorialTarget}
 	>
 		{#snippet summaryEnd()}
 			{#if calories !== null}
@@ -85,32 +87,28 @@
 				<RoundedActionButton
 					fullWidth
 					busy={loading}
-					disabled={disabled}
+					{disabled}
 					ariaLabel={`Load ${recipe.name}`}
 					onclick={() => onLoad(recipe)}
 				>
 					Load
 				</RoundedActionButton>
-				<SavedRecipeExportAction
-					{recipe}
-					compact
-					disabled={disabled}
-				/>
+				<SavedRecipeExportAction {recipe} compact {disabled} />
 				<TwoStepConfirmation
 					actionLabel={`Delete ${recipe.name}`}
 					confirmationLabel={`Confirm deletion of ${recipe.name}`}
 					message="Tap or click delete again to confirm."
 					messageId={`saved-recipe-delete-${recipe.id}`}
-					disabled={disabled}
+					{disabled}
 					onConfirm={() => onDelete(recipe)}
 				>
 					{#snippet children({ armed, activate, label, messageId })}
 						<CircleIconButton
-							label={label}
+							{label}
 							variant={armed ? "danger" : "soft"}
 							size="control"
 							busy={deleting}
-							disabled={disabled}
+							{disabled}
 							aria-describedby={armed ? messageId : undefined}
 							onclick={activate}
 						>

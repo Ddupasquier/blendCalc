@@ -22,19 +22,29 @@ const preference = (
 });
 
 describe("shouldAutomaticallyShowTutorial", () => {
-	it("uses the granular tutorial sequence for version 3", () => {
+	it("uses stable semantic targets and explicit disclosure prerequisites", () => {
 		expect(CURRENT_TUTORIAL_VERSION).toBe(3);
 		expect(tutorialSteps).toHaveLength(9);
-		expect(tutorialSteps.map((step) => step.target)).toEqual([
-			"[data-tutorial-target='ingredient-search']",
-			"[data-tutorial-target='ingredient-barcode']",
-			"[data-tutorial-target='ingredient-card'] > .saved-ingredient-card",
-			"[data-tutorial-target='ingredient-card'] button[aria-label^='Open actions for']",
-			"[data-tutorial-target='mix-ingredient-options'] .mix-ingredient-option:first-child",
-			"[data-tutorial-target='mix-goals'] .goal-input input",
-			"[data-tutorial-target='mix-result-chart']",
-			"[data-tutorial-target='saved-recipe'] .saved-recipe-card summary",
-			"[data-tutorial-target='food-preferences'] .preference-reviewed-options:first-of-type label:first-child",
+		expect(tutorialSteps.map((step) => step.targetId)).toEqual([
+			"ingredient-search",
+			"ingredient-barcode",
+			"ingredient-card",
+			"ingredient-actions",
+			"mix-ingredient-option",
+			"mix-goal-input",
+			"mix-result-chart",
+			"saved-recipe",
+			"food-preference-search",
+		]);
+		expect(
+			tutorialSteps
+				.filter((step) => step.revealId)
+				.map((step) => [step.targetId, step.revealId]),
+		).toEqual([
+			["mix-ingredient-option", "mix-add-ingredients"],
+			["mix-goal-input", "mix-goals"],
+			["mix-result-chart", "mix-nutrient-shape"],
+			["food-preference-search", "profile-allergens"],
 		]);
 		expect(tutorialSteps.at(-1)?.route).toBe("/profile/food-preferences");
 	});
@@ -49,9 +59,7 @@ describe("shouldAutomaticallyShowTutorial", () => {
 
 	it("does not automatically repeat after any current-version completion", () => {
 		expect(
-			shouldAutomaticallyShowTutorial(
-				preference({ do_not_show_again: true }),
-			),
+			shouldAutomaticallyShowTutorial(preference({ do_not_show_again: true })),
 		).toBe(false);
 	});
 
@@ -86,11 +94,7 @@ describe("writeTutorialCompletion", () => {
 		const now = new Date("2026-07-29T12:00:00.000Z");
 
 		expect(
-			await writeTutorialCompletion(
-				supabase as never,
-				"user-1",
-				now,
-			),
+			await writeTutorialCompletion(supabase as never, "user-1", now),
 		).toBe(true);
 		expect(upsert).toHaveBeenCalledWith(
 			{

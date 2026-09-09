@@ -65,10 +65,7 @@
 	);
 </script>
 
-<div
-	class="profile-food-preference-settings"
-	data-tutorial-target="food-preferences"
->
+<div class="profile-food-preference-settings">
 	{#if errorMessage}
 		<StatusMessage tone="danger" message={errorMessage} />
 	{:else if successMessage}
@@ -156,6 +153,9 @@
 					titleId={`profile-${groupKey}-title`}
 					badge={preferenceFormState.getGroupSummary(groupKey)}
 					surface="accent"
+					tutorialReveal={groupKey === "allergens"
+						? "profile-allergens"
+						: undefined}
 					open={preferenceFormState.openSections[groupKey]}
 					onOpenChange={(open) =>
 						preferenceFormState.setSectionOpen(groupKey, open)}
@@ -183,6 +183,9 @@
 						unresolvedValues={groupKey === "allergens"
 							? preferenceFormState.unresolvedAllergens
 							: preferenceFormState.unresolvedDietaryRestrictions}
+						tutorialTarget={groupKey === "allergens"
+							? "food-preference-search"
+							: undefined}
 						onAdd={(value) =>
 							preferenceFormState.addPreference(groupKey, value)}
 						onClear={() => preferenceFormState.clearPreferenceGroup(groupKey)}

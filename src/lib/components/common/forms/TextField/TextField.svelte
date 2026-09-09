@@ -21,6 +21,7 @@
 		multiline = false,
 		rows = 4,
 		labelVisibility = "visible",
+		tutorialTarget,
 		"aria-describedby": externalDescribedBy = undefined,
 		"aria-invalid": ariaInvalid = undefined,
 		oninput,
@@ -85,6 +86,7 @@
 				{name}
 				type={inputType}
 				class:text-field__input--with-visibility-toggle={type === "password"}
+				data-tutorial-target={tutorialTarget}
 				{placeholder}
 				{required}
 				{disabled}

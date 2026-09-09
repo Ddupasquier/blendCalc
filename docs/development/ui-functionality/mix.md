@@ -63,6 +63,9 @@ stored with stable section identifiers, never visible labels.
 - `Warnings`, `Suggested adjustments`, and `What is driving this shape` default closed.
 - Other established sections default open unless the account has saved another state.
 - Later open/closed choices persist across sessions.
+- Tutorial steps may temporarily reveal a named section so their direct target can be
+  measured after any saved reordering. That reveal restores the prior open state and
+  never saves over the account's section preference.
 - Empty conditional warning, suggestion, and contribution sections stay absent from the
   normal view.
 - A closed section occupies only the shared summary height and boundary. Body padding

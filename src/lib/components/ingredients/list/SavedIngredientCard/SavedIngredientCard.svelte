@@ -25,6 +25,8 @@
 		category,
 		warning = null,
 		provenanceOptions = [],
+		tutorialCardTarget,
+		tutorialActionsTarget,
 		onToggle,
 		onEnterSelection,
 		onPreview,
@@ -54,6 +56,7 @@
 	class:saved-ingredient-card--selection-mode={selectionMode}
 	class:saved-ingredient-card--warning={hasWarningFrame}
 	data-warning-tone={hasWarningFrame ? warningFrameTone : undefined}
+	data-tutorial-target={tutorialCardTarget}
 >
 	<IngredientCardMedia {food} />
 	{#if hasWarningFrame && warningFrameTone}
@@ -117,6 +120,7 @@
 					<CircleIconButton
 						class="ingredient-card-action-button"
 						label={`Open actions for ${food.description}`}
+						tutorialTarget={tutorialActionsTarget}
 						variant="soft"
 						size="small"
 						onclick={onActions}

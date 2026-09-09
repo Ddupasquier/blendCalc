@@ -143,6 +143,7 @@
 />
 
 <MixPanelSection
+	tutorialReveal="mix-add-ingredients"
 	class="ingredient-chooser"
 	ariaLabel="Add ingredients"
 	title="Add ingredients"
@@ -197,12 +198,12 @@
 				aria-label={activeListKey === MIX_STORAGE_KEYS.fridge
 					? "Mix fridge ingredients"
 					: "Mix shopping-list ingredients"}
-				data-tutorial-target="mix-ingredient-options"
 			>
-				{#each visibleItems as food (food.fdcId)}
+				{#each visibleItems as food, index (food.fdcId)}
 					<MixIngredientOption
 						{food}
 						selected={selectedFoodIds.includes(food.fdcId)}
+						tutorialTarget={index === 0 ? "mix-ingredient-option" : undefined}
 						onSelect={() => onToggleFood(food.fdcId)}
 					/>
 				{/each}

@@ -8,7 +8,8 @@
 	} from "$lib/utils/ingredients/ingredientListUi";
 	import type { MixIngredientOptionProps } from "./types";
 
-	let { food, selected, onSelect }: MixIngredientOptionProps = $props();
+	let { food, selected, tutorialTarget, onSelect }: MixIngredientOptionProps =
+		$props();
 	const warning = $derived(getPrimaryFoodWarning(food));
 	const warningFrameTone = $derived(getFoodWarningFrameTone(food));
 </script>
@@ -18,6 +19,7 @@
 	class:mix-ingredient-option--selected={selected}
 	class:mix-ingredient-option--warning={warningFrameTone !== null}
 	data-warning-tone={warningFrameTone ?? undefined}
+	data-tutorial-target={tutorialTarget}
 >
 	<IngredientCardMedia {food} />
 	{#if warningFrameTone}

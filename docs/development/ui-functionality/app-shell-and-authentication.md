@@ -108,6 +108,14 @@ welcome, and guided tutorial. Auth configuration and security details remain in
 - Keep copy short and task-focused. Explain that a goal percentage is not a health
   score and that available warning data can be incomplete.
 - `Previous` and `Next` navigate and focus the correct route target automatically.
+- Identify every step target by a stable semantic tutorial ID, not by its DOM position,
+  visible label, descendant order, or screen coordinates. A step may also name one
+  semantic disclosure prerequisite.
+- Before measuring a target inside a closed disclosure, open its named owner without
+  invoking the owner's persistence callback, wait for layout and disclosure motion to
+  settle, then scroll and measure the direct target. Restore the owner's prior state
+  when the step or tutorial closes; tutorial-driven reveals never overwrite saved
+  layout preferences.
 - While open, trap keyboard focus in the tutorial and prevent interaction or scrolling
   in the underlying application.
 - Support `Don't show again` and completion. Either choice stops automatic prompts for
@@ -117,4 +125,6 @@ welcome, and guided tutorial. Auth configuration and security details remain in
 - Keep actions visible while long tutorial copy scrolls internally.
 - Preserve the tour across its own route changes. If a target is unavailable, show a
   centered readable step instead of blocking the app.
+- Recalculate the spotlight from live target geometry after route changes, disclosure
+  motion, responsive resizing, and reordered content.
 - Honor reduced motion without changing the route, focus, or completion behavior.
