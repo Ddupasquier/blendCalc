@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">blendCalc</string>
+    <string name="title_activity_main">blendCalc</string>
+    <string name="package_name">food.blendcalc</string>
+    <string name="custom_url_scheme">food.blendcalc</string>
+</resources>

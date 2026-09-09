@@ -102,16 +102,17 @@ U.S. TTB label and accepts only explicit identity, ABV, package volume, and appr
 evidence. Its response is not cached in blendCalc, promoted to the canonical catalog,
 or exposed through blendCalcAPI v1 under the current source policy.
 
-## Future Native App
+## Native App
 
-The scanner UI already routes native Capacitor builds through
-`@capacitor/barcode-scanner`. When the native shell is created:
+The Capacitor iOS and Android shells are initialized, and scanner UI routes native
+builds through `@capacitor/barcode-scanner`. Both platforms declare camera access;
+Android uses the plugin-required minimum SDK 26. `mobile/web` is a local bundled
+bootstrap and the production configuration must not point a native webview at the
+hosted SvelteKit application.
 
-1. Install `@capacitor/cli`, `@capacitor/ios`, and `@capacitor/android`.
-2. Initialize Capacitor and add the iOS and Android platforms.
-3. Add the iOS camera usage description.
-4. Confirm Android camera permissions and the plugin's minimum SDK requirements.
-5. Test OAuth deep links and barcode scanning on physical devices.
+The next native client phase owns the authenticated app API and OAuth deep-link
+boundary. OAuth redirects, permission prompts, camera behavior, and live barcode scans
+must then pass on physical iOS and Android devices before release.
 
 The product lookup and custom-food review flow are platform-independent and do not need
 to be rewritten.

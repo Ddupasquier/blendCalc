@@ -8,10 +8,12 @@ export default defineConfig(
 	globalIgnores([
 		".svelte-kit/**",
 		".vercel/**",
+		"android/**",
 		"build/**",
 		"coverage/**",
 		"dist/**",
 		"docs/workspace/**",
+		"ios/**",
 		"node_modules/**",
 		"notes/**",
 		"playwright-report/**",
