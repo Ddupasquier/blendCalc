@@ -3,6 +3,7 @@ import {
 	assertHomogeneousProjectTicketBatch,
 	assertProjectTicketCanStart,
 	assertReadyForMainBatchEligible,
+	assertShipReadyBatchEligible,
 	assertStageBatchEligible,
 	assertTicketNeutralBatchEvidence,
 	approvedProjectTicketNextAction,
@@ -167,5 +168,39 @@ describe("Project ticket lifecycle classification", () => {
 				"DEV-001 passed and should ship with DEV-002.",
 			),
 		).toThrow("ticket-neutral");
+	});
+
+	it("accepts one atomic Ship transition after the exact staging tree passes", () => {
+		for (const status of ["In Progress", "User Verification", "Approved"]) {
+			expect(() =>
+				assertShipReadyBatchEligible(
+					[ticket({ status })],
+					"The exact staging tree passed every required gate.",
+				),
+			).not.toThrow();
+		}
+	});
+
+	it("keeps verification-only and completed work out of the Ship fast lane", () => {
+		expect(() =>
+			assertShipReadyBatchEligible(
+				[
+					ticket({
+						taskId: "QA-069-001",
+						workType: "QA",
+						status: "User Verification",
+						branch: "staging",
+						changeReference: "Staging review",
+					}),
+				],
+				"The exact observation passed.",
+			),
+		).toThrow("cannot use the implementation Ship fast lane");
+		expect(() =>
+			assertShipReadyBatchEligible(
+				[ticket({ status: "Done", branch: "main" })],
+				"The exact release passed.",
+			),
+		).toThrow("cannot re-enter the Ship fast lane");
 	});
 });

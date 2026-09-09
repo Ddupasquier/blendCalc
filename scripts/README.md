@@ -145,10 +145,14 @@ not a reason to rerun every layer after a small change.
 
 A successful local Release Check stores its receipt under the repository's shared Git
 directory so every local branch can validate the same immutable tree. The routine
-release path instead runs the complete hosted checks once on the exact `mock-staging`
-or `staging` candidate and uses `verify:promotion -- --against <candidate-ref>` for
-unchanged promotions. Promotion checks never reuse results across changed, dirty,
-stale, missing, or differently executed candidates.
+release path runs the complete hosted checks once on the exact assembled candidate. A
+successful manually dispatched `Verify (full)` run may be reused by an identical staging
+tree; otherwise `mock-staging` or `staging` supplies the complete run.
+`verify:promotion -- --against <candidate-ref>` validates unchanged promotions.
+Promotion checks never reuse results across changed, dirty, stale, missing, failed, or
+differently executed candidates. The short security and repository-policy preflight
+finishes before expensive browser jobs begin, and the scheduled Dependency Audit reports
+new moderate-or-higher lockfile advisories before release day.
 `npm run verify:promotion -- --force-full` bypasses reuse and runs the full Release
 Check.
 

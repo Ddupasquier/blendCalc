@@ -141,6 +141,9 @@ describe("Playwright browser-testing architecture", () => {
 		const hostedAuthWorkflow = readSource(
 			".github/workflows/hosted-auth-verification.yml",
 		);
+		const dependencyAuditWorkflow = readSource(
+			".github/workflows/dependency-audit.yml",
+		);
 		const viteConfig = readSource("vite.config.ts");
 
 		expect(verificationWorkflow).toContain("matrix:");
@@ -153,7 +156,7 @@ describe("Playwright browser-testing architecture", () => {
 		]) {
 			expect(verificationWorkflow).toContain(`project: ${project}`);
 		}
-		expect(verificationWorkflow).toContain("npm audit --audit-level=high");
+		expect(verificationWorkflow).toContain("npm audit --audit-level=moderate");
 		expect(verificationWorkflow).toContain(
 			"PUBLIC_SUPABASE_URL: http://127.0.0.1:54321",
 		);
@@ -165,6 +168,17 @@ describe("Playwright browser-testing architecture", () => {
 		expect(verificationWorkflow).toContain("npm run test:affected");
 		expect(verificationWorkflow).toContain("npm run build");
 		expect(verificationWorkflow).toContain("name: Choose Verification Scope");
+		expect(verificationWorkflow).toContain(
+			"name: Security And Repository Policy Preflight",
+		);
+		expect(verificationWorkflow).toContain(
+			"Audit dependencies before expensive browser work",
+		);
+		expect(verificationWorkflow).toContain("workflow_dispatch:");
+		expect(verificationWorkflow).toContain("Verify (full)");
+		expect(verificationWorkflow).toContain(
+			"Reusing the successful full verification for identical candidate",
+		);
 		expect(verificationWorkflow).toContain("name: Browser Matrix");
 		expect(verificationWorkflow).toContain("name: Affected Browser Flows");
 		expect(verificationWorkflow).not.toContain("needs: source");
@@ -184,7 +198,7 @@ describe("Playwright browser-testing architecture", () => {
 			"verify_release_promotion.mjs --against origin/staging",
 		);
 		expect(verificationWorkflow).toContain(
-			"No identical verified mock-staging candidate; running the full staging checks.",
+			"No identical fully verified candidate; running the full staging checks.",
 		);
 		expect(verificationWorkflow).toContain(
 			"PLAYWRIGHT_ENFORCE_DURATION_BUDGETS: true",
@@ -196,6 +210,7 @@ describe("Playwright browser-testing architecture", () => {
 			nightlyWorkflow,
 			databaseWorkflow,
 			hostedAuthWorkflow,
+			dependencyAuditWorkflow,
 		]) {
 			expect(workflow).not.toMatch(/actions\/(?:checkout|setup-node)@v[1-4]\b/);
 		}
@@ -221,6 +236,10 @@ describe("Playwright browser-testing architecture", () => {
 		);
 		expect(hostedAuthWorkflow).toContain("vars.BLENDCALC_HOSTED_SUPABASE_URL");
 		expect(hostedAuthWorkflow).not.toContain("secrets.");
+		expect(dependencyAuditWorkflow).toContain('cron: "15 10 * * *"');
+		expect(dependencyAuditWorkflow).toContain(
+			"npm audit --package-lock-only --ignore-scripts --audit-level=moderate",
+		);
 		expect(viteConfig).toContain("maxWorkers: 4");
 	});
 

@@ -78,6 +78,20 @@ describe("development rules documentation", () => {
 		);
 	});
 
+	it("defines a fast owner command lifecycle without weakening release gates", () => {
+		expect(rules).toContain("Owner command fast lane:");
+		expect(rules).toContain("**`Go`**");
+		expect(rules).toContain("**`Ship`**");
+		expect(rules).toContain("`ship-ready-batch`");
+		expect(rules).toContain(
+			"Run at most one complete hosted\nbrowser matrix for each unique release tree",
+		);
+		expect(rules).toContain(
+			"A mandatory schema-first database\nexpansion and its dependent application remain separate release trees",
+		);
+		expect(rules).not.toContain("proposed-commit ledger");
+	});
+
 	it("keeps every individual rule available in the document outline", () => {
 		const outlinedRuleCount = [
 			...rules.matchAll(

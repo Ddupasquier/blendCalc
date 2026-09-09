@@ -987,8 +987,17 @@ without going through `staging`, stop and call that out before merging.
 **19.** Do not automatically add changes to `staging`. Work must stay on the active
 feature branch until explicitly approved for staging.
 
-**20.** Do not auto commit. Show the diff and get explicit approval before committing or
-pushing changes.
+**20.** Do not commit or publish changed content without delivery authorization. The
+owner saying `Ship`, `ship it`, `send it`, or an unambiguous equivalent for the exact
+active ticket or named batch is explicit authorization to create its coherent commits,
+push its changed-content branches, integrate and verify staging, promote and deploy the
+unchanged approved release, apply any required guarded schema-first migration, and
+complete its Project tickets when every gate passes. Do not stop for repeated approval
+at each mechanical boundary. This authorization remains limited to the named work and
+small separately ticketed corrections required to satisfy its release gates; it never
+absorbs unrelated work or permits bypassing a failure. `Go`, `do it`, and equivalent
+implementation instructions authorize implementation and verification, but not release,
+unless the instruction also clearly requests delivery.
 
 **20a.** Every commit must represent one coherent responsibility and use a meaningful,
 specific message that states the delivered outcome. Prefer the established
@@ -1005,11 +1014,12 @@ absorb another person's or another task's changes merely to make the tree clean.
 commits may retain their generated merge description when it clearly names the branches
 or responsibility being integrated.
 
-**20b.** Before making multiple explicitly authorized commits, present the exact proposed
-commit messages grouped by branch, feature, intention, and execution order. Identify
-each coherent responsibility and its required verification. Reconcile the list with the
-real diff and branch immediately before staging; a proposed list is planning context,
-not permission to commit, push, merge, or deploy.
+**20b.** Before making multiple authorized commits, reconcile the real diff, branch,
+ticket ownership, exact commit messages, execution order, and required verification.
+Keep that packaging in Git and the owning tickets; do not maintain a parallel proposed-
+commit ledger or add a user round trip merely to narrate already-authorized mechanics.
+Surface the proposed split only when ownership is ambiguous, a new material risk appears,
+or the requested grouping would violate a release or data boundary.
 
 **21.** Verify meaningful changes with `npm run check`, focused tests, and builds when
 scope warrants it.
@@ -1047,12 +1057,18 @@ single branches, assembled parent branches, and ordinary release batches. Use
 `mock-staging` only when an unusual, dangerous, or conflict-prone merge needs a
 disposable integration checkpoint before it can safely touch `staging`; size or ticket
 count alone is not sufficient. Source and browser jobs may run
-concurrently because their environments are isolated. Reuse a candidate result only
-when the next promotion preserves the identical Git tree and passes the maintained
-Promotion Check; any dirty tree, content mismatch, or failed check requires a fresh
-complete candidate run. A local `npm run verify:release` remains the fallback for an
-unavailable hosted run, an unpublished candidate, or an explicitly requested local
-full check.
+concurrently because their environments are isolated. Run the security and repository-
+policy preflight before expensive browser fan-out. Run at most one complete hosted
+browser matrix for each unique release tree: either dispatch the complete Verify workflow
+on the exact assembled pre-staging candidate and reuse that successful result when
+staging has the identical tree, or let staging supply the one complete run. Reuse a
+candidate result only when immutable Git-tree identity and the maintained successful
+full-run evidence both pass; any dirty tree, content mismatch, missing evidence, or
+failed check requires a fresh complete candidate run. Assemble all compatible approved
+responsibilities before creating that candidate. A mandatory schema-first database
+expansion and its dependent application remain separate release trees. A local
+`npm run verify:release` remains the fallback for an unavailable hosted run, an
+unpublished candidate, or an explicitly requested local full check.
 Promote `staging` to `main` only
 for an explicitly approved release and never skip the staging integration boundary.
 Push and verify every updated branch, then return the local
@@ -2251,11 +2267,30 @@ status before the first Project mutation, then run lifecycle doctor immediately 
 
 ##### Required Project Management Flow
 
+Owner command fast lane:
+
+- **`Go`** performs one fresh Project recovery/doctor pass, selects the user's named
+  ticket or the highest-priority eligible Ready item, creates and publishes its focused
+  branch, atomically records `In Progress`, implements the outcome, and runs affected
+  verification. It does not request confirmation between those mechanical steps.
+- **`Ship`** carries the exact named implementation or homogeneous batch through the
+  full authorization in Rule 20. After the exact staging tree passes, use one
+  `ship-ready-batch` mutation to record the durable Approved-on-staging fact instead of
+  serially writing `In Staging`, `Ready for Main`, and `Approved`. After the exact main
+  tree, deployment, migration when applicable, and smoke checks pass, use one
+  `complete-batch` mutation. Verification-only and operational/manual tickets never use
+  this implementation fast lane.
+- Update the Project at durable outcome boundaries, not after every shell command. One
+  pull/doctor at pickup and one fresh pull/doctor at handoff or closeout are sufficient
+  while state remains unchanged; rerun immediately after an error, external edit, or
+  lifecycle mutation that is not part of an atomic helper.
+
 Use this sequence for every work session and every ticket. Status is an operational
 fact, not a label to repair after work has started.
 
-1. **Recover and validate the queue.** Pull the private Project, run `doctor`, and use
-   `resume` only after validation passes. Reconcile an externally changed status before
+1. **Recover and validate the queue.** Pull the private Project and run `doctor` once;
+   the maintained `go` helper performs both before pickup. Use `resume` only after
+   validation passes. Reconcile an externally changed status before
    selecting work. Stop on stale ownership, an invalid lifecycle combination, a missing
    active branch, or an uninspectable working tree.
 2. **Triage Inbox before pickup.** Compare each Work Queue Inbox item with the current
@@ -2296,10 +2331,11 @@ fact, not a label to repair after work has started.
 8. **Deliver according to ownership.** Verification-only work already proven on `main`
    goes directly to `Done`; if its behavior is not yet in `main`, it remains approved
    and links to the implementation owner. Implementation delivery alone follows
-   approved feature commit and push, staging integration, integrated verification,
-   `Ready for Main`, separate production-promotion approval, main promotion,
-   post-merge verification, and `Done`. Operational/manual work closes only from its
-   own external or observational evidence.
+   authorized feature commit and push, staging integration, integrated verification,
+   the atomic Approved-on-staging Ship transition, main promotion, post-merge
+   verification, and `Done`. A scoped `Ship` instruction is the production-promotion
+   approval; do not ask for it again. Operational/manual work closes only from its own
+   external or observational evidence.
 9. **Reconcile before selecting the next ticket.** Pull the Project and run `doctor`
    after lifecycle mutations and before moving on. Recheck Inbox and Ready items whose
    prerequisites changed during the completed work. Update the active recovery context
