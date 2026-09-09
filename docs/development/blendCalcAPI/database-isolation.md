@@ -6,6 +6,15 @@ blendCalcAPI uses a separate Supabase project as a server-only publication read 
 This separation reduces the data and privileges reachable from the API runtime without
 creating a second canonical catalog or copying private application records.
 
+## Quick Navigation
+
+| Need                                  | Sections                                                                                          |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Understand stored data ownership      | [Ownership Boundary](#ownership-boundary) and [Publication Generations](#publication-generations) |
+| Review runtime and privacy boundaries | [Runtime Boundary](#runtime-boundary) and [Safe Request Logs](#safe-request-logs)                 |
+| Verify release readiness              | [Cutover Gates](#cutover-gates)                                                                   |
+| Operate and monitor the read model    | [Operational Visibility](#operational-visibility)                                                 |
+
 ## Ownership Boundary
 
 The blendCalc application project remains authoritative for:
@@ -126,7 +135,8 @@ The isolated project owns service-role-only operational views so monitoring cann
 become a dependency of the public read path. `api_request_operations_dashboard`
 reports request volume, p50/p95 latency, database time, result counts, client/server
 errors, rate limits, and conditional-request cache effectiveness over 24-hour, 7-day,
-and 35-day windows. `api_shadow_parity_dashboard` reports source/target comparison
+and 35-day windows; alert evaluation also uses 15-minute and one-hour windows plus an
+explicit database-failure count. `api_shadow_parity_dashboard` reports source/target comparison
 volume, failures, and p95 timings. `publication_generation_operations_dashboard` and
 `publication_operations_dashboard` report generation state and age, expected and
 target counts, source and verified-target hashes, sync duration and failures, product
@@ -141,3 +151,11 @@ Operators can inspect the views in the blendCalcAPI Supabase SQL Editor or call 
 server-only `GET /api/internal/blendCalcAPI/operations` route with
 `Authorization: Bearer <CRON_SECRET>`. The route returns `private, no-store` JSON and
 uses the same private operations credential as publication synchronization.
+
+`api_shadow_parity_alert_dashboard` and `api_key_usage_operations_dashboard` expose
+only recent aggregate counts. The latter never returns a key or actor hash. The
+protected alert route combines those isolated metrics with service-only counts for
+pending catalog submissions and intake requests stuck in `processing`, evaluates the
+maintained thresholds, and sends one Resend summary to the configured owner list. This
+monitor remains outside the API read path. A missing dashboard, alert credential, or
+email delivery fails the scheduled check instead of reporting a false healthy state.
