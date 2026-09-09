@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+	getLocalQaBrowserRateLimitClientAddress,
 	getLocalQaSignInCredentials,
 	getLocalQaSignInPageData,
 } from "../../../../src/lib/server/auth/localQaSignIn.server";
@@ -99,6 +100,33 @@ describe("local QA sign-in boundary", () => {
 			getLocalQaSignInCredentials("moderator", {
 				...localRuntime,
 				appUrl: new URL("https://staging.example.com/auth"),
+			}),
+		).toBeNull();
+	});
+
+	it("partitions local browser quota only for a maintained QA worker and project", () => {
+		expect(
+			getLocalQaBrowserRateLimitClientAddress(
+				"browserWorker2|desktop-webkit",
+				localRuntime,
+			),
+		).toBe("local-qa-browser:desktop-webkit:browserWorker2");
+		expect(
+			getLocalQaBrowserRateLimitClientAddress(
+				"unknown-worker|desktop-webkit",
+				localRuntime,
+			),
+		).toBeNull();
+		expect(
+			getLocalQaBrowserRateLimitClientAddress(
+				"browserWorker2|unknown-project",
+				localRuntime,
+			),
+		).toBeNull();
+		expect(
+			getLocalQaBrowserRateLimitClientAddress("browserWorker2|desktop-webkit", {
+				...localRuntime,
+				appUrl: new URL("https://www.blendcalc.food/auth"),
 			}),
 		).toBeNull();
 	});

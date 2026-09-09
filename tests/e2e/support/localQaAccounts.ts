@@ -4,8 +4,7 @@ const defaultWorkerEmails = [
 	"qa-browser-3@blendcalc.local",
 ] as const;
 
-const configuredWorkerEmails = process.env.PLAYWRIGHT_QA_EMAILS
-	?.split(",")
+const configuredWorkerEmails = process.env.PLAYWRIGHT_QA_EMAILS?.split(",")
 	.map((email) => email.trim())
 	.filter(Boolean);
 
@@ -18,6 +17,11 @@ const workerEmails =
 
 export const localQaAccountCount = workerEmails.length;
 
+export const getLocalQaBrowserRateLimitPartition = (
+	projectName: string,
+	parallelWorkerIndex: number,
+) => `browserWorker${parallelWorkerIndex + 1}|${projectName}`;
+
 export const getLocalQaAccountForWorker = (parallelWorkerIndex: number) => {
 	const email = workerEmails[parallelWorkerIndex];
 	if (!email) {
@@ -29,8 +33,7 @@ export const getLocalQaAccountForWorker = (parallelWorkerIndex: number) => {
 
 	return {
 		email,
-		password:
-			process.env.PLAYWRIGHT_QA_PASSWORD ?? "BlendCalc-Local-QA-2026!",
+		password: process.env.PLAYWRIGHT_QA_PASSWORD ?? "BlendCalc-Local-QA-2026!",
 	};
 };
 

@@ -71,7 +71,11 @@ Workers never share an account or browser state. Tests that mutate durable data 
 still restore it before finishing because later files may reuse that worker's account.
 The local Auth emulator permits a larger sign-in burst so repeated full matrices do not
 trip a five-minute test-only rate limit; hosted Auth keeps its independently configured
-and audited production limits.
+and audited production limits. Requests from each Playwright project and worker on the
+exact isolated local test runtime also use a separate app-level quota partition tied to
+its validated maintained QA persona. Every endpoint retains its configured bounded
+quota, fixture sign-in still performs real password authentication, and localhost
+development, previews, and production keep the unpartitioned client and account limits.
 The complete remote matrix runs each browser project in a separate job with its own
 local Supabase stack. See [Testing Strategy: Parallelism](testing.md#parallelism).
 

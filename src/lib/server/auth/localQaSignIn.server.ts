@@ -5,6 +5,13 @@ import { Buffer } from "node:buffer";
 const LOCAL_TEST_APP_PORT = "5174";
 const LOCAL_TEST_SUPABASE_PORT = "54321";
 const LOCAL_HOSTNAMES = new Set(["127.0.0.1", "localhost", "[::1]", "::1"]);
+const LOCAL_QA_BROWSER_PROJECTS = new Set([
+	"desktop-chromium",
+	"desktop-firefox",
+	"desktop-webkit",
+	"mobile-chromium",
+	"mobile-webkit",
+]);
 
 type LocalQaRuntimeInput = {
 	appUrl: URL;
@@ -116,4 +123,24 @@ export const getLocalQaSignInCredentials = (
 	const account = runtime.accounts.find(({ key }) => key === accountKey);
 	if (!account) return null;
 	return { email: account.email, password: runtime.password };
+};
+
+export const getLocalQaBrowserRateLimitClientAddress = (
+	browserPartition: string | null,
+	input: LocalQaRuntimeInput,
+) => {
+	const runtime = resolveRuntime(input);
+	if (!runtime.enabled) return null;
+	const [accountKey, projectName, ...unexpectedParts] =
+		browserPartition?.split("|") ?? [];
+	if (
+		unexpectedParts.length > 0 ||
+		!accountKey ||
+		!projectName ||
+		!LOCAL_QA_BROWSER_PROJECTS.has(projectName)
+	) {
+		return null;
+	}
+	const account = runtime.accounts.find(({ key }) => key === accountKey);
+	return account ? `local-qa-browser:${projectName}:${account.key}` : null;
 };
