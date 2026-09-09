@@ -14,6 +14,7 @@ export type Database = {
 					cache_not_modified: boolean;
 					cache_validation: boolean;
 					database_duration_ms: number | null;
+					database_failed: boolean;
 					id: number;
 					observed_at: string;
 					operation: string;
@@ -26,6 +27,7 @@ export type Database = {
 					cache_not_modified?: boolean;
 					cache_validation?: boolean;
 					database_duration_ms?: number | null;
+					database_failed?: boolean;
 					id?: never;
 					observed_at?: string;
 					operation: string;
@@ -38,6 +40,7 @@ export type Database = {
 					cache_not_modified?: boolean;
 					cache_validation?: boolean;
 					database_duration_ms?: number | null;
+					database_failed?: boolean;
 					id?: never;
 					observed_at?: string;
 					operation?: string;
@@ -708,6 +711,18 @@ export type Database = {
 					},
 				];
 			};
+			api_key_usage_operations_dashboard: {
+				Row: {
+					active_key_count: number | null;
+					denied_count: number | null;
+					max_denied_per_key: number | null;
+					max_requests_per_key: number | null;
+					rate_limited_count: number | null;
+					request_count: number | null;
+					window_name: string | null;
+				};
+				Relationships: [];
+			};
 			api_request_operations_dashboard: {
 				Row: {
 					average_result_count: number | null;
@@ -715,6 +730,7 @@ export type Database = {
 					cache_not_modified_count: number | null;
 					cache_validation_count: number | null;
 					client_error_count: number | null;
+					database_failure_count: number | null;
 					last_observed_at: string | null;
 					max_database_duration_ms: number | null;
 					max_result_count: number | null;
@@ -729,6 +745,17 @@ export type Database = {
 					request_count: number | null;
 					server_error_count: number | null;
 					total_result_count: number | null;
+					window_name: string | null;
+				};
+				Relationships: [];
+			};
+			api_shadow_parity_alert_dashboard: {
+				Row: {
+					comparison_count: number | null;
+					failure_count: number | null;
+					last_failure_at: string | null;
+					last_observed_at: string | null;
+					operation: string | null;
 					window_name: string | null;
 				};
 				Relationships: [];
@@ -866,6 +893,20 @@ export type Database = {
 					p_cache_not_modified?: boolean;
 					p_cache_validation?: boolean;
 					p_database_duration_ms?: number;
+					p_operation: string;
+					p_read_mode: string;
+					p_response_status: number;
+					p_result_count?: number;
+					p_total_duration_ms: number;
+				};
+				Returns: undefined;
+			};
+			record_api_request_observation_v2: {
+				Args: {
+					p_cache_not_modified?: boolean;
+					p_cache_validation?: boolean;
+					p_database_duration_ms?: number;
+					p_database_failed?: boolean;
 					p_operation: string;
 					p_read_mode: string;
 					p_response_status: number;
