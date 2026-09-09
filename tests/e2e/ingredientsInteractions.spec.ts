@@ -503,6 +503,34 @@ test(
 			const bounds = await scanAction.boundingBox();
 			expect(bounds).not.toBeNull();
 			expect(bounds!.height).toBeGreaterThanOrEqual(44);
+			const scanContentBounds = await scanAction.evaluate((button) => {
+				const label = button.querySelector(".barcode-scan-button__label");
+				const icon = button.querySelector(".barcode-scan-button__icon");
+				if (!(label instanceof HTMLElement) || !(icon instanceof HTMLElement)) {
+					throw new Error(
+						"The labeled scan action is missing its icon or label.",
+					);
+				}
+				const buttonBounds = button.getBoundingClientRect();
+				const labelBounds = label.getBoundingClientRect();
+				const iconBounds = icon.getBoundingClientRect();
+				return {
+					buttonLeft: buttonBounds.left,
+					buttonRight: buttonBounds.right,
+					iconWidth: iconBounds.width,
+					labelLeft: labelBounds.left,
+					labelRight: labelBounds.right,
+					hasHorizontalOverflow: button.scrollWidth > button.clientWidth,
+				};
+			});
+			expect(scanContentBounds.hasHorizontalOverflow).toBe(false);
+			expect(scanContentBounds.iconWidth).toBeLessThanOrEqual(24);
+			expect(scanContentBounds.labelLeft).toBeGreaterThanOrEqual(
+				scanContentBounds.buttonLeft,
+			);
+			expect(scanContentBounds.labelRight).toBeLessThanOrEqual(
+				scanContentBounds.buttonRight,
+			);
 			const centeredContent = await emptyState.evaluate((element) => {
 				const containerBounds = element.getBoundingClientRect();
 				const visibleChildren = Array.from(element.children)
