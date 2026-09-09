@@ -1,11 +1,20 @@
 @use "../../../../../styles/variables" as *;
 
+$empty-scan-emphasis-duration: 1.4s;
+
 .ingredient-empty-state {
 	display: grid;
+	flex: 1 1 auto;
+	grid-auto-rows: max-content;
+	align-content: safe center;
 	justify-items: center;
+	box-sizing: border-box;
 	gap: $app-gap-sm;
-	min-height: 42vh;
-	padding: calc($app-shell-header-height) $app-gap-md;
+	width: 100%;
+	min-width: 0;
+	min-height: 0;
+	padding: $app-gap-lg $app-gap-md;
+	overflow-y: auto;
 	color: $app-shell-text-muted;
 	text-align: center;
 }
@@ -29,6 +38,57 @@ p {
 	line-height: $app-line-height-ui;
 }
 
+.ingredient-empty-state__scan {
+	position: relative;
+	margin-top: $app-gap-xs;
+}
+
+.ingredient-empty-state__scan--emphasized :global(.barcode-scan-button) {
+	animation: empty-scan-emphasis $empty-scan-emphasis-duration ease-out 1;
+}
+
+.ingredient-empty-state__scan--emphasized :global(.barcode-scan-button::after) {
+	position: absolute;
+	inset: -0.35rem;
+	content: "";
+	pointer-events: none;
+	border: 2px solid $app-shell-accent-primary;
+	border-radius: calc($app-shell-radius-card + 0.35rem);
+	animation: empty-scan-emphasis-ring $empty-scan-emphasis-duration ease-out 1;
+}
+
 :global(.ingredient-empty-state__delight) {
 	max-width: 22rem;
+}
+
+@keyframes empty-scan-emphasis {
+	0%,
+	100% {
+		transform: scale(1);
+	}
+	42% {
+		transform: scale(1.035);
+	}
+}
+
+@keyframes empty-scan-emphasis-ring {
+	0% {
+		opacity: 0;
+		transform: scale(0.94);
+	}
+	35% {
+		opacity: 0.72;
+	}
+	100% {
+		opacity: 0;
+		transform: scale(1.12);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.ingredient-empty-state__scan--emphasized :global(.barcode-scan-button),
+	.ingredient-empty-state__scan--emphasized
+		:global(.barcode-scan-button::after) {
+		animation: none;
+	}
 }

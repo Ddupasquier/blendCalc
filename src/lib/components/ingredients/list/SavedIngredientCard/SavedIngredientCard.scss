@@ -96,6 +96,12 @@ $selection-border-color: color-mix(
 	z-index: 2;
 }
 
+.saved-ingredient-card :global(.two-step-confirmation__message) {
+	justify-self: end;
+	inline-size: fit-content;
+	max-inline-size: calc(100% - var(--ingredient-card-copy-start-offset));
+}
+
 @media (max-width: $app-breakpoint-xs) {
 	.saved-ingredient-card {
 		grid-template-columns: minmax(0, 1fr) auto auto;

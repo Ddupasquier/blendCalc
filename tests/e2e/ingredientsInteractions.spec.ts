@@ -1,6 +1,7 @@
 import {
 	expect,
 	expectCompactHeaderHidesAndRevealsWithScroll,
+	signInLocalQaAccount,
 	test,
 	waitForAppReady,
 } from "./support/browserTest";
@@ -467,6 +468,122 @@ test("Ingredients exposes one page-level manual-entry action without a duplicate
 	await manualEntryAction.click();
 	await expect(page).toHaveURL(/\/ingredients\/fridge\/manual-entry$/);
 });
+
+test(
+	"empty Fridge and Shopping views keep a prominent, usable scan action",
+	{ tag: "@mobile" },
+	async ({ page }, testInfo) => {
+		test.skip(
+			testInfo.project.name !== "desktop-chromium",
+			"One deterministic Chromium project owns the empty-list state matrix.",
+		);
+
+		await signInLocalQaAccount({
+			page,
+			email: "qa-empty@blendcalc.local",
+			nextPath: "/ingredients/fridge",
+		});
+		await page.evaluate(() =>
+			localStorage.removeItem("blendcalc:ingredients:empty-scan-emphasis-seen"),
+		);
+		await page.reload();
+		await waitForAppReady(page);
+
+		for (const viewport of [
+			{ width: 390, height: 844 },
+			{ width: 1280, height: 800 },
+		]) {
+			await page.setViewportSize(viewport);
+			const emptyState = page.locator(".ingredient-empty-state");
+			const scanAction = emptyState.getByRole("button", {
+				name: "Scan barcode",
+			});
+			await expect(scanAction).toBeVisible();
+			await expect(scanAction).toContainText("Scan a barcode");
+			const bounds = await scanAction.boundingBox();
+			expect(bounds).not.toBeNull();
+			expect(bounds!.height).toBeGreaterThanOrEqual(44);
+			const scanContentBounds = await scanAction.evaluate((button) => {
+				const label = button.querySelector(".barcode-scan-button__label");
+				const icon = button.querySelector(".barcode-scan-button__icon");
+				if (!(label instanceof HTMLElement) || !(icon instanceof HTMLElement)) {
+					throw new Error(
+						"The labeled scan action is missing its icon or label.",
+					);
+				}
+				const buttonBounds = button.getBoundingClientRect();
+				const labelBounds = label.getBoundingClientRect();
+				const iconBounds = icon.getBoundingClientRect();
+				return {
+					buttonLeft: buttonBounds.left,
+					buttonRight: buttonBounds.right,
+					iconWidth: iconBounds.width,
+					labelLeft: labelBounds.left,
+					labelRight: labelBounds.right,
+				};
+			});
+			expect(scanContentBounds.iconWidth).toBeLessThanOrEqual(24);
+			expect(scanContentBounds.labelLeft).toBeGreaterThanOrEqual(
+				scanContentBounds.buttonLeft,
+			);
+			expect(scanContentBounds.labelRight).toBeLessThanOrEqual(
+				scanContentBounds.buttonRight,
+			);
+			const centeredContent = await emptyState.evaluate((element) => {
+				const containerBounds = element.getBoundingClientRect();
+				const visibleChildren = Array.from(element.children)
+					.map((child) => child.getBoundingClientRect())
+					.filter((childBounds) => childBounds.height > 0);
+				const contentTop = Math.min(
+					...visibleChildren.map((childBounds) => childBounds.top),
+				);
+				const contentBottom = Math.max(
+					...visibleChildren.map((childBounds) => childBounds.bottom),
+				);
+				return {
+					containerCenter: containerBounds.top + containerBounds.height / 2,
+					contentCenter: contentTop + (contentBottom - contentTop) / 2,
+				};
+			});
+			expect(
+				Math.abs(
+					centeredContent.containerCenter - centeredContent.contentCenter,
+				),
+			).toBeLessThanOrEqual(8);
+			expect(
+				await page.evaluate(() => document.documentElement.scrollWidth),
+			).toBeLessThanOrEqual(viewport.width);
+		}
+
+		const emptyScan = page
+			.locator(".ingredient-empty-state")
+			.getByRole("button", { name: "Scan barcode" });
+		await emptyScan.click();
+		await expect(page).toHaveURL(/\/ingredients\/fridge\/barcode-scanner$/);
+		await expect(
+			page.getByRole("dialog", { name: "Scan Barcode" }),
+		).toBeVisible();
+		await page.getByRole("button", { name: "Close barcode scanner" }).click();
+		await page.getByRole("button", { name: "Close sheet" }).click();
+
+		await page.reload();
+		await waitForAppReady(page);
+		await expect(page.locator(".ingredient-empty-state__scan")).toHaveAttribute(
+			"data-scan-emphasis",
+			"settled",
+		);
+
+		await page.getByRole("tab", { name: /Shopping List/ }).click();
+		await expect(
+			page.getByRole("heading", { name: "Your shopping list is empty" }),
+		).toBeVisible();
+		await expect(
+			page
+				.locator(".ingredient-empty-state")
+				.getByRole("button", { name: "Scan barcode" }),
+		).toBeVisible();
+	},
+);
 
 test("Ingredients keeps Filters level with Manual Entry across the compact breakpoint", async ({
 	page,
