@@ -24,6 +24,88 @@ const keyboardCases: IngredientDeletionKeyboardCase[] = [
 	},
 ];
 
+test(
+	"the inline delete confirmation preserves the right edge while revealing the product image",
+	{ tag: "@mobile" },
+	async ({ page }, testInfo) => {
+		test.skip(
+			!["desktop-chromium", "mobile-chromium"].includes(testInfo.project.name),
+			"Deterministic Chromium projects own the responsive confirmation geometry matrix.",
+		);
+
+		const scenario = testInfo.project.name.startsWith("mobile-")
+			? {
+					viewport: { width: 390, height: 844 },
+					theme: "light" as const,
+				}
+			: {
+					viewport: { width: 1280, height: 800 },
+					theme: "dark" as const,
+				};
+		for (const { viewport, theme } of [scenario]) {
+			await page.setViewportSize(viewport);
+			await page.goto("/ingredients/fridge");
+			await waitForAppReady(page);
+			await page.evaluate((selectedTheme) => {
+				document.documentElement.dataset.theme = selectedTheme;
+			}, theme);
+
+			const listItems = page.locator("li[data-food-id]");
+			expect(await listItems.count()).toBeGreaterThan(0);
+			const card = listItems.first().locator(".saved-ingredient-card");
+			const foodName = await card.locator("strong").innerText();
+			await card
+				.getByRole("button", {
+					name: `Remove ${foodName}`,
+					exact: true,
+				})
+				.click();
+
+			const message = card.getByRole("status");
+			await expect(message).toBeVisible();
+			const [cardBounds, mediaBounds, messageBounds] = await Promise.all([
+				card.boundingBox(),
+				card.locator(".ingredient-card-media-lane").boundingBox(),
+				message.boundingBox(),
+			]);
+			expect(cardBounds).not.toBeNull();
+			expect(mediaBounds).not.toBeNull();
+			expect(messageBounds).not.toBeNull();
+
+			const messageRight = messageBounds!.x + messageBounds!.width;
+			const cardRight = cardBounds!.x + cardBounds!.width;
+			const intrinsicMessageSizing = await message.evaluate((element) => {
+				const styles = window.getComputedStyle(element);
+				const textRange = document.createRange();
+				textRange.selectNodeContents(element);
+				return {
+					actualWidth: element.getBoundingClientRect().width,
+					contentWidth: textRange.getBoundingClientRect().width,
+					paddingWidth:
+						Number.parseFloat(styles.paddingInlineStart) +
+						Number.parseFloat(styles.paddingInlineEnd),
+				};
+			});
+			expect(cardRight - messageRight).toBeGreaterThanOrEqual(8);
+			expect(cardRight - messageRight).toBeLessThanOrEqual(24);
+			expect(
+				Math.abs(
+					intrinsicMessageSizing.actualWidth -
+						(intrinsicMessageSizing.contentWidth +
+							intrinsicMessageSizing.paddingWidth),
+				),
+			).toBeLessThanOrEqual(2);
+			expect(messageBounds!.x).toBeGreaterThan(
+				mediaBounds!.x + mediaBounds!.width * 0.45,
+			);
+			expect(messageBounds!.width).toBeLessThan(cardBounds!.width * 0.8);
+			expect(
+				await page.evaluate(() => document.documentElement.scrollWidth),
+			).toBeLessThanOrEqual(viewport.width);
+		}
+	},
+);
+
 const readSavedIngredientRecord = async (
 	parallelWorkerIndex: number,
 	listType: IngredientDeletionKeyboardCase["listType"],

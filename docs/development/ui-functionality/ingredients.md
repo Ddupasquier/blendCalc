@@ -454,8 +454,10 @@ Both lists share the same card and list behavior:
   food remains a personal list alias; Nutrition details continue to show that food's
   canonical source name. The rename dialog explains which behavior applies before the
   user saves the change.
-- Remove uses the shared two-step confirmation. Rename and item actions use the shared
-  routed overlays.
+- Remove uses the shared two-step confirmation. Its inline card message keeps the
+  established right edge and makes the red surface only as wide as its text plus normal
+  internal padding, bounded to the available copy region at narrow or enlarged-text
+  widths. Rename and item actions use the shared routed overlays.
 - A truly empty Fridge may show one optional DB-backed meal-prep line beneath the normal
   empty-state guidance. Shopping, filtered-empty, error, and safety states retain only
   their factual copy.
