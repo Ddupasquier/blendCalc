@@ -390,6 +390,21 @@ and not medical advice. Public responses expose only current normalized notice f
 source attribution, and the official link; raw provider payloads, match evidence,
 moderator identity, and user notification state stay private.
 
+## Transactional Email
+
+Supabase Auth owns account confirmation, recovery, invitation, email-change,
+reauthentication, and Auth security notifications through custom SMTP. The tracked
+`supabase/templates/` catalog is the shared local and hosted content source; hosted
+configuration is changed only through the guarded Auth configuration operation.
+
+Application-owned moderation and operational messages cross one server-only Resend
+transport in `src/lib/server/email/`. Callers provide an idempotency key, HTML and
+plain-text bodies, and purpose-specific recipients; the transport owns provider
+authentication, timeout/retry behavior, response parsing, and verified sender-domain
+enforcement. Browser code never receives provider credentials. Transactional delivery
+uses `noreply.blendcalc.food`; marketing and subscriptions require a separately reviewed
+future boundary.
+
 ## Operational Analytics
 
 Vercel Web Analytics owns anonymous page-view collection and the explicitly registered

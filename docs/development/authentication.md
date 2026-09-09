@@ -153,6 +153,29 @@ sender, host, port, user, and sender name exactly. The read-only hosted-security
 separately verifies provider sender-domain readiness; a successful configuration write
 does not claim that email delivery is ready.
 
+### Transactional Email Catalog
+
+Supabase Auth email content is source-controlled in `supabase/templates/`. The catalog
+covers confirmation, recovery, invitation, magic-link/OTP, email-change, and
+reauthentication messages plus password, email, MFA-factor, and linked-identity security
+notifications. Phone-change notification remains disabled while phone Auth is disabled.
+Local Mailpit and hosted Auth use the same subjects and HTML, so a locally reviewed
+message is the artifact later promoted to production.
+
+All Auth mail sends as `blendCalc <accounts@noreply.blendcalc.food>`. The dedicated
+subdomain isolates transactional sending reputation. Templates are self-contained,
+include a plain visible fallback URL or code when applicable, and contain no remote
+images, tracking pixels, scripts, marketing copy, secrets, or account-existence claims.
+Security notifications direct unexpected changes to `support@blendcalc.food`.
+
+Run `npm run auth:configure-hosted -- --templates --dry-run` before applying template
+changes. After review, repeat with the reported `--confirm-project=<project-ref>` value.
+The write verifies every subject, HTML body, and notification toggle exactly. The hosted
+security audit treats any later difference from the tracked catalog as configuration
+drift. Template styling follows the shared blendCalc visual language and must be reviewed
+with the final public landing-page direction in DEV-055; the delivery contract and Auth
+variables remain independent of that visual pass.
+
 CAPTCHA requires dashboard secrets and a public site key, so it must not be enabled in
 Supabase until both values are configured and the deployed token flow has passed a
 real email sign-in, registration, and recovery check. Google OAuth continues through

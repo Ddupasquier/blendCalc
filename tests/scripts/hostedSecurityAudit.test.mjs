@@ -4,74 +4,80 @@ import {
 	getSerializableHostedSecuritySnapshot,
 } from "../../scripts/lib/security/hosted_security_audit.mjs";
 import { checkSmtpProviderReadiness } from "../../scripts/lib/security/smtp_provider_readiness.mjs";
+import { getAuthEmailTemplatePatch } from "../../scripts/lib/auth/auth_email_templates.mjs";
 
-const createSecureSnapshot = () => ({
-	project: {
-		id: "project-ref",
-		name: "blendCalc",
-		region: "us-west-2",
-		status: "ACTIVE_HEALTHY",
-		database: { version: "17.6" },
-	},
-	networkRestrictions: {
-		status: "applied",
-		config: { dbAllowedCidrs: ["192.0.2.10/32"], dbAllowedCidrsV6: [] },
-	},
-	backupConfiguration: {
-		backups: [
-			{
-				id: 1,
-				inserted_at: "2026-08-11T12:00:00.000Z",
-				is_physical_backup: true,
-				status: "COMPLETED",
-			},
-		],
-		pitr_enabled: false,
-		walg_enabled: true,
-	},
-	authConfiguration: {
-		site_url: "https://www.blendcalc.food",
-		uri_allow_list:
-			"https://www.blendcalc.food/auth/callback,http://localhost:5173/auth/callback,http://localhost:5174/auth/callback,https://*-account.vercel.app/auth/callback",
-		mailer_autoconfirm: false,
-		password_min_length: 15,
-		password_hibp_enabled: true,
-		security_update_password_require_reauthentication: true,
-		refresh_token_rotation_enabled: true,
-		security_refresh_token_reuse_interval: 10,
-		rate_limit_email_sent: 2,
-		rate_limit_otp: 30,
-		rate_limit_token_refresh: 150,
-		rate_limit_verify: 30,
-		security_captcha_enabled: true,
-		security_captcha_provider: "turnstile",
-		security_captcha_secret: "never-serialize-this",
-		mfa_totp_enroll_enabled: true,
-		mfa_totp_verify_enabled: true,
-		mfa_allow_low_aal: false,
-		smtp_admin_email: "security@example.test",
-		smtp_host: "smtp.example.test",
-		smtp_port: "587",
-		smtp_pass: "never-serialize-this-either",
-		smtp_user: "blendcalc",
-		smtp_sender_name: "blendCalc",
-	},
-	privilegedMfaSummary: {
-		checked: true,
-		elevatedAccountCount: 3,
-		verifiedTotpAccountCount: 3,
-		userIds: ["never-serialize-this-user-id"],
-	},
-	smtpProviderReadiness: {
-		checked: true,
-		provider: "resend",
-		senderDomain: "noreply.example.test",
-		domainStatus: "verified",
-		sendingCapability: "enabled",
-		ready: true,
-		reason: "provider-ready",
-	},
-});
+const createSecureSnapshot = () => {
+	const authEmailTemplatePatch = getAuthEmailTemplatePatch();
+	return {
+		project: {
+			id: "project-ref",
+			name: "blendCalc",
+			region: "us-west-2",
+			status: "ACTIVE_HEALTHY",
+			database: { version: "17.6" },
+		},
+		networkRestrictions: {
+			status: "applied",
+			config: { dbAllowedCidrs: ["192.0.2.10/32"], dbAllowedCidrsV6: [] },
+		},
+		backupConfiguration: {
+			backups: [
+				{
+					id: 1,
+					inserted_at: "2026-08-11T12:00:00.000Z",
+					is_physical_backup: true,
+					status: "COMPLETED",
+				},
+			],
+			pitr_enabled: false,
+			walg_enabled: true,
+		},
+		authConfiguration: {
+			...authEmailTemplatePatch,
+			site_url: "https://www.blendcalc.food",
+			uri_allow_list:
+				"https://www.blendcalc.food/auth/callback,http://localhost:5173/auth/callback,http://localhost:5174/auth/callback,https://*-account.vercel.app/auth/callback",
+			mailer_autoconfirm: false,
+			password_min_length: 15,
+			password_hibp_enabled: true,
+			security_update_password_require_reauthentication: true,
+			refresh_token_rotation_enabled: true,
+			security_refresh_token_reuse_interval: 10,
+			rate_limit_email_sent: 2,
+			rate_limit_otp: 30,
+			rate_limit_token_refresh: 150,
+			rate_limit_verify: 30,
+			security_captcha_enabled: true,
+			security_captcha_provider: "turnstile",
+			security_captcha_secret: "never-serialize-this",
+			mfa_totp_enroll_enabled: true,
+			mfa_totp_verify_enabled: true,
+			mfa_allow_low_aal: false,
+			smtp_admin_email: "accounts@noreply.blendcalc.food",
+			smtp_host: "smtp.example.test",
+			smtp_port: "587",
+			smtp_pass: "never-serialize-this-either",
+			smtp_user: "blendcalc",
+			smtp_sender_name: "blendCalc",
+		},
+		privilegedMfaSummary: {
+			checked: true,
+			elevatedAccountCount: 3,
+			verifiedTotpAccountCount: 3,
+			userIds: ["never-serialize-this-user-id"],
+		},
+		smtpProviderReadiness: {
+			checked: true,
+			provider: "resend",
+			senderDomain: "noreply.blendcalc.food",
+			domainStatus: "verified",
+			sendingCapability: "enabled",
+			ready: true,
+			reason: "provider-ready",
+		},
+		authEmailTemplatePatch,
+	};
+};
 
 describe("hosted security audit", () => {
 	it("recognizes the approved hosted security baseline", () => {
@@ -91,6 +97,19 @@ describe("hosted security audit", () => {
 			report.findings.find(({ id }) => id === "privileged-mfa-enforcement")
 				?.status,
 		).toBe("pass");
+	});
+
+	it("fails when hosted Auth drifts from the tracked email catalog", () => {
+		const snapshot = createSecureSnapshot();
+		snapshot.authConfiguration.mailer_subjects_recovery = "Old subject";
+
+		const report = evaluateHostedSecuritySnapshot(snapshot, {
+			now: new Date("2026-08-11T20:00:00.000Z"),
+		});
+
+		expect(
+			report.findings.find(({ id }) => id === "auth-email-templates")?.status,
+		).toBe("fail");
 	});
 
 	it("fails when an elevated account has no verified TOTP factor", () => {
@@ -202,8 +221,22 @@ describe("hosted security audit", () => {
 		).toMatchObject({
 			status: "blocked",
 			detail:
-				"Custom SMTP provider credentials are not configured in hosted Auth.",
+				"Custom SMTP is incomplete or does not use accounts@noreply.blendcalc.food.",
 		});
+	});
+
+	it("blocks SMTP when hosted Auth uses the wrong local sender identity", () => {
+		const snapshot = createSecureSnapshot();
+		snapshot.authConfiguration.smtp_admin_email =
+			"moderation@noreply.blendcalc.food";
+
+		const report = evaluateHostedSecuritySnapshot(snapshot, {
+			now: new Date("2026-08-11T20:00:00.000Z"),
+		});
+
+		expect(
+			report.findings.find(({ id }) => id === "custom-smtp"),
+		).toMatchObject({ status: "blocked" });
 	});
 
 	it("checks Resend readiness without returning the provider credential", async () => {

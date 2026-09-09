@@ -782,6 +782,25 @@ left-aligned. Keep the immediate reasons concise; exact evidence and correction 
 belong in the closed `Review these warnings` disclosure rather than repeating a full
 reporting interface for every warning in the default view.
 
+## Transactional Email
+
+- Use one centered, bounded white message card on the light page surface. Preserve the
+  current primary text, muted text, informational eyebrow, green action, border, and
+  spacing hierarchy without importing application stylesheets or remote assets.
+- Keep the `blendCalc` wordmark, one short purpose label, one clear heading, concise
+  body copy, and one primary action. Security-only notifications omit an artificial
+  action and use the destructive brown-red accent for the purpose label.
+- Use table-based structure and inline styles for broad email-client resilience. Every
+  action email includes its visible URL or one-time code as a fallback, and every send
+  includes a useful plain-text body.
+- Do not use remote fonts, remote images, tracking pixels, scripts, decorative motion,
+  box shadows, marketing copy, or disclosures. Unsupported rounded corners and other
+  enhancements must degrade to a readable rectangular message.
+- Treat the source-controlled Auth templates and application email renderer as one
+  visual family. When DEV-055 approves the public landing-page direction, apply its
+  shared brand treatment to both email owners in one coordinated review rather than
+  creating a third style system.
+
 ## Badges And Privileged Actions
 
 - Use badges only when the state helps the current decision.

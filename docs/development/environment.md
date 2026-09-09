@@ -224,6 +224,15 @@ email credential nor recipient addresses. Alert delivery and evaluation stay ins
 protected application route, and a delivery failure fails the workflow as a secondary
 operator signal.
 
+All application-owned Resend messages use the provider-verified
+`noreply.blendcalc.food` transactional subdomain. Use
+`moderation@noreply.blendcalc.food` for user moderation notices and
+`operations@noreply.blendcalc.food` for internal API alerts. User-facing messages may
+set `support@blendcalc.food` as Reply-To; credentials and recipients remain server-only.
+Supabase Auth separately sends as `accounts@noreply.blendcalc.food` using the protected
+SMTP settings in `.env.moderation.local`. Marketing or subscription mail must use a
+separately reviewed future sending boundary rather than these transactional identities.
+
 The daily `/api/internal/nutrition-label-ocr/cleanup` cron uses the existing
 `CRON_SECRET` and removes expired temporary OCR objects and job rows. Background
 recognition starts only from the authenticated job-creation route and receives only the

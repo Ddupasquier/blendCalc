@@ -302,6 +302,8 @@ npm run auth:configure-hosted -- --turnstile --dry-run
 npm run auth:configure-hosted -- --turnstile --confirm-project=<project-ref>
 npm run auth:configure-hosted -- --smtp --dry-run
 npm run auth:configure-hosted -- --smtp --confirm-project=<project-ref>
+npm run auth:configure-hosted -- --templates --dry-run
+npm run auth:configure-hosted -- --templates --confirm-project=<project-ref>
 ```
 
 This command reads only the selected `SUPABASE_AUTH_*` inputs from the ignored
@@ -314,6 +316,10 @@ For SMTP, it requires the returned protected password marker to remain present a
 matches every non-secret field exactly. The separate hosted-security audit checks the
 configured Resend sender domain through the provider API; configured credentials alone
 remain blocked rather than being reported as delivery-ready.
+For templates, it loads the tracked `supabase/templates/` catalog, updates every Auth
+subject and HTML body together, enables password/email/MFA/identity security notices,
+keeps phone-change notices disabled with phone Auth, and verifies exact hosted equality.
+The dry run never prints message bodies or protected values.
 
 Create and verify a protected backup outside the repository:
 
@@ -351,14 +357,14 @@ deployments.
 
 ## API References And Releases
 
-| Command                                                | Purpose                                                                             |
-| ------------------------------------------------------ | ----------------------------------------------------------------------------------- |
-| `npm run generate:api-structures`                      | Regenerate sampled, documentation-only USDA and Open Food Facts payload references  |
-| `npm run check:auth`                                   | Validate Auth-related environment values and endpoint health                        |
-| `npm run auth:configure-hosted -- --turnstile\|--smtp` | Apply one explicit hosted Supabase Auth configuration safely                        |
-| `npm run version:check`                                | Verify Node, app, build, API, OpenAPI, tests, and documentation version consistency |
-| `npm run verify:vercel-routes`                         | Reject root-function collisions and missing generated dynamic API functions         |
-| `npm run version:bump -- patch\|minor\|major`          | Update application release files without committing or tagging                      |
+| Command                                                             | Purpose                                                                             |
+| ------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `npm run generate:api-structures`                                   | Regenerate sampled, documentation-only USDA and Open Food Facts payload references  |
+| `npm run check:auth`                                                | Validate Auth-related environment values and endpoint health                        |
+| `npm run auth:configure-hosted -- --turnstile\|--smtp\|--templates` | Apply one explicit hosted Supabase Auth configuration safely                        |
+| `npm run version:check`                                             | Verify Node, app, build, API, OpenAPI, tests, and documentation version consistency |
+| `npm run verify:vercel-routes`                                      | Reject root-function collisions and missing generated dynamic API functions         |
+| `npm run version:bump -- patch\|minor\|major`                       | Update application release files without committing or tagging                      |
 
 The API generator may call providers and read stored query terms but never mutates
 Supabase. Generated references are not runtime types. See

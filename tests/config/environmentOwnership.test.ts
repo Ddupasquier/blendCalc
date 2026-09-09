@@ -7,6 +7,13 @@ const readEnvironmentKeys = (path: string): string[] =>
 		.map((line) => line.match(/^([A-Z][A-Z0-9_]*)=/)?.[1])
 		.filter((key): key is string => Boolean(key));
 
+const readEnvironmentValue = (path: string, key: string) => {
+	const line = readFileSync(path, "utf8")
+		.split("\n")
+		.find((candidate) => candidate.startsWith(`${key}=`));
+	return line?.slice(key.length + 1).replace(/^"|"$/g, "") ?? null;
+};
+
 const expectedEnvironmentKeys = {
 	".env.example": [
 		"API_ALERT_EMAIL_FROM",
@@ -114,5 +121,25 @@ describe("environment ownership", () => {
 		}
 		expect(gitignore).toContain("!.env.vercel.example");
 		expect(gitignore).toContain("!supabase/functions/.env.example");
+	});
+
+	it("keeps every tracked transactional sender on its purpose-specific identity", () => {
+		for (const path of [".env.example", ".env.vercel.example"]) {
+			expect(readEnvironmentValue(path, "MODERATION_EMAIL_FROM"), path).toBe(
+				"blendCalc <moderation@noreply.blendcalc.food>",
+			);
+			expect(readEnvironmentValue(path, "API_ALERT_EMAIL_FROM"), path).toBe(
+				"blendCalc API <operations@noreply.blendcalc.food>",
+			);
+			expect(readEnvironmentValue(path, "MODERATION_SUPPORT_EMAIL"), path).toBe(
+				"support@blendcalc.food",
+			);
+		}
+		expect(
+			readEnvironmentValue(
+				".env.moderation.example",
+				"SUPABASE_AUTH_SMTP_ADMIN_EMAIL",
+			),
+		).toBe("accounts@noreply.blendcalc.food");
 	});
 });

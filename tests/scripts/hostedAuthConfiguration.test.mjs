@@ -24,7 +24,7 @@ describe("hosted Auth configuration", () => {
 		expect(() =>
 			buildHostedAuthPatch(
 				{
-					SUPABASE_AUTH_SMTP_ADMIN_EMAIL: "auth@example.test",
+					SUPABASE_AUTH_SMTP_ADMIN_EMAIL: "accounts@noreply.blendcalc.food",
 					SUPABASE_AUTH_SMTP_HOST: "smtp.example.test",
 				},
 				{ smtp: true },
@@ -32,10 +32,41 @@ describe("hosted Auth configuration", () => {
 		).toThrow("SUPABASE_AUTH_SMTP_PORT");
 	});
 
+	it("rejects a hosted Auth sender outside the accounts identity", () => {
+		expect(() =>
+			buildHostedAuthPatch(
+				{
+					SUPABASE_AUTH_SMTP_ADMIN_EMAIL: "moderation@noreply.blendcalc.food",
+					SUPABASE_AUTH_SMTP_HOST: "smtp.resend.com",
+					SUPABASE_AUTH_SMTP_PORT: "587",
+					SUPABASE_AUTH_SMTP_USER: "resend",
+					SUPABASE_AUTH_SMTP_PASS: "protected",
+					SUPABASE_AUTH_SMTP_SENDER_NAME: "blendCalc",
+				},
+				{ smtp: true },
+			),
+		).toThrow("accounts@noreply.blendcalc.food");
+	});
+
+	it("adds only the source-controlled template fields when requested", () => {
+		const templatePatch = {
+			mailer_subjects_confirmation: "Confirm",
+			mailer_templates_confirmation_content: "<p>Confirm</p>",
+			mailer_notifications_password_changed_enabled: true,
+		};
+
+		expect(
+			buildHostedAuthPatch({}, { templates: true }, templatePatch),
+		).toEqual(templatePatch);
+		expect(() => buildHostedAuthPatch({}, { templates: true })).toThrow(
+			"template patch is empty",
+		);
+	});
+
 	it("reports only safe hosted configuration status", () => {
 		const expectedPatch = {
 			security_captcha_secret: "never-report-this",
-			smtp_admin_email: "auth@example.test",
+			smtp_admin_email: "accounts@noreply.blendcalc.food",
 			smtp_host: "smtp.example.test",
 			smtp_port: "587",
 			smtp_user: "blendcalc",
@@ -74,7 +105,7 @@ describe("hosted Auth configuration", () => {
 		"smtp_sender_name",
 	])("rejects an SMTP %s mismatch", (field) => {
 		const expectedPatch = {
-			smtp_admin_email: "auth@example.test",
+			smtp_admin_email: "accounts@noreply.blendcalc.food",
 			smtp_host: "smtp.example.test",
 			smtp_port: "587",
 			smtp_user: "blendcalc",
@@ -98,7 +129,7 @@ describe("hosted Auth configuration", () => {
 
 	it("requires a non-empty stored SMTP credential marker", () => {
 		const expectedPatch = {
-			smtp_admin_email: "auth@example.test",
+			smtp_admin_email: "accounts@noreply.blendcalc.food",
 			smtp_host: "smtp.example.test",
 			smtp_port: "587",
 			smtp_user: "blendcalc",
@@ -113,6 +144,30 @@ describe("hosted Auth configuration", () => {
 				expectedPatch,
 			),
 		).toEqual({ customSmtpConfigured: false });
+	});
+
+	it("verifies every requested template field exactly", () => {
+		const expectedPatch = {
+			mailer_subjects_confirmation: "Confirm",
+			mailer_templates_confirmation_content: "<p>Confirm</p>",
+			mailer_notifications_password_changed_enabled: true,
+			mailer_notifications_phone_changed_enabled: false,
+		};
+
+		expect(
+			summarizeHostedAuthConfiguration(
+				expectedPatch,
+				{ templates: true },
+				expectedPatch,
+			),
+		).toEqual({ authEmailTemplatesConfigured: true });
+		expect(
+			summarizeHostedAuthConfiguration(
+				{ ...expectedPatch, mailer_subjects_confirmation: "Old subject" },
+				{ templates: true },
+				expectedPatch,
+			),
+		).toEqual({ authEmailTemplatesConfigured: false });
 	});
 
 	it("recognizes Cloudflare's safe valid-secret probe response", () => {
