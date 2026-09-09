@@ -6,6 +6,15 @@ blendCalcAPI uses a separate Supabase project as a server-only publication read 
 This separation reduces the data and privileges reachable from the API runtime without
 creating a second canonical catalog or copying private application records.
 
+## Quick Navigation
+
+| Need                                  | Sections                                                                                          |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Understand stored data ownership      | [Ownership Boundary](#ownership-boundary) and [Publication Generations](#publication-generations) |
+| Review runtime and privacy boundaries | [Runtime Boundary](#runtime-boundary) and [Safe Request Logs](#safe-request-logs)                 |
+| Verify release readiness              | [Cutover Gates](#cutover-gates)                                                                   |
+| Operate and monitor the read model    | [Operational Visibility](#operational-visibility)                                                 |
+
 ## Ownership Boundary
 
 The blendCalc application project remains authoritative for:
