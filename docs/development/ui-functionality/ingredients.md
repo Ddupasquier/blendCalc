@@ -456,9 +456,17 @@ Both lists share the same card and list behavior:
   user saves the change.
 - Remove uses the shared two-step confirmation. Rename and item actions use the shared
   routed overlays.
+- A truly empty Fridge or Shopping List centers its icon, title, guidance, and labeled
+  primary `Scan a barcode` action as one compact composition in the available list
+  region. The action receives one brief first-display emphasis, remains fully usable
+  without motion, and never appears in a filtered-empty result.
 - A truly empty Fridge may show one optional DB-backed meal-prep line beneath the normal
   empty-state guidance. Shopping, filtered-empty, error, and safety states retain only
   their factual copy.
+- A truly empty Fridge or Shopping List places a primary `Scan a barcode` action inside
+  the empty state. It may receive one brief, gentle emphasis the first time that device
+  sees it; the emphasis stops after that first display or interaction, does not appear
+  for filtered-empty or populated lists, and is absent when reduced motion is requested.
 
 ## Responsive And Accessibility Checks
 

@@ -40,6 +40,7 @@
 		moving = false,
 		revealPaused = false,
 		resetKey = 0,
+		scanning = false,
 		allowPlayfulMessages = true,
 		onSelectAll,
 		onEnterSelection,
@@ -51,6 +52,7 @@
 		onActions,
 		onRemove,
 		onRevealMore,
+		onScan = () => {},
 		onScrollDirectionChange = () => {},
 	}: SavedIngredientListProps = $props();
 
@@ -353,7 +355,9 @@
 			<IngredientEmptyState
 				{activeList}
 				hasItems={activeRawCount > 0}
+				{scanning}
 				{allowPlayfulMessages}
+				{onScan}
 			/>
 		{/if}
 	</div>
