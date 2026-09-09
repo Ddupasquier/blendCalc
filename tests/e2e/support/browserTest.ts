@@ -11,9 +11,11 @@ import { dirname } from "node:path";
 import {
 	getAuthenticatedBrowserStatePath,
 	getLocalQaAccountForWorker,
+	getLocalQaBrowserRateLimitPartition,
 } from "./localQaAccounts";
 
 type BrowserErrorFixture = {
+	localQaBrowserRateLimitPartition: void;
 	unexpectedBrowserErrors: string[];
 };
 
@@ -116,7 +118,11 @@ const createAuthenticatedBrowserState = async ({
 	}
 	const authenticationRequest = await playwrightRequest.newContext({
 		baseURL,
-		extraHTTPHeaders: { origin: baseURL },
+		extraHTTPHeaders: {
+			origin: baseURL,
+			"x-blendcalc-local-qa-browser-partition":
+				getLocalQaBrowserRateLimitPartition(projectName, parallelWorkerIndex),
+		},
 	});
 
 	try {
@@ -169,6 +175,22 @@ export const test = playwrightTest.extend<
 	storageState: async ({ authenticatedBrowserStatePath }, use) => {
 		await use(authenticatedBrowserStatePath);
 	},
+	localQaBrowserRateLimitPartition: [
+		async ({ context }, use, testInfo) => {
+			await context.addCookies([
+				{
+					name: "blendcalc-local-qa-browser-partition",
+					value: getLocalQaBrowserRateLimitPartition(
+						testInfo.project.name,
+						testInfo.parallelIndex,
+					),
+					url: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:5174",
+				},
+			]);
+			await use();
+		},
+		{ auto: true },
+	],
 	unexpectedBrowserErrors: [
 		async ({ page }, use) => {
 			const unexpectedBrowserErrors: string[] = [];

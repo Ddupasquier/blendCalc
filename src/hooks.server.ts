@@ -28,6 +28,7 @@ import {
 } from "$lib/utils/theme/themePreference";
 import { env } from "$env/dynamic/private";
 import { recordBlendCalcAPIRequestObservation } from "$lib/server/blendCalcAPI/operations/blendCalcAPIOperations.server";
+import { getLocalQaBrowserRateLimitClientAddress } from "$lib/server/auth/localQaSignIn.server";
 import {
 	appendServerTimingHeader,
 	recordServerTiming,
@@ -193,15 +194,24 @@ export const handle: Handle = async ({ event, resolve }) => {
 		}
 	}
 
+	const requestClientAddress = (() => {
+		try {
+			return event.getClientAddress();
+		} catch {
+			return "unavailable";
+		}
+	})();
+	const localQaBrowserPartition =
+		event.request.headers.get("x-blendcalc-local-qa-browser-partition") ??
+		event.cookies.get("blendcalc-local-qa-browser-partition") ??
+		null;
+	const rateLimitClientAddress =
+		getLocalQaBrowserRateLimitClientAddress(localQaBrowserPartition, {
+			appUrl: event.url,
+		}) ?? requestClientAddress;
 	const rateLimitLayers = getRequestRateLimitLayers({
 		apiKey: event.request.headers.get("x-blendcalc-api-key"),
-		clientAddress: (() => {
-			try {
-				return event.getClientAddress();
-			} catch {
-				return "unavailable";
-			}
-		})(),
+		clientAddress: rateLimitClientAddress,
 		method: event.request.method,
 		pathname: event.url.pathname,
 		userId: user?.id,
