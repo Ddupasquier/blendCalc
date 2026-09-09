@@ -79,22 +79,74 @@ test("@mobile ingredient cards use thumbnails while visible details prioritize t
 	await expect(mixImage).toHaveAttribute("fetchpriority", "auto");
 });
 
+const waitForSavedIngredientTarget = async ({
+	page,
+	productName,
+	target,
+}: {
+	page: Page;
+	productName: string;
+	target: Locator;
+}) => {
+	const savedIngredientList = page.getByRole("list", {
+		name: "Fridge ingredients",
+	});
+	const loadMoreButton = page.getByRole("button", { name: "Load more" });
+
+	for (let attempt = 0; attempt < 10; attempt += 1) {
+		await expect
+			.poll(
+				async () => {
+					if (await target.isVisible().catch(() => false)) {
+						return "target-visible";
+					}
+					if (!(await savedIngredientList.isVisible().catch(() => false))) {
+						return "loading";
+					}
+					if (
+						(await savedIngredientList.getAttribute("aria-busy")) === "true"
+					) {
+						return "loading";
+					}
+					if (!(await loadMoreButton.isVisible().catch(() => false))) {
+						return "pagination-finished";
+					}
+					return (await loadMoreButton.isEnabled().catch(() => false))
+						? "load-more-ready"
+						: "loading";
+				},
+				{
+					message: `Wait for ${productName} or the next stable pagination state`,
+				},
+			)
+			.not.toBe("loading");
+
+		if (await target.isVisible().catch(() => false)) return target;
+		if (!(await loadMoreButton.isVisible().catch(() => false))) break;
+		if ((await savedIngredientList.getAttribute("aria-busy")) === "true") {
+			continue;
+		}
+		if (!(await loadMoreButton.isEnabled().catch(() => false))) continue;
+		await loadMoreButton.click();
+	}
+
+	await expect(
+		target,
+		`${productName} should appear before pagination finishes`,
+	).toBeVisible();
+	return target;
+};
+
 const findSavedIngredientCard = async (page: Page, productName: string) => {
 	const previewButton = page.getByRole("button", {
 		name: `Preview ${productName}`,
 		exact: true,
 	});
-	for (
-		let attempt = 0;
-		attempt < 10 && !(await previewButton.isVisible().catch(() => false));
-		attempt += 1
-	) {
-		const loadMoreButton = page.getByRole("button", { name: "Load more" });
-		if (!(await loadMoreButton.isVisible().catch(() => false))) break;
-		await expect(loadMoreButton).toBeEnabled();
-		await loadMoreButton.click();
-	}
-	await expect(previewButton).toBeVisible();
+	await waitForSavedIngredientTarget({
+		page,
+		productName,
+		target: previewButton,
+	});
 	return page.locator(".saved-ingredient-card").filter({ has: previewButton });
 };
 
@@ -117,31 +169,11 @@ const openSavedIngredientActions = async (page: Page, productName: string) => {
 		name: `Open actions for ${productName}`,
 		exact: true,
 	});
-	for (
-		let attempt = 0;
-		attempt < 10 && !(await actionButton.isVisible().catch(() => false));
-		attempt += 1
-	) {
-		const loadMoreButton = page.getByRole("button", { name: "Load more" });
-		if (!(await loadMoreButton.isVisible().catch(() => false))) break;
-		await expect
-			.poll(async () => {
-				if (await actionButton.isVisible().catch(() => false)) {
-					return "target-visible";
-				}
-				if (!(await loadMoreButton.isVisible().catch(() => false))) {
-					return "pagination-finished";
-				}
-				return (await loadMoreButton.isEnabled().catch(() => false))
-					? "ready"
-					: "loading";
-			})
-			.not.toBe("loading");
-		if (await actionButton.isVisible().catch(() => false)) break;
-		if (!(await loadMoreButton.isVisible().catch(() => false))) break;
-		await loadMoreButton.click();
-	}
-	await expect(actionButton).toBeVisible();
+	await waitForSavedIngredientTarget({
+		page,
+		productName,
+		target: actionButton,
+	});
 	await actionButton.click();
 	const dialog = page.getByRole("dialog", { name: productName });
 	await expect(dialog).toBeVisible();
