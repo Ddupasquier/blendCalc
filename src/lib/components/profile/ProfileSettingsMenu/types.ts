@@ -4,6 +4,7 @@ import type { ProfileSettingsRoute } from "$lib/utils/profile/profileRouteState"
 export type ProfileSettingsMenuProps = {
 	appearanceTheme: ThemePreference;
 	playfulMessagesEnabled: boolean;
+	marketingEmailSubscriptionCount: number;
 	bio: string;
 	hasProfileImage: boolean;
 	activeFoodPreferenceCount: number;

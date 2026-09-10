@@ -26,6 +26,9 @@ describe("Profile settings routes", () => {
 		expect(getProfileSettingsRouteTitle("/profile/playful-messages")).toBe(
 			"Playful Messages",
 		);
+		expect(getProfileSettingsRouteTitle("/profile/email-preferences")).toBe(
+			"Email Preferences",
+		);
 		expect(getProfileSettingsRouteTitle("/profile/details")).toBe(
 			"Profile Details",
 		);

@@ -18,6 +18,11 @@ const stableViewSnapshots = [
 		rootSelector: ".profile-food-preference-view",
 	},
 	{
+		route: "/profile/email-preferences",
+		snapshotName: "profile-email-preferences.png",
+		rootSelector: ".profile-email-preferences",
+	},
+	{
 		route: "/auth/update-password?reason=recovery",
 		snapshotName: "account-password-update.png",
 		rootSelector: ".account-security-page-shell__card",

@@ -37,6 +37,12 @@ test(
 		await expect(
 			page.getByRole("button", { name: "Show confirm password" }),
 		).toBeVisible();
+		const marketingEmailChoice = page.getByRole("switch", {
+			name: "Receive optional blendCalc promotional messages",
+		});
+		await expect(marketingEmailChoice).not.toBeChecked();
+		await marketingEmailChoice.click();
+		await expect(marketingEmailChoice).toBeChecked();
 		await expect(passwordField).toHaveAttribute("minlength", "15");
 		const confirmationField = page.getByLabel("Confirm password", {
 			exact: true,
@@ -73,6 +79,11 @@ test(
 			googleButton.locator("[data-google-brand-icon] svg"),
 		).toHaveCount(1);
 		await expect(page.getByLabel("Confirm password")).toHaveCount(0);
+		await expect(
+			page.getByRole("switch", {
+				name: "Receive optional blendCalc promotional messages",
+			}),
+		).toHaveCount(0);
 		await expect(
 			page.getByRole("button", { name: "Forgot your password?" }),
 		).toBeVisible();

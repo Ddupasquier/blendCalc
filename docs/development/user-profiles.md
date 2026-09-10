@@ -10,12 +10,12 @@ This document owns profile behavior and privacy. Auth configuration belongs in
 
 ## Quick Navigation
 
-| Area                         | Sections                                                                                                                |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| Identity and appearance      | [Identity And Email Privacy](#identity-and-email-privacy) and [Appearance](#appearance)                                 |
-| Optional account preferences | [Playful Messages](#playful-messages) and [Food Safety Preferences](#food-safety-preferences)                           |
-| Profile media and policy     | [Profile Images](#profile-images) and [Content Policy And Moderation Boundary](#content-policy-and-moderation-boundary) |
-| Verification                 | [Change Verification](#change-verification)                                                                             |
+| Area                         | Sections                                                                                                                            |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Identity and appearance      | [Identity And Email Privacy](#identity-and-email-privacy) and [Appearance](#appearance)                                             |
+| Optional account preferences | [Playful Messages](#playful-messages), [Marketing Email](#marketing-email), and [Food Safety Preferences](#food-safety-preferences) |
+| Profile media and policy     | [Profile Images](#profile-images) and [Content Policy And Moderation Boundary](#content-policy-and-moderation-boundary)             |
+| Verification                 | [Change Verification](#change-verification)                                                                                         |
 
 ## Identity And Email Privacy
 
@@ -55,6 +55,22 @@ This document owns profile behavior and privacy. Auth configuration belongs in
   authentication, validation, warning, error, body-weight, or minor-related contexts.
 - Disabling the preference takes effect across devices after the account setting is
   saved.
+
+## Marketing Email
+
+- Marketing email uses global explicit opt-in. Existing accounts and new accounts
+  without an explicit choice are not subscribed.
+- Email/password registration offers one optional, unchecked choice. An explicit yes
+  starts all currently offered categories on; an explicit no records no subscription.
+  Google sign-in is intentionally not presented as a registration-only consent moment
+  because the same provider button also signs in existing accounts; those accounts use
+  the Profile choice after authentication.
+- Profile exposes each optional category independently and a master turn-off action.
+- Supabase stores the authoritative latest choices and append-only consent history by
+  Auth user id. Email addresses remain owned by Supabase Auth rather than copied into
+  profile or preference tables.
+- Transactional account, security, safety, and required service messages are outside
+  the marketing catalog and cannot be disabled from marketing settings.
 
 ## Food Safety Preferences
 
