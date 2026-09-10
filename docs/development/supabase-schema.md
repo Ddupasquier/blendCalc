@@ -48,13 +48,16 @@ policies, or core data ownership changes.
 
 ## Core User Data
 
-| Table                       | Primary Key | Owner Scope             | Purpose                                                                                                                                                | Key Relationships                                                      |
-| --------------------------- | ----------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
-| `profiles`                  | `user_id`   | One row per auth user   | Display/profile data, appearance and delight preferences, avatar metadata, and avatar policy state                                                     | `user_id → auth.users.id`                                              |
-| `user_tutorial_preferences` | `user_id`   | One row per auth user   | Tracks tutorial version and completion state; the legacy reminder field is retained only for backward compatibility and no longer schedules onboarding | `user_id → auth.users.id`                                              |
-| `user_food_preferences`     | `user_id`   | One row per auth user   | Optional unit system, allergens, dietary restrictions, nutrient priorities, and default serving preference                                             | `user_id → auth.users.id`                                              |
-| `user_compatibility_rules`  | `id`        | Many rows per auth user | Server-derived exact resolution state for saved allergen and dietary preferences                                                                       | User, active policy version, optional canonical tag/term/alias/mapping |
-| `mix_preferences`           | `user_id`   | One row per auth user   | Versioned Mix draft state, goal-configuration source, goal basis, and validated section presentation                                                   | User, optional system preset version, optional private user preset     |
+| Table                               | Primary Key | Owner Scope              | Purpose                                                                                                                                                | Key Relationships                                                      |
+| ----------------------------------- | ----------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
+| `profiles`                          | `user_id`   | One row per auth user    | Display/profile data, appearance and delight preferences, avatar metadata, and avatar policy state                                                     | `user_id → auth.users.id`                                              |
+| `marketing_email_topics`            | `topic_key` | Shared reference catalog | Active optional promotional-email categories and user-facing explanations                                                                              | Referenced by current choices and history                              |
+| `user_marketing_email_preferences`  | Composite   | One row per user/topic   | Latest explicit promotional-email choice, consent-copy version, and source; missing rows mean not subscribed                                           | User and marketing topic                                               |
+| `marketing_email_preference_events` | `id`        | Append-only user history | Evidence of effective promotional preference changes without copying Auth email addresses                                                              | User and marketing topic                                               |
+| `user_tutorial_preferences`         | `user_id`   | One row per auth user    | Tracks tutorial version and completion state; the legacy reminder field is retained only for backward compatibility and no longer schedules onboarding | `user_id → auth.users.id`                                              |
+| `user_food_preferences`             | `user_id`   | One row per auth user    | Optional unit system, allergens, dietary restrictions, nutrient priorities, and default serving preference                                             | `user_id → auth.users.id`                                              |
+| `user_compatibility_rules`          | `id`        | Many rows per auth user  | Server-derived exact resolution state for saved allergen and dietary preferences                                                                       | User, active policy version, optional canonical tag/term/alias/mapping |
+| `mix_preferences`                   | `user_id`   | One row per auth user    | Versioned Mix draft state, goal-configuration source, goal basis, and validated section presentation                                                   | User, optional system preset version, optional private user preset     |
 
 ### `profiles`
 
@@ -91,6 +94,32 @@ Notes:
   can become current only when `save_current_user_profile_image` finds matching policy
   evidence for the same authenticated owner, exact private Storage path, and policy
   version.
+
+### Marketing email preferences
+
+| Table                               | Documented columns                                                                                    |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `marketing_email_topics`            | `topic_key`, `label`, `description`, `sort_order`, `enabled`, `created_at`, `updated_at`              |
+| `user_marketing_email_preferences`  | `user_id`, `topic_key`, `is_subscribed`, `consent_copy_version`, `source`, `created_at`, `updated_at` |
+| `marketing_email_preference_events` | `id`, `user_id`, `topic_key`, `is_subscribed`, `consent_copy_version`, `source`, `created_at`         |
+
+Notes:
+
+- The initial optional catalog contains Product and launch updates, MVP testing
+  invitations, and Tips, recipes, and education. Every topic is explicit-opt-in;
+  an absent current row is interpreted as `false`.
+- `save_current_user_marketing_email_preferences` derives its owner from `auth.uid()`,
+  requires a boolean value for every enabled topic, writes current rows atomically, and
+  appends history only when an effective value changes.
+- `get_current_user_marketing_email_preferences` returns the active DB catalog with
+  missing account rows coalesced to off.
+- The Auth-user creation trigger records registration consent only when reviewed
+  boolean metadata and a valid consent-copy version are present. Accounts created by
+  Google, operations, or older application versions remain unsubscribed by default.
+- Authenticated clients may read their own latest choices and history but cannot write
+  the tables directly. The tables do not copy account email addresses.
+- `source` distinguishes registration, Profile, provider preference-link, and provider
+  webhook changes. Supabase remains authoritative; Resend is a delivery projection.
 
 ### `user_food_preferences`
 
@@ -2283,6 +2312,8 @@ category, or serving fields.
 | `review_official_food_safety_alert_match`              | Confirms or dismisses one probable recall match after an AAL2 permission check                                                                                                                         |
 | `review_catalog_provider_change`                       | Rejects/supersedes a provider change or links acceptance to an existing approved catalog revision after an AAL2 permission check                                                                       |
 | `mark_product_safety_alert_notification_read`          | Lets an authenticated owner mark exactly one of their alert notifications as read                                                                                                                      |
+| `save_current_user_marketing_email_preferences`        | Atomically validates and saves every enabled optional promotional-email category for the authenticated account                                                                                         |
+| `get_current_user_marketing_email_preferences`         | Returns the active marketing-email topic catalog with missing owner choices safely treated as off                                                                                                      |
 | `catalog_change_summary_is_valid`                      | Validates unique structured old/new field changes before a catalog product update can be accepted                                                                                                      |
 | `consume_request_rate_limit`                           | Atomically consumes one private server-side request quota unit; service role only                                                                                                                      |
 | `consume_request_rate_limits`                          | Atomically consumes bounded endpoint, IP, account, API-key, burst, and sustained quota layers; service role only                                                                                       |
