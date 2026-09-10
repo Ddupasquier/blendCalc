@@ -972,6 +972,78 @@ export type Database = {
           },
         ]
       }
+      catalog_health_review_dispositions: {
+        Row: {
+          id: string
+          issue_count: number
+          issue_fingerprint: string
+          issue_snapshot: Json
+          outcome: string
+          review_note: string
+          reviewed_at: string
+          reviewed_by: string
+          shared_product_id: string
+        }
+        Insert: {
+          id?: string
+          issue_count: number
+          issue_fingerprint: string
+          issue_snapshot: Json
+          outcome: string
+          review_note: string
+          reviewed_at?: string
+          reviewed_by: string
+          shared_product_id: string
+        }
+        Update: {
+          id?: string
+          issue_count?: number
+          issue_fingerprint?: string
+          issue_snapshot?: Json
+          outcome?: string
+          review_note?: string
+          reviewed_at?: string
+          reviewed_by?: string
+          shared_product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_health_review_dispositions_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "blendcalc_api_catalog_product_readiness"
+            referencedColumns: ["shared_product_id"]
+          },
+          {
+            foreignKeyName: "catalog_health_review_dispositions_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "blendcalc_api_v1_product_readiness"
+            referencedColumns: ["shared_product_id"]
+          },
+          {
+            foreignKeyName: "catalog_health_review_dispositions_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "blendcalc_api_v1_published_products"
+            referencedColumns: ["shared_product_id"]
+          },
+          {
+            foreignKeyName: "catalog_health_review_dispositions_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_product_readiness"
+            referencedColumns: ["shared_product_id"]
+          },
+          {
+            foreignKeyName: "catalog_health_review_dispositions_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "shared_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       catalog_health_repair_run_items: {
         Row: {
           after_value: Json | null
@@ -9105,6 +9177,21 @@ export type Database = {
           },
         ]
       }
+      catalog_health_actionable_issue_occurrences: {
+        Row: {
+          detected_at: string | null
+          issue_code: string | null
+          occurrence_key: string | null
+          parameters: Json | null
+          shared_product_id: string | null
+          source_reason: string | null
+          source_scope: string | null
+          status: string | null
+          subject_key: string | null
+          subject_type: string | null
+        }
+        Relationships: []
+      }
       catalog_health_issue_occurrences: {
         Row: {
           detected_at: string | null
@@ -9859,6 +9946,10 @@ export type Database = {
       fail_nutrition_label_ocr_job: {
         Args: { p_claim_token: string; p_error_code: string; p_job_id: string }
         Returns: string
+      }
+      finish_catalog_health_product_review: {
+        Args: { p_review_note: string; p_shared_product_id: string }
+        Returns: Json
       }
       food_alcohol_disclosure_is_valid: {
         Args: { p_food: Json }

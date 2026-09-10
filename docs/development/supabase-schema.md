@@ -1175,6 +1175,14 @@ Notes:
   active/import-enabled dataset gaps, and warning-policy coverage gaps. Every row uses
   an `app_issue_codes` contract for urgency, work ownership, supported action, and
   reviewed repair capability. Disabled unused datasets do not create failures.
+- `catalog_health_review_dispositions` stores append-only `accepted_withheld` outcomes
+  for one exact product issue fingerprint, including the private review note, bounded
+  issue snapshot, reviewer, and timestamp. Authenticated clients have no direct table
+  access.
+- `catalog_health_actionable_issue_occurrences` removes only a currently matching
+  accepted-withheld API-publication fingerprint from operator queues. Raw occurrences
+  and API withholding remain unchanged, and a changed occurrence timestamp or issue set
+  automatically becomes actionable again.
 - `catalog_health_repair_runs` is the immutable audit header for one AAL2 dry run or
   apply request against an open occurrence. It records the requesting user, issue,
   approved handler, linked dry run, status, bounded outcome counts, summary, and timing.
@@ -1207,12 +1215,13 @@ Notes:
   remains absent and unknown. The same validation protects submissions, canonical rows,
   and revisions.
 
-### Catalog health repair audit
+### Catalog health review and repair audit
 
-| Table                             | Documented columns                                                                                                                                                                                                                  |
-| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `catalog_health_repair_runs`      | `id`, `requested_by`, `occurrence_key`, `issue_code`, `repair_key`, `mode`, `dry_run_id`, `status`, `candidate_count`, `changed_count`, `skipped_count`, `unresolved_count`, `error_count`, `summary`, `started_at`, `completed_at` |
-| `catalog_health_repair_run_items` | `id`, `run_id`, `item_key`, `result`, `reason_code`, `before_value`, `after_value`, `created_at`                                                                                                                                    |
+| Table                                | Documented columns                                                                                                                                                                                                                  |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `catalog_health_review_dispositions` | `id`, `shared_product_id`, `issue_fingerprint`, `outcome`, `review_note`, `issue_count`, `issue_snapshot`, `reviewed_by`, `reviewed_at`                                                                                             |
+| `catalog_health_repair_runs`         | `id`, `requested_by`, `occurrence_key`, `issue_code`, `repair_key`, `mode`, `dry_run_id`, `status`, `candidate_count`, `changed_count`, `skipped_count`, `unresolved_count`, `error_count`, `summary`, `started_at`, `completed_at` |
+| `catalog_health_repair_run_items`    | `id`, `run_id`, `item_key`, `result`, `reason_code`, `before_value`, `after_value`, `created_at`                                                                                                                                    |
 
 Notes:
 
@@ -2048,7 +2057,9 @@ Notes:
   `private.build_catalog_monitor_summary(p_limit)` assemble bounded payloads without
   granting access. Direct execution is revoked from client and service roles. Every
   public wrapper independently enforces its exact role permission and AAL2 before
-  calling a private builder.
+  calling a private builder. Catalog-monitor provider-change and safety-match objects
+  expose their timestamps as the camelCase `createdAt` and `detectedAt` application
+  fields so non-empty action queues satisfy the same typed contract as empty queues.
 - `get_moderator_data_health` and `get_catalog_monitor_moderation_summary` remain
   temporary compatibility wrappers for the previous interface. New application code
   does not call them.
@@ -2265,6 +2276,7 @@ category, or serving fields.
 | `get_blendcalc_api_product_revision_history_v1`        | Service-role-only raw reader for bounded immutable revision metadata and evidence-backed field changes for one publication-ready GTIN-14                                                               |
 | `search_blendcalc_api_products_v1`                     | Service-role-only partial metadata search for active, publication-ready shared products with bounded pagination and name → brand → category → supporting-metadata relevance                            |
 | `get_blendcalc_api_catalog_product_readiness_passport` | Authenticated AAL2 catalog-review or data-operations passport with canonical blendCalcAPI status naming                                                                                                |
+| `finish_catalog_health_product_review`                 | Records an AAL2 accepted-withheld outcome for the exact current product issue fingerprint after every available safe repair is inconclusive; never changes catalog or API publication data             |
 | `get_catalog_data_operations_health`                   | Returns bounded admin/developer catalog, source, dataset, policy, mapping, revision, and publication-readiness summaries after exact AAL2 data-operations authorization                                |
 | `get_catalog_data_operations_monitor_summary`          | Returns bounded admin/developer monitor configuration, queue counts, and recent run state after exact AAL2 data-operations authorization                                                               |
 | `get_catalog_review_work_summary`                      | Returns bounded material conflicts, provider changes, and possible recall matches after exact AAL2 catalog-review authorization                                                                        |
