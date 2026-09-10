@@ -402,8 +402,27 @@ transport in `src/lib/server/email/`. Callers provide an idempotency key, HTML a
 plain-text bodies, and purpose-specific recipients; the transport owns provider
 authentication, timeout/retry behavior, response parsing, and verified sender-domain
 enforcement. Browser code never receives provider credentials. Transactional delivery
-uses `noreply.blendcalc.food`; marketing and subscriptions require a separately reviewed
-future boundary.
+uses `noreply.blendcalc.food`.
+
+Promotional email has a separate reviewed boundary. Supabase owns the normalized topic
+catalog, effective account choices, consent-copy version, and append-only preference
+history; missing choices are off. Account email remains in Auth and is resolved only by
+trusted server work when an explicitly subscribed recipient is prepared for delivery.
+Resend Contacts and public Topics are a delivery projection, not the consent authority,
+and every Resend Topic must use its provider `opt_out` default so contacts do not receive
+that topic until explicitly subscribed. Resend Broadcasts own the signed no-login
+preference/unsubscribe page and suppression behavior. Provider changes must reconcile
+back to Supabase before any campaign audience is used.
+
+Promotional content uses `hello@updates.blendcalc.food`, replies to
+`support@blendcalc.food`, and never crosses the transactional transport. The
+source-controlled MVP-testing and public-launch announcement variants remain draft-only:
+there is no campaign creation, scheduling, or sending endpoint. Local preview routes
+under `/email-preview/` render only on a development server or localhost. Before the
+first campaign, Engineering must verify the sending subdomain, configure three public
+provider Topics, add the business postal address, configure and verify contact-update
+reconciliation, synchronize only explicitly subscribed accounts, and review the exact
+recipient list.
 
 ## Operational Analytics
 

@@ -168,6 +168,56 @@ test("playful messages persist the exact saved account preference", async ({
 	}
 });
 
+test("optional email categories persist independently and can all be turned off", async ({
+	page,
+}) => {
+	await page.goto("/profile/email-preferences");
+	await waitForAppReady(page);
+	await expect(page).toHaveTitle("Email Preferences · blendCalc");
+
+	let sheet = page.getByRole("dialog", { name: "Email preferences" });
+	const productUpdates = sheet.getByRole("switch", {
+		name: "Product and launch updates",
+	});
+	const testingInvitations = sheet.getByRole("switch", {
+		name: "MVP testing invitations",
+	});
+	const tips = sheet.getByRole("switch", {
+		name: "Tips, recipes, and education",
+	});
+
+	await productUpdates.click();
+	await testingInvitations.click();
+	await expect(productUpdates).toBeChecked();
+	await expect(testingInvitations).toBeChecked();
+	await expect(tips).not.toBeChecked();
+	await sheet.getByRole("button", { name: "Save email preferences" }).click();
+	await expect(page).toHaveURL(/\/profile$/);
+	await expect(
+		page.getByRole("button", { name: /Email preferences/ }),
+	).toContainText("2 optional categories on");
+
+	await page.reload();
+	await waitForAppReady(page);
+	await page.getByRole("button", { name: /Email preferences/ }).click();
+	sheet = page.getByRole("dialog", { name: "Email preferences" });
+	await expect(
+		sheet.getByRole("switch", { name: "Product and launch updates" }),
+	).toBeChecked();
+	await expect(
+		sheet.getByRole("switch", { name: "MVP testing invitations" }),
+	).toBeChecked();
+
+	await sheet
+		.getByRole("button", { name: "Turn off all promotional email" })
+		.click();
+	await sheet.getByRole("button", { name: "Save email preferences" }).click();
+	await expect(page).toHaveURL(/\/profile$/);
+	await expect(
+		page.getByRole("button", { name: /Email preferences/ }),
+	).toContainText("All promotional email is off");
+});
+
 test(
 	"profile image upload, description, preview, and removal persist",
 	{ tag: "@mobile" },

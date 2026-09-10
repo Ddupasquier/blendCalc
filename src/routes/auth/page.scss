@@ -132,6 +132,36 @@
 	}
 }
 
+.email-form__marketing-choice {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	gap: $app-gap-md;
+	align-items: center;
+	padding: $app-gap-sm;
+	background: $app-shell-surface-control;
+	border-radius: $app-shell-radius-card;
+	cursor: pointer;
+
+	> span {
+		display: grid;
+		gap: $app-gap-2xs;
+		min-width: 0;
+	}
+
+	strong {
+		color: $app-shell-text-primary;
+		font-size: $app-font-size-sm;
+		line-height: $app-line-height-ui;
+	}
+
+	small {
+		color: $app-shell-text-muted;
+		font-size: $app-font-size-xs;
+		font-weight: $app-font-weight-medium;
+		line-height: $app-line-height-body;
+	}
+}
+
 .email-form__actions {
 	display: grid;
 	grid-template-columns: repeat(2, minmax(0, 1fr));

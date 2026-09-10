@@ -166,6 +166,13 @@ All Auth mail sends as `blendCalc <accounts@noreply.blendcalc.food>`. The dedica
 subdomain isolates transactional sending reputation. Templates are self-contained,
 include a plain visible fallback URL or code when applicable, and contain no remote
 images, tracking pixels, scripts, marketing copy, secrets, or account-existence claims.
+
+Email/password account creation also presents an optional unchecked marketing-email
+choice. The exact boolean choice and consent-copy version enter Auth signup metadata so
+the database can record the decision with the new account atomically. Missing metadata,
+Google sign-in, service-created accounts, and all existing accounts remain unsubscribed
+until the authenticated owner makes an explicit choice in Profile. Marketing consent
+never changes Auth confirmation, recovery, security notifications, or account access.
 Security notifications direct unexpected changes to `support@blendcalc.food`.
 
 Run `npm run auth:configure-hosted -- --templates --dry-run` before applying template

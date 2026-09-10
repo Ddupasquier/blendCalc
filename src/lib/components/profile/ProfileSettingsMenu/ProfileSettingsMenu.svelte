@@ -4,6 +4,7 @@
 	import Pencil from "$lib/assets/icons/Pencil/Pencil.svelte";
 	import Sliders from "$lib/assets/icons/Sliders/Sliders.svelte";
 	import User from "$lib/assets/icons/User/User.svelte";
+	import Envelope from "$lib/assets/icons/Envelope/Envelope.svelte";
 	import ProfileSettingsSection from "$lib/components/profile/ProfileSettingsSection/ProfileSettingsSection.svelte";
 	import ProfileSettingsSheetLauncher from "$lib/components/profile/ProfileSettingsSheetLauncher/ProfileSettingsSheetLauncher.svelte";
 	import { PROFILE_SETTINGS_ROUTES } from "$lib/utils/profile/profileRouteState";
@@ -12,6 +13,7 @@
 	let {
 		appearanceTheme,
 		playfulMessagesEnabled,
+		marketingEmailSubscriptionCount,
 		bio,
 		hasProfileImage,
 		activeFoodPreferenceCount,
@@ -64,6 +66,16 @@
 			onOpen={() => onOpen(PROFILE_SETTINGS_ROUTES.playfulMessages)}
 		>
 			{#snippet icon()}<Bolt />{/snippet}
+		</ProfileSettingsSheetLauncher>
+		<ProfileSettingsSheetLauncher
+			title="Email preferences"
+			description={marketingEmailSubscriptionCount
+				? `${marketingEmailSubscriptionCount} optional ${marketingEmailSubscriptionCount === 1 ? "category" : "categories"} on`
+				: "All promotional email is off"}
+			controls="profile-email-preferences-sheet"
+			onOpen={() => onOpen(PROFILE_SETTINGS_ROUTES.emailPreferences)}
+		>
+			{#snippet icon()}<Envelope />{/snippet}
 		</ProfileSettingsSheetLauncher>
 		<ProfileSettingsSheetLauncher
 			title="Profile details"

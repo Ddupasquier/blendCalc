@@ -21,6 +21,12 @@ import {
 	THEME_PREFERENCE_COOKIE,
 } from "$lib/utils/theme/themePreference";
 import { requireAuthenticatedProfileUser } from "./profileActionAuthentication.server";
+import { saveCurrentUserMarketingEmailPreferences } from "$lib/server/email/marketingEmailPreferences.server";
+import {
+	MARKETING_EMAIL_CONSENT_COPY_VERSION,
+	MARKETING_EMAIL_TOPIC_KEYS,
+	type MarketingEmailPreferenceValues,
+} from "$lib/utils/email/marketingEmailPreferences";
 
 const PROFILE_ACCOUNT_SETTINGS_FORM_MAX_BYTES = 64 * 1024;
 
@@ -37,6 +43,54 @@ const getProfileFormValues = (formData: FormData) => ({
 	displayName: normalizeOptionalProfileText(formData.get("displayName")),
 	bio: normalizeOptionalProfileText(formData.get("bio")),
 });
+
+const getMarketingEmailPreferenceValues = (formData: FormData) => {
+	const values = {} as MarketingEmailPreferenceValues;
+	for (const topicKey of MARKETING_EMAIL_TOPIC_KEYS) {
+		const value = formData.get(topicKey);
+		if (value !== "true" && value !== "false") return null;
+		values[topicKey] = value === "true";
+	}
+	return values;
+};
+
+export const saveMarketingEmailPreferences = async ({
+	locals,
+	request,
+}: ProfileAccountSettingsActionEvent) => {
+	await requireAuthenticatedProfileUser(locals);
+	const formData = await readLimitedFormData(
+		request,
+		PROFILE_ACCOUNT_SETTINGS_FORM_MAX_BYTES,
+	);
+	const emailPreferenceValues = getMarketingEmailPreferenceValues(formData);
+
+	if (!emailPreferenceValues) {
+		return fail(400, {
+			emailPreferencesError:
+				"Choose an on or off value for every optional email category.",
+		});
+	}
+
+	const { error } = await saveCurrentUserMarketingEmailPreferences(
+		locals.supabase,
+		emailPreferenceValues,
+		MARKETING_EMAIL_CONSENT_COPY_VERSION,
+	);
+
+	if (error) {
+		return fail(500, {
+			emailPreferencesError:
+				"Your email preferences could not be saved. Try again.",
+			emailPreferenceValues,
+		});
+	}
+
+	return {
+		emailPreferencesSuccess: "Email preferences saved.",
+		emailPreferenceValues,
+	};
+};
 
 export const savePlayfulMessagesPreference = async ({
 	locals,

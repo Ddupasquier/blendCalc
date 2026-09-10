@@ -11,6 +11,7 @@
 	import ProfileAppearanceSettings from "$lib/components/profile/ProfileAppearanceSettings/ProfileAppearanceSettings.svelte";
 	import ProfilePlayfulMessageSettings from "$lib/components/profile/ProfilePlayfulMessageSettings/ProfilePlayfulMessageSettings.svelte";
 	import ProfileDetailsSettings from "$lib/components/profile/ProfileDetailsSettings/ProfileDetailsSettings.svelte";
+	import ProfileEmailPreferences from "$lib/components/profile/ProfileEmailPreferences/ProfileEmailPreferences.svelte";
 	import ProfileFoodPreferenceView from "$lib/components/profile/ProfileFoodPreferenceView/ProfileFoodPreferenceView.svelte";
 	import ProfileIdentitySummary from "$lib/components/profile/ProfileIdentitySummary/ProfileIdentitySummary.svelte";
 	import ProfileImageSettings from "$lib/components/profile/ProfileImageSettings/ProfileImageSettings.svelte";
@@ -153,6 +154,22 @@
 </BottomSheet>
 
 <BottomSheet
+	id="profile-email-preferences-sheet"
+	open={activeSettingsRoute === PROFILE_SETTINGS_ROUTES.emailPreferences}
+	title="Email preferences"
+	titleId="profile-email-preferences-sheet-title"
+	onClose={closeSettingsRoute}
+>
+	<ProfileEmailPreferences
+		preferences={data.marketingEmailPreferences}
+		submittedValues={form?.emailPreferenceValues}
+		errorMessage={form?.emailPreferencesError}
+		successMessage={form?.emailPreferencesSuccess}
+		onSaveSuccess={closeSettingsRouteAfterSave}
+	/>
+</BottomSheet>
+
+<BottomSheet
 	id="profile-playful-messages-sheet"
 	open={activeSettingsRoute === PROFILE_SETTINGS_ROUTES.playfulMessages}
 	title="Playful messages"
@@ -262,6 +279,9 @@
 			<ProfileSettingsMenu
 				{appearanceTheme}
 				{playfulMessagesEnabled}
+				marketingEmailSubscriptionCount={data.marketingEmailPreferences.filter(
+					(preference) => preference.isSubscribed,
+				).length}
 				{bio}
 				hasProfileImage={Boolean(data.profile?.avatar_path)}
 				{activeFoodPreferenceCount}
