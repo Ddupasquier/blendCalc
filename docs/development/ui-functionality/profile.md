@@ -190,6 +190,15 @@ matching.
   queue count is zero; a nonzero actionable queue displays its own red count in the
   row's top-right corner. Catalog review and Catalog data operations retain their
   standing entry points even at zero while displaying a count when action exists.
+- Lead the sheet with one plain-language work-status card. When actions exist, name
+  the exact aggregate and the first queue to open; when none exist, say that no human
+  decision is waiting; when identity or count reads block the summary, explain the
+  next safe step without presenting unknown as zero.
+- Place every nonzero queue once under **Needs attention**, ordered with food-safety
+  review first, followed by catalog decisions, product submissions, reported profile
+  images, and data operations. Keep zero-count queues and standing search or diagnostic
+  tools under clearly secondary headings so a red badge always means real work rather
+  than availability or volume.
 - Count only exact profile images with pending user reports. Ordinary profile-image
   uploads remain active and never create moderator work by themselves.
 - Group catalog decisions under **Review work** and source/dataset/readiness operations
@@ -213,6 +222,10 @@ matching.
   bottom sheet explaining that tool's purpose, review flow, decision effect, and safety
   boundary. Keep the main right sheet focused on current work instead of repeating those
   instructions in every review card.
+- Immediately below feedback, give every focused workspace one shared start card that
+  states the current action or clear/on-demand state, the first step, and an explicit
+  **Done when** condition. Nested product-readiness and nutrient-mapping views retain
+  the same pattern so entering a detail never removes the operator's sense of progress.
 - Before identity verification, keep review counts private but leave the protected
   review rows available as entry points into the authenticator flow. Explain that
   verification is required instead of making the actions look permanently unavailable.

@@ -128,3 +128,6 @@ export const getCatalogHealthRepairItemLabel = (itemKey: string) => {
 	if (itemKey.startsWith("revision:")) return "Revision change history";
 	return itemKey;
 };
+
+export const getCatalogHealthRepairTargetId = (occurrenceKey: string) =>
+	`safe-repair-${occurrenceKey.replaceAll(/[^a-zA-Z0-9_-]/g, "-")}`;

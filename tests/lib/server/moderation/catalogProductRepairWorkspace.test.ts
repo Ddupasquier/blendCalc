@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
 	requireModeratorPermission: vi.fn(),
 	readCatalogProductReadinessPassport: vi.fn(),
 	runCatalogHealthRepair: vi.fn(),
+	finishCatalogProductReview: vi.fn(),
 }));
 
 vi.mock("$lib/server/moderation/moderationAccess.server", () => ({
@@ -18,6 +19,20 @@ vi.mock(
 		readCatalogProductReadinessPassport:
 			mocks.readCatalogProductReadinessPassport,
 	}),
+);
+
+vi.mock(
+	"$lib/server/moderation/catalogProductReviewDisposition.server",
+	async (importOriginal) => {
+		const original =
+			await importOriginal<
+				typeof import("$lib/server/moderation/catalogProductReviewDisposition.server")
+			>();
+		return {
+			...original,
+			finishCatalogProductReview: mocks.finishCatalogProductReview,
+		};
+	},
 );
 
 vi.mock(
@@ -35,6 +50,7 @@ vi.mock(
 );
 
 import {
+	finishCatalogProductReviewAction,
 	loadCatalogProductRepairWorkspace,
 	runCatalogProductRepairAction,
 } from "$lib/server/moderation/catalogProductRepairWorkspace.server";
@@ -155,5 +171,61 @@ describe("catalog product repair workspace", () => {
 			},
 		});
 		expect(mocks.runCatalogHealthRepair).not.toHaveBeenCalled();
+	});
+
+	it("finishes an inconclusive review through the guarded product action", async () => {
+		mocks.finishCatalogProductReview.mockResolvedValue({
+			outcome: "accepted_withheld",
+			issueCount: 3,
+			reviewedAt: "2026-09-10T18:00:00.000Z",
+		});
+		const supabase = {};
+
+		await expect(
+			finishCatalogProductReviewAction({
+				locals: { supabase },
+				params: { productId: "product-id" },
+				request: createFormRequest({
+					reviewNote:
+						"The current package and approved sources do not include potassium.",
+				}),
+			} as never),
+		).resolves.toMatchObject({
+			catalogReviewDispositionResult: {
+				outcome: "accepted_withheld",
+				issueCount: 3,
+			},
+			catalogReviewDispositionSuccess: expect.stringContaining(
+				"removed from the work queue",
+			),
+		});
+		expect(mocks.requireModeratorPermission).toHaveBeenCalledWith(
+			expect.anything(),
+			"data_operations.catalog_health.repair",
+			"/profile/privileged-tools/data-operations/products/product-id",
+		);
+		expect(mocks.finishCatalogProductReview).toHaveBeenCalledWith(supabase, {
+			sharedProductId: "product-id",
+			reviewNote:
+				"The current package and approved sources do not include potassium.",
+		});
+	});
+
+	it("rejects an uninformative terminal review note before the database call", async () => {
+		const result = await finishCatalogProductReviewAction({
+			locals: { supabase: {} },
+			params: { productId: "product-id" },
+			request: createFormRequest({ reviewNote: "No proof" }),
+		} as never);
+
+		expect(result).toMatchObject({
+			status: 400,
+			data: {
+				catalogReviewDispositionError: expect.stringContaining(
+					"at least 10 characters",
+				),
+			},
+		});
+		expect(mocks.finishCatalogProductReview).not.toHaveBeenCalled();
 	});
 });

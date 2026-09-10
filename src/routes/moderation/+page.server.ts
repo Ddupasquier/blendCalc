@@ -1,10 +1,6 @@
-import type { Actions, PageServerLoad } from "./$types";
-import {
-	loadModerationWorkspaceData,
-	moderationWorkspaceActions,
-} from "$lib/server/moderation/moderationWorkspace.server";
+import { redirect } from "@sveltejs/kit";
+import type { PageServerLoad } from "./$types";
 
-export const load: PageServerLoad = (event) =>
-	loadModerationWorkspaceData(event, "/moderation");
-
-export const actions: Actions = moderationWorkspaceActions;
+export const load: PageServerLoad = () => {
+	throw redirect(308, "/profile/privileged-tools");
+};

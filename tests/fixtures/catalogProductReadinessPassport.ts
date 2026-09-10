@@ -38,6 +38,12 @@ export const catalogProductReadinessPassportFixture: CatalogProductReadinessPass
 			observationCount: 4,
 			sources: ["open-food-facts", "usda-fdc"],
 		},
+		reviewCompletion: {
+			requiredSafeRepairCheckCount: 1,
+			completedSafeRepairCheckCount: 0,
+			canFinish: false,
+		},
+		reviewDisposition: null,
 		issues: [
 			{
 				occurrenceKey:

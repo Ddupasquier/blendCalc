@@ -48,6 +48,17 @@ export type CatalogProductReadinessPassport = {
 		observationCount: number;
 		sources: string[];
 	};
+	reviewCompletion: {
+		requiredSafeRepairCheckCount: number;
+		completedSafeRepairCheckCount: number;
+		canFinish: boolean;
+	};
+	reviewDisposition: {
+		outcome: "accepted_withheld";
+		reviewNote: string;
+		issueCount: number;
+		reviewedAt: string;
+	} | null;
 	issues: CatalogProductReadinessIssue[];
 };
 
@@ -87,6 +98,34 @@ const readBoolean = (value: unknown, field: string): boolean => {
 		throw new TypeError(`Invalid product readiness passport field: ${field}`);
 	}
 	return value;
+};
+
+const parseReviewDisposition = (
+	value: unknown,
+): CatalogProductReadinessPassport["reviewDisposition"] => {
+	if (value === null) return null;
+	const disposition = readRecord(value, "reviewDisposition");
+	const outcome = readString(disposition.outcome, "reviewDisposition.outcome");
+	if (outcome !== "accepted_withheld") {
+		throw new TypeError(
+			"Invalid product readiness passport field: reviewDisposition.outcome",
+		);
+	}
+	return {
+		outcome,
+		reviewNote: readString(
+			disposition.reviewNote,
+			"reviewDisposition.reviewNote",
+		),
+		issueCount: readNumber(
+			disposition.issueCount,
+			"reviewDisposition.issueCount",
+		),
+		reviewedAt: readString(
+			disposition.reviewedAt,
+			"reviewDisposition.reviewedAt",
+		),
+	};
 };
 
 const parseIssue = (
@@ -217,6 +256,24 @@ export const parseCatalogProductReadinessPassport = (
 				(source, index) => readString(source, `evidence.sources[${index}]`),
 			),
 		},
+		reviewCompletion: (() => {
+			const completion = readRecord(root.reviewCompletion, "reviewCompletion");
+			return {
+				requiredSafeRepairCheckCount: readNumber(
+					completion.requiredSafeRepairCheckCount,
+					"reviewCompletion.requiredSafeRepairCheckCount",
+				),
+				completedSafeRepairCheckCount: readNumber(
+					completion.completedSafeRepairCheckCount,
+					"reviewCompletion.completedSafeRepairCheckCount",
+				),
+				canFinish: readBoolean(
+					completion.canFinish,
+					"reviewCompletion.canFinish",
+				),
+			};
+		})(),
+		reviewDisposition: parseReviewDisposition(root.reviewDisposition),
 		issues: readArray(root.issues, "issues").map(parseIssue),
 	};
 };

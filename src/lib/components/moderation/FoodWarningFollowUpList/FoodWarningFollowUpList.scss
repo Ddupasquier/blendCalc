@@ -11,6 +11,15 @@
 	gap: $app-gap-sm;
 }
 
+.food-warning-follow-up-list__introduction {
+	margin: 0;
+	padding: $app-gap-xs;
+	color: $app-shell-text-muted;
+	background: $app-shell-surface-panel;
+	border-radius: $app-shell-radius-control;
+	font-size: $app-font-size-sm;
+}
+
 .food-warning-follow-up-list__item {
 	gap: $app-gap-sm;
 	padding: $app-shell-card-padding-compact;

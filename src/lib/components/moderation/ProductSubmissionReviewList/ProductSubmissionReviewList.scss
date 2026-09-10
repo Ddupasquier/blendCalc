@@ -118,6 +118,33 @@
 	border-top: $app-border;
 }
 
+.product-submission-review__decision-heading {
+	display: grid;
+	gap: $app-gap-2xs;
+}
+
+.product-submission-review__decision-heading span {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-bold;
+	letter-spacing: $app-letter-spacing-wide;
+	text-transform: uppercase;
+}
+
+.product-submission-review__decision-heading h3,
+.product-submission-review__decision-heading p {
+	margin: 0;
+}
+
+.product-submission-review__decision-heading h3 {
+	font-size: $app-font-size-md;
+}
+
+.product-submission-review__decision-heading p {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+}
+
 @media (max-width: $app-breakpoint-xs),
 	(max-height: $app-breakpoint-height-compact) {
 	.product-submission-review,

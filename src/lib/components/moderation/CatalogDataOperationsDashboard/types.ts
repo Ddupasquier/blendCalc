@@ -4,4 +4,5 @@ import type { CatalogDataOperationsHealth } from "$lib/utils/moderation/catalogD
 export type CatalogDataOperationsDashboardProps = {
 	dashboard: CatalogDataOperationsHealth;
 	catalogMonitor: CatalogMonitorModerationSummary;
+	actionCount: number | null;
 };

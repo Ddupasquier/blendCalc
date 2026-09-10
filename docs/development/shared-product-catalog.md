@@ -672,6 +672,13 @@ coverage counts, and normalized open issues without exposing raw observations or
 evidence. Catalog review and data operations share the contract while retaining
 separate route and database permissions.
 
+An AAL2 data operator may finish an exact API-publication issue snapshot as
+`accepted_withheld` only after every offered evidence-only repair has returned no safe
+candidate. The append-only disposition removes that fingerprint from actionable queues,
+but it neither changes canonical data nor makes the product publishable. The raw
+readiness reasons remain queryable, the active product remains usable in blendCalc, and
+a changed issue timestamp or issue set produces a new fingerprint that reopens review.
+
 ### Official Recall Matching
 
 FDA recall announcements, FDA enforcement records, and USDA FSIS recalls/public-health

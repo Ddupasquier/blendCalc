@@ -98,6 +98,10 @@ export type CatalogDataOperationsIssues = {
 		barcode: string;
 		productName: string;
 		reasons: string[];
+		reasonDetails: Array<{
+			reason: string;
+			parameters: Record<string, unknown>;
+		}>;
 	}>;
 	nutrientMappings: Array<{
 		mappingId: string;
@@ -438,6 +442,20 @@ const parseIssues = (value: unknown): CatalogDataOperationsIssues => {
 					barcode: readString(issue.barcode, `${path}.barcode`),
 					productName: readString(issue.productName, `${path}.productName`),
 					reasons: readStringArray(issue.reasons, `${path}.reasons`),
+					reasonDetails: readArray(
+						issue.reasonDetails,
+						`${path}.reasonDetails`,
+					).map((value, reasonIndex) => {
+						const reasonPath = `${path}.reasonDetails[${reasonIndex}]`;
+						const reason = readRecord(value, reasonPath);
+						return {
+							reason: readString(reason.reason, `${reasonPath}.reason`),
+							parameters: readRecord(
+								reason.parameters,
+								`${reasonPath}.parameters`,
+							),
+						};
+					}),
 				};
 			},
 		),

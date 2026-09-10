@@ -74,6 +74,14 @@ describe("Profile privileged tools sheet", () => {
 		expect(
 			screen.getByLabelText("2 catalog decisions requiring review"),
 		).toBeVisible();
+		expect(screen.getByText("6 actions need attention")).toBeVisible();
+		expect(screen.getByText(/Start with catalog review work/)).toBeVisible();
+		expect(
+			screen.getByRole("heading", { name: "Needs attention" }),
+		).toBeVisible();
+		expect(
+			screen.getByRole("heading", { name: "Other review tools" }),
+		).toBeVisible();
 		expect(
 			screen.getAllByRole("heading", { name: "Moderator tools" }),
 		).toHaveLength(1);
@@ -131,6 +139,7 @@ describe("Profile privileged tools sheet", () => {
 		expect(
 			screen.getAllByText("Verify your identity to check this queue"),
 		).toHaveLength(4);
+		expect(screen.getByText("Verify once to see today's work")).toBeVisible();
 		expect(screen.queryByLabelText(/requiring review/)).not.toBeInTheDocument();
 
 		await fireEvent.click(
@@ -175,6 +184,9 @@ describe("Profile privileged tools sheet", () => {
 		expect(
 			screen.getByRole("button", { name: /Catalog review work/ }),
 		).toBeEnabled();
+		expect(
+			screen.getByText("Queue status is temporarily unavailable"),
+		).toBeVisible();
 	});
 
 	it("routes every moderator responsibility to its focused Profile view", async () => {

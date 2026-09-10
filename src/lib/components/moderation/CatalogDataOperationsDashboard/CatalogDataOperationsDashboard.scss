@@ -10,6 +10,97 @@
 	min-width: 0;
 }
 
+.catalog-data-operations__action-queues,
+.catalog-data-operations__action-grid,
+.catalog-data-operations__action-card,
+.catalog-data-operations__required-work,
+.catalog-data-operations__required-list,
+.catalog-data-operations__required-card,
+.catalog-data-operations__section-heading > div {
+	display: grid;
+	gap: $app-gap-sm;
+	min-width: 0;
+}
+
+.catalog-data-operations__section-heading {
+	display: flex;
+	align-items: start;
+	justify-content: space-between;
+	gap: $app-gap-sm;
+}
+
+.catalog-data-operations__section-heading h2,
+.catalog-data-operations__section-heading p,
+.catalog-data-operations__action-card p,
+.catalog-data-operations__required-card p,
+.catalog-data-operations__required-card ul {
+	margin: 0;
+}
+
+.catalog-data-operations__section-heading h2 {
+	font-size: $app-font-size-lg;
+}
+
+.catalog-data-operations__section-heading p,
+.catalog-data-operations__action-card p,
+.catalog-data-operations__required-card p,
+.catalog-data-operations__required-card ul {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+}
+
+.catalog-data-operations__section-heading--details {
+	padding-top: $app-gap-sm;
+	border-top: $app-border;
+}
+
+.catalog-data-operations__action-grid {
+	grid-template-columns: 1fr;
+}
+
+.catalog-data-operations__action-card,
+.catalog-data-operations__required-card {
+	align-content: start;
+	padding: $app-shell-card-padding-compact;
+	background: $app-shell-surface-panel;
+	border: $app-warning-border;
+	border-radius: $app-shell-radius-card;
+}
+
+.catalog-data-operations__action-card[data-clear="true"] {
+	border: $app-border;
+}
+
+.catalog-data-operations__required-card[data-clear="true"] {
+	border: $app-border;
+}
+
+.catalog-data-operations__action-card header,
+.catalog-data-operations__required-card header {
+	display: flex;
+	align-items: start;
+	justify-content: space-between;
+	gap: $app-gap-xs;
+}
+
+.catalog-data-operations__required-card ul {
+	padding-left: $app-gap-lg;
+}
+
+.catalog-data-operations__action-card a,
+.catalog-data-operations__clear-label {
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-bold;
+}
+
+.catalog-data-operations__action-card a {
+	color: $app-shell-accent-primary;
+}
+
+.catalog-data-operations__clear-label {
+	color: $app-primary;
+}
+
 .catalog-data-operations {
 	gap: $app-gap-md;
 	width: 100%;
@@ -145,6 +236,7 @@
 
 @media (max-width: $app-breakpoint-xs) {
 	.catalog-data-operations__overview,
+	.catalog-data-operations__action-grid,
 	.catalog-data-operations__metrics {
 		grid-template-columns: 1fr;
 	}

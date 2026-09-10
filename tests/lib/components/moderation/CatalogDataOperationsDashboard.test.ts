@@ -10,6 +10,7 @@ describe("CatalogDataOperationsDashboard", () => {
 			props: {
 				dashboard: catalogDataOperationsHealthFixture,
 				catalogMonitor: catalogMonitorModerationFixture,
+				actionCount: 3,
 			},
 		});
 
@@ -20,6 +21,28 @@ describe("CatalogDataOperationsDashboard", () => {
 			screen.getByText("Products ready for blendCalcAPI v1"),
 		).toBeInTheDocument();
 		expect(
+			screen.getByRole("heading", { name: "Required work" }),
+		).toBeVisible();
+		expect(
+			screen.getByRole("heading", { name: "Diagnostic checks" }),
+		).toBeVisible();
+		expect(screen.getByText("Publication readiness")).toBeVisible();
+		expect(
+			screen.getByText("A required nutrient is missing: Potassium, K"),
+		).toBeVisible();
+		expect(
+			screen.queryByText("A required nutrient is missing: Product information"),
+		).not.toBeInTheDocument();
+		expect(
+			screen.getByRole("link", { name: "Inspect first product" }),
+		).toHaveAttribute(
+			"href",
+			"/profile/privileged-tools/data-operations/products/product-id",
+		);
+		expect(screen.getAllByText("1 match").length).toBeGreaterThanOrEqual(3);
+		expect(screen.getByText("1 source")).toBeVisible();
+		expect(screen.getByText("1 dataset")).toBeVisible();
+		expect(
 			screen.queryByText("Official recall matches"),
 		).not.toBeInTheDocument();
 		expect(screen.queryByText("Provider changes")).not.toBeInTheDocument();
@@ -28,7 +51,7 @@ describe("CatalogDataOperationsDashboard", () => {
 			screen.queryByRole("link", { name: "Review product submissions" }),
 		).not.toBeInTheDocument();
 		expect(
-			screen.getByRole("link", { name: "Review nutrient identity" }),
+			screen.getByRole("link", { name: "Inspect first mapping" }),
 		).toHaveAttribute(
 			"href",
 			"/profile/privileged-tools/data-operations/nutrient-mappings/mapping-id",
