@@ -1,6 +1,22 @@
 begin;
 
-select plan(17);
+select plan(20);
+
+select ok(
+	strpos(
+		pg_get_functiondef('private.build_catalog_monitor_summary(integer)'::regprocedure),
+		'review.created_at as "createdAt"'
+	) > 0,
+	'provider-change summaries expose the application timestamp key'
+);
+
+select ok(
+	strpos(
+		pg_get_functiondef('private.build_catalog_monitor_summary(integer)'::regprocedure),
+		'match.detected_at as "detectedAt"'
+	) > 0,
+	'safety-match summaries expose the application timestamp key'
+);
 
 select enum_has_labels(
 	'public',
@@ -127,6 +143,39 @@ select throws_ok(
 select lives_ok(
 	$$select public.get_catalog_review_work_summary(20)$$,
 	'moderators can read catalog review work'
+);
+
+reset role;
+update public.official_food_safety_alert_matches
+set status = 'needs_review',
+	reviewed_by = null,
+	reviewed_at = null,
+	review_note = null
+where id = (
+	select match.id
+	from public.official_food_safety_alert_matches match
+	where match.status in ('active', 'confirmed')
+	order by match.detected_at
+	limit 1
+);
+set local role authenticated;
+select set_config(
+	'request.jwt.claim.sub',
+	'72000000-0000-4000-8000-000000000001',
+	true
+);
+select set_config(
+	'request.jwt.claims',
+	'{"sub":"72000000-0000-4000-8000-000000000001","role":"authenticated","app_role":"moderator","aal":"aal2"}',
+	true
+);
+
+select ok(
+	public.get_catalog_review_work_summary(20) #> '{safetyMatches,0}' ? 'detectedAt'
+		and not (
+			public.get_catalog_review_work_summary(20) #> '{safetyMatches,0}' ? 'detected_at'
+		),
+	'actionable safety matches satisfy the camelCase application contract'
 );
 
 select set_config(
