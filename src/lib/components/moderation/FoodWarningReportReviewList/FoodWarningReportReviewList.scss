@@ -45,12 +45,12 @@
 	color: $app-shell-text-muted;
 	font-size: $app-font-size-xs;
 	font-weight: $app-font-weight-bold;
-	letter-spacing: 0.08em;
+	letter-spacing: $app-letter-spacing-wide;
 	text-transform: uppercase;
 }
 
 .food-warning-report-review__review-brief strong {
-	line-height: 1.35;
+	line-height: $app-line-height-ui;
 }
 
 .food-warning-report-review__report-facts {
