@@ -972,6 +972,78 @@ export type Database = {
           },
         ]
       }
+      catalog_health_review_dispositions: {
+        Row: {
+          id: string
+          issue_count: number
+          issue_fingerprint: string
+          issue_snapshot: Json
+          outcome: string
+          review_note: string
+          reviewed_at: string
+          reviewed_by: string
+          shared_product_id: string
+        }
+        Insert: {
+          id?: string
+          issue_count: number
+          issue_fingerprint: string
+          issue_snapshot: Json
+          outcome: string
+          review_note: string
+          reviewed_at?: string
+          reviewed_by: string
+          shared_product_id: string
+        }
+        Update: {
+          id?: string
+          issue_count?: number
+          issue_fingerprint?: string
+          issue_snapshot?: Json
+          outcome?: string
+          review_note?: string
+          reviewed_at?: string
+          reviewed_by?: string
+          shared_product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_health_review_dispositions_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "blendcalc_api_catalog_product_readiness"
+            referencedColumns: ["shared_product_id"]
+          },
+          {
+            foreignKeyName: "catalog_health_review_dispositions_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "blendcalc_api_v1_product_readiness"
+            referencedColumns: ["shared_product_id"]
+          },
+          {
+            foreignKeyName: "catalog_health_review_dispositions_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "blendcalc_api_v1_published_products"
+            referencedColumns: ["shared_product_id"]
+          },
+          {
+            foreignKeyName: "catalog_health_review_dispositions_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_product_readiness"
+            referencedColumns: ["shared_product_id"]
+          },
+          {
+            foreignKeyName: "catalog_health_review_dispositions_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "shared_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       catalog_health_repair_run_items: {
         Row: {
           after_value: Json | null

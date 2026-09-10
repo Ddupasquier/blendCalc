@@ -18,25 +18,39 @@
 >
 	<div class="privileged-tool-information">
 		<p>{information.purpose}</p>
+		<section aria-labelledby={`privileged-tool-information-${action}-when`}>
+			<h3 id={`privileged-tool-information-${action}-when`}>
+				When to use this
+			</h3>
+			<p>{information.whenToUse}</p>
+		</section>
 		<section aria-labelledby={`privileged-tool-information-${action}-flow`}>
-			<h3 id={`privileged-tool-information-${action}-flow`}>Review flow</h3>
+			<h3 id={`privileged-tool-information-${action}-flow`}>Start here</h3>
 			<ol>
 				{#each information.reviewSteps as reviewStep}
 					<li>{reviewStep}</li>
 				{/each}
 			</ol>
 		</section>
+		<section aria-labelledby={`privileged-tool-information-${action}-complete`}>
+			<h3 id={`privileged-tool-information-${action}-complete`}>Done when</h3>
+			<p>{information.completion}</p>
+		</section>
 		<section aria-labelledby={`privileged-tool-information-${action}-result`}>
 			<h3 id={`privileged-tool-information-${action}-result`}>
-				What your decision changes
+				What each action changes
 			</h3>
-			<p>{information.decisionEffect}</p>
+			<ul>
+				{#each information.decisionEffects as decisionEffect}
+					<li>{decisionEffect}</li>
+				{/each}
+			</ul>
 		</section>
 		<section
 			aria-labelledby={`privileged-tool-information-${action}-guardrail`}
 		>
 			<h3 id={`privileged-tool-information-${action}-guardrail`}>
-				Important safeguard
+				Safety boundary
 			</h3>
 			<p>{information.guardrail}</p>
 		</section>

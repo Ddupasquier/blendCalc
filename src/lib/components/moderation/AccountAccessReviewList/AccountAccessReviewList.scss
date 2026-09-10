@@ -81,7 +81,8 @@
 
 .account-access__suspension,
 .account-access__restriction,
-.account-access__public-reason {
+.account-access__public-reason,
+.account-access__action-explanation {
 	padding: $app-gap-xs;
 	border-radius: $app-radius-sm;
 	font-size: $app-font-size-sm;
@@ -97,6 +98,12 @@
 .account-access__public-reason {
 	color: $app-muted;
 	background: $app-accent;
+}
+
+.account-access__action-explanation {
+	margin: 0;
+	color: $app-shell-text-muted;
+	background: $app-shell-surface-panel;
 }
 
 @media (max-width: $app-breakpoint-xs),

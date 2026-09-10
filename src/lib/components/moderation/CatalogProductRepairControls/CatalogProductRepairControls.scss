@@ -8,6 +8,27 @@
 	min-width: 0;
 }
 
+.catalog-product-repairs__stop {
+	display: grid;
+	gap: $app-gap-xs;
+	padding: $app-gap-sm;
+	background: $app-shell-surface-panel;
+	border-radius: $app-shell-radius-control;
+}
+
+.catalog-product-repairs__stop p {
+	margin: 0;
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+}
+
+.catalog-product-repairs__stop a {
+	width: fit-content;
+	color: $app-shell-accent-primary;
+	font-weight: $app-font-weight-semibold;
+	text-underline-offset: 0.18em;
+}
+
 .catalog-product-repairs,
 .catalog-product-repairs__item {
 	gap: $app-gap-sm;

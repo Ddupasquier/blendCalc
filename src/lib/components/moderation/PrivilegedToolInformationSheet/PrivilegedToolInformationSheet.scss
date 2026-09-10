@@ -22,15 +22,30 @@
 }
 
 .privileged-tool-information p,
-.privileged-tool-information ol {
+.privileged-tool-information ol,
+.privileged-tool-information ul {
 	margin: 0;
 	color: $app-shell-text-muted;
 }
 
-.privileged-tool-information ol {
+.privileged-tool-information ol,
+.privileged-tool-information ul {
 	display: grid;
 	gap: $app-gap-xs;
+}
+
+.privileged-tool-information ol {
 	padding-left: $app-gap-lg;
+}
+
+.privileged-tool-information ul {
+	padding: 0;
+	list-style: none;
+}
+
+.privileged-tool-information ul li + li {
+	padding-top: $app-gap-xs;
+	border-top: 1px solid $app-shell-border-subtle;
 }
 
 @media (max-width: $app-breakpoint-xs),

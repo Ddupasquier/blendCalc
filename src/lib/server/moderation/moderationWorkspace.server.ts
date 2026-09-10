@@ -76,7 +76,6 @@ type ModerationAction = (
 	event: Pick<RequestEvent, "locals" | "request">,
 ) => Promise<unknown>;
 export type ModerationWorkspaceDataScope =
-	| "all"
 	| "product-submissions"
 	| "food-warning-reports"
 	| "profile-images"
@@ -87,10 +86,7 @@ const MODERATION_SCOPE_PERMISSIONS = {
 	"food-warning-reports": "moderation.warnings.review",
 	"product-submissions": "moderation.catalog.review",
 	"profile-images": "moderation.accounts.manage",
-} as const satisfies Record<
-	Exclude<ModerationWorkspaceDataScope, "all">,
-	AppPermission
->;
+} as const satisfies Record<ModerationWorkspaceDataScope, AppPermission>;
 
 const getReason = (formData: FormData) => {
 	const reason = String(formData.get("reason") ?? "") as ModerationReason;
@@ -198,32 +194,29 @@ const getTargetContext = async (
 
 export const loadModerationWorkspaceData = async (
 	{ locals, url }: ModerationLoadEvent,
-	returnPath = "/moderation",
-	scope: ModerationWorkspaceDataScope = "all",
+	returnPath: string,
+	scope: ModerationWorkspaceDataScope,
 ) => {
 	const { user: viewer, role } = await requireModeratorAccess(
 		locals,
 		returnPath,
 	);
 	const permissions = await readAppRolePermissions(role);
-	if (
-		scope !== "all" &&
-		!hasAppPermission(permissions, MODERATION_SCOPE_PERMISSIONS[scope])
-	) {
+	if (!hasAppPermission(permissions, MODERATION_SCOPE_PERMISSIONS[scope])) {
 		throwAppError(403, "ACCESS_DENIED");
 	}
 	const query = url.searchParams.get("q")?.trim().toLocaleLowerCase() ?? "";
 	const includesAccounts =
-		(scope === "all" || scope === "account-access") &&
+		scope === "account-access" &&
 		hasAppPermission(permissions, "moderation.accounts.manage");
 	const includesProductSubmissions =
-		(scope === "all" || scope === "product-submissions") &&
+		scope === "product-submissions" &&
 		hasAppPermission(permissions, "moderation.catalog.review");
 	const includesFoodWarningReports =
-		(scope === "all" || scope === "food-warning-reports") &&
+		scope === "food-warning-reports" &&
 		hasAppPermission(permissions, "moderation.warnings.review");
 	const includesProfileImageReports =
-		(scope === "all" || scope === "profile-images") &&
+		scope === "profile-images" &&
 		hasAppPermission(permissions, "moderation.accounts.manage");
 	const [
 		{ admin, users: authUsers },
@@ -626,7 +619,7 @@ export const moderationWorkspaceActions = {
 		) {
 			return fail(400, {
 				compatibilityReviewError:
-					"Choose an outcome, next step, and add a review note.",
+					"Complete all three review steps: decide whether the report is supported, choose the follow-up, and record the evidence you checked.",
 			});
 		}
 

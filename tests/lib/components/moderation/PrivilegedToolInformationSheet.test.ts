@@ -21,14 +21,33 @@ describe("PrivilegedToolInformationSheet", () => {
 
 		expect(screen.getByRole("heading", { name: title })).toBeInTheDocument();
 		expect(
-			screen.getByRole("heading", { name: "Review flow" }),
+			screen.getByRole("heading", { name: "When to use this" }),
 		).toBeInTheDocument();
 		expect(
-			screen.getByRole("heading", { name: "What your decision changes" }),
+			screen.getByRole("heading", { name: "Start here" }),
 		).toBeInTheDocument();
 		expect(
-			screen.getByRole("heading", { name: "Important safeguard" }),
+			screen.getByRole("heading", { name: "Done when" }),
 		).toBeInTheDocument();
+		expect(
+			screen.getByRole("heading", { name: "What each action changes" }),
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole("heading", { name: "Safety boundary" }),
+		).toBeInTheDocument();
+	});
+
+	it("states both outcomes for consequential review tools", () => {
+		render(PrivilegedToolInformationSheet, {
+			props: {
+				open: true,
+				action: "food-warning-reports",
+				onClose: vi.fn(),
+			},
+		});
+
+		expect(screen.getByText(/^Confirm the report:/)).toBeVisible();
+		expect(screen.getByText(/^Dismiss the report:/)).toBeVisible();
 	});
 
 	it("closes from the clear acknowledgement action", async () => {

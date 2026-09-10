@@ -48,7 +48,16 @@ describe("AccountAccessReviewList", () => {
 		await fireEvent.click(screen.getByText("Access controls"));
 
 		expect(screen.getByLabelText("Reason")).toBeVisible();
-		expect(screen.getByRole("button", { name: "Block account" })).toBeVisible();
+		const blockAccount = screen.getByRole("button", { name: "Block account" });
+		expect(blockAccount).toBeDisabled();
+		expect(
+			screen.getByText(/Blocking prevents this account from signing in/),
+		).toBeVisible();
+		await fireEvent.click(screen.getByRole("combobox", { name: "Reason" }));
+		await fireEvent.click(
+			screen.getByRole("option", { name: "Fraud or spam" }),
+		);
+		expect(blockAccount).toBeEnabled();
 	});
 
 	it("explains an empty account search without rendering account controls", () => {

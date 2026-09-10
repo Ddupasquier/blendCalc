@@ -56,8 +56,20 @@ const foodWarningReport = {
 	foodDescription: "Reviewed Peanut Butter",
 	warningId: null,
 	issueCode: null,
-	issueParams: { preference: "peanut" },
-	factSnapshot: { contains: ["peanut"] },
+	issueParams: { factLabel: "Peanut" },
+	factSnapshot: {
+		facts: [
+			{
+				slug: "peanut",
+				label: "Peanut",
+				category: "allergen",
+				factType: "contains",
+				sourceType: "label_allergen_field",
+				sourceText: "Contains: Peanuts",
+				confidence: "confirmed",
+			},
+		],
+	},
 	preferenceType: "allergen",
 	preferenceValue: "Peanut",
 	observedLabelDate: "2026-08-20",
@@ -82,7 +94,7 @@ describe("focused moderator review lists", () => {
 		).toBeInTheDocument();
 	});
 
-	it("keeps product evidence closed while exposing the decision controls", async () => {
+	it("keeps supporting evidence bounded and requires a deliberate product decision", async () => {
 		render(ProductSubmissionReviewList, {
 			props: { submissions: [productSubmission] },
 		});
@@ -95,15 +107,39 @@ describe("focused moderator review lists", () => {
 		expect(screen.getByText("Trusted evidence conflict")).toBeVisible();
 		expect(screen.getByText("Nutrition facts")).not.toBeVisible();
 		expect(
-			screen.getByRole("button", { name: "Approve submission" }),
-		).toBeEnabled();
+			screen.getByRole("combobox", {
+				name: "1. What does the package evidence support?",
+			}),
+		).toHaveTextContent("Choose a decision");
 		expect(
-			screen.getByRole("button", { name: "Reject submission" }),
-		).toBeEnabled();
+			screen.queryByRole("button", { name: "Approve and publish submission" }),
+		).not.toBeInTheDocument();
+		expect(
+			screen.queryByRole("button", { name: "Reject submission" }),
+		).not.toBeInTheDocument();
+		expect(
+			screen.getByText(/Rejection keeps them unpublished and saves/),
+		).toBeVisible();
 
 		await fireEvent.click(screen.getByText("Package evidence"));
 
 		expect(screen.getByText("Nutrition facts")).toBeVisible();
+
+		await fireEvent.click(
+			screen.getByRole("combobox", {
+				name: "1. What does the package evidence support?",
+			}),
+		);
+		await fireEvent.click(
+			screen.getByRole("option", {
+				name: "Approve — every submitted value is supported",
+			}),
+		);
+		expect(
+			screen.getByRole("button", {
+				name: "Approve and publish submission",
+			}),
+		).toBeEnabled();
 	});
 
 	it("explains an empty food-warning queue", () => {
@@ -119,7 +155,7 @@ describe("focused moderator review lists", () => {
 		).toBeInTheDocument();
 	});
 
-	it("presents one warning report with evidence and an explicit next step", async () => {
+	it("explains the report, evidence, and safe decision sequence", async () => {
 		render(FoodWarningReportReviewList, {
 			props: { reports: [foodWarningReport] },
 		});
@@ -130,16 +166,58 @@ describe("focused moderator review lists", () => {
 			screen.getByText("The current package explicitly lists peanuts."),
 		).toBeVisible();
 		expect(
-			screen.getByText("Open private package-label evidence"),
-		).not.toBeVisible();
-		expect(screen.getByRole("combobox", { name: "Decision" })).toBeVisible();
-		expect(screen.getByRole("combobox", { name: "Next step" })).toBeVisible();
-		expect(screen.getByRole("button", { name: "Save review" })).toBeEnabled();
-
-		await fireEvent.click(screen.getByText("Report evidence"));
-
-		expect(
-			screen.getByText("Open private package-label evidence"),
+			screen.getByText(
+				"The user expected a Peanut warning, but blendCalc did not show one.",
+			),
 		).toBeVisible();
+		expect(
+			screen.getByText(
+				"No Peanut warning was active when this report was created.",
+			),
+		).toBeVisible();
+		expect(screen.getByText("Contains: Peanut")).toBeVisible();
+		expect(
+			screen.getByText("Open the user’s package-label evidence"),
+		).toBeVisible();
+		expect(screen.getByText(/"issueParams"/)).not.toBeVisible();
+
+		const decision = screen.getByRole("combobox", {
+			name: "1. Is the user’s report supported?",
+		});
+		const nextStep = screen.getByRole("combobox", {
+			name: "2. What should happen next?",
+		});
+		const saveReview = screen.getByRole("button", { name: "Save review" });
+		expect(nextStep).toBeDisabled();
+		expect(saveReview).toBeDisabled();
+		expect(
+			screen.getByText(
+				"Yes confirms the report and can create follow-up work. No dismisses it and preserves the current warning behavior.",
+			),
+		).toBeVisible();
+
+		await fireEvent.click(decision);
+		await fireEvent.click(
+			screen.getByRole("option", {
+				name: "Yes — blendCalc missed this warning",
+			}),
+		);
+		expect(nextStep).toBeEnabled();
+		await fireEvent.click(nextStep);
+		await fireEvent.click(
+			screen.getByRole("option", {
+				name: "Correct product data — stored food facts are wrong",
+			}),
+		);
+		await fireEvent.input(
+			screen.getByRole("textbox", {
+				name: "3. What evidence supports this decision?",
+			}),
+			{ target: { value: "The package label confirms the missing warning." } },
+		);
+		expect(saveReview).toBeEnabled();
+
+		await fireEvent.click(screen.getByText("Technical record details"));
+		expect(screen.getByText(/"issueParams"/)).toBeVisible();
 	});
 });

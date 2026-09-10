@@ -25,6 +25,10 @@
 		open
 	>
 		<div class="food-warning-follow-up-list">
+			<p class="food-warning-follow-up-list__introduction">
+				The report decision is complete. These items are the separate corrective
+				work that must finish before the underlying warning issue is closed.
+			</p>
 			{#each followUps.productCorrections as correction (correction.id)}
 				<article class="food-warning-follow-up-list__item">
 					<header>
@@ -76,6 +80,11 @@
 						Owner: {getCatalogResponsibleGroupLabel(
 							reviewCase.responsibleGroup,
 						)}
+					</p>
+					<p class="food-warning-follow-up-list__owner">
+						Next step: {reviewCase.caseType === "rule_review"
+							? "Compare the active warning rule with its approved policy sources."
+							: "Trace the incorrect source mapping to reviewed package or provider evidence."}
 					</p>
 				</article>
 			{/each}

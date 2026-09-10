@@ -18,6 +18,14 @@
 	title="Account access"
 	subtitle="Find an account, review its current standing, and block or restore access when policy requires it."
 	informationKey="account-access"
+	guide={{
+		tone: "lookup",
+		title: "Search for the exact account first",
+		description:
+			"Use a name, email, user ID, role, or status. Open one result, verify that it is the intended account, and use access controls only when policy requires a change.",
+		completion:
+			"The intended account's standing is confirmed and any necessary block or restoration is recorded with the reason shown to the user.",
+	}}
 	feedbackMessage={form?.moderationError ??
 		form?.moderationWarning ??
 		form?.moderationSuccess}

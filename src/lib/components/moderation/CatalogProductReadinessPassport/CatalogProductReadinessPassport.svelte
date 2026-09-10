@@ -1,6 +1,8 @@
 <script lang="ts">
 	import TextBadge from "$lib/components/common/badges/TextBadge/TextBadge.svelte";
+	import RoundedActionLink from "$lib/components/common/buttons/RoundedActionLink/RoundedActionLink.svelte";
 	import CollapsibleSection from "$lib/components/common/disclosure/CollapsibleSection/CollapsibleSection.svelte";
+	import { getCatalogHealthRepairTargetId } from "$lib/utils/moderation/catalogHealthRepair";
 	import {
 		getCatalogHealthStatusLabel,
 		getCatalogIssueCodeLabel,
@@ -10,7 +12,10 @@
 	} from "$lib/utils/moderation/catalogHealthMessages";
 	import type { CatalogProductReadinessPassportProps } from "./types";
 
-	let { passport }: CatalogProductReadinessPassportProps = $props();
+	let {
+		passport,
+		canRunRepairs = false,
+	}: CatalogProductReadinessPassportProps = $props();
 
 	const dateFormatter = new Intl.DateTimeFormat(undefined, {
 		dateStyle: "medium",
@@ -33,6 +38,17 @@
 			? ("danger" as const)
 			: ("warning" as const),
 	);
+	const repairActionAvailable = (issue: (typeof passport.issues)[number]) =>
+		canRunRepairs &&
+		issue.automatedRepairAllowed &&
+		Boolean(issue.automatedRepairKey);
+	const actionableIssueCount = $derived(
+		passport.issues.filter(repairActionAvailable).length,
+	);
+	const orderedIssues = $derived([
+		...passport.issues.filter(repairActionAvailable),
+		...passport.issues.filter((issue) => !repairActionAvailable(issue)),
+	]);
 </script>
 
 <article class="catalog-product-passport">
@@ -88,17 +104,33 @@
 			surface="panel"
 			tone={issueTone}
 		>
+			<p class="catalog-product-passport__supporting-copy">
+				{!canRunRepairs
+					? `This screen explains the evidence and names the team responsible for each issue. Data operations runs any safe checks and records the final public-API outcome.`
+					: actionableIssueCount === 0
+						? `None of these ${passport.issues.length} issues can be corrected from this screen. Each card names the missing workflow. If the evidence is unavailable today, record that outcome with the final action below.`
+						: actionableIssueCount === passport.issues.length
+							? `Every current issue has a safe repair check on this screen. Run each check once, then complete the final review below if no safe change is available.`
+							: `${actionableIssueCount} ${actionableIssueCount === 1 ? "issue can" : "issues can"} be checked here now. The other ${passport.issues.length - actionableIssueCount} cannot be corrected on this screen. Actionable cards are listed first.`}
+			</p>
 			<div class="catalog-product-passport__issue-list">
-				{#each passport.issues as issue (issue.occurrenceKey)}
-					<article class="catalog-product-passport__issue">
+				{#each orderedIssues as issue (issue.occurrenceKey)}
+					<article
+						class="catalog-product-passport__issue"
+						id={`issue-${getCatalogHealthRepairTargetId(issue.occurrenceKey)}`}
+					>
 						<header>
 							<strong>{getCatalogIssueCodeLabel(issue.issueCode)}</strong>
 							<TextBadge
-								label={getCatalogHealthStatusLabel(issue.operationalSeverity)}
-								tone="warning"
+								label={repairActionAvailable(issue)
+									? "Fix here"
+									: "No action here"}
+								tone={repairActionAvailable(issue) ? "info" : "warning"}
 							/>
 						</header>
-						<p>{getCatalogIssueReasonLabel(issue.sourceReason)}</p>
+						<p>
+							{getCatalogIssueReasonLabel(issue.sourceReason, issue.parameters)}
+						</p>
 						<dl>
 							<div>
 								<dt>Owner</dt>
@@ -107,9 +139,9 @@
 								</dd>
 							</div>
 							<div>
-								<dt>Next step</dt>
+								<dt>Priority</dt>
 								<dd>
-									{getCatalogResolutionActionLabel(issue.resolutionAction)}
+									{getCatalogHealthStatusLabel(issue.operationalSeverity)}
 								</dd>
 							</div>
 							<div>
@@ -125,10 +157,58 @@
 								</dd>
 							</div>
 						</dl>
+						<section class="catalog-product-passport__action">
+							<span>Do this now</span>
+							<strong>
+								{repairActionAvailable(issue)
+									? "Run the safe repair check below"
+									: getCatalogResolutionActionLabel(issue.resolutionAction)}
+							</strong>
+							{#if repairActionAvailable(issue)}
+								<p>
+									The check is a preview and changes nothing. Apply appears only
+									if stored evidence proves an exact repair.
+								</p>
+								<RoundedActionLink
+									href={`#${getCatalogHealthRepairTargetId(issue.occurrenceKey)}`}
+									variant="primary"
+									fullWidth
+								>
+									Go to safe repair check
+								</RoundedActionLink>
+							{:else}
+								<p>
+									<strong>No in-app control exists for this action yet.</strong>
+									The {getCatalogResponsibleGroupLabel(
+										issue.responsibleGroup,
+									).toLocaleLowerCase()} workflow is still needed to add or approve
+									the missing evidence.
+									{canRunRepairs
+										? "If that evidence is unavailable today, the final action below records that decision and removes this current item from the queue without publishing it."
+										: "Data operations must record the final public-API outcome when that evidence is unavailable."}
+								</p>
+							{/if}
+							<div class="catalog-product-passport__result">
+								<span>Finished when</span>
+								<p>
+									This issue disappears after readiness checks confirm the
+									required evidence, or after the current evidence is
+									deliberately accepted as not publishable by data operations.
+								</p>
+							</div>
+						</section>
 					</article>
 				{/each}
 			</div>
 		</CollapsibleSection>
+	{:else if passport.reviewDisposition}
+		<div class="catalog-product-passport__reviewed-message">
+			<strong>Current review is complete.</strong>
+			<p>
+				The product remains available in blendCalc and withheld from public
+				blendCalcAPI v1. Changed evidence automatically creates new work.
+			</p>
+		</div>
 	{:else}
 		<p class="catalog-product-passport__ready-message">
 			No current catalog-health issues were found for this product.
@@ -175,7 +255,7 @@
 				<dd>{passport.evidence.selectedFieldCount}</dd>
 			</div>
 			<div>
-				<dt>Nutrition with source evidence</dt>
+				<dt>Existing nutrient records with source evidence</dt>
 				<dd>
 					{formatEvidenceCoverage(
 						passport.evidence.nutrientsWithSourceEvidenceCount,

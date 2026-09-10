@@ -1,7 +1,7 @@
 # Moderation
 
 Routes: the Profile gateway at `/profile/privileged-tools`, focused privileged views
-under `/profile/privileged-tools/*`, and the legacy compatibility routes
+under `/profile/privileged-tools/*`, and the legacy compatibility redirects
 `/moderation` and `/moderation/data-health`.
 
 Only authorized moderators, administrators, and developers may enter these views. Role,
@@ -33,12 +33,21 @@ catalog-review, and permitted data-operation tools remain available. The bottom-
 own one crown without repeating the same visible label inside their content.
 
 Every focused right sheet follows the same reading order: the plain-language view
-heading, current action feedback, one bounded result summary, review records, supporting
+heading, current action feedback, one shared start card with the first step and
+**Done when** condition, one bounded result summary, review records, supporting
 evidence in closed shared disclosures, and the decision controls last. An adjacent
 information button opens the shared contextual bottom sheet for that exact tool. It
 explains the tool's purpose, review order, decision effect, and safety boundary without
 adding permanent instructions to every record. The information sheet is contextual help,
 not a second moderation workflow, and never exposes private evidence or internal codes.
+Consequential decisions and public reasons start unselected. The final action remains
+unavailable until every required choice and evidence note is complete, and nearby copy
+states what the action changes, what it preserves, and where unfinished work goes.
+Approve/confirm and reject/dismiss descriptions must each state both the immediate
+system effect and what remains unchanged. They must distinguish closing a queue item
+from downstream publication, notification, correction, access, or policy effects and
+must not imply a user notification or automatic correction that the server does not
+perform.
 
 Product, warning, and reported-image queues use the shared moderator review-list and
 review-card structure. Keep identity and the decision-relevant status in the card header,
@@ -72,7 +81,9 @@ required action after reading the evidence.
 - Keep package photos, proposed changes, card-image placement, and full nutrition values
   in separate closed disclosures. Missing evidence and validation flags remain visible
   before the decision area.
-- Keep one clear Approve action and one Reject action that requires a note.
+- Require one unselected evidence decision before showing its matching action. Approval
+  states that it publishes the reviewed values; rejection requires a useful correction
+  note before its action is available.
 - Preserve deterministic QA-fixture behavior in the disposable local environment.
 - The 51st moderator rejection pauses public catalog sharing for six calendar months.
   Automated declines do not count, and private food tracking remains available.
@@ -81,6 +92,17 @@ required action after reading the evidence.
 
 - Pending reports remain the decision queue. Each report requires one outcome, one
   bounded follow-up action, and a concise internal note.
+- Lead each report with two plain-language statements: what the user says is wrong and
+  why blendCalc showed or omitted the warning. Present the stored facts as readable
+  evidence with their source and confidence; raw identifiers and JSON remain secondary
+  troubleshooting details, never the primary review experience.
+- Keep evidence open while the technical record stays closed. Number the three decision
+  steps, start both selects without a chosen outcome, explain the effect of every
+  follow-up option, and keep Save unavailable until the reviewer has deliberately chosen
+  an outcome, chosen a compatible follow-up, and written an evidence note.
+- When a report is dismissed, offer only no-follow-up or duplicate closure. Correction
+  routes are available only when the report is confirmed, matching the database
+  boundary and preventing an invalid outcome/follow-up combination.
 - Confirmed reports with corrective work move into a separate `Follow-up work` list so
   completed review decisions do not look unfinished or disappear without an owner.
 - Product corrections link to the shared product-readiness passport and show the exact
@@ -103,7 +125,8 @@ required action after reading the evidence.
   dates as private moderation evidence.
 - Keep the exact reported image visible while report reasons stay in one closed Report
   details disclosure.
-- Require one explicit `Keep image` or `Remove image` decision and a review note.
+- Require one explicit, initially unselected `Keep image` or `Remove image` decision and
+  an evidence note before Save is available.
 - `Keep image` dismisses every pending report for that exact image. `Remove image`
   clears only that exact current image and closes its reports. If the user already
   replaced the image, close the stale reports without affecting the replacement.
@@ -113,23 +136,34 @@ required action after reading the evidence.
 ## Catalog Review And Data Operations
 
 `/profile/privileged-tools/catalog-review-work` contains possible recall matches,
-provider changes, and material product conflicts. These are review decisions, not data
-health metrics. Keep each queue in a closed shared disclosure and route product-specific
-evidence to a path-backed product view.
+material product conflicts, and provider changes in that priority order. These are
+review decisions, not data health metrics. Open the first non-clear queue, label every
+queue badge as `to review` or `Clear`, explain the evidence decision at the start of
+each queue, and route product-specific evidence to a path-backed product view.
+Recall decisions start unselected and cannot be saved without an evidence note.
+Provider observations explain that keeping the current record closes the observation,
+while supported provider evidence must continue through a catalog correction.
 
-`/profile/privileged-tools/data-operations` starts with a compact operational summary.
+`/profile/privileged-tools/data-operations` starts with the exact deduplicated human-
+action count, a Required work summary, three explicitly named diagnostic checks, and
+compact catalog-coverage facts. Publication readiness, nutrient identity, and revision
+evidence use `match` wording because their broader results can overlap and do not add to
+the red action total; their summary cards link directly to the first affected record.
+Monitoring, source, dataset, and policy badges include their units or status so they
+cannot be mistaken for task counts.
 Keep automated monitoring, source activity, dataset/licence state, food-warning policy
 coverage, blendCalcAPI publication gaps, nutrient mapping gaps, and revision gaps in closed
-shared disclosures. Do not render product submissions, warning reports, provider-change
+shared disclosures, except that the first non-clear action queue opens by default. Do not render product submissions, warning reports, provider-change
 decisions, recall decisions, or catalog-conflict decisions in this workspace.
 Its Profile badge counts each distinct affected subject once when that subject has one
 or more open enabled `app_issue_codes` rows owned by `data_operations`. Informational
 metrics, disabled issue codes, and multiple open issues on the same subject do not add
 extra actions.
 
-The legacy `/moderation/data-health` route redirects to the Profile privileged-tools
-gateway. `/profile/privileged-tools/catalog-data-health` redirects to data operations
-during rollout and owns no data or mutation logic.
+The legacy `/moderation` and `/moderation/data-health` routes redirect to the Profile
+privileged-tools gateway so operators always enter the same role-aware workflow.
+`/profile/privileged-tools/catalog-data-health` redirects to data operations during
+rollout and owns no data or mutation logic.
 
 Source activity uses the database-recorded lookup count for the selected bounded metric
 window and lists the most-used source first. Equal lookup counts fall back to source name
@@ -161,6 +195,28 @@ evidence coverage, and API-publication details in closed shared disclosures so t
 default view remains understandable. Only the data-operations route may render repair
 controls, and only when the live permission set includes
 `data_operations.catalog_health.repair`.
+The passport explicitly identifies itself as an evidence-and-status view. Every issue
+has a `Do this now` panel that names the required workflow, states whether that action is
+available on the current screen, and defines the observable condition that clears the
+issue. Actionable issues appear before unavailable issues. The workspace guide states
+the exact number operators can act on now and defines completion for the current screen
+instead of describing every diagnostic as resolvable work. When a safe repair is available, the issue links directly to its exact
+repair control. A dry run with no exact candidate is a stop state, not a retry loop: it tells
+the operator to continue to the final product-review action and may be rerun only after
+the stored evidence changes. The final action is enabled only after every available safe
+check has returned no candidate. Before confirmation it states all four outcomes: the
+product remains available inside blendCalc, remains withheld from public blendCalcAPI
+v1, the exact current readiness snapshot leaves actionable queues, and changed evidence
+automatically reopens the review. A private explanation of at least 10 characters is
+required. Missing correction workflows remain clearly identified as unavailable; the
+terminal outcome records `accepted_withheld` rather than implying that inspection fixed
+or approved missing evidence.
+
+Evidence coverage labels must distinguish completeness from provenance. `Existing
+nutrient records with source evidence` describes only the nutrients already stored; it
+does not imply that every nutrient required by the active publication profile exists.
+Missing-required-nutrient cards resolve the database nutrient id to its canonical name
+instead of displaying a generic product-information fallback.
 
 Nutrient mapping gaps use a separate path-backed nested right sheet at
 `/profile/privileged-tools/data-operations/nutrient-mappings/[mappingId]`. The summary
@@ -170,3 +226,6 @@ closed shared disclosure, and uses the reusable searchable/select controls to of
 only database-returned nutrients with a reviewed compatible unit path. Approve requires
 an evidence reference and review note; exclude requires a review note. Resolved work is
 read-only and no longer appears in the summary queue.
+The outcome starts unselected; the suggested nutrient and confidence are explicitly
+described as clues rather than approval evidence, and the action remains unavailable
+until the selected path is complete.

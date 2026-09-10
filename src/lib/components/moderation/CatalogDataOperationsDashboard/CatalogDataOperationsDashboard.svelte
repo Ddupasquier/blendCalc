@@ -7,8 +7,11 @@
 	} from "$lib/utils/moderation/catalogHealthMessages";
 	import type { CatalogDataOperationsDashboardProps } from "./types";
 
-	let { dashboard, catalogMonitor }: CatalogDataOperationsDashboardProps =
-		$props();
+	let {
+		dashboard,
+		catalogMonitor,
+		actionCount,
+	}: CatalogDataOperationsDashboardProps = $props();
 
 	const numberFormatter = new Intl.NumberFormat();
 	const dateFormatter = new Intl.DateTimeFormat(undefined, {
@@ -27,22 +30,51 @@
 			value: dashboard.overview.publicationReadyProducts,
 			tone: "success" as const,
 		},
+	]);
+	const diagnosticItems = $derived([
 		{
-			label: "blendCalcAPI publication gaps",
-			value: dashboard.issues.publication.length,
-			tone: "neutral" as const,
+			title: "Publication readiness",
+			count: dashboard.issues.publication.length,
+			description:
+				"Products missing evidence or policy required for blendCalcAPI v1.",
+			href: dashboard.issues.publication[0]
+				? `/profile/privileged-tools/data-operations/products/${encodeURIComponent(dashboard.issues.publication[0].productId)}`
+				: null,
+			action: "Inspect first product",
 		},
 		{
-			label: "Nutrient mappings to resolve",
-			value: dashboard.issues.nutrientMappings.length,
-			tone: "neutral" as const,
+			title: "Nutrient identity",
+			count: dashboard.issues.nutrientMappings.length,
+			description:
+				"Source nutrients that must be mapped to the correct canonical nutrient.",
+			href: dashboard.issues.nutrientMappings[0]
+				? `/profile/privileged-tools/data-operations/nutrient-mappings/${encodeURIComponent(dashboard.issues.nutrientMappings[0].mappingId)}`
+				: null,
+			action: "Inspect first mapping",
 		},
 		{
-			label: "Revision history gaps",
-			value: dashboard.issues.revisions.length,
-			tone: "neutral" as const,
+			title: "Revision evidence",
+			count: dashboard.issues.revisions.length,
+			description:
+				"Products whose revision history does not yet explain a recorded change.",
+			href: dashboard.issues.revisions[0]
+				? `/profile/privileged-tools/data-operations/products/${encodeURIComponent(dashboard.issues.revisions[0].productId)}`
+				: null,
+			action: "Inspect first revision",
 		},
 	]);
+	const datasetImportEvidenceItems = $derived(
+		dashboard.datasets.filter(
+			(dataset) =>
+				dataset.importEnabled &&
+				(dataset.importedAt === null || !dataset.checksumRecorded),
+		),
+	);
+	const unidentifiedActionCount = $derived(
+		actionCount === null
+			? null
+			: Math.max(actionCount - datasetImportEvidenceItems.length, 0),
+	);
 
 	const formatNumber = (value: number) => numberFormatter.format(value);
 	const formatDate = (value: string | null) => {
@@ -61,8 +93,84 @@
 	</p>
 
 	<section
+		class="catalog-data-operations__required-work"
+		aria-labelledby="catalog-data-operations-required-work-title"
+	>
+		<header class="catalog-data-operations__section-heading">
+			<div>
+				<h2 id="catalog-data-operations-required-work-title">Required work</h2>
+				<p>
+					This is the same deduplicated workload shown in the Admin tools
+					launcher.
+				</p>
+			</div>
+		</header>
+		{#if actionCount === null}
+			<article class="catalog-data-operations__required-card">
+				<header>
+					<strong>Queue status unavailable</strong>
+					<TextBadge label="Unknown" tone="warning" />
+				</header>
+				<p>
+					Use the diagnostic checks below, but do not treat a missing total as
+					an all-clear.
+				</p>
+			</article>
+		{:else if actionCount === 0}
+			<article class="catalog-data-operations__required-card" data-clear="true">
+				<header>
+					<strong>No tracked operator work</strong>
+					<TextBadge label="Clear" tone="success" />
+				</header>
+				<p>
+					No enabled data-operations issue currently needs a person. The
+					diagnostics below remain available for investigation.
+				</p>
+			</article>
+		{:else}
+			<div class="catalog-data-operations__required-list">
+				{#if datasetImportEvidenceItems.length > 0}
+					<article class="catalog-data-operations__required-card">
+						<header>
+							<strong>Dataset import evidence</strong>
+							<TextBadge
+								label={`${formatNumber(datasetImportEvidenceItems.length)} ${datasetImportEvidenceItems.length === 1 ? "dataset" : "datasets"}`}
+								tone="warning"
+							/>
+						</header>
+						<p>
+							Record the missing import date or checksum evidence for these
+							datasets:
+						</p>
+						<ul>
+							{#each datasetImportEvidenceItems as dataset (dataset.key)}
+								<li>{dataset.displayName}</li>
+							{/each}
+						</ul>
+					</article>
+				{/if}
+				{#if unidentifiedActionCount && unidentifiedActionCount > 0}
+					<article class="catalog-data-operations__required-card">
+						<header>
+							<strong>Other tracked operational issues</strong>
+							<TextBadge
+								label={`${formatNumber(unidentifiedActionCount)} to resolve`}
+								tone="warning"
+							/>
+						</header>
+						<p>
+							Use the diagnostic checks and detailed sections below to locate
+							the affected subjects and their evidence.
+						</p>
+					</article>
+				{/if}
+			</div>
+		{/if}
+	</section>
+
+	<section
 		class="catalog-data-operations__overview"
-		aria-label="Operational overview"
+		aria-label="Catalog coverage"
 	>
 		{#each operationalOverviewItems as item (item.label)}
 			<article>
@@ -71,6 +179,60 @@
 			</article>
 		{/each}
 	</section>
+
+	<section
+		class="catalog-data-operations__action-queues"
+		aria-labelledby="catalog-data-operations-diagnostics-title"
+	>
+		<header class="catalog-data-operations__section-heading">
+			<div>
+				<h2 id="catalog-data-operations-diagnostics-title">
+					Diagnostic checks
+				</h2>
+				<p>
+					These broader checks can overlap. Use them to investigate the required
+					work above; they do not add to the red action total.
+				</p>
+			</div>
+		</header>
+		<div class="catalog-data-operations__action-grid">
+			{#each diagnosticItems as item (item.title)}
+				<article
+					class="catalog-data-operations__action-card"
+					data-clear={item.count === 0}
+				>
+					<header>
+						<strong>{item.title}</strong>
+						<TextBadge
+							label={item.count === 0
+								? "Clear"
+								: `${formatNumber(item.count)} ${item.count === 1 ? "match" : "matches"}`}
+							tone={item.count === 0 ? "success" : "warning"}
+						/>
+					</header>
+					<p>{item.description}</p>
+					{#if item.href}
+						<a href={item.href}>{item.action}</a>
+					{:else}
+						<span class="catalog-data-operations__clear-label"
+							>No diagnostic matches</span
+						>
+					{/if}
+				</article>
+			{/each}
+		</div>
+	</section>
+
+	<header
+		class="catalog-data-operations__section-heading catalog-data-operations__section-heading--details"
+	>
+		<div>
+			<h2>Details and system health</h2>
+			<p>
+				Open these sections for diagnostics, evidence, and the full queue lists.
+			</p>
+		</div>
+	</header>
 
 	<div class="catalog-data-operations__sections">
 		<CollapsibleSection
@@ -151,7 +313,7 @@
 
 		<CollapsibleSection
 			title="Source activity"
-			badge={`${dashboard.sources.length}`}
+			badge={`${dashboard.sources.length} ${dashboard.sources.length === 1 ? "source" : "sources"}`}
 			surface="panel"
 		>
 			<div class="catalog-data-operations__stack">
@@ -247,7 +409,7 @@
 
 		<CollapsibleSection
 			title="Dataset imports and licensing"
-			badge={`${dashboard.datasets.length}`}
+			badge={`${dashboard.datasets.length} ${dashboard.datasets.length === 1 ? "dataset" : "datasets"}`}
 			surface="panel"
 		>
 			<div class="catalog-data-operations__stack">
@@ -351,7 +513,11 @@
 
 		<CollapsibleSection
 			title="blendCalcAPI publication gaps"
-			badge={`${dashboard.issues.publication.length}`}
+			badge={dashboard.issues.publication.length === 0
+				? "Clear"
+				: `${dashboard.issues.publication.length} ${dashboard.issues.publication.length === 1 ? "match" : "matches"}`}
+			tone={dashboard.issues.publication.length > 0 ? "warning" : "neutral"}
+			open={dashboard.issues.publication.length > 0}
 			surface="panel"
 		>
 			<div class="catalog-data-operations__stack">
@@ -361,8 +527,8 @@
 							<strong>{issue.productName}</strong><span>{issue.barcode}</span>
 						</div>
 						<ul>
-							{#each issue.reasons as reason}<li>
-									{getCatalogIssueReasonLabel(reason)}
+							{#each issue.reasonDetails as reason}<li>
+									{getCatalogIssueReasonLabel(reason.reason, reason.parameters)}
 								</li>{/each}
 						</ul>
 						<a
@@ -371,14 +537,23 @@
 						>
 					</article>
 				{:else}<p class="catalog-data-operations__empty">
-						Every active product is ready for blendCalcAPI v1.
+						No product needs publication-readiness action. Products with a
+						finished accepted-withheld review remain out of public blendCalcAPI
+						v1 until their evidence changes.
 					</p>{/each}
 			</div>
 		</CollapsibleSection>
 
 		<CollapsibleSection
 			title="Nutrient mapping gaps"
-			badge={`${dashboard.issues.nutrientMappings.length}`}
+			badge={dashboard.issues.nutrientMappings.length === 0
+				? "Clear"
+				: `${dashboard.issues.nutrientMappings.length} ${dashboard.issues.nutrientMappings.length === 1 ? "match" : "matches"}`}
+			tone={dashboard.issues.nutrientMappings.length > 0
+				? "warning"
+				: "neutral"}
+			open={dashboard.issues.publication.length === 0 &&
+				dashboard.issues.nutrientMappings.length > 0}
 			surface="panel"
 		>
 			<div class="catalog-data-operations__stack">
@@ -407,7 +582,13 @@
 
 		<CollapsibleSection
 			title="Revision history gaps"
-			badge={`${dashboard.issues.revisions.length}`}
+			badge={dashboard.issues.revisions.length === 0
+				? "Clear"
+				: `${dashboard.issues.revisions.length} ${dashboard.issues.revisions.length === 1 ? "match" : "matches"}`}
+			tone={dashboard.issues.revisions.length > 0 ? "warning" : "neutral"}
+			open={dashboard.issues.publication.length === 0 &&
+				dashboard.issues.nutrientMappings.length === 0 &&
+				dashboard.issues.revisions.length > 0}
 			surface="panel"
 		>
 			<div class="catalog-data-operations__stack">

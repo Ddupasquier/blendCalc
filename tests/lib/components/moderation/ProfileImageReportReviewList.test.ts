@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/svelte";
+import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it } from "vitest";
 import ProfileImageReportReviewList from "$lib/components/moderation/ProfileImageReportReviewList/ProfileImageReportReviewList.svelte";
 
@@ -22,7 +22,7 @@ describe("ProfileImageReportReviewList", () => {
 		).toBeInTheDocument();
 	});
 
-	it("groups report evidence around one keep-or-remove decision", () => {
+	it("groups report evidence around one deliberate keep-or-remove decision", async () => {
 		render(ProfileImageReportReviewList, {
 			props: {
 				reports: [
@@ -57,14 +57,34 @@ describe("ProfileImageReportReviewList", () => {
 		).toBeInTheDocument();
 		expect(screen.getByText("2 reports")).toBeInTheDocument();
 		expect(screen.getByText("First reported Aug 20, 2026")).toBeInTheDocument();
-		expect(screen.getByText("Impersonation")).toBeInTheDocument();
-		expect(screen.getByText("Another concern")).toBeInTheDocument();
+		expect(screen.getByText("Impersonation")).not.toBeVisible();
+		await fireEvent.click(screen.getByText("Report details"));
+		expect(screen.getByText("Impersonation")).toBeVisible();
+		expect(screen.getByText("Another concern")).toBeVisible();
 		expect(
-			screen.getByRole("combobox", { name: "Decision" }),
+			screen.getByRole("combobox", {
+				name: "1. Does this image break the profile-image rules?",
+			}),
 		).toBeInTheDocument();
-		expect(
-			screen.getByRole("button", { name: "Save decision" }),
-		).toBeInTheDocument();
+		const saveDecision = screen.getByRole("button", { name: "Save decision" });
+		expect(saveDecision).toBeDisabled();
+		await fireEvent.click(
+			screen.getByRole("combobox", {
+				name: "1. Does this image break the profile-image rules?",
+			}),
+		);
+		await fireEvent.click(
+			screen.getByRole("option", { name: "No — keep the current image" }),
+		);
+		await fireEvent.input(
+			screen.getByRole("textbox", {
+				name: "2. What evidence supports this decision?",
+			}),
+			{
+				target: { value: "The reported concern is not visible in the image." },
+			},
+		);
+		expect(saveDecision).toBeEnabled();
 		expect(
 			screen.getByText(/The image stays visible during review/),
 		).toBeInTheDocument();

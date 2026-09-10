@@ -1,17 +1,24 @@
 import { fail, type RequestEvent } from "@sveltejs/kit";
 import { readCatalogProductReadinessPassport } from "$lib/server/moderation/catalogProductReadinessPassport.server";
 import {
+	CatalogProductReviewDispositionError,
+	finishCatalogProductReview,
+} from "$lib/server/moderation/catalogProductReviewDisposition.server";
+import {
 	CatalogHealthRepairError,
 	runCatalogHealthRepair,
 } from "$lib/server/moderation/catalogHealthRepair.server";
 import { requireModeratorPermission } from "$lib/server/moderation/moderationAccess.server";
 import { readLimitedFormData } from "$lib/server/security/requestBody.server";
 import type { CatalogHealthRepairActionData } from "$lib/utils/moderation/catalogHealthRepair";
+import type { CatalogProductReviewDispositionActionData } from "$lib/utils/moderation/catalogProductReviewDisposition";
 
 const CATALOG_PRODUCT_REPAIR_ROUTE =
 	"/profile/privileged-tools/data-operations";
 const CATALOG_REPAIR_FORM_MAX_BYTES = 16 * 1024;
 const CATALOG_OCCURRENCE_KEY_MAX_LENGTH = 1024;
+const CATALOG_REVIEW_NOTE_MIN_LENGTH = 10;
+const CATALOG_REVIEW_NOTE_MAX_LENGTH = 2000;
 const UUID_PATTERN =
 	/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
 
@@ -148,6 +155,74 @@ export const runCatalogProductRepairAction = async ({
 			catalogRepairOccurrenceKey: occurrenceKey,
 			catalogRepairError: getCatalogHealthRepairErrorMessage(error),
 		});
+	}
+};
+
+const getDispositionErrorMessage = (error: unknown) => {
+	if (!(error instanceof CatalogProductReviewDispositionError)) {
+		return "This product review could not be finished right now.";
+	}
+	if (error.reason === "checks_required") {
+		return "Run every available safe repair check first. Finish is available only after each check finds no safe change.";
+	}
+	if (error.reason === "review_unavailable") {
+		return "This product's readiness work has already changed or been finished. Refresh before continuing.";
+	}
+	if (error.reason === "validation") {
+		return "Add a review note of at least 10 characters explaining why the product remains withheld.";
+	}
+	return "This product review could not be finished right now.";
+};
+
+export const finishCatalogProductReviewAction = async ({
+	locals,
+	params,
+	request,
+}: CatalogProductRepairActionEvent): Promise<
+	CatalogProductReviewDispositionActionData | ReturnType<typeof fail>
+> => {
+	const productId = params.productId ?? "";
+	if (!productId) throw new TypeError("Catalog product ID is required.");
+	await requireModeratorPermission(
+		locals,
+		"data_operations.catalog_health.repair",
+		getCatalogProductRepairRoute(productId),
+	);
+	const formData = await readLimitedFormData(
+		request,
+		CATALOG_REPAIR_FORM_MAX_BYTES,
+	);
+	const reviewNote = String(formData.get("reviewNote") ?? "").trim();
+
+	if (
+		reviewNote.length < CATALOG_REVIEW_NOTE_MIN_LENGTH ||
+		reviewNote.length > CATALOG_REVIEW_NOTE_MAX_LENGTH
+	) {
+		return fail(400, {
+			catalogReviewDispositionError:
+				"Add a review note of at least 10 characters explaining why the product remains withheld.",
+		});
+	}
+
+	try {
+		const result = await finishCatalogProductReview(locals.supabase, {
+			sharedProductId: productId,
+			reviewNote,
+		});
+		return {
+			catalogReviewDispositionResult: result,
+			catalogReviewDispositionSuccess: `${result.issueCount} current ${result.issueCount === 1 ? "item was" : "items were"} removed from the work queue. The product remains available in blendCalc and withheld from the public API.`,
+		};
+	} catch (error) {
+		return fail(
+			error instanceof CatalogProductReviewDispositionError &&
+				error.reason === "checks_required"
+				? 409
+				: 500,
+			{
+				catalogReviewDispositionError: getDispositionErrorMessage(error),
+			},
+		);
 	}
 };
 

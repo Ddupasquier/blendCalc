@@ -8,6 +8,7 @@
 	import {
 		getCatalogHealthRepairItemLabel,
 		getCatalogHealthRepairReasonLabel,
+		getCatalogHealthRepairTargetId,
 	} from "$lib/utils/moderation/catalogHealthRepair";
 	import {
 		getCatalogFieldLabel,
@@ -69,12 +70,17 @@
 
 			{#each repairableIssues as issue (issue.occurrenceKey)}
 				{@const repairResult = resultForIssue(issue.occurrenceKey)}
-				<article class="catalog-product-repairs__item">
+				<article
+					class="catalog-product-repairs__item"
+					id={getCatalogHealthRepairTargetId(issue.occurrenceKey)}
+				>
 					<header>
 						<strong>{getCatalogIssueCodeLabel(issue.issueCode)}</strong>
 						<TextBadge label="Safe repair available" tone="info" />
 					</header>
-					<p>{getCatalogIssueReasonLabel(issue.sourceReason)}</p>
+					<p>
+						{getCatalogIssueReasonLabel(issue.sourceReason, issue.parameters)}
+					</p>
 
 					{#if errorForIssue(issue.occurrenceKey)}
 						<StatusMessage
@@ -113,6 +119,10 @@
 						{/if}
 
 						{#if repairResult.candidateCount > 0}
+							<p>
+								Apply changes only the safe items listed above. Unresolved items
+								stay unchanged; leaving without applying changes nothing.
+							</p>
 							<form
 								method="POST"
 								action="?/runCatalogRepair"
@@ -139,28 +149,22 @@
 								>
 							</form>
 						{:else}
-							<form
-								method="POST"
-								action="?/runCatalogRepair"
-								use:enhance={enhanceRepair}
-							>
-								<input
-									type="hidden"
-									name="occurrenceKey"
-									value={issue.occurrenceKey}
-								/>
-								<input type="hidden" name="mode" value="dry_run" />
-								<ActionButton
-									type="submit"
-									variant="secondary"
-									fullWidth
-									busy={pendingOccurrenceKey === issue.occurrenceKey}
-									disabled={pendingOccurrenceKey !== null}
-									>Check again</ActionButton
-								>
-							</form>
+							<div class="catalog-product-repairs__stop">
+								<strong>You are done with this repair check.</strong>
+								<p>
+									Do not run it again unless the product’s stored evidence has
+									changed. Finish any other safe checks, then use the final
+									review action below. That removes the current work from the
+									queue while keeping the product out of the public API.
+								</p>
+								<a href="#finish-product-review">Go to final review</a>
+							</div>
 						{/if}
 					{:else}
+						<p>
+							Check repair previews exact safe changes and unresolved items. It
+							changes no stored data.
+						</p>
 						<form
 							method="POST"
 							action="?/runCatalogRepair"

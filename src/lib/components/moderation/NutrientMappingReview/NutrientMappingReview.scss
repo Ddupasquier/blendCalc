@@ -73,6 +73,33 @@
 	border-radius: $app-shell-radius-card;
 }
 
+.nutrient-mapping-review__decision-heading {
+	display: grid;
+	gap: $app-gap-2xs;
+}
+
+.nutrient-mapping-review__decision-heading span {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-bold;
+	letter-spacing: $app-letter-spacing-wide;
+	text-transform: uppercase;
+}
+
+.nutrient-mapping-review__decision-heading h2,
+.nutrient-mapping-review__decision-heading p {
+	margin: 0;
+}
+
+.nutrient-mapping-review__decision-heading h2 {
+	font-size: $app-font-size-md;
+}
+
+.nutrient-mapping-review__decision-heading p {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+}
+
 @media (max-width: $app-breakpoint-xs),
 	(max-height: $app-breakpoint-height-compact) {
 	.nutrient-mapping-review,

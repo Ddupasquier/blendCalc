@@ -93,21 +93,32 @@ describe("Profile privileged tools architecture", () => {
 		const workspaceServer = readSource(
 			"src/lib/server/moderation/moderationWorkspace.server.ts",
 		);
-		const workspaceView = readSource(
-			"src/lib/components/moderation/ModerationWorkspace/ModerationWorkspace.svelte",
-		);
 		const profileImageRoute = readSource(
 			"src/routes/profile/privileged-tools/profile-images/+page.server.ts",
 		);
+		const profileImageView = readSource(
+			"src/routes/profile/privileged-tools/profile-images/+page.svelte",
+		);
+		const accountAccessView = readSource(
+			"src/routes/profile/privileged-tools/account-access/+page.svelte",
+		);
 
 		expect(workspaceServer).toContain("listPendingProfileImageReports");
-		expect(workspaceServer).toContain(
-			'scope === "all" || scope === "account-access"',
-		);
-		expect(workspaceView).toContain("ProfileImageReportReviewList");
-		expect(workspaceView).toContain("AccountAccessReviewList");
+		expect(workspaceServer).toContain('scope === "account-access"');
+		expect(workspaceServer).not.toContain('scope === "all"');
+		expect(profileImageView).toContain("ProfileImageReportReviewList");
+		expect(profileImageView).not.toContain("AccountAccessReviewList");
+		expect(accountAccessView).toContain("AccountAccessReviewList");
+		expect(accountAccessView).not.toContain("ProfileImageReportReviewList");
 		expect(profileImageRoute).toContain("reviewProfileImageReport");
 		expect(profileImageRoute).not.toContain("moderationWorkspaceActions.ban");
+	});
+
+	it("redirects the legacy combined workspace to the role-aware gateway", () => {
+		const legacyRoute = readSource("src/routes/moderation/+page.server.ts");
+
+		expect(legacyRoute).toContain('redirect(308, "/profile/privileged-tools")');
+		expect(legacyRoute).not.toContain("moderationWorkspaceActions");
 	});
 
 	it("uses one reusable help sheet across every focused privileged tool", () => {
@@ -138,9 +149,6 @@ describe("Profile privileged tools architecture", () => {
 	});
 
 	it("keeps each review domain in a focused component", () => {
-		const workspaceView = readSource(
-			"src/lib/components/moderation/ModerationWorkspace/ModerationWorkspace.svelte",
-		);
 		const focusedWorkspaceView = readSource(
 			"src/lib/components/moderation/PrivilegedToolWorkspaceView/PrivilegedToolWorkspaceView.svelte",
 		);
@@ -167,8 +175,5 @@ describe("Profile privileged tools architecture", () => {
 		for (const focusedReviewListType of focusedReviewListTypes) {
 			expect(focusedReviewListType).not.toContain("ModerationWorkspace/types");
 		}
-		expect(workspaceView).toContain("ProductSubmissionReviewList");
-		expect(workspaceView).not.toContain("<article");
-		expect(workspaceView).not.toContain("<form");
 	});
 });
