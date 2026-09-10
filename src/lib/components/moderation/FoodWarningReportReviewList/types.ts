@@ -6,3 +6,14 @@ export type FoodWarningReportReviewListProps = {
 	form?: ModerationActionFeedback;
 	showHeading?: boolean;
 };
+
+export type FoodWarningReport =
+	FoodWarningReportReviewListProps["reports"][number];
+
+export type StoredWarningFact = {
+	label: string;
+	factType: string;
+	sourceType: string;
+	sourceText: string | null;
+	confidence: string;
+};

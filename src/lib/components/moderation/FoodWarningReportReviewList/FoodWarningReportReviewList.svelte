@@ -14,7 +14,11 @@
 		isAppIssueCode,
 		normalizeAppIssueParams,
 	} from "$lib/utils/errors/appIssues";
-	import type { FoodWarningReportReviewListProps } from "./types";
+	import type {
+		FoodWarningReport,
+		FoodWarningReportReviewListProps,
+		StoredWarningFact,
+	} from "./types";
 
 	let {
 		reports,
@@ -32,15 +36,6 @@
 			}
 		>
 	>({});
-
-	type WarningReport = FoodWarningReportReviewListProps["reports"][number];
-	type StoredWarningFact = {
-		label: string;
-		factType: string;
-		sourceType: string;
-		sourceText: string | null;
-		confidence: string;
-	};
 
 	const formatReadableLabel = (value: string) =>
 		value
@@ -91,7 +86,7 @@
 		shared_submission_metadata: "Reviewed submission evidence",
 	};
 
-	const getReportClaim = (report: WarningReport) =>
+	const getReportClaim = (report: FoodWarningReport) =>
 		report.feedbackType === "missing_warning"
 			? `The user expected a ${report.preferenceValue ?? "food-preference"} warning, but blendCalc did not show one.`
 			: "The user says the warning blendCalc showed is not supported for this food.";
@@ -106,7 +101,7 @@
 		other: "They reported another warning problem.",
 	};
 
-	const getCurrentWarningExplanation = (report: WarningReport) => {
+	const getCurrentWarningExplanation = (report: FoodWarningReport) => {
 		if (report.feedbackType === "missing_warning") {
 			return `No ${report.preferenceValue ?? "matching"} warning was active when this report was created.`;
 		}
