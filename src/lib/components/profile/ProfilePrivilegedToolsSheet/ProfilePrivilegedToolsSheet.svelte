@@ -6,7 +6,8 @@
 	import WarningTriangle from "$lib/assets/icons/WarningTriangle/WarningTriangle.svelte";
 	import PrivilegedActionGroup from "$lib/components/common/actions/PrivilegedActionGroup/PrivilegedActionGroup.svelte";
 	import PrivilegedActionBadge from "$lib/components/common/badges/PrivilegedActionBadge/PrivilegedActionBadge.svelte";
-	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
+	import ActionRequiredCountBadge from "$lib/components/common/badges/ActionRequiredCountBadge/ActionRequiredCountBadge.svelte";
+	import TextBadge from "$lib/components/common/badges/TextBadge/TextBadge.svelte";
 	import BottomSheet from "$lib/components/common/sheets/BottomSheet/BottomSheet.svelte";
 	import BottomSheetAction from "$lib/components/common/sheets/BottomSheetAction/BottomSheetAction.svelte";
 	import {
@@ -48,6 +49,42 @@
 			PROFILE_PRIVILEGED_TOOL_PERMISSIONS.dataOperationsRead,
 		),
 	);
+	const hasActions = (count: number | null) =>
+		typeof count === "number" && count > 0;
+	const hasActionableWork = $derived(
+		!summary.identityVerificationRequired &&
+			!summary.unavailable &&
+			(summary.totalActionableItems ?? 0) > 0,
+	);
+	const firstPriorityLabel = $derived(
+		canReviewWarnings && hasActions(summary.pendingFoodWarningReports)
+			? "food warning reports"
+			: canReviewProducts && hasActions(summary.pendingCatalogReviewItems)
+				? "catalog review work"
+				: canReviewProducts && hasActions(summary.pendingProductSubmissions)
+					? "product submissions"
+					: canManageAccounts && hasActions(summary.pendingProfileImageReviews)
+						? "reported profile images"
+						: "catalog data operations",
+	);
+	const overviewTitle = $derived(
+		summary.identityVerificationRequired
+			? "Verify once to see today's work"
+			: summary.unavailable
+				? "Queue status is temporarily unavailable"
+				: hasActionableWork
+					? `${summary.totalActionableItems} ${summary.totalActionableItems === 1 ? "action needs" : "actions need"} attention`
+					: "You're all caught up",
+	);
+	const overviewDescription = $derived(
+		summary.identityVerificationRequired
+			? "Open any protected tool and complete authenticator verification. Counts will appear without exposing review work first."
+			: summary.unavailable
+				? "You can still use standing lookup and diagnostic tools. Queue-only tools stay unavailable until counts can be read safely."
+				: hasActionableWork
+					? `Start with ${firstPriorityLabel}. Red badges always mean a human decision or repair is waiting.`
+					: "No human decisions are waiting. Standing lookup and diagnostic tools remain available below.",
+	);
 
 	const describeQueue = (count: number | null) => {
 		if (summary.identityVerificationRequired) {
@@ -69,6 +106,109 @@
 	};
 </script>
 
+{#snippet productSubmissionsAction()}
+	<BottomSheetAction
+		label="Product submissions"
+		description={describeQueue(summary.pendingProductSubmissions)}
+		disabled={isQueueActionDisabled(summary.pendingProductSubmissions)}
+		actionRequiredCount={summary.pendingProductSubmissions ?? 0}
+		actionRequiredLabel="product submissions requiring review"
+		onSelect={() =>
+			openPrivilegedToolDestination(
+				getProfileSettingsRouteHref(
+					PROFILE_SETTINGS_ROUTES.privilegedProductSubmissions,
+				),
+			)}
+	>
+		{#snippet icon()}<BrandCup />{/snippet}
+	</BottomSheetAction>
+{/snippet}
+
+{#snippet catalogReviewAction()}
+	<BottomSheetAction
+		label="Catalog review work"
+		description={describeQueue(summary.pendingCatalogReviewItems)}
+		actionRequiredCount={summary.pendingCatalogReviewItems ?? 0}
+		actionRequiredLabel="catalog decisions requiring review"
+		onSelect={() =>
+			openPrivilegedToolDestination(
+				getProfileSettingsRouteHref(
+					PROFILE_SETTINGS_ROUTES.privilegedCatalogReviewWork,
+				),
+			)}
+	>
+		{#snippet icon()}<Sliders />{/snippet}
+	</BottomSheetAction>
+{/snippet}
+
+{#snippet warningReportsAction()}
+	<BottomSheetAction
+		label="Food warning reports"
+		description={describeQueue(summary.pendingFoodWarningReports)}
+		disabled={isQueueActionDisabled(summary.pendingFoodWarningReports)}
+		actionRequiredCount={summary.pendingFoodWarningReports ?? 0}
+		actionRequiredLabel="food warning reports requiring review"
+		onSelect={() =>
+			openPrivilegedToolDestination(
+				getProfileSettingsRouteHref(
+					PROFILE_SETTINGS_ROUTES.privilegedFoodWarningReports,
+				),
+			)}
+	>
+		{#snippet icon()}<WarningTriangle />{/snippet}
+	</BottomSheetAction>
+{/snippet}
+
+{#snippet profileImagesAction()}
+	<BottomSheetAction
+		label="Profile images"
+		description={describeQueue(summary.pendingProfileImageReviews)}
+		disabled={isQueueActionDisabled(summary.pendingProfileImageReviews)}
+		actionRequiredCount={summary.pendingProfileImageReviews ?? 0}
+		actionRequiredLabel="profile images requiring review"
+		onSelect={() =>
+			openPrivilegedToolDestination(
+				getProfileSettingsRouteHref(
+					PROFILE_SETTINGS_ROUTES.privilegedProfileImages,
+				),
+			)}
+	>
+		{#snippet icon()}<User />{/snippet}
+	</BottomSheetAction>
+{/snippet}
+
+{#snippet accountAccessAction()}
+	<BottomSheetAction
+		label="Account access"
+		description="Find an account and review or change its access"
+		onSelect={() =>
+			openPrivilegedToolDestination(
+				getProfileSettingsRouteHref(
+					PROFILE_SETTINGS_ROUTES.privilegedAccountAccess,
+				),
+			)}
+	>
+		{#snippet icon()}<ShieldCheck />{/snippet}
+	</BottomSheetAction>
+{/snippet}
+
+{#snippet dataOperationsAction()}
+	<BottomSheetAction
+		label="Catalog data operations"
+		description={describeQueue(summary.pendingCatalogDataOperations)}
+		actionRequiredCount={summary.pendingCatalogDataOperations ?? 0}
+		actionRequiredLabel="catalog subjects requiring data operations"
+		onSelect={() =>
+			openPrivilegedToolDestination(
+				getProfileSettingsRouteHref(
+					PROFILE_SETTINGS_ROUTES.privilegedDataOperations,
+				),
+			)}
+	>
+		{#snippet icon()}<Sliders />{/snippet}
+	</BottomSheetAction>
+{/snippet}
+
 <BottomSheet
 	id="profile-privileged-tools-sheet"
 	{open}
@@ -80,124 +220,86 @@
 		<PrivilegedActionBadge label={title} />
 	{/snippet}
 	<div class="profile-privileged-tools-sheet">
-		{#if summary.identityVerificationRequired}
-			<StatusMessage
-				tone="info"
-				message="Verify with your authenticator when you open a protected tool. Action counts stay private until then."
-			/>
-		{:else if summary.unavailable}
-			<StatusMessage
-				tone="warning"
-				message="Action counts are temporarily unavailable. Standing privileged tools still work."
-			/>
+		<section
+			class="profile-privileged-tools-sheet__overview"
+			data-tone={summary.identityVerificationRequired
+				? "protected"
+				: summary.unavailable
+					? "unavailable"
+					: hasActionableWork
+						? "attention"
+						: "clear"}
+			aria-live="polite"
+		>
+			<header>
+				<span>{hasActionableWork ? "Work requiring you" : "Work status"}</span>
+				{#if hasActionableWork}
+					<ActionRequiredCountBadge
+						count={summary.totalActionableItems ?? 0}
+						label="privileged actions requiring attention"
+					/>
+				{:else}
+					<TextBadge
+						label={summary.identityVerificationRequired
+							? "Protected"
+							: summary.unavailable
+								? "Unknown"
+								: "0 waiting"}
+						tone={summary.unavailable
+							? "warning"
+							: summary.identityVerificationRequired
+								? "info"
+								: "success"}
+					/>
+				{/if}
+			</header>
+			<strong>{overviewTitle}</strong>
+			<p>{overviewDescription}</p>
+		</section>
+
+		{#if hasActionableWork}
+			<section
+				class="profile-privileged-tools-sheet__group"
+				aria-labelledby="profile-attention-title"
+			>
+				<h2 id="profile-attention-title">Needs attention</h2>
+				<PrivilegedActionGroup
+					title="Needs attention"
+					showHeader={false}
+					class="profile-privileged-tools-sheet__action-group--attention"
+				>
+					{#if canReviewWarnings && hasActions(summary.pendingFoodWarningReports)}{@render warningReportsAction()}{/if}
+					{#if canReviewProducts && hasActions(summary.pendingCatalogReviewItems)}{@render catalogReviewAction()}{/if}
+					{#if canReviewProducts && hasActions(summary.pendingProductSubmissions)}{@render productSubmissionsAction()}{/if}
+					{#if canManageAccounts && hasActions(summary.pendingProfileImageReviews)}{@render profileImagesAction()}{/if}
+					{#if canReadDataOperations && hasActions(summary.pendingCatalogDataOperations)}{@render dataOperationsAction()}{/if}
+				</PrivilegedActionGroup>
+			</section>
 		{/if}
 
 		<section
 			class="profile-privileged-tools-sheet__group"
 			aria-labelledby="profile-review-work-title"
 		>
-			<h2 id="profile-review-work-title">Review work</h2>
-			<PrivilegedActionGroup title="Review work" showHeader={false}>
-				{#if canReviewProducts}
-					<BottomSheetAction
-						label="Product submissions"
-						description={describeQueue(summary.pendingProductSubmissions)}
-						disabled={isQueueActionDisabled(summary.pendingProductSubmissions)}
-						actionRequiredCount={summary.pendingProductSubmissions ?? 0}
-						actionRequiredLabel="product submissions requiring review"
-						onSelect={() =>
-							openPrivilegedToolDestination(
-								getProfileSettingsRouteHref(
-									PROFILE_SETTINGS_ROUTES.privilegedProductSubmissions,
-								),
-							)}
-					>
-						{#snippet icon()}<BrandCup />{/snippet}
-					</BottomSheetAction>
-					<BottomSheetAction
-						label="Catalog review work"
-						description={describeQueue(summary.pendingCatalogReviewItems)}
-						actionRequiredCount={summary.pendingCatalogReviewItems ?? 0}
-						actionRequiredLabel="catalog decisions requiring review"
-						onSelect={() =>
-							openPrivilegedToolDestination(
-								getProfileSettingsRouteHref(
-									PROFILE_SETTINGS_ROUTES.privilegedCatalogReviewWork,
-								),
-							)}
-					>
-						{#snippet icon()}<Sliders />{/snippet}
-					</BottomSheetAction>
-				{/if}
-				{#if canReviewWarnings}
-					<BottomSheetAction
-						label="Food warning reports"
-						description={describeQueue(summary.pendingFoodWarningReports)}
-						disabled={isQueueActionDisabled(summary.pendingFoodWarningReports)}
-						actionRequiredCount={summary.pendingFoodWarningReports ?? 0}
-						actionRequiredLabel="food warning reports requiring review"
-						onSelect={() =>
-							openPrivilegedToolDestination(
-								getProfileSettingsRouteHref(
-									PROFILE_SETTINGS_ROUTES.privilegedFoodWarningReports,
-								),
-							)}
-					>
-						{#snippet icon()}<WarningTriangle />{/snippet}
-					</BottomSheetAction>
-				{/if}
-				{#if canManageAccounts}
-					<BottomSheetAction
-						label="Profile images"
-						description={describeQueue(summary.pendingProfileImageReviews)}
-						disabled={isQueueActionDisabled(summary.pendingProfileImageReviews)}
-						actionRequiredCount={summary.pendingProfileImageReviews ?? 0}
-						actionRequiredLabel="profile images requiring review"
-						onSelect={() =>
-							openPrivilegedToolDestination(
-								getProfileSettingsRouteHref(
-									PROFILE_SETTINGS_ROUTES.privilegedProfileImages,
-								),
-							)}
-					>
-						{#snippet icon()}<User />{/snippet}
-					</BottomSheetAction>
-					<BottomSheetAction
-						label="Account access"
-						description="Search accounts, block access, or restore access"
-						onSelect={() =>
-							openPrivilegedToolDestination(
-								getProfileSettingsRouteHref(
-									PROFILE_SETTINGS_ROUTES.privilegedAccountAccess,
-								),
-							)}
-					>
-						{#snippet icon()}<ShieldCheck />{/snippet}
-					</BottomSheetAction>
-				{/if}
+			<h2 id="profile-review-work-title">
+				{hasActionableWork ? "Other review tools" : "Review tools"}
+			</h2>
+			<PrivilegedActionGroup title="Review tools" showHeader={false}>
+				{#if canReviewProducts && !hasActions(summary.pendingProductSubmissions)}{@render productSubmissionsAction()}{/if}
+				{#if canReviewProducts && !hasActions(summary.pendingCatalogReviewItems)}{@render catalogReviewAction()}{/if}
+				{#if canReviewWarnings && !hasActions(summary.pendingFoodWarningReports)}{@render warningReportsAction()}{/if}
+				{#if canManageAccounts && !hasActions(summary.pendingProfileImageReviews)}{@render profileImagesAction()}{/if}
+				{#if canManageAccounts}{@render accountAccessAction()}{/if}
 			</PrivilegedActionGroup>
 		</section>
-		{#if canReadDataOperations}
+		{#if canReadDataOperations && !hasActions(summary.pendingCatalogDataOperations)}
 			<section
 				class="profile-privileged-tools-sheet__group"
 				aria-labelledby="profile-data-operations-title"
 			>
-				<h2 id="profile-data-operations-title">Data operations</h2>
-				<PrivilegedActionGroup title="Data operations" showHeader={false}>
-					<BottomSheetAction
-						label="Catalog data operations"
-						description={describeQueue(summary.pendingCatalogDataOperations)}
-						actionRequiredCount={summary.pendingCatalogDataOperations ?? 0}
-						actionRequiredLabel="catalog subjects requiring data operations"
-						onSelect={() =>
-							openPrivilegedToolDestination(
-								getProfileSettingsRouteHref(
-									PROFILE_SETTINGS_ROUTES.privilegedDataOperations,
-								),
-							)}
-					>
-						{#snippet icon()}<Sliders />{/snippet}
-					</BottomSheetAction>
+				<h2 id="profile-data-operations-title">System operations</h2>
+				<PrivilegedActionGroup title="System operations" showHeader={false}>
+					{@render dataOperationsAction()}
 				</PrivilegedActionGroup>
 			</section>
 		{/if}

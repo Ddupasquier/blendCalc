@@ -1,0 +1,84 @@
+@use "../../../../styles/variables" as *;
+
+.privileged-workspace-guide {
+	display: grid;
+	gap: $app-gap-xs;
+	min-width: 0;
+	padding: $app-gap-md;
+	background: $app-shell-surface-soft;
+	border: $app-border;
+	border-left: 0.3rem solid $app-shell-accent-info;
+	border-radius: $app-shell-radius-card;
+}
+
+.privileged-workspace-guide[data-tone="attention"] {
+	border-left-color: $app-shell-accent-danger;
+}
+
+.privileged-workspace-guide[data-tone="clear"] {
+	border-left-color: $app-primary;
+}
+
+.privileged-workspace-guide[data-tone="unavailable"] {
+	border-left-color: $app-warning-strong;
+}
+
+.privileged-workspace-guide header,
+.privileged-workspace-guide__completion {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: $app-gap-sm;
+	min-width: 0;
+}
+
+.privileged-workspace-guide__eyebrow {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-heavy;
+	letter-spacing: $app-letter-spacing-wider;
+	text-transform: uppercase;
+}
+
+.privileged-workspace-guide h2,
+.privileged-workspace-guide p {
+	margin: 0;
+}
+
+.privileged-workspace-guide h2 {
+	font-size: $app-font-size-lg;
+	line-height: $app-line-height-heading;
+}
+
+.privileged-workspace-guide > p:not(.privileged-workspace-guide__completion),
+.privileged-workspace-guide__completion span {
+	color: $app-shell-text-muted;
+}
+
+.privileged-workspace-guide__completion {
+	align-items: start;
+	justify-content: start;
+	padding-top: $app-gap-xs;
+	border-top: $app-border;
+	font-size: $app-font-size-sm;
+}
+
+.privileged-workspace-guide__completion strong {
+	flex: 0 0 auto;
+}
+
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
+	.privileged-workspace-guide {
+		padding: $app-gap-sm;
+	}
+
+	.privileged-workspace-guide h2 {
+		font-size: $app-font-size-md;
+	}
+
+	.privileged-workspace-guide__completion {
+		display: grid;
+		gap: $app-gap-2xs;
+	}
+}

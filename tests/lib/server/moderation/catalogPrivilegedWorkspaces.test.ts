@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
 	readCatalogMonitorModerationSummary: vi.fn(),
 	readCatalogReviewWork: vi.fn(),
 	readCatalogProductReadinessPassport: vi.fn(),
+	readPrivilegedToolReviewSummary: vi.fn(),
 }));
 
 vi.mock("$lib/server/moderation/moderationAccess.server", () => ({
@@ -24,6 +25,10 @@ vi.mock("$lib/server/moderation/catalogReviewWork.server", () => ({
 	readCatalogReviewWork: mocks.readCatalogReviewWork,
 }));
 
+vi.mock("$lib/server/moderation/privilegedToolReviewSummary.server", () => ({
+	readPrivilegedToolReviewSummary: mocks.readPrivilegedToolReviewSummary,
+}));
+
 vi.mock(
 	"$lib/server/moderation/catalogProductReadinessPassport.server",
 	() => ({
@@ -37,7 +42,12 @@ import { loadCatalogReviewWorkWorkspace } from "$lib/server/moderation/catalogRe
 import { loadCatalogProductReadinessPassportWorkspace } from "$lib/server/moderation/catalogProductReadinessPassportWorkspace.server";
 
 describe("catalog privileged workspaces", () => {
-	beforeEach(() => vi.clearAllMocks());
+	beforeEach(() => {
+		vi.clearAllMocks();
+		mocks.readPrivilegedToolReviewSummary.mockResolvedValue({
+			pendingCatalogDataOperations: 7,
+		});
+	});
 
 	it("requires data-operations permission before loading operational health", async () => {
 		mocks.requireModeratorPermission.mockResolvedValue({
@@ -59,6 +69,7 @@ describe("catalog privileged workspaces", () => {
 			viewerRole: "developer",
 			dashboard: catalogDataOperationsHealthFixture,
 			catalogMonitor: catalogMonitorModerationFixture,
+			actionCount: 7,
 		});
 		expect(mocks.requireModeratorPermission).toHaveBeenCalledWith(
 			expect.anything(),
@@ -71,6 +82,28 @@ describe("catalog privileged workspaces", () => {
 		expect(mocks.readCatalogMonitorModerationSummary).toHaveBeenCalledWith(
 			supabase,
 		);
+		expect(mocks.readPrivilegedToolReviewSummary).toHaveBeenCalledWith(
+			supabase,
+		);
+	});
+
+	it("keeps the data-operations count unknown when the secure summary cannot be read", async () => {
+		mocks.requireModeratorPermission.mockResolvedValue({ role: "developer" });
+		mocks.readCatalogDataOperationsHealth.mockResolvedValue(
+			catalogDataOperationsHealthFixture,
+		);
+		mocks.readCatalogMonitorModerationSummary.mockResolvedValue(
+			catalogMonitorModerationFixture,
+		);
+		mocks.readPrivilegedToolReviewSummary.mockRejectedValue(
+			new Error("offline"),
+		);
+
+		await expect(
+			loadCatalogDataOperationsWorkspace({
+				locals: { supabase: {} },
+			} as never),
+		).resolves.toMatchObject({ actionCount: null });
 	});
 
 	it("requires catalog-review permission before loading human decisions", async () => {

@@ -104,7 +104,13 @@ export const catalogDataOperationsHealthFixture: CatalogDataOperationsHealth = {
 				productId: "product-id",
 				barcode: "00021130493609",
 				productName: "Roasted Onion & Garlic Pasta Sauce",
-				reasons: ["missing_attribution"],
+				reasons: ["missing_required_nutrient:1092"],
+				reasonDetails: [
+					{
+						reason: "missing_required_nutrient:1092",
+						parameters: { displayName: "Potassium, K" },
+					},
+				],
 			},
 		],
 		nutrientMappings: [

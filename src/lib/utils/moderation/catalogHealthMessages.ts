@@ -148,11 +148,21 @@ export const getCatalogHealthStatusLabel = (value: string) =>
 export const getCatalogFieldLabel = (fieldPath: string) =>
 	CATALOG_FIELD_LABELS[fieldPath] ?? "Product information";
 
-export const getCatalogIssueReasonLabel = (reason: string) => {
+export const getCatalogIssueReasonLabel = (
+	reason: string,
+	parameters?: Record<string, unknown>,
+) => {
 	const [reasonKey, parameter] = reason.split(":", 2);
 	const label = CATALOG_ISSUE_REASON_LABELS[reasonKey];
 	if (!label) return "Catalog evidence needs review";
 	if (!parameter) return label;
+	if (
+		reasonKey === "missing_required_nutrient" &&
+		typeof parameters?.displayName === "string" &&
+		parameters.displayName.trim()
+	) {
+		return `${label}: ${parameters.displayName}`;
+	}
 	return `${label}: ${getCatalogFieldLabel(parameter)}`;
 };
 

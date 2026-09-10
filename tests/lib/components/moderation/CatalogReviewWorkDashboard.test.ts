@@ -34,11 +34,77 @@ describe("CatalogReviewWorkDashboard", () => {
 			screen.queryByText("Dataset imports and licensing"),
 		).not.toBeInTheDocument();
 
-		await fireEvent.click(screen.getByText("Product conflicts"));
+		expect(screen.getByText("Queues in priority order")).toBeVisible();
+		expect(
+			screen.getByText("Product conflicts").closest("details"),
+		).toHaveAttribute("open");
 		expect(screen.getByRole("link", { name: /Peanut Butter/ })).toHaveAttribute(
 			"href",
 			"/profile/privileged-tools/catalog-review-work/products/product-id",
 		);
 		expect(screen.getByText(/Ingredients/)).toBeInTheDocument();
+	});
+
+	it("requires a deliberate recall decision and evidence note", async () => {
+		render(CatalogReviewWorkDashboard, {
+			props: {
+				reviewWork: {
+					conflicts: [],
+					providerChanges: [],
+					safetyMatches: [
+						{
+							id: "match-id",
+							sharedProductId: "product-id",
+							barcode: "00011110129505",
+							productName: "Peanut Butter",
+							brandOwner: "QA Foods",
+							alertProductDescription: "12 oz Peanut Butter",
+							classification: "Class I",
+							reason: "Possible undeclared allergen",
+							packageDescription: "12 oz jar",
+							codeInformation: "Lot QA-1",
+							sourceUrl: "https://example.test/recall",
+							sourceName: "FDA",
+							matchEvidence: { barcode: "exact" },
+							requiresPackageCheck: true,
+							detectedAt: "2026-08-22T12:00:00.000Z",
+						},
+					],
+					counts: { conflicts: 0, providerChanges: 0, safetyMatches: 1 },
+					issueLimit: 20,
+				},
+			},
+		});
+
+		const decision = screen.getByRole("combobox", {
+			name: "1. Is this exact product covered by the notice?",
+		});
+		const save = screen.getByRole("button", { name: "Save safety decision" });
+		expect(decision).toHaveTextContent("Choose a decision");
+		expect(
+			screen.getByText(
+				"Yes activates the matched notice and user alerts. No closes the match without attaching the notice to this product.",
+			),
+		).toBeVisible();
+		expect(save).toBeDisabled();
+
+		await fireEvent.click(decision);
+		await fireEvent.click(
+			screen.getByRole("option", {
+				name: "No — this is a different product",
+			}),
+		);
+		expect(
+			screen.getByText(
+				"No closes this match without showing the official notice for this product.",
+			),
+		).toBeVisible();
+		await fireEvent.input(
+			screen.getByRole("textbox", {
+				name: "2. What evidence proves this decision?",
+			}),
+			{ target: { value: "The notice lists a different lot code." } },
+		);
+		expect(save).toBeEnabled();
 	});
 });

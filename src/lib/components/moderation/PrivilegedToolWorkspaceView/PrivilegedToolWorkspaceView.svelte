@@ -1,6 +1,7 @@
 <script lang="ts">
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import PrivilegedToolRightSheet from "$lib/components/moderation/PrivilegedToolRightSheet/PrivilegedToolRightSheet.svelte";
+	import PrivilegedWorkspaceGuide from "$lib/components/moderation/PrivilegedWorkspaceGuide/PrivilegedWorkspaceGuide.svelte";
 	import type { PrivilegedToolWorkspaceViewProps } from "./types";
 
 	let {
@@ -10,6 +11,7 @@
 		informationKey,
 		feedbackMessage,
 		feedbackTone = "info",
+		guide,
 		onClose,
 		children,
 	}: PrivilegedToolWorkspaceViewProps = $props();
@@ -19,5 +21,6 @@
 	{#if feedbackMessage}
 		<StatusMessage tone={feedbackTone} message={feedbackMessage} />
 	{/if}
+	<PrivilegedWorkspaceGuide {...guide} />
 	{@render children()}
 </PrivilegedToolRightSheet>

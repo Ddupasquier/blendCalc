@@ -1,0 +1,83 @@
+@use "../../../../styles/variables" as *;
+
+.catalog-product-review-disposition {
+	display: grid;
+	gap: $app-gap-sm;
+	padding: $app-shell-card-padding;
+	background: $app-shell-surface-soft;
+	border: $app-border;
+	border-radius: $app-shell-radius-card;
+}
+
+.catalog-product-review-disposition > header {
+	display: grid;
+	gap: $app-gap-inline-compact;
+}
+
+.catalog-product-review-disposition > header span {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-bold;
+	letter-spacing: $app-letter-spacing-label;
+	text-transform: uppercase;
+}
+
+.catalog-product-review-disposition h2,
+.catalog-product-review-disposition p,
+.catalog-product-review-disposition dl,
+.catalog-product-review-disposition dd {
+	margin: 0;
+}
+
+.catalog-product-review-disposition h2 {
+	font-size: $app-font-size-lg;
+}
+
+.catalog-product-review-disposition > p,
+.catalog-product-review-disposition__effects,
+.catalog-product-review-disposition__progress,
+.catalog-product-review-disposition dd {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+}
+
+.catalog-product-review-disposition__effects {
+	display: grid;
+	gap: $app-gap-xs;
+	padding: $app-gap-sm;
+	background: $app-shell-surface-panel;
+	border-radius: $app-shell-radius-control;
+}
+
+.catalog-product-review-disposition__effects strong,
+.catalog-product-review-disposition__progress strong,
+.catalog-product-review-disposition dd {
+	color: $app-shell-text-primary;
+}
+
+.catalog-product-review-disposition__effects ul {
+	display: grid;
+	gap: $app-gap-inline-compact;
+	margin: 0;
+	padding-inline-start: $app-gap-lg;
+}
+
+.catalog-product-review-disposition form,
+.catalog-product-review-disposition dl,
+.catalog-product-review-disposition dl div {
+	display: grid;
+	gap: $app-gap-sm;
+}
+
+.catalog-product-review-disposition dt {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-xs;
+}
+
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
+	.catalog-product-review-disposition {
+		gap: $app-gap-xs;
+		padding: $app-shell-card-padding-compact;
+	}
+}

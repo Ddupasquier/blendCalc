@@ -20,8 +20,16 @@
 	}: AccountAccessReviewListProps = $props();
 	let pendingAccountUserId = $state<string | null>(null);
 	let searching = $state(false);
+	let blockReasonByUserId = $state<Record<string, string>>({});
 
 	const blockReasonOptions = [
+		{
+			value: "",
+			label: "Choose the policy reason",
+			disabled: true,
+			hidden: true,
+			placeholder: true,
+		},
 		{
 			value: "profile_image_policy_violation",
 			label: "Profile image violation",
@@ -55,6 +63,9 @@
 		return query
 			? `${users.length} of ${totalCount} ${accountLabel} shown`
 			: `${totalCount} ${accountLabel}`;
+	};
+	const setBlockReason = (userId: string, reason: string) => {
+		blockReasonByUserId = { ...blockReasonByUserId, [userId]: reason };
 	};
 
 	const submitAccountSearch = async (event: SubmitEvent) => {
@@ -148,6 +159,7 @@
 
 	<div class="account-access__list">
 		{#each users as user (user.id)}
+			{@const blockReason = blockReasonByUserId[user.id] ?? ""}
 			<article class="account-access__account">
 				<CollapsibleSection
 					title={user.displayName}
@@ -214,6 +226,10 @@
 
 						{#if user.id !== viewerUserId && canModerateTargetRole(viewerRole, user.role)}
 							{#if user.status === "banned"}
+								<p class="account-access__action-explanation">
+									Restoring access lets this account sign in again immediately.
+									The block history remains in the private moderation record.
+								</p>
 								<form
 									method="POST"
 									action="?/unban"
@@ -232,6 +248,11 @@
 								</form>
 							{:else}
 								<CollapsibleSection title="Access controls" surface="panel">
+									<p class="account-access__action-explanation">
+										Blocking prevents this account from signing in. The selected
+										reason is emailed to the user, so confirm the account and
+										policy basis before continuing.
+									</p>
 									<form
 										class="account-access__block-form"
 										method="POST"
@@ -244,9 +265,10 @@
 											id={`account-ban-reason-${user.id}`}
 											name="reason"
 											label="Reason"
-											value="profile_image_policy_violation"
+											value={blockReason}
 											options={blockReasonOptions}
-											helper="This explanation is emailed to the user."
+											helper="Choose the exact policy basis. This explanation is emailed to the user."
+											onValueChange={(value) => setBlockReason(user.id, value)}
 											required
 											disabled={pendingAccountUserId !== null}
 										/>
@@ -255,7 +277,7 @@
 											variant="danger"
 											fullWidth
 											busy={pendingAccountUserId === user.id}
-											disabled={pendingAccountUserId !== null}
+											disabled={pendingAccountUserId !== null || !blockReason}
 											>Block account</ActionButton
 										>
 									</form>

@@ -811,8 +811,11 @@ test("privileged tools stay hidden from regular accounts and use the shared shee
 		).toBeEnabled();
 	}
 	await expect(
+		privilegedToolsSheet.getByText("Verify once to see today's work"),
+	).toBeVisible();
+	await expect(
 		privilegedToolsSheet.getByText(
-			"Verify with your authenticator when you open a protected tool. Action counts stay private until then.",
+			"Open any protected tool and complete authenticator verification. Counts will appear without exposing review work first.",
 		),
 	).toBeVisible();
 	await expect(
@@ -845,6 +848,12 @@ test("privileged tools stay hidden from regular accounts and use the shared shee
 		await expect(
 			productSubmissionSheet.getByText(/submission(?:s)? waiting for review/),
 		).toBeVisible();
+		await expect(
+			productSubmissionSheet.getByRole("heading", {
+				name: /Review \d+ submissions?/,
+			}),
+		).toBeVisible();
+		await expect(productSubmissionSheet.getByText("Done when")).toBeVisible();
 
 		const imageSubmission = productSubmissionSheet
 			.locator("article.moderator-review-card")
@@ -920,18 +929,34 @@ test("privileged tools stay hidden from regular accounts and use the shared shee
 		await expect(verticalPosition).toBeEnabled();
 		await setRangeValue(verticalPosition, 35);
 
-		const approvalForm = imageSubmission.locator(
-			'form[action*="approveProduct"]',
-		);
+		const productDecision = imageSubmission.getByRole("combobox", {
+			name: "1. What does the package evidence support?",
+		});
+		await expect(productDecision).toContainText("Choose a decision");
 		await expect(
-			approvalForm.locator('input[name="imageCropZoom"]'),
-		).toHaveValue("1.65");
-		await expect(approvalForm.locator('input[name="imageCropY"]')).toHaveValue(
-			"35",
-		);
+			imageSubmission.getByRole("button", {
+				name: "Approve and publish submission",
+			}),
+		).toHaveCount(0);
 		await expect(
-			approvalForm.locator('input[name="imageFitMode"]'),
-		).toHaveValue("custom");
+			imageSubmission.getByRole("button", { name: "Reject submission" }),
+		).toHaveCount(0);
+		await productDecision.click();
+		await imageSubmission
+			.getByRole("option", {
+				name: "Reject — the submission needs a correction",
+			})
+			.click();
+		const rejectSubmission = imageSubmission.getByRole("button", {
+			name: "Reject submission",
+		});
+		await expect(rejectSubmission).toBeDisabled();
+		await imageSubmission
+			.getByRole("textbox", {
+				name: "2. What must the submitter correct?",
+			})
+			.fill("QA review note confirms the deliberate decision gate.");
+		await expect(rejectSubmission).toBeEnabled();
 
 		await page.goto("/profile");
 		await waitForAppReady(page);
@@ -977,8 +1002,7 @@ test("privileged tools stay hidden from regular accounts and use the shared shee
 			{
 				path: "/profile/privileged-tools/catalog-review-work",
 				title: "Catalog review work",
-				content:
-					"Resolve product conflicts, provider changes, and possible recall matches.",
+				content: /catalog decisions? need review/,
 			},
 			{
 				path: "/profile/privileged-tools/food-warning-reports",
@@ -1006,6 +1030,11 @@ test("privileged tools stay hidden from regular accounts and use the shared shee
 				protectedToolSheet.getByText(protectedTool.content).first(),
 			).toBeVisible();
 		}
+
+		await page.goto("/moderation");
+		await expect(page).toHaveURL(
+			(url) => url.pathname === "/profile/privileged-tools",
+		);
 	} finally {
 		try {
 			await runImageModerationFixture("cleanup");
@@ -1044,11 +1073,69 @@ test("administrators can open data operations after direct AAL2 verification", a
 		});
 		await expect(dataOperationsSheet).toBeVisible();
 		await expect(
-			dataOperationsSheet.getByRole("region", { name: "Operational overview" }),
+			dataOperationsSheet.getByRole("region", { name: "Catalog coverage" }),
+		).toBeVisible();
+		await expect(
+			dataOperationsSheet.getByRole("region", { name: "Required work" }),
+		).toBeVisible();
+		await expect(
+			dataOperationsSheet.getByRole("region", { name: "Diagnostic checks" }),
+		).toBeVisible();
+		await expect(
+			dataOperationsSheet.getByText(
+				"These broader checks can overlap. Use them to investigate the required work above; they do not add to the red action total.",
+			),
 		).toBeVisible();
 		await expect(
 			dataOperationsSheet.getByText("Automated catalog monitoring"),
 		).toBeVisible();
+		const namedMissingNutrients = dataOperationsSheet.getByText(
+			"A required nutrient is missing: Fatty acids, total saturated",
+		);
+		expect(await namedMissingNutrients.count()).toBeGreaterThan(0);
+		await expect(namedMissingNutrients.first()).toBeVisible();
+		await dataOperationsSheet
+			.getByRole("link", { name: "Inspect first product" })
+			.click();
+		const productReadinessSheet = page.getByRole("dialog", {
+			name: "Product readiness",
+		});
+		await expect(productReadinessSheet).toBeVisible();
+		await expect(
+			productReadinessSheet.getByText(
+				"The product stays available in blendCalc.",
+			),
+		).toBeVisible();
+		await expect(
+			productReadinessSheet.getByText(
+				"It stays withheld from public blendCalcAPI v1.",
+			),
+		).toBeVisible();
+		await expect(
+			productReadinessSheet.getByLabel(
+				"Why can this product not be published yet?",
+			),
+		).toBeVisible();
+		await expect(
+			productReadinessSheet.getByRole("button", {
+				name: "Finish review — keep out of public API",
+			}),
+		).toBeDisabled();
+
+		await page.goto(dataOperationsPath);
+		await dataOperationsSheet
+			.getByRole("button", { name: "About Data operations" })
+			.click();
+		const informationSheet = page.getByRole("dialog", {
+			name: "About data operations",
+		});
+		await expect(
+			informationSheet.getByRole("heading", { name: "When to use this" }),
+		).toBeVisible();
+		await expect(
+			informationSheet.getByRole("heading", { name: "Done when" }),
+		).toBeVisible();
+		await informationSheet.getByRole("button", { name: "Got it" }).click();
 
 		await page.goto("/profile");
 		await waitForAppReady(page);

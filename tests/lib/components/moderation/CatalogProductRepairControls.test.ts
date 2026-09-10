@@ -19,6 +19,7 @@ describe("CatalogProductRepairControls", () => {
 		expect(
 			screen.getByRole("button", { name: "Check repair" }),
 		).toBeInTheDocument();
+		expect(screen.getByText(/changes no stored data/u)).toBeInTheDocument();
 		expect(screen.queryByText(/reviewed dry run/u)).not.toBeInTheDocument();
 	});
 
@@ -39,6 +40,9 @@ describe("CatalogProductRepairControls", () => {
 		expect(
 			screen.getByText(/still need stronger evidence/u),
 		).toBeInTheDocument();
+		expect(
+			screen.getByText(/Unresolved items stay unchanged/u),
+		).toBeInTheDocument();
 		const applyButton = screen.getByRole("button", {
 			name: "Apply safe repair",
 		});
@@ -49,5 +53,40 @@ describe("CatalogProductRepairControls", () => {
 				catalogHealthRepairDryRunFixture.runId,
 			),
 		).toHaveAttribute("name", "dryRunId");
+	});
+
+	it("ends a zero-result check instead of sending the operator through a retry loop", () => {
+		const issue = catalogProductReadinessPassportFixture.issues[0];
+		render(CatalogProductRepairControls, {
+			props: {
+				issues: [issue],
+				form: {
+					catalogRepairOccurrenceKey: issue.occurrenceKey,
+					catalogRepairResult: {
+						...catalogHealthRepairDryRunFixture,
+						candidateCount: 0,
+						unresolvedCount: 1,
+						items: [
+							{
+								itemKey: "sourceMetadata",
+								result: "unresolved",
+								reasonCode: "canonical_value_missing",
+							},
+						],
+					},
+				},
+			},
+		});
+
+		expect(screen.getByText("No safe changes found")).toBeInTheDocument();
+		expect(
+			screen.getByText("You are done with this repair check."),
+		).toBeInTheDocument();
+		expect(
+			screen.queryByRole("button", { name: "Check again" }),
+		).not.toBeInTheDocument();
+		expect(
+			screen.getByRole("link", { name: "Go to final review" }),
+		).toHaveAttribute("href", "#finish-product-review");
 	});
 });

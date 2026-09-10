@@ -2,4 +2,5 @@ import type { CatalogProductReadinessPassport } from "$lib/utils/moderation/cata
 
 export type CatalogProductReadinessPassportProps = {
 	passport: CatalogProductReadinessPassport;
+	canRunRepairs?: boolean;
 };

@@ -18,7 +18,10 @@
 		showHeading = false,
 	}: ProfileImageReportReviewListProps = $props();
 	let pendingReportId = $state<string | null>(null);
-	let decisionByReportId = $state<Record<string, "dismissed" | "removed">>({});
+	let decisionByReportId = $state<Record<string, "" | "dismissed" | "removed">>(
+		{},
+	);
+	let reviewNoteByReportId = $state<Record<string, string>>({});
 
 	const reasonLabels: Record<ProfileImageReportReasonCode, string> = {
 		explicit_content: "Explicit content",
@@ -36,12 +39,14 @@
 			timeZone: "UTC",
 		}).format(new Date(value));
 
-	const getDecision = (reportId: string) =>
-		decisionByReportId[reportId] ?? "dismissed";
+	const getDecision = (reportId: string) => decisionByReportId[reportId] ?? "";
 
 	const setDecision = (reportId: string, value: string) => {
 		if (value !== "dismissed" && value !== "removed") return;
 		decisionByReportId = { ...decisionByReportId, [reportId]: value };
+	};
+	const setReviewNote = (reportId: string, reviewNote: string) => {
+		reviewNoteByReportId = { ...reviewNoteByReportId, [reportId]: reviewNote };
 	};
 
 	const enhanceReview: SubmitFunction = ({ formData, cancel }) => {
@@ -90,6 +95,7 @@
 		emptyDescription="Ordinary profile-image uploads are published without entering this queue."
 	>
 		{#each reports as report (report.id)}
+			{@const decision = getDecision(report.id)}
 			<ModeratorReviewCard
 				title={report.displayName}
 				subtitle={`First reported ${formatReportDate(report.createdAt)}`}
@@ -144,39 +150,72 @@
 					aria-busy={pendingReportId === report.id}
 				>
 					<input type="hidden" name="reportId" value={report.id} />
+					<header class="profile-image-report-review__decision-heading">
+						<span>Record the outcome</span>
+						<h3>Finish this review in two steps</h3>
+						<ol>
+							<li>Choose whether the image itself breaks the rules.</li>
+							<li>Record what you saw and which report reasons it supports.</li>
+						</ol>
+					</header>
 					<SelectField
 						id={`profile-image-decision-${report.id}`}
 						name="decision"
-						label="Decision"
-						value={getDecision(report.id)}
+						label="1. Does this image break the profile-image rules?"
+						value={decision}
 						onValueChange={(value) => setDecision(report.id, value)}
 						options={[
-							{ value: "dismissed", label: "Keep image" },
-							{ value: "removed", label: "Remove image" },
+							{
+								value: "",
+								label: "Choose a decision",
+								disabled: true,
+								hidden: true,
+								placeholder: true,
+							},
+							{
+								value: "dismissed",
+								label: "No — keep the current image",
+							},
+							{
+								value: "removed",
+								label: "Yes — remove this exact image",
+							},
 						]}
+						helper={decision === "removed"
+							? "Removing clears this exact current image. It does not affect a replacement image."
+							: decision === "dismissed"
+								? "Keeping dismisses every pending report attached to this exact image."
+								: "Keep leaves the image visible and dismisses its reports. Remove clears this exact image and resolves its reports."}
 						disabled={pendingReportId !== null}
 						required
 					/>
 					<TextField
 						id={`profile-image-review-note-${report.id}`}
 						name="reviewNote"
-						label="Review note"
-						placeholder="What did you verify?"
-						helper="Required for the private moderation record."
+						label="2. What evidence supports this decision?"
+						placeholder="Example: Image contains no prohibited content; impersonation report is unsupported."
+						helper="Describe what is visible and which report reasons the evidence supports or disproves. Saved privately."
 						maxlength={2000}
 						multiline
 						rows={3}
 						disabled={pendingReportId !== null}
+						oninput={(event) =>
+							setReviewNote(report.id, event.currentTarget.value)}
 						required
 					/>
 					<ActionButton
 						type="submit"
-						variant={getDecision(report.id) === "removed"
-							? "danger"
-							: "primary"}
+						variant={decision === "removed" ? "danger" : "primary"}
 						fullWidth
 						busy={pendingReportId === report.id}
-						disabled={pendingReportId !== null}>Save decision</ActionButton
+						disabled={pendingReportId !== null ||
+							!decision ||
+							!reviewNoteByReportId[report.id]?.trim()}
+						>{decision === "removed"
+							? "Remove image and resolve reports"
+							: decision === "dismissed"
+								? "Keep image and dismiss reports"
+								: "Save decision"}</ActionButton
 					>
 				</form>
 			</ModeratorReviewCard>

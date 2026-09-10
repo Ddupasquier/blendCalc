@@ -5,6 +5,7 @@
 	import TextBadge from "$lib/components/common/badges/TextBadge/TextBadge.svelte";
 	import CollapsibleSection from "$lib/components/common/disclosure/CollapsibleSection/CollapsibleSection.svelte";
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
+	import SelectField from "$lib/components/common/forms/SelectField/SelectField.svelte";
 	import TextField from "$lib/components/common/forms/TextField/TextField.svelte";
 	import ImagePlacementEditor from "$lib/components/common/images/ImagePlacementEditor/ImagePlacementEditor.svelte";
 	import ModeratorReviewCard from "$lib/components/moderation/ModeratorReviewCard/ModeratorReviewCard.svelte";
@@ -21,6 +22,10 @@
 	let imagePlacementBySubmissionId = $state<
 		Record<string, ImagePlacementValue>
 	>({});
+	let decisionBySubmissionId = $state<
+		Record<string, "" | "approve" | "reject">
+	>({});
+	let rejectionNoteBySubmissionId = $state<Record<string, string>>({});
 
 	const getImagePlacement = (
 		submission: ProductSubmissionReviewListProps["submissions"][number],
@@ -33,6 +38,21 @@
 		imagePlacementBySubmissionId = {
 			...imagePlacementBySubmissionId,
 			[submission.id]: value,
+		};
+	};
+	const getDecision = (submissionId: string) =>
+		decisionBySubmissionId[submissionId] ?? "";
+	const setDecision = (submissionId: string, decision: string) => {
+		if (decision !== "approve" && decision !== "reject") return;
+		decisionBySubmissionId = {
+			...decisionBySubmissionId,
+			[submissionId]: decision,
+		};
+	};
+	const setRejectionNote = (submissionId: string, reviewNote: string) => {
+		rejectionNoteBySubmissionId = {
+			...rejectionNoteBySubmissionId,
+			[submissionId]: reviewNote,
 		};
 	};
 
@@ -83,6 +103,7 @@
 		emptyDescription="New evidence-backed submissions will appear here."
 	>
 		{#each submissions as submission (submission.id)}
+			{@const decision = getDecision(submission.id)}
 			<ModeratorReviewCard
 				title={submission.productName}
 				subtitle={submission.brandOwner ?? "Brand not provided"}
@@ -252,92 +273,150 @@
 					class="product-submission-review__decision"
 					aria-label={`Decision for ${submission.productName}`}
 				>
-					<form
-						method="POST"
-						action="?/approveProduct"
-						use:enhance={enhanceProductDecision}
-					>
-						<input type="hidden" name="submissionId" value={submission.id} />
-						<input
-							type="hidden"
-							name="imageCropX"
-							value={getImagePlacement(submission).cropX}
+					<header class="product-submission-review__decision-heading">
+						<span>Record the outcome</span>
+						<h3>Choose one evidence-backed path</h3>
+						<p>
+							Approval publishes these values to the shared catalog. Rejection
+							keeps them unpublished and saves the correction reason in the
+							private submission record.
+						</p>
+					</header>
+					<SelectField
+						id={`product-decision-${submission.id}`}
+						label="1. What does the package evidence support?"
+						value={decision}
+						onValueChange={(value) => setDecision(submission.id, value)}
+						options={[
+							{
+								value: "",
+								label: "Choose a decision",
+								disabled: true,
+								hidden: true,
+								placeholder: true,
+							},
+							{
+								value: "approve",
+								label: "Approve — every submitted value is supported",
+								disabled:
+									!submission.evidenceComplete || submission.isQaFixture,
+							},
+							{
+								value: "reject",
+								label: "Reject — the submission needs a correction",
+							},
+						]}
+						helper={!submission.evidenceComplete
+							? "Approval is unavailable because required package evidence is missing."
+							: submission.isQaFixture
+								? "This QA fixture can be rejected for testing, but it cannot be published."
+								: "Compare the identity, photos, differences, and nutrition before choosing."}
+						disabled={pendingSubmissionId !== null}
+					/>
+
+					{#if decision === "approve"}
+						<StatusMessage
+							tone="warning"
+							message="Approve publishes the reviewed values as a shared catalog revision, removes this submission from the queue, and makes the product available to shared search."
 						/>
-						<input
-							type="hidden"
-							name="imageCropY"
-							value={getImagePlacement(submission).cropY}
-						/>
-						<input
-							type="hidden"
-							name="imageCropZoom"
-							value={getImagePlacement(submission).cropZoom}
-						/>
-						<input
-							type="hidden"
-							name="imageRotationDegrees"
-							value={getImagePlacement(submission).rotationDegrees}
-						/>
-						<input
-							type="hidden"
-							name="imageFitMode"
-							value={getImagePlacement(submission).fitMode}
-						/>
-						<input
-							type="hidden"
-							name="imagePlacementVersion"
-							value={getImagePlacement(submission).placementVersion}
-						/>
-						<input
-							type="hidden"
-							name="imagePlacementMethod"
-							value={getImagePlacement(submission).placementMethod ?? "manual"}
-						/>
-						<input
-							type="hidden"
-							name="imageSuggestionVersion"
-							value={getImagePlacement(submission).suggestionVersion ?? ""}
-						/>
-						<input
-							type="hidden"
-							name="imageSuggestionConfidence"
-							value={getImagePlacement(submission).suggestionConfidence ?? ""}
-						/>
-						<ActionButton
-							type="submit"
-							variant="success"
-							fullWidth
-							busy={pendingSubmissionId === submission.id}
-							disabled={pendingSubmissionId !== null ||
-								!submission.evidenceComplete ||
-								submission.isQaFixture}>Approve submission</ActionButton
+						<form
+							method="POST"
+							action="?/approveProduct"
+							use:enhance={enhanceProductDecision}
 						>
-					</form>
-					<form
-						class="product-submission-review__reject"
-						method="POST"
-						action="?/rejectProduct"
-						use:enhance={enhanceProductDecision}
-					>
-						<input type="hidden" name="submissionId" value={submission.id} />
-						<TextField
-							id={`product-rejection-note-${submission.id}`}
-							name="reviewNote"
-							label="Correction needed"
-							placeholder="What needs to be corrected?"
-							maxlength={1000}
-							disabled={pendingSubmissionId !== null}
-							required
+							<input type="hidden" name="submissionId" value={submission.id} />
+							<input
+								type="hidden"
+								name="imageCropX"
+								value={getImagePlacement(submission).cropX}
+							/>
+							<input
+								type="hidden"
+								name="imageCropY"
+								value={getImagePlacement(submission).cropY}
+							/>
+							<input
+								type="hidden"
+								name="imageCropZoom"
+								value={getImagePlacement(submission).cropZoom}
+							/>
+							<input
+								type="hidden"
+								name="imageRotationDegrees"
+								value={getImagePlacement(submission).rotationDegrees}
+							/>
+							<input
+								type="hidden"
+								name="imageFitMode"
+								value={getImagePlacement(submission).fitMode}
+							/>
+							<input
+								type="hidden"
+								name="imagePlacementVersion"
+								value={getImagePlacement(submission).placementVersion}
+							/>
+							<input
+								type="hidden"
+								name="imagePlacementMethod"
+								value={getImagePlacement(submission).placementMethod ??
+									"manual"}
+							/>
+							<input
+								type="hidden"
+								name="imageSuggestionVersion"
+								value={getImagePlacement(submission).suggestionVersion ?? ""}
+							/>
+							<input
+								type="hidden"
+								name="imageSuggestionConfidence"
+								value={getImagePlacement(submission).suggestionConfidence ?? ""}
+							/>
+							<ActionButton
+								type="submit"
+								variant="success"
+								fullWidth
+								busy={pendingSubmissionId === submission.id}
+								disabled={pendingSubmissionId !== null ||
+									!submission.evidenceComplete ||
+									submission.isQaFixture}
+								>Approve and publish submission</ActionButton
+							>
+						</form>
+					{:else if decision === "reject"}
+						<StatusMessage
+							tone="info"
+							message="Reject publishes nothing, removes this submission from the queue, and saves your correction reason in the private submission record."
 						/>
-						<ActionButton
-							type="submit"
-							variant="danger"
-							fullWidth
-							busy={pendingSubmissionId === submission.id}
-							disabled={pendingSubmissionId !== null}
-							>Reject submission</ActionButton
+						<form
+							class="product-submission-review__reject"
+							method="POST"
+							action="?/rejectProduct"
+							use:enhance={enhanceProductDecision}
 						>
-					</form>
+							<input type="hidden" name="submissionId" value={submission.id} />
+							<TextField
+								id={`product-rejection-note-${submission.id}`}
+								name="reviewNote"
+								label="2. What must the submitter correct?"
+								placeholder="Example: Front photo shows a different barcode than the submitted value."
+								helper="Name the unsupported value and the evidence needed for a successful resubmission."
+								maxlength={1000}
+								disabled={pendingSubmissionId !== null}
+								oninput={(event) =>
+									setRejectionNote(submission.id, event.currentTarget.value)}
+								required
+							/>
+							<ActionButton
+								type="submit"
+								variant="danger"
+								fullWidth
+								busy={pendingSubmissionId === submission.id}
+								disabled={pendingSubmissionId !== null ||
+									!rejectionNoteBySubmissionId[submission.id]?.trim()}
+								>Reject submission</ActionButton
+							>
+						</form>
+					{/if}
 				</div>
 			</ModeratorReviewCard>
 		{/each}

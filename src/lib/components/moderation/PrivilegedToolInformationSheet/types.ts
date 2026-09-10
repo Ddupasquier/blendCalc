@@ -9,8 +9,10 @@ export type PrivilegedToolInformationKey =
 export type PrivilegedToolInformation = {
 	title: string;
 	purpose: string;
+	whenToUse: string;
 	reviewSteps: readonly string[];
-	decisionEffect: string;
+	completion: string;
+	decisionEffects: readonly string[];
 	guardrail: string;
 };
 

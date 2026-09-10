@@ -12,6 +12,62 @@
 	min-width: 0;
 }
 
+.profile-privileged-tools-sheet__overview {
+	display: grid;
+	gap: $app-gap-xs;
+	padding: $app-gap-sm;
+	background: $app-shell-surface-soft;
+	border: $app-border;
+	border-left: 0.3rem solid $app-primary;
+	border-radius: $app-shell-radius-card;
+}
+
+.profile-privileged-tools-sheet__overview[data-tone="attention"] {
+	border-left-color: $app-shell-accent-danger;
+}
+
+.profile-privileged-tools-sheet__overview[data-tone="protected"] {
+	border-left-color: $app-shell-accent-info;
+}
+
+.profile-privileged-tools-sheet__overview[data-tone="unavailable"] {
+	border-left-color: $app-warning-strong;
+}
+
+.profile-privileged-tools-sheet__overview header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: $app-gap-sm;
+}
+
+.profile-privileged-tools-sheet__overview header > span {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-heavy;
+	letter-spacing: $app-letter-spacing-wider;
+	text-transform: uppercase;
+}
+
+.profile-privileged-tools-sheet__overview > strong {
+	font-size: $app-font-size-lg;
+	line-height: $app-line-height-heading;
+}
+
+.profile-privileged-tools-sheet__overview p {
+	margin: 0;
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+}
+
+:global(.profile-privileged-tools-sheet__action-group--attention) {
+	background: color-mix(
+		in srgb,
+		$app-shell-accent-danger 12%,
+		$app-shell-surface-panel
+	);
+}
+
 .profile-privileged-tools-sheet__group h2 {
 	margin: 0;
 	color: $app-shell-text-muted;

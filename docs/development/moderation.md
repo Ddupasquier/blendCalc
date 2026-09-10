@@ -87,11 +87,28 @@ database permission rows. **Review work** includes product submissions, catalog
 conflicts/provider changes/possible recalls, food-warning reports, reported profile
 images, and account access. **Data operations** includes source, dataset, publication,
 mapping, revision, and automated-monitoring health for administrators and developers.
-Each sheet
-uses the same review order: concise queue or result status, record identity and key facts,
+The launcher first names the exact work status and moves nonzero queues into a single
+**Needs attention** group in safety-first order. Zero-count queues, account lookup, and
+standing diagnostics remain visible under secondary headings without appearing to be
+waiting work. Each focused sheet uses the same review order: concise start guidance
+with an explicit completion condition, queue or result status, record identity and key facts,
 closed supporting-evidence disclosures, then the decision controls. One shared
-information action explains the purpose, review steps, effect, and guardrail for the
-current tool without mixing instructions into every record.
+information action explains when to use the tool, its steps, completion condition,
+effect, and guardrail without mixing permanent instructions into every record.
+Consequential choices and public block reasons start unselected. The matching action
+remains unavailable until the operator deliberately chooses a valid path and completes
+the required evidence or reason fields. Nearby copy explains what changes, what remains
+unchanged, and where follow-up work goes.
+Every approve/confirm and reject/dismiss path states its immediate effect before save,
+including whether it publishes data, notifies users, creates correction work, closes
+only the queue item, or deliberately preserves current behavior.
+
+Food-warning reports additionally translate the captured warning and compatibility
+facts into a visible user claim and a visible explanation of the current blendCalc
+behavior. Evidence source, wording, and confidence are readable before technical IDs or
+JSON. Review controls have no preselected outcome, follow-up choices are constrained by
+the selected outcome, and Save remains unavailable until all three deliberate steps are
+complete.
 
 Product submissions, food-warning reports, and reported profile images share the same
 review-list and card shells. Account access remains search-led and keeps account evidence
@@ -99,8 +116,13 @@ plus destructive controls behind deliberate disclosures, so it has no action bad
 does not contribute to the Profile aggregate. Catalog review work contains only
 decisions a reviewer can make and badges their exact combined total. Data operations
 badges distinct affected subjects with open enabled issues assigned to that work group,
-rather than summing overlapping dashboard metrics. It keeps its bounded operational
-sections collapsed until requested and never duplicates review queues. The
+rather than summing overlapping dashboard metrics. Its three actionable summaries use
+diagnostic-match wording and direct first-record links; those broader, potentially
+overlapping checks never add to the red operator-work total. Required work appears
+separately and names the affected records when the existing health response can identify
+them. Source, dataset, policy, and monitor badges show explicit informational units or
+health states. It opens only the first non-clear diagnostic and never duplicates review
+queues. The
 visual consistency never replaces each route's independent server, database, AAL2, and
 permission checks.
 
@@ -384,6 +406,18 @@ developers use `/profile/privileged-tools/data-operations/products/[productId]`.
 returning normalized counts and statuses. It never returns raw provider payloads,
 private evidence paths, or contributor identity.
 
+Each passport issue presents one literal next action, whether that action is available
+on the current screen, and the readiness result that marks the work complete. Eligible
+data-operations repairs link to their exact safety check. A zero-candidate dry run ends
+that repair attempt instead of encouraging an unchanged retry. After every available
+repair check returns no exact candidate, an administrator or developer records a
+required private note and chooses `Finish review — keep out of public API`. That
+append-only disposition removes only the exact current issue snapshot from actionable
+queues. It does not change the product, approve missing evidence, or publish the record:
+the product stays available inside blendCalc and remains withheld from blendCalcAPI v1.
+Any changed product/evidence timestamp or issue set automatically reopens the work while
+preserving the earlier review history.
+
 Administrators and developers with `data_operations.catalog_health.repair` may run a
 bounded repair from the data-operations product route when the issue code explicitly
 allows one. `run_catalog_health_repair` requires AAL2 and records a separate dry-run or
@@ -393,8 +427,9 @@ link unchanged product fields, nutrition, or servings to an exact, redistributab
 observation already stored for the same barcode, restore a missing baseline revision
 from an exact approved submission or exact source observation, or rebuild change rows
 from that revision's existing valid structured summary. Missing or ambiguous evidence
-remains unresolved; it does not become a review decision and never creates a guessed
-value or historical change.
+remains unresolved and never creates a guessed value or historical change. A terminal
+accepted-withheld disposition acknowledges that exact unresolved state; it is not an
+evidence approval or catalog-submission rejection.
 
 Catalog-review decisions follow the same rule. Dismissing a provider change records that
 the current canonical revision remains authoritative. Accepting a correct provider
@@ -420,10 +455,10 @@ role-aware permitted tool list, while the following direct routes own focused ri
 - `/profile/privileged-tools/data-operations`.
 
 Every direct route repeats the current role, exact database-owned permission, and AAL2
-checks on the server. Legacy
-`/moderation` routes remain compatibility entry points while links and Profile flows use
-the focused routes. `/profile/privileged-tools/catalog-data-health` redirects to the new
-data-operations route during rollout and owns no business logic.
+checks on the server. Legacy `/moderation` routes remain compatibility entry points by
+redirecting to the Profile privileged-tools gateway; they do not render a second
+combined workspace. `/profile/privileged-tools/catalog-data-health` redirects to the
+new data-operations route during rollout and owns no business logic.
 
 ## Enable Future-Signup Blocking
 

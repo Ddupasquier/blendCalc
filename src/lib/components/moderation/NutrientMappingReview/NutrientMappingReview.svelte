@@ -11,15 +11,20 @@
 
 	let { workspace, form = null }: NutrientMappingReviewProps = $props();
 	let pending = $state(false);
-	let outcome = $state<"approved" | "excluded">("approved");
+	let outcome = $state<"" | "approved" | "excluded">("");
 	let nutrientSearch = $state("");
 	let selectedNutrientId = $state("");
 	let initializedMappingId = $state("");
+	let evidenceReference = $state("");
+	let reviewNote = $state("");
 
 	$effect(() => {
 		if (workspace.mapping.id === initializedMappingId) return;
 		initializedMappingId = workspace.mapping.id;
 		selectedNutrientId = String(workspace.mapping.currentNutrient.nutrientId);
+		outcome = "";
+		evidenceReference = "";
+		reviewNote = "";
 	});
 
 	const resolved = $derived(
@@ -60,6 +65,12 @@
 			label: `${nutrient.nutrientName} · ${nutrient.defaultUnitName}`,
 		})),
 	);
+	const setOutcome = (value: string) => {
+		if (value !== "approved" && value !== "excluded") return;
+		outcome = value;
+		evidenceReference = "";
+		reviewNote = "";
+	};
 
 	const enhanceDecision: SubmitFunction = ({ cancel }) => {
 		if (pending) {
@@ -175,16 +186,40 @@
 			use:enhance={enhanceDecision}
 			aria-busy={pending}
 		>
+			<header class="nutrient-mapping-review__decision-heading">
+				<span>Record the outcome</span>
+				<h2>Confirm the identity from evidence, not the suggestion</h2>
+				<p>
+					Approve links this provider key to the confirmed nutrient and enables
+					it for future normalized imports. Exclude disables the candidate,
+					removes it from this queue, and keeps it out of canonical nutrition
+					data.
+				</p>
+			</header>
 			<SelectField
 				id="nutrient-mapping-outcome"
 				name="outcome"
-				label="Decision"
+				label="1. What does the evidence support?"
 				value={outcome}
-				onValueChange={(value) => (outcome = value as "approved" | "excluded")}
+				onValueChange={setOutcome}
 				options={[
-					{ value: "approved", label: "Approve an exact nutrient identity" },
-					{ value: "excluded", label: "Exclude this candidate" },
+					{
+						value: "",
+						label: "Choose a decision",
+						disabled: true,
+						hidden: true,
+						placeholder: true,
+					},
+					{
+						value: "approved",
+						label: "Approve — evidence proves an exact identity",
+					},
+					{
+						value: "excluded",
+						label: "Exclude — evidence does not prove this match",
+					},
 				]}
+				helper="The suggested nutrient and confidence are clues, not approval evidence."
 				disabled={pending}
 				required
 			/>
@@ -213,42 +248,52 @@
 				<TextField
 					id="nutrient-mapping-evidence-reference"
 					name="evidenceReference"
-					label="Evidence reference"
+					label="2. Where was the identity confirmed?"
 					placeholder="Provider documentation, standard, or reviewed source"
 					helper="Record exactly where the nutrient identity was confirmed."
 					maxlength={2000}
 					disabled={pending}
+					oninput={(event) => (evidenceReference = event.currentTarget.value)}
 					required
 				/>
 			{/if}
 
-			<TextField
-				id="nutrient-mapping-review-note"
-				name="reviewNote"
-				label="Review note"
-				placeholder={outcome === "approved"
-					? "How does the evidence prove this identity?"
-					: "Why should this candidate remain unavailable?"}
-				helper="Saved with the private, immutable decision record."
-				maxlength={2000}
-				multiline
-				rows={4}
-				disabled={pending}
-				required
-			/>
+			{#if outcome}
+				<TextField
+					id="nutrient-mapping-review-note"
+					name="reviewNote"
+					label={outcome === "approved"
+						? "3. How does the evidence prove this identity?"
+						: "2. Why must this candidate remain unavailable?"}
+					placeholder={outcome === "approved"
+						? "Explain how the provider key, unit, and reference identify the selected nutrient."
+						: "Explain the mismatch, ambiguity, or missing evidence."}
+					helper="Saved with the private, immutable decision record."
+					maxlength={2000}
+					multiline
+					rows={4}
+					disabled={pending}
+					oninput={(event) => (reviewNote = event.currentTarget.value)}
+					required
+				/>
 
-			<ActionButton
-				type="submit"
-				variant={outcome === "approved" ? "success" : "danger"}
-				fullWidth
-				busy={pending}
-				disabled={pending ||
-					(outcome === "approved" && nutrientOptions.length === 0)}
-			>
-				{outcome === "approved"
-					? "Approve nutrient mapping"
-					: "Exclude candidate"}
-			</ActionButton>
+				<ActionButton
+					type="submit"
+					variant={outcome === "approved" ? "success" : "danger"}
+					fullWidth
+					busy={pending}
+					disabled={pending ||
+						!reviewNote.trim() ||
+						(outcome === "approved" &&
+							(!selectedNutrientId ||
+								nutrientOptions.length === 0 ||
+								!evidenceReference.trim()))}
+				>
+					{outcome === "approved"
+						? "Approve nutrient mapping"
+						: "Exclude candidate"}
+				</ActionButton>
+			{/if}
 		</form>
 	{/if}
 </section>
