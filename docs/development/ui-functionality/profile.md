@@ -8,12 +8,12 @@ session settings. Detailed privacy and storage rules live in
 
 ## Quick Navigation
 
-| Area                         | Sections                                                                                                                |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| Profile navigation           | [Settings Surfaces](#settings-surfaces)                                                                                 |
-| Personal settings            | [Identity](#identity), [Light/Dark Mode](#lightdark-mode), [Playful Messages](#playful-messages), and [Avatar](#avatar) |
-| Food and onboarding settings | [Food Preferences](#food-preferences) and [Tutorial And Session](#tutorial-and-session)                                 |
-| Elevated access              | [Privileged Tools](#privileged-tools)                                                                                   |
+| Area                         | Sections                                                                                                                                                         |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Profile navigation           | [Settings Surfaces](#settings-surfaces)                                                                                                                          |
+| Personal settings            | [Identity](#identity), [Light/Dark Mode](#lightdark-mode), [Playful Messages](#playful-messages), [Email Preferences](#email-preferences), and [Avatar](#avatar) |
+| Food and onboarding settings | [Food Preferences](#food-preferences) and [Tutorial And Session](#tutorial-and-session)                                                                          |
+| Elevated access              | [Privileged Tools](#privileged-tools)                                                                                                                            |
 
 ## Settings Surfaces
 
@@ -26,8 +26,9 @@ session settings. Detailed privacy and storage rules live in
   header visible, and reduced motion removes the transition without changing the
   visibility state.
 - Open Light/Dark Mode at `/profile/appearance`, Playful messages at
-  `/profile/playful-messages`, Profile details at `/profile/details`, and Profile image
-  at `/profile/image` in the shared route-backed `BottomSheet`.
+  `/profile/playful-messages`, Email preferences at `/profile/email-preferences`,
+  Profile details at `/profile/details`, and Profile image at `/profile/image` in the
+  shared route-backed `BottomSheet`.
 - Let each bottom-sheet title own the visible heading. Keep control-level semantic
   labels available to assistive technology without repeating the same visible wording
   inside the sheet.
@@ -71,6 +72,24 @@ session settings. Detailed privacy and storage rules live in
   allergens, recalls, alcohol safety, medical guidance, authentication, validation,
   errors, body weight, or anything involving minors.
 - Use the shared toggle, bottom sheet, status message, and submit-button primitives.
+
+## Email Preferences
+
+- Treat every marketing category as optional and off until the account explicitly
+  turns it on. Missing preference rows mean not subscribed.
+- Present Product and launch updates, MVP testing invitations, and Tips, recipes, and
+  education as independent switches. Newly introduced categories also start off.
+- Provide one `Turn off all promotional email` action that changes every visible
+  category to off before the user saves.
+- Summarize the number of enabled optional categories in the Profile menu. When none
+  are enabled, state that all promotional email is off.
+- State inside the setting that account confirmation, password, security, safety, and
+  required service messages are transactional and unaffected.
+- Save all current categories atomically through the owner-scoped database function;
+  partial, unknown, or malformed preference submissions fail without changing state.
+- Each effective preference change appends consent evidence with the consent-copy
+  version and source. The application does not duplicate the Auth email address in
+  preference storage.
 
 ## Avatar
 

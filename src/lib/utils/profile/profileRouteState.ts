@@ -1,6 +1,7 @@
 export const PROFILE_SETTINGS_ROUTES = {
 	appearance: "appearance",
 	playfulMessages: "playful-messages",
+	emailPreferences: "email-preferences",
 	details: "details",
 	image: "image",
 	foodPreferences: "food-preferences",
@@ -23,6 +24,7 @@ const PROFILE_BASE_PATH = "/profile";
 const PROFILE_SETTINGS_ROUTE_TITLES: Record<ProfileSettingsRoute, string> = {
 	[PROFILE_SETTINGS_ROUTES.appearance]: "Light/Dark Mode",
 	[PROFILE_SETTINGS_ROUTES.playfulMessages]: "Playful Messages",
+	[PROFILE_SETTINGS_ROUTES.emailPreferences]: "Email Preferences",
 	[PROFILE_SETTINGS_ROUTES.details]: "Profile Details",
 	[PROFILE_SETTINGS_ROUTES.image]: "Profile Image",
 	[PROFILE_SETTINGS_ROUTES.foodPreferences]: "Food Preferences",

@@ -1,0 +1,59 @@
+@use "../../../../styles/variables" as *;
+
+.profile-email-preferences,
+form,
+.profile-email-preferences__topics,
+.profile-email-preferences__actions {
+	display: grid;
+	gap: $app-gap-sm;
+}
+
+.profile-email-preferences > p {
+	margin: 0;
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-medium;
+	line-height: $app-line-height-body;
+}
+
+.profile-email-preferences__toggle {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	gap: $app-gap-md;
+	align-items: center;
+	min-width: 0;
+	padding: $app-gap-sm;
+	border-radius: $app-radius;
+	background: $app-shell-surface-control;
+	cursor: pointer;
+}
+
+.profile-email-preferences__toggle > span {
+	display: grid;
+	gap: $app-gap-2xs;
+	min-width: 0;
+}
+
+.profile-email-preferences__toggle strong,
+.profile-email-preferences__toggle small {
+	line-height: $app-line-height-ui;
+}
+
+.profile-email-preferences__toggle small {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-medium;
+}
+
+.profile-email-preferences .profile-email-preferences__service-note {
+	padding-top: $app-gap-sm;
+	border-top: 1px solid $app-shell-border-subtle;
+	font-size: $app-font-size-xs;
+}
+
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
+	.profile-email-preferences > p {
+		font-size: $app-font-size-xs;
+	}
+}

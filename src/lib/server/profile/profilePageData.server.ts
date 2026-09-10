@@ -28,6 +28,7 @@ import {
 } from "$lib/server/moderation/privilegedToolReviewSummary.server";
 import { readAppRolePermissions } from "$lib/server/moderation/appRolePermissions.server";
 import { readMfaSecurityStatus } from "$lib/server/auth/mfaAccess.server";
+import { readCurrentUserMarketingEmailPreferences } from "$lib/server/email/marketingEmailPreferences.server";
 
 export const getRegulatoryRegionOptions = (
 	policy: FoodSafetyPolicy,
@@ -80,6 +81,7 @@ export const loadProfilePageData = async ({
 		appReferenceCatalog,
 		foodSafetyPolicy,
 		preferenceResolutions,
+		marketingEmailPreferences,
 		privilegedToolAccess,
 	] = await Promise.all([
 		profileWithAvatarPromise,
@@ -100,6 +102,7 @@ export const loadProfilePageData = async ({
 		getAppReferenceCatalog(),
 		getFoodSafetyPolicy(),
 		getUserFoodPreferenceResolutions(supabase, userId),
+		readCurrentUserMarketingEmailPreferences(supabase),
 		privilegedToolAccessPromise,
 	]);
 
@@ -131,6 +134,7 @@ export const loadProfilePageData = async ({
 		defaultDisplayName: getDefaultDisplayName(userId),
 		avatarPolicyItems: PROFILE_AVATAR_POLICY_ITEMS,
 		requireHumanFace: PROFILE_AVATAR_REQUIRE_HUMAN_FACE,
+		marketingEmailPreferences,
 		privilegedToolAccess,
 	};
 };

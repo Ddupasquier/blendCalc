@@ -4605,6 +4605,74 @@ export type Database = {
           },
         ]
       }
+      marketing_email_preference_events: {
+        Row: {
+          consent_copy_version: string
+          created_at: string
+          id: number
+          is_subscribed: boolean
+          source: string
+          topic_key: string
+          user_id: string
+        }
+        Insert: {
+          consent_copy_version: string
+          created_at?: string
+          id?: never
+          is_subscribed: boolean
+          source: string
+          topic_key: string
+          user_id: string
+        }
+        Update: {
+          consent_copy_version?: string
+          created_at?: string
+          id?: never
+          is_subscribed?: boolean
+          source?: string
+          topic_key?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_email_preference_events_topic_key_fkey"
+            columns: ["topic_key"]
+            isOneToOne: false
+            referencedRelation: "marketing_email_topics"
+            referencedColumns: ["topic_key"]
+          },
+        ]
+      }
+      marketing_email_topics: {
+        Row: {
+          created_at: string
+          description: string
+          enabled: boolean
+          label: string
+          sort_order: number
+          topic_key: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          enabled?: boolean
+          label: string
+          sort_order: number
+          topic_key: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          enabled?: boolean
+          label?: string
+          sort_order?: number
+          topic_key?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       mix_goal_template_targets: {
         Row: {
           goal_type: string
@@ -8921,6 +8989,44 @@ export type Database = {
         }
         Relationships: []
       }
+      user_marketing_email_preferences: {
+        Row: {
+          consent_copy_version: string
+          created_at: string
+          is_subscribed: boolean
+          source: string
+          topic_key: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          consent_copy_version: string
+          created_at?: string
+          is_subscribed?: boolean
+          source: string
+          topic_key: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          consent_copy_version?: string
+          created_at?: string
+          is_subscribed?: boolean
+          source?: string
+          topic_key?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_marketing_email_preferences_topic_key_fkey"
+            columns: ["topic_key"]
+            isOneToOne: false
+            referencedRelation: "marketing_email_topics"
+            referencedColumns: ["topic_key"]
+          },
+        ]
+      }
       user_mix_goal_template_targets: {
         Row: {
           goal_type: string
@@ -9677,6 +9783,15 @@ export type Database = {
         }
         Returns: string[]
       }
+      apply_user_marketing_email_preferences: {
+        Args: {
+          p_consent_copy_version: string
+          p_preferences: Json
+          p_source: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       apply_user_mix_goal_template: {
         Args: { p_keep_extra_goals?: boolean; p_template_id: string }
         Returns: Json
@@ -10017,6 +10132,16 @@ export type Database = {
         Args: { p_limit?: number }
         Returns: Json
       }
+      get_current_user_marketing_email_preferences: {
+        Args: never
+        Returns: {
+          description: string
+          is_subscribed: boolean
+          label: string
+          topic_key: string
+          updated_at: string
+        }[]
+      }
       get_moderator_data_health: {
         Args: { p_days?: number; p_issue_limit?: number }
         Returns: Json
@@ -10301,6 +10426,13 @@ export type Database = {
       save_current_user_appearance_theme: {
         Args: { p_appearance_theme: string }
         Returns: undefined
+      }
+      save_current_user_marketing_email_preferences: {
+        Args: { p_consent_copy_version: string; p_preferences: Json }
+        Returns: {
+          is_subscribed: boolean
+          topic_key: string
+        }[]
       }
       save_current_user_playful_message_preference: {
         Args: { p_enabled: boolean }

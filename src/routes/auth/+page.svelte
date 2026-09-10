@@ -23,6 +23,7 @@
 	let email = $state("");
 	let password = $state("");
 	let passwordConfirmation = $state("");
+	let marketingEmailOptIn = $state(false);
 	let authMode = $state<AuthMode>("signIn");
 	let isSubmitting = $state(false);
 	let captchaResetVersion = $state(0);
@@ -81,6 +82,13 @@
 		if (form?.email !== undefined) {
 			email = form.email;
 		}
+		if (
+			form &&
+			"marketingEmailOptIn" in form &&
+			typeof form.marketingEmailOptIn === "boolean"
+		) {
+			marketingEmailOptIn = form.marketingEmailOptIn;
+		}
 		if (form?.mode === "signUp" || form?.mode === "signIn") {
 			authMode = form.mode;
 		}
@@ -101,6 +109,7 @@
 		authMode = mode;
 		password = "";
 		passwordConfirmation = "";
+		marketingEmailOptIn = false;
 		captchaResetVersion += 1;
 	};
 </script>
@@ -320,6 +329,30 @@
 							{email}
 							confirmation={passwordConfirmation}
 						/>
+						<input
+							type="hidden"
+							name="marketingEmailOptIn"
+							value={marketingEmailOptIn ? "true" : "false"}
+						/>
+						<label
+							class="email-form__marketing-choice"
+							for="authentication-marketing-email-opt-in"
+						>
+							<span>
+								<strong>Optional blendCalc email</strong>
+								<small>
+									Send me product and launch updates, testing invitations, and
+									future tips. I can change each category anytime.
+								</small>
+							</span>
+							<ToggleSwitch
+								id="authentication-marketing-email-opt-in"
+								checked={marketingEmailOptIn}
+								disabled={isSubmitting}
+								ariaLabel="Receive optional blendCalc promotional messages"
+								onChange={(checked) => (marketingEmailOptIn = checked)}
+							/>
+						</label>
 					{/if}
 				</div>
 				{#if data.turnstileSiteKey}

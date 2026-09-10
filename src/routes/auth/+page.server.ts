@@ -26,6 +26,7 @@ import {
 	getLocalQaSignInPageData,
 } from "$lib/server/auth/localQaSignIn.server";
 import { env as publicEnvironment } from "$env/dynamic/public";
+import { MARKETING_EMAIL_CONSENT_COPY_VERSION } from "$lib/utils/email/marketingEmailPreferences";
 
 const AUTH_FORM_MAX_BYTES = 32 * 1024;
 
@@ -39,9 +40,17 @@ const getEmailAuthFields = async (request: Request) => {
 		formData.get("passwordConfirmation") ?? "",
 	);
 	const captchaToken = String(formData.get("captchaToken") ?? "").trim();
+	const marketingEmailOptIn = formData.get("marketingEmailOptIn") === "true";
 	const next = getSafeAuthNextPath(formData.get("next"));
 
-	return { email, password, passwordConfirmation, captchaToken, next };
+	return {
+		email,
+		password,
+		passwordConfirmation,
+		captchaToken,
+		marketingEmailOptIn,
+		next,
+	};
 };
 
 const getEmailField = async (request: Request) => {
@@ -239,8 +248,14 @@ export const actions: Actions = {
 		throw redirect(303, next);
 	},
 	emailSignUp: async ({ locals, request, url, cookies }) => {
-		const { email, password, passwordConfirmation, captchaToken, next } =
-			await getEmailAuthFields(request);
+		const {
+			email,
+			password,
+			passwordConfirmation,
+			captchaToken,
+			marketingEmailOptIn,
+			next,
+		} = await getEmailAuthFields(request);
 		redirectToCanonicalAuthPage(request, url, next);
 		const validationError =
 			getEmailValidationError(email) ||
@@ -251,6 +266,7 @@ export const actions: Actions = {
 			return fail(400, {
 				message: validationError,
 				email,
+				marketingEmailOptIn,
 				next,
 				mode: "signUp" as const,
 			});
@@ -265,6 +281,8 @@ export const actions: Actions = {
 			options: {
 				data: {
 					password_policy_version: PASSWORD_POLICY_VERSION,
+					marketing_email_opt_in: marketingEmailOptIn,
+					marketing_email_consent_version: MARKETING_EMAIL_CONSENT_COPY_VERSION,
 				},
 				emailRedirectTo: redirectTo,
 				...(captchaToken ? { captchaToken } : {}),
@@ -285,6 +303,7 @@ export const actions: Actions = {
 						? "That password was rejected as too weak. Choose a longer, unique passphrase."
 						: "Unable to create that account. Try again in a moment.",
 				email,
+				marketingEmailOptIn,
 				next,
 				mode: "signUp" as const,
 			});
@@ -303,6 +322,7 @@ export const actions: Actions = {
 			success:
 				"Account created. Check your email to confirm it, then come back and sign in.",
 			email,
+			marketingEmailOptIn,
 			next,
 			mode: "signIn" as const,
 		};

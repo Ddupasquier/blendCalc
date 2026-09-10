@@ -1,6 +1,7 @@
 import type { Actions } from "./$types";
 import {
 	savePlayfulMessagesPreference,
+	saveMarketingEmailPreferences,
 	saveProfileAppearance,
 	saveProfileDetails,
 } from "$lib/server/profile/profileAccountSettingsActions.server";
@@ -13,6 +14,7 @@ import {
 
 export const actions: Actions = {
 	savePlayfulMessages: savePlayfulMessagesPreference,
+	saveEmailPreferences: saveMarketingEmailPreferences,
 	saveAppearance: saveProfileAppearance,
 	saveProfile: saveProfileDetails,
 	saveFoodPreferences: saveProfileFoodPreferences,
