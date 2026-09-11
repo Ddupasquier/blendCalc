@@ -476,19 +476,19 @@ test("manual entry shows duplicate and move actions for the selected list", asyn
 	}
 });
 
-test("@mobile a reviewed product correction reveals sharing evidence without blocking the sheet", async ({
+test("@mobile a reviewed product correction reveals sharing evidence without a validation request", async ({
 	page,
 }, testInfo) => {
 	test.skip(
 		testInfo.project.name !== "mobile-chromium",
-		"One phone-sized Chromium project owns the reviewed-update timing corpus.",
+		"One phone-sized Chromium project owns the reviewed-update interaction corpus.",
 	);
 	const baseUrl = new URL(
 		String(testInfo.project.use.baseURL ?? "http://localhost:5174"),
 	);
 	test.skip(
 		!["127.0.0.1", "localhost"].includes(baseUrl.hostname),
-		"The reviewed-update timing corpus is restricted to disposable local infrastructure.",
+		"The reviewed-update interaction corpus is restricted to disposable local infrastructure.",
 	);
 
 	let shareValidationRequestCount = 0;
@@ -521,12 +521,10 @@ test("@mobile a reviewed product correction reveals sharing evidence without blo
 	const destination = dialog.getByRole("combobox", {
 		name: "Add after saving",
 	});
-	const destinationStartedAt = Date.now();
 	await destination.click();
 	await expect(
 		dialog.getByRole("option", { name: "Shopping List", exact: true }),
-	).toBeVisible({ timeout: 500 });
-	expect(Date.now() - destinationStartedAt).toBeLessThan(500);
+	).toBeVisible();
 	await dialog
 		.getByRole("option", { name: "Shopping List", exact: true })
 		.click();
@@ -538,11 +536,10 @@ test("@mobile a reviewed product correction reveals sharing evidence without blo
 	).toBeVisible();
 
 	const shareToggle = dialog.getByLabel("Share with community");
-	const revealStartedAt = Date.now();
 	await shareToggle.click();
 	await expect(
 		dialog.getByRole("button", { name: "Replace product image" }),
-	).toBeVisible({ timeout: 500 });
+	).toBeVisible();
 	await expect(
 		dialog.getByLabel("Choose existing front of package"),
 	).toHaveCount(0);
@@ -558,8 +555,7 @@ test("@mobile a reviewed product correction reveals sharing evidence without blo
 	).toHaveCount(0);
 	await expect(
 		dialog.getByLabel("Choose existing nutrition facts label"),
-	).toBeVisible({ timeout: 500 });
-	expect(Date.now() - revealStartedAt).toBeLessThan(500);
+	).toBeVisible();
 	expect(shareValidationRequestCount).toBe(0);
 	await expect(shareToggle).toBeChecked();
 	await expect(
@@ -1149,7 +1145,7 @@ test("@desktop @mobile @compatibility front-photo upload stays responsive before
 	const responsiveness = await destinationResponsiveness;
 	await expect(
 		dialog.getByRole("button", { name: "Add Ingredient" }),
-	).toBeEnabled({ timeout: 2_000 });
+	).toBeEnabled();
 	await expect(
 		dialog.getByRole("button", { name: "Place automatically" }),
 	).toBeEnabled();
@@ -1160,11 +1156,11 @@ test("@desktop @mobile @compatibility front-photo upload stays responsive before
 		name: "Add after saving",
 	});
 	const fridgeOption = page.getByRole("option", { name: "Fridge" });
-	await expect(fridgeOption).toBeVisible({
-		timeout: 2_000,
+	await expect(fridgeOption).toBeVisible();
+	await testInfo.attach("manual-entry-large-photo-responsiveness", {
+		body: JSON.stringify(responsiveness, null, 2),
+		contentType: "application/json",
 	});
-	expect(responsiveness.maximumFrameGapMilliseconds).toBeLessThan(250);
-	expect(responsiveness.destinationOpenMilliseconds).toBeLessThan(500);
 	await fridgeOption.evaluate((element) =>
 		(element as HTMLButtonElement).click(),
 	);

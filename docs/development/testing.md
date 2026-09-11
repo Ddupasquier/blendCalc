@@ -270,6 +270,10 @@ Route performance uses two distinct gates. Deterministic tests require the maint
 instrumentation, lazy boundaries, and explicit budgets to remain present. A repeatable
 Playwright diagnostic records server phases, hydration, and important interaction
 durations as an attachment, but one local sample is not a production request blocker.
+Functional browser tests must assert the resulting state, event order, request boundary,
+and loading behavior instead of failing on a single narrow wall-clock measurement.
+Ordinary Playwright assertion and test timeouts are deadlock guards, not product
+performance budgets.
 Release acceptance compares p75 production field metrics to the maintained Fridge
 budgets: FCP and LCP at 2.5 seconds, INP at 200 milliseconds, and TTFB at 800
 milliseconds. Diagnose failures with the fixed server phase budgets before changing a

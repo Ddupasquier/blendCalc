@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const readSource = (path: string) => readFileSync(path, "utf8");
@@ -257,6 +257,21 @@ describe("Playwright browser-testing architecture", () => {
 		expect(rootLayout).toContain('dataset.appReady = "true"');
 		expect(rootLayout).toContain(
 			"delete document.documentElement.dataset.appReady",
+		);
+	});
+
+	it("keeps single-sample wall-clock measurements out of blocking browser assertions", () => {
+		const browserTestSource = readdirSync("tests/e2e", {
+			recursive: true,
+			withFileTypes: true,
+		})
+			.filter((entry) => entry.isFile() && entry.name.endsWith(".spec.ts"))
+			.map((entry) => readSource(`${entry.parentPath}/${entry.name}`))
+			.join("\n");
+
+		expect(browserTestSource).not.toMatch(/expect\(\s*Date\.now\(\)\s*-/u);
+		expect(browserTestSource).not.toMatch(
+			/expect\([^)]*Milliseconds\)\.toBeLessThan(?:OrEqual)?\(/u,
 		);
 	});
 
