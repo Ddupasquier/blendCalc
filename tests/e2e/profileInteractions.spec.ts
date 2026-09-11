@@ -1170,17 +1170,17 @@ test("administrators can open data operations after direct AAL2 verification", a
 		await expect(
 			dataOperationsSheet.getByText("Automated catalog monitoring"),
 		).toBeVisible();
-		await dataOperationsSheet
-			.locator("summary")
-			.filter({ hasText: "Nutrient mapping gaps" })
-			.click();
+		const nutrientMappingGaps = dataOperationsSheet
+			.locator("details")
+			.filter({ hasText: "Nutrient mapping gaps" });
+		await nutrientMappingGaps.locator("summary").click();
 		await expect(
-			dataOperationsSheet.locator(
+			nutrientMappingGaps.locator(
 				`a[href$="/nutrient-mappings/${pendingMappingId}"]`,
 			),
 		).toBeVisible();
 		await expect(
-			dataOperationsSheet.locator(
+			nutrientMappingGaps.locator(
 				`a[href$="/nutrient-mappings/${resolvedMappingId}"]`,
 			),
 		).toHaveCount(0);

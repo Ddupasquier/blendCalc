@@ -50,7 +50,7 @@ export const createManualEntryReferenceDataController = () => {
 		} catch (error) {
 			if (generation !== loadGeneration) return;
 			if (import.meta.env.DEV) {
-				console.error("Unable to load manual entry reference data", error);
+				console.warn("Unable to load manual entry reference data", error);
 			}
 			const messages = getManualEntryReferenceDataAvailabilityMessages(null);
 			state.nutrientGroups = emptyManualEntryNutrientGroups;
