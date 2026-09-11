@@ -1,0 +1,78 @@
+@use "../../../../styles/variables" as *;
+
+.compatible-nutrient-picker {
+	display: grid;
+	gap: $app-gap-xs;
+	min-width: 0;
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+.compatible-nutrient-picker > legend {
+	margin-bottom: $app-gap-2xs;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-bold;
+	letter-spacing: $app-letter-spacing-wide;
+	text-transform: uppercase;
+}
+
+.compatible-nutrient-picker__selection {
+	display: grid;
+	gap: $app-gap-2xs;
+	padding: $app-gap-sm;
+	background: $app-shell-surface-control;
+	border: $app-border;
+	border-radius: $app-shell-radius-control;
+}
+
+.compatible-nutrient-picker__selection span,
+.compatible-nutrient-picker__help,
+.compatible-nutrient-picker__metadata,
+.compatible-nutrient-picker__empty {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+}
+
+.compatible-nutrient-picker__help,
+.compatible-nutrient-picker__empty {
+	margin: 0;
+}
+
+.compatible-nutrient-picker__results {
+	display: grid;
+	gap: $app-gap-xs;
+	max-height: 18rem;
+	padding: $app-focus-outline-offset;
+	overflow-y: auto;
+	overscroll-behavior-y: contain;
+}
+
+.compatible-nutrient-picker__name {
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+.compatible-nutrient-picker__metadata {
+	flex: 0 0 auto;
+	font-weight: $app-font-weight-semibold;
+	white-space: nowrap;
+}
+
+.compatible-nutrient-picker__empty {
+	padding: $app-gap-sm;
+	background: $app-shell-surface-control;
+	border-radius: $app-shell-radius-control;
+}
+
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
+	.compatible-nutrient-picker__results {
+		max-height: 15rem;
+	}
+
+	.compatible-nutrient-picker__selection,
+	.compatible-nutrient-picker__empty {
+		padding: $app-gap-xs;
+	}
+}

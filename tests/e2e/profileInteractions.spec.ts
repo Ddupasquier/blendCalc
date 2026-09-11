@@ -12,7 +12,12 @@ import {
 	getAuthenticatedBrowserStatePath,
 	getLocalQaAccountForWorker,
 } from "./support/localQaAccounts";
-import { deleteLocalQaAuthenticatorFactorsForEmail } from "./support/localQaDatabase";
+import {
+	createLocalQaPendingNutrientMapping,
+	deleteLocalQaAuthenticatorFactorsForEmail,
+	deleteLocalQaPendingNutrientMapping,
+	recheckLocalQaDeterministicNutrientMapping,
+} from "./support/localQaDatabase";
 import { finishLocalQaAuthenticatorEnrollment } from "./support/localQaAuthenticator";
 
 const tinyPng = Buffer.from(
@@ -1104,6 +1109,8 @@ test("administrators can open data operations after direct AAL2 verification", a
 	const adminEmail = "qa-admin@blendcalc.local";
 	const dataOperationsPath = "/profile/privileged-tools/data-operations";
 	await deleteLocalQaAuthenticatorFactorsForEmail(adminEmail);
+	const pendingMappingId = await createLocalQaPendingNutrientMapping();
+	const resolvedMappingId = await recheckLocalQaDeterministicNutrientMapping();
 
 	try {
 		await signInLocalQaAccount({
@@ -1139,6 +1146,67 @@ test("administrators can open data operations after direct AAL2 verification", a
 		await expect(
 			dataOperationsSheet.getByText("Automated catalog monitoring"),
 		).toBeVisible();
+		await dataOperationsSheet
+			.locator("summary")
+			.filter({ hasText: "Nutrient mapping gaps" })
+			.click();
+		await expect(
+			dataOperationsSheet.locator(
+				`a[href$="/nutrient-mappings/${pendingMappingId}"]`,
+			),
+		).toBeVisible();
+		await expect(
+			dataOperationsSheet.locator(
+				`a[href$="/nutrient-mappings/${resolvedMappingId}"]`,
+			),
+		).toHaveCount(0);
+
+		await page.goto(
+			`${dataOperationsPath}/nutrient-mappings/${pendingMappingId}`,
+		);
+		await waitForAppReady(page);
+		const nutrientMappingSheet = page.getByRole("dialog", {
+			name: "Review nutrient mapping",
+		});
+		await nutrientMappingSheet
+			.getByRole("combobox", {
+				name: "1. What does the evidence support?",
+			})
+			.click();
+		await nutrientMappingSheet
+			.getByRole("option", {
+				name: "Approve — evidence proves an exact identity",
+			})
+			.click();
+		const nutrientPicker = nutrientMappingSheet.getByRole("group", {
+			name: "Confirmed nutrient",
+		});
+		const nutrientSearch = nutrientPicker.getByRole("searchbox", {
+			name: "Find a compatible nutrient",
+		});
+		await nutrientSearch.fill("arachidonic");
+		await expect(
+			nutrientPicker.getByText(/1 of \d+ compatible nutrients match/u),
+		).toBeVisible();
+		await nutrientPicker
+			.getByRole("button", { name: /arachidonic.*855.*G/iu })
+			.click();
+		await expect(nutrientPicker.getByText(/arachidonic · G$/iu)).toBeVisible();
+		await nutrientSearch.fill("not-a-real-nutrient");
+		await expect(
+			nutrientPicker
+				.getByRole("status")
+				.filter({ hasText: "No compatible nutrient matches" }),
+		).toContainText("Your current selection is unchanged");
+		await expect(nutrientPicker.getByText(/arachidonic · G$/iu)).toBeVisible();
+		await nutrientPicker
+			.getByRole("button", { name: "Clear find a compatible nutrient" })
+			.click();
+		await expect(
+			nutrientPicker.getByText(/\d+ compatible nutrients available/u),
+		).toBeVisible();
+
+		await page.goto(dataOperationsPath);
 		const namedMissingNutrients = dataOperationsSheet.getByText(
 			"A required nutrient is missing: Fatty acids, total saturated",
 		);
@@ -1202,6 +1270,10 @@ test("administrators can open data operations after direct AAL2 verification", a
 				.locator(".action-required-count-badge"),
 		).toHaveCount(0);
 	} finally {
-		await deleteLocalQaAuthenticatorFactorsForEmail(adminEmail);
+		try {
+			await deleteLocalQaPendingNutrientMapping(pendingMappingId);
+		} finally {
+			await deleteLocalQaAuthenticatorFactorsForEmail(adminEmail);
+		}
 	}
 });

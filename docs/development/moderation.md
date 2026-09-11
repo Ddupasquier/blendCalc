@@ -389,7 +389,10 @@ Rejected candidates and approved mappings are completed outcomes rather than rec
 gaps. The workspace never offers arbitrary free-text nutrient identity or an unreviewed
 unit conversion. Source-controlled deterministic rules remove exact, fully evidenced
 provider identities from routine review only after their exact unit path is eligible;
-confidence and name similarity never do.
+confidence and name similarity never do. For remaining work, nutrient search renders
+the matching compatible choices and an announced result count directly. A zero-result
+query preserves the current selection, explains the missing match, and can be cleared
+without disabling or stranding the decision form.
 
 The initial deterministic-rule migration checks every existing pending mapping. Each
 mapping receives an immutable backfill result: an exact eligible rule records approval

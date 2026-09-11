@@ -116,10 +116,10 @@ aliases used by ingestion before a rule or reviewed conversion may match.
 Exact provider identifiers, source-controlled deterministic keys, and dataset mappings
 continue through the automated path and never become routine human work. A semantic
 candidate receives a stable mapping UUID and remains disabled with `pending_review`
-status. An AAL2 admin or developer may open its focused data-operations route, choose
-only a nutrient with a reviewed unit path, cite identity evidence, and approve it as
-`moderator_verified`; or exclude it. Human and deterministic decisions are both
-immutable and identify their actual actor type.
+status. An AAL2 admin or developer may open its focused data-operations route, search
+the visible compatible choices, choose only a nutrient with a reviewed unit path, cite
+identity evidence, and approve it as `moderator_verified`; or exclude it. Human and
+deterministic decisions are both immutable and identify their actual actor type.
 Approval affects future normalization and deliberate reprocessing, not historical
 values through an implicit rewrite.
 

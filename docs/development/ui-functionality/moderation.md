@@ -49,6 +49,13 @@ from downstream publication, notification, correction, access, or policy effects
 must not imply a user notification or automatic correction that the server does not
 perform.
 
+The nutrient-mapping decision form shows compatible nutrient matches directly beneath
+its search field with an announced result count. Search by canonical name, nutrient
+number, or canonical ID narrows those choices without changing the current selection.
+A zero-result query keeps the chosen nutrient intact and explains how to restore the
+complete compatible list. If the suggested nutrient lacks a reviewed unit path, it is
+not preselected and the form plainly requires another compatible choice or exclusion.
+
 Product, warning, and reported-image queues use the shared moderator review-list and
 review-card structure. Keep identity and the decision-relevant status in the card header,
 keep a short fact summary in the primary reading path, and move package photos, raw

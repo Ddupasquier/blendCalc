@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { randomUUID } from "node:crypto";
 import { parse } from "dotenv";
 import { readFile } from "node:fs/promises";
 import type { Database, Json } from "$lib/types/database.types";
@@ -37,6 +38,82 @@ const createLocalQaServiceRoleDatabaseClient = async () => {
 	return createClient<Database>(supabaseUrl, serviceRoleKey, {
 		auth: { autoRefreshToken: false, persistSession: false },
 	});
+};
+
+export const createLocalQaPendingNutrientMapping = async () => {
+	const admin = await createLocalQaServiceRoleDatabaseClient();
+	const sourceNutrientKey = `qa-browser-omega-6-${randomUUID()}`;
+	const { data, error } = await admin
+		.from("nutrient_source_mappings")
+		.insert({
+			confidence: 1,
+			enabled: false,
+			mapping_method: "api_taxonomy_match",
+			nutrient_id: 700855,
+			priority: 100,
+			provenance: {
+				fixture: true,
+				reason:
+					"A broad parent nutrient label still requires an exact identity decision.",
+			},
+			review_status: "pending_review",
+			source_key: "open-food-facts",
+			source_nutrient_key: sourceNutrientKey,
+			source_nutrient_name: "Omega-6 fatty acids",
+			source_unit_name: "G",
+		})
+		.select("id")
+		.single();
+	if (error) throw error;
+	return data.id;
+};
+
+export const deleteLocalQaPendingNutrientMapping = async (
+	mappingId: string,
+) => {
+	const admin = await createLocalQaServiceRoleDatabaseClient();
+	const { error } = await admin
+		.from("nutrient_source_mappings")
+		.delete()
+		.eq("id", mappingId);
+	if (error) throw error;
+};
+
+export const recheckLocalQaDeterministicNutrientMapping = async () => {
+	const admin = await createLocalQaServiceRoleDatabaseClient();
+	const { data: mapping, error: findError } = await admin
+		.from("nutrient_source_mappings")
+		.select("id")
+		.eq("source_key", "open-food-facts")
+		.eq("source_nutrient_key", "arachidonic-acid")
+		.eq("source_unit_name", "G")
+		.single();
+	if (findError) throw findError;
+
+	const { error: updateError } = await admin
+		.from("nutrient_source_mappings")
+		.update({
+			enabled: false,
+			review_reference: null,
+			review_status: "pending_review",
+			reviewed_at: null,
+		})
+		.eq("id", mapping.id);
+	if (updateError) throw updateError;
+
+	const { data: rechecked, error: recheckError } = await admin
+		.from("nutrient_source_mappings")
+		.select("enabled, id, review_status")
+		.eq("id", mapping.id)
+		.single();
+	if (recheckError) throw recheckError;
+	if (rechecked.review_status !== "approved" || !rechecked.enabled) {
+		throw new Error(
+			"The deterministic nutrient rule did not remove the rechecked mapping from human review.",
+		);
+	}
+
+	return rechecked.id;
 };
 
 const findLocalQaUserByEmail = async (email: string) => {
