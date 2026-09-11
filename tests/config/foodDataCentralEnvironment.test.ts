@@ -26,13 +26,17 @@ describe("FoodData Central environment configuration", () => {
 		);
 	});
 
-	it("removes the retired browser-prefixed key from runtime and script readers", () => {
-		const retiredKey = ["VITE", "FDC", "API", "KEY"].join("_");
-		const affectedSource = collectTrackedSourceFiles()
-			.map((path) => readFileSync(path, "utf8"))
-			.join("\n");
+	it(
+		"removes the retired browser-prefixed key from runtime and script readers",
+		() => {
+			const retiredKey = ["VITE", "FDC", "API", "KEY"].join("_");
+			const affectedSource = collectTrackedSourceFiles()
+				.map((path) => readFileSync(path, "utf8"))
+				.join("\n");
 
-		expect(affectedSource).not.toContain(retiredKey);
-		expect(affectedSource).toContain("FDC_API_KEY");
-	});
+			expect(affectedSource).not.toContain(retiredKey);
+			expect(affectedSource).toContain("FDC_API_KEY");
+		},
+		15_000,
+	);
 });

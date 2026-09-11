@@ -345,7 +345,7 @@ export const parseCatalogProductReadinessPassport = (
 					),
 				}
 			: null,
-		revisionHistory: [],
+		revisionHistory: parseCatalogProductRevisionHistory(root.revisionHistory),
 		qualityDimensions: readRecord(root.qualityDimensions, "qualityDimensions"),
 		evidence: {
 			selectedFieldCount: readNumber(
