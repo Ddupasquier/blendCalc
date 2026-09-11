@@ -10262,6 +10262,10 @@ export type Database = {
         Args: { p_shared_product_id: string }
         Returns: Json
       }
+      get_catalog_product_revision_context: {
+        Args: { p_shared_product_id: string }
+        Returns: Json
+      }
       get_blendcalc_api_product_revision_history_v1: {
         Args: { p_barcode: string; p_limit?: number; p_offset?: number }
         Returns: {

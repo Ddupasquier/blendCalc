@@ -47,6 +47,22 @@ describe("CatalogProductReadinessPassport", () => {
 		).toBeInTheDocument();
 		expect(screen.getByText("13 of 14")).toBeInTheDocument();
 		expect(screen.getByText(/open-food-facts, usda-fdc/u)).toBeInTheDocument();
+
+		const revisionSummary = screen
+			.getByText("Revision and verification")
+			.closest("summary");
+		await fireEvent.click(revisionSummary as HTMLElement);
+		expect(screen.getByText("What changed in each revision")).toBeVisible();
+		expect(
+			screen.getByText("Ingredient evidence confidence").closest("li"),
+		).toHaveTextContent(
+			"Ingredient evidence confidence changed from Unknown to Source Verified",
+		);
+		expect(
+			screen.getByText(
+				/Initial catalog record; there is no preceding revision/u,
+			),
+		).toBeVisible();
 	});
 
 	it("plainly identifies work that cannot be completed from the passport", () => {

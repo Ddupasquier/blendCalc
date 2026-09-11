@@ -455,6 +455,14 @@ remains unresolved and never creates a guessed value or historical change. A ter
 accepted-withheld disposition acknowledges that exact unresolved state; it is not an
 evidence approval or catalog-submission rejection.
 
+Revision history no longer depends on a manually supplied summary when the immutable
+predecessor and successor snapshots already prove the distinction. The database stores
+their exact leaf-level before/after differences with human-readable labels, backfills
+reconstructable legacy gaps, and rejects identical future snapshots. The privileged
+passport exposes those bounded stored change rows newest-first without returning the
+complete historical food documents. If no retained predecessor can prove a change, the
+operator records the existing evidence-unavailable disposition instead of guessing.
+
 Catalog-review decisions follow the same rule. Dismissing a provider change records that
 the current canonical revision remains authoritative and closes only open conflicts
 whose evidence names that exact provider snapshot. An operator may separately resolve

@@ -25,6 +25,35 @@ export const catalogProductReadinessPassportFixture: CatalogProductReadinessPass
 			sourceReference: "00021130493609",
 			changeSummary: { reason: "Label update" },
 		},
+		revisionHistory: [
+			{
+				id: "revision-id",
+				number: 3,
+				labelObservedAt: "2026-07-31T12:00:00.000Z",
+				createdAt: "2026-08-01T12:00:00.000Z",
+				source: "open-food-facts",
+				sourceReference: "00021130493609",
+				changes: [
+					{
+						fieldPath: "fieldProvenance.ingredients.confidence",
+						fieldLabel: "Ingredient evidence confidence",
+						changeType: "changed",
+						previousValue: "unknown",
+						newValue: "source-verified",
+						severity: "low",
+					},
+				],
+			},
+			{
+				id: "revision-one",
+				number: 1,
+				labelObservedAt: "2026-07-01T12:00:00.000Z",
+				createdAt: "2026-07-01T12:00:00.000Z",
+				source: "open-food-facts",
+				sourceReference: "00021130493609",
+				changes: [],
+			},
+		],
 		qualityDimensions: {
 			identity: "complete",
 			nutrition: "complete",

@@ -32,6 +32,41 @@
 	};
 	const formatEvidenceCoverage = (covered: number, total: number) =>
 		total === 0 ? "No records" : `${covered} of ${total}`;
+	const humanizeStoredValue = (value: string) =>
+		value
+			.replaceAll("-", " ")
+			.replaceAll("_", " ")
+			.replace(/\b\w/gu, (character) => character.toLocaleUpperCase());
+	const formatRevisionValue = (value: unknown): string => {
+		if (value === null || value === undefined || value === "") {
+			return "Not recorded";
+		}
+		if (typeof value === "string") return humanizeStoredValue(value);
+		if (typeof value === "number") return String(value);
+		if (typeof value === "boolean") return value ? "Yes" : "No";
+		if (Array.isArray(value)) {
+			if (value.length === 0) return "None";
+			if (
+				value.every((entry) => typeof entry === "string") &&
+				value.length <= 4
+			) {
+				return value.map((entry) => humanizeStoredValue(entry)).join(", ");
+			}
+			return `${value.length} stored ${value.length === 1 ? "record" : "records"}`;
+		}
+		if (typeof value === "object") {
+			const entries = Object.entries(value as Record<string, unknown>);
+			if (entries.length === 0) return "No recorded details";
+			return entries
+				.slice(0, 3)
+				.map(
+					([key, entry]) =>
+						`${humanizeStoredValue(key)}: ${formatRevisionValue(entry)}`,
+				)
+				.join("; ");
+		}
+		return "Recorded value";
+	};
 	const statusTone = (ready: boolean) =>
 		ready ? ("success" as const) : ("warning" as const);
 	const issueTone = $derived(
@@ -337,6 +372,61 @@
 				<dd>{passport.product.openMaterialConflictCount}</dd>
 			</div>
 		</dl>
+		{#if passport.revisionHistory.length > 0}
+			<section class="catalog-product-passport__revision-history">
+				<header>
+					<h3>What changed in each revision</h3>
+					<p>
+						Each item below is a separate stored snapshot. The wording names the
+						exact difference from the preceding revision.
+					</p>
+				</header>
+				<ol>
+					{#each passport.revisionHistory as revision (revision.id)}
+						<li>
+							<header>
+								<strong>Revision {revision.number}</strong>
+								<span>{formatDate(revision.createdAt)}</span>
+							</header>
+							<p class="catalog-product-passport__revision-source">
+								Source: {humanizeStoredValue(
+									revision.source,
+								)}{revision.sourceReference
+									? ` · ${revision.sourceReference}`
+									: ""}
+							</p>
+							{#if revision.changes.length === 0}
+								<p>Initial catalog record; there is no preceding revision.</p>
+							{:else}
+								<ul>
+									{#each revision.changes.slice(0, 6) as change (change.fieldPath)}
+										<li>
+											{#if change.changeType === "added"}
+												<strong>{change.fieldLabel}</strong> was added:
+												{formatRevisionValue(change.newValue)}.
+											{:else if change.changeType === "removed"}
+												<strong>{change.fieldLabel}</strong> was removed. It was
+												{formatRevisionValue(change.previousValue)}.
+											{:else}
+												<strong>{change.fieldLabel}</strong> changed from
+												{formatRevisionValue(change.previousValue)} to
+												{formatRevisionValue(change.newValue)}.
+											{/if}
+										</li>
+									{/each}
+								</ul>
+								{#if revision.changes.length > 6}
+									<p class="catalog-product-passport__revision-more">
+										And {revision.changes.length - 6} more stored
+										{revision.changes.length - 6 === 1 ? "change" : "changes"}.
+									</p>
+								{/if}
+							{/if}
+						</li>
+					{/each}
+				</ol>
+			</section>
+		{/if}
 	</CollapsibleSection>
 
 	<CollapsibleSection title="Evidence coverage" surface="panel">

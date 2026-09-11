@@ -56,6 +56,8 @@ const CATALOG_ISSUE_REASON_LABELS: Record<string, string> = {
 	policy_review_missing: "Source policy review is missing",
 	serving_source_not_redistributable:
 		"A selected serving source cannot be redistributed through blendCalcAPI v1",
+	structured_change_rows_missing:
+		"The stored revision is missing its exact before-and-after change record",
 	unsupported_nutrient_value_state:
 		"A nutrient value has an unsupported reporting state",
 	unexplained_revision: "Revision changes need evidence",

@@ -1310,8 +1310,11 @@ Another trigger copies the submission and observed-label metadata onto the new r
 `shared_product_revision_changes` then stores one row per changed field with
 `field_path`, `field_label`, `change_type`, `previous_value`, `new_value`, and
 `severity`. These service-role-only rows make future API history queryable without
-parsing every historical food document. Older revisions keep their original snapshots;
-the migration does not invent historical field differences.
+parsing every historical food document. Older revisions keep their original snapshots.
+When two exact stored snapshots differ but the later revision lacks a valid structured
+summary, the database derives leaf-level before/after rows from those snapshots and
+labels the changed fields in human-readable terms. This reconstructs recorded history;
+it does not infer a value or claim unsupported source evidence.
 
 `catalog_change_summary_is_valid` requires each new product-update submission to carry
 at least one uniquely named, typed change with both previous and submitted values.
@@ -1323,6 +1326,14 @@ field paths, replaces stored labels with API-owned wording, and reduces values t
 public shapes. Browser roles cannot execute the RPC directly. Revision snapshots,
 private evidence, arbitrary JSON, and reviewer identities are never returned. Historical
 rows are left with empty changes when no retained evidence can prove the difference.
+
+Every revision after Revision 1 must differ from and link to its exact predecessor. The
+database rejects identical snapshots instead of creating duplicate review work and
+automatically derives a valid structured summary when a caller omits one. The migration
+backfills all reconstructable historical summaries and change rows through the same
+comparison. `get_catalog_product_revision_context` returns only bounded revision
+metadata and those human-readable differences to MFA-verified catalog reviewers and
+data operators; it never returns the full food snapshots.
 
 An AAL2 data operator may use the shared dry-run-first catalog repair boundary to repair
 historical structural gaps without editing rows manually. A missing first revision is
