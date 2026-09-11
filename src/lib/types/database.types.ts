@@ -7,6 +7,11 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.5"
+  }
   graphql_public: {
     Tables: {
       [_ in never]: never
@@ -5274,7 +5279,7 @@ export type Database = {
           {
             foreignKeyName: "nutrient_manual_entry_fields_nutrient_id_fkey"
             columns: ["nutrient_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "nutrient_definitions"
             referencedColumns: ["nutrient_id"]
           },
@@ -10514,6 +10519,14 @@ export type Database = {
         Returns: undefined
       }
       request_catalog_monitor_run: { Args: never; Returns: number }
+      resolve_catalog_conflict_without_correction: {
+        Args: {
+          p_conflict_id: string
+          p_resolution_note: string
+          p_shared_product_id: string
+        }
+        Returns: Json
+      }
       resolve_custom_food_category_option: {
         Args: { p_source_values: string[] }
         Returns: {
@@ -10544,14 +10557,6 @@ export type Database = {
       resolve_food_symbol_key_for_food: {
         Args: { p_category_option_id?: string; p_food: Json }
         Returns: string
-      }
-      resolve_catalog_conflict_without_correction: {
-        Args: {
-          p_conflict_id: string
-          p_resolution_note: string
-          p_shared_product_id: string
-        }
-        Returns: Json
       }
       resolve_food_warning_policy_review_case: {
         Args: {
