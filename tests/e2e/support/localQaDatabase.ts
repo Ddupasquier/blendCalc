@@ -102,6 +102,97 @@ export const deleteLocalQaAuthenticatorFactorsForEmail = async (
 	}
 };
 
+const localQaDiagnosticProductId = "81000000-0000-4000-8000-000000000061";
+const localQaDiagnosticRevisionId = "72900000-0000-4000-8000-000000000010";
+
+export type LocalQaCatalogDiagnosticReviewFixture = {
+	occurrenceKey: string;
+	productId: string;
+};
+
+const removeLocalQaCatalogDiagnosticReviewFixture = async (
+	admin: SupabaseClient<Database>,
+) => {
+	const { data: occurrences, error: occurrenceError } = await admin
+		.from("catalog_health_issue_occurrences")
+		.select("occurrence_key")
+		.eq("shared_product_id", localQaDiagnosticProductId)
+		.eq("source_scope", "catalog_revision");
+	if (occurrenceError) throw occurrenceError;
+
+	const occurrenceKeys = (occurrences ?? [])
+		.map((occurrence) => occurrence.occurrence_key)
+		.filter((occurrenceKey): occurrenceKey is string => Boolean(occurrenceKey));
+	if (occurrenceKeys.length > 0) {
+		const { error: repairError } = await admin
+			.from("catalog_health_repair_runs")
+			.delete()
+			.in("occurrence_key", occurrenceKeys);
+		if (repairError) throw repairError;
+	}
+
+	const { error: dispositionError } = await admin
+		.from("catalog_health_review_dispositions")
+		.delete()
+		.eq("shared_product_id", localQaDiagnosticProductId);
+	if (dispositionError) throw dispositionError;
+
+	const { error: revisionError } = await admin
+		.from("shared_product_revisions")
+		.delete()
+		.eq("id", localQaDiagnosticRevisionId);
+	if (revisionError) throw revisionError;
+};
+
+export const seedLocalQaCatalogDiagnosticReview =
+	async (): Promise<LocalQaCatalogDiagnosticReviewFixture> => {
+		const admin = await createLocalQaServiceRoleDatabaseClient();
+		await removeLocalQaCatalogDiagnosticReviewFixture(admin);
+
+		const { data: revision, error: revisionReadError } = await admin
+			.from("shared_product_revisions")
+			.select("*")
+			.eq("shared_product_id", localQaDiagnosticProductId)
+			.eq("revision_number", 1)
+			.single();
+		if (revisionReadError) throw revisionReadError;
+
+		const { error: revisionInsertError } = await admin
+			.from("shared_product_revisions")
+			.insert({
+				...revision,
+				id: localQaDiagnosticRevisionId,
+				revision_number: 2,
+				change_summary: {},
+				label_observed_at: "2026-09-10T12:00:00.000Z",
+				created_at: "2026-09-10T12:00:00.000Z",
+			});
+		if (revisionInsertError) throw revisionInsertError;
+
+		const { data: occurrence, error: occurrenceError } = await admin
+			.from("catalog_health_actionable_issue_occurrences")
+			.select("occurrence_key")
+			.eq("shared_product_id", localQaDiagnosticProductId)
+			.eq("source_scope", "catalog_revision")
+			.single();
+		if (occurrenceError) throw occurrenceError;
+		if (!occurrence.occurrence_key) {
+			throw new Error(
+				"The local catalog diagnostic fixture did not create an occurrence key.",
+			);
+		}
+
+		return {
+			occurrenceKey: occurrence.occurrence_key,
+			productId: localQaDiagnosticProductId,
+		};
+	};
+
+export const cleanupLocalQaCatalogDiagnosticReview = async () => {
+	const admin = await createLocalQaServiceRoleDatabaseClient();
+	await removeLocalQaCatalogDiagnosticReviewFixture(admin);
+};
+
 export type LocalQaCatalogSubmissionEnforcementSnapshot = {
 	enforcement:
 		| Database["public"]["Tables"]["user_catalog_submission_enforcement"]["Row"]

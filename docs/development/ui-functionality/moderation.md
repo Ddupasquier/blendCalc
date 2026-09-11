@@ -200,8 +200,12 @@ has a `Do this now` panel that names the required workflow, states whether that 
 available on the current screen, and defines the observable condition that clears the
 issue. Actionable issues appear before unavailable issues. The workspace guide states
 the exact number operators can act on now and defines completion for the current screen
-instead of describing every diagnostic as resolvable work. When a safe repair is available, the issue links directly to its exact
-repair control. A dry run with no exact candidate is a stop state, not a retry loop: it tells
+instead of describing every diagnostic as resolvable work. Issues are grouped into
+public-API blockers and nonblocking catalog-evidence follow-ups, and every card states
+its publication impact. Revision checks name the exact revision and the evidence sources
+they inspect. When a safe repair is available, the issue links directly to its exact
+repair control, scrolls that control fully into the visible sheet body, and moves keyboard
+focus there. A dry run with no exact candidate is a stop state, not a retry loop: it tells
 the operator to continue to the final product-review action and may be rerun only after
 the stored evidence changes. The final action is enabled only after every available safe
 check has returned no candidate. Before confirmation it states all four outcomes: the
@@ -210,7 +214,10 @@ v1, the exact current readiness snapshot leaves actionable queues, and changed e
 automatically reopens the review. A private explanation of at least 10 characters is
 required. Missing correction workflows remain clearly identified as unavailable; the
 terminal outcome records `accepted_withheld` rather than implying that inspection fixed
-or approved missing evidence.
+or approved missing evidence. An already API-ready product never offers that withholding
+action for internal diagnostics. Its separate final action records
+`accepted_evidence_gap`, removes only the exact evidence follow-up from the queue, and
+explicitly leaves product values, revision history, and public API availability unchanged.
 
 Evidence coverage labels must distinguish completeness from provenance. `Existing
 nutrient records with source evidence` describes only the nutrients already stored; it

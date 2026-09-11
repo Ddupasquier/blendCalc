@@ -1236,14 +1236,16 @@ Notes:
   active/import-enabled dataset gaps, and warning-policy coverage gaps. Every row uses
   an `app_issue_codes` contract for urgency, work ownership, supported action, and
   reviewed repair capability. Disabled unused datasets do not create failures.
-- `catalog_health_review_dispositions` stores append-only `accepted_withheld` outcomes
-  for one exact product issue fingerprint, including the private review note, bounded
-  issue snapshot, reviewer, and timestamp. Authenticated clients have no direct table
-  access.
-- `catalog_health_actionable_issue_occurrences` removes only a currently matching
-  accepted-withheld API-publication fingerprint from operator queues. Raw occurrences
-  and API withholding remain unchanged, and a changed occurrence timestamp or issue set
-  automatically becomes actionable again.
+- `catalog_health_review_dispositions` stores append-only `accepted_withheld`
+  publication outcomes and `accepted_evidence_gap` diagnostic outcomes for one exact
+  product fingerprint, including the private review note, bounded issue snapshot,
+  reviewer, and timestamp. Authenticated clients have no direct table access.
+- `catalog_health_actionable_issue_occurrences` removes a currently matching
+  accepted-withheld API-publication fingerprint or accepted-evidence-gap product
+  diagnostic fingerprint from operator queues. Raw occurrences, product data, revision
+  history, and API publication remain unchanged. Changed product, revision, observation,
+  submission, occurrence timestamp, or issue-set evidence automatically becomes
+  actionable again.
 - `catalog_health_repair_runs` is the immutable audit header for one AAL2 dry run or
   apply request against an open occurrence. It records the requesting user, issue,
   approved handler, linked dry run, status, bounded outcome counts, summary, and timing.
@@ -2107,7 +2109,8 @@ Notes:
 - `get_blendcalc_api_catalog_product_readiness_passport(p_shared_product_id)` returns one bounded
   product contract to an AAL2 catalog reviewer or data-operations reader. It separates
   shared-catalog and blendCalcAPI v1 status, includes the current revision and source-evidence
-  counts, and maps open normalized issues to ownership and supported action metadata.
+  counts, classifies every issue as a publication blocker or nonblocking catalog
+  diagnostic, and maps open normalized issues to ownership and supported action metadata.
   It excludes raw provider payloads, private evidence paths, and contributor identity.
 - `private.build_catalog_product_readiness_passport(p_shared_product_id)` owns the
   bounded shared-catalog and blendCalcAPI readiness assembly. Direct execution is
@@ -2338,6 +2341,7 @@ category, or serving fields.
 | `search_blendcalc_api_products_v1`                     | Service-role-only partial metadata search for active, publication-ready shared products with bounded pagination and name → brand → category → supporting-metadata relevance                            |
 | `get_blendcalc_api_catalog_product_readiness_passport` | Authenticated AAL2 catalog-review or data-operations passport with canonical blendCalcAPI status naming                                                                                                |
 | `finish_catalog_health_product_review`                 | Records an AAL2 accepted-withheld outcome for the exact current product issue fingerprint after every available safe repair is inconclusive; never changes catalog or API publication data             |
+| `finish_catalog_health_product_diagnostic_review`      | Records an AAL2 accepted-evidence-gap outcome for one inconclusive nonpublication diagnostic snapshot without changing catalog or API data                                                             |
 | `get_catalog_data_operations_health`                   | Returns bounded admin/developer catalog, source, dataset, policy, mapping, revision, and publication-readiness summaries after exact AAL2 data-operations authorization                                |
 | `get_catalog_data_operations_monitor_summary`          | Returns bounded admin/developer monitor configuration, queue counts, and recent run state after exact AAL2 data-operations authorization                                                               |
 | `get_catalog_review_work_summary`                      | Returns bounded material conflicts, provider changes, and possible recall matches after exact AAL2 catalog-review authorization                                                                        |

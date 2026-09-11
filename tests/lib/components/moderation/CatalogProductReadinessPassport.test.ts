@@ -131,4 +131,47 @@ describe("CatalogProductReadinessPassport", () => {
 			screen.queryByText(/No current catalog-health issues/u),
 		).not.toBeInTheDocument();
 	});
+
+	it("separates API blockers from nonblocking revision evidence and names the revision", () => {
+		render(CatalogProductReadinessPassport, {
+			props: {
+				passport: {
+					...catalogProductReadinessPassportFixture,
+					product: {
+						...catalogProductReadinessPassportFixture.product,
+						blendCalcAPIV1Status: "Ready",
+					},
+					issues: [
+						{
+							...catalogProductReadinessPassportFixture.issues[0],
+							issueCode: "CATALOG_REVISION_EXPLANATION_MISSING",
+							sourceScope: "catalog_revision",
+							sourceReason: "structured_change_rows_missing",
+							parameters: {
+								revisionId: "revision-four",
+								revisionNumber: 4,
+							},
+							workCategory: "catalog_diagnostic",
+							impact: "does_not_block_publication",
+						},
+					],
+				},
+				canRunRepairs: true,
+			},
+		});
+
+		expect(screen.getByText("Catalog evidence follow-up")).toBeInTheDocument();
+		expect(
+			screen.getByText("Revision 4 needs change evidence"),
+		).toBeInTheDocument();
+		expect(
+			screen.getByText("Does not affect current API publication"),
+		).toBeInTheDocument();
+		expect(
+			screen.getByText(/This product is already public/u),
+		).toBeInTheDocument();
+		expect(
+			screen.queryByText(/keeping it out of the public API/u),
+		).not.toBeInTheDocument();
+	});
 });

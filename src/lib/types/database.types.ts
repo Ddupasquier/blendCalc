@@ -7,11 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.5"
-  }
   graphql_public: {
     Tables: {
       [_ in never]: never
@@ -5279,7 +5274,7 @@ export type Database = {
           {
             foreignKeyName: "nutrient_manual_entry_fields_nutrient_id_fkey"
             columns: ["nutrient_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "nutrient_definitions"
             referencedColumns: ["nutrient_id"]
           },
@@ -10237,6 +10232,10 @@ export type Database = {
       fail_nutrition_label_ocr_job: {
         Args: { p_claim_token: string; p_error_code: string; p_job_id: string }
         Returns: string
+      }
+      finish_catalog_health_product_diagnostic_review: {
+        Args: { p_review_note: string; p_shared_product_id: string }
+        Returns: Json
       }
       finish_catalog_health_product_review: {
         Args: { p_review_note: string; p_shared_product_id: string }

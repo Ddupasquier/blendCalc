@@ -8,13 +8,31 @@
 
 	let {
 		passport,
+		category,
 		canFinishReview,
 		form = null,
 	}: CatalogProductReviewDispositionProps = $props();
 	let reviewNote = $state("");
 	let pending = $state(false);
 
-	const completion = $derived(passport.reviewCompletion);
+	const isDiagnostic = $derived(category === "diagnostic");
+	const completion = $derived(
+		isDiagnostic
+			? passport.diagnosticReviewCompletion
+			: passport.reviewCompletion,
+	);
+	const disposition = $derived(
+		isDiagnostic
+			? passport.diagnosticReviewDisposition
+			: passport.reviewDisposition,
+	);
+	const issueCount = $derived(
+		passport.issues.filter((issue) =>
+			isDiagnostic
+				? issue.workCategory === "catalog_diagnostic"
+				: issue.workCategory === "publication_blocker",
+		).length,
+	);
 	const remainingCheckCount = $derived(
 		Math.max(
 			completion.requiredSafeRepairCheckCount -
@@ -38,42 +56,58 @@
 	};
 </script>
 
-{#if passport.reviewDisposition}
+{#if disposition}
 	<section
 		class="catalog-product-review-disposition catalog-product-review-disposition--complete"
 	>
 		<StatusMessage
 			tone="success"
-			title="Review finished — kept out of the public API"
-			message={`${passport.reviewDisposition.issueCount} current ${passport.reviewDisposition.issueCount === 1 ? "item is" : "items are"} no longer in the work queue. The product is still available inside blendCalc. New or changed evidence will automatically reopen the review.`}
+			title={isDiagnostic
+				? "Evidence follow-up finished"
+				: "Review finished — kept out of the public API"}
+			message={isDiagnostic
+				? `${disposition.issueCount} current evidence ${disposition.issueCount === 1 ? "follow-up is" : "follow-ups are"} no longer in the work queue. Product data and public API availability are unchanged. New or changed evidence will automatically reopen the review.`
+				: `${disposition.issueCount} current ${disposition.issueCount === 1 ? "item is" : "items are"} no longer in the work queue. The product is still available inside blendCalc. New or changed evidence will automatically reopen the review.`}
 		/>
 		<dl>
 			<div>
 				<dt>Recorded reason</dt>
-				<dd>{passport.reviewDisposition.reviewNote}</dd>
+				<dd>{disposition.reviewNote}</dd>
 			</div>
 		</dl>
 	</section>
-{:else if passport.issues.length > 0 && canFinishReview}
+{:else if issueCount > 0 && canFinishReview}
 	<section
 		class="catalog-product-review-disposition"
-		id="finish-product-review"
+		id={isDiagnostic ? "finish-evidence-review" : "finish-publication-review"}
+		tabindex="-1"
 	>
 		<header>
 			<span>Final step</span>
-			<h2>Finish this product review</h2>
+			<h2>
+				{isDiagnostic
+					? "Finish the evidence follow-up"
+					: "Finish this product review"}
+			</h2>
 		</header>
 		<p>
-			Use this after the safe checks cannot prove a repair and the remaining
-			missing evidence is not available today.
+			{isDiagnostic
+				? "Use this after the history checks cannot reconstruct exact evidence and no additional source is available today."
+				: "Use this after the safe checks cannot prove a repair and the remaining missing evidence is not available today."}
 		</p>
 
 		<div class="catalog-product-review-disposition__effects">
 			<strong>When you finish:</strong>
 			<ul>
 				<li>The product stays available in blendCalc.</li>
-				<li>It stays withheld from public blendCalcAPI v1.</li>
-				<li>These current readiness items leave the work queue.</li>
+				{#if isDiagnostic}
+					<li>Its current public blendCalcAPI v1 status does not change.</li>
+					<li>Only these current evidence follow-ups leave the work queue.</li>
+					<li>No product values or revision history are rewritten.</li>
+				{:else}
+					<li>It stays withheld from public blendCalcAPI v1.</li>
+					<li>These current publication items leave the work queue.</li>
+				{/if}
 				<li>New or changed evidence automatically reopens the review.</li>
 			</ul>
 		</div>
@@ -91,11 +125,13 @@
 			<StatusMessage
 				tone="info"
 				title={`${remainingCheckCount} ${remainingCheckCount === 1 ? "check remains" : "checks remain"}`}
-				message="Run each available Check repair action above. If a check finds an exact repair, apply it. If it finds no safe change, it counts as complete."
+				message={isDiagnostic
+					? "Run each available evidence check above. Apply an exact repair when one is found; an inconclusive check also counts as complete."
+					: "Run each available Check repair action above. If a check finds an exact repair, apply it. If it finds no safe change, it counts as complete."}
 			/>
 		{/if}
 
-		{#if form?.catalogReviewDispositionError}
+		{#if form?.catalogReviewDispositionError && form.catalogReviewDispositionCategory === category}
 			<StatusMessage
 				tone="danger"
 				message={form.catalogReviewDispositionError}
@@ -107,12 +143,17 @@
 			action="?/finishCatalogReview"
 			use:enhance={enhanceFinish}
 		>
+			<input type="hidden" name="reviewCategory" value={category} />
 			<TextField
-				id="catalog-review-disposition-note"
+				id={`catalog-review-${category}-disposition-note`}
 				name="reviewNote"
-				label="Why can this product not be published yet?"
+				label={isDiagnostic
+					? "Why can this evidence not be reconstructed today?"
+					: "Why can this product not be published yet?"}
 				value={reviewNote}
-				placeholder="For example: The current label does not provide the missing potassium value, and no approved source can supply it."
+				placeholder={isDiagnostic
+					? "For example: Revision 4 has no field-by-field summary, matching submission, or exact stored observation."
+					: "For example: The current label does not provide the missing potassium value, and no approved source can supply it."}
 				helper="Required. This note becomes part of the private review record."
 				minlength={10}
 				maxlength={2000}
@@ -129,7 +170,9 @@
 				busy={pending}
 				disabled={!completion.canFinish || reviewNote.trim().length < 10}
 			>
-				Finish review — keep out of public API
+				{isDiagnostic
+					? "Finish evidence follow-up"
+					: "Finish review — keep out of public API"}
 			</ActionButton>
 		</form>
 	</section>

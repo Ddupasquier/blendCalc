@@ -43,7 +43,13 @@ export const catalogProductReadinessPassportFixture: CatalogProductReadinessPass
 			completedSafeRepairCheckCount: 0,
 			canFinish: false,
 		},
+		diagnosticReviewCompletion: {
+			requiredSafeRepairCheckCount: 0,
+			completedSafeRepairCheckCount: 0,
+			canFinish: false,
+		},
 		reviewDisposition: null,
+		diagnosticReviewDisposition: null,
 		issues: [
 			{
 				occurrenceKey:
@@ -58,6 +64,8 @@ export const catalogProductReadinessPassportFixture: CatalogProductReadinessPass
 				resolutionAction: "run_nutrient_provenance_repair",
 				automatedRepairAllowed: true,
 				automatedRepairKey: "link_existing_nutrient_observation",
+				workCategory: "publication_blocker",
+				impact: "blocks_publication",
 			},
 		],
 	};

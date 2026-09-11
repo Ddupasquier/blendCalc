@@ -12,5 +12,6 @@ export type RoundedActionLinkProps = {
 	target?: "_blank" | "_parent" | "_self" | "_top";
 	rel?: string;
 	ariaLabel?: string;
+	onclick?: (event: MouseEvent) => void;
 	children?: Snippet;
 };

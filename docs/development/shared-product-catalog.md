@@ -682,6 +682,14 @@ but it neither changes canonical data nor makes the product publishable. The raw
 readiness reasons remain queryable, the active product remains usable in blendCalc, and
 a changed issue timestamp or issue set produces a new fingerprint that reopens review.
 
+Nonpublication revision and provenance diagnostics are a separate work category. An
+API-ready product remains published while those checks are open. After every available
+exact-evidence check is inconclusive, an AAL2 data operator may record
+`accepted_evidence_gap`; this removes only the matching diagnostic fingerprint from the
+actionable queue and does not rewrite product data or revision history. Raw diagnostics
+remain queryable, and changed product, revision, observation, or submission evidence
+produces a new fingerprint that reopens the follow-up.
+
 ### Official Recall Matching
 
 FDA recall announcements, FDA enforcement records, and USDA FSIS recalls/public-health

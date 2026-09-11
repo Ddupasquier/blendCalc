@@ -420,12 +420,15 @@ on the current screen, and the readiness result that marks the work complete. El
 data-operations repairs link to their exact safety check. A zero-candidate dry run ends
 that repair attempt instead of encouraging an unchanged retry. After every available
 repair check returns no exact candidate, an administrator or developer records a
-required private note and chooses `Finish review — keep out of public API`. That
-append-only disposition removes only the exact current issue snapshot from actionable
-queues. It does not change the product, approve missing evidence, or publish the record:
-the product stays available inside blendCalc and remains withheld from blendCalcAPI v1.
-Any changed product/evidence timestamp or issue set automatically reopens the work while
-preserving the earlier review history.
+required private note. Publication blockers use `Finish review — keep out of public
+API`; that append-only `accepted_withheld` disposition removes only the exact current
+publication snapshot from actionable queues while the product stays available inside
+blendCalc and withheld from blendCalcAPI v1. Revision and provenance diagnostics on an
+already API-ready product are labeled as nonblocking and use `Finish evidence follow-up`;
+the append-only `accepted_evidence_gap` disposition removes only that internal follow-up
+without changing product data, revision history, or API availability. Any changed
+product/evidence timestamp or issue set automatically reopens the matching work while
+preserving earlier review history.
 
 Administrators and developers with `data_operations.catalog_health.repair` may run a
 bounded repair from the data-operations product route when the issue code explicitly

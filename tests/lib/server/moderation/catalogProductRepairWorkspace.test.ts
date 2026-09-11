@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
 	readCatalogProductReadinessPassport: vi.fn(),
 	runCatalogHealthRepair: vi.fn(),
 	finishCatalogProductReview: vi.fn(),
+	finishCatalogProductDiagnosticReview: vi.fn(),
 }));
 
 vi.mock("$lib/server/moderation/moderationAccess.server", () => ({
@@ -31,6 +32,8 @@ vi.mock(
 		return {
 			...original,
 			finishCatalogProductReview: mocks.finishCatalogProductReview,
+			finishCatalogProductDiagnosticReview:
+				mocks.finishCatalogProductDiagnosticReview,
 		};
 	},
 );
@@ -186,6 +189,7 @@ describe("catalog product repair workspace", () => {
 				locals: { supabase },
 				params: { productId: "product-id" },
 				request: createFormRequest({
+					reviewCategory: "publication",
 					reviewNote:
 						"The current package and approved sources do not include potassium.",
 				}),
@@ -211,11 +215,45 @@ describe("catalog product repair workspace", () => {
 		});
 	});
 
+	it("finishes nonpublication diagnostics through their separate durable outcome", async () => {
+		mocks.finishCatalogProductDiagnosticReview.mockResolvedValue({
+			outcome: "accepted_evidence_gap",
+			issueCount: 2,
+			reviewedAt: "2026-09-10T18:00:00.000Z",
+		});
+
+		await expect(
+			finishCatalogProductReviewAction({
+				locals: { supabase: {} },
+				params: { productId: "product-id" },
+				request: createFormRequest({
+					reviewCategory: "diagnostic",
+					reviewNote:
+						"No stored revision summary or exact observation can reconstruct the change.",
+				}),
+			} as never),
+		).resolves.toMatchObject({
+			catalogReviewDispositionCategory: "diagnostic",
+			catalogReviewDispositionResult: {
+				outcome: "accepted_evidence_gap",
+				issueCount: 2,
+			},
+			catalogReviewDispositionSuccess: expect.stringContaining(
+				"public API availability are unchanged",
+			),
+		});
+		expect(mocks.finishCatalogProductDiagnosticReview).toHaveBeenCalled();
+		expect(mocks.finishCatalogProductReview).not.toHaveBeenCalled();
+	});
+
 	it("rejects an uninformative terminal review note before the database call", async () => {
 		const result = await finishCatalogProductReviewAction({
 			locals: { supabase: {} },
 			params: { productId: "product-id" },
-			request: createFormRequest({ reviewNote: "No proof" }),
+			request: createFormRequest({
+				reviewCategory: "publication",
+				reviewNote: "No proof",
+			}),
 		} as never);
 
 		expect(result).toMatchObject({

@@ -7,14 +7,16 @@
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import {
 		getCatalogHealthRepairItemLabel,
+		getCatalogHealthRepairEvidenceDescription,
 		getCatalogHealthRepairReasonLabel,
 		getCatalogHealthRepairTargetId,
 	} from "$lib/utils/moderation/catalogHealthRepair";
 	import {
 		getCatalogFieldLabel,
-		getCatalogIssueCodeLabel,
+		getCatalogIssueDisplayTitle,
 		getCatalogIssueReasonLabel,
 	} from "$lib/utils/moderation/catalogHealthMessages";
+	import { focusPrivilegedWorkspaceTarget } from "$lib/utils/moderation/privilegedWorkspaceNavigation";
 	import type { CatalogProductRepairControlsProps } from "./types";
 
 	let { issues, form = null }: CatalogProductRepairControlsProps = $props();
@@ -73,13 +75,26 @@
 				<article
 					class="catalog-product-repairs__item"
 					id={getCatalogHealthRepairTargetId(issue.occurrenceKey)}
+					tabindex="-1"
 				>
 					<header>
-						<strong>{getCatalogIssueCodeLabel(issue.issueCode)}</strong>
+						<strong
+							>{getCatalogIssueDisplayTitle(
+								issue.issueCode,
+								issue.parameters,
+							)}</strong
+						>
 						<TextBadge label="Safe repair available" tone="info" />
 					</header>
 					<p>
 						{getCatalogIssueReasonLabel(issue.sourceReason, issue.parameters)}
+					</p>
+					<p class="catalog-product-repairs__evidence-check">
+						<strong>What this check examines:</strong>
+						{getCatalogHealthRepairEvidenceDescription(
+							issue.automatedRepairKey,
+							issue.parameters,
+						)}
 					</p>
 
 					{#if errorForIssue(issue.occurrenceKey)}
@@ -154,16 +169,31 @@
 								<p>
 									Do not run it again unless the product’s stored evidence has
 									changed. Finish any other safe checks, then use the final
-									review action below. That removes the current work from the
-									queue while keeping the product out of the public API.
+									review action below.
+									{issue.workCategory === "publication_blocker"
+										? "That removes the current publication work while keeping the product out of the public API."
+										: "That removes only this evidence follow-up while leaving product data and the current API status unchanged."}
 								</p>
-								<a href="#finish-product-review">Go to final review</a>
+								<a
+									href={`#${
+										issue.workCategory === "publication_blocker"
+											? "finish-publication-review"
+											: "finish-evidence-review"
+									}`}
+									onclick={(event) =>
+										focusPrivilegedWorkspaceTarget(
+											event,
+											issue.workCategory === "publication_blocker"
+												? "finish-publication-review"
+												: "finish-evidence-review",
+										)}>Go to final review</a
+								>
 							</div>
 						{/if}
 					{:else}
 						<p>
-							Check repair previews exact safe changes and unresolved items. It
-							changes no stored data.
+							This preview changes no stored data. It reports the exact match
+							found—or the exact reason no repair is safe.
 						</p>
 						<form
 							method="POST"
