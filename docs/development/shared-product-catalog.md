@@ -660,9 +660,12 @@ revision; the monitor never overwrites `shared_products` directly.
 Rejecting or superseding an unlinked provider observation also resolves only open
 conflicts whose `observed_values` cite that observation's immutable snapshot. It never
 changes canonical values or clears an unrelated conflict. Catalog reviewers may close
-one unlinked conflict while retaining the current canonical value when a required
-evidence note explains why it remains authoritative. A linked correction must be
-reviewed instead so its approval or rejection owns the outcome.
+one unlinked conflict while retaining the stored canonical value when the review shows
+the exact field or nutrient, unit and reporting basis, stored value and source, and every
+competing observation, and a required evidence note explains why the stored value remains
+authoritative. The shortcut is unavailable when the stored value cannot be identified.
+A linked correction must be reviewed instead so its approval or rejection owns the
+outcome.
 
 ### Readiness And Operational Issues
 

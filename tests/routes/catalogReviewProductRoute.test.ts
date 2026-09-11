@@ -56,7 +56,7 @@ describe("catalog review product route", () => {
 			} as never),
 		).resolves.toEqual({
 			catalogReviewSuccess:
-				"The current value remains unchanged and this conflict is resolved. API readiness was recalculated.",
+				"The stored catalog value remains unchanged and this conflict is resolved. API readiness was recalculated.",
 		});
 		expect(rpc).toHaveBeenCalledWith(
 			"resolve_catalog_conflict_without_correction",

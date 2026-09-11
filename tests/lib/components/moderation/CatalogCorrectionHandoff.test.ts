@@ -6,10 +6,22 @@ const finding = {
 	id: "finding-id",
 	type: "catalog_conflict" as const,
 	label: "Open catalog conflict",
-	affectedFieldPaths: ["ingredients"],
+	fieldLabel: "Sodium, Na",
+	comparisonBasis: "per 100 g",
+	affectedFieldPaths: ["nutrient:1093"],
+	currentValue: {
+		source: "USDA FoodData Central · record 373595",
+		value: "59 mg · per 100 g",
+	},
 	evidence: [
-		{ source: "Current label", value: "Peanuts, salt" },
-		{ source: "Provider observation", value: "Peanuts, sugar, salt" },
+		{
+			source: "USDA FoodData Central · record 373595",
+			value: "59 mg · per 100 g",
+		},
+		{
+			source: "Open Food Facts · record 00000000772914",
+			value: "40 mg · per 100 g",
+		},
 	],
 	status: "needs_correction" as const,
 	submissionId: null,
@@ -30,8 +42,15 @@ describe("CatalogCorrectionHandoff", () => {
 		});
 
 		expect(screen.getByText("Open catalog conflict")).toBeVisible();
-		expect(screen.getByText("Ingredients")).toBeVisible();
-		expect(screen.getByText("Peanuts, salt")).toBeVisible();
+		expect(screen.getByText("Sodium, Na")).toBeVisible();
+		expect(
+			screen.getByText("Stored catalog value — this is what “keep” preserves"),
+		).toBeVisible();
+		expect(screen.getAllByText("59 mg · per 100 g")).toHaveLength(2);
+		expect(screen.getByText("40 mg · per 100 g")).toBeVisible();
+		expect(
+			screen.getByText("Every value below is shown per 100 g."),
+		).toBeVisible();
 		expect(
 			screen.getByText(/Approval applies only the reviewed changes/u),
 		).toBeVisible();
@@ -69,9 +88,33 @@ describe("CatalogCorrectionHandoff", () => {
 		).toBeVisible();
 		expect(
 			screen.getByRole("button", {
-				name: "Keep current value and resolve conflict",
+				name: "Keep stored value and resolve conflict",
 			}),
 		).toBeDisabled();
+	});
+
+	it("does not offer a keep action when the stored value cannot be identified", () => {
+		render(CatalogCorrectionHandoff, {
+			props: {
+				handoff: {
+					applicationFoodId: 123,
+					pendingSubmissionId: null,
+					findings: [{ ...finding, currentValue: null }],
+				},
+				returnPath:
+					"/profile/privileged-tools/catalog-review-work/products/product-id",
+				allowConflictResolution: true,
+			},
+		});
+
+		expect(
+			screen.getByText("Stored value could not be identified"),
+		).toBeVisible();
+		expect(
+			screen.queryByRole("button", {
+				name: "Keep stored value and resolve conflict",
+			}),
+		).not.toBeInTheDocument();
 	});
 
 	it("routes linked work to its one existing submission instead of offering a duplicate", () => {

@@ -71,26 +71,59 @@
 			{#each activeFindings as finding (finding.id)}
 				<li>
 					<strong>{finding.label}</strong>
-					<span>
-						{finding.detail ??
-							finding.affectedFieldPaths.map(getCatalogFieldLabel).join(", ")}
-					</span>
+					{#if finding.type === "catalog_conflict"}
+						<div class="catalog-correction-handoff__subject">
+							<span>Compared field</span>
+							<strong>{finding.fieldLabel}</strong>
+							{#if finding.comparisonBasis}
+								<small
+									>Every value below is shown {finding.comparisonBasis}.</small
+								>
+							{/if}
+						</div>
+					{:else}
+						<span>
+							{finding.detail ??
+								finding.affectedFieldPaths.map(getCatalogFieldLabel).join(", ")}
+						</span>
+					{/if}
 					<small>
 						{finding.status === "correction_submitted"
 							? "A pending submission is linked to this exact finding. Do not create a duplicate."
 							: "No correction submission is linked yet."}
 					</small>
-					{#if finding.evidence.length > 0}
-						<dl class="catalog-correction-handoff__evidence">
-							{#each finding.evidence as evidence}
-								<div>
-									<dt>{evidence.source}</dt>
-									<dd>{evidence.value}</dd>
-								</div>
-							{/each}
-						</dl>
+					{#if finding.type === "catalog_conflict"}
+						<div
+							class="catalog-correction-handoff__current"
+							data-available={finding.currentValue ? "true" : "false"}
+						>
+							<span>Stored catalog value — this is what “keep” preserves</span>
+							{#if finding.currentValue}
+								<strong>{finding.currentValue.value}</strong>
+								<small>Current source: {finding.currentValue.source}</small>
+							{:else}
+								<strong>Stored value could not be identified</strong>
+								<small>
+									Do not close this conflict as “keep.” Open a correction so the
+									canonical value and evidence can be reviewed together.
+								</small>
+							{/if}
+						</div>
 					{/if}
-					{#if allowConflictResolution && finding.type === "catalog_conflict" && finding.status === "needs_correction" && !correctionAlreadyPending}
+					{#if finding.evidence.length > 0}
+						<div class="catalog-correction-handoff__observations">
+							<strong>Source observations being compared</strong>
+							<dl class="catalog-correction-handoff__evidence">
+								{#each finding.evidence as evidence}
+									<div>
+										<dt>{evidence.source}</dt>
+										<dd>{evidence.value}</dd>
+									</div>
+								{/each}
+							</dl>
+						</div>
+					{/if}
+					{#if allowConflictResolution && finding.type === "catalog_conflict" && finding.status === "needs_correction" && !correctionAlreadyPending && finding.currentValue}
 						<form
 							method="POST"
 							action="?/resolveConflictWithoutCorrection"
@@ -99,20 +132,20 @@
 							<input type="hidden" name="conflictId" value={finding.id} />
 							<header>
 								<strong
-									>Or keep the current value and close this conflict</strong
+									>Or keep the stored catalog value and close this conflict</strong
 								>
 								<span>
-									Use this only when the current value is better supported. The
-									product stays unchanged, this conflict leaves the queue, and
-									API readiness is recalculated. Other blockers may still keep
-									it withheld.
+									Choose this only when the stored value shown above is better
+									supported than the competing observations. The product stays
+									unchanged, this conflict leaves the queue, and API readiness
+									is recalculated. Other blockers may still keep it withheld.
 								</span>
 							</header>
 							<TextField
 								id={`conflict-resolution-note-${finding.id}`}
 								name="resolutionNote"
-								label="Why is the current value better supported?"
-								placeholder="Name the source and explain why it outweighs the conflicting observation."
+								label="Why is the stored catalog value better supported?"
+								placeholder="Name the evidence for the stored value and explain why it outweighs the competing observations."
 								maxlength={2000}
 								multiline
 								rows={3}
@@ -131,7 +164,7 @@
 								disabled={pendingConflictId !== null ||
 									!resolutionNotes[finding.id]?.trim()}
 							>
-								Keep current value and resolve conflict
+								Keep stored value and resolve conflict
 							</ActionButton>
 						</form>
 					{/if}

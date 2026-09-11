@@ -13,6 +13,9 @@
 .catalog-correction-handoff > header > div,
 .catalog-correction-handoff li,
 .catalog-correction-handoff__outcome,
+.catalog-correction-handoff__subject,
+.catalog-correction-handoff__current,
+.catalog-correction-handoff__observations,
 .catalog-correction-handoff li form,
 .catalog-correction-handoff li form header {
 	display: grid;
@@ -57,13 +60,41 @@
 }
 
 .catalog-correction-handoff__outcome[data-tone="warning"] {
-	border: 1px solid $app-warning-border;
+	border: $app-warning-border;
+}
+
+.catalog-correction-handoff__subject,
+.catalog-correction-handoff__current {
+	padding: $app-gap-xs;
+	border-radius: $app-shell-radius-control;
+	background: $app-shell-surface-soft;
+}
+
+.catalog-correction-handoff__subject > span,
+.catalog-correction-handoff__current > span {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-bold;
+	letter-spacing: $app-letter-spacing-wide;
+	text-transform: uppercase;
+}
+
+.catalog-correction-handoff__current {
+	border: $app-border;
+}
+
+.catalog-correction-handoff__current[data-available="false"] {
+	border-color: $app-warning-border-color;
 }
 
 .catalog-correction-handoff__evidence {
 	display: grid;
 	gap: $app-gap-xs;
 	margin: 0;
+}
+
+.catalog-correction-handoff__observations > strong {
+	font-size: $app-font-size-sm;
 }
 
 .catalog-correction-handoff__evidence div {
