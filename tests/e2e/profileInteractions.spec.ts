@@ -17,9 +17,11 @@ import {
 	seedLocalQaCatalogDiagnosticReview,
 	createLocalQaPendingNutrientMapping,
 	deleteLocalQaAuthenticatorFactorsForEmail,
+	deleteLocalQaCatalogValueConflict,
 	deleteLocalQaPendingNutrientMapping,
 	recheckLocalQaDeterministicNutrientMapping,
 	resetLocalQaDatasetImportEvidence,
+	seedLocalQaCatalogValueConflict,
 } from "./support/localQaDatabase";
 import { finishLocalQaAuthenticatorEnrollment } from "./support/localQaAuthenticator";
 
@@ -1117,6 +1119,7 @@ test("administrators can open data operations after direct AAL2 verification", a
 	const pendingMappingId = await createLocalQaPendingNutrientMapping();
 	const resolvedMappingId = await recheckLocalQaDeterministicNutrientMapping();
 	await resetLocalQaDatasetImportEvidence("cnf-2026");
+	let displayConflictId: string | null = null;
 
 	try {
 		await signInLocalQaAccount({
@@ -1458,6 +1461,53 @@ test("administrators can open data operations after direct AAL2 verification", a
 			dataOperationsSheet.getByText("Jalapeno Sauce, Jalapeno"),
 		).toHaveCount(0);
 
+		const displayConflict = await seedLocalQaCatalogValueConflict();
+		displayConflictId = displayConflict.id;
+		await page.goto("/profile/privileged-tools/catalog-review-work");
+		await waitForAppReady(page);
+		const catalogReviewSheet = page.getByRole("dialog", {
+			name: "Catalog review work",
+		});
+		const productConflicts = catalogReviewSheet
+			.locator("details")
+			.filter({ hasText: "Product conflicts" });
+		if (!(await productConflicts.getAttribute("open"))) {
+			await productConflicts.locator("summary").click();
+		}
+		const sodiumConflict = productConflicts
+			.getByRole("link")
+			.filter({ hasText: "643 versus 400" })
+			.first();
+		await expect(sodiumConflict).toBeVisible();
+		await sodiumConflict.click();
+		const conflictReadinessSheet = page.getByRole("dialog", {
+			name: "Product readiness",
+		});
+		await expect(
+			conflictReadinessSheet.getByText("Sodium, Na", { exact: true }),
+		).toBeVisible();
+		await expect(
+			conflictReadinessSheet.getByText(
+				"Stored catalog value — this is what “keep” preserves",
+			),
+		).toBeVisible();
+		await expect(
+			conflictReadinessSheet.getByText(
+				"Current source: USDA FoodData Central · record 1862061",
+			),
+		).toBeVisible();
+		await expect(
+			conflictReadinessSheet.getByText("643 mg · per 100 g").first(),
+		).toBeVisible();
+		await expect(
+			conflictReadinessSheet.getByText("400 mg · per 100 g"),
+		).toBeVisible();
+		await expect(
+			conflictReadinessSheet.getByRole("button", {
+				name: "Keep stored value and resolve conflict",
+			}),
+		).toBeDisabled();
+
 		await page.goto("/profile");
 		await waitForAppReady(page);
 		await page.getByRole("button", { name: /Admin tools/ }).click();
@@ -1475,6 +1525,9 @@ test("administrators can open data operations after direct AAL2 verification", a
 	} finally {
 		try {
 			await resetLocalQaDatasetImportEvidence("cnf-2026");
+			if (displayConflictId) {
+				await deleteLocalQaCatalogValueConflict(displayConflictId);
+			}
 			try {
 				await cleanupLocalQaCatalogDiagnosticReview();
 			} finally {

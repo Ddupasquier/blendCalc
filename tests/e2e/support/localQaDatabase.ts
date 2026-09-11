@@ -296,6 +296,47 @@ export const cleanupLocalQaCatalogDiagnosticReview = async () => {
 	await removeLocalQaCatalogDiagnosticReviewFixture(admin);
 };
 
+export const seedLocalQaCatalogValueConflict = async () => {
+	const admin = await createLocalQaServiceRoleDatabaseClient();
+	const id = randomUUID();
+	const productId = localQaDiagnosticProductId;
+	const { error } = await admin.from("shared_product_conflicts").insert({
+		id,
+		shared_product_id: productId,
+		barcode: "00072360002031",
+		field_path: "nutrient:1093",
+		observed_values: [
+			{
+				source: "usda",
+				sourceReference: "1862061",
+				value: 643,
+				unitName: "MG",
+				basis: "per 100 g",
+			},
+			{
+				source: "open-food-facts",
+				sourceReference: "00072360002031",
+				value: 400,
+				unitName: "MG",
+				basis: "per 100 g",
+			},
+		],
+		severity: "medium",
+		status: "open",
+	});
+	if (error) throw error;
+	return { id, productId };
+};
+
+export const deleteLocalQaCatalogValueConflict = async (conflictId: string) => {
+	const admin = await createLocalQaServiceRoleDatabaseClient();
+	const { error } = await admin
+		.from("shared_product_conflicts")
+		.delete()
+		.eq("id", conflictId);
+	if (error) throw error;
+};
+
 export type LocalQaCatalogSubmissionEnforcementSnapshot = {
 	enforcement:
 		| Database["public"]["Tables"]["user_catalog_submission_enforcement"]["Row"]

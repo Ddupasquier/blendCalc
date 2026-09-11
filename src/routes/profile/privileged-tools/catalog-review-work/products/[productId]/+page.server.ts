@@ -39,7 +39,7 @@ export const actions: Actions = {
 		if (!conflictId || !resolutionNote) {
 			return fail(400, {
 				catalogReviewError:
-					"Explain why the current value is better supported before resolving the conflict.",
+					"Explain why the stored catalog value is better supported before resolving the conflict.",
 			});
 		}
 		const { error } = await locals.supabase.rpc(
@@ -59,7 +59,7 @@ export const actions: Actions = {
 		}
 		return {
 			catalogReviewSuccess:
-				"The current value remains unchanged and this conflict is resolved. API readiness was recalculated.",
+				"The stored catalog value remains unchanged and this conflict is resolved. API readiness was recalculated.",
 		};
 	},
 };

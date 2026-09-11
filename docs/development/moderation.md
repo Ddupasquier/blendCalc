@@ -470,9 +470,11 @@ Catalog-review decisions follow the same rule. Dismissing a provider change reco
 the current canonical revision remains authoritative and closes only open conflicts
 whose evidence names that exact provider snapshot. An operator may separately resolve
 an unlinked field conflict without a correction when reviewed evidence proves the
-current canonical value is stronger; the required note, reviewer, and timestamp remain
-on the terminal conflict. Linked corrections must be reviewed before either terminal
-shortcut can run. Accepting a correct provider
+stored canonical value is stronger. The review card names the exact field or nutrient,
+unit and reporting basis, stored value and source, and every competing observation before
+offering that outcome; it withholds the shortcut when the stored value cannot be
+identified. The required note, reviewer, and timestamp remain on the terminal conflict.
+Linked corrections must be reviewed before either terminal shortcut can run. Accepting a correct provider
 change requires completing the existing product-correction workflow and linking the
 new approved catalog revision; a monitor result cannot overwrite a canonical product.
 `catalog_correction_origins` applies the same origin-to-revision contract to provider

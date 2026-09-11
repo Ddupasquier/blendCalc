@@ -228,17 +228,19 @@ default view remains understandable. Only the data-operations route may render r
 controls, and only when the live permission set includes
 `data_operations.catalog_health.repair`.
 Both routes may render the shared **Correction workflow** handoff. It lists the exact
-open conflict with its competing values and provenance, provider-change, warning-report,
-or readiness finding; opens the existing
+open conflict with the human-readable field or nutrient, reporting basis, separately
+identified stored catalog value and provenance, and every competing source observation;
+it also lists provider-change, warning-report, or readiness findings and opens the existing
 prefilled catalog-correction form without changing stored data; and supplies an explicit
 return link to the originating review. When a correction is already pending, the handoff
 links to Product submissions and does not offer a duplicate. Its copy states that
 approval creates a reviewed revision and rechecks the findings, while rejection keeps
 the current product unchanged.
-On the catalog-review route, an unlinked conflict also has an evidence-gated **Keep
-current value and resolve conflict** outcome. It leaves the canonical product unchanged,
+On the catalog-review route, an unlinked conflict with an identifiable stored value also
+has an evidence-gated **Keep stored value and resolve conflict** outcome. It leaves the canonical product unchanged,
 records the conflict and unused correction origin as terminal, and immediately
-recalculates readiness. A linked conflict must be finished through Product submissions.
+recalculates readiness. If the stored value cannot be identified, the shortcut is not
+offered. A linked conflict must be finished through Product submissions.
 The passport explicitly identifies itself as an evidence-and-status view. Every issue
 has a `Do this now` panel that names the required workflow, states whether that action is
 available on the current screen, and defines the observable condition that clears the
