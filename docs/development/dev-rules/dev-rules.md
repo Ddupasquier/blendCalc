@@ -1273,14 +1273,18 @@ terms can be adopted without losing history or creating duplicate inputs.
 
 Treat source nutrient names,
 taxonomy labels, and observation similarity as candidate discovery only. They must never
-become enabled canonical mappings automatically, even when simplified tokens or units
-appear to match. An enabled mapping requires an exact source identifier or an explicit
-reviewed source-key decision, an approved review state, durable review evidence, and an
-exact normalized source unit. A different unit is a separate mapping and may normalize
-only through a nutrient-specific reviewed conversion. Preserve ambiguous, parent/child,
-and incompatible-unit candidates as disabled pending observations; preserve reviewed
-rejections; and prevent legacy semantic metadata from reappearing as canonical normalized
-lineage.
+become enabled canonical mappings from confidence, name similarity, simplified tokens,
+or observation counts, even when units appear to match. An enabled mapping requires an
+exact source identifier, an explicit human-reviewed source-key decision, or a versioned
+source-controlled deterministic rule. A deterministic rule may approve automatically
+only when its exact provider, exact source key, exact normalized source unit, canonical
+nutrient, evidence reference, and immutable system-decision record all match. A
+different unit additionally requires an exact nutrient-specific conversion whose
+review method and confidence permit automatic use. Runtime service credentials must
+not create deterministic rules. Preserve ambiguous, parent/child, near-name,
+incompatible-unit, and conversion-incomplete candidates as disabled review work;
+preserve reviewed rejections; and prevent legacy semantic metadata from reappearing as
+canonical normalized lineage.
 
 ### External Sources And Catalog Evidence
 

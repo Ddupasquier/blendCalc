@@ -387,7 +387,16 @@ workspace merely because they can review catalog products.
 Each nutrient-mapping gap links by stable mapping UUID to the focused route above.
 Rejected candidates and approved mappings are completed outcomes rather than recurring
 gaps. The workspace never offers arbitrary free-text nutrient identity or an unreviewed
-unit conversion.
+unit conversion. Source-controlled deterministic rules remove exact, fully evidenced
+provider identities from routine review only after their exact unit path is eligible;
+confidence and name similarity never do.
+
+The initial deterministic-rule migration checks every existing pending mapping. Each
+mapping receives an immutable backfill result: an exact eligible rule records approval
+and removes the mapping from routine work, while an unproven identity or incomplete
+unit path records a specific skipped reason and remains available for human review.
+Run totals must reconcile the complete pending snapshot; service-role runtime code may
+inspect those results but cannot create rules or launch a backfill.
 
 Both workspaces are bounded to 20 issue rows in the application and database. They do
 not expose raw provider payloads, private evidence paths, user identifiers, secrets,
