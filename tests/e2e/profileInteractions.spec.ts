@@ -1171,6 +1171,32 @@ test("administrators can open data operations after direct AAL2 verification", a
 				name: "Finish review — keep out of public API",
 			}),
 		).toBeDisabled();
+		const correctionLink = productReadinessSheet.getByRole("link", {
+			name: "Open prefilled correction",
+		});
+		await expect(correctionLink).toBeVisible();
+		await expect(productReadinessSheet).toContainText(
+			"Opening it changes nothing; only an approved submission creates a new product revision.",
+		);
+		await correctionLink.click();
+		const correctionSheet = page.getByRole("dialog", {
+			name: "Correct Product Information",
+		});
+		await expect(correctionSheet).toBeVisible();
+		await expect(
+			correctionSheet.getByRole("link", {
+				name: "Return to originating review",
+			}),
+		).toHaveAttribute(
+			"href",
+			/\/profile\/privileged-tools\/data-operations\/products\//,
+		);
+		await correctionSheet
+			.getByRole("link", { name: "Return to originating review" })
+			.click();
+		await expect(
+			page.getByRole("dialog", { name: "Product readiness" }),
+		).toBeVisible();
 
 		await page.goto(dataOperationsPath);
 		await dataOperationsSheet

@@ -4,8 +4,17 @@ import type { CatalogDataOperationsIssues } from "./catalogDataOperationsHealth"
 type JsonRecord = Record<string, unknown>;
 
 export type CatalogReviewWorkSummary = {
-	conflicts: CatalogDataOperationsIssues["conflicts"];
-	providerChanges: CatalogMonitorModerationSummary["providerChanges"];
+	conflicts: Array<
+		CatalogDataOperationsIssues["conflicts"][number] & {
+			observedValues: unknown[];
+		}
+	>;
+	providerChanges: Array<
+		CatalogMonitorModerationSummary["providerChanges"][number] & {
+			correctionStatus: "waiting_for_correction" | "linked" | null;
+			submissionId: string | null;
+		}
+	>;
 	safetyMatches: CatalogMonitorModerationSummary["safetyMatches"];
 	counts: {
 		conflicts: number;
@@ -53,6 +62,15 @@ const readBoolean = (value: unknown, field: string): boolean => {
 	return value;
 };
 
+const readCorrectionStatus = (
+	value: unknown,
+	field: string,
+): "waiting_for_correction" | "linked" | null => {
+	if (value === null) return null;
+	if (value === "waiting_for_correction" || value === "linked") return value;
+	throw new TypeError(`Invalid catalog review-work field: ${field}`);
+};
+
 const parseConflict = (value: unknown, index: number) => {
 	const path = `conflicts[${index}]`;
 	const conflict = readRecord(value, path);
@@ -62,6 +80,10 @@ const parseConflict = (value: unknown, index: number) => {
 		barcode: readString(conflict.barcode, `${path}.barcode`),
 		productName: readString(conflict.productName, `${path}.productName`),
 		fieldPath: readString(conflict.fieldPath, `${path}.fieldPath`),
+		observedValues: readArray(
+			conflict.observedValues,
+			`${path}.observedValues`,
+		),
 		severity: readString(conflict.severity, `${path}.severity`),
 		createdAt: readString(conflict.createdAt, `${path}.createdAt`),
 	};
@@ -89,6 +111,8 @@ const parseProviderChange = (value: unknown, index: number) => {
 						field: readString(detail.field, `${detailPath}.field`),
 						label: readString(detail.label, `${detailPath}.label`),
 						severity: readString(detail.severity, `${detailPath}.severity`),
+						previousValue: detail.previousValue ?? null,
+						observedValue: detail.observedValue ?? null,
 					};
 				},
 			),
@@ -101,7 +125,41 @@ const parseProviderChange = (value: unknown, index: number) => {
 		),
 		observedAt: readString(change.observedAt, `${path}.observedAt`),
 		createdAt: readString(change.createdAt, `${path}.createdAt`),
+		correctionStatus: readCorrectionStatus(
+			change.correctionStatus,
+			`${path}.correctionStatus`,
+		),
+		submissionId: readNullableString(
+			change.submissionId,
+			`${path}.submissionId`,
+		),
 	};
+};
+
+const MAX_EVIDENCE_VALUE_LENGTH = 240;
+
+export const formatCatalogEvidenceValue = (value: unknown): string => {
+	if (value === null || value === undefined || value === "")
+		return "Not reported";
+	if (typeof value === "string")
+		return value.slice(0, MAX_EVIDENCE_VALUE_LENGTH);
+	if (typeof value === "number" || typeof value === "boolean")
+		return String(value);
+	if (Array.isArray(value)) {
+		const formatted = value.map(formatCatalogEvidenceValue).join(", ");
+		return formatted.slice(0, MAX_EVIDENCE_VALUE_LENGTH);
+	}
+	if (typeof value === "object") {
+		const record = value as Record<string, unknown>;
+		if ("value" in record) {
+			return `${formatCatalogEvidenceValue(record.value)} ${typeof record.unit === "string" ? record.unit : ""}`.trim();
+		}
+		const formatted = Object.entries(record)
+			.map(([key, entry]) => `${key}: ${formatCatalogEvidenceValue(entry)}`)
+			.join("; ");
+		return formatted.slice(0, MAX_EVIDENCE_VALUE_LENGTH);
+	}
+	return "Not reported";
 };
 
 const parseSafetyMatch = (value: unknown, index: number) => {

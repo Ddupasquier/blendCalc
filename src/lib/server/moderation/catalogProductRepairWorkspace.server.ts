@@ -1,5 +1,6 @@
 import { fail, type RequestEvent } from "@sveltejs/kit";
 import { readCatalogProductReadinessPassport } from "$lib/server/moderation/catalogProductReadinessPassport.server";
+import { readCatalogCorrectionHandoff } from "$lib/server/moderation/catalogCorrectionHandoff.server";
 import {
 	CatalogProductReviewDispositionError,
 	finishCatalogProductReview,
@@ -59,14 +60,19 @@ export const loadCatalogProductRepairWorkspace = async ({
 		getCatalogProductRepairRoute(productId),
 	);
 
+	const passport = await readCatalogProductReadinessPassport(
+		locals.supabase,
+		productId,
+	);
 	return {
 		viewerRole: role,
 		canRunRepairs: permissions.includes(
 			"data_operations.catalog_health.repair",
 		),
-		passport: await readCatalogProductReadinessPassport(
-			locals.supabase,
+		passport,
+		correctionHandoff: await readCatalogCorrectionHandoff(
 			productId,
+			passport.issues,
 		),
 	};
 };

@@ -10,6 +10,7 @@
 		getCatalogFieldLabel,
 		getCatalogHealthStatusLabel,
 	} from "$lib/utils/moderation/catalogHealthMessages";
+	import { formatCatalogEvidenceValue } from "$lib/utils/moderation/catalogReviewWork";
 	import type { CatalogReviewWorkDashboardProps } from "./types";
 
 	let { reviewWork }: CatalogReviewWorkDashboardProps = $props();
@@ -36,6 +37,57 @@
 			[matchId]: outcome,
 		};
 	};
+	const formatAgreement = (value: unknown) =>
+		typeof value === "number"
+			? `${Math.round((value <= 1 ? value * 100 : value) * 10) / 10}%`
+			: "Not recorded";
+	const recallEvidenceRows = (
+		evidence: Record<string, unknown>,
+		requiresPackageCheck: boolean,
+	) => [
+		{
+			label: "Match basis",
+			value:
+				evidence.matchBasis === "exact_gtin"
+					? "The notice contains this exact product code."
+					: evidence.matchBasis === "brand_product_package"
+						? "The brand, product name, and package description appear similar."
+						: formatCatalogEvidenceValue(evidence.matchBasis),
+		},
+		...(typeof evidence.matchedIdentifier === "string"
+			? [{ label: "Matched product code", value: evidence.matchedIdentifier }]
+			: []),
+		...(typeof evidence.brandAgreement === "number"
+			? [
+					{
+						label: "Brand-name agreement",
+						value: formatAgreement(evidence.brandAgreement),
+					},
+				]
+			: []),
+		...(typeof evidence.productAgreement === "number"
+			? [
+					{
+						label: "Product-name agreement",
+						value: formatAgreement(evidence.productAgreement),
+					},
+				]
+			: []),
+		...(typeof evidence.packageAgreement === "number"
+			? [
+					{
+						label: "Package agreement",
+						value: formatAgreement(evidence.packageAgreement),
+					},
+				]
+			: []),
+		{
+			label: "Package-code check",
+			value: requiresPackageCheck
+				? "Required — verify the package, lot, and date codes before confirming."
+				: "Not required because the product code matched exactly.",
+		},
+	];
 	const enhanceReview: SubmitFunction = ({ formData, cancel }) => {
 		if (pendingReviewId) {
 			cancel();
@@ -79,6 +131,10 @@
 			</p>
 			{#each reviewWork.safetyMatches as match (match.id)}
 				{@const safetyDecision = safetyDecisionByMatchId[match.id] ?? ""}
+				{@const matchEvidenceRows = recallEvidenceRows(
+					match.matchEvidence,
+					match.requiresPackageCheck,
+				)}
 				<article class="catalog-review-work__record">
 					<header>
 						<div>
@@ -105,6 +161,20 @@
 							<strong>Codes:</strong>
 							{match.codeInformation}
 						</p>{/if}
+					<section
+						class="catalog-review-work__evidence"
+						aria-label="Why this product was flagged"
+					>
+						<strong>Why this was flagged</strong>
+						<dl>
+							{#each matchEvidenceRows as evidence}
+								<div>
+									<dt>{evidence.label}</dt>
+									<dd>{evidence.value}</dd>
+								</div>
+							{/each}
+						</dl>
+					</section>
 					<a href={match.sourceUrl} target="_blank" rel="noreferrer">
 						Read the official {match.sourceName} notice
 					</a>
@@ -219,6 +289,18 @@
 								conflict.fieldPath,
 							)}</small
 						>
+						<small>
+							Competing evidence: {conflict.observedValues
+								.slice(0, 2)
+								.map((entry) =>
+									formatCatalogEvidenceValue(
+										entry && typeof entry === "object" && !Array.isArray(entry)
+											? (entry as Record<string, unknown>).value
+											: entry,
+									),
+								)
+								.join(" versus ")}
+						</small>
 					</span>
 					<TextBadge
 						label={getCatalogHealthStatusLabel(conflict.severity)}
@@ -263,61 +345,90 @@
 						</div>
 						<TextBadge label={change.sourceName} tone="info" />
 					</header>
-					<ul>
+					<div class="catalog-review-work__changes">
 						{#each change.changeSummary.changes as detail (detail.field)}
-							<li>
-								{getCatalogFieldLabel(detail.field)} · {getCatalogHealthStatusLabel(
-									detail.severity,
-								)}
-							</li>
+							<section>
+								<header>
+									<strong>{getCatalogFieldLabel(detail.field)}</strong>
+									<TextBadge
+										label={getCatalogHealthStatusLabel(detail.severity)}
+										tone="warning"
+									/>
+								</header>
+								<dl>
+									<div>
+										<dt>Earlier provider value</dt>
+										<dd>{formatCatalogEvidenceValue(detail.previousValue)}</dd>
+									</div>
+									<div>
+										<dt>New provider observation</dt>
+										<dd>{formatCatalogEvidenceValue(detail.observedValue)}</dd>
+									</div>
+								</dl>
+							</section>
 						{/each}
-					</ul>
+					</div>
 					<a
 						href={`/profile/privileged-tools/catalog-review-work/products/${encodeURIComponent(change.sharedProductId)}`}
-						>Review product evidence</a
+						>{change.correctionStatus === "linked"
+							? "Review linked correction submission"
+							: "Review product evidence and start correction"}</a
 					>
-					<form
-						method="POST"
-						action="?/dismissProviderChange"
-						use:enhance={enhanceReview}
-					>
-						<input type="hidden" name="reviewId" value={change.id} />
-						<header class="catalog-review-work__decision-heading">
-							<strong
-								>Close this observation only if no correction is needed</strong
-							>
+					{#if change.correctionStatus === "linked"}
+						<div class="catalog-review-work__decision-heading">
+							<strong>A correction is already waiting for review</strong>
 							<span>
-								Keep current closes this observation as rejected and leaves the
-								active revision unchanged. If the provider evidence is stronger,
-								leave it open and start the catalog-correction path; only an
-								approved correction creates a new revision.
+								Approve it to create a new revision and resolve this
+								observation. Reject it to keep the current product unchanged and
+								return this observation for a better correction.
 							</span>
-						</header>
-						<TextField
-							id={`provider-change-review-note-${change.id}`}
-							name="reviewNote"
-							label="Why should the current record stay?"
-							placeholder="Describe the evidence supporting the current product."
-							maxlength={2000}
-							multiline
-							rows={3}
-							oninput={(event) =>
-								(providerNoteByReviewId = {
-									...providerNoteByReviewId,
-									[change.id]: event.currentTarget.value,
-								})}
-							required
-						/>
-						<ActionButton
-							type="submit"
-							variant="success"
-							size="small"
-							busy={pendingReviewId === change.id}
-							disabled={pendingReviewId !== null ||
-								!providerNoteByReviewId[change.id]?.trim()}
-							>Keep current record</ActionButton
+						</div>
+					{:else}
+						<form
+							method="POST"
+							action="?/dismissProviderChange"
+							use:enhance={enhanceReview}
 						>
-					</form>
+							<input type="hidden" name="reviewId" value={change.id} />
+							<header class="catalog-review-work__decision-heading">
+								<strong
+									>Close this observation only if no correction is needed</strong
+								>
+								<span>
+									Keep current rejects this observation, leaves every product
+									value unchanged, and closes API conflicts created by this
+									exact provider snapshot. Readiness is recalculated; unrelated
+									blockers remain. If the provider evidence is stronger, leave
+									it open and start a correction. Only approval creates a new
+									revision.
+								</span>
+							</header>
+							<TextField
+								id={`provider-change-review-note-${change.id}`}
+								name="reviewNote"
+								label="Why should the current record stay?"
+								placeholder="Describe the evidence supporting the current product."
+								maxlength={2000}
+								multiline
+								rows={3}
+								oninput={(event) =>
+									(providerNoteByReviewId = {
+										...providerNoteByReviewId,
+										[change.id]: event.currentTarget.value,
+									})}
+								required
+							/>
+							<ActionButton
+								type="submit"
+								variant="success"
+								size="small"
+								busy={pendingReviewId === change.id}
+								disabled={pendingReviewId !== null ||
+									!providerNoteByReviewId[change.id]?.trim()}
+								>Keep current record</ActionButton
+							>
+						</form>
+					{/if}
 				</article>
 			{:else}
 				<p class="catalog-review-work__empty">

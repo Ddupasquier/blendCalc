@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
 	readCatalogProductReadinessPassport: vi.fn(),
 	runCatalogHealthRepair: vi.fn(),
 	finishCatalogProductReview: vi.fn(),
+	readCatalogCorrectionHandoff: vi.fn(),
 }));
 
 vi.mock("$lib/server/moderation/moderationAccess.server", () => ({
@@ -20,6 +21,10 @@ vi.mock(
 			mocks.readCatalogProductReadinessPassport,
 	}),
 );
+
+vi.mock("$lib/server/moderation/catalogCorrectionHandoff.server", () => ({
+	readCatalogCorrectionHandoff: mocks.readCatalogCorrectionHandoff,
+}));
 
 vi.mock(
 	"$lib/server/moderation/catalogProductReviewDisposition.server",
@@ -80,6 +85,11 @@ describe("catalog product repair workspace", () => {
 		mocks.readCatalogProductReadinessPassport.mockResolvedValue(
 			catalogProductReadinessPassportFixture,
 		);
+		mocks.readCatalogCorrectionHandoff.mockResolvedValue({
+			applicationFoodId: 123,
+			pendingSubmissionId: null,
+			findings: [],
+		});
 	});
 
 	it("loads the product passport and exposes repair capability from exact permissions", async () => {
@@ -93,6 +103,11 @@ describe("catalog product repair workspace", () => {
 			viewerRole: "developer",
 			canRunRepairs: true,
 			passport: catalogProductReadinessPassportFixture,
+			correctionHandoff: {
+				applicationFoodId: 123,
+				pendingSubmissionId: null,
+				findings: [],
+			},
 		});
 		expect(mocks.requireModeratorPermission).toHaveBeenCalledWith(
 			expect.anything(),
@@ -102,6 +117,10 @@ describe("catalog product repair workspace", () => {
 		expect(mocks.readCatalogProductReadinessPassport).toHaveBeenCalledWith(
 			supabase,
 			"product-id",
+		);
+		expect(mocks.readCatalogCorrectionHandoff).toHaveBeenCalledWith(
+			"product-id",
+			catalogProductReadinessPassportFixture.issues,
 		);
 	});
 

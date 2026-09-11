@@ -405,6 +405,11 @@ overlap that origin. Approval atomically records the exact resolving revision an
 the linked work; rejection releases it for a later correction. The origin snapshot does
 not invent a submission or satisfy evidence requirements by itself, so ordinary exact
 matches and safe automated acceptance remain unchanged.
+The privileged Product readiness handoff reuses this ordinary correction workflow. It
+may also open the same prefilled form for a readiness gap without an origin row; that
+submission still receives the full evidence and review treatment, and the subsequent
+revision causes readiness to be recomputed. Existing pending corrections are surfaced
+instead of creating duplicate product-update work.
 
 `label_observed_at` records when blendCalc saw the submitted label. It is not presented
 as the date the manufacturer changed the product unless a separate source provides that
@@ -652,6 +657,12 @@ compared field by field. Material differences create a review record while the l
 approved canonical revision remains active. A moderator may dismiss a provider change,
 or complete the existing catalog correction workflow and link the resulting approved
 revision; the monitor never overwrites `shared_products` directly.
+Rejecting or superseding an unlinked provider observation also resolves only open
+conflicts whose `observed_values` cite that observation's immutable snapshot. It never
+changes canonical values or clears an unrelated conflict. Catalog reviewers may close
+one unlinked conflict while retaining the current canonical value when a required
+evidence note explains why it remains authoritative. A linked correction must be
+reviewed instead so its approval or rejection owns the outcome.
 
 ### Readiness And Operational Issues
 

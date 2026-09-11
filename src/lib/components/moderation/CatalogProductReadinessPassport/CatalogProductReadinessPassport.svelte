@@ -15,6 +15,7 @@
 	let {
 		passport,
 		canRunRepairs = false,
+		correctionWorkflowAvailable = false,
 	}: CatalogProductReadinessPassportProps = $props();
 
 	const dateFormatter = new Intl.DateTimeFormat(undefined, {
@@ -42,6 +43,11 @@
 		canRunRepairs &&
 		issue.automatedRepairAllowed &&
 		Boolean(issue.automatedRepairKey);
+	const correctionActionAvailable = (issue: (typeof passport.issues)[number]) =>
+		correctionWorkflowAvailable &&
+		["create_catalog_correction", "review_catalog_conflict"].includes(
+			issue.resolutionAction,
+		);
 	const actionableIssueCount = $derived(
 		passport.issues.filter(repairActionAvailable).length,
 	);
@@ -106,9 +112,13 @@
 		>
 			<p class="catalog-product-passport__supporting-copy">
 				{!canRunRepairs
-					? `This screen explains the evidence and names the team responsible for each issue. Data operations runs any safe checks and records the final public-API outcome.`
+					? correctionWorkflowAvailable
+						? `This screen preserves the current evidence and routes supported changes into the Correction workflow below. Opening that workflow changes nothing until a separate reviewer approves the submitted correction.`
+						: `This screen explains the evidence and names the team responsible for each issue. Data operations runs any safe checks and records the final public-API outcome.`
 					: actionableIssueCount === 0
-						? `None of these ${passport.issues.length} issues can be corrected from this screen. Each card names the missing workflow. If the evidence is unavailable today, record that outcome with the final action below.`
+						? correctionWorkflowAvailable
+							? `These ${passport.issues.length} issues require an evidence-backed correction rather than a safe automatic repair. Use the Correction workflow below, or record an accepted-withheld outcome if the evidence is unavailable today.`
+							: `None of these ${passport.issues.length} issues can be corrected from this screen. Each card names the missing workflow. If the evidence is unavailable today, record that outcome with the final action below.`
 						: actionableIssueCount === passport.issues.length
 							? `Every current issue has a safe repair check on this screen. Run each check once, then complete the final review below if no safe change is available.`
 							: `${actionableIssueCount} ${actionableIssueCount === 1 ? "issue can" : "issues can"} be checked here now. The other ${passport.issues.length - actionableIssueCount} cannot be corrected on this screen. Actionable cards are listed first.`}
@@ -124,8 +134,13 @@
 							<TextBadge
 								label={repairActionAvailable(issue)
 									? "Fix here"
-									: "No action here"}
-								tone={repairActionAvailable(issue) ? "info" : "warning"}
+									: correctionActionAvailable(issue)
+										? "Continue below"
+										: "No action here"}
+								tone={repairActionAvailable(issue) ||
+								correctionActionAvailable(issue)
+									? "info"
+									: "warning"}
 							/>
 						</header>
 						<p>
@@ -178,11 +193,20 @@
 								</RoundedActionLink>
 							{:else}
 								<p>
-									<strong>No in-app control exists for this action yet.</strong>
-									The {getCatalogResponsibleGroupLabel(
-										issue.responsibleGroup,
-									).toLocaleLowerCase()} workflow is still needed to add or approve
-									the missing evidence.
+									{#if correctionActionAvailable(issue)}
+										<strong>Use the Correction workflow below.</strong>
+										It opens the existing evidence-backed correction form and returns
+										you to this review. Opening it changes nothing; only an approved
+										submission creates a new product revision.
+									{:else}
+										<strong
+											>No in-app control exists for this action yet.</strong
+										>
+										The {getCatalogResponsibleGroupLabel(
+											issue.responsibleGroup,
+										).toLocaleLowerCase()} workflow is still needed to add or approve
+										the missing evidence.
+									{/if}
 									{canRunRepairs
 										? "If that evidence is unavailable today, the final action below records that decision and removes this current item from the queue without publishing it."
 										: "Data operations must record the final public-API outcome when that evidence is unavailable."}

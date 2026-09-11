@@ -268,6 +268,12 @@ release their linked origins for another evidence-backed correction instead of l
 the report. Private package evidence is viewed through short-lived signed URLs and never
 enters public catalog or API responses.
 
+Privileged action counts include both pending reports and every open or deferred
+warning follow-up. Reviewing a report therefore cannot make outstanding corrective work
+disappear from the launcher. Focused rule and source reviews repeat the human-readable
+evidence snapshot and the initial reviewer note. Resolved and dismissed case URLs remain
+available as read-only audit receipts and never render another decision form.
+
 ## Custom Food Preference Mapping Requests
 
 Custom allergen and dietary text without one exact reviewed match enters
@@ -441,7 +447,12 @@ accepted-withheld disposition acknowledges that exact unresolved state; it is no
 evidence approval or catalog-submission rejection.
 
 Catalog-review decisions follow the same rule. Dismissing a provider change records that
-the current canonical revision remains authoritative. Accepting a correct provider
+the current canonical revision remains authoritative and closes only open conflicts
+whose evidence names that exact provider snapshot. An operator may separately resolve
+an unlinked field conflict without a correction when reviewed evidence proves the
+current canonical value is stronger; the required note, reviewer, and timestamp remain
+on the terminal conflict. Linked corrections must be reviewed before either terminal
+shortcut can run. Accepting a correct provider
 change requires completing the existing product-correction workflow and linking the
 new approved catalog revision; a monitor result cannot overwrite a canonical product.
 `catalog_correction_origins` applies the same origin-to-revision contract to provider
@@ -449,9 +460,25 @@ changes, open field conflicts, and confirmed food-warning reports. A real correc
 submission links automatically by exact product, base revision, and overlapping changed
 fields. Approval then resolves all linked origins atomically; it never fabricates a
 change summary or treats an unchanged product snapshot as corrective evidence.
+The Product readiness sheets expose that contract through one Correction workflow
+handoff. Opening the prefilled correction changes nothing, submitting creates ordinary
+pending review work, approval creates a new immutable revision, and rejection preserves
+the current canonical product. A pending correction routes to Product submissions
+instead of allowing a duplicate. Readiness gaps without a separate origin may use the
+same form; publication readiness is recalculated from the resulting reviewed revision.
 Probable recall matches can be confirmed or dismissed only by an elevated AAL2 session.
-Exact GTIN matches are visible immediately, while title-only similarity never enters
-the queue.
+The review card explains the recorded match basis and any required package-code check.
+Exact GTIN matches are visible immediately, while title-only similarity never enters the
+queue.
+
+`resolve_food_warning_policy_review_case` is the AAL2 browser-session boundary for
+confirmed warning-rule and source-correction follow-ups. It requires an evidence note;
+resolved and dismissed outcomes close the case and originating follow-up, while deferred
+keeps both in the work queue with the recorded prerequisite. Source corrections also
+require `data_operations.catalog_health.repair`. This decision records review state
+only—it never edits a warning rule, source mapping, or product value.
+`get_privileged_tool_action_summary` reports pending warning decisions separately from
+open warning follow-ups and includes both in its actionable total.
 
 Profile is the privileged navigation gateway. `/profile/privileged-tools` opens the
 role-aware permitted tool list, while the following direct routes own focused right sheets:

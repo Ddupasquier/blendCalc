@@ -3,6 +3,7 @@
 	import CatalogProductRepairControls from "$lib/components/moderation/CatalogProductRepairControls/CatalogProductRepairControls.svelte";
 	import CatalogProductReadinessPassport from "$lib/components/moderation/CatalogProductReadinessPassport/CatalogProductReadinessPassport.svelte";
 	import CatalogProductReviewDisposition from "$lib/components/moderation/CatalogProductReviewDisposition/CatalogProductReviewDisposition.svelte";
+	import CatalogCorrectionHandoff from "$lib/components/moderation/CatalogCorrectionHandoff/CatalogCorrectionHandoff.svelte";
 	import PrivilegedToolWorkspaceView from "$lib/components/moderation/PrivilegedToolWorkspaceView/PrivilegedToolWorkspaceView.svelte";
 	import ProfilePage from "../../../../+page.svelte";
 	import type { CatalogOperationsProductPageProps } from "./types";
@@ -65,6 +66,11 @@
 	<CatalogProductReadinessPassport
 		passport={data.passport}
 		canRunRepairs={data.canRunRepairs}
+		correctionWorkflowAvailable={data.correctionHandoff.findings.length > 0}
+	/>
+	<CatalogCorrectionHandoff
+		handoff={data.correctionHandoff}
+		returnPath={`/profile/privileged-tools/data-operations/products/${data.passport.product.id}`}
 	/>
 	{#if data.canRunRepairs}
 		<CatalogProductRepairControls issues={data.passport.issues} {form} />

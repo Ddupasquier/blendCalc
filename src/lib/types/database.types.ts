@@ -10546,6 +10546,22 @@ export type Database = {
         Args: { p_category_option_id?: string; p_food: Json }
         Returns: string
       }
+      resolve_catalog_conflict_without_correction: {
+        Args: {
+          p_conflict_id: string
+          p_resolution_note: string
+          p_shared_product_id: string
+        }
+        Returns: Json
+      }
+      resolve_food_warning_policy_review_case: {
+        Args: {
+          p_case_id: string
+          p_outcome: string
+          p_resolution_note: string
+        }
+        Returns: Json
+      }
       review_catalog_provider_change: {
         Args: {
           p_accepted_revision_id?: string

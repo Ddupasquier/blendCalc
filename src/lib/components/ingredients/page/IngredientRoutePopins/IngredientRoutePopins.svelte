@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { page } from "$app/state";
 	import RightSheet from "$lib/components/common/sheets/RightSheet/RightSheet.svelte";
 	import TextInputDialog from "$lib/components/common/dialogs/TextInputDialog/TextInputDialog.svelte";
 	import IngredientActionSheet from "$lib/components/ingredients/sheets/IngredientActionSheet/IngredientActionSheet.svelte";
@@ -71,6 +72,10 @@
 			? "This changes the name of your private food everywhere it appears."
 			: "This only changes the display label in your lists. Original source data is preserved.",
 	);
+	const correctionReturnHref = $derived.by(() => {
+		const value = page.url.searchParams.get("returnTo");
+		return value?.startsWith("/profile/privileged-tools/") ? value : null;
+	});
 </script>
 
 <IngredientActionSheet
@@ -181,6 +186,7 @@
 	initialFood={correctionFood ?? undefined}
 	submissionIntent="catalog_correction"
 	catalogSubmissionOnly
+	returnHref={correctionReturnHref}
 	onClose={onCloseCorrection}
 	onCreate={onCreateManualIngredient}
 	{onLookupStateChange}

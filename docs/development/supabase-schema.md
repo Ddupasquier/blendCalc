@@ -1767,6 +1767,17 @@ Notes:
 Rule and source cases remain private operational work. They retain the originating
 feedback and explicit responsible group instead of flattening a confirmed report into
 an ambiguous resolved status.
+`resolve_food_warning_policy_review_case` requires an AAL2 session with
+`moderation.warnings.review`; Data operations cases additionally require
+`data_operations.catalog_health.repair`. A required private note accompanies every
+outcome. `resolved` and `dismissed` set the case and originating feedback follow-up to
+their terminal state, while `deferred` remains queryable work with no resolved actor or
+timestamp. The function does not mutate catalog, warning-policy, or source data.
+`get_privileged_tool_action_summary` exposes `pendingFoodWarningReports` for unreviewed
+feedback and `pendingFoodWarningFollowUps` for open/deferred rule and source cases plus
+waiting/linked warning-origin product corrections. Both contribute to
+`totalActionableItems`, so unfinished corrective work cannot vanish from the privileged
+launcher after the initial report is reviewed.
 
 ### `catalog_correction_origins`
 
@@ -1780,6 +1791,10 @@ The database validates product and revision identity before linking a real
 the prefilled product snapshot is only a safe starting point and never counts as proof
 of a change. Approval requires and records the immutable revision that resolved the
 origin, while rejection returns the origin to the waiting state.
+An evidence-backed decision to retain the current value dismisses an unlinked waiting
+origin without changing the product. Rejecting an unlinked provider observation also
+dismisses its waiting origin and any waiting origins for conflicts produced by that exact
+snapshot.
 
 - Users may read only their own reports. Inserts and moderation updates use authenticated
   server boundaries; the service role owns privileged writes.
@@ -2340,7 +2355,7 @@ category, or serving fields.
 | `finish_catalog_health_product_review`                 | Records an AAL2 accepted-withheld outcome for the exact current product issue fingerprint after every available safe repair is inconclusive; never changes catalog or API publication data             |
 | `get_catalog_data_operations_health`                   | Returns bounded admin/developer catalog, source, dataset, policy, mapping, revision, and publication-readiness summaries after exact AAL2 data-operations authorization                                |
 | `get_catalog_data_operations_monitor_summary`          | Returns bounded admin/developer monitor configuration, queue counts, and recent run state after exact AAL2 data-operations authorization                                                               |
-| `get_catalog_review_work_summary`                      | Returns bounded material conflicts, provider changes, and possible recall matches after exact AAL2 catalog-review authorization                                                                        |
+| `get_catalog_review_work_summary`                      | Returns bounded conflicts with competing values, provider changes with old/new values and correction state, possible recall matches, and exact queue totals after AAL2 catalog-review authorization    |
 | `get_moderator_data_health`                            | Temporary compatibility wrapper for the previous combined data-health interface                                                                                                                        |
 | `get_pending_profile_image_review_count`               | Service-role-only count of distinct exact profile images with one or more pending reports                                                                                                              |
 | `get_privileged_tool_action_summary`                   | Returns exact live-role-aware actionable Profile counts after AAL2 verification, deduplicating data-operations work by affected subject and excluding search-only account access                       |
@@ -2354,7 +2369,8 @@ category, or serving fields.
 | `request_catalog_monitor_run`                          | Requests the secret-authenticated monitor Edge Function through the configured Vault values                                                                                                            |
 | `get_catalog_monitor_moderation_summary`               | Temporary compatibility wrapper for the previous combined monitor/review interface                                                                                                                     |
 | `review_official_food_safety_alert_match`              | Confirms or dismisses one probable recall match after an AAL2 permission check                                                                                                                         |
-| `review_catalog_provider_change`                       | Rejects/supersedes a provider change or links acceptance to an existing approved catalog revision after an AAL2 permission check                                                                       |
+| `resolve_catalog_conflict_without_correction`          | Keeps canonical values unchanged while recording one exact unlinked catalog conflict and its waiting correction origin as resolved after an AAL2 permission check                                      |
+| `review_catalog_provider_change`                       | Rejects/supersedes an unlinked provider change and its exact-snapshot conflicts, or links acceptance to an approved catalog revision, after an AAL2 permission check                                   |
 | `mark_product_safety_alert_notification_read`          | Lets an authenticated owner mark exactly one of their alert notifications as read                                                                                                                      |
 | `save_current_user_marketing_email_preferences`        | Atomically validates and saves every enabled optional promotional-email category for the authenticated account                                                                                         |
 | `get_current_user_marketing_email_preferences`         | Returns the active marketing-email topic catalog with missing owner choices safely treated as off                                                                                                      |

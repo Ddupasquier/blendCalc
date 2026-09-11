@@ -80,6 +80,58 @@ describe("CatalogProductReadinessPassport", () => {
 		).toBeInTheDocument();
 	});
 
+	it("points correction findings to the available in-app workflow without contradictory copy", () => {
+		render(CatalogProductReadinessPassport, {
+			props: {
+				passport: {
+					...catalogProductReadinessPassportFixture,
+					issues: [
+						{
+							...catalogProductReadinessPassportFixture.issues[0],
+							automatedRepairAllowed: false,
+							automatedRepairKey: null,
+							responsibleGroup: "catalog_review",
+							resolutionAction: "create_catalog_correction",
+						},
+					],
+				},
+				correctionWorkflowAvailable: true,
+			},
+		});
+
+		expect(
+			screen.getByText("Use the Correction workflow below."),
+		).toBeVisible();
+		expect(
+			screen.queryByText(/No in-app control exists for this action yet/u),
+		).not.toBeInTheDocument();
+		expect(screen.getByText("Continue below")).toBeVisible();
+	});
+
+	it("routes catalog conflicts into the same correction workflow", () => {
+		render(CatalogProductReadinessPassport, {
+			props: {
+				passport: {
+					...catalogProductReadinessPassportFixture,
+					issues: [
+						{
+							...catalogProductReadinessPassportFixture.issues[0],
+							automatedRepairAllowed: false,
+							automatedRepairKey: null,
+							resolutionAction: "review_catalog_conflict",
+						},
+					],
+				},
+				correctionWorkflowAvailable: true,
+			},
+		});
+
+		expect(
+			screen.getByText("Use the Correction workflow below."),
+		).toBeVisible();
+		expect(screen.getByText("Continue below")).toBeVisible();
+	});
+
 	it("names the actual missing required nutrient", () => {
 		render(CatalogProductReadinessPassport, {
 			props: {

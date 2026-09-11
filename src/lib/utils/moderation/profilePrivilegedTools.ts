@@ -4,6 +4,7 @@ export type PrivilegedReviewSummary = {
 	pendingProductSubmissions: number | null;
 	pendingCatalogReviewItems: number | null;
 	pendingFoodWarningReports: number | null;
+	pendingFoodWarningFollowUps: number | null;
 	pendingProfileImageReviews: number | null;
 	pendingCatalogDataOperations: number | null;
 	totalActionableItems: number | null;

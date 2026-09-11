@@ -105,6 +105,9 @@ required action after reading the evidence.
   boundary and preventing an invalid outcome/follow-up combination.
 - Confirmed reports with corrective work move into a separate `Follow-up work` list so
   completed review decisions do not look unfinished or disappear without an owner.
+- The Profile launcher and page guide count pending reports plus open follow-ups. When
+  only follow-ups remain, the queue stays enabled and leads with finishing that work
+  instead of claiming the warning workspace is clear.
 - Product corrections link to the shared product-readiness passport and show the exact
   affected field families. Policy and source cases identify the responsible work group.
 - Product-correction follow-ups remain open until an evidence-backed correction creates
@@ -141,8 +144,13 @@ review decisions, not data health metrics. Open the first non-clear queue, label
 queue badge as `to review` or `Clear`, explain the evidence decision at the start of
 each queue, and route product-specific evidence to a path-backed product view.
 Recall decisions start unselected and cannot be saved without an evidence note.
-Provider observations explain that keeping the current record closes the observation,
-while supported provider evidence must continue through a catalog correction.
+Recall cards show why the match was proposed, including the exact product code or
+brand/product/package agreement and whether package-code verification is required.
+Provider observations show the earlier and newly observed value for every changed field.
+Keeping the current record closes the provider observation and only the conflicts
+created by that exact snapshot; supported provider evidence must continue through a
+catalog correction. When a correction is linked, finish that submission instead of
+recording a contradictory provider decision.
 
 `/profile/privileged-tools/data-operations` starts with the exact deduplicated human-
 action count, a Required work summary, three explicitly named diagnostic checks, and
@@ -195,6 +203,18 @@ evidence coverage, and API-publication details in closed shared disclosures so t
 default view remains understandable. Only the data-operations route may render repair
 controls, and only when the live permission set includes
 `data_operations.catalog_health.repair`.
+Both routes may render the shared **Correction workflow** handoff. It lists the exact
+open conflict with its competing values and provenance, provider-change, warning-report,
+or readiness finding; opens the existing
+prefilled catalog-correction form without changing stored data; and supplies an explicit
+return link to the originating review. When a correction is already pending, the handoff
+links to Product submissions and does not offer a duplicate. Its copy states that
+approval creates a reviewed revision and rechecks the findings, while rejection keeps
+the current product unchanged.
+On the catalog-review route, an unlinked conflict also has an evidence-gated **Keep
+current value and resolve conflict** outcome. It leaves the canonical product unchanged,
+records the conflict and unused correction origin as terminal, and immediately
+recalculates readiness. A linked conflict must be finished through Product submissions.
 The passport explicitly identifies itself as an evidence-and-status view. Every issue
 has a `Do this now` panel that names the required workflow, states whether that action is
 available on the current screen, and defines the observable condition that clears the
@@ -211,6 +231,17 @@ automatically reopens the review. A private explanation of at least 10 character
 required. Missing correction workflows remain clearly identified as unavailable; the
 terminal outcome records `accepted_withheld` rather than implying that inspection fixed
 or approved missing evidence.
+
+Confirmed food-warning rule and source follow-ups use the focused nested route
+`/profile/privileged-tools/food-warning-reports/follow-ups/[caseId]`. The screen shows
+the original report, human-readable warning, complete readable fact snapshot, initial
+review decision and note, policy, source, and owner before allowing a decision.
+**Resolved** and **Dismissed** close the follow-up without mutating product, policy, or
+source data; **Deferred** keeps it in the queue with a required named prerequisite.
+Source-correction decisions additionally require the Data operations repair permission.
+Every outcome requires a private evidence note and returns to the refreshed queue.
+Direct navigation to a resolved or dismissed case renders a read-only completion receipt
+with the retained evidence and notes, never another writable form.
 
 Evidence coverage labels must distinguish completeness from provenance. `Existing
 nutrient records with source evidence` describes only the nutrients already stored; it

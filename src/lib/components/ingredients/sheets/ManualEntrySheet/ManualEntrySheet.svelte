@@ -1,6 +1,7 @@
 <script lang="ts">
 	import BottomSheet from "$lib/components/common/sheets/BottomSheet/BottomSheet.svelte";
 	import CustomIngredientForm from "$lib/components/ingredients/manual-entry/CustomIngredientForm/CustomIngredientForm.svelte";
+	import RoundedActionLink from "$lib/components/common/buttons/RoundedActionLink/RoundedActionLink.svelte";
 	import { clearManualEntryDraft } from "$lib/components/ingredients/manual-entry/CustomIngredientForm/manualEntryDraft";
 	import type { ManualEntryCreateHandler } from "$lib/components/ingredients/manual-entry/types";
 	import type { ManualEntrySheetProps } from "./types";
@@ -18,6 +19,7 @@
 		initialFood,
 		submissionIntent = "catalog_share",
 		catalogSubmissionOnly = false,
+		returnHref = null,
 		ingredientListIndex,
 	}: ManualEntrySheetProps = $props();
 	let closingAfterSuccessfulCreate = $state(false);
@@ -55,6 +57,11 @@
 	fill
 	onClose={handleClose}
 >
+	{#if returnHref}
+		<RoundedActionLink href={returnHref} variant="outline" fullWidth>
+			Return to originating review
+		</RoundedActionLink>
+	{/if}
 	<CustomIngredientForm
 		onCreate={handleCreate}
 		{scanSignal}

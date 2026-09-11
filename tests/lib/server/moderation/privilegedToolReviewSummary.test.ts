@@ -11,9 +11,10 @@ const completeCounts = {
 	pendingProductSubmissions: 3,
 	pendingCatalogReviewItems: 4,
 	pendingFoodWarningReports: 2,
+	pendingFoodWarningFollowUps: 1,
 	pendingProfileImageReviews: 1,
 	pendingCatalogDataOperations: 5,
-	totalActionableItems: 15,
+	totalActionableItems: 16,
 };
 
 const createSupabase = (data: unknown, error: unknown = null) => {
@@ -50,6 +51,10 @@ describe("Profile privileged tool action summary", () => {
 			{ ...completeCounts, pendingCatalogReviewItems: undefined },
 		],
 		["a negative count", { ...completeCounts, pendingFoodWarningReports: -1 }],
+		[
+			"a negative follow-up count",
+			{ ...completeCounts, pendingFoodWarningFollowUps: -1 },
+		],
 		["a fractional count", { ...completeCounts, totalActionableItems: 1.5 }],
 		["a non-object response", null],
 	])("rejects %s", async (_label, data) => {
@@ -65,6 +70,7 @@ describe("Profile privileged tool action summary", () => {
 			pendingProductSubmissions: null,
 			pendingCatalogReviewItems: null,
 			pendingFoodWarningReports: null,
+			pendingFoodWarningFollowUps: null,
 			pendingProfileImageReviews: null,
 			pendingCatalogDataOperations: null,
 			totalActionableItems: null,
@@ -80,6 +86,7 @@ describe("Profile privileged tool action summary", () => {
 			pendingProductSubmissions: null,
 			pendingCatalogReviewItems: null,
 			pendingFoodWarningReports: null,
+			pendingFoodWarningFollowUps: null,
 			pendingProfileImageReviews: null,
 			pendingCatalogDataOperations: null,
 			totalActionableItems: null,

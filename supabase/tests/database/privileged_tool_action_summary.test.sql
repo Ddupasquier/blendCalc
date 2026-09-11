@@ -1,6 +1,6 @@
 begin;
 
-select plan(16);
+select plan(17);
 
 select has_function(
 	'public',
@@ -61,6 +61,19 @@ select
 		from public.food_compatibility_feedback feedback
 		where feedback.status = 'pending'
 	) as food_warnings,
+	(
+		select count(*)
+		from (
+			select correction.id
+			from public.catalog_correction_origins correction
+			where correction.origin_type = 'food_warning_report'
+				and correction.status in ('waiting_for_correction', 'linked')
+			union all
+			select review_case.id
+			from public.food_warning_policy_review_cases review_case
+			where review_case.status in ('open', 'deferred')
+		) warning_follow_up
+	) as food_warning_follow_ups,
 	(
 		select count(*)
 		from (
@@ -145,6 +158,12 @@ select is(
 );
 
 select is(
+	(public.get_privileged_tool_action_summary() ->> 'pendingFoodWarningFollowUps')::bigint,
+	(select food_warning_follow_ups from expected_privileged_action_counts),
+	'food-warning follow-ups count every open policy, source, and product correction'
+);
+
+select is(
 	(public.get_privileged_tool_action_summary() ->> 'pendingProfileImageReviews')::bigint,
 	(select profile_images from expected_privileged_action_counts),
 	'profile-image reports are deduplicated by exact reported image'
@@ -159,7 +178,12 @@ select is(
 select is(
 	(public.get_privileged_tool_action_summary() ->> 'totalActionableItems')::bigint,
 	(
-		select product_submissions + catalog_review + food_warnings + profile_images
+		select
+			product_submissions
+			+ catalog_review
+			+ food_warnings
+			+ food_warning_follow_ups
+			+ profile_images
 		from expected_privileged_action_counts
 	),
 	'moderator aggregate sums only permitted genuine action queues'
@@ -189,6 +213,7 @@ select is(
 			product_submissions
 			+ catalog_review
 			+ food_warnings
+			+ food_warning_follow_ups
 			+ profile_images
 			+ data_operations
 		from expected_privileged_action_counts
