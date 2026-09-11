@@ -1236,14 +1236,16 @@ Notes:
   active/import-enabled dataset gaps, and warning-policy coverage gaps. Every row uses
   an `app_issue_codes` contract for urgency, work ownership, supported action, and
   reviewed repair capability. Disabled unused datasets do not create failures.
-- `catalog_health_review_dispositions` stores append-only `accepted_withheld` outcomes
-  for one exact product issue fingerprint, including the private review note, bounded
-  issue snapshot, reviewer, and timestamp. Authenticated clients have no direct table
-  access.
-- `catalog_health_actionable_issue_occurrences` removes only a currently matching
-  accepted-withheld API-publication fingerprint from operator queues. Raw occurrences
-  and API withholding remain unchanged, and a changed occurrence timestamp or issue set
-  automatically becomes actionable again.
+- `catalog_health_review_dispositions` stores append-only `accepted_withheld`
+  publication outcomes and `accepted_evidence_gap` diagnostic outcomes for one exact
+  product fingerprint, including the private review note, bounded issue snapshot,
+  reviewer, and timestamp. Authenticated clients have no direct table access.
+- `catalog_health_actionable_issue_occurrences` removes a currently matching
+  accepted-withheld API-publication fingerprint or accepted-evidence-gap product
+  diagnostic fingerprint from operator queues. Raw occurrences, product data, revision
+  history, and API publication remain unchanged. Changed product, revision, observation,
+  submission, occurrence timestamp, or issue-set evidence automatically becomes
+  actionable again.
 - `catalog_health_repair_runs` is the immutable audit header for one AAL2 dry run or
   apply request against an open occurrence. It records the requesting user, issue,
   approved handler, linked dry run, status, bounded outcome counts, summary, and timing.
@@ -1767,6 +1769,17 @@ Notes:
 Rule and source cases remain private operational work. They retain the originating
 feedback and explicit responsible group instead of flattening a confirmed report into
 an ambiguous resolved status.
+`resolve_food_warning_policy_review_case` requires an AAL2 session with
+`moderation.warnings.review`; Data operations cases additionally require
+`data_operations.catalog_health.repair`. A required private note accompanies every
+outcome. `resolved` and `dismissed` set the case and originating feedback follow-up to
+their terminal state, while `deferred` remains queryable work with no resolved actor or
+timestamp. The function does not mutate catalog, warning-policy, or source data.
+`get_privileged_tool_action_summary` exposes `pendingFoodWarningReports` for unreviewed
+feedback and `pendingFoodWarningFollowUps` for open/deferred rule and source cases plus
+waiting/linked warning-origin product corrections. Both contribute to
+`totalActionableItems`, so unfinished corrective work cannot vanish from the privileged
+launcher after the initial report is reviewed.
 
 ### `catalog_correction_origins`
 
@@ -1780,6 +1793,10 @@ The database validates product and revision identity before linking a real
 the prefilled product snapshot is only a safe starting point and never counts as proof
 of a change. Approval requires and records the immutable revision that resolved the
 origin, while rejection returns the origin to the waiting state.
+An evidence-backed decision to retain the current value dismisses an unlinked waiting
+origin without changing the product. Rejecting an unlinked provider observation also
+dismisses its waiting origin and any waiting origins for conflicts produced by that exact
+snapshot.
 
 - Users may read only their own reports. Inserts and moderation updates use authenticated
   server boundaries; the service role owns privileged writes.
@@ -2057,8 +2074,13 @@ Notes:
 - `get_privileged_tool_action_summary()` returns exact AAL2, live-role-aware Profile
   counts for product submissions, combined catalog-review decisions, food-warning
   reports, distinct reported profile images, and deduplicated data-operation subjects.
-  It excludes search-only Account access and sums only the counts permitted for the
-  current database role assignment.
+  For authorized administrators and developers, the same grouped data-operations query
+  returns up to 50 severity-ordered subject objects with safe identity, complete issue
+  facts, resolution action, and either a focused destination or an explicit missing
+  prerequisite; a truncation flag distinguishes a bounded list from a complete one.
+  Disabled issue codes and accepted publication-only diagnostics are excluded. It
+  excludes search-only Account access and sums only the counts permitted for the current
+  database role assignment.
 - `app_role_assignments` is the authority for application roles. The `app_role` enum
   contains `user`, `moderator`, `admin`, and `developer`, while assignments store only
   elevated roles. `app_role_permissions` maps those roles to database-owned
@@ -2107,7 +2129,8 @@ Notes:
 - `get_blendcalc_api_catalog_product_readiness_passport(p_shared_product_id)` returns one bounded
   product contract to an AAL2 catalog reviewer or data-operations reader. It separates
   shared-catalog and blendCalcAPI v1 status, includes the current revision and source-evidence
-  counts, and maps open normalized issues to ownership and supported action metadata.
+  counts, classifies every issue as a publication blocker or nonblocking catalog
+  diagnostic, and maps open normalized issues to ownership and supported action metadata.
   It excludes raw provider payloads, private evidence paths, and contributor identity.
 - `private.build_catalog_product_readiness_passport(p_shared_product_id)` owns the
   bounded shared-catalog and blendCalcAPI readiness assembly. Direct execution is
@@ -2338,9 +2361,10 @@ category, or serving fields.
 | `search_blendcalc_api_products_v1`                     | Service-role-only partial metadata search for active, publication-ready shared products with bounded pagination and name → brand → category → supporting-metadata relevance                            |
 | `get_blendcalc_api_catalog_product_readiness_passport` | Authenticated AAL2 catalog-review or data-operations passport with canonical blendCalcAPI status naming                                                                                                |
 | `finish_catalog_health_product_review`                 | Records an AAL2 accepted-withheld outcome for the exact current product issue fingerprint after every available safe repair is inconclusive; never changes catalog or API publication data             |
+| `finish_catalog_health_product_diagnostic_review`      | Records an AAL2 accepted-evidence-gap outcome for one inconclusive nonpublication diagnostic snapshot without changing catalog or API data                                                             |
 | `get_catalog_data_operations_health`                   | Returns bounded admin/developer catalog, source, dataset, policy, mapping, revision, and publication-readiness summaries after exact AAL2 data-operations authorization                                |
 | `get_catalog_data_operations_monitor_summary`          | Returns bounded admin/developer monitor configuration, queue counts, and recent run state after exact AAL2 data-operations authorization                                                               |
-| `get_catalog_review_work_summary`                      | Returns bounded material conflicts, provider changes, and possible recall matches after exact AAL2 catalog-review authorization                                                                        |
+| `get_catalog_review_work_summary`                      | Returns bounded conflicts with competing values, provider changes with old/new values and correction state, possible recall matches, and exact queue totals after AAL2 catalog-review authorization    |
 | `get_moderator_data_health`                            | Temporary compatibility wrapper for the previous combined data-health interface                                                                                                                        |
 | `get_pending_profile_image_review_count`               | Service-role-only count of distinct exact profile images with one or more pending reports                                                                                                              |
 | `get_privileged_tool_action_summary`                   | Returns exact live-role-aware actionable Profile counts after AAL2 verification, deduplicating data-operations work by affected subject and excluding search-only account access                       |
@@ -2354,7 +2378,8 @@ category, or serving fields.
 | `request_catalog_monitor_run`                          | Requests the secret-authenticated monitor Edge Function through the configured Vault values                                                                                                            |
 | `get_catalog_monitor_moderation_summary`               | Temporary compatibility wrapper for the previous combined monitor/review interface                                                                                                                     |
 | `review_official_food_safety_alert_match`              | Confirms or dismisses one probable recall match after an AAL2 permission check                                                                                                                         |
-| `review_catalog_provider_change`                       | Rejects/supersedes a provider change or links acceptance to an existing approved catalog revision after an AAL2 permission check                                                                       |
+| `resolve_catalog_conflict_without_correction`          | Keeps canonical values unchanged while recording one exact unlinked catalog conflict and its waiting correction origin as resolved after an AAL2 permission check                                      |
+| `review_catalog_provider_change`                       | Rejects/supersedes an unlinked provider change and its exact-snapshot conflicts, or links acceptance to an approved catalog revision, after an AAL2 permission check                                   |
 | `mark_product_safety_alert_notification_read`          | Lets an authenticated owner mark exactly one of their alert notifications as read                                                                                                                      |
 | `save_current_user_marketing_email_preferences`        | Atomically validates and saves every enabled optional promotional-email category for the authenticated account                                                                                         |
 | `get_current_user_marketing_email_preferences`         | Returns the active marketing-email topic catalog with missing owner choices safely treated as off                                                                                                      |
