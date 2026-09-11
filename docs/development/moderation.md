@@ -410,6 +410,17 @@ unit path records a specific skipped reason and remains available for human revi
 Run totals must reconcile the complete pending snapshot; service-role runtime code may
 inspect those results but cannot create rules or launch a backfill.
 
+Each `DATASET_IMPORT_EVIDENCE_MISSING` subject links to the focused dataset-release
+workflow under `/profile/privileged-tools/data-operations/datasets/[datasetKey]`.
+The same exact data-repair permission and AAL2 boundary protect its read, preview, and
+apply operations. Preview validates the stored release identity, UTC completion time,
+64-character SHA-256, approved licence state, and bounded HTTPS evidence reference
+without changing the dataset. Apply requires that current same-operator preview plus a
+private note, fills only missing canonical dataset evidence, records append-only
+history, and rolls back unless the owning health occurrence disappears. It never
+changes the release, licence decision, active/import-enabled flags, imported records,
+or public API eligibility by itself.
+
 Both workspaces are bounded to 20 issue rows in the application and database. They do
 not expose raw provider payloads, private evidence paths, user identifiers, secrets,
 download URLs, or internal source-evaluation details. Shared private builders assemble

@@ -1,0 +1,131 @@
+@use "../../../../styles/variables" as *;
+
+.dataset-evidence,
+.dataset-evidence__summary,
+.dataset-evidence__summary > header > div,
+.dataset-evidence__facts,
+.dataset-evidence__explanation,
+.dataset-evidence__preview,
+.dataset-evidence__decision,
+.dataset-evidence__decision-heading,
+.dataset-evidence__actions {
+	display: grid;
+	min-width: 0;
+}
+
+.dataset-evidence,
+.dataset-evidence__summary,
+.dataset-evidence__preview,
+.dataset-evidence__decision {
+	gap: $app-gap-sm;
+}
+
+.dataset-evidence__summary,
+.dataset-evidence__preview,
+.dataset-evidence__decision {
+	padding: $app-shell-card-padding-compact;
+	background: $app-shell-surface-soft;
+	border-radius: $app-shell-radius-card;
+}
+
+.dataset-evidence__summary > header,
+.dataset-evidence__preview > header {
+	display: flex;
+	align-items: start;
+	justify-content: space-between;
+	gap: $app-gap-sm;
+}
+
+.dataset-evidence__summary span,
+.dataset-evidence__facts dt,
+.dataset-evidence__explanation,
+.dataset-evidence__preview p,
+.dataset-evidence__decision-heading p {
+	color: $app-shell-text-muted;
+}
+
+.dataset-evidence__facts,
+.dataset-evidence__explanation,
+.dataset-evidence__decision-heading,
+.dataset-evidence__actions {
+	gap: $app-gap-xs;
+}
+
+.dataset-evidence__facts {
+	margin: 0;
+}
+
+.dataset-evidence__facts > div {
+	display: flex;
+	justify-content: space-between;
+	gap: $app-gap-sm;
+	min-width: 0;
+}
+
+.dataset-evidence__facts dt {
+	font-weight: $app-font-weight-semibold;
+}
+
+.dataset-evidence__facts dd {
+	min-width: 0;
+	margin: 0;
+	font-weight: $app-font-weight-bold;
+	text-align: end;
+	overflow-wrap: anywhere;
+}
+
+.dataset-evidence__facts dd[data-missing="true"] {
+	color: $app-warning-text;
+}
+
+.dataset-evidence__explanation p,
+.dataset-evidence__preview h2,
+.dataset-evidence__preview p,
+.dataset-evidence__decision-heading h2,
+.dataset-evidence__decision-heading p {
+	margin: 0;
+}
+
+.dataset-evidence__preview > header span,
+.dataset-evidence__decision-heading > span {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-bold;
+	letter-spacing: $app-letter-spacing-wide;
+	text-transform: uppercase;
+}
+
+.dataset-evidence__preview h2,
+.dataset-evidence__decision-heading h2 {
+	font-size: $app-font-size-md;
+}
+
+.dataset-evidence__preview ul {
+	display: grid;
+	gap: $app-gap-xs;
+	margin: 0;
+	padding-inline-start: $app-gap-lg;
+	overflow-wrap: anywhere;
+}
+
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
+	.dataset-evidence,
+	.dataset-evidence__summary,
+	.dataset-evidence__preview,
+	.dataset-evidence__decision {
+		gap: $app-gap-xs;
+	}
+
+	.dataset-evidence__summary,
+	.dataset-evidence__preview,
+	.dataset-evidence__decision {
+		padding: $app-gap-xs;
+	}
+
+	.dataset-evidence__facts > div,
+	.dataset-evidence__summary > header,
+	.dataset-evidence__preview > header {
+		gap: $app-gap-xs;
+	}
+}

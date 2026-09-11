@@ -74,6 +74,8 @@ const parseCatalogDataOperationSubject = (
 		throw new Error(`Privileged action summary has an invalid ${path}.`);
 	}
 	const subject = value as Record<string, unknown>;
+	const subjectType = readString(subject.subjectType, `${path}.subjectType`);
+	const subjectKey = readString(subject.subjectKey, `${path}.subjectKey`);
 	const issueCount = subject.issueCount;
 	if (!Number.isSafeInteger(issueCount) || (issueCount as number) < 1) {
 		throw new Error(
@@ -95,8 +97,8 @@ const parseCatalogDataOperationSubject = (
 		);
 	}
 	return {
-		subjectType: readString(subject.subjectType, `${path}.subjectType`),
-		subjectKey: readString(subject.subjectKey, `${path}.subjectKey`),
+		subjectType,
+		subjectKey,
 		displayName: readString(subject.displayName, `${path}.displayName`),
 		context: readNullableString(subject.context, `${path}.context`),
 		issueCount: issueCount as number,
@@ -106,11 +108,18 @@ const parseCatalogDataOperationSubject = (
 			subject.resolutionAction,
 			`${path}.resolutionAction`,
 		),
-		destination: readNullableString(subject.destination, `${path}.destination`),
-		missingPrerequisite: readNullableString(
-			subject.missingPrerequisite,
-			`${path}.missingPrerequisite`,
-		),
+		destination:
+			readNullableString(subject.destination, `${path}.destination`) ??
+			(subjectType === "generic_food_dataset"
+				? `/profile/privileged-tools/data-operations/datasets/${encodeURIComponent(subjectKey)}`
+				: null),
+		missingPrerequisite:
+			subjectType === "generic_food_dataset"
+				? null
+				: readNullableString(
+						subject.missingPrerequisite,
+						`${path}.missingPrerequisite`,
+					),
 		issues,
 	};
 };

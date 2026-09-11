@@ -19,6 +19,7 @@ import {
 	deleteLocalQaAuthenticatorFactorsForEmail,
 	deleteLocalQaPendingNutrientMapping,
 	recheckLocalQaDeterministicNutrientMapping,
+	resetLocalQaDatasetImportEvidence,
 } from "./support/localQaDatabase";
 import { finishLocalQaAuthenticatorEnrollment } from "./support/localQaAuthenticator";
 
@@ -1115,6 +1116,7 @@ test("administrators can open data operations after direct AAL2 verification", a
 	const diagnosticFixture = await seedLocalQaCatalogDiagnosticReview();
 	const pendingMappingId = await createLocalQaPendingNutrientMapping();
 	const resolvedMappingId = await recheckLocalQaDeterministicNutrientMapping();
+	await resetLocalQaDatasetImportEvidence("cnf-2026");
 
 	try {
 		await signInLocalQaAccount({
@@ -1153,12 +1155,68 @@ test("administrators can open data operations after direct AAL2 verification", a
 		).toHaveCount(0);
 		await expect(
 			requiredWork.getByText("Cannot finish this in the app yet"),
-		).toHaveCount(3);
+		).toHaveCount(0);
 		await expect(
 			requiredWork.getByText(
 				"Nothing changes until that workflow records reviewed evidence.",
 			),
-		).toHaveCount(3);
+		).toHaveCount(0);
+
+		const cnfDatasetCard = requiredWork
+			.locator("article")
+			.filter({ hasText: "Canadian Nutrient File 2026" });
+		await expect(
+			cnfDatasetCard.getByRole("link", { name: "Record dataset evidence" }),
+		).toBeVisible();
+		await page.setViewportSize({ width: 390, height: 844 });
+		await cnfDatasetCard
+			.getByRole("link", { name: "Record dataset evidence" })
+			.click();
+		const datasetEvidenceSheet = page.getByRole("dialog", {
+			name: "Record dataset evidence",
+		});
+		await expect(datasetEvidenceSheet).toBeVisible();
+		const datasetEvidenceBox = await datasetEvidenceSheet.boundingBox();
+		expect(datasetEvidenceBox?.x ?? -1).toBeGreaterThanOrEqual(0);
+		expect(
+			(datasetEvidenceBox?.x ?? 0) + (datasetEvidenceBox?.width ?? 0),
+		).toBeLessThanOrEqual(390);
+		await datasetEvidenceSheet
+			.getByLabel("2. When did the import finish? (UTC)")
+			.fill("2026-09-10T21:30");
+		await datasetEvidenceSheet
+			.getByLabel("3. What is the source file SHA-256?")
+			.fill("a".repeat(64));
+		await datasetEvidenceSheet
+			.getByRole("button", { name: "Preview evidence" })
+			.click();
+		await expect(
+			datasetEvidenceSheet.getByText("This will complete the dataset evidence"),
+		).toBeVisible();
+		const applyDatasetEvidence = datasetEvidenceSheet.getByRole("button", {
+			name: "Apply evidence and finish",
+		});
+		await expect(applyDatasetEvidence).toBeDisabled();
+		await datasetEvidenceSheet
+			.getByLabel("Why is this evidence trustworthy?")
+			.fill("Verified against the retained browser QA import record.");
+		await applyDatasetEvidence.scrollIntoViewIfNeeded();
+		await expect(applyDatasetEvidence).toBeInViewport();
+		await applyDatasetEvidence.click();
+		await expect(page).toHaveURL(
+			(url) =>
+				url.pathname === dataOperationsPath &&
+				url.searchParams.get("datasetEvidence") === "recorded",
+		);
+		await expect(
+			dataOperationsSheet.getByText("Dataset evidence recorded"),
+		).toBeVisible();
+		await expect(
+			dataOperationsSheet
+				.getByRole("region", { name: "Required work" })
+				.getByText("Canadian Nutrient File 2026"),
+		).toHaveCount(0);
+		await page.setViewportSize({ width: 1280, height: 800 });
 		await expect(
 			dataOperationsSheet.getByRole("region", { name: "Diagnostic checks" }),
 		).toBeVisible();
@@ -1416,7 +1474,7 @@ test("administrators can open data operations after direct AAL2 verification", a
 		).toHaveCount(0);
 	} finally {
 		try {
-			await cleanupLocalQaCatalogDiagnosticReview();
+			await resetLocalQaDatasetImportEvidence("cnf-2026");
 			try {
 				await cleanupLocalQaCatalogDiagnosticReview();
 			} finally {

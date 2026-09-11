@@ -128,6 +128,46 @@ describe("Profile privileged tool action summary", () => {
 		);
 	});
 
+	it("routes dataset evidence findings to the focused in-app workflow", async () => {
+		const datasetSubject = {
+			subjectType: "generic_food_dataset",
+			subjectKey: "cnf-2026",
+			displayName: "Canadian Nutrient File 2026",
+			context: "health-canada-cnf",
+			issueCount: 1,
+			severity: "attention",
+			resolutionAction: "review_dataset_import",
+			destination: null,
+			missingPrerequisite:
+				"The ingestion workflow must record missing evidence.",
+			issues: [
+				{
+					code: "DATASET_IMPORT_EVIDENCE_MISSING",
+					sourceReason: "import_evidence_missing",
+					resolutionAction: "review_dataset_import",
+					severity: "attention",
+					parameters: { datasetKey: "cnf-2026" },
+				},
+			],
+		};
+		const { supabase } = createSupabase({
+			...completeCounts,
+			catalogDataOperationSubjects: [datasetSubject],
+		});
+
+		await expect(readPrivilegedToolReviewSummary(supabase)).resolves.toEqual(
+			expect.objectContaining({
+				catalogDataOperationSubjects: [
+					expect.objectContaining({
+						destination:
+							"/profile/privileged-tools/data-operations/datasets/cnf-2026",
+						missingPrerequisite: null,
+					}),
+				],
+			}),
+		);
+	});
+
 	it("rejects malformed issue facts instead of rendering unsafe fallback copy", async () => {
 		const subject = completeCounts.catalogDataOperationSubjects[0];
 		const { supabase } = createSupabase({
