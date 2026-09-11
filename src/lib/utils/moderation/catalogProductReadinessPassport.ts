@@ -73,6 +73,7 @@ export type CatalogProductReadinessPassport = {
 		changeSummary: JsonRecord;
 	} | null;
 	revisionHistory: CatalogProductRevisionContext[];
+	revisionHistoryAvailable: boolean;
 	qualityDimensions: JsonRecord;
 	evidence: {
 		selectedFieldCount: number;
@@ -345,7 +346,11 @@ export const parseCatalogProductReadinessPassport = (
 					),
 				}
 			: null,
-		revisionHistory: parseCatalogProductRevisionHistory(root.revisionHistory),
+		revisionHistory:
+			root.revisionHistory === undefined
+				? []
+				: parseCatalogProductRevisionHistory(root.revisionHistory),
+		revisionHistoryAvailable: root.revisionHistoryAvailable !== false,
 		qualityDimensions: readRecord(root.qualityDimensions, "qualityDimensions"),
 		evidence: {
 			selectedFieldCount: readNumber(

@@ -49,4 +49,34 @@ describe("catalog product readiness passport repository", () => {
 			),
 		).rejects.toMatchObject({ status: 502 });
 	});
+
+	it("keeps the readiness workspace available while revision context is still rolling out", async () => {
+		const legacyPassport = {
+			...catalogProductReadinessPassportFixture,
+			revisionHistory: undefined,
+			revisionHistoryAvailable: undefined,
+		};
+		const rpc = vi.fn().mockImplementation((functionName: string) =>
+			Promise.resolve(
+				functionName === "get_catalog_product_revision_context"
+					? {
+							data: null,
+							error: {
+								code: "PGRST202",
+								message:
+									"Could not find the function get_catalog_product_revision_context",
+							},
+						}
+					: { data: legacyPassport, error: null },
+			),
+		);
+
+		await expect(
+			readCatalogProductReadinessPassport({ rpc } as never, "product-id"),
+		).resolves.toMatchObject({
+			product: { id: "product-id" },
+			revisionHistory: [],
+			revisionHistoryAvailable: false,
+		});
+	});
 });

@@ -54,6 +54,7 @@ export const catalogProductReadinessPassportFixture: CatalogProductReadinessPass
 				changes: [],
 			},
 		],
+		revisionHistoryAvailable: true,
 		qualityDimensions: {
 			identity: "complete",
 			nutrition: "complete",
