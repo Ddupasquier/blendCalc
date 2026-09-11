@@ -7,6 +7,13 @@ import {
 } from "$lib/utils/moderation/catalogProductReadinessPassport";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+const isRevisionContextSchemaUnavailable = (error: {
+	code?: string;
+	message?: string;
+}) =>
+	["42883", "PGRST202"].includes(error.code ?? "") ||
+	(error.message ?? "").includes("get_catalog_product_revision_context");
+
 export const readCatalogProductReadinessPassport = async (
 	supabase: SupabaseClient<Database>,
 	sharedProductId: string,
@@ -24,21 +31,29 @@ export const readCatalogProductReadinessPassport = async (
 	if (error?.code === "P0002") {
 		throwAppError(404, "PRODUCT_NOT_FOUND");
 	}
+	if (error || data === null) {
+		throwAppError(502, "MODERATION_DATA_UNAVAILABLE");
+	}
+	const revisionHistoryUnavailable = Boolean(
+		revisionHistoryResult.error &&
+		isRevisionContextSchemaUnavailable(revisionHistoryResult.error),
+	);
 	if (
-		error ||
-		data === null ||
-		revisionHistoryResult.error ||
-		revisionHistoryResult.data === null
+		(revisionHistoryResult.error && !revisionHistoryUnavailable) ||
+		(!revisionHistoryUnavailable && revisionHistoryResult.data === null)
 	) {
 		throwAppError(502, "MODERATION_DATA_UNAVAILABLE");
 	}
 
 	try {
 		return {
-			...parseCatalogProductReadinessPassport(data),
-			revisionHistory: parseCatalogProductRevisionHistory(
-				revisionHistoryResult.data,
-			),
+			...parseCatalogProductReadinessPassport({
+				...(data as Record<string, unknown>),
+				revisionHistoryAvailable: !revisionHistoryUnavailable,
+			}),
+			revisionHistory: revisionHistoryUnavailable
+				? []
+				: parseCatalogProductRevisionHistory(revisionHistoryResult.data),
 		};
 	} catch {
 		return throwAppError(502, "MODERATION_DATA_UNAVAILABLE");

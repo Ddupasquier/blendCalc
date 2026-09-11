@@ -2,6 +2,7 @@
 	import TextBadge from "$lib/components/common/badges/TextBadge/TextBadge.svelte";
 	import RoundedActionLink from "$lib/components/common/buttons/RoundedActionLink/RoundedActionLink.svelte";
 	import CollapsibleSection from "$lib/components/common/disclosure/CollapsibleSection/CollapsibleSection.svelte";
+	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import { getCatalogHealthRepairTargetId } from "$lib/utils/moderation/catalogHealthRepair";
 	import {
 		getCatalogHealthStatusLabel,
@@ -372,6 +373,13 @@
 				<dd>{passport.product.openMaterialConflictCount}</dd>
 			</div>
 		</dl>
+		{#if !passport.revisionHistoryAvailable}
+			<StatusMessage
+				tone="warning"
+				title="Detailed revision changes are temporarily unavailable"
+				message="The rest of this product readiness record is current. Do not close a revision-evidence finding until the stored change details are available."
+			/>
+		{/if}
 		{#if passport.revisionHistory.length > 0}
 			<section class="catalog-product-passport__revision-history">
 				<header>

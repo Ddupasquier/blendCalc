@@ -242,4 +242,27 @@ describe("CatalogProductReadinessPassport", () => {
 			screen.queryByText(/keeping it out of the public API/u),
 		).not.toBeInTheDocument();
 	});
+
+	it("keeps other readiness work usable when detailed revision history is unavailable", async () => {
+		render(CatalogProductReadinessPassport, {
+			props: {
+				passport: {
+					...catalogProductReadinessPassportFixture,
+					revisionHistory: [],
+					revisionHistoryAvailable: false,
+				},
+			},
+		});
+
+		const revisionSummary = screen
+			.getByText("Revision and verification")
+			.closest("summary");
+		await fireEvent.click(revisionSummary as HTMLElement);
+		expect(
+			screen.getByText("Detailed revision changes are temporarily unavailable"),
+		).toBeVisible();
+		expect(
+			screen.getByText("Roasted Onion & Garlic Pasta Sauce"),
+		).toBeVisible();
+	});
 });

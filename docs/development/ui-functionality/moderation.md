@@ -49,6 +49,12 @@ from downstream publication, notification, correction, access, or policy effects
 must not imply a user notification or automatic correction that the server does not
 perform.
 
+If an additive moderation detail RPC is temporarily unavailable during a schema-first
+rollout, the route must keep independently current readiness data usable and clearly
+mark only the unavailable evidence detail. It must not turn an optional revision-detail
+read into a whole-page 502, and it must tell reviewers not to close findings that depend
+on the unavailable evidence.
+
 The nutrient-mapping decision form shows compatible nutrient matches directly beneath
 its search field with an announced result count. Search by canonical name, nutrient
 number, or canonical ID narrows those choices without changing the current selection.
