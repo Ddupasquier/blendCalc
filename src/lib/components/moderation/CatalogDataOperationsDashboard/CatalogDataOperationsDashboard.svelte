@@ -84,10 +84,13 @@
 				return "Data operation";
 		}
 	};
-	const getDestinationLabel = (subjectType: string) =>
-		subjectType === "nutrient_mapping"
-			? "Review nutrient identity"
-			: "Open product readiness";
+	const getDestinationLabel = (subjectType: string) => {
+		if (subjectType === "nutrient_mapping") return "Review nutrient identity";
+		if (subjectType === "generic_food_dataset") {
+			return "Record dataset evidence";
+		}
+		return "Open product readiness";
+	};
 	const formatDate = (value: string | null) => {
 		if (!value) return "Not recorded";
 		const date = new Date(value);
@@ -509,6 +512,12 @@
 										{getCatalogIssueReasonLabel(issue)}
 									</li>{/each}
 							</ul>
+							{#if dataset.importEnabled}
+								<a
+									href={`/profile/privileged-tools/data-operations/datasets/${encodeURIComponent(dataset.key)}`}
+									>Review import evidence</a
+								>
+							{/if}
 						{/if}
 					</article>
 				{/each}

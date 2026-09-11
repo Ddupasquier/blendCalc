@@ -4186,6 +4186,75 @@ export type Database = {
           },
         ]
       }
+      generic_food_dataset_import_evidence_runs: {
+        Row: {
+          created_at: string
+          dataset_key: string
+          evidence_reference: string
+          expected_dataset_updated_at: string
+          id: string
+          mode: string
+          outcome: string
+          preview_run_id: string | null
+          previous_imported_at: string | null
+          previous_source_file_sha256: string | null
+          proposed_imported_at: string | null
+          proposed_source_file_sha256: string | null
+          recorded_by: string
+          release_version: string
+          review_note: string | null
+        }
+        Insert: {
+          created_at?: string
+          dataset_key: string
+          evidence_reference: string
+          expected_dataset_updated_at: string
+          id?: string
+          mode: string
+          outcome: string
+          preview_run_id?: string | null
+          previous_imported_at?: string | null
+          previous_source_file_sha256?: string | null
+          proposed_imported_at?: string | null
+          proposed_source_file_sha256?: string | null
+          recorded_by: string
+          release_version: string
+          review_note?: string | null
+        }
+        Update: {
+          created_at?: string
+          dataset_key?: string
+          evidence_reference?: string
+          expected_dataset_updated_at?: string
+          id?: string
+          mode?: string
+          outcome?: string
+          preview_run_id?: string | null
+          previous_imported_at?: string | null
+          previous_source_file_sha256?: string | null
+          proposed_imported_at?: string | null
+          proposed_source_file_sha256?: string | null
+          recorded_by?: string
+          release_version?: string
+          review_note?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generic_food_dataset_import_evidence_runs_dataset_key_fkey"
+            columns: ["dataset_key"]
+            isOneToOne: false
+            referencedRelation: "generic_food_datasets"
+            referencedColumns: ["key"]
+          },
+          {
+            foreignKeyName: "generic_food_dataset_import_evidence_runs_preview_run_id_fkey"
+            columns: ["preview_run_id"]
+            isOneToOne: false
+            referencedRelation: "generic_food_dataset_import_evidence_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       generic_food_datasets: {
         Row: {
           active: boolean
@@ -9968,6 +10037,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      apply_dataset_import_evidence: {
+        Args: { p_preview_run_id: string; p_review_note: string }
+        Returns: Json
+      }
       apply_user_mix_goal_template: {
         Args: { p_keep_extra_goals?: boolean; p_template_id: string }
         Returns: Json
@@ -10322,6 +10395,10 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_dataset_import_evidence_workspace: {
+        Args: { p_dataset_key: string }
+        Returns: Json
+      }
       get_moderator_data_health: {
         Args: { p_days?: number; p_issue_limit?: number }
         Returns: Json
@@ -10363,6 +10440,16 @@ export type Database = {
       place_user_food_list_items: {
         Args: { p_foods: Json; p_list_type: string }
         Returns: string
+      }
+      preview_dataset_import_evidence: {
+        Args: {
+          p_dataset_key: string
+          p_evidence_reference: string
+          p_imported_at: string | null
+          p_release_version: string
+          p_source_file_sha256: string | null
+        }
+        Returns: Json
       }
       publish_shared_product_submission: {
         Args: {

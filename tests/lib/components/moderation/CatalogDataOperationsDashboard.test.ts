@@ -51,9 +51,9 @@ describe("CatalogDataOperationsDashboard", () => {
 						severity: "attention",
 						summary: "Import evidence is missing.",
 						resolutionAction: "review_dataset_import",
-						destination: null,
-						missingPrerequisite:
-							"The ingestion workflow must record the missing import date or checksum; no in-app editor exists yet.",
+						destination:
+							"/profile/privileged-tools/data-operations/datasets/dataset-key",
+						missingPrerequisite: null,
 						issues: [
 							{
 								code: "DATASET_IMPORT_EVIDENCE_MISSING",
@@ -88,12 +88,12 @@ describe("CatalogDataOperationsDashboard", () => {
 			"href",
 			"/profile/privileged-tools/data-operations/products/product-id",
 		);
-		expect(screen.getByText("Cannot finish this in the app yet")).toBeVisible();
 		expect(
-			screen.getByText(
-				"Nothing changes until that workflow records reviewed evidence.",
-			),
-		).toBeVisible();
+			screen.getByRole("link", { name: "Record dataset evidence" }),
+		).toHaveAttribute(
+			"href",
+			"/profile/privileged-tools/data-operations/datasets/dataset-key",
+		);
 		expect(
 			screen.queryByText("Other tracked operational issues"),
 		).not.toBeInTheDocument();

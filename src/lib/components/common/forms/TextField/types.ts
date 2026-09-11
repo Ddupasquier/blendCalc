@@ -9,7 +9,7 @@ export type TextFieldProps = {
 	name?: string;
 	label: string;
 	value?: string | null;
-	type?: "text" | "search" | "email" | "password";
+	type?: "text" | "search" | "email" | "password" | "datetime-local";
 	placeholder?: string;
 	helper?: string;
 	required?: boolean;

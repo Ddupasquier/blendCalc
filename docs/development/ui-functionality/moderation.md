@@ -179,6 +179,19 @@ provide either a direct focused-workflow link or a plain-language missing prereq
 it must never substitute a generic remainder count or imply that an unavailable action
 can be completed in the app.
 
+Import-enabled dataset findings link to
+`/profile/privileged-tools/data-operations/datasets/[datasetKey]`. The focused sheet
+names the exact release and missing canonical artifacts, shows existing evidence and
+record counts, and explains why completion time and SHA-256 are required. An AAL2
+administrator or developer with data-repair permission must confirm the stored release,
+enter only missing evidence plus an HTTPS reference, and preview the result before
+applying it. Apply remains unavailable until the preview proves the finding will clear
+and a private note is present. Apply fills only missing `generic_food_datasets`
+provenance, preserves release, licence, activation, and imported rows, then reruns the
+owning health check and returns to the refreshed queue. Cancel leaves canonical data
+and queue state unchanged. Already-complete, incomplete/no-change, invalid, stale,
+unauthorized, and failed-recheck states remain explicit.
+
 The legacy `/moderation` and `/moderation/data-health` routes redirect to the Profile
 privileged-tools gateway so operators always enter the same role-aware workflow.
 `/profile/privileged-tools/catalog-data-health` redirects to data operations during

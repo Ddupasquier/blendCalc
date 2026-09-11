@@ -116,6 +116,32 @@ export const recheckLocalQaDeterministicNutrientMapping = async () => {
 	return rechecked.id;
 };
 
+export const resetLocalQaDatasetImportEvidence = async (datasetKey: string) => {
+	const admin = await createLocalQaServiceRoleDatabaseClient();
+	const { data: dataset, error: readError } = await admin
+		.from("generic_food_datasets")
+		.select("metadata")
+		.eq("key", datasetKey)
+		.single();
+	if (readError) throw readError;
+	const metadata =
+		dataset.metadata &&
+		typeof dataset.metadata === "object" &&
+		!Array.isArray(dataset.metadata)
+			? { ...dataset.metadata }
+			: {};
+	delete metadata.importEvidence;
+	const { error: updateError } = await admin
+		.from("generic_food_datasets")
+		.update({
+			imported_at: null,
+			metadata,
+			source_file_sha256: null,
+		})
+		.eq("key", datasetKey);
+	if (updateError) throw updateError;
+};
+
 const findLocalQaUserByEmail = async (email: string) => {
 	const admin = await createLocalQaServiceRoleDatabaseClient();
 	const { data: users, error: usersError } = await admin.auth.admin.listUsers({

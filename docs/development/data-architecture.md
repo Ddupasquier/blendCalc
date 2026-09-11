@@ -88,6 +88,14 @@ Durable writes use narrowly scoped Supabase functions. The database function:
 
 Client checks may provide faster feedback, but they are never the final authority.
 
+Privileged dataset-import evidence follows the same boundary. The focused application
+route calls AAL2 permission-checked database functions. Preview records the exact
+release snapshot and proposed missing fields without editing canonical data. Apply
+accepts only that current same-operator preview, writes the completion time, SHA-256,
+and source reference into `generic_food_datasets`, appends private audit history, and
+rolls back unless the normalized health finding clears. Browser code never writes the
+dataset or its audit table directly.
+
 Nutrition-label OCR is a separate asynchronous processing boundary. After explicit user
 action, the browser prepares a bounded crop and uploads it through an authenticated app
 route. The server normalizes it again, stores it in a private temporary bucket, creates

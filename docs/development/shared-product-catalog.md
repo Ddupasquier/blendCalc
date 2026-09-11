@@ -935,6 +935,10 @@ Packaged products and generic foods use different evidence paths:
 3. Generic search can return active national dataset records. These keep their original
    food/preparation identity and are not automatically merged into a packaged barcode
    product.
+   Import-enabled releases remain operationally incomplete until their canonical import
+   completion time and exact source-file SHA-256 are present. An AAL2 data-operations
+   preview/apply workflow may fill only those missing facts and must clear the owning
+   health occurrence; it does not change imported foods or publication policy.
 4. A database-backed completeness profile checks whether required nutrients are
    reported. It does not change missing, trace, or unmapped values into zero.
 5. Optional label recognition may suggest missing packaged-label values, but the user

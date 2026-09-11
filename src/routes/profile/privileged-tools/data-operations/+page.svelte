@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
 	import CatalogDataOperationsDashboard from "$lib/components/moderation/CatalogDataOperationsDashboard/CatalogDataOperationsDashboard.svelte";
+	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import PrivilegedToolWorkspaceView from "$lib/components/moderation/PrivilegedToolWorkspaceView/PrivilegedToolWorkspaceView.svelte";
 	import ProfilePage from "../../+page.svelte";
 	import type { CatalogDataOperationsPageProps } from "./types";
@@ -46,6 +47,13 @@
 	}}
 	onClose={closeAction}
 >
+	{#if data.datasetEvidenceRecorded}
+		<StatusMessage
+			tone="success"
+			title="Dataset evidence recorded"
+			message="The import evidence passed its health recheck. The completed dataset finding has been removed from Required work."
+		/>
+	{/if}
 	<CatalogDataOperationsDashboard
 		dashboard={data.dashboard}
 		catalogMonitor={data.catalogMonitor}
