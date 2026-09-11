@@ -5,16 +5,19 @@
 	import { getCatalogHealthRepairTargetId } from "$lib/utils/moderation/catalogHealthRepair";
 	import {
 		getCatalogHealthStatusLabel,
-		getCatalogIssueCodeLabel,
+		getCatalogIssueDisplayTitle,
+		getCatalogIssueImpactLabel,
 		getCatalogIssueReasonLabel,
 		getCatalogResolutionActionLabel,
 		getCatalogResponsibleGroupLabel,
 	} from "$lib/utils/moderation/catalogHealthMessages";
+	import { focusPrivilegedWorkspaceTarget } from "$lib/utils/moderation/privilegedWorkspaceNavigation";
 	import type { CatalogProductReadinessPassportProps } from "./types";
 
 	let {
 		passport,
 		canRunRepairs = false,
+		correctionWorkflowAvailable = false,
 	}: CatalogProductReadinessPassportProps = $props();
 
 	const dateFormatter = new Intl.DateTimeFormat(undefined, {
@@ -42,6 +45,11 @@
 		canRunRepairs &&
 		issue.automatedRepairAllowed &&
 		Boolean(issue.automatedRepairKey);
+	const correctionActionAvailable = (issue: (typeof passport.issues)[number]) =>
+		correctionWorkflowAvailable &&
+		["create_catalog_correction", "review_catalog_conflict"].includes(
+			issue.resolutionAction,
+		);
 	const actionableIssueCount = $derived(
 		passport.issues.filter(repairActionAvailable).length,
 	);
@@ -49,6 +57,34 @@
 		...passport.issues.filter(repairActionAvailable),
 		...passport.issues.filter((issue) => !repairActionAvailable(issue)),
 	]);
+	const publicationIssues = $derived(
+		orderedIssues.filter(
+			(issue) => issue.workCategory === "publication_blocker",
+		),
+	);
+	const diagnosticIssues = $derived(
+		orderedIssues.filter(
+			(issue) => issue.workCategory === "catalog_diagnostic",
+		),
+	);
+	const issueGroups = $derived(
+		[
+			{
+				key: "publication",
+				title: "Blocks public API publication",
+				description:
+					"These checks explain why this product is withheld from public blendCalcAPI v1.",
+				issues: publicationIssues,
+			},
+			{
+				key: "diagnostic",
+				title: "Catalog evidence follow-up",
+				description:
+					"These checks improve internal revision or evidence history. They do not block the product's current API status.",
+				issues: diagnosticIssues,
+			},
+		].filter((group) => group.issues.length > 0),
+	);
 </script>
 
 <article class="catalog-product-passport">
@@ -105,108 +141,163 @@
 			tone={issueTone}
 		>
 			<p class="catalog-product-passport__supporting-copy">
-				{!canRunRepairs
-					? `This screen explains the evidence and names the team responsible for each issue. Data operations runs any safe checks and records the final public-API outcome.`
-					: actionableIssueCount === 0
-						? `None of these ${passport.issues.length} issues can be corrected from this screen. Each card names the missing workflow. If the evidence is unavailable today, record that outcome with the final action below.`
-						: actionableIssueCount === passport.issues.length
-							? `Every current issue has a safe repair check on this screen. Run each check once, then complete the final review below if no safe change is available.`
-							: `${actionableIssueCount} ${actionableIssueCount === 1 ? "issue can" : "issues can"} be checked here now. The other ${passport.issues.length - actionableIssueCount} cannot be corrected on this screen. Actionable cards are listed first.`}
+				{passport.product.blendCalcAPIV1Status === "Ready" &&
+				diagnosticIssues.length > 0 &&
+				publicationIssues.length === 0
+					? `This product is already public. The ${diagnosticIssues.length} ${diagnosticIssues.length === 1 ? "item below improves" : "items below improve"} internal evidence history only; none ${diagnosticIssues.length === 1 ? "is" : "are"} keeping it out of blendCalcAPI v1.`
+					: !canRunRepairs
+						? correctionWorkflowAvailable
+							? `This screen preserves the current evidence and routes supported changes into the Correction workflow below. Opening that workflow changes nothing until a separate reviewer approves the submitted correction.`
+							: `This screen explains the evidence and names the team responsible for each issue. Data operations runs any safe checks and records the final public-API outcome.`
+						: actionableIssueCount === 0
+							? correctionWorkflowAvailable
+								? `These ${passport.issues.length} issues require an evidence-backed correction rather than a safe automatic repair. Use the Correction workflow below, or record the applicable terminal outcome if the evidence is unavailable today.`
+								: `None of these ${passport.issues.length} issues can be corrected from this screen. Each card names the missing workflow. If the evidence is unavailable today, record the applicable terminal outcome below.`
+							: actionableIssueCount === passport.issues.length
+								? `Every current issue has a safe repair check on this screen. Run each check once, then complete the final review below if no safe change is available.`
+								: `${actionableIssueCount} ${actionableIssueCount === 1 ? "issue can" : "issues can"} be checked here now. The other ${passport.issues.length - actionableIssueCount} cannot be corrected on this screen. Actionable cards are listed first.`}
 			</p>
 			<div class="catalog-product-passport__issue-list">
-				{#each orderedIssues as issue (issue.occurrenceKey)}
-					<article
-						class="catalog-product-passport__issue"
-						id={`issue-${getCatalogHealthRepairTargetId(issue.occurrenceKey)}`}
-					>
+				{#each issueGroups as group (group.key)}
+					<section class="catalog-product-passport__issue-group">
 						<header>
-							<strong>{getCatalogIssueCodeLabel(issue.issueCode)}</strong>
-							<TextBadge
-								label={repairActionAvailable(issue)
-									? "Fix here"
-									: "No action here"}
-								tone={repairActionAvailable(issue) ? "info" : "warning"}
-							/>
+							<div>
+								<h3>{group.title}</h3>
+								<p>{group.description}</p>
+							</div>
+							<TextBadge label={`${group.issues.length}`} tone="info" />
 						</header>
-						<p>
-							{getCatalogIssueReasonLabel(issue.sourceReason, issue.parameters)}
-						</p>
-						<dl>
-							<div>
-								<dt>Owner</dt>
-								<dd>
-									{getCatalogResponsibleGroupLabel(issue.responsibleGroup)}
-								</dd>
-							</div>
-							<div>
-								<dt>Priority</dt>
-								<dd>
-									{getCatalogHealthStatusLabel(issue.operationalSeverity)}
-								</dd>
-							</div>
-							<div>
-								<dt>Detected</dt>
-								<dd>{formatDate(issue.detectedAt)}</dd>
-							</div>
-							<div>
-								<dt>Automatic repair</dt>
-								<dd>
-									{issue.automatedRepairAllowed
-										? "Eligible after an exact-evidence safety check"
-										: "More evidence required"}
-								</dd>
-							</div>
-						</dl>
-						<section class="catalog-product-passport__action">
-							<span>Do this now</span>
-							<strong>
-								{repairActionAvailable(issue)
-									? "Run the safe repair check below"
-									: getCatalogResolutionActionLabel(issue.resolutionAction)}
-							</strong>
-							{#if repairActionAvailable(issue)}
+						{#each group.issues as issue (issue.occurrenceKey)}
+							<article
+								class="catalog-product-passport__issue"
+								id={`issue-${getCatalogHealthRepairTargetId(issue.occurrenceKey)}`}
+							>
+								<header>
+									<strong
+										>{getCatalogIssueDisplayTitle(
+											issue.issueCode,
+											issue.parameters,
+										)}</strong
+									>
+									<TextBadge
+										label={repairActionAvailable(issue)
+											? "Check available"
+											: correctionActionAvailable(issue)
+												? "Continue below"
+												: "No action here"}
+										tone={repairActionAvailable(issue) ||
+										correctionActionAvailable(issue)
+											? "info"
+											: "warning"}
+									/>
+								</header>
 								<p>
-									The check is a preview and changes nothing. Apply appears only
-									if stored evidence proves an exact repair.
+									{getCatalogIssueReasonLabel(
+										issue.sourceReason,
+										issue.parameters,
+									)}
 								</p>
-								<RoundedActionLink
-									href={`#${getCatalogHealthRepairTargetId(issue.occurrenceKey)}`}
-									variant="primary"
-									fullWidth
-								>
-									Go to safe repair check
-								</RoundedActionLink>
-							{:else}
-								<p>
-									<strong>No in-app control exists for this action yet.</strong>
-									The {getCatalogResponsibleGroupLabel(
-										issue.responsibleGroup,
-									).toLocaleLowerCase()} workflow is still needed to add or approve
-									the missing evidence.
-									{canRunRepairs
-										? "If that evidence is unavailable today, the final action below records that decision and removes this current item from the queue without publishing it."
-										: "Data operations must record the final public-API outcome when that evidence is unavailable."}
-								</p>
-							{/if}
-							<div class="catalog-product-passport__result">
-								<span>Finished when</span>
-								<p>
-									This issue disappears after readiness checks confirm the
-									required evidence, or after the current evidence is
-									deliberately accepted as not publishable by data operations.
-								</p>
-							</div>
-						</section>
-					</article>
+								<dl>
+									<div>
+										<dt>Impact</dt>
+										<dd>{getCatalogIssueImpactLabel(issue.impact)}</dd>
+									</div>
+									<div>
+										<dt>Owner</dt>
+										<dd>
+											{getCatalogResponsibleGroupLabel(issue.responsibleGroup)}
+										</dd>
+									</div>
+									<div>
+										<dt>Priority</dt>
+										<dd>
+											{getCatalogHealthStatusLabel(issue.operationalSeverity)}
+										</dd>
+									</div>
+									<div>
+										<dt>Detected</dt>
+										<dd>{formatDate(issue.detectedAt)}</dd>
+									</div>
+									<div>
+										<dt>Automatic repair</dt>
+										<dd>
+											{issue.automatedRepairAllowed
+												? "Eligible after an exact-evidence safety check"
+												: "More evidence required"}
+										</dd>
+									</div>
+								</dl>
+								<section class="catalog-product-passport__action">
+									<span>Do this now</span>
+									<strong>
+										{repairActionAvailable(issue)
+											? "Run the safe repair check below"
+											: getCatalogResolutionActionLabel(issue.resolutionAction)}
+									</strong>
+									{#if repairActionAvailable(issue)}
+										<p>
+											The check is a preview and changes nothing. Apply appears
+											only if stored evidence proves an exact repair.
+										</p>
+										<RoundedActionLink
+											href={`#${getCatalogHealthRepairTargetId(issue.occurrenceKey)}`}
+											variant="primary"
+											fullWidth
+											onclick={(event) =>
+												focusPrivilegedWorkspaceTarget(
+													event,
+													getCatalogHealthRepairTargetId(issue.occurrenceKey),
+												)}
+										>
+											Go to safe repair check
+										</RoundedActionLink>
+									{:else}
+										<p>
+											{#if correctionActionAvailable(issue)}
+												<strong>Use the Correction workflow below.</strong>
+												It opens the existing evidence-backed correction form and
+												returns you to this review. Opening it changes nothing; only
+												an approved submission creates a new product revision.
+											{:else}
+												<strong
+													>No in-app control exists for this action yet.</strong
+												>
+												The {getCatalogResponsibleGroupLabel(
+													issue.responsibleGroup,
+												).toLocaleLowerCase()} workflow is still needed to add or
+												approve the missing evidence.
+											{/if}
+											{canRunRepairs
+												? issue.workCategory === "publication_blocker"
+													? "If that evidence is unavailable today, the publication review below records that decision and removes this current item from the queue without publishing it."
+													: "If that evidence is unavailable today, the evidence follow-up below records that result and removes only this diagnostic work without changing product or API data."
+												: issue.workCategory === "publication_blocker"
+													? "Data operations must record the final public-API outcome when that evidence is unavailable."
+													: "Data operations must record the evidence follow-up outcome when no reconstruction is possible."}
+										</p>
+									{/if}
+									<div class="catalog-product-passport__result">
+										<span>Finished when</span>
+										<p>
+											{issue.workCategory === "publication_blocker"
+												? "This issue disappears after readiness checks confirm the required evidence, or after the current evidence is deliberately accepted as not publishable by data operations."
+												: "This follow-up disappears after exact history is restored, or after data operations records that the current evidence cannot reconstruct it. Neither outcome changes current API publication."}
+										</p>
+									</div>
+								</section>
+							</article>
+						{/each}
+					</section>
 				{/each}
 			</div>
 		</CollapsibleSection>
-	{:else if passport.reviewDisposition}
+	{:else if passport.reviewDisposition || passport.diagnosticReviewDisposition}
 		<div class="catalog-product-passport__reviewed-message">
 			<strong>Current review is complete.</strong>
 			<p>
-				The product remains available in blendCalc and withheld from public
-				blendCalcAPI v1. Changed evidence automatically creates new work.
+				{passport.product.blendCalcAPIV1Status === "Ready"
+					? "The product remains available in blendCalc and public through blendCalcAPI v1. Only the current internal evidence follow-up was closed. Changed evidence automatically creates new work."
+					: "The product remains available in blendCalc and withheld from public blendCalcAPI v1. Changed evidence automatically creates new work."}
 			</p>
 		</div>
 	{:else}

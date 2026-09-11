@@ -10,7 +10,61 @@ describe("CatalogDataOperationsDashboard", () => {
 			props: {
 				dashboard: catalogDataOperationsHealthFixture,
 				catalogMonitor: catalogMonitorModerationFixture,
-				actionCount: 3,
+				actionCount: 2,
+				actionSubjectsTruncated: false,
+				actionSubjects: [
+					{
+						subjectType: "shared_product",
+						subjectKey: "product-id",
+						displayName: "Evidence-light cereal",
+						context: "Example Foods",
+						issueCount: 2,
+						severity: "blocking",
+						summary: "A required nutrient is missing.",
+						resolutionAction: "submit_catalog_correction",
+						destination:
+							"/profile/privileged-tools/data-operations/products/product-id",
+						missingPrerequisite: null,
+						issues: [
+							{
+								code: "CATALOG_REQUIRED_NUTRIENT_MISSING",
+								summary: "A required nutrient is missing.",
+								resolutionAction: "submit_catalog_correction",
+								severity: "blocking",
+								parameters: { nutrientId: 1008 },
+							},
+							{
+								code: "CATALOG_FIELD_PROVENANCE_MISSING",
+								summary: "Product information lacks source evidence.",
+								resolutionAction: "repair_catalog_field_provenance",
+								severity: "blocking",
+								parameters: { fieldKey: "ingredients" },
+							},
+						],
+					},
+					{
+						subjectType: "generic_food_dataset",
+						subjectKey: "dataset-key",
+						displayName: "Example dataset",
+						context: "example-source",
+						issueCount: 1,
+						severity: "attention",
+						summary: "Import evidence is missing.",
+						resolutionAction: "review_dataset_import",
+						destination: null,
+						missingPrerequisite:
+							"The ingestion workflow must record the missing import date or checksum; no in-app editor exists yet.",
+						issues: [
+							{
+								code: "DATASET_IMPORT_EVIDENCE_MISSING",
+								summary: "Import evidence is missing.",
+								resolutionAction: "review_dataset_import",
+								severity: "attention",
+								parameters: {},
+							},
+						],
+					},
+				],
 			},
 		});
 
@@ -26,6 +80,23 @@ describe("CatalogDataOperationsDashboard", () => {
 		expect(
 			screen.getByRole("heading", { name: "Diagnostic checks" }),
 		).toBeVisible();
+		expect(screen.getByText("Evidence-light cereal")).toBeVisible();
+		expect(screen.getByText("Example dataset")).toBeVisible();
+		expect(
+			screen.getByRole("link", { name: "Open product readiness" }),
+		).toHaveAttribute(
+			"href",
+			"/profile/privileged-tools/data-operations/products/product-id",
+		);
+		expect(screen.getByText("Cannot finish this in the app yet")).toBeVisible();
+		expect(
+			screen.getByText(
+				"Nothing changes until that workflow records reviewed evidence.",
+			),
+		).toBeVisible();
+		expect(
+			screen.queryByText("Other tracked operational issues"),
+		).not.toBeInTheDocument();
 		expect(screen.getByText("Publication readiness")).toBeVisible();
 		expect(
 			screen.getByText("A required nutrient is missing: Potassium, K"),

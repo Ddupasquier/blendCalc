@@ -16,5 +16,6 @@ export type ManualEntrySheetProps = {
 	initialFood?: FoodItem;
 	submissionIntent?: CatalogSubmissionIntent;
 	catalogSubmissionOnly?: boolean;
+	returnHref?: string | null;
 	ingredientListIndex?: CloudIngredientListIndex;
 };

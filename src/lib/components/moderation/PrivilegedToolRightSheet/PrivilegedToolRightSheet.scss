@@ -27,6 +27,7 @@
 	align-content: start;
 	gap: $app-gap-md;
 	padding-block: $app-gap-sm $app-gap-lg;
+	scroll-padding-block: $app-gap-sm $app-gap-lg;
 }
 
 @media (max-width: $app-breakpoint-xs),

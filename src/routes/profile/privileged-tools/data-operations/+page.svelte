@@ -6,13 +6,7 @@
 	import type { CatalogDataOperationsPageProps } from "./types";
 
 	let { data }: CatalogDataOperationsPageProps = $props();
-	const datasetImportEvidenceCount = $derived(
-		data.dashboard.datasets.filter(
-			(dataset) =>
-				dataset.importEnabled &&
-				(dataset.importedAt === null || !dataset.checksumRecorded),
-		).length,
-	);
+	const firstActionSubject = $derived(data.actionSubjects?.[0] ?? null);
 	const closeAction = () => {
 		void goto("/profile/privileged-tools", { replaceState: true });
 	};
@@ -41,10 +35,9 @@
 			data.actionCount === null
 				? "The exact deduplicated action count could not be read. The diagnostic sections remain available, but do not assume that a missing count means no work."
 				: data.actionCount > 0
-					? datasetImportEvidenceCount === data.actionCount &&
-						datasetImportEvidenceCount > 0
-						? "Start with Dataset import evidence in Required work. The diagnostic totals below are broader, can overlap, and do not increase this red count."
-						: "Start in Required work, then use the broader diagnostic checks to locate supporting evidence. Diagnostic totals can overlap and do not increase this red count."
+					? firstActionSubject
+						? `Start with ${firstActionSubject.displayName} in Required work. Its card names every finding, the exact next action, and whether that action is available here. Diagnostic totals below can overlap and do not increase this red count.`
+						: "The named Required work list could not be loaded. Use the broader diagnostic checks to investigate, but do not assume the red count is fully explained."
 					: "No deduplicated catalog subject currently requires an operator repair. Monitoring and reference details remain available below.",
 		completion:
 			"Every tracked issue is resolved from reviewed evidence and the red action total returns to zero.",
@@ -57,5 +50,7 @@
 		dashboard={data.dashboard}
 		catalogMonitor={data.catalogMonitor}
 		actionCount={data.actionCount}
+		actionSubjects={data.actionSubjects}
+		actionSubjectsTruncated={data.actionSubjectsTruncated}
 	/>
 </PrivilegedToolWorkspaceView>

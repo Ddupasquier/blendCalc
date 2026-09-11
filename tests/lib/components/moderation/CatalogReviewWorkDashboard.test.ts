@@ -14,6 +14,10 @@ describe("CatalogReviewWorkDashboard", () => {
 							barcode: "00011110129505",
 							productName: "Peanut Butter",
 							fieldPath: "ingredients",
+							observedValues: [
+								{ source: "label", value: "Peanuts, salt" },
+								{ source: "provider", value: "Peanuts, sugar, salt" },
+							],
 							severity: "high",
 							createdAt: "2026-08-22T12:00:00.000Z",
 						},
@@ -43,6 +47,9 @@ describe("CatalogReviewWorkDashboard", () => {
 			"/profile/privileged-tools/catalog-review-work/products/product-id",
 		);
 		expect(screen.getByText(/Ingredients/)).toBeInTheDocument();
+		expect(
+			screen.getByText(/Peanuts, salt versus Peanuts, sugar, salt/),
+		).toBeVisible();
 	});
 
 	it("requires a deliberate recall decision and evidence note", async () => {
@@ -87,6 +94,12 @@ describe("CatalogReviewWorkDashboard", () => {
 			),
 		).toBeVisible();
 		expect(save).toBeDisabled();
+		expect(screen.getByText("Why this was flagged")).toBeVisible();
+		expect(
+			screen.getByText(
+				"Required — verify the package, lot, and date codes before confirming.",
+			),
+		).toBeVisible();
 
 		await fireEvent.click(decision);
 		await fireEvent.click(
@@ -106,5 +119,51 @@ describe("CatalogReviewWorkDashboard", () => {
 			{ target: { value: "The notice lists a different lot code." } },
 		);
 		expect(save).toBeEnabled();
+	});
+
+	it("shows provider values and explains the exact keep-current outcome", () => {
+		render(CatalogReviewWorkDashboard, {
+			props: {
+				reviewWork: {
+					conflicts: [],
+					providerChanges: [
+						{
+							id: "review-id",
+							sharedProductId: "product-id",
+							barcode: "00011110129505",
+							productName: "Peanut Butter",
+							sourceName: "Open Food Facts",
+							changeSummary: {
+								changes: [
+									{
+										field: "ingredients",
+										label: "Ingredients",
+										severity: "high",
+										previousValue: "Peanuts, salt",
+										observedValue: "Peanuts, sugar, salt",
+									},
+								],
+							},
+							materialFieldPaths: ["ingredients"],
+							observedAt: "2026-08-22T12:00:00.000Z",
+							createdAt: "2026-08-22T12:00:00.000Z",
+							correctionStatus: null,
+							submissionId: null,
+						},
+					],
+					safetyMatches: [],
+					counts: { conflicts: 0, providerChanges: 1, safetyMatches: 0 },
+					issueLimit: 20,
+				},
+			},
+		});
+
+		expect(screen.getByText("Earlier provider value")).toBeVisible();
+		expect(screen.getByText("Peanuts, sugar, salt")).toBeVisible();
+		expect(
+			screen.getByText(
+				/closes API conflicts created by this exact provider snapshot/u,
+			),
+		).toBeVisible();
 	});
 });

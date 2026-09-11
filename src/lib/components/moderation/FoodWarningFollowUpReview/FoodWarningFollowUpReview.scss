@@ -1,0 +1,103 @@
+@use "../../../../styles/variables" as *;
+
+.food-warning-follow-up-review,
+.food-warning-follow-up-review > section,
+.food-warning-follow-up-review form,
+.food-warning-follow-up-review dl,
+.food-warning-follow-up-review dl div,
+.food-warning-follow-up-review__report-note,
+.food-warning-follow-up-review__initial-review,
+.food-warning-follow-up-review__initial-review > p,
+.food-warning-follow-up-review__evidence-snapshot,
+.food-warning-follow-up-review__evidence-snapshot li,
+.food-warning-follow-up-review__complete,
+.food-warning-follow-up-review__unavailable {
+	display: grid;
+	gap: $app-gap-sm;
+}
+
+.food-warning-follow-up-review > section {
+	padding: $app-shell-card-padding;
+	background: $app-shell-surface-soft;
+	border: $app-border;
+	border-radius: $app-shell-radius-card;
+}
+
+.food-warning-follow-up-review > section > header {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	gap: $app-gap-sm;
+	align-items: start;
+}
+
+.food-warning-follow-up-review h2,
+.food-warning-follow-up-review p,
+.food-warning-follow-up-review dl,
+.food-warning-follow-up-review dd {
+	margin: 0;
+}
+
+.food-warning-follow-up-review header span,
+.food-warning-follow-up-review dt {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-bold;
+}
+
+.food-warning-follow-up-review header span {
+	letter-spacing: $app-letter-spacing-label;
+	text-transform: uppercase;
+}
+
+.food-warning-follow-up-review dl {
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.food-warning-follow-up-review dl div,
+.food-warning-follow-up-review__report-note,
+.food-warning-follow-up-review__initial-review,
+.food-warning-follow-up-review__evidence-snapshot,
+.food-warning-follow-up-review__complete,
+.food-warning-follow-up-review__unavailable {
+	min-width: 0;
+	padding: $app-gap-sm;
+	background: $app-shell-surface-panel;
+	border-radius: $app-shell-radius-control;
+}
+
+.food-warning-follow-up-review dd {
+	overflow-wrap: anywhere;
+}
+
+.food-warning-follow-up-review__initial-review > dl {
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.food-warning-follow-up-review__initial-review > p,
+.food-warning-follow-up-review__evidence-snapshot li {
+	padding: $app-gap-sm;
+	background: $app-shell-surface-soft;
+	border-radius: $app-shell-radius-control;
+}
+
+.food-warning-follow-up-review__evidence-snapshot ul {
+	display: grid;
+	gap: $app-gap-xs;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.food-warning-follow-up-review__evidence-snapshot li > span,
+.food-warning-follow-up-review__evidence-snapshot > p {
+	margin: 0;
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+}
+
+@media (max-width: $app-breakpoint-xs) {
+	.food-warning-follow-up-review dl,
+	.food-warning-follow-up-review__initial-review > dl {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}

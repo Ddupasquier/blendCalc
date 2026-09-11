@@ -1,9 +1,11 @@
 <script lang="ts">
 	import TextBadge from "$lib/components/common/badges/TextBadge/TextBadge.svelte";
+	import RoundedActionLink from "$lib/components/common/buttons/RoundedActionLink/RoundedActionLink.svelte";
 	import CollapsibleSection from "$lib/components/common/disclosure/CollapsibleSection/CollapsibleSection.svelte";
 	import {
 		getCatalogHealthStatusLabel,
 		getCatalogIssueReasonLabel,
+		getCatalogResolutionActionLabel,
 	} from "$lib/utils/moderation/catalogHealthMessages";
 	import type { CatalogDataOperationsDashboardProps } from "./types";
 
@@ -11,6 +13,8 @@
 		dashboard,
 		catalogMonitor,
 		actionCount,
+		actionSubjects,
+		actionSubjectsTruncated,
 	}: CatalogDataOperationsDashboardProps = $props();
 
 	const numberFormatter = new Intl.NumberFormat();
@@ -63,20 +67,27 @@
 			action: "Inspect first revision",
 		},
 	]);
-	const datasetImportEvidenceItems = $derived(
-		dashboard.datasets.filter(
-			(dataset) =>
-				dataset.importEnabled &&
-				(dataset.importedAt === null || !dataset.checksumRecorded),
-		),
-	);
-	const unidentifiedActionCount = $derived(
-		actionCount === null
-			? null
-			: Math.max(actionCount - datasetImportEvidenceItems.length, 0),
-	);
-
 	const formatNumber = (value: number) => numberFormatter.format(value);
+	const getSubjectTypeLabel = (subjectType: string) => {
+		switch (subjectType) {
+			case "shared_product":
+				return "Catalog product";
+			case "nutrient_mapping":
+				return "Nutrient identity";
+			case "generic_food_dataset":
+				return "Dataset";
+			case "product_data_source":
+				return "Product source";
+			case "food_preference":
+				return "Food-warning policy";
+			default:
+				return "Data operation";
+		}
+	};
+	const getDestinationLabel = (subjectType: string) =>
+		subjectType === "nutrient_mapping"
+			? "Review nutrient identity"
+			: "Open product readiness";
 	const formatDate = (value: string | null) => {
 		if (!value) return "Not recorded";
 		const date = new Date(value);
@@ -105,7 +116,7 @@
 				</p>
 			</div>
 		</header>
-		{#if actionCount === null}
+		{#if actionCount === null || actionSubjects === null}
 			<article class="catalog-data-operations__required-card">
 				<header>
 					<strong>Queue status unavailable</strong>
@@ -129,40 +140,75 @@
 			</article>
 		{:else}
 			<div class="catalog-data-operations__required-list">
-				{#if datasetImportEvidenceItems.length > 0}
-					<article class="catalog-data-operations__required-card">
+				{#each actionSubjects as subject (`${subject.subjectType}:${subject.subjectKey}`)}
+					<article
+						class="catalog-data-operations__required-card"
+						data-severity={subject.severity}
+					>
 						<header>
-							<strong>Dataset import evidence</strong>
+							<div>
+								<span class="catalog-data-operations__required-type">
+									{getSubjectTypeLabel(subject.subjectType)}
+								</span>
+								<strong>{subject.displayName}</strong>
+								{#if subject.context}
+									<small>{subject.context}</small>
+								{/if}
+							</div>
 							<TextBadge
-								label={`${formatNumber(datasetImportEvidenceItems.length)} ${datasetImportEvidenceItems.length === 1 ? "dataset" : "datasets"}`}
+								label={`${formatNumber(subject.issueCount)} ${subject.issueCount === 1 ? "finding" : "findings"}`}
 								tone="warning"
 							/>
 						</header>
-						<p>
-							Record the missing import date or checksum evidence for these
-							datasets:
-						</p>
-						<ul>
-							{#each datasetImportEvidenceItems as dataset (dataset.key)}
-								<li>{dataset.displayName}</li>
+						<ul aria-label={`Findings for ${subject.displayName}`}>
+							{#each subject.issues as issue}
+								<li>
+									<strong>{issue.summary}</strong>
+									<span>
+										Next: {getCatalogResolutionActionLabel(
+											issue.resolutionAction,
+										)}
+									</span>
+								</li>
 							{/each}
 						</ul>
+						{#if subject.destination}
+							<div class="catalog-data-operations__required-action">
+								<strong>What happens next</strong>
+								<p>
+									Opening the focused review changes nothing. It shows the
+									evidence and enables only the decisions or repairs supported
+									for this subject.
+								</p>
+								<RoundedActionLink
+									href={subject.destination}
+									variant="primary"
+									fullWidth
+								>
+									{getDestinationLabel(subject.subjectType)}
+								</RoundedActionLink>
+							</div>
+						{:else}
+							<div
+								class="catalog-data-operations__required-action"
+								data-unavailable="true"
+							>
+								<strong>Cannot finish this in the app yet</strong>
+								<p>{subject.missingPrerequisite}</p>
+								<p>
+									Nothing changes until that workflow records reviewed evidence.
+								</p>
+							</div>
+						{/if}
 					</article>
-				{/if}
-				{#if unidentifiedActionCount && unidentifiedActionCount > 0}
-					<article class="catalog-data-operations__required-card">
-						<header>
-							<strong>Other tracked operational issues</strong>
-							<TextBadge
-								label={`${formatNumber(unidentifiedActionCount)} to resolve`}
-								tone="warning"
-							/>
-						</header>
-						<p>
-							Use the diagnostic checks and detailed sections below to locate
-							the affected subjects and their evidence.
-						</p>
-					</article>
+				{/each}
+				{#if actionSubjectsTruncated}
+					<p class="catalog-data-operations__required-limit" role="status">
+						Showing the first {formatNumber(actionSubjects.length)} of {formatNumber(
+							actionCount,
+						)} named subjects. Finish or repair these first, then refresh for the
+						next batch.
+					</p>
 				{/if}
 			</div>
 		{/if}

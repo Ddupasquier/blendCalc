@@ -1,0 +1,95 @@
+@use "../../../../styles/variables" as *;
+
+.catalog-correction-handoff {
+	display: grid;
+	gap: $app-gap-sm;
+	padding: $app-shell-card-padding;
+	border: 1px solid $app-warning-border;
+	border-radius: $app-shell-radius-card;
+	background: $app-shell-surface-soft;
+}
+
+.catalog-correction-handoff > header,
+.catalog-correction-handoff > header > div,
+.catalog-correction-handoff li,
+.catalog-correction-handoff__outcome,
+.catalog-correction-handoff li form,
+.catalog-correction-handoff li form header {
+	display: grid;
+	gap: $app-gap-inline-compact;
+}
+
+.catalog-correction-handoff > header {
+	grid-template-columns: minmax(0, 1fr) auto;
+	align-items: start;
+}
+
+.catalog-correction-handoff h2,
+.catalog-correction-handoff p,
+.catalog-correction-handoff ul {
+	margin: 0;
+}
+
+.catalog-correction-handoff > header span,
+.catalog-correction-handoff small {
+	color: $app-shell-text-muted;
+}
+
+.catalog-correction-handoff > header span {
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-bold;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.catalog-correction-handoff ul {
+	display: grid;
+	gap: $app-gap-xs;
+	padding: 0;
+	list-style: none;
+}
+
+.catalog-correction-handoff li,
+.catalog-correction-handoff__outcome {
+	padding: $app-gap-sm;
+	border-radius: $app-shell-radius-control;
+	background: $app-shell-surface-panel;
+}
+
+.catalog-correction-handoff__outcome[data-tone="warning"] {
+	border: 1px solid $app-warning-border;
+}
+
+.catalog-correction-handoff__evidence {
+	display: grid;
+	gap: $app-gap-xs;
+	margin: 0;
+}
+
+.catalog-correction-handoff__evidence div {
+	display: grid;
+	gap: $app-gap-2xs;
+	padding: $app-gap-xs;
+	border-left: 2px solid $app-shell-border-subtle;
+}
+
+.catalog-correction-handoff__evidence dt {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-xs;
+}
+
+.catalog-correction-handoff__evidence dd {
+	margin: 0;
+	overflow-wrap: anywhere;
+}
+
+.catalog-correction-handoff li form {
+	margin-top: $app-gap-xs;
+	padding-top: $app-gap-sm;
+	border-top: 1px solid $app-shell-border-subtle;
+}
+
+.catalog-correction-handoff li form header span {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+}

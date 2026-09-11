@@ -86,6 +86,13 @@
 							? "Compare the active warning rule with its approved policy sources."
 							: "Trace the incorrect source mapping to reviewed package or provider evidence."}
 					</p>
+					<a
+						href={`/profile/privileged-tools/food-warning-reports/follow-ups/${encodeURIComponent(reviewCase.id)}`}
+					>
+						{reviewCase.caseType === "rule_review"
+							? "Review warning rule"
+							: "Review warning source"}
+					</a>
 				</article>
 			{/each}
 		</div>

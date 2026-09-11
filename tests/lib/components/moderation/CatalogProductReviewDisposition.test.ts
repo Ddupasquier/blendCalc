@@ -8,6 +8,7 @@ describe("CatalogProductReviewDisposition", () => {
 		render(CatalogProductReviewDisposition, {
 			props: {
 				passport: catalogProductReadinessPassportFixture,
+				category: "publication",
 				canFinishReview: true,
 			},
 		});
@@ -20,7 +21,7 @@ describe("CatalogProductReviewDisposition", () => {
 			screen.getByText("It stays withheld from public blendCalcAPI v1."),
 		).toBeInTheDocument();
 		expect(
-			screen.getByText("These current readiness items leave the work queue."),
+			screen.getByText("These current publication items leave the work queue."),
 		).toBeInTheDocument();
 		expect(
 			screen.getByText(
@@ -52,6 +53,7 @@ describe("CatalogProductReviewDisposition", () => {
 						canFinish: true,
 					},
 				},
+				category: "publication",
 				canFinishReview: true,
 			},
 		});
@@ -80,6 +82,7 @@ describe("CatalogProductReviewDisposition", () => {
 						reviewedAt: "2026-09-10T18:00:00.000Z",
 					},
 				},
+				category: "publication",
 				canFinishReview: true,
 			},
 		});
@@ -92,5 +95,50 @@ describe("CatalogProductReviewDisposition", () => {
 				name: "Finish review — keep out of public API",
 			}),
 		).not.toBeInTheDocument();
+	});
+
+	it("finishes nonblocking evidence work without offering an API-withhold action", async () => {
+		render(CatalogProductReviewDisposition, {
+			props: {
+				passport: {
+					...catalogProductReadinessPassportFixture,
+					product: {
+						...catalogProductReadinessPassportFixture.product,
+						blendCalcAPIV1Status: "Ready",
+					},
+					issues: [
+						{
+							...catalogProductReadinessPassportFixture.issues[0],
+							workCategory: "catalog_diagnostic",
+							impact: "does_not_block_publication",
+						},
+					],
+					diagnosticReviewCompletion: {
+						requiredSafeRepairCheckCount: 1,
+						completedSafeRepairCheckCount: 1,
+						canFinish: true,
+					},
+				},
+				category: "diagnostic",
+				canFinishReview: true,
+			},
+		});
+
+		expect(
+			screen.getByText("Finish the evidence follow-up"),
+		).toBeInTheDocument();
+		expect(
+			screen.getByText(
+				"Its current public blendCalcAPI v1 status does not change.",
+			),
+		).toBeInTheDocument();
+		expect(
+			screen.queryByRole("button", {
+				name: "Finish review — keep out of public API",
+			}),
+		).not.toBeInTheDocument();
+		expect(
+			screen.getByRole("button", { name: "Finish evidence follow-up" }),
+		).toBeDisabled();
 	});
 });
