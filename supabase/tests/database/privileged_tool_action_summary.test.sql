@@ -1,6 +1,6 @@
 begin;
 
-select plan(16);
+select plan(23);
 
 select has_function(
 	'public',
@@ -74,7 +74,7 @@ select
 		select count(*)
 		from (
 			select occurrence.subject_type, occurrence.subject_key
-			from public.catalog_health_issue_occurrences occurrence
+			from public.catalog_health_actionable_issue_occurrences occurrence
 			join public.app_issue_codes issue
 				on issue.code = occurrence.issue_code
 			where occurrence.status = 'open'
@@ -157,6 +157,18 @@ select is(
 );
 
 select is(
+	public.get_privileged_tool_action_summary() -> 'catalogDataOperationSubjects',
+	'[]'::jsonb,
+	'moderators receive no data-operations subject identities'
+);
+
+select is(
+	(public.get_privileged_tool_action_summary() ->> 'catalogDataOperationSubjectsTruncated')::boolean,
+	false,
+	'moderator subject results are not falsely marked as truncated'
+);
+
+select is(
 	(public.get_privileged_tool_action_summary() ->> 'totalActionableItems')::bigint,
 	(
 		select product_submissions + catalog_review + food_warnings + profile_images
@@ -194,6 +206,78 @@ select is(
 		from expected_privileged_action_counts
 	),
 	'admin aggregate includes every permitted genuine action queue'
+);
+
+select is(
+	jsonb_array_length(
+		public.get_privileged_tool_action_summary() -> 'catalogDataOperationSubjects'
+	)::bigint,
+	least(
+		(select data_operations from expected_privileged_action_counts),
+		50::bigint
+	),
+	'the bounded subject list contains the expected number of exact subjects'
+);
+
+select is(
+	(
+		public.get_privileged_tool_action_summary()
+		->> 'catalogDataOperationSubjectsTruncated'
+	)::boolean,
+	(select data_operations > 50 from expected_privileged_action_counts),
+	'the summary reports whether the exact subject list exceeds its bound'
+);
+
+select is(
+	(
+		select count(*)
+		from jsonb_array_elements(
+			public.get_privileged_tool_action_summary()
+			-> 'catalogDataOperationSubjects'
+		) subject
+	),
+	(
+		select count(distinct concat_ws(
+			':',
+			subject ->> 'subjectType',
+			subject ->> 'subjectKey'
+		))
+		from jsonb_array_elements(
+			public.get_privileged_tool_action_summary()
+			-> 'catalogDataOperationSubjects'
+		) subject
+	),
+	'overlapping findings are deduplicated to one card per action subject'
+);
+
+select ok(
+	not exists (
+		select 1
+		from jsonb_array_elements(
+			public.get_privileged_tool_action_summary()
+			-> 'catalogDataOperationSubjects'
+		) subject
+		where (subject ->> 'issueCount')::integer
+			<> jsonb_array_length(subject -> 'issues')
+	),
+	'each subject count agrees with its complete finding list'
+);
+
+select ok(
+	not exists (
+		select 1
+		from jsonb_array_elements(
+			public.get_privileged_tool_action_summary()
+			-> 'catalogDataOperationSubjects'
+		) subject
+		where nullif(btrim(subject ->> 'displayName'), '') is null
+			or nullif(btrim(subject ->> 'severity'), '') is null
+			or (
+				nullif(btrim(subject ->> 'destination'), '') is null
+				and nullif(btrim(subject ->> 'missingPrerequisite'), '') is null
+			)
+	),
+	'every named subject exposes priority and either a destination or the missing prerequisite'
 );
 
 select ok(

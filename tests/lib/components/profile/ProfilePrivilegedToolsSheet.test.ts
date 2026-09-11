@@ -16,6 +16,8 @@ const emptyReviewSummary: ProfilePrivilegedToolAccess["reviewSummary"] = {
 	pendingFoodWarningReports: 0,
 	pendingProfileImageReviews: 0,
 	pendingCatalogDataOperations: 0,
+	catalogDataOperationSubjects: [],
+	catalogDataOperationSubjectsTruncated: false,
 	totalActionableItems: 0,
 	unavailable: false,
 	identityVerificationRequired: false,

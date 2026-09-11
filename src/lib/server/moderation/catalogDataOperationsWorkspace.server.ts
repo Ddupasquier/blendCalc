@@ -28,6 +28,9 @@ export const loadCatalogDataOperationsWorkspace = async (
 		dashboard,
 		catalogMonitor,
 		actionCount: actionSummary?.pendingCatalogDataOperations ?? null,
+		actionSubjects: actionSummary?.catalogDataOperationSubjects ?? null,
+		actionSubjectsTruncated:
+			actionSummary?.catalogDataOperationSubjectsTruncated ?? false,
 	};
 };
 export type CatalogDataOperationsWorkspaceData = Awaited<

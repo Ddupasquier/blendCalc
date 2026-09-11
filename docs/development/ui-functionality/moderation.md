@@ -145,7 +145,7 @@ Provider observations explain that keeping the current record closes the observa
 while supported provider evidence must continue through a catalog correction.
 
 `/profile/privileged-tools/data-operations` starts with the exact deduplicated human-
-action count, a Required work summary, three explicitly named diagnostic checks, and
+action count, an exact named Required work list, three explicitly named diagnostic checks, and
 compact catalog-coverage facts. Publication readiness, nutrient identity, and revision
 evidence use `match` wording because their broader results can overlap and do not add to
 the red action total; their summary cards link directly to the first affected record.
@@ -158,7 +158,11 @@ decisions, recall decisions, or catalog-conflict decisions in this workspace.
 Its Profile badge counts each distinct affected subject once when that subject has one
 or more open enabled `app_issue_codes` rows owned by `data_operations`. Informational
 metrics, disabled issue codes, and multiple open issues on the same subject do not add
-extra actions.
+extra actions. Required work uses that same grouped query, orders the most severe
+subjects first, and shows every issue attached to each subject. A subject card must
+provide either a direct focused-workflow link or a plain-language missing prerequisite;
+it must never substitute a generic remainder count or imply that an unavailable action
+can be completed in the app.
 
 The legacy `/moderation` and `/moderation/data-health` routes redirect to the Profile
 privileged-tools gateway so operators always enter the same role-aware workflow.

@@ -2057,8 +2057,13 @@ Notes:
 - `get_privileged_tool_action_summary()` returns exact AAL2, live-role-aware Profile
   counts for product submissions, combined catalog-review decisions, food-warning
   reports, distinct reported profile images, and deduplicated data-operation subjects.
-  It excludes search-only Account access and sums only the counts permitted for the
-  current database role assignment.
+  For authorized administrators and developers, the same grouped data-operations query
+  returns up to 50 severity-ordered subject objects with safe identity, complete issue
+  facts, resolution action, and either a focused destination or an explicit missing
+  prerequisite; a truncation flag distinguishes a bounded list from a complete one.
+  Disabled issue codes and accepted publication-only diagnostics are excluded. It
+  excludes search-only Account access and sums only the counts permitted for the current
+  database role assignment.
 - `app_role_assignments` is the authority for application roles. The `app_role` enum
   contains `user`, `moderator`, `admin`, and `developer`, while assignments store only
   elevated roles. `app_role_permissions` maps those roles to database-owned

@@ -1128,6 +1128,26 @@ test("administrators can open data operations after direct AAL2 verification", a
 		await expect(
 			dataOperationsSheet.getByRole("region", { name: "Required work" }),
 		).toBeVisible();
+		const requiredWork = dataOperationsSheet.getByRole("region", {
+			name: "Required work",
+		});
+		await expect(
+			requiredWork.getByText("Canadian Nutrient File 2026"),
+		).toBeVisible();
+		await expect(
+			requiredWork.getByText("UK Composition of Foods Integrated Dataset 2021"),
+		).toBeVisible();
+		await expect(
+			requiredWork.getByText("Other tracked operational issues"),
+		).toHaveCount(0);
+		await expect(
+			requiredWork.getByText("Cannot finish this in the app yet"),
+		).toHaveCount(3);
+		await expect(
+			requiredWork.getByText(
+				"Nothing changes until that workflow records reviewed evidence.",
+			),
+		).toHaveCount(3);
 		await expect(
 			dataOperationsSheet.getByRole("region", { name: "Diagnostic checks" }),
 		).toBeVisible();

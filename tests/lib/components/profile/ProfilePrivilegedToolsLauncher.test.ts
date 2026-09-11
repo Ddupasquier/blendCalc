@@ -25,6 +25,9 @@ const createAccess = (
 		unavailable: false,
 		identityVerificationRequired: false,
 		...overrides,
+		catalogDataOperationSubjects: overrides.catalogDataOperationSubjects ?? [],
+		catalogDataOperationSubjectsTruncated:
+			overrides.catalogDataOperationSubjectsTruncated ?? false,
 	},
 });
 

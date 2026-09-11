@@ -119,10 +119,13 @@ badges distinct affected subjects with open enabled issues assigned to that work
 rather than summing overlapping dashboard metrics. Its three actionable summaries use
 diagnostic-match wording and direct first-record links; those broader, potentially
 overlapping checks never add to the red operator-work total. Required work appears
-separately and names the affected records when the existing health response can identify
-them. Source, dataset, policy, and monitor badges show explicit informational units or
-health states. It opens only the first non-clear diagnostic and never duplicates review
-queues. The
+separately from the exact same query as its badge count. It groups overlapping findings
+into one card per affected subject, names that subject, lists every finding and next
+action, and links directly to an available focused workflow. When no in-app workflow
+exists, the card names the missing prerequisite and makes clear that nothing was
+changed. Source, dataset, policy, and monitor badges show explicit informational units
+or health states. It opens only the first non-clear diagnostic and never duplicates
+review queues. The
 visual consistency never replaces each route's independent server, database, AAL2, and
 permission checks.
 
