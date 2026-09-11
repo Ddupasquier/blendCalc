@@ -9,6 +9,7 @@
 		target,
 		rel,
 		ariaLabel,
+		onclick,
 		children,
 	}: RoundedActionLinkProps = $props();
 </script>
@@ -22,6 +23,7 @@
 	data-variant={variant}
 	data-content-align={contentAlign}
 	aria-label={ariaLabel}
+	{onclick}
 >
 	{#if children}
 		{@render children()}

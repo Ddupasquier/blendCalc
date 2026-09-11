@@ -169,6 +169,26 @@ export const getCatalogIssueReasonLabel = (
 export const getCatalogIssueCodeLabel = (issueCode: string) =>
 	CATALOG_ISSUE_CODE_LABELS[issueCode] ?? "Catalog evidence needs attention";
 
+export const getCatalogIssueDisplayTitle = (
+	issueCode: string,
+	parameters?: Record<string, unknown>,
+) => {
+	if (
+		issueCode === "CATALOG_REVISION_EXPLANATION_MISSING" &&
+		typeof parameters?.revisionNumber === "number"
+	) {
+		return `Revision ${parameters.revisionNumber} needs change evidence`;
+	}
+	return getCatalogIssueCodeLabel(issueCode);
+};
+
+export const getCatalogIssueImpactLabel = (
+	impact: "blocks_publication" | "does_not_block_publication",
+) =>
+	impact === "blocks_publication"
+		? "Blocks public blendCalcAPI v1 publication"
+		: "Does not affect current API publication";
+
 export const getCatalogResponsibleGroupLabel = (responsibleGroup: string) =>
 	CATALOG_RESPONSIBLE_GROUP_LABELS[responsibleGroup] ?? "Privileged review";
 

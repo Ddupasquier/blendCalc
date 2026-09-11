@@ -33,3 +33,7 @@ export const navigateShallowRoute = ({
 
 	pushState(href, nextPageState);
 };
+
+export const replaceShallowRouteHash = (hash: string) => {
+	replaceNavigationState(hash, window.history.state);
+};

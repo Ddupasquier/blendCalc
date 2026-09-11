@@ -7,12 +7,12 @@
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import SelectField from "$lib/components/common/forms/SelectField/SelectField.svelte";
 	import TextField from "$lib/components/common/forms/TextField/TextField.svelte";
+	import CompatibleNutrientPicker from "$lib/components/moderation/CompatibleNutrientPicker/CompatibleNutrientPicker.svelte";
 	import type { NutrientMappingReviewProps } from "./types";
 
 	let { workspace, form = null }: NutrientMappingReviewProps = $props();
 	let pending = $state(false);
 	let outcome = $state<"" | "approved" | "excluded">("");
-	let nutrientSearch = $state("");
 	let selectedNutrientId = $state("");
 	let initializedMappingId = $state("");
 	let evidenceReference = $state("");
@@ -21,7 +21,12 @@
 	$effect(() => {
 		if (workspace.mapping.id === initializedMappingId) return;
 		initializedMappingId = workspace.mapping.id;
-		selectedNutrientId = String(workspace.mapping.currentNutrient.nutrientId);
+		selectedNutrientId = workspace.compatibleNutrients.some(
+			(nutrient) =>
+				nutrient.nutrientId === workspace.mapping.currentNutrient.nutrientId,
+		)
+			? String(workspace.mapping.currentNutrient.nutrientId)
+			: "";
 		outcome = "";
 		evidenceReference = "";
 		reviewNote = "";
@@ -33,37 +38,11 @@
 	const confidencePercent = $derived(
 		`${Math.round(workspace.mapping.confidence * 100)}%`,
 	);
-	const filteredNutrients = $derived.by(() => {
-		const query = nutrientSearch.trim().toLocaleLowerCase();
-		const matches = query
-			? workspace.compatibleNutrients.filter((nutrient) =>
-					[
-						nutrient.nutrientName,
-						nutrient.nutrientNumber,
-						nutrient.nutrientId,
-					].some((value) =>
-						String(value ?? "")
-							.toLocaleLowerCase()
-							.includes(query),
-					),
-				)
-			: workspace.compatibleNutrients;
-		const boundedMatches = matches.slice(0, 80);
-		const selected = workspace.compatibleNutrients.find(
-			(nutrient) => String(nutrient.nutrientId) === selectedNutrientId,
-		);
-		return selected &&
-			!boundedMatches.some(
-				(nutrient) => nutrient.nutrientId === selected.nutrientId,
-			)
-			? [selected, ...boundedMatches]
-			: boundedMatches;
-	});
-	const nutrientOptions = $derived(
-		filteredNutrients.map((nutrient) => ({
-			value: String(nutrient.nutrientId),
-			label: `${nutrient.nutrientName} · ${nutrient.defaultUnitName}`,
-		})),
+	const currentSuggestionIsCompatible = $derived(
+		workspace.compatibleNutrients.some(
+			(nutrient) =>
+				nutrient.nutrientId === workspace.mapping.currentNutrient.nutrientId,
+		),
 	);
 	const setOutcome = (value: string) => {
 		if (value !== "approved" && value !== "excluded") return;
@@ -135,11 +114,20 @@
 
 	<CollapsibleSection title="Why this needs review" surface="panel">
 		<div class="nutrient-mapping-review__explanation">
-			<p>
-				blendCalc found a possible match, but the provider key is not an exact
-				reviewed identity. It stays disabled until evidence confirms what it
-				represents.
-			</p>
+			{#if workspace.mapping.mappingMethod === "db_reviewed_api_key_match" && !currentSuggestionIsCompatible}
+				<p>
+					The provider key has an exact reviewed identity, but its reported
+					{workspace.mapping.sourceUnitName} unit does not have a reviewed path to
+					{workspace.mapping.currentNutrient.defaultUnitName}. It stays disabled
+					until that nutrient-specific conversion is reviewed.
+				</p>
+			{:else}
+				<p>
+					blendCalc found a possible match, but the provider key is not an exact
+					reviewed identity. It stays disabled until evidence confirms what it
+					represents.
+				</p>
+			{/if}
 			{#if workspace.mapping.candidateReason}
 				<p>{workspace.mapping.candidateReason}</p>
 			{/if}
@@ -225,25 +213,18 @@
 			/>
 
 			{#if outcome === "approved"}
-				<TextField
-					id="nutrient-mapping-search"
-					label="Find a compatible nutrient"
-					type="search"
-					value={nutrientSearch}
-					placeholder="Search nutrient name, number, or ID"
-					helper="Only nutrients with the same unit or a reviewed conversion are available."
-					disabled={pending}
-					oninput={(event) => (nutrientSearch = event.currentTarget.value)}
-				/>
-				<SelectField
-					id="nutrient-mapping-selected-nutrient"
-					name="selectedNutrientId"
-					label="Confirmed nutrient"
-					value={selectedNutrientId}
+				{#if !currentSuggestionIsCompatible}
+					<StatusMessage
+						tone="warning"
+						title="The suggested nutrient is not selectable yet"
+						message={`There is no reviewed ${workspace.mapping.sourceUnitName}-to-${workspace.mapping.currentNutrient.defaultUnitName} unit path for ${workspace.mapping.currentNutrient.nutrientName}. Choose another compatible nutrient only if the evidence proves it, or change the decision to Exclude.`}
+					/>
+				{/if}
+				<CompatibleNutrientPicker
+					nutrients={workspace.compatibleNutrients}
+					{selectedNutrientId}
 					onValueChange={(value) => (selectedNutrientId = value)}
-					options={nutrientOptions}
-					disabled={pending || nutrientOptions.length === 0}
-					required
+					disabled={pending}
 				/>
 				<TextField
 					id="nutrient-mapping-evidence-reference"
@@ -285,9 +266,7 @@
 					disabled={pending ||
 						!reviewNote.trim() ||
 						(outcome === "approved" &&
-							(!selectedNutrientId ||
-								nutrientOptions.length === 0 ||
-								!evidenceReference.trim()))}
+							(!selectedNutrientId || !evidenceReference.trim()))}
 				>
 					{outcome === "approved"
 						? "Approve nutrient mapping"

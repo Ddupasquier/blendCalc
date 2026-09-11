@@ -129,5 +129,27 @@ export const getCatalogHealthRepairItemLabel = (itemKey: string) => {
 	return itemKey;
 };
 
+export const getCatalogHealthRepairEvidenceDescription = (
+	repairKey: string | null,
+	parameters: Record<string, unknown>,
+) => {
+	if (repairKey === "restore_revision_changes_from_summary") {
+		const revisionNumber = parameters.revisionNumber;
+		return typeof revisionNumber === "number"
+			? `Checks Revision ${revisionNumber}'s stored change summary for exact field-by-field before and after values. It does not compare names or guess what changed.`
+			: "Checks the stored revision summary for exact field-by-field before and after values. It does not compare names or guess what changed.";
+	}
+	if (repairKey === "create_revision_from_existing_evidence") {
+		return "Checks approved matching submissions and exact stored source observations for a complete first-revision snapshot.";
+	}
+	if (repairKey === "link_existing_nutrient_observation") {
+		return "Checks exact stored nutrient observations for the same product, canonical nutrient, amount, unit, and redistributable source.";
+	}
+	if (repairKey === "link_existing_serving_observation") {
+		return "Checks exact stored serving observations for the same product, amount, unit, gram weight, and redistributable source.";
+	}
+	return "Checks exact stored observations for the same product value and an approved redistributable source.";
+};
+
 export const getCatalogHealthRepairTargetId = (occurrenceKey: string) =>
 	`safe-repair-${occurrenceKey.replaceAll(/[^a-zA-Z0-9_-]/g, "-")}`;

@@ -52,7 +52,7 @@
 
 .catalog-review-work__empty,
 .catalog-review-work__record p,
-.catalog-review-work__record ul {
+.catalog-review-work__record dl {
 	margin: 0;
 }
 
@@ -116,6 +116,50 @@
 	font-size: $app-font-size-sm;
 }
 
+.catalog-review-work__evidence,
+.catalog-review-work__changes,
+.catalog-review-work__changes > section,
+.catalog-review-work__evidence dl,
+.catalog-review-work__changes dl {
+	display: grid;
+	gap: $app-gap-xs;
+}
+
+.catalog-review-work__evidence,
+.catalog-review-work__changes > section {
+	padding: $app-gap-xs;
+	border-radius: $app-shell-radius-control;
+	background: $app-shell-surface-panel;
+}
+
+.catalog-review-work__evidence dl,
+.catalog-review-work__changes dl {
+	margin: 0;
+}
+
+.catalog-review-work__evidence dl div,
+.catalog-review-work__changes dl div {
+	display: grid;
+	grid-template-columns: minmax(7.5rem, 0.7fr) minmax(0, 1.3fr);
+	gap: $app-gap-xs;
+}
+
+.catalog-review-work__evidence dt,
+.catalog-review-work__changes dt {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-xs;
+}
+
+.catalog-review-work__evidence dd,
+.catalog-review-work__changes dd {
+	margin: 0;
+	overflow-wrap: anywhere;
+}
+
+.catalog-review-work__changes > section > header {
+	align-items: center;
+}
+
 @media (max-width: $app-breakpoint-xs),
 	(max-height: $app-breakpoint-height-compact) {
 	.catalog-review-work,
@@ -132,5 +176,10 @@
 	.catalog-review-work,
 	.catalog-review-work__record {
 		font-size: $app-font-size-xs;
+	}
+
+	.catalog-review-work__evidence dl div,
+	.catalog-review-work__changes dl div {
+		grid-template-columns: 1fr;
 	}
 }

@@ -49,6 +49,13 @@ from downstream publication, notification, correction, access, or policy effects
 must not imply a user notification or automatic correction that the server does not
 perform.
 
+The nutrient-mapping decision form shows compatible nutrient matches directly beneath
+its search field with an announced result count. Search by canonical name, nutrient
+number, or canonical ID narrows those choices without changing the current selection.
+A zero-result query keeps the chosen nutrient intact and explains how to restore the
+complete compatible list. If the suggested nutrient lacks a reviewed unit path, it is
+not preselected and the form plainly requires another compatible choice or exclusion.
+
 Product, warning, and reported-image queues use the shared moderator review-list and
 review-card structure. Keep identity and the decision-relevant status in the card header,
 keep a short fact summary in the primary reading path, and move package photos, raw
@@ -105,6 +112,9 @@ required action after reading the evidence.
   boundary and preventing an invalid outcome/follow-up combination.
 - Confirmed reports with corrective work move into a separate `Follow-up work` list so
   completed review decisions do not look unfinished or disappear without an owner.
+- The Profile launcher and page guide count pending reports plus open follow-ups. When
+  only follow-ups remain, the queue stays enabled and leads with finishing that work
+  instead of claiming the warning workspace is clear.
 - Product corrections link to the shared product-readiness passport and show the exact
   affected field families. Policy and source cases identify the responsible work group.
 - Product-correction follow-ups remain open until an evidence-backed correction creates
@@ -141,11 +151,16 @@ review decisions, not data health metrics. Open the first non-clear queue, label
 queue badge as `to review` or `Clear`, explain the evidence decision at the start of
 each queue, and route product-specific evidence to a path-backed product view.
 Recall decisions start unselected and cannot be saved without an evidence note.
-Provider observations explain that keeping the current record closes the observation,
-while supported provider evidence must continue through a catalog correction.
+Recall cards show why the match was proposed, including the exact product code or
+brand/product/package agreement and whether package-code verification is required.
+Provider observations show the earlier and newly observed value for every changed field.
+Keeping the current record closes the provider observation and only the conflicts
+created by that exact snapshot; supported provider evidence must continue through a
+catalog correction. When a correction is linked, finish that submission instead of
+recording a contradictory provider decision.
 
 `/profile/privileged-tools/data-operations` starts with the exact deduplicated human-
-action count, a Required work summary, three explicitly named diagnostic checks, and
+action count, an exact named Required work list, three explicitly named diagnostic checks, and
 compact catalog-coverage facts. Publication readiness, nutrient identity, and revision
 evidence use `match` wording because their broader results can overlap and do not add to
 the red action total; their summary cards link directly to the first affected record.
@@ -158,7 +173,11 @@ decisions, recall decisions, or catalog-conflict decisions in this workspace.
 Its Profile badge counts each distinct affected subject once when that subject has one
 or more open enabled `app_issue_codes` rows owned by `data_operations`. Informational
 metrics, disabled issue codes, and multiple open issues on the same subject do not add
-extra actions.
+extra actions. Required work uses that same grouped query, orders the most severe
+subjects first, and shows every issue attached to each subject. A subject card must
+provide either a direct focused-workflow link or a plain-language missing prerequisite;
+it must never substitute a generic remainder count or imply that an unavailable action
+can be completed in the app.
 
 The legacy `/moderation` and `/moderation/data-health` routes redirect to the Profile
 privileged-tools gateway so operators always enter the same role-aware workflow.
@@ -195,13 +214,29 @@ evidence coverage, and API-publication details in closed shared disclosures so t
 default view remains understandable. Only the data-operations route may render repair
 controls, and only when the live permission set includes
 `data_operations.catalog_health.repair`.
+Both routes may render the shared **Correction workflow** handoff. It lists the exact
+open conflict with its competing values and provenance, provider-change, warning-report,
+or readiness finding; opens the existing
+prefilled catalog-correction form without changing stored data; and supplies an explicit
+return link to the originating review. When a correction is already pending, the handoff
+links to Product submissions and does not offer a duplicate. Its copy states that
+approval creates a reviewed revision and rechecks the findings, while rejection keeps
+the current product unchanged.
+On the catalog-review route, an unlinked conflict also has an evidence-gated **Keep
+current value and resolve conflict** outcome. It leaves the canonical product unchanged,
+records the conflict and unused correction origin as terminal, and immediately
+recalculates readiness. A linked conflict must be finished through Product submissions.
 The passport explicitly identifies itself as an evidence-and-status view. Every issue
 has a `Do this now` panel that names the required workflow, states whether that action is
 available on the current screen, and defines the observable condition that clears the
 issue. Actionable issues appear before unavailable issues. The workspace guide states
 the exact number operators can act on now and defines completion for the current screen
-instead of describing every diagnostic as resolvable work. When a safe repair is available, the issue links directly to its exact
-repair control. A dry run with no exact candidate is a stop state, not a retry loop: it tells
+instead of describing every diagnostic as resolvable work. Issues are grouped into
+public-API blockers and nonblocking catalog-evidence follow-ups, and every card states
+its publication impact. Revision checks name the exact revision and the evidence sources
+they inspect. When a safe repair is available, the issue links directly to its exact
+repair control, scrolls that control fully into the visible sheet body, and moves keyboard
+focus there. A dry run with no exact candidate is a stop state, not a retry loop: it tells
 the operator to continue to the final product-review action and may be rerun only after
 the stored evidence changes. The final action is enabled only after every available safe
 check has returned no candidate. Before confirmation it states all four outcomes: the
@@ -210,7 +245,21 @@ v1, the exact current readiness snapshot leaves actionable queues, and changed e
 automatically reopens the review. A private explanation of at least 10 characters is
 required. Missing correction workflows remain clearly identified as unavailable; the
 terminal outcome records `accepted_withheld` rather than implying that inspection fixed
-or approved missing evidence.
+or approved missing evidence. An already API-ready product never offers that withholding
+action for internal diagnostics. Its separate final action records
+`accepted_evidence_gap`, removes only the exact evidence follow-up from the queue, and
+explicitly leaves product values, revision history, and public API availability unchanged.
+
+Confirmed food-warning rule and source follow-ups use the focused nested route
+`/profile/privileged-tools/food-warning-reports/follow-ups/[caseId]`. The screen shows
+the original report, human-readable warning, complete readable fact snapshot, initial
+review decision and note, policy, source, and owner before allowing a decision.
+**Resolved** and **Dismissed** close the follow-up without mutating product, policy, or
+source data; **Deferred** keeps it in the queue with a required named prerequisite.
+Source-correction decisions additionally require the Data operations repair permission.
+Every outcome requires a private evidence note and returns to the refreshed queue.
+Direct navigation to a resolved or dismissed case renders a read-only completion receipt
+with the retained evidence and notes, never another writable form.
 
 Evidence coverage labels must distinguish completeness from provenance. `Existing
 nutrient records with source evidence` describes only the nutrients already stored; it

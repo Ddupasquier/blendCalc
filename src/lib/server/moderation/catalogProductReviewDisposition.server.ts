@@ -24,7 +24,10 @@ const classifyFailure = (error: {
 }): CatalogProductReviewDispositionFailureReason => {
 	if (error.code === "P0002") return "review_unavailable";
 	if (error.code === "22023") return "validation";
-	if (error.message?.toLowerCase().includes("safe repair check")) {
+	if (
+		error.message?.toLowerCase().includes("safe repair check") ||
+		error.message?.toLowerCase().includes("catalog-evidence check")
+	) {
 		return "checks_required";
 	}
 	return "service_unavailable";
@@ -47,7 +50,34 @@ export const finishCatalogProductReview = async (
 	}
 
 	try {
-		return parseCatalogProductReviewDispositionResult(data);
+		const result = parseCatalogProductReviewDispositionResult(data);
+		if (result.outcome !== "accepted_withheld") throw new TypeError();
+		return result;
+	} catch {
+		throw new CatalogProductReviewDispositionError("service_unavailable");
+	}
+};
+
+export const finishCatalogProductDiagnosticReview = async (
+	supabase: SupabaseClient<Database>,
+	request: { sharedProductId: string; reviewNote: string },
+): Promise<CatalogProductReviewDispositionResult> => {
+	const { data, error } = await supabase.rpc(
+		"finish_catalog_health_product_diagnostic_review",
+		{
+			p_shared_product_id: request.sharedProductId,
+			p_review_note: request.reviewNote,
+		},
+	);
+
+	if (error) {
+		throw new CatalogProductReviewDispositionError(classifyFailure(error));
+	}
+
+	try {
+		const result = parseCatalogProductReviewDispositionResult(data);
+		if (result.outcome !== "accepted_evidence_gap") throw new TypeError();
+		return result;
 	} catch {
 		throw new CatalogProductReviewDispositionError("service_unavailable");
 	}

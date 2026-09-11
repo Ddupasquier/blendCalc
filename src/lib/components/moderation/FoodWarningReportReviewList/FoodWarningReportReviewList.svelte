@@ -194,6 +194,31 @@
 				]),
 	];
 
+	const getResolutionExplanation = (
+		status: "" | "confirmed" | "dismissed",
+		resolutionAction: string,
+	) => {
+		if (!status) {
+			return "Choose the report decision first. The valid follow-up choices will then appear.";
+		}
+		switch (resolutionAction) {
+			case "rule_review":
+				return "Saving creates one open warning-policy review owned by the Food warning policy team. It does not edit or activate a policy.";
+			case "source_correction":
+				return "Saving creates one open source-correction review owned by Data operations. It does not overwrite imported or catalog evidence.";
+			case "product_correction":
+				return "Saving creates one catalog-correction starting point for this product. Product data changes only if a separate correction submission is approved.";
+			case "duplicate":
+				return "Saving closes this report as work already tracked. It creates no new follow-up and leaves current warning behavior unchanged.";
+			case "none":
+				return status === "dismissed"
+					? "Saving dismisses this report, creates no follow-up, and leaves current warning behavior unchanged."
+					: "Saving confirms and closes this report because no further work remains. It creates no follow-up and changes no live data.";
+			default:
+				return "Choose the exact follow-up or closeout that the reviewed evidence supports.";
+		}
+	};
+
 	const enhanceWarningDecision: SubmitFunction = ({ formData, cancel }) => {
 		if (pendingReportId) {
 			cancel();
@@ -287,11 +312,9 @@
 						</div>
 					{:else}
 						<div>
-							<dt>Reported warning</dt>
+							<dt>Warning under review</dt>
 							<dd>
-								{report.issueCode
-									? formatReadableLabel(report.issueCode)
-									: "Not recorded"}
+								{getCurrentWarningExplanation(report)}
 							</dd>
 						</div>
 					{/if}
@@ -444,9 +467,10 @@
 						label="2. What should happen next?"
 						value={decision.resolutionAction}
 						options={getResolutionOptions(decision.status)}
-						helper={decision.status
-							? "This creates or closes the named follow-up; it does not silently change product data or policy."
-							: "Choose the report decision first. The valid follow-up choices will then appear."}
+						helper={getResolutionExplanation(
+							decision.status,
+							decision.resolutionAction,
+						)}
 						onValueChange={(value) => setResolutionAction(report.id, value)}
 						disabled={pendingReportId !== null || !decision.status}
 						required

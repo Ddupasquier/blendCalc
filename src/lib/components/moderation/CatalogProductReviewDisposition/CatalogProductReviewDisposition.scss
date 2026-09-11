@@ -7,6 +7,12 @@
 	background: $app-shell-surface-soft;
 	border: $app-border;
 	border-radius: $app-shell-radius-card;
+	scroll-margin-block: $app-gap-md;
+}
+
+.catalog-product-review-disposition:focus-visible {
+	outline: $app-focus-outline;
+	outline-offset: $app-focus-outline-offset;
 }
 
 .catalog-product-review-disposition > header {

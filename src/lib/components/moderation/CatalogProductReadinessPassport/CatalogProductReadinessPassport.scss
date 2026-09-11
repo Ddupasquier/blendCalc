@@ -3,6 +3,7 @@
 .catalog-product-passport,
 .catalog-product-passport__identity > div,
 .catalog-product-passport__issue-list,
+.catalog-product-passport__issue-group,
 .catalog-product-passport__issue {
 	display: grid;
 	min-width: 0;
@@ -72,10 +73,38 @@
 }
 
 .catalog-product-passport__issue-list,
+.catalog-product-passport__issue-group,
 .catalog-product-passport__issue,
 .catalog-product-passport__action,
 .catalog-product-passport__result {
 	gap: $app-gap-sm;
+}
+
+.catalog-product-passport__issue-group > header {
+	display: flex;
+	align-items: start;
+	justify-content: space-between;
+	gap: $app-gap-sm;
+	padding-inline: $app-gap-xs;
+}
+
+.catalog-product-passport__issue-group > header > div {
+	display: grid;
+	gap: $app-gap-inline-compact;
+}
+
+.catalog-product-passport__issue-group h3,
+.catalog-product-passport__issue-group > header p {
+	margin: 0;
+}
+
+.catalog-product-passport__issue-group h3 {
+	font-size: $app-font-size-md;
+}
+
+.catalog-product-passport__issue-group > header p {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
 }
 
 .catalog-product-passport__issue {

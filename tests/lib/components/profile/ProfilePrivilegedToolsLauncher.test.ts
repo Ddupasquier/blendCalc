@@ -19,12 +19,16 @@ const createAccess = (
 		pendingProductSubmissions: 0,
 		pendingCatalogReviewItems: 0,
 		pendingFoodWarningReports: 0,
+		pendingFoodWarningFollowUps: 0,
 		pendingProfileImageReviews: 0,
 		pendingCatalogDataOperations: 0,
 		totalActionableItems,
 		unavailable: false,
 		identityVerificationRequired: false,
 		...overrides,
+		catalogDataOperationSubjects: overrides.catalogDataOperationSubjects ?? [],
+		catalogDataOperationSubjectsTruncated:
+			overrides.catalogDataOperationSubjectsTruncated ?? false,
 	},
 });
 

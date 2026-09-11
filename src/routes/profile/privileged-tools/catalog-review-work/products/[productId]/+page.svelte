@@ -1,11 +1,12 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
 	import CatalogProductReadinessPassport from "$lib/components/moderation/CatalogProductReadinessPassport/CatalogProductReadinessPassport.svelte";
+	import CatalogCorrectionHandoff from "$lib/components/moderation/CatalogCorrectionHandoff/CatalogCorrectionHandoff.svelte";
 	import PrivilegedToolWorkspaceView from "$lib/components/moderation/PrivilegedToolWorkspaceView/PrivilegedToolWorkspaceView.svelte";
 	import ProfilePage from "../../../../+page.svelte";
 	import type { CatalogReviewProductPageProps } from "./types";
 
-	let { data }: CatalogReviewProductPageProps = $props();
+	let { data, form }: CatalogReviewProductPageProps = $props();
 	const closeAction = () => {
 		void goto("/profile/privileged-tools/catalog-review-work", {
 			replaceState: true,
@@ -23,17 +24,29 @@
 		tone: data.passport.issues.length > 0 ? "attention" : "clear",
 		title:
 			data.passport.issues.length > 0
-				? "Review the evidence, then hand off to Data operations"
+				? "Decide each catalog finding from the evidence"
 				: "No review concern is open for this product",
 		description:
-			data.passport.issues.length > 0
-				? `${data.passport.issues.length} ${data.passport.issues.length === 1 ? "issue is" : "issues are"} open. This screen is evidence-only: identify what is missing, then ask a Data operations reviewer to run the safe checks and record whether the product should stay out of the public API.`
-				: "The current evidence does not identify a catalog-review decision for this product.",
+			data.correctionHandoff.findings.length > 0
+				? `${data.correctionHandoff.findings.length} correction ${data.correctionHandoff.findings.length === 1 ? "finding is" : "findings are"} open. Review the evidence below, then use the Correction workflow card to open the prefilled form or continue an already-linked submission.`
+				: data.passport.issues.length > 0
+					? `${data.passport.issues.length} evidence ${data.passport.issues.length === 1 ? "issue is" : "issues are"} open. No supported catalog-correction finding is attached; use the named owner and next step on each issue.`
+					: "The current evidence does not identify a catalog-review decision for this product.",
 		completion:
-			"You have identified the missing evidence and handed the product to Data operations. That reviewer either repairs it or finishes the review with the product still withheld from the public API.",
+			"Every correction finding is linked to one pending submission, resolved by an approved revision, or closed with an evidence-backed decision to keep the current value.",
 		countLabel: "actions available on this evidence-only screen",
 	}}
+	feedbackMessage={form?.catalogReviewError ?? form?.catalogReviewSuccess}
+	feedbackTone={form?.catalogReviewError ? "danger" : "success"}
 	onClose={closeAction}
 >
-	<CatalogProductReadinessPassport passport={data.passport} />
+	<CatalogProductReadinessPassport
+		passport={data.passport}
+		correctionWorkflowAvailable={data.correctionHandoff.findings.length > 0}
+	/>
+	<CatalogCorrectionHandoff
+		handoff={data.correctionHandoff}
+		returnPath={`/profile/privileged-tools/catalog-review-work/products/${data.passport.product.id}`}
+		allowConflictResolution
+	/>
 </PrivilegedToolWorkspaceView>

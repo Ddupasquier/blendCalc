@@ -12,7 +12,14 @@ import {
 	getAuthenticatedBrowserStatePath,
 	getLocalQaAccountForWorker,
 } from "./support/localQaAccounts";
-import { deleteLocalQaAuthenticatorFactorsForEmail } from "./support/localQaDatabase";
+import {
+	cleanupLocalQaCatalogDiagnosticReview,
+	seedLocalQaCatalogDiagnosticReview,
+	createLocalQaPendingNutrientMapping,
+	deleteLocalQaAuthenticatorFactorsForEmail,
+	deleteLocalQaPendingNutrientMapping,
+	recheckLocalQaDeterministicNutrientMapping,
+} from "./support/localQaDatabase";
 import { finishLocalQaAuthenticatorEnrollment } from "./support/localQaAuthenticator";
 
 const tinyPng = Buffer.from(
@@ -1097,6 +1104,7 @@ test("privileged tools stay hidden from regular accounts and use the shared shee
 test("administrators can open data operations after direct AAL2 verification", async ({
 	page,
 }, testInfo) => {
+	test.setTimeout(90_000);
 	test.skip(
 		testInfo.project.name !== "desktop-chromium",
 		"One isolated Chromium project owns the shared administrator MFA persona.",
@@ -1104,6 +1112,9 @@ test("administrators can open data operations after direct AAL2 verification", a
 	const adminEmail = "qa-admin@blendcalc.local";
 	const dataOperationsPath = "/profile/privileged-tools/data-operations";
 	await deleteLocalQaAuthenticatorFactorsForEmail(adminEmail);
+	const diagnosticFixture = await seedLocalQaCatalogDiagnosticReview();
+	const pendingMappingId = await createLocalQaPendingNutrientMapping();
+	const resolvedMappingId = await recheckLocalQaDeterministicNutrientMapping();
 
 	try {
 		await signInLocalQaAccount({
@@ -1128,6 +1139,26 @@ test("administrators can open data operations after direct AAL2 verification", a
 		await expect(
 			dataOperationsSheet.getByRole("region", { name: "Required work" }),
 		).toBeVisible();
+		const requiredWork = dataOperationsSheet.getByRole("region", {
+			name: "Required work",
+		});
+		await expect(
+			requiredWork.getByText("Canadian Nutrient File 2026"),
+		).toBeVisible();
+		await expect(
+			requiredWork.getByText("UK Composition of Foods Integrated Dataset 2021"),
+		).toBeVisible();
+		await expect(
+			requiredWork.getByText("Other tracked operational issues"),
+		).toHaveCount(0);
+		await expect(
+			requiredWork.getByText("Cannot finish this in the app yet"),
+		).toHaveCount(3);
+		await expect(
+			requiredWork.getByText(
+				"Nothing changes until that workflow records reviewed evidence.",
+			),
+		).toHaveCount(3);
 		await expect(
 			dataOperationsSheet.getByRole("region", { name: "Diagnostic checks" }),
 		).toBeVisible();
@@ -1139,6 +1170,67 @@ test("administrators can open data operations after direct AAL2 verification", a
 		await expect(
 			dataOperationsSheet.getByText("Automated catalog monitoring"),
 		).toBeVisible();
+		const nutrientMappingGaps = dataOperationsSheet
+			.locator("details")
+			.filter({ hasText: "Nutrient mapping gaps" });
+		await nutrientMappingGaps.locator("summary").click();
+		await expect(
+			nutrientMappingGaps.locator(
+				`a[href$="/nutrient-mappings/${pendingMappingId}"]`,
+			),
+		).toBeVisible();
+		await expect(
+			nutrientMappingGaps.locator(
+				`a[href$="/nutrient-mappings/${resolvedMappingId}"]`,
+			),
+		).toHaveCount(0);
+
+		await page.goto(
+			`${dataOperationsPath}/nutrient-mappings/${pendingMappingId}`,
+		);
+		await waitForAppReady(page);
+		const nutrientMappingSheet = page.getByRole("dialog", {
+			name: "Review nutrient mapping",
+		});
+		await nutrientMappingSheet
+			.getByRole("combobox", {
+				name: "1. What does the evidence support?",
+			})
+			.click();
+		await nutrientMappingSheet
+			.getByRole("option", {
+				name: "Approve — evidence proves an exact identity",
+			})
+			.click();
+		const nutrientPicker = nutrientMappingSheet.getByRole("group", {
+			name: "Confirmed nutrient",
+		});
+		const nutrientSearch = nutrientPicker.getByRole("searchbox", {
+			name: "Find a compatible nutrient",
+		});
+		await nutrientSearch.fill("arachidonic");
+		await expect(
+			nutrientPicker.getByText(/1 of \d+ compatible nutrients match/u),
+		).toBeVisible();
+		await nutrientPicker
+			.getByRole("button", { name: /arachidonic.*855.*G/iu })
+			.click();
+		await expect(nutrientPicker.getByText(/arachidonic · G$/iu)).toBeVisible();
+		await nutrientSearch.fill("not-a-real-nutrient");
+		await expect(
+			nutrientPicker
+				.getByRole("status")
+				.filter({ hasText: "No compatible nutrient matches" }),
+		).toContainText("Your current selection is unchanged");
+		await expect(nutrientPicker.getByText(/arachidonic · G$/iu)).toBeVisible();
+		await nutrientPicker
+			.getByRole("button", { name: "Clear find a compatible nutrient" })
+			.click();
+		await expect(
+			nutrientPicker.getByText(/\d+ compatible nutrients available/u),
+		).toBeVisible();
+
+		await page.goto(dataOperationsPath);
 		const namedMissingNutrients = dataOperationsSheet.getByText(
 			"A required nutrient is missing: Fatty acids, total saturated",
 		);
@@ -1171,6 +1263,32 @@ test("administrators can open data operations after direct AAL2 verification", a
 				name: "Finish review — keep out of public API",
 			}),
 		).toBeDisabled();
+		const correctionLink = productReadinessSheet.getByRole("link", {
+			name: "Open prefilled correction",
+		});
+		await expect(correctionLink).toBeVisible();
+		await expect(productReadinessSheet).toContainText(
+			"Opening it changes nothing; only an approved submission creates a new product revision.",
+		);
+		await correctionLink.click();
+		const correctionSheet = page.getByRole("dialog", {
+			name: "Correct Product Information",
+		});
+		await expect(correctionSheet).toBeVisible();
+		await expect(
+			correctionSheet.getByRole("link", {
+				name: "Return to originating review",
+			}),
+		).toHaveAttribute(
+			"href",
+			/\/profile\/privileged-tools\/data-operations\/products\//,
+		);
+		await correctionSheet
+			.getByRole("link", { name: "Return to originating review" })
+			.click();
+		await expect(
+			page.getByRole("dialog", { name: "Product readiness" }),
+		).toBeVisible();
 
 		await page.goto(dataOperationsPath);
 		await dataOperationsSheet
@@ -1187,6 +1305,101 @@ test("administrators can open data operations after direct AAL2 verification", a
 		).toBeVisible();
 		await informationSheet.getByRole("button", { name: "Got it" }).click();
 
+		await page.setViewportSize({ width: 390, height: 844 });
+		await page.goto(
+			`${dataOperationsPath}/products/${diagnosticFixture.productId}`,
+		);
+		await waitForAppReady(page);
+		const diagnosticSheet = page.getByRole("dialog", {
+			name: "Product readiness",
+		});
+		await expect(
+			diagnosticSheet.getByText(
+				"This product is already public. The 1 item below improves internal evidence history only; none is keeping it out of blendCalcAPI v1.",
+			),
+		).toBeVisible();
+		await expect(
+			diagnosticSheet.getByRole("heading", {
+				name: "Catalog evidence follow-up",
+			}),
+		).toBeVisible();
+		await expect(
+			diagnosticSheet.getByText("Revision 2 needs change evidence").first(),
+		).toBeVisible();
+		await expect(
+			diagnosticSheet.getByText("Does not affect current API publication"),
+		).toBeVisible();
+		await expect(
+			diagnosticSheet.getByRole("button", {
+				name: "Finish review — keep out of public API",
+			}),
+		).toHaveCount(0);
+
+		await diagnosticSheet
+			.getByRole("link", { name: "Go to safe repair check" })
+			.click();
+		const repairTarget = diagnosticSheet
+			.locator(".catalog-product-repairs__item")
+			.filter({ hasText: "Revision 2 needs change evidence" });
+		await expect(repairTarget).toBeFocused();
+		await expect(repairTarget).toBeInViewport();
+		const repairBox = await repairTarget.boundingBox();
+		expect(repairBox?.y ?? -1).toBeGreaterThanOrEqual(0);
+		expect((repairBox?.y ?? 0) + (repairBox?.height ?? 0)).toBeLessThanOrEqual(
+			844,
+		);
+		await expect(
+			repairTarget.getByText(
+				"Checks Revision 2's stored change summary for exact field-by-field before and after values. It does not compare names or guess what changed.",
+			),
+		).toBeVisible();
+		await repairTarget.getByRole("button", { name: "Check repair" }).click();
+		await expect(repairTarget.getByText("No safe changes found")).toBeVisible();
+		await repairTarget
+			.getByRole("link", { name: "Go to final review" })
+			.click();
+
+		const evidenceReview = diagnosticSheet.locator("#finish-evidence-review");
+		await expect(evidenceReview).toBeFocused();
+		await expect(evidenceReview).toBeInViewport();
+		await expect(
+			evidenceReview.getByText(
+				"Its current public blendCalcAPI v1 status does not change.",
+			),
+		).toBeVisible();
+		const finishButton = evidenceReview.getByRole("button", {
+			name: "Finish evidence follow-up",
+		});
+		await expect(finishButton).toBeDisabled();
+		await evidenceReview
+			.getByLabel("Why can this evidence not be reconstructed today?")
+			.fill(
+				"Revision 2 has no field summary, matching submission, or exact stored observation.",
+			);
+		await expect(finishButton).toBeEnabled();
+		await finishButton.click();
+		await expect(
+			diagnosticSheet.getByText("Evidence follow-up finished", {
+				exact: true,
+			}),
+		).toBeVisible();
+		await expect(
+			diagnosticSheet.getByText(
+				"Product data and public API availability are unchanged.",
+				{ exact: false },
+			),
+		).toBeVisible();
+
+		await page.goto(dataOperationsPath);
+		await waitForAppReady(page);
+		await dataOperationsSheet
+			.locator("summary")
+			.filter({ hasText: "Revision history gaps" })
+			.click();
+		await expect(
+			dataOperationsSheet.getByText("Jalapeno Sauce, Jalapeno"),
+		).toHaveCount(0);
+
 		await page.goto("/profile");
 		await waitForAppReady(page);
 		await page.getByRole("button", { name: /Admin tools/ }).click();
@@ -1202,6 +1415,15 @@ test("administrators can open data operations after direct AAL2 verification", a
 				.locator(".action-required-count-badge"),
 		).toHaveCount(0);
 	} finally {
-		await deleteLocalQaAuthenticatorFactorsForEmail(adminEmail);
+		try {
+			await cleanupLocalQaCatalogDiagnosticReview();
+			try {
+				await cleanupLocalQaCatalogDiagnosticReview();
+			} finally {
+				await deleteLocalQaPendingNutrientMapping(pendingMappingId);
+			}
+		} finally {
+			await deleteLocalQaAuthenticatorFactorsForEmail(adminEmail);
+		}
 	}
 });

@@ -42,6 +42,13 @@ export const nutrientMappingReviewWorkspaceFixture: NutrientMappingReviewWorkspa
 				defaultUnitName: "G",
 				conversionMultiplier: 1,
 			},
+			{
+				nutrientId: 700855,
+				nutrientName: "Fatty acids, polyunsaturated, 20:4 n-6, arachidonic",
+				nutrientNumber: "855",
+				defaultUnitName: "G",
+				conversionMultiplier: 1,
+			},
 		],
 		latestDecision: null,
 	};
