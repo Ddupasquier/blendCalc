@@ -320,7 +320,7 @@ export const cleanupLocalQaCatalogRevisionHistory = async () => {
 export const seedLocalQaCatalogValueConflict = async () => {
 	const admin = await createLocalQaServiceRoleDatabaseClient();
 	const id = randomUUID();
-	const productId = localQaDiagnosticProductId;
+	const productId = localQaRevisionHistoryProductId;
 	const { error } = await admin.from("shared_product_conflicts").insert({
 		id,
 		shared_product_id: productId,
