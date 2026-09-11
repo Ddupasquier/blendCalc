@@ -1,3 +1,5 @@
+import { replaceShallowRouteHash } from "$lib/utils/navigation/shallowRouteNavigation";
+
 export const focusPrivilegedWorkspaceTarget = (
 	event: MouseEvent,
 	targetId: string,
@@ -17,7 +19,7 @@ export const focusPrivilegedWorkspaceTarget = (
 	if (!target) return;
 
 	event.preventDefault();
-	window.history.replaceState(window.history.state, "", `#${targetId}`);
+	replaceShallowRouteHash(`#${targetId}`);
 	target.scrollIntoView({ block: "start" });
 	target.focus({ preventScroll: true });
 };

@@ -6,6 +6,8 @@ measurement model, and experiment order. It does not promise rankings or featuri
 it does not replace the public-site, Android-release, privacy, or product contracts that
 own implementation.
 
+## Quick Navigation
+
 | Read this for...                        | Go to                                                                   |
 | --------------------------------------- | ----------------------------------------------------------------------- |
 | The decision and current readiness      | [Executive Decision](#executive-decision)                               |
