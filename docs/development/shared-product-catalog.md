@@ -485,10 +485,13 @@ quality context, and correction tools remain available as nested disclosures for
 who want the deeper record without making that detail part of the default reading path.
 
 Canonical nutrient lineage cannot come from provider-name similarity alone. Exact
-provider identifiers and explicitly reviewed source keys own nutrient identity, exact
-normalized units own lookup, and any unit change requires a reviewed nutrient-specific
-conversion. Semantic taxonomy candidates remain pending moderation evidence and are
-excluded from catalog/blendCalcAPI publication until reviewed.
+provider identifiers, explicit human decisions, and versioned source-controlled exact
+rules own nutrient identity. Exact normalized units own lookup, and any unit change
+requires a reviewed nutrient-specific conversion eligible for that decision path.
+Deterministic rules append system-owned evidence without impersonating a reviewer;
+confidence, names, and observation counts cannot trigger them. Semantic taxonomy
+candidates remain pending moderation evidence and are excluded from catalog/blendCalcAPI
+publication until reviewed.
 
 Authenticated app reads may additionally resolve an account's optional regulatory
 region against the regional profile in that same immutable policy version. The result

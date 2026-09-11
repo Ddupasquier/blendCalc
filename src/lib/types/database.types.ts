@@ -5499,8 +5499,173 @@ export type Database = {
           },
         ]
       }
+      nutrient_mapping_deterministic_backfill_results: {
+        Row: {
+          decision_id: string | null
+          evaluated_at: string
+          id: string
+          mapping_id: string | null
+          reason: string
+          result: string
+          run_id: string
+          source_key: string
+          source_nutrient_key: string
+          source_unit_name: string
+        }
+        Insert: {
+          decision_id?: string | null
+          evaluated_at?: string
+          id?: string
+          mapping_id?: string | null
+          reason: string
+          result: string
+          run_id: string
+          source_key: string
+          source_nutrient_key: string
+          source_unit_name: string
+        }
+        Update: {
+          decision_id?: string | null
+          evaluated_at?: string
+          id?: string
+          mapping_id?: string | null
+          reason?: string
+          result?: string
+          run_id?: string
+          source_key?: string
+          source_nutrient_key?: string
+          source_unit_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nutrient_mapping_deterministic_backfill_result_decision_id_fkey"
+            columns: ["decision_id"]
+            isOneToOne: false
+            referencedRelation: "nutrient_mapping_review_decisions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nutrient_mapping_deterministic_backfill_results_mapping_id_fkey"
+            columns: ["mapping_id"]
+            isOneToOne: false
+            referencedRelation: "nutrient_source_mappings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nutrient_mapping_deterministic_backfill_results_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "nutrient_mapping_deterministic_backfill_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nutrient_mapping_deterministic_backfill_runs: {
+        Row: {
+          approved_count: number
+          completed_at: string | null
+          id: string
+          operation_reference: string
+          pending_count: number
+          rule_count: number
+          skipped_count: number
+          started_at: string
+        }
+        Insert: {
+          approved_count?: number
+          completed_at?: string | null
+          id?: string
+          operation_reference: string
+          pending_count: number
+          rule_count: number
+          skipped_count?: number
+          started_at?: string
+        }
+        Update: {
+          approved_count?: number
+          completed_at?: string | null
+          id?: string
+          operation_reference?: string
+          pending_count?: number
+          rule_count?: number
+          skipped_count?: number
+          started_at?: string
+        }
+        Relationships: []
+      }
+      nutrient_mapping_deterministic_rules: {
+        Row: {
+          created_at: string
+          effective_at: string
+          enabled: boolean
+          evidence_reference: string
+          id: string
+          nutrient_id: number
+          provenance: Json
+          review_note: string
+          review_reference: string
+          rule_version: number
+          source_key: string
+          source_nutrient_key: string
+          source_nutrient_name: string
+          source_unit_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          effective_at: string
+          enabled?: boolean
+          evidence_reference: string
+          id?: string
+          nutrient_id: number
+          provenance?: Json
+          review_note: string
+          review_reference: string
+          rule_version: number
+          source_key: string
+          source_nutrient_key: string
+          source_nutrient_name: string
+          source_unit_name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          effective_at?: string
+          enabled?: boolean
+          evidence_reference?: string
+          id?: string
+          nutrient_id?: number
+          provenance?: Json
+          review_note?: string
+          review_reference?: string
+          rule_version?: number
+          source_key?: string
+          source_nutrient_key?: string
+          source_nutrient_name?: string
+          source_unit_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nutrient_mapping_deterministic_rules_nutrient_id_fkey"
+            columns: ["nutrient_id"]
+            isOneToOne: false
+            referencedRelation: "nutrient_definitions"
+            referencedColumns: ["nutrient_id"]
+          },
+          {
+            foreignKeyName: "nutrient_mapping_deterministic_rules_source_key_fkey"
+            columns: ["source_key"]
+            isOneToOne: false
+            referencedRelation: "product_data_sources"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
       nutrient_mapping_review_decisions: {
         Row: {
+          decision_origin: string
+          deterministic_rule_id: string | null
           evidence_reference: string | null
           id: string
           mapping_id: string
@@ -5509,13 +5674,15 @@ export type Database = {
           previous_nutrient_id: number
           review_note: string
           reviewed_at: string
-          reviewed_by: string
+          reviewed_by: string | null
           selected_nutrient_id: number | null
           source_key: string
           source_nutrient_key: string
           source_unit_name: string
         }
         Insert: {
+          decision_origin?: string
+          deterministic_rule_id?: string | null
           evidence_reference?: string | null
           id?: string
           mapping_id: string
@@ -5524,13 +5691,15 @@ export type Database = {
           previous_nutrient_id: number
           review_note: string
           reviewed_at?: string
-          reviewed_by: string
+          reviewed_by?: string | null
           selected_nutrient_id?: number | null
           source_key: string
           source_nutrient_key: string
           source_unit_name: string
         }
         Update: {
+          decision_origin?: string
+          deterministic_rule_id?: string | null
           evidence_reference?: string | null
           id?: string
           mapping_id?: string
@@ -5539,13 +5708,20 @@ export type Database = {
           previous_nutrient_id?: number
           review_note?: string
           reviewed_at?: string
-          reviewed_by?: string
+          reviewed_by?: string | null
           selected_nutrient_id?: number | null
           source_key?: string
           source_nutrient_key?: string
           source_unit_name?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "nutrient_mapping_review_decisions_deterministic_rule_id_fkey"
+            columns: ["deterministic_rule_id"]
+            isOneToOne: false
+            referencedRelation: "nutrient_mapping_deterministic_rules"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "nutrient_mapping_review_decisions_mapping_id_fkey"
             columns: ["mapping_id"]
