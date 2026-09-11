@@ -119,10 +119,13 @@ badges distinct affected subjects with open enabled issues assigned to that work
 rather than summing overlapping dashboard metrics. Its three actionable summaries use
 diagnostic-match wording and direct first-record links; those broader, potentially
 overlapping checks never add to the red operator-work total. Required work appears
-separately and names the affected records when the existing health response can identify
-them. Source, dataset, policy, and monitor badges show explicit informational units or
-health states. It opens only the first non-clear diagnostic and never duplicates review
-queues. The
+separately from the exact same query as its badge count. It groups overlapping findings
+into one card per affected subject, names that subject, lists every finding and next
+action, and links directly to an available focused workflow. When no in-app workflow
+exists, the card names the missing prerequisite and makes clear that nothing was
+changed. Source, dataset, policy, and monitor badges show explicit informational units
+or health states. It opens only the first non-clear diagnostic and never duplicates
+review queues. The
 visual consistency never replaces each route's independent server, database, AAL2, and
 permission checks.
 
@@ -268,6 +271,12 @@ release their linked origins for another evidence-backed correction instead of l
 the report. Private package evidence is viewed through short-lived signed URLs and never
 enters public catalog or API responses.
 
+Privileged action counts include both pending reports and every open or deferred
+warning follow-up. Reviewing a report therefore cannot make outstanding corrective work
+disappear from the launcher. Focused rule and source reviews repeat the human-readable
+evidence snapshot and the initial reviewer note. Resolved and dismissed case URLs remain
+available as read-only audit receipts and never render another decision form.
+
 ## Custom Food Preference Mapping Requests
 
 Custom allergen and dietary text without one exact reviewed match enters
@@ -389,7 +398,10 @@ Rejected candidates and approved mappings are completed outcomes rather than rec
 gaps. The workspace never offers arbitrary free-text nutrient identity or an unreviewed
 unit conversion. Source-controlled deterministic rules remove exact, fully evidenced
 provider identities from routine review only after their exact unit path is eligible;
-confidence and name similarity never do.
+confidence and name similarity never do. For remaining work, nutrient search renders
+the matching compatible choices and an announced result count directly. A zero-result
+query preserves the current selection, explains the missing match, and can be cleared
+without disabling or stranding the decision form.
 
 The initial deterministic-rule migration checks every existing pending mapping. Each
 mapping receives an immutable backfill result: an exact eligible rule records approval
@@ -420,12 +432,15 @@ on the current screen, and the readiness result that marks the work complete. El
 data-operations repairs link to their exact safety check. A zero-candidate dry run ends
 that repair attempt instead of encouraging an unchanged retry. After every available
 repair check returns no exact candidate, an administrator or developer records a
-required private note and chooses `Finish review — keep out of public API`. That
-append-only disposition removes only the exact current issue snapshot from actionable
-queues. It does not change the product, approve missing evidence, or publish the record:
-the product stays available inside blendCalc and remains withheld from blendCalcAPI v1.
-Any changed product/evidence timestamp or issue set automatically reopens the work while
-preserving the earlier review history.
+required private note. Publication blockers use `Finish review — keep out of public
+API`; that append-only `accepted_withheld` disposition removes only the exact current
+publication snapshot from actionable queues while the product stays available inside
+blendCalc and withheld from blendCalcAPI v1. Revision and provenance diagnostics on an
+already API-ready product are labeled as nonblocking and use `Finish evidence follow-up`;
+the append-only `accepted_evidence_gap` disposition removes only that internal follow-up
+without changing product data, revision history, or API availability. Any changed
+product/evidence timestamp or issue set automatically reopens the matching work while
+preserving earlier review history.
 
 Administrators and developers with `data_operations.catalog_health.repair` may run a
 bounded repair from the data-operations product route when the issue code explicitly
@@ -441,7 +456,12 @@ accepted-withheld disposition acknowledges that exact unresolved state; it is no
 evidence approval or catalog-submission rejection.
 
 Catalog-review decisions follow the same rule. Dismissing a provider change records that
-the current canonical revision remains authoritative. Accepting a correct provider
+the current canonical revision remains authoritative and closes only open conflicts
+whose evidence names that exact provider snapshot. An operator may separately resolve
+an unlinked field conflict without a correction when reviewed evidence proves the
+current canonical value is stronger; the required note, reviewer, and timestamp remain
+on the terminal conflict. Linked corrections must be reviewed before either terminal
+shortcut can run. Accepting a correct provider
 change requires completing the existing product-correction workflow and linking the
 new approved catalog revision; a monitor result cannot overwrite a canonical product.
 `catalog_correction_origins` applies the same origin-to-revision contract to provider
@@ -449,9 +469,25 @@ changes, open field conflicts, and confirmed food-warning reports. A real correc
 submission links automatically by exact product, base revision, and overlapping changed
 fields. Approval then resolves all linked origins atomically; it never fabricates a
 change summary or treats an unchanged product snapshot as corrective evidence.
+The Product readiness sheets expose that contract through one Correction workflow
+handoff. Opening the prefilled correction changes nothing, submitting creates ordinary
+pending review work, approval creates a new immutable revision, and rejection preserves
+the current canonical product. A pending correction routes to Product submissions
+instead of allowing a duplicate. Readiness gaps without a separate origin may use the
+same form; publication readiness is recalculated from the resulting reviewed revision.
 Probable recall matches can be confirmed or dismissed only by an elevated AAL2 session.
-Exact GTIN matches are visible immediately, while title-only similarity never enters
-the queue.
+The review card explains the recorded match basis and any required package-code check.
+Exact GTIN matches are visible immediately, while title-only similarity never enters the
+queue.
+
+`resolve_food_warning_policy_review_case` is the AAL2 browser-session boundary for
+confirmed warning-rule and source-correction follow-ups. It requires an evidence note;
+resolved and dismissed outcomes close the case and originating follow-up, while deferred
+keeps both in the work queue with the recorded prerequisite. Source corrections also
+require `data_operations.catalog_health.repair`. This decision records review state
+only—it never edits a warning rule, source mapping, or product value.
+`get_privileged_tool_action_summary` reports pending warning decisions separately from
+open warning follow-ups and includes both in its actionable total.
 
 Profile is the privileged navigation gateway. `/profile/privileged-tools` opens the
 role-aware permitted tool list, while the following direct routes own focused right sheets:

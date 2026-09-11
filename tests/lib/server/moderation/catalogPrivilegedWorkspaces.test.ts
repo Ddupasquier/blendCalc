@@ -46,6 +46,8 @@ describe("catalog privileged workspaces", () => {
 		vi.clearAllMocks();
 		mocks.readPrivilegedToolReviewSummary.mockResolvedValue({
 			pendingCatalogDataOperations: 7,
+			catalogDataOperationSubjects: [],
+			catalogDataOperationSubjectsTruncated: true,
 		});
 	});
 
@@ -70,6 +72,8 @@ describe("catalog privileged workspaces", () => {
 			dashboard: catalogDataOperationsHealthFixture,
 			catalogMonitor: catalogMonitorModerationFixture,
 			actionCount: 7,
+			actionSubjects: [],
+			actionSubjectsTruncated: true,
 		});
 		expect(mocks.requireModeratorPermission).toHaveBeenCalledWith(
 			expect.anything(),
@@ -103,7 +107,11 @@ describe("catalog privileged workspaces", () => {
 			loadCatalogDataOperationsWorkspace({
 				locals: { supabase: {} },
 			} as never),
-		).resolves.toMatchObject({ actionCount: null });
+		).resolves.toMatchObject({
+			actionCount: null,
+			actionSubjects: null,
+			actionSubjectsTruncated: false,
+		});
 	});
 
 	it("requires catalog-review permission before loading human decisions", async () => {

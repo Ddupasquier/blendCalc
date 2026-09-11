@@ -1,5 +1,9 @@
-import type { CatalogProductReadinessPassportWorkspaceData } from "$lib/server/moderation/catalogProductReadinessPassportWorkspace.server";
+import type { PageData } from "./$types";
 
 export type CatalogReviewProductPageProps = {
-	data: CatalogProductReadinessPassportWorkspaceData;
+	data: PageData;
+	form?: {
+		catalogReviewError?: string;
+		catalogReviewSuccess?: string;
+	} | null;
 };

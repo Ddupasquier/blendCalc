@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { randomUUID } from "node:crypto";
 import { parse } from "dotenv";
 import { readFile } from "node:fs/promises";
 import type { Database, Json } from "$lib/types/database.types";
@@ -37,6 +38,82 @@ const createLocalQaServiceRoleDatabaseClient = async () => {
 	return createClient<Database>(supabaseUrl, serviceRoleKey, {
 		auth: { autoRefreshToken: false, persistSession: false },
 	});
+};
+
+export const createLocalQaPendingNutrientMapping = async () => {
+	const admin = await createLocalQaServiceRoleDatabaseClient();
+	const sourceNutrientKey = `qa-browser-omega-6-${randomUUID()}`;
+	const { data, error } = await admin
+		.from("nutrient_source_mappings")
+		.insert({
+			confidence: 1,
+			enabled: false,
+			mapping_method: "api_taxonomy_match",
+			nutrient_id: 700855,
+			priority: 100,
+			provenance: {
+				fixture: true,
+				reason:
+					"A broad parent nutrient label still requires an exact identity decision.",
+			},
+			review_status: "pending_review",
+			source_key: "open-food-facts",
+			source_nutrient_key: sourceNutrientKey,
+			source_nutrient_name: "Omega-6 fatty acids",
+			source_unit_name: "G",
+		})
+		.select("id")
+		.single();
+	if (error) throw error;
+	return data.id;
+};
+
+export const deleteLocalQaPendingNutrientMapping = async (
+	mappingId: string,
+) => {
+	const admin = await createLocalQaServiceRoleDatabaseClient();
+	const { error } = await admin
+		.from("nutrient_source_mappings")
+		.delete()
+		.eq("id", mappingId);
+	if (error) throw error;
+};
+
+export const recheckLocalQaDeterministicNutrientMapping = async () => {
+	const admin = await createLocalQaServiceRoleDatabaseClient();
+	const { data: mapping, error: findError } = await admin
+		.from("nutrient_source_mappings")
+		.select("id")
+		.eq("source_key", "open-food-facts")
+		.eq("source_nutrient_key", "arachidonic-acid")
+		.eq("source_unit_name", "G")
+		.single();
+	if (findError) throw findError;
+
+	const { error: updateError } = await admin
+		.from("nutrient_source_mappings")
+		.update({
+			enabled: false,
+			review_reference: null,
+			review_status: "pending_review",
+			reviewed_at: null,
+		})
+		.eq("id", mapping.id);
+	if (updateError) throw updateError;
+
+	const { data: rechecked, error: recheckError } = await admin
+		.from("nutrient_source_mappings")
+		.select("enabled, id, review_status")
+		.eq("id", mapping.id)
+		.single();
+	if (recheckError) throw recheckError;
+	if (rechecked.review_status !== "approved" || !rechecked.enabled) {
+		throw new Error(
+			"The deterministic nutrient rule did not remove the rechecked mapping from human review.",
+		);
+	}
+
+	return rechecked.id;
 };
 
 const findLocalQaUserByEmail = async (email: string) => {
@@ -100,6 +177,97 @@ export const deleteLocalQaAuthenticatorFactorsForEmail = async (
 		});
 		if (deleteError) throw deleteError;
 	}
+};
+
+const localQaDiagnosticProductId = "81000000-0000-4000-8000-000000000061";
+const localQaDiagnosticRevisionId = "72900000-0000-4000-8000-000000000010";
+
+export type LocalQaCatalogDiagnosticReviewFixture = {
+	occurrenceKey: string;
+	productId: string;
+};
+
+const removeLocalQaCatalogDiagnosticReviewFixture = async (
+	admin: SupabaseClient<Database>,
+) => {
+	const { data: occurrences, error: occurrenceError } = await admin
+		.from("catalog_health_issue_occurrences")
+		.select("occurrence_key")
+		.eq("shared_product_id", localQaDiagnosticProductId)
+		.eq("source_scope", "catalog_revision");
+	if (occurrenceError) throw occurrenceError;
+
+	const occurrenceKeys = (occurrences ?? [])
+		.map((occurrence) => occurrence.occurrence_key)
+		.filter((occurrenceKey): occurrenceKey is string => Boolean(occurrenceKey));
+	if (occurrenceKeys.length > 0) {
+		const { error: repairError } = await admin
+			.from("catalog_health_repair_runs")
+			.delete()
+			.in("occurrence_key", occurrenceKeys);
+		if (repairError) throw repairError;
+	}
+
+	const { error: dispositionError } = await admin
+		.from("catalog_health_review_dispositions")
+		.delete()
+		.eq("shared_product_id", localQaDiagnosticProductId);
+	if (dispositionError) throw dispositionError;
+
+	const { error: revisionError } = await admin
+		.from("shared_product_revisions")
+		.delete()
+		.eq("id", localQaDiagnosticRevisionId);
+	if (revisionError) throw revisionError;
+};
+
+export const seedLocalQaCatalogDiagnosticReview =
+	async (): Promise<LocalQaCatalogDiagnosticReviewFixture> => {
+		const admin = await createLocalQaServiceRoleDatabaseClient();
+		await removeLocalQaCatalogDiagnosticReviewFixture(admin);
+
+		const { data: revision, error: revisionReadError } = await admin
+			.from("shared_product_revisions")
+			.select("*")
+			.eq("shared_product_id", localQaDiagnosticProductId)
+			.eq("revision_number", 1)
+			.single();
+		if (revisionReadError) throw revisionReadError;
+
+		const { error: revisionInsertError } = await admin
+			.from("shared_product_revisions")
+			.insert({
+				...revision,
+				id: localQaDiagnosticRevisionId,
+				revision_number: 2,
+				change_summary: {},
+				label_observed_at: "2026-09-10T12:00:00.000Z",
+				created_at: "2026-09-10T12:00:00.000Z",
+			});
+		if (revisionInsertError) throw revisionInsertError;
+
+		const { data: occurrence, error: occurrenceError } = await admin
+			.from("catalog_health_actionable_issue_occurrences")
+			.select("occurrence_key")
+			.eq("shared_product_id", localQaDiagnosticProductId)
+			.eq("source_scope", "catalog_revision")
+			.single();
+		if (occurrenceError) throw occurrenceError;
+		if (!occurrence.occurrence_key) {
+			throw new Error(
+				"The local catalog diagnostic fixture did not create an occurrence key.",
+			);
+		}
+
+		return {
+			occurrenceKey: occurrence.occurrence_key,
+			productId: localQaDiagnosticProductId,
+		};
+	};
+
+export const cleanupLocalQaCatalogDiagnosticReview = async () => {
+	const admin = await createLocalQaServiceRoleDatabaseClient();
+	await removeLocalQaCatalogDiagnosticReviewFixture(admin);
 };
 
 export type LocalQaCatalogSubmissionEnforcementSnapshot = {

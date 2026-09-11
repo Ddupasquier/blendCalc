@@ -1,11 +1,36 @@
 import type { AppPermission, AppRole } from "./moderation";
 
+export type CatalogDataOperationSubjectIssue = {
+	code: string;
+	summary: string;
+	resolutionAction: string;
+	severity: string;
+	parameters: Record<string, unknown>;
+};
+
+export type CatalogDataOperationSubject = {
+	subjectType: string;
+	subjectKey: string;
+	displayName: string;
+	context: string | null;
+	issueCount: number;
+	severity: string;
+	summary: string;
+	resolutionAction: string;
+	destination: string | null;
+	missingPrerequisite: string | null;
+	issues: CatalogDataOperationSubjectIssue[];
+};
+
 export type PrivilegedReviewSummary = {
 	pendingProductSubmissions: number | null;
 	pendingCatalogReviewItems: number | null;
 	pendingFoodWarningReports: number | null;
+	pendingFoodWarningFollowUps: number | null;
 	pendingProfileImageReviews: number | null;
 	pendingCatalogDataOperations: number | null;
+	catalogDataOperationSubjects: CatalogDataOperationSubject[] | null;
+	catalogDataOperationSubjectsTruncated: boolean;
 	totalActionableItems: number | null;
 	unavailable: boolean;
 	identityVerificationRequired: boolean;

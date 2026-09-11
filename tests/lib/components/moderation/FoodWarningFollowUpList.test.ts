@@ -55,6 +55,12 @@ describe("FoodWarningFollowUpList", () => {
 		expect(
 			screen.getByText("Owner: Food warning policy review"),
 		).toBeInTheDocument();
+		expect(
+			screen.getByRole("link", { name: "Review warning rule" }),
+		).toHaveAttribute(
+			"href",
+			"/profile/privileged-tools/food-warning-reports/follow-ups/policy-case-id",
+		);
 	});
 
 	it("does not add an empty second queue", () => {

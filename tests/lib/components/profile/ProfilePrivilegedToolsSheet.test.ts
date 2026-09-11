@@ -14,8 +14,11 @@ const emptyReviewSummary: ProfilePrivilegedToolAccess["reviewSummary"] = {
 	pendingProductSubmissions: 0,
 	pendingCatalogReviewItems: 0,
 	pendingFoodWarningReports: 0,
+	pendingFoodWarningFollowUps: 0,
 	pendingProfileImageReviews: 0,
 	pendingCatalogDataOperations: 0,
+	catalogDataOperationSubjects: [],
+	catalogDataOperationSubjectsTruncated: false,
 	totalActionableItems: 0,
 	unavailable: false,
 	identityVerificationRequired: false,
@@ -42,6 +45,7 @@ describe("Profile privileged tools sheet", () => {
 					pendingProductSubmissions: 4,
 					pendingCatalogReviewItems: 2,
 					pendingFoodWarningReports: 0,
+					pendingFoodWarningFollowUps: 0,
 					pendingProfileImageReviews: 0,
 					totalActionableItems: 6,
 				}),
@@ -116,6 +120,7 @@ describe("Profile privileged tools sheet", () => {
 					pendingProductSubmissions: null,
 					pendingCatalogReviewItems: null,
 					pendingFoodWarningReports: null,
+					pendingFoodWarningFollowUps: null,
 					pendingProfileImageReviews: null,
 					pendingCatalogDataOperations: null,
 					totalActionableItems: null,
@@ -151,6 +156,33 @@ describe("Profile privileged tools sheet", () => {
 		);
 	});
 
+	it("keeps food-warning work visible when only follow-ups remain", () => {
+		render(ProfilePrivilegedToolsSheet, {
+			props: {
+				open: true,
+				access: createAccess({
+					pendingFoodWarningReports: 0,
+					pendingFoodWarningFollowUps: 2,
+					totalActionableItems: 2,
+				}),
+				onClose: vi.fn(),
+				onNavigate: vi.fn(),
+			},
+		});
+
+		const warningWork = screen.getByRole("button", {
+			name: /Food warning reports/,
+		});
+		expect(warningWork).toBeEnabled();
+		expect(warningWork).toHaveTextContent("2 follow-ups waiting");
+		expect(
+			screen.getByLabelText(
+				"2 food warning reports and follow-ups requiring review",
+			),
+		).toBeVisible();
+		expect(screen.getByText(/Start with food warning reports/)).toBeVisible();
+	});
+
 	it("keeps review queues disabled when their counts cannot be read", () => {
 		render(ProfilePrivilegedToolsSheet, {
 			props: {
@@ -159,6 +191,7 @@ describe("Profile privileged tools sheet", () => {
 					pendingProductSubmissions: null,
 					pendingCatalogReviewItems: null,
 					pendingFoodWarningReports: null,
+					pendingFoodWarningFollowUps: null,
 					pendingProfileImageReviews: null,
 					pendingCatalogDataOperations: null,
 					totalActionableItems: null,

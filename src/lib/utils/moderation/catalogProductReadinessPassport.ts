@@ -12,6 +12,21 @@ export type CatalogProductReadinessIssue = {
 	resolutionAction: string;
 	automatedRepairAllowed: boolean;
 	automatedRepairKey: string | null;
+	workCategory: "publication_blocker" | "catalog_diagnostic";
+	impact: "blocks_publication" | "does_not_block_publication";
+};
+
+export type CatalogProductReviewCompletion = {
+	requiredSafeRepairCheckCount: number;
+	completedSafeRepairCheckCount: number;
+	canFinish: boolean;
+};
+
+export type CatalogProductReviewDisposition = {
+	outcome: "accepted_withheld" | "accepted_evidence_gap";
+	reviewNote: string;
+	issueCount: number;
+	reviewedAt: string;
 };
 
 export type CatalogProductReadinessPassport = {
@@ -48,17 +63,10 @@ export type CatalogProductReadinessPassport = {
 		observationCount: number;
 		sources: string[];
 	};
-	reviewCompletion: {
-		requiredSafeRepairCheckCount: number;
-		completedSafeRepairCheckCount: number;
-		canFinish: boolean;
-	};
-	reviewDisposition: {
-		outcome: "accepted_withheld";
-		reviewNote: string;
-		issueCount: number;
-		reviewedAt: string;
-	} | null;
+	reviewCompletion: CatalogProductReviewCompletion;
+	diagnosticReviewCompletion: CatalogProductReviewCompletion;
+	reviewDisposition: CatalogProductReviewDisposition | null;
+	diagnosticReviewDisposition: CatalogProductReviewDisposition | null;
 	issues: CatalogProductReadinessIssue[];
 };
 
@@ -102,30 +110,45 @@ const readBoolean = (value: unknown, field: string): boolean => {
 
 const parseReviewDisposition = (
 	value: unknown,
+	field: "reviewDisposition" | "diagnosticReviewDisposition",
 ): CatalogProductReadinessPassport["reviewDisposition"] => {
 	if (value === null) return null;
-	const disposition = readRecord(value, "reviewDisposition");
-	const outcome = readString(disposition.outcome, "reviewDisposition.outcome");
-	if (outcome !== "accepted_withheld") {
+	const disposition = readRecord(value, field);
+	const outcome = readString(disposition.outcome, `${field}.outcome`);
+	if (outcome !== "accepted_withheld" && outcome !== "accepted_evidence_gap") {
 		throw new TypeError(
-			"Invalid product readiness passport field: reviewDisposition.outcome",
+			`Invalid product readiness passport field: ${field}.outcome`,
 		);
 	}
 	return {
 		outcome,
-		reviewNote: readString(
-			disposition.reviewNote,
-			"reviewDisposition.reviewNote",
-		),
-		issueCount: readNumber(
-			disposition.issueCount,
-			"reviewDisposition.issueCount",
-		),
-		reviewedAt: readString(
-			disposition.reviewedAt,
-			"reviewDisposition.reviewedAt",
-		),
+		reviewNote: readString(disposition.reviewNote, `${field}.reviewNote`),
+		issueCount: readNumber(disposition.issueCount, `${field}.issueCount`),
+		reviewedAt: readString(disposition.reviewedAt, `${field}.reviewedAt`),
 	};
+};
+
+const readWorkCategory = (
+	value: unknown,
+	field: string,
+): CatalogProductReadinessIssue["workCategory"] => {
+	if (value !== "publication_blocker" && value !== "catalog_diagnostic") {
+		throw new TypeError(`Invalid product readiness passport field: ${field}`);
+	}
+	return value;
+};
+
+const readImpact = (
+	value: unknown,
+	field: string,
+): CatalogProductReadinessIssue["impact"] => {
+	if (
+		value !== "blocks_publication" &&
+		value !== "does_not_block_publication"
+	) {
+		throw new TypeError(`Invalid product readiness passport field: ${field}`);
+	}
+	return value;
 };
 
 const parseIssue = (
@@ -161,6 +184,26 @@ const parseIssue = (
 			issue.automatedRepairKey,
 			`${path}.automatedRepairKey`,
 		),
+		workCategory: readWorkCategory(issue.workCategory, `${path}.workCategory`),
+		impact: readImpact(issue.impact, `${path}.impact`),
+	};
+};
+
+const parseReviewCompletion = (
+	value: unknown,
+	field: "reviewCompletion" | "diagnosticReviewCompletion",
+): CatalogProductReviewCompletion => {
+	const completion = readRecord(value, field);
+	return {
+		requiredSafeRepairCheckCount: readNumber(
+			completion.requiredSafeRepairCheckCount,
+			`${field}.requiredSafeRepairCheckCount`,
+		),
+		completedSafeRepairCheckCount: readNumber(
+			completion.completedSafeRepairCheckCount,
+			`${field}.completedSafeRepairCheckCount`,
+		),
+		canFinish: readBoolean(completion.canFinish, `${field}.canFinish`),
 	};
 };
 
@@ -256,24 +299,22 @@ export const parseCatalogProductReadinessPassport = (
 				(source, index) => readString(source, `evidence.sources[${index}]`),
 			),
 		},
-		reviewCompletion: (() => {
-			const completion = readRecord(root.reviewCompletion, "reviewCompletion");
-			return {
-				requiredSafeRepairCheckCount: readNumber(
-					completion.requiredSafeRepairCheckCount,
-					"reviewCompletion.requiredSafeRepairCheckCount",
-				),
-				completedSafeRepairCheckCount: readNumber(
-					completion.completedSafeRepairCheckCount,
-					"reviewCompletion.completedSafeRepairCheckCount",
-				),
-				canFinish: readBoolean(
-					completion.canFinish,
-					"reviewCompletion.canFinish",
-				),
-			};
-		})(),
-		reviewDisposition: parseReviewDisposition(root.reviewDisposition),
+		reviewCompletion: parseReviewCompletion(
+			root.reviewCompletion,
+			"reviewCompletion",
+		),
+		diagnosticReviewCompletion: parseReviewCompletion(
+			root.diagnosticReviewCompletion,
+			"diagnosticReviewCompletion",
+		),
+		reviewDisposition: parseReviewDisposition(
+			root.reviewDisposition,
+			"reviewDisposition",
+		),
+		diagnosticReviewDisposition: parseReviewDisposition(
+			root.diagnosticReviewDisposition,
+			"diagnosticReviewDisposition",
+		),
 		issues: readArray(root.issues, "issues").map(parseIssue),
 	};
 };

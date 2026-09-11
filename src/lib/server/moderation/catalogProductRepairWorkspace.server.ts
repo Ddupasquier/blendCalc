@@ -1,7 +1,9 @@
 import { fail, type RequestEvent } from "@sveltejs/kit";
 import { readCatalogProductReadinessPassport } from "$lib/server/moderation/catalogProductReadinessPassport.server";
+import { readCatalogCorrectionHandoff } from "$lib/server/moderation/catalogCorrectionHandoff.server";
 import {
 	CatalogProductReviewDispositionError,
+	finishCatalogProductDiagnosticReview,
 	finishCatalogProductReview,
 } from "$lib/server/moderation/catalogProductReviewDisposition.server";
 import {
@@ -59,14 +61,19 @@ export const loadCatalogProductRepairWorkspace = async ({
 		getCatalogProductRepairRoute(productId),
 	);
 
+	const passport = await readCatalogProductReadinessPassport(
+		locals.supabase,
+		productId,
+	);
 	return {
 		viewerRole: role,
 		canRunRepairs: permissions.includes(
 			"data_operations.catalog_health.repair",
 		),
-		passport: await readCatalogProductReadinessPassport(
-			locals.supabase,
+		passport,
+		correctionHandoff: await readCatalogCorrectionHandoff(
 			productId,
+			passport.issues,
 		),
 	};
 };
@@ -193,25 +200,39 @@ export const finishCatalogProductReviewAction = async ({
 		CATALOG_REPAIR_FORM_MAX_BYTES,
 	);
 	const reviewNote = String(formData.get("reviewNote") ?? "").trim();
+	const reviewCategory = String(formData.get("reviewCategory") ?? "");
 
 	if (
+		(reviewCategory !== "publication" && reviewCategory !== "diagnostic") ||
 		reviewNote.length < CATALOG_REVIEW_NOTE_MIN_LENGTH ||
 		reviewNote.length > CATALOG_REVIEW_NOTE_MAX_LENGTH
 	) {
 		return fail(400, {
+			catalogReviewDispositionCategory:
+				reviewCategory === "diagnostic" ? "diagnostic" : "publication",
 			catalogReviewDispositionError:
-				"Add a review note of at least 10 characters explaining why the product remains withheld.",
+				reviewCategory === "diagnostic"
+					? "Add a review note of at least 10 characters explaining why the evidence cannot be reconstructed."
+					: "Add a review note of at least 10 characters explaining why the product remains withheld.",
 		});
 	}
 
 	try {
-		const result = await finishCatalogProductReview(locals.supabase, {
+		const finishReview =
+			reviewCategory === "diagnostic"
+				? finishCatalogProductDiagnosticReview
+				: finishCatalogProductReview;
+		const result = await finishReview(locals.supabase, {
 			sharedProductId: productId,
 			reviewNote,
 		});
 		return {
+			catalogReviewDispositionCategory: reviewCategory,
 			catalogReviewDispositionResult: result,
-			catalogReviewDispositionSuccess: `${result.issueCount} current ${result.issueCount === 1 ? "item was" : "items were"} removed from the work queue. The product remains available in blendCalc and withheld from the public API.`,
+			catalogReviewDispositionSuccess:
+				reviewCategory === "diagnostic"
+					? `${result.issueCount} current evidence ${result.issueCount === 1 ? "follow-up was" : "follow-ups were"} removed from the work queue. Product data and public API availability are unchanged.`
+					: `${result.issueCount} current ${result.issueCount === 1 ? "item was" : "items were"} removed from the work queue. The product remains available in blendCalc and withheld from the public API.`,
 		};
 	} catch (error) {
 		return fail(
@@ -220,6 +241,7 @@ export const finishCatalogProductReviewAction = async ({
 				? 409
 				: 500,
 			{
+				catalogReviewDispositionCategory: reviewCategory,
 				catalogReviewDispositionError: getDispositionErrorMessage(error),
 			},
 		);

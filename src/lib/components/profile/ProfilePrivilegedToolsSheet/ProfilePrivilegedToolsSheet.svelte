@@ -51,13 +51,19 @@
 	);
 	const hasActions = (count: number | null) =>
 		typeof count === "number" && count > 0;
+	const foodWarningActionCount = $derived(
+		summary.pendingFoodWarningReports === null ||
+			summary.pendingFoodWarningFollowUps === null
+			? null
+			: summary.pendingFoodWarningReports + summary.pendingFoodWarningFollowUps,
+	);
 	const hasActionableWork = $derived(
 		!summary.identityVerificationRequired &&
 			!summary.unavailable &&
 			(summary.totalActionableItems ?? 0) > 0,
 	);
 	const firstPriorityLabel = $derived(
-		canReviewWarnings && hasActions(summary.pendingFoodWarningReports)
+		canReviewWarnings && hasActions(foodWarningActionCount)
 			? "food warning reports"
 			: canReviewProducts && hasActions(summary.pendingCatalogReviewItems)
 				? "catalog review work"
@@ -95,6 +101,27 @@
 		return count === 1
 			? "1 item is waiting for review"
 			: `${count} items are waiting for review`;
+	};
+	const describeFoodWarningQueue = () => {
+		if (summary.identityVerificationRequired) {
+			return "Verify your identity to check this queue";
+		}
+		if (foodWarningActionCount === null) {
+			return "Review count is temporarily unavailable";
+		}
+		if (foodWarningActionCount === 0) return "Nothing is waiting for review";
+		const parts = [];
+		if ((summary.pendingFoodWarningReports ?? 0) > 0) {
+			parts.push(
+				`${summary.pendingFoodWarningReports} ${summary.pendingFoodWarningReports === 1 ? "report" : "reports"}`,
+			);
+		}
+		if ((summary.pendingFoodWarningFollowUps ?? 0) > 0) {
+			parts.push(
+				`${summary.pendingFoodWarningFollowUps} ${summary.pendingFoodWarningFollowUps === 1 ? "follow-up" : "follow-ups"}`,
+			);
+		}
+		return `${parts.join(" · ")} waiting`;
 	};
 
 	const isQueueActionDisabled = (count: number | null) =>
@@ -144,10 +171,10 @@
 {#snippet warningReportsAction()}
 	<BottomSheetAction
 		label="Food warning reports"
-		description={describeQueue(summary.pendingFoodWarningReports)}
-		disabled={isQueueActionDisabled(summary.pendingFoodWarningReports)}
-		actionRequiredCount={summary.pendingFoodWarningReports ?? 0}
-		actionRequiredLabel="food warning reports requiring review"
+		description={describeFoodWarningQueue()}
+		disabled={isQueueActionDisabled(foodWarningActionCount)}
+		actionRequiredCount={foodWarningActionCount ?? 0}
+		actionRequiredLabel="food warning reports and follow-ups requiring review"
 		onSelect={() =>
 			openPrivilegedToolDestination(
 				getProfileSettingsRouteHref(
@@ -268,7 +295,7 @@
 					showHeader={false}
 					class="profile-privileged-tools-sheet__action-group--attention"
 				>
-					{#if canReviewWarnings && hasActions(summary.pendingFoodWarningReports)}{@render warningReportsAction()}{/if}
+					{#if canReviewWarnings && hasActions(foodWarningActionCount)}{@render warningReportsAction()}{/if}
 					{#if canReviewProducts && hasActions(summary.pendingCatalogReviewItems)}{@render catalogReviewAction()}{/if}
 					{#if canReviewProducts && hasActions(summary.pendingProductSubmissions)}{@render productSubmissionsAction()}{/if}
 					{#if canManageAccounts && hasActions(summary.pendingProfileImageReviews)}{@render profileImagesAction()}{/if}
@@ -287,7 +314,7 @@
 			<PrivilegedActionGroup title="Review tools" showHeader={false}>
 				{#if canReviewProducts && !hasActions(summary.pendingProductSubmissions)}{@render productSubmissionsAction()}{/if}
 				{#if canReviewProducts && !hasActions(summary.pendingCatalogReviewItems)}{@render catalogReviewAction()}{/if}
-				{#if canReviewWarnings && !hasActions(summary.pendingFoodWarningReports)}{@render warningReportsAction()}{/if}
+				{#if canReviewWarnings && !hasActions(foodWarningActionCount)}{@render warningReportsAction()}{/if}
 				{#if canManageAccounts && !hasActions(summary.pendingProfileImageReviews)}{@render profileImagesAction()}{/if}
 				{#if canManageAccounts}{@render accountAccessAction()}{/if}
 			</PrivilegedActionGroup>

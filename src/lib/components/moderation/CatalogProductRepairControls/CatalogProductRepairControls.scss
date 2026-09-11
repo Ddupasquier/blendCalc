@@ -38,6 +38,12 @@
 	padding: $app-shell-card-padding-compact;
 	background: $app-shell-surface-soft;
 	border-radius: $app-shell-radius-card;
+	scroll-margin-block: $app-gap-sm;
+}
+
+.catalog-product-repairs__item:focus-visible {
+	outline: $app-focus-outline;
+	outline-offset: $app-focus-outline-offset;
 }
 
 .catalog-product-repairs__item > header {
@@ -50,6 +56,18 @@
 .catalog-product-repairs__item > p,
 .catalog-product-repairs__results {
 	margin: 0;
+}
+
+.catalog-product-repairs__evidence-check {
+	display: grid;
+	gap: $app-gap-inline-compact;
+	padding: $app-gap-sm;
+	background: $app-shell-surface-panel;
+	border-radius: $app-shell-radius-control;
+}
+
+.catalog-product-repairs__evidence-check strong {
+	color: $app-shell-text-primary;
 }
 
 .catalog-product-repairs__item > p,
