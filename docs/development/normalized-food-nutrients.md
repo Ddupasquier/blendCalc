@@ -90,20 +90,38 @@ submissions, catalog products, revisions, and source observations. Reported valu
 units are preserved; duplicate aliases yield to an already-present canonical nutrient.
 
 Source nutrient mappings are active only after a source identifier or exact source key
-and unit receive an explicit reviewed decision. Taxonomy and name similarity can suggest
-a candidate for review, but cannot mark a nutrient canonical. Runtime mapping requires
-the exact normalized source unit; a different unit requires a reviewed nutrient-specific
-conversion. Legacy semantic mapping metadata remains noncanonical lineage rather than
-being deleted or silently trusted.
+and unit receive an explicit human decision or match a versioned source-controlled
+deterministic rule. Taxonomy and name similarity can suggest a candidate for review, but
+cannot mark a nutrient canonical. A deterministic rule records the exact provider key,
+canonical nutrient, evidence reference, and immutable system decision; runtime service
+credentials cannot create one. Runtime mapping requires the exact normalized source
+unit; a different unit requires a reviewed nutrient-specific conversion that is itself
+eligible for automatic use. Legacy semantic mapping metadata remains noncanonical
+lineage rather than being deleted or silently trusted.
 
-Exact provider identifiers, reviewed keys, and dataset mappings continue through the
-automated path and never become routine human work. A semantic candidate receives a
-stable mapping UUID and remains disabled with `pending_review` status. An AAL2 admin or
-developer may open its focused data-operations route, choose only a nutrient with a
-compatible reviewed unit path, cite identity evidence, and approve it as
-`moderator_verified`; or exclude it. The decision is immutable. Approval affects future
-normalization and deliberate reprocessing, not historical values through an implicit
-rewrite.
+The deterministic-rule migration evaluates the complete pending-review snapshot before
+future candidate triggers take over. It records one approved-or-skipped result per
+mapping plus reconciled run totals. A skipped mapping remains disabled and records
+whether it lacked an exact rule, lacked an eligible reviewed conversion, or changed
+state before approval; a backfill never upgrades confidence or name similarity into
+identity evidence.
+
+The initial Open Food Facts corpus is deliberately key-and-unit specific. It includes
+direct named nutrients supported by the provider's maintained field inventory and an
+existing canonical definition, while broad totals, ratios, pet-food proximate fields,
+stereochemical aliases without provider documentation, and apparent parent/component
+matches remain human review. The source unit is normalized through the same canonical
+aliases used by ingestion before a rule or reviewed conversion may match.
+
+Exact provider identifiers, source-controlled deterministic keys, and dataset mappings
+continue through the automated path and never become routine human work. A semantic
+candidate receives a stable mapping UUID and remains disabled with `pending_review`
+status. An AAL2 admin or developer may open its focused data-operations route, choose
+only a nutrient with a reviewed unit path, cite identity evidence, and approve it as
+`moderator_verified`; or exclude it. Human and deterministic decisions are both
+immutable and identify their actual actor type.
+Approval affects future normalization and deliberate reprocessing, not historical
+values through an implicit rewrite.
 
 ## Application Reads
 

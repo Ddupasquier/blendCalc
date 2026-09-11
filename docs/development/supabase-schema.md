@@ -586,18 +586,21 @@ These tables replace runtime nutrient, source, serving-unit, alias, and unit-con
 constants. The app loads them from Supabase and uses them when it interprets USDA
 FoodData Central and Open Food Facts products.
 
-| Table                                | Primary Key                                                               | Purpose                                                                                                                          | Key Relationships                                                                                                     |
-| ------------------------------------ | ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `product_data_sources`               | `key`                                                                     | Canonical identity, display name, URLs, terms, and observation history for each external API, standards API, or internal catalog | Referenced by all source-specific mapping and serving tables                                                          |
-| `product_source_daily_metrics`       | `(metric_date, source_key, source_data_type, lookup_kind, lookup_origin)` | Privacy-safe daily API usage, reliability, match, nutrient-depth, metadata-coverage, cache, and timing counters                  | `source_key → product_data_sources.key`                                                                               |
-| `product_source_field_daily_metrics` | `(metric_date, source_key, field_path, evaluation_origin)`                | Privacy-safe field selection, validity, disagreement, and confirmed-correction counters                                          | `source_key → product_data_sources.key`                                                                               |
-| `food_category_resolution_guidance`  | `source_normalized_value`                                                 | Reviewed specificity and exclusion bumpers for selecting among exact source-observed categories                                  | Same normalized value resolves through `custom_food_category_options`; no semantic target mapping                     |
-| `nutrient_source_mappings`           | `(source_key, source_nutrient_key, source_unit_name)`                     | Maps a source API nutrient key and unit to the app's canonical nutrient; immutable UUID `id` identifies review work              | `source_key → product_data_sources.key`, `nutrient_id → nutrient_definitions.nutrient_id`                             |
-| `nutrient_mapping_review_decisions`  | `id`                                                                      | Records immutable evidence-backed approval or exclusion decisions for ambiguous nutrient mappings                                | `mapping_id → nutrient_source_mappings.id`, selected and previous nutrient definitions, `reviewed_by → auth.users.id` |
-| `nutrient_unit_conversions`          | `(source_key, nutrient_id, from_unit_name, to_unit_name)`                 | Stores source- and nutrient-specific conversion multipliers                                                                      | `source_key → product_data_sources.key`, `nutrient_id → nutrient_definitions.nutrient_id`                             |
-| `serving_measure_units`              | `key`                                                                     | App-ready weight, volume, and count units, labels, dimensions, ordering, and same-dimension conversions                          | `source_key → product_data_sources.key`                                                                               |
-| `serving_measure_aliases`            | `(unit_key, normalized_alias)`                                            | Recognizes API and label spellings such as `tbsp`, `tablespoon`, and `tablespoons`                                               | `unit_key → serving_measure_units.key`, `source_key → product_data_sources.key`                                       |
-| `food_servings`                      | `id`                                                                      | Exact reported weight, volume, or count/package serving sizes used by nutrition and Mix                                          | Exactly one food parent; optional `unit_key → serving_measure_units.key`                                              |
+| Table                                             | Primary Key                                                               | Purpose                                                                                                                          | Key Relationships                                                                                                     |
+| ------------------------------------------------- | ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `product_data_sources`                            | `key`                                                                     | Canonical identity, display name, URLs, terms, and observation history for each external API, standards API, or internal catalog | Referenced by all source-specific mapping and serving tables                                                          |
+| `product_source_daily_metrics`                    | `(metric_date, source_key, source_data_type, lookup_kind, lookup_origin)` | Privacy-safe daily API usage, reliability, match, nutrient-depth, metadata-coverage, cache, and timing counters                  | `source_key → product_data_sources.key`                                                                               |
+| `product_source_field_daily_metrics`              | `(metric_date, source_key, field_path, evaluation_origin)`                | Privacy-safe field selection, validity, disagreement, and confirmed-correction counters                                          | `source_key → product_data_sources.key`                                                                               |
+| `food_category_resolution_guidance`               | `source_normalized_value`                                                 | Reviewed specificity and exclusion bumpers for selecting among exact source-observed categories                                  | Same normalized value resolves through `custom_food_category_options`; no semantic target mapping                     |
+| `nutrient_source_mappings`                        | `(source_key, source_nutrient_key, source_unit_name)`                     | Maps a source API nutrient key and unit to the app's canonical nutrient; immutable UUID `id` identifies review work              | `source_key → product_data_sources.key`, `nutrient_id → nutrient_definitions.nutrient_id`                             |
+| `nutrient_mapping_deterministic_rules`            | `id`                                                                      | Versions source-controlled exact provider identities that may bypass routine human review only through an eligible unit path     | `source_key → product_data_sources.key`, `nutrient_id → nutrient_definitions.nutrient_id`                             |
+| `nutrient_mapping_deterministic_backfill_runs`    | `id`                                                                      | Reconciles one complete pending-review snapshot against the enabled deterministic rule corpus                                    | Summarized by `nutrient_mapping_deterministic_backfill_results.run_id`                                                |
+| `nutrient_mapping_deterministic_backfill_results` | `id`                                                                      | Records one approved-or-skipped result and reason for every mapping evaluated in a backfill                                      | `run_id → nutrient_mapping_deterministic_backfill_runs.id`, optional mapping and decision references                  |
+| `nutrient_mapping_review_decisions`               | `id`                                                                      | Records immutable evidence-backed approval or exclusion decisions for ambiguous nutrient mappings                                | `mapping_id → nutrient_source_mappings.id`, selected and previous nutrient definitions, `reviewed_by → auth.users.id` |
+| `nutrient_unit_conversions`                       | `(source_key, nutrient_id, from_unit_name, to_unit_name)`                 | Stores source- and nutrient-specific conversion multipliers                                                                      | `source_key → product_data_sources.key`, `nutrient_id → nutrient_definitions.nutrient_id`                             |
+| `serving_measure_units`                           | `key`                                                                     | App-ready weight, volume, and count units, labels, dimensions, ordering, and same-dimension conversions                          | `source_key → product_data_sources.key`                                                                               |
+| `serving_measure_aliases`                         | `(unit_key, normalized_alias)`                                            | Recognizes API and label spellings such as `tbsp`, `tablespoon`, and `tablespoons`                                               | `unit_key → serving_measure_units.key`, `source_key → product_data_sources.key`                                       |
+| `food_servings`                                   | `id`                                                                      | Exact reported weight, volume, or count/package serving sizes used by nutrition and Mix                                          | Exactly one food parent; optional `unit_key → serving_measure_units.key`                                              |
 
 `food_category_resolution_guidance` keeps provider taxonomy evidence separate from
 selection policy. Guidance may prefer a specific exact candidate, retain a broad
@@ -690,11 +693,14 @@ Notes:
 
 ### `nutrient_source_mappings`
 
-| Table                                  | Documented columns                                                                                                                                                                                                                                            |
-| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `nutrient_source_mappings`             | `id`, `source_key`, `source_nutrient_key`, `source_unit_name`, `source_nutrient_name`, `nutrient_id`, `priority`, `mapping_method`, `review_status`, `review_reference`, `confidence`, `enabled`, observation counts/timestamps, `provenance`, and timestamps |
-| `nutrient_source_mapping_observations` | `source_key`, exact `source_nutrient_key` and normalized `source_unit_name`, neutral source name, anonymous observation count, first/last-seen times, and timestamps                                                                                          |
-| `nutrient_mapping_review_decisions`    | `id`, `mapping_id`, source identity snapshot, `outcome`, previous and selected nutrient IDs, previous mapping method, bounded review note and evidence reference, reviewer, and review time                                                                   |
+| Table                                             | Documented columns                                                                                                                                                                                                                                            |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `nutrient_source_mappings`                        | `id`, `source_key`, `source_nutrient_key`, `source_unit_name`, `source_nutrient_name`, `nutrient_id`, `priority`, `mapping_method`, `review_status`, `review_reference`, `confidence`, `enabled`, observation counts/timestamps, `provenance`, and timestamps |
+| `nutrient_source_mapping_observations`            | `source_key`, exact `source_nutrient_key` and normalized `source_unit_name`, neutral source name, anonymous observation count, first/last-seen times, and timestamps                                                                                          |
+| `nutrient_mapping_deterministic_rules`            | `id`, exact source identity and unit, source name, canonical nutrient, rule version, unique review and evidence references, bounded review note, effective/enabled state, provenance, and timestamps                                                          |
+| `nutrient_mapping_deterministic_backfill_runs`    | `id`, operation reference, rule and pending snapshot counts, approved and skipped totals, and start/completion times                                                                                                                                          |
+| `nutrient_mapping_deterministic_backfill_results` | `id`, run and optional mapping references, exact source identity snapshot, approved-or-skipped result, bounded reason vocabulary, optional deterministic decision, and evaluation time                                                                        |
+| `nutrient_mapping_review_decisions`               | `id`, `mapping_id`, source identity snapshot, `outcome`, previous and selected nutrient IDs, previous mapping method, bounded review note and evidence reference, decision origin, optional deterministic rule or human reviewer, and review time             |
 
 Notes:
 
@@ -709,6 +715,23 @@ Notes:
   retain review evidence. Taxonomy/name similarity remains disabled and pending until
   reviewed into an identity-bearing method; seed runs may refresh only its observation
   metadata and cannot replace an approved or rejected identity.
+- A deterministic rule is migration-owned, versioned reference policy. Only one version
+  may be active for an exact provider/key/unit tuple. Runtime service credentials may
+  read the rules for audits but cannot insert, update, or delete them. The rule remains
+  inert until the canonical unit matches or a `reviewed_standard` or
+  `moderator_verified` nutrient-specific conversion with full confidence provides the
+  exact source-to-canonical unit path.
+- Matching a deterministic rule approves the stable mapping UUID idempotently as
+  `db_reviewed_api_key_match` and appends one `deterministic_rule` decision linked to
+  that exact rule version. The decision has no fabricated human reviewer. Reprocessing
+  the rule cannot duplicate the decision or silently change an already approved or
+  rejected mapping.
+- `run_deterministic_nutrient_mapping_backfill` is a migration-owner operation, not a
+  runtime RPC. It evaluates every mapping that is pending at the start of the run and
+  records one result row. Exact eligible rules approve; missing rules, missing reviewed
+  unit conversions, and concurrent state changes remain skipped with their explicit
+  reason. Completed run totals must equal the captured pending count. Service-role code
+  may read the audit tables but cannot insert results or execute the backfill.
 - Runtime lookup requires the exact normalized `(source key, nutrient key, source unit)`
   row. Equivalent unit spellings normalize to the same unit, while a genuinely different
   unit requires its own approved mapping plus a nutrient-specific reviewed conversion.
@@ -747,6 +770,15 @@ Notes:
   reviewed source-unit path with the missing gram-to-milligram conversions for Sodium
   and Cholesterol. The already-approved source identities can therefore retain all 17
   reported values instead of diverting those two values to mapping review.
+- `20260910210000_deterministic_nutrient_mapping_rules.sql` adds the migration-owned
+  exact-rule path and a reviewed Open Food Facts key-and-unit corpus for direct nutrient
+  identities such as named sugars, minerals, vitamins, and fatty-acid components. A rule
+  is installed only when its canonical nutrient definition exists in that environment;
+  cross-unit rules become active only through their reviewed UCUM conversion. Every
+  automatic result appends an immutable system decision. The same migration evaluates
+  the complete existing pending-review snapshot and records one approved-or-skipped
+  audit result per mapping; near-name, wrong-unit, broad-total, ratio, ambiguous,
+  rejected, or conversion-incomplete candidates stay in review with a specific reason.
 
 ### `nutrient_unit_conversions`
 
