@@ -265,6 +265,13 @@ action for internal diagnostics. Its separate final action records
 `accepted_evidence_gap`, removes only the exact evidence follow-up from the queue, and
 explicitly leaves product values, revision history, and public API availability unchanged.
 
+The Revision and verification disclosure lists every stored revision newest-first and
+states the exact difference from its predecessor in plain language, including the old
+and new values. A revision number is never the only visible distinction. Reconstructable
+historical gaps disappear from the work queue after their exact snapshot differences
+are stored, and the database rejects truly identical future snapshots instead of asking
+an operator to repeat the same check.
+
 Confirmed food-warning rule and source follow-ups use the focused nested route
 `/profile/privileged-tools/food-warning-reports/follow-ups/[caseId]`. The screen shows
 the original report, human-readable warning, complete readable fact snapshot, initial

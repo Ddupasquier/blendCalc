@@ -29,6 +29,25 @@ export type CatalogProductReviewDisposition = {
 	reviewedAt: string;
 };
 
+export type CatalogProductRevisionChange = {
+	fieldPath: string;
+	fieldLabel: string;
+	changeType: "added" | "removed" | "changed";
+	previousValue: unknown;
+	newValue: unknown;
+	severity: "low" | "medium" | "high";
+};
+
+export type CatalogProductRevisionContext = {
+	id: string;
+	number: number;
+	labelObservedAt: string;
+	createdAt: string;
+	source: string;
+	sourceReference: string | null;
+	changes: CatalogProductRevisionChange[];
+};
+
 export type CatalogProductReadinessPassport = {
 	product: {
 		id: string;
@@ -53,6 +72,7 @@ export type CatalogProductReadinessPassport = {
 		sourceReference: string | null;
 		changeSummary: JsonRecord;
 	} | null;
+	revisionHistory: CatalogProductRevisionContext[];
 	qualityDimensions: JsonRecord;
 	evidence: {
 		selectedFieldCount: number;
@@ -189,6 +209,59 @@ const parseIssue = (
 	};
 };
 
+const parseRevisionChange = (
+	value: unknown,
+	path: string,
+): CatalogProductRevisionChange => {
+	const change = readRecord(value, path);
+	const changeType = readString(change.changeType, `${path}.changeType`);
+	const severity = readString(change.severity, `${path}.severity`);
+	if (!["added", "removed", "changed"].includes(changeType)) {
+		throw new TypeError(
+			`Invalid product readiness passport field: ${path}.changeType`,
+		);
+	}
+	if (!["low", "medium", "high"].includes(severity)) {
+		throw new TypeError(
+			`Invalid product readiness passport field: ${path}.severity`,
+		);
+	}
+	return {
+		fieldPath: readString(change.fieldPath, `${path}.fieldPath`),
+		fieldLabel: readString(change.fieldLabel, `${path}.fieldLabel`),
+		changeType: changeType as CatalogProductRevisionChange["changeType"],
+		previousValue: change.previousValue,
+		newValue: change.newValue,
+		severity: severity as CatalogProductRevisionChange["severity"],
+	};
+};
+
+export const parseCatalogProductRevisionHistory = (
+	value: unknown,
+): CatalogProductRevisionContext[] =>
+	readArray(value, "revisionHistory").map((entry, index) => {
+		const path = `revisionHistory[${index}]`;
+		const revision = readRecord(entry, path);
+		return {
+			id: readString(revision.id, `${path}.id`),
+			number: readNumber(revision.number, `${path}.number`),
+			labelObservedAt: readString(
+				revision.labelObservedAt,
+				`${path}.labelObservedAt`,
+			),
+			createdAt: readString(revision.createdAt, `${path}.createdAt`),
+			source: readString(revision.source, `${path}.source`),
+			sourceReference: readNullableString(
+				revision.sourceReference,
+				`${path}.sourceReference`,
+			),
+			changes: readArray(revision.changes, `${path}.changes`).map(
+				(change, changeIndex) =>
+					parseRevisionChange(change, `${path}.changes[${changeIndex}]`),
+			),
+		};
+	});
+
 const parseReviewCompletion = (
 	value: unknown,
 	field: "reviewCompletion" | "diagnosticReviewCompletion",
@@ -272,6 +345,7 @@ export const parseCatalogProductReadinessPassport = (
 					),
 				}
 			: null,
+		revisionHistory: [],
 		qualityDimensions: readRecord(root.qualityDimensions, "qualityDimensions"),
 		evidence: {
 			selectedFieldCount: readNumber(

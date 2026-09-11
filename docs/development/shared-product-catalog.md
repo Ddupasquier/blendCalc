@@ -704,6 +704,15 @@ actionable queue and does not rewrite product data or revision history. Raw diag
 remain queryable, and changed product, revision, observation, or submission evidence
 produces a new fingerprint that reopens the follow-up.
 
+Revision differences are durable data, not a UI guess. Every revision after Revision 1
+must link to and differ from its exact predecessor. If the writer does not supply a
+valid structured summary, the database derives leaf-level before/after rows from the
+two immutable snapshots and stores human-readable field labels. Existing reconstructable
+gaps are backfilled through that same comparison and leave the work queue. Identical
+future snapshots are rejected rather than becoming repeat checks; only a legacy row
+whose stored history truly cannot establish a difference uses the explicit
+evidence-unavailable disposition.
+
 ### Official Recall Matching
 
 FDA recall announcements, FDA enforcement records, and USDA FSIS recalls/public-health

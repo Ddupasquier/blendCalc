@@ -96,7 +96,12 @@ select
 	revision.shared_product_id,
 	2,
 	revision.category_option_id,
-	revision.food,
+	jsonb_set(
+		revision.food,
+		'{qaUnrecoverableRevisionMarker}',
+		'true'::jsonb,
+		true
+	),
 	revision.source,
 	revision.source_reference,
 	'{}'::jsonb,
@@ -105,6 +110,17 @@ select
 from public.shared_product_revisions revision
 where revision.shared_product_id = '81000000-0000-4000-8000-000000000061'
 	and revision.revision_number = 1;
+
+delete from public.shared_product_revision_changes revision_change
+where revision_change.revision_id = '72900000-0000-4000-8000-000000000010';
+
+alter table public.shared_product_revisions
+	disable trigger prepare_shared_product_revision_history;
+update public.shared_product_revisions revision
+set change_summary = '{}'::jsonb
+where revision.id = '72900000-0000-4000-8000-000000000010';
+alter table public.shared_product_revisions
+	enable trigger prepare_shared_product_revision_history;
 
 insert into catalog_health_disposition_test_state (key, value)
 select 'serving-occurrence', occurrence.occurrence_key

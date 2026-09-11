@@ -313,8 +313,12 @@ that current check. Immutable run and item records preserve what was considered 
 what changed; unresolved evidence cannot be promoted by the repair path. Revision
 repairs use a dedicated private handler behind the same public RPC: exact approved
 submissions or source observations may restore a missing baseline, and an existing
-valid structured revision summary may restore its queryable field-change rows. No
-snapshot comparison or best-effort inference is permitted.
+valid structured revision summary may restore its queryable field-change rows. When
+the immutable predecessor and successor snapshots both exist, their exact leaf-level
+differences are also authoritative revision evidence: the database stores those
+before/after rows, backfills historical gaps, and rejects identical successor snapshots.
+Best-effort inference from provider data or a current canonical record remains
+prohibited.
 Canonical product images follow the same evidence-first rule without creating routine
 review work. The database selects one exact licensed or moderator-approved front image
 only when no eligible canonical image exists, keeps later alternatives as candidates,

@@ -13,8 +13,8 @@ import {
 	getLocalQaAccountForWorker,
 } from "./support/localQaAccounts";
 import {
-	cleanupLocalQaCatalogDiagnosticReview,
-	seedLocalQaCatalogDiagnosticReview,
+	cleanupLocalQaCatalogRevisionHistory,
+	seedLocalQaCatalogRevisionHistory,
 	createLocalQaPendingNutrientMapping,
 	deleteLocalQaAuthenticatorFactorsForEmail,
 	deleteLocalQaCatalogValueConflict,
@@ -1115,7 +1115,7 @@ test("administrators can open data operations after direct AAL2 verification", a
 	const adminEmail = "qa-admin@blendcalc.local";
 	const dataOperationsPath = "/profile/privileged-tools/data-operations";
 	await deleteLocalQaAuthenticatorFactorsForEmail(adminEmail);
-	const diagnosticFixture = await seedLocalQaCatalogDiagnosticReview();
+	const revisionHistoryFixture = await seedLocalQaCatalogRevisionHistory();
 	const pendingMappingId = await createLocalQaPendingNutrientMapping();
 	const resolvedMappingId = await recheckLocalQaDeterministicNutrientMapping();
 	await resetLocalQaDatasetImportEvidence("cnf-2026");
@@ -1368,98 +1368,45 @@ test("administrators can open data operations after direct AAL2 verification", a
 
 		await page.setViewportSize({ width: 390, height: 844 });
 		await page.goto(
-			`${dataOperationsPath}/products/${diagnosticFixture.productId}`,
+			`${dataOperationsPath}/products/${revisionHistoryFixture.productId}`,
 		);
 		await waitForAppReady(page);
-		const diagnosticSheet = page.getByRole("dialog", {
+		const revisionHistorySheet = page.getByRole("dialog", {
 			name: "Product readiness",
 		});
 		await expect(
-			diagnosticSheet.getByText(
-				"This product is already public. The 1 item below improves internal evidence history only; none is keeping it out of blendCalcAPI v1.",
-			),
-		).toBeVisible();
-		await expect(
-			diagnosticSheet.getByRole("heading", {
-				name: "Catalog evidence follow-up",
-			}),
-		).toBeVisible();
-		await expect(
-			diagnosticSheet.getByText("Revision 2 needs change evidence").first(),
-		).toBeVisible();
-		await expect(
-			diagnosticSheet.getByText("Does not affect current API publication"),
-		).toBeVisible();
-		await expect(
-			diagnosticSheet.getByRole("button", {
-				name: "Finish review — keep out of public API",
-			}),
+			revisionHistorySheet.getByText("Revision 2 needs change evidence"),
 		).toHaveCount(0);
-
-		await diagnosticSheet
-			.getByRole("link", { name: "Go to safe repair check" })
+		await revisionHistorySheet
+			.getByText("Revision and verification", { exact: true })
 			.click();
-		const repairTarget = diagnosticSheet
-			.locator(".catalog-product-repairs__item")
-			.filter({ hasText: "Revision 2 needs change evidence" });
-		await expect(repairTarget).toBeFocused();
-		await expect(repairTarget).toBeInViewport();
-		const repairBox = await repairTarget.boundingBox();
-		expect(repairBox?.y ?? -1).toBeGreaterThanOrEqual(0);
-		expect((repairBox?.y ?? 0) + (repairBox?.height ?? 0)).toBeLessThanOrEqual(
-			844,
-		);
 		await expect(
-			repairTarget.getByText(
-				"Checks Revision 2's stored change summary for exact field-by-field before and after values. It does not compare names or guess what changed.",
-			),
-		).toBeVisible();
-		await repairTarget.getByRole("button", { name: "Check repair" }).click();
-		await expect(repairTarget.getByText("No safe changes found")).toBeVisible();
-		await repairTarget
-			.getByRole("link", { name: "Go to final review" })
-			.click();
-
-		const evidenceReview = diagnosticSheet.locator("#finish-evidence-review");
-		await expect(evidenceReview).toBeFocused();
-		await expect(evidenceReview).toBeInViewport();
-		await expect(
-			evidenceReview.getByText(
-				"Its current public blendCalcAPI v1 status does not change.",
-			),
-		).toBeVisible();
-		const finishButton = evidenceReview.getByRole("button", {
-			name: "Finish evidence follow-up",
-		});
-		await expect(finishButton).toBeDisabled();
-		await evidenceReview
-			.getByLabel("Why can this evidence not be reconstructed today?")
-			.fill(
-				"Revision 2 has no field summary, matching submission, or exact stored observation.",
-			);
-		await expect(finishButton).toBeEnabled();
-		await finishButton.click();
-		await expect(
-			diagnosticSheet.getByText("Evidence follow-up finished", {
-				exact: true,
+			revisionHistorySheet.getByRole("heading", {
+				name: "What changed in each revision",
 			}),
 		).toBeVisible();
-		await expect(
-			diagnosticSheet.getByText(
-				"Product data and public API availability are unchanged.",
-				{ exact: false },
-			),
-		).toBeVisible();
+		const explainedRevision = revisionHistorySheet
+			.locator(".catalog-product-passport__revision-history > ol > li")
+			.filter({ hasText: "Revision 2" });
+		await expect(explainedRevision).toContainText(
+			"Ingredient evidence confidence was added: Source Verified.",
+		);
+		await expect(explainedRevision).toContainText(
+			"Ingredient evidence source was added: Usda.",
+		);
+		const historyBox = await explainedRevision.boundingBox();
+		expect(historyBox?.x ?? -1).toBeGreaterThanOrEqual(0);
+		expect((historyBox?.x ?? 0) + (historyBox?.width ?? 0)).toBeLessThanOrEqual(
+			390,
+		);
 
 		await page.goto(dataOperationsPath);
 		await waitForAppReady(page);
-		await dataOperationsSheet
-			.locator("summary")
-			.filter({ hasText: "Revision history gaps" })
-			.click();
 		await expect(
-			dataOperationsSheet.getByText("Jalapeno Sauce, Jalapeno"),
-		).toHaveCount(0);
+			dataOperationsSheet
+				.locator("summary")
+				.filter({ hasText: "Revision history gaps" }),
+		).toContainText("Clear");
 
 		const displayConflict = await seedLocalQaCatalogValueConflict();
 		displayConflictId = displayConflict.id;
@@ -1529,7 +1476,7 @@ test("administrators can open data operations after direct AAL2 verification", a
 				await deleteLocalQaCatalogValueConflict(displayConflictId);
 			}
 			try {
-				await cleanupLocalQaCatalogDiagnosticReview();
+				await cleanupLocalQaCatalogRevisionHistory();
 			} finally {
 				await deleteLocalQaPendingNutrientMapping(pendingMappingId);
 			}

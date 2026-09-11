@@ -4,10 +4,15 @@ import { catalogProductReadinessPassportFixture } from "../../../fixtures/catalo
 
 describe("catalog product readiness passport repository", () => {
 	it("requests one bounded product passport through the authenticated client", async () => {
-		const rpc = vi.fn().mockResolvedValue({
-			data: catalogProductReadinessPassportFixture,
-			error: null,
-		});
+		const rpc = vi.fn().mockImplementation((functionName: string) =>
+			Promise.resolve({
+				data:
+					functionName === "get_catalog_product_revision_context"
+						? catalogProductReadinessPassportFixture.revisionHistory
+						: catalogProductReadinessPassportFixture,
+				error: null,
+			}),
+		);
 
 		await expect(
 			readCatalogProductReadinessPassport({ rpc } as never, "product-id"),
@@ -18,6 +23,9 @@ describe("catalog product readiness passport repository", () => {
 				p_shared_product_id: "product-id",
 			},
 		);
+		expect(rpc).toHaveBeenCalledWith("get_catalog_product_revision_context", {
+			p_shared_product_id: "product-id",
+		});
 	});
 
 	it("keeps missing products distinct from contract or database failures", async () => {
