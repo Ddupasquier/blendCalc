@@ -6,6 +6,7 @@ import type {
 import {
 	describeProductEvidencePhotos,
 	getMissingProductEvidenceRoles,
+	type ProductEvidenceRole,
 } from "$lib/utils/products/productEvidenceRequirements";
 
 export type ManualEntrySubmitBlock = {
@@ -21,6 +22,7 @@ export const getManualEntrySubmitState = ({
 	servingMeasureAmountRequiredMessage,
 	barcode,
 	requiresCatalogEvidence,
+	requiredEvidenceRoles,
 	requiresFreshFrontPhoto,
 	hasTrustedProductImage,
 	frontPhoto,
@@ -34,6 +36,7 @@ export const getManualEntrySubmitState = ({
 	servingMeasureAmountRequiredMessage: string;
 	barcode: string;
 	requiresCatalogEvidence: boolean;
+	requiredEvidenceRoles?: ProductEvidenceRole[];
 	requiresFreshFrontPhoto: boolean;
 	hasTrustedProductImage: boolean;
 	frontPhoto: File | null;
@@ -99,7 +102,7 @@ export const getManualEntrySubmitState = ({
 				{
 					requireFront: !hasTrustedProductImage || requiresFreshFrontPhoto,
 				},
-			)
+			).filter((role) => requiredEvidenceRoles?.includes(role) ?? true)
 		: [];
 
 	if (missingEvidenceRoles.length > 0) {

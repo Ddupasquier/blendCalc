@@ -1,0 +1,100 @@
+@use "../../../../styles/variables" as *;
+
+.catalog-review-inbox,
+.catalog-review-inbox > header,
+.catalog-review-inbox__products,
+.catalog-review-inbox__identity {
+	display: grid;
+	min-width: 0;
+}
+
+.catalog-review-inbox,
+.catalog-review-inbox__products {
+	gap: $app-gap-sm;
+}
+
+.catalog-review-inbox > header,
+.catalog-review-inbox__identity {
+	gap: $app-gap-2xs;
+}
+
+.catalog-review-inbox h2,
+.catalog-review-inbox p {
+	margin: 0;
+}
+
+.catalog-review-inbox h2 {
+	font-size: $app-font-size-lg;
+}
+
+.catalog-review-inbox > header p,
+.catalog-review-inbox__identity small,
+.catalog-review-inbox__identity > span {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+}
+
+.catalog-review-inbox__product {
+	display: flex;
+	align-items: start;
+	justify-content: space-between;
+	gap: $app-gap-sm;
+	min-width: 0;
+	height: 100%;
+	padding: $app-shell-card-padding-compact;
+	color: inherit;
+	text-decoration: none;
+	background: $app-shell-surface-soft;
+	border-radius: $app-shell-radius-card;
+}
+
+.catalog-review-inbox__product:hover {
+	background: $app-shell-surface-panel;
+}
+
+.catalog-review-inbox__product:focus-visible {
+	outline: $app-focus-outline;
+	outline-offset: $app-focus-outline-offset;
+}
+
+.catalog-review-inbox__identity strong,
+.catalog-review-inbox__identity small,
+.catalog-review-inbox__identity > span {
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+.catalog-review-inbox__empty {
+	padding: $app-gap-sm;
+	color: $app-shell-text-muted;
+	text-align: center;
+}
+
+@media (min-width: $app-breakpoint-privileged-desktop) {
+	.catalog-review-inbox__products {
+		grid-template-columns: repeat(
+			auto-fit,
+			minmax(
+				min($app-privileged-card-grid-min-width, 100%),
+				$app-privileged-card-grid-max-width
+			)
+		);
+		align-items: stretch;
+	}
+
+	.catalog-review-inbox__empty {
+		width: min(100%, $app-privileged-card-grid-max-width);
+	}
+}
+
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
+	.catalog-review-inbox,
+	.catalog-review-inbox__products {
+		gap: $app-gap-xs;
+	}
+
+	.catalog-review-inbox__product {
+		padding: $app-gap-xs;
+	}
+}

@@ -1,0 +1,29 @@
+@use "../../../../styles/variables" as *;
+
+.privileged-tool-workspace-view,
+.privileged-tool-workspace-view__content {
+	display: grid;
+	align-content: start;
+	gap: $app-gap-md;
+	min-width: 0;
+}
+
+.privileged-tool-workspace-view__guide {
+	display: grid;
+	align-content: start;
+	gap: $app-gap-md;
+	min-width: 0;
+}
+
+@media (min-width: $app-breakpoint-privileged-desktop) {
+	.privileged-tool-workspace-view {
+		grid-template-columns: minmax(14rem, 18rem) minmax(0, 1fr);
+		align-items: start;
+		gap: $app-gap-lg;
+	}
+
+	.privileged-tool-workspace-view__guide {
+		position: sticky;
+		top: 0;
+	}
+}

@@ -7,6 +7,15 @@ import {
 } from "$lib/server/moderation/privilegedToolReviewSummary.server";
 import type { Database } from "$lib/types/database.types";
 
+const admissionMocks = vi.hoisted(() => ({
+	runPrivilegedQueueAdmission: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock(
+	"$lib/server/moderation/privilegedQueueAdmission.server",
+	() => admissionMocks,
+);
+
 const completeCounts = {
 	pendingProductSubmissions: 3,
 	pendingCatalogReviewItems: 4,
@@ -72,6 +81,10 @@ describe("Profile privileged tool action summary", () => {
 			}),
 		);
 		expect(rpc).toHaveBeenCalledOnce();
+		expect(admissionMocks.runPrivilegedQueueAdmission).toHaveBeenCalledWith(
+			supabase,
+			["catalog_review", "product_submissions", "data_operations"],
+		);
 		expect(rpc).toHaveBeenCalledWith("get_privileged_tool_action_summary");
 	});
 
@@ -124,6 +137,76 @@ describe("Profile privileged tool action summary", () => {
 			expect.objectContaining({
 				pendingCatalogDataOperations: 51,
 				catalogDataOperationSubjectsTruncated: true,
+			}),
+		);
+	});
+
+	it("routes dataset evidence findings to the focused in-app workflow", async () => {
+		const datasetSubject = {
+			subjectType: "generic_food_dataset",
+			subjectKey: "cnf-2026",
+			displayName: "Canadian Nutrient File 2026",
+			context: "health-canada-cnf",
+			issueCount: 1,
+			severity: "attention",
+			resolutionAction: "review_dataset_import",
+			destination: null,
+			missingPrerequisite:
+				"The ingestion workflow must record missing evidence.",
+			issues: [
+				{
+					code: "DATASET_IMPORT_EVIDENCE_MISSING",
+					sourceReason: "import_evidence_missing",
+					resolutionAction: "review_dataset_import",
+					severity: "attention",
+					parameters: { datasetKey: "cnf-2026" },
+				},
+			],
+		};
+		const { supabase } = createSupabase({
+			...completeCounts,
+			catalogDataOperationSubjects: [datasetSubject],
+		});
+
+		await expect(readPrivilegedToolReviewSummary(supabase)).resolves.toEqual(
+			expect.objectContaining({
+				catalogDataOperationSubjects: [
+					expect.objectContaining({
+						destination:
+							"/profile/privileged-tools/data-operations/datasets/cnf-2026",
+						missingPrerequisite: null,
+					}),
+				],
+			}),
+		);
+	});
+
+	it("keeps historical revision audit gaps out of required operator work", async () => {
+		const historicalAuditSubject = {
+			...completeCounts.catalogDataOperationSubjects[0],
+			issueCount: 1,
+			severity: "attention",
+			resolutionAction: "run_revision_repair",
+			issues: [
+				{
+					code: "CATALOG_REVISION_EXPLANATION_MISSING",
+					sourceReason: "structured_change_rows_missing",
+					resolutionAction: "run_revision_repair",
+					severity: "attention",
+					parameters: { revisionNumber: 2 },
+				},
+			],
+		};
+		const { supabase } = createSupabase({
+			...completeCounts,
+			catalogDataOperationSubjects: [historicalAuditSubject],
+		});
+
+		await expect(readPrivilegedToolReviewSummary(supabase)).resolves.toEqual(
+			expect.objectContaining({
+				pendingCatalogDataOperations: 0,
+				totalActionableItems: 11,
+				catalogDataOperationSubjects: [],
 			}),
 		);
 	});

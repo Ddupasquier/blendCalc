@@ -10,6 +10,7 @@
 	min-height: $app-shell-control-height;
 	padding: $app-gap-sm;
 	color: $app-shell-text-primary;
+	text-decoration: none;
 	text-align: left;
 	background: $app-shell-surface-page;
 	border: 0;
@@ -37,7 +38,10 @@
 	background: $app-shell-accent-soft;
 }
 
-:global(.profile-settings-sheet-launcher--privileged .profile-settings-sheet-launcher__icon) {
+:global(
+	.profile-settings-sheet-launcher--privileged
+		.profile-settings-sheet-launcher__icon
+) {
 	--circular-icon-frame-color: #{$app-highlight};
 	--circular-icon-frame-background: color-mix(
 		in srgb,
@@ -87,7 +91,8 @@
 	font-size: $app-font-size-md;
 }
 
-@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
 	.profile-settings-sheet-launcher {
 		min-height: $app-shell-control-height-narrow;
 		padding: $app-gap-xs;

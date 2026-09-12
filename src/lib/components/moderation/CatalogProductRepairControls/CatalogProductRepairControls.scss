@@ -36,6 +36,7 @@
 
 .catalog-product-repairs__item {
 	padding: $app-shell-card-padding-compact;
+	height: 100%;
 	background: $app-shell-surface-soft;
 	border-radius: $app-shell-radius-card;
 	scroll-margin-block: $app-gap-sm;
@@ -91,6 +92,24 @@
 	grid-template-columns: minmax(0, auto) minmax(0, 1fr);
 	gap: $app-gap-sm;
 	align-items: baseline;
+}
+
+@media (min-width: $app-breakpoint-privileged-desktop) {
+	.catalog-product-repairs {
+		grid-template-columns: repeat(
+			auto-fit,
+			minmax(
+				min($app-privileged-card-grid-min-width, 100%),
+				$app-privileged-card-grid-max-width
+			)
+		);
+		align-items: stretch;
+	}
+
+	.catalog-product-repairs__introduction {
+		grid-column: 1 / -1;
+		max-width: $app-privileged-card-grid-max-width;
+	}
 }
 
 @media (max-width: $app-breakpoint-xs),

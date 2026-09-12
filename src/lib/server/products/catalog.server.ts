@@ -481,6 +481,7 @@ export const approveCommunityProductSubmission = async (
 		submission.validation_report as CatalogSubmissionValidationReport;
 	if (
 		validationReport.sourceAutoPublishEligible === false &&
+		validationReport.requiredEvidenceRoles === undefined &&
 		!hasCompleteProductEvidence(evidencePaths)
 	) {
 		throw new Error(

@@ -20,18 +20,23 @@ $view-frame-focus-clearance: $app-gap-2xs;
 	width: 100%;
 	max-width: $app-shell-content-max-width;
 	height: calc(
-		100vh - $app-shell-header-height - $app-shell-nav-height -
-			env(safe-area-inset-bottom)
+		100vh - $app-shell-header-height -
+			$app-shell-nav-height - env(safe-area-inset-bottom)
 	);
 	height: calc(
-		100dvh - $app-shell-header-height - $app-shell-nav-height -
-			env(safe-area-inset-bottom)
+		100dvh - $app-shell-header-height -
+			$app-shell-nav-height - env(safe-area-inset-bottom)
 	);
 	margin: 0 auto;
 	padding: $app-shell-padding-y $app-shell-padding-x 0;
 }
 
-@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+.view-frame--app-shell.view-frame--full-width {
+	max-width: none;
+}
+
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
 	.view-frame--app-shell {
 		height: calc(
 			100vh - $app-shell-header-height-compact -

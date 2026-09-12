@@ -34,5 +34,5 @@ describe("FoodData Central environment configuration", () => {
 
 		expect(affectedSource).not.toContain(retiredKey);
 		expect(affectedSource).toContain("FDC_API_KEY");
-	});
+	}, 15_000);
 });

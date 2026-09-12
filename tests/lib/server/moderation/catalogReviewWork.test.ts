@@ -1,6 +1,15 @@
 import { describe, expect, it, vi } from "vitest";
 import { readCatalogReviewWork } from "$lib/server/moderation/catalogReviewWork.server";
 
+const admissionMocks = vi.hoisted(() => ({
+	runPrivilegedQueueAdmission: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock(
+	"$lib/server/moderation/privilegedQueueAdmission.server",
+	() => admissionMocks,
+);
+
 const reviewWorkFixture = {
 	conflicts: [],
 	providerChanges: [],
@@ -20,8 +29,13 @@ describe("catalog review-work repository", () => {
 			error: null,
 		});
 
-		await expect(readCatalogReviewWork({ rpc } as never)).resolves.toEqual(
+		const supabase = { rpc } as never;
+		await expect(readCatalogReviewWork(supabase)).resolves.toEqual(
 			reviewWorkFixture,
+		);
+		expect(admissionMocks.runPrivilegedQueueAdmission).toHaveBeenCalledWith(
+			supabase,
+			["catalog_review"],
 		);
 		expect(rpc).toHaveBeenCalledWith("get_catalog_review_work_summary", {
 			p_limit: 20,

@@ -5,11 +5,12 @@ import type {
 } from "svelte/elements";
 
 export type TextFieldProps = {
+	element?: HTMLInputElement | null;
 	id: string;
 	name?: string;
 	label: string;
 	value?: string | null;
-	type?: "text" | "search" | "email" | "password";
+	type?: "text" | "search" | "email" | "password" | "datetime-local";
 	placeholder?: string;
 	helper?: string;
 	required?: boolean;

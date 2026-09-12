@@ -36,8 +36,8 @@ session settings. Detailed privacy and storage rules live in
   `RightSheet` because it is a long, independently scrollable settings workflow.
 - Show the privileged-tools launcher only when the current server-verified role is
   moderator, administrator, or developer. Name it `Moderator tools`, `Admin tools`, or
-  `Developer tools` from that verified role, and open it at
-  `/profile/privileged-tools` in the shared route-backed `BottomSheet`.
+  `Developer tools` from that verified role. Render it as a normal link to the full-page
+  `/profile/privileged-tools` dashboard rather than opening a Profile bottom sheet.
 - Each launcher summarizes the saved state without duplicating its complete form.
 - The shared handle, intentional backdrop press, Escape, and browser history close a
   bottom sheet and return to `/profile` without reloading the underlying Profile page.
@@ -177,20 +177,19 @@ matching.
   implementation. Every destination retains its own server and database authorization.
 - Read the current role's permission rows from `app_role_permissions`; never infer tool
   access from the role name or expose a destination without its required permission.
-- Open the compact permitted destination list in the shared bottom sheet, then open each
-  selected responsibility in its own route-backed `RightSheet`. Closing a focused
-  view returns to the destination list. Never use hash jumps into one crowded page as
-  the primary Profile moderation flow.
+- Open `/profile/privileged-tools` as the role-aware landing dashboard, then open each
+  selected responsibility in its own route-backed `RightSheet`. Closing a focused view
+  returns to the landing dashboard. Never use hash jumps into one crowded page as the
+  primary Profile moderation flow.
 - Show one aggregate red count on the Profile launcher only when one or more genuine
   actions are waiting across the current role's permitted queues. The aggregate is the
   sum of product submissions, catalog-review decisions, food-warning reports, exact
   reported profile images, and deduplicated catalog data-operation subjects.
-- Keep every permitted option visible in the sheet. Product submissions,
-  food-warning reports, and profile-image review rows are disabled when their verified
-  queue count is zero; a nonzero actionable queue displays its own red count in the
-  row's top-right corner. Catalog review and Catalog data operations retain their
-  standing entry points even at zero while displaying a count when action exists.
-- Lead the sheet with one plain-language work-status card. When actions exist, name
+- Keep every permitted workspace visible on the landing page. Put nonzero queues in the
+  primary **Needs attention** group and keep zero-count or search-led workspaces as
+  ordinary secondary links. Catalog review and Catalog data operations retain their
+  standing entry points at zero while displaying a count when action exists.
+- Lead the landing page with one plain-language work-status card. When actions exist, name
   the exact aggregate and the first queue to open; when none exist, say that no human
   decision is waiting; when identity or count reads block the summary, explain the
   next safe step without presenting unknown as zero.
@@ -212,9 +211,13 @@ matching.
 - Do not badge Account access while it remains a search-driven tool without a genuine
   pending-action queue. It stays available to permitted roles and is excluded from the
   launcher aggregate.
-- Show one crown beside the role-aware tools sheet title. The action region retains its
-  accessible group name without repeating the title as a second visible
-  heading.
+- Show one crown beside the role-aware landing-page title without repeating the title in
+  the dashboard body.
+- Keep global catalog and system diagnostics exclusively on the landing page. For users
+  with data-operations permission, show the active shared-catalog total, public
+  blendCalcAPI v1 total, shared-catalog-only total, API publication coverage, monitoring,
+  sources, datasets, policy, and diagnostic matches. Label these as signals rather than
+  operator work, and do not duplicate them inside focused workspaces.
 - Give every focused privileged-tool right sheet one plain-language heading, one short outcome-
   focused explanation, and one crown at the view header. Do not repeat the heading in
   the action body or expose source keys and status codes as unexplained user-facing copy.

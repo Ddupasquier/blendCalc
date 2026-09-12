@@ -327,6 +327,9 @@ Dataset reference: [Canadian Nutrient File 2026](https://open.canada.ca/data/en/
 - Imported foods, nutrient values, and measures retain CNF identifiers and release
   provenance.
 - Generic-food search returns release-specific source attribution.
+- Missing import time or file-hash evidence is completed only through the AAL2 dataset
+  evidence workflow. Its validated preview and immutable apply history supplement the
+  canonical `generic_food_datasets` fields without changing this licence decision.
 
 Current status: approved by the repository's engineering policy review for canonical
 and API use with the stored attribution. Excluded third-party material must still be
@@ -356,6 +359,9 @@ Dataset reference: [UK Composition of Foods Integrated Dataset 2021](https://www
 - Source food/nutrient identifiers and source basis are retained. Records whose basis is
   per 100 ml remain identified as such instead of being silently converted to per 100 g.
 - Generic-food search returns release-specific source attribution.
+- Missing import time or file-hash evidence is completed only through the AAL2 dataset
+  evidence workflow. Its validated preview and immutable apply history supplement the
+  canonical `generic_food_datasets` fields without changing this licence decision.
 
 Current status: approved by the repository's engineering policy review for canonical
 and API use with the stored attribution and basis semantics.

@@ -13,7 +13,11 @@
 	import { formatCatalogEvidenceValue } from "$lib/utils/moderation/catalogReviewWork";
 	import type { CatalogReviewWorkDashboardProps } from "./types";
 
-	let { reviewWork }: CatalogReviewWorkDashboardProps = $props();
+	let {
+		reviewWork,
+		hideConflicts = false,
+		hideHeading = false,
+	}: CatalogReviewWorkDashboardProps = $props();
 	let pendingReviewId = $state<string | null>(null);
 	let safetyDecisionByMatchId = $state<
 		Record<string, "" | "confirmed" | "dismissed">
@@ -107,12 +111,15 @@
 </script>
 
 <div class="catalog-review-work">
-	<header class="catalog-review-work__heading">
-		<h2>Queues in priority order</h2>
-		<p>
-			Open the first non-clear queue and work from the oldest evidence forward.
-		</p>
-	</header>
+	{#if !hideHeading}
+		<header class="catalog-review-work__heading">
+			<h2>Queues in priority order</h2>
+			<p>
+				Open the first non-clear queue and work from the oldest evidence
+				forward.
+			</p>
+		</header>
+	{/if}
 
 	<CollapsibleSection
 		title="Possible recall matches"
@@ -261,59 +268,61 @@
 		</div>
 	</CollapsibleSection>
 
-	<CollapsibleSection
-		title="Product conflicts"
-		badge={reviewWork.counts.conflicts === 0
-			? "Clear"
-			: `${reviewWork.counts.conflicts} to review`}
-		surface="panel"
-		tone={reviewWork.counts.conflicts > 0 ? "warning" : "neutral"}
-		open={reviewWork.counts.safetyMatches === 0 &&
-			reviewWork.counts.conflicts > 0}
-	>
-		<div class="catalog-review-work__stack">
-			<p class="catalog-review-work__queue-guidance">
-				Open each product to compare the competing values and their provenance.
-				Resolve the conflict from the strongest evidence, never from preference
-				alone.
-			</p>
-			{#each reviewWork.conflicts as conflict (conflict.id)}
-				<a
-					class="catalog-review-work__record catalog-review-work__record--link"
-					href={`/profile/privileged-tools/catalog-review-work/products/${encodeURIComponent(conflict.productId)}`}
-				>
-					<span>
-						<strong>{conflict.productName}</strong>
-						<small
-							>{conflict.barcode} · {getCatalogFieldLabel(
-								conflict.fieldPath,
-							)}</small
-						>
-						<small>
-							Competing evidence: {conflict.observedValues
-								.slice(0, 2)
-								.map((entry) =>
-									formatCatalogEvidenceValue(
-										entry && typeof entry === "object" && !Array.isArray(entry)
-											? (entry as Record<string, unknown>).value
-											: entry,
-									),
-								)
-								.join(" versus ")}
-						</small>
-					</span>
-					<TextBadge
-						label={getCatalogHealthStatusLabel(conflict.severity)}
-						tone="warning"
-					/>
-				</a>
-			{:else}
-				<p class="catalog-review-work__empty">
-					No product conflicts need review.
+	{#if !hideConflicts}<CollapsibleSection
+			title="Product conflicts"
+			badge={reviewWork.counts.conflicts === 0
+				? "Clear"
+				: `${reviewWork.counts.conflicts} to review`}
+			surface="panel"
+			tone={reviewWork.counts.conflicts > 0 ? "warning" : "neutral"}
+			open={reviewWork.counts.safetyMatches === 0 &&
+				reviewWork.counts.conflicts > 0}
+		>
+			<div class="catalog-review-work__stack">
+				<p class="catalog-review-work__queue-guidance">
+					Open each product to compare the competing values and their
+					provenance. Resolve the conflict from the strongest evidence, never
+					from preference alone.
 				</p>
-			{/each}
-		</div>
-	</CollapsibleSection>
+				{#each reviewWork.conflicts as conflict (conflict.id)}
+					<a
+						class="catalog-review-work__record catalog-review-work__record--link"
+						href={`/profile/privileged-tools/catalog-review-work/products/${encodeURIComponent(conflict.productId)}`}
+					>
+						<span>
+							<strong>{conflict.productName}</strong>
+							<small
+								>{conflict.barcode} · {getCatalogFieldLabel(
+									conflict.fieldPath,
+								)}</small
+							>
+							<small>
+								Competing evidence: {conflict.observedValues
+									.slice(0, 2)
+									.map((entry) =>
+										formatCatalogEvidenceValue(
+											entry &&
+												typeof entry === "object" &&
+												!Array.isArray(entry)
+												? (entry as Record<string, unknown>).value
+												: entry,
+										),
+									)
+									.join(" versus ")}
+							</small>
+						</span>
+						<TextBadge
+							label={getCatalogHealthStatusLabel(conflict.severity)}
+							tone="warning"
+						/>
+					</a>
+				{:else}
+					<p class="catalog-review-work__empty">
+						No product conflicts need review.
+					</p>
+				{/each}
+			</div>
+		</CollapsibleSection>{/if}
 
 	<CollapsibleSection
 		title="Provider changes"

@@ -9,6 +9,7 @@ import type {
 	SharedProductSubmissionProgress,
 } from "$lib/utils/products/catalog";
 import type { PhotoUploadStatus } from "$lib/components/common/forms/PhotoUploadInput/types";
+import type { ProductEvidenceRole } from "$lib/utils/products/productEvidenceRequirements";
 import type {
 	ManualEntryBarcodeShareMismatch,
 	ManualEntrySummaryItem,
@@ -33,6 +34,7 @@ export type ShareStepProps = {
 	lookingUpBarcode: boolean;
 	validatingBarcodeShare: boolean;
 	requiresCatalogEvidence: boolean;
+	catalogCorrectionEvidenceRoles?: ProductEvidenceRole[];
 	showOptionalProductImageUpload: boolean;
 	trustedProductImage: FoodImageAsset | undefined;
 	frontPhoto: File | null;

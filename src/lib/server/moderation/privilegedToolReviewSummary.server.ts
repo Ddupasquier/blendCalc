@@ -6,6 +6,7 @@ import type {
 	CatalogDataOperationSubjectIssue,
 	PrivilegedReviewSummary,
 } from "$lib/utils/moderation/profilePrivilegedTools";
+import { runPrivilegedQueueAdmission } from "$lib/server/moderation/privilegedQueueAdmission.server";
 
 const COUNT_KEYS = [
 	"pendingProductSubmissions",
@@ -19,6 +20,10 @@ const COUNT_KEYS = [
 
 type PrivilegedActionCountKey = (typeof COUNT_KEYS)[number];
 type PrivilegedActionCounts = Record<PrivilegedActionCountKey, number>;
+
+const NONBLOCKING_DIAGNOSTIC_ISSUE_CODES = new Set([
+	"CATALOG_REVISION_EXPLANATION_MISSING",
+]);
 
 const readString = (value: unknown, path: string) => {
 	if (typeof value !== "string" || value.trim().length === 0) {
@@ -74,6 +79,8 @@ const parseCatalogDataOperationSubject = (
 		throw new Error(`Privileged action summary has an invalid ${path}.`);
 	}
 	const subject = value as Record<string, unknown>;
+	const subjectType = readString(subject.subjectType, `${path}.subjectType`);
+	const subjectKey = readString(subject.subjectKey, `${path}.subjectKey`);
 	const issueCount = subject.issueCount;
 	if (!Number.isSafeInteger(issueCount) || (issueCount as number) < 1) {
 		throw new Error(
@@ -95,8 +102,8 @@ const parseCatalogDataOperationSubject = (
 		);
 	}
 	return {
-		subjectType: readString(subject.subjectType, `${path}.subjectType`),
-		subjectKey: readString(subject.subjectKey, `${path}.subjectKey`),
+		subjectType,
+		subjectKey,
 		displayName: readString(subject.displayName, `${path}.displayName`),
 		context: readNullableString(subject.context, `${path}.context`),
 		issueCount: issueCount as number,
@@ -106,14 +113,42 @@ const parseCatalogDataOperationSubject = (
 			subject.resolutionAction,
 			`${path}.resolutionAction`,
 		),
-		destination: readNullableString(subject.destination, `${path}.destination`),
-		missingPrerequisite: readNullableString(
-			subject.missingPrerequisite,
-			`${path}.missingPrerequisite`,
-		),
+		destination:
+			readNullableString(subject.destination, `${path}.destination`) ??
+			(subjectType === "generic_food_dataset"
+				? `/profile/privileged-tools/data-operations/datasets/${encodeURIComponent(subjectKey)}`
+				: null),
+		missingPrerequisite:
+			subjectType === "generic_food_dataset"
+				? null
+				: readNullableString(
+						subject.missingPrerequisite,
+						`${path}.missingPrerequisite`,
+					),
 		issues,
 	};
 };
+
+const removeNonblockingDiagnostics = (
+	subjects: CatalogDataOperationSubject[],
+) =>
+	subjects.flatMap((subject) => {
+		const issues = subject.issues.filter(
+			(issue) => !NONBLOCKING_DIAGNOSTIC_ISSUE_CODES.has(issue.code),
+		);
+		if (issues.length === 0) return [];
+		const [primaryIssue] = issues;
+		return [
+			{
+				...subject,
+				issueCount: issues.length,
+				severity: primaryIssue.severity,
+				summary: primaryIssue.summary,
+				resolutionAction: primaryIssue.resolutionAction,
+				issues,
+			},
+		];
+	});
 
 const parsePrivilegedActionCounts = (
 	value: unknown,
@@ -137,6 +172,11 @@ const parsePrivilegedActionCounts = (
 export const readPrivilegedToolReviewSummary = async (
 	supabase: SupabaseClient<Database>,
 ): Promise<PrivilegedReviewSummary> => {
+	await runPrivilegedQueueAdmission(supabase, [
+		"catalog_review",
+		"product_submissions",
+		"data_operations",
+	]);
 	const { data, error } = await supabase.rpc(
 		"get_privileged_tool_action_summary",
 	);
@@ -153,20 +193,30 @@ export const readPrivilegedToolReviewSummary = async (
 			"Privileged action summary has invalid catalogDataOperationSubjectsTruncated.",
 		);
 	}
-	const catalogDataOperationSubjects = record.catalogDataOperationSubjects.map(
-		parseCatalogDataOperationSubject,
-	);
+	const parsedCatalogDataOperationSubjects =
+		record.catalogDataOperationSubjects.map(parseCatalogDataOperationSubject);
 	if (
 		!record.catalogDataOperationSubjectsTruncated &&
-		catalogDataOperationSubjects.length !== counts.pendingCatalogDataOperations
+		parsedCatalogDataOperationSubjects.length !==
+			counts.pendingCatalogDataOperations
 	) {
 		throw new Error(
 			"Privileged action summary data-operations count and subject list disagree.",
 		);
 	}
+	const catalogDataOperationSubjects = removeNonblockingDiagnostics(
+		parsedCatalogDataOperationSubjects,
+	);
+	const removedSubjectCount =
+		parsedCatalogDataOperationSubjects.length -
+		catalogDataOperationSubjects.length;
+	const pendingCatalogDataOperations =
+		counts.pendingCatalogDataOperations - removedSubjectCount;
 
 	return {
 		...counts,
+		pendingCatalogDataOperations,
+		totalActionableItems: counts.totalActionableItems - removedSubjectCount,
 		catalogDataOperationSubjects,
 		catalogDataOperationSubjectsTruncated:
 			record.catalogDataOperationSubjectsTruncated,

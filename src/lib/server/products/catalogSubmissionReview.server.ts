@@ -25,8 +25,10 @@ import type { ProductEvidencePaths } from "./productEvidence.server";
 import { hasCompleteProductEvidence } from "./productEvidence.server";
 import {
 	describeProductEvidencePhotos,
+	getCatalogCorrectionEvidenceRoles,
 	getMissingProductEvidenceRoles,
 	getTrustedSourceEvidencePolicy,
+	type ProductEvidenceRole,
 } from "$lib/utils/products/productEvidenceRequirements";
 import type { FoodImagePlacementValues } from "./foodImages.server";
 import type { ProductSourceFieldMetricIncrement } from "./sourceMetrics.server";
@@ -55,6 +57,7 @@ export type CatalogSubmissionValidationReport = {
 	retainedEvidenceConflictCount?: number;
 	retainedEvidenceLookupFailed?: boolean;
 	sourceAutoPublishEligible?: boolean;
+	requiredEvidenceRoles?: ProductEvidenceRole[];
 };
 
 export const resolveCatalogSubmissionTrust = (input: {
@@ -146,6 +149,8 @@ export const evaluateCatalogSubmissionEvidence = (input: {
 	needsSourceComparisonReview: boolean;
 	hasCanonicalImage: boolean;
 	evidencePaths: ProductEvidencePaths;
+	catalogCorrectionFieldPaths?: string[];
+	sourceSupportsCorrection?: boolean;
 }) => {
 	const requiresSourceEvidenceReview =
 		input.hasSourceMatch && !input.sourceCanAutoPublish;
@@ -160,18 +165,28 @@ export const evaluateCatalogSubmissionEvidence = (input: {
 		hasExactSourceMatch: input.hasSourceMatch,
 		hasSourceChanges: input.needsSourceComparisonReview,
 	});
-	const evidenceComplete = !sourceEvidencePolicy.requiresCatalogEvidence
-		? true
-		: hasSourceMatchedImageEvidence
+	const requiredEvidenceRoles = input.catalogCorrectionFieldPaths
+		? input.sourceCanAutoPublish && input.sourceSupportsCorrection
+			? []
+			: getCatalogCorrectionEvidenceRoles(input.catalogCorrectionFieldPaths)
+		: undefined;
+	const evidenceComplete = requiredEvidenceRoles
+		? requiredEvidenceRoles.every((role) => Boolean(input.evidencePaths[role]))
+		: !sourceEvidencePolicy.requiresCatalogEvidence
 			? true
-			: input.hasCanonicalImage
-				? Boolean(input.evidencePaths.nutrition && input.evidencePaths.barcode)
-				: hasCompleteProductEvidence(input.evidencePaths);
+			: hasSourceMatchedImageEvidence
+				? true
+				: input.hasCanonicalImage
+					? Boolean(
+							input.evidencePaths.nutrition && input.evidencePaths.barcode,
+						)
+					: hasCompleteProductEvidence(input.evidencePaths);
 
 	return {
 		evidenceComplete,
 		hasSourceMatchedImageEvidence,
 		requiresSourceEvidenceReview,
+		...(requiredEvidenceRoles ? { requiredEvidenceRoles } : {}),
 	};
 };
 
@@ -312,16 +327,30 @@ export const prepareCatalogSubmissionReview = (input: {
 					],
 				})
 			: null;
-	const { evidenceComplete, hasSourceMatchedImageEvidence } =
-		evaluateCatalogSubmissionEvidence({
-			hasSourceMatch: Boolean(matchedDraft),
-			sourceCanAutoPublish,
-			needsSourceComparisonReview,
-			hasCanonicalImage: Boolean(canonicalSubmissionFood.image?.imageUrl),
-			evidencePaths: input.evidencePaths,
-		});
+	const sourceSupportsCorrection = Boolean(
+		catalogUpdateSummary?.sourceChecks.some(
+			(sourceCheck) => sourceCheck.supportsSubmittedValues === true,
+		),
+	);
+	const {
+		evidenceComplete,
+		hasSourceMatchedImageEvidence,
+		requiredEvidenceRoles,
+	} = evaluateCatalogSubmissionEvidence({
+		hasSourceMatch: Boolean(matchedDraft),
+		sourceCanAutoPublish,
+		needsSourceComparisonReview,
+		hasCanonicalImage: Boolean(canonicalSubmissionFood.image?.imageUrl),
+		evidencePaths: input.evidencePaths,
+		catalogCorrectionFieldPaths: catalogUpdateSummary?.changes.map(
+			(change) => change.field,
+		),
+		sourceSupportsCorrection,
+	});
 	const missingEvidenceDescription = describeProductEvidencePhotos(
-		getMissingProductEvidenceRoles(input.evidencePaths),
+		getMissingProductEvidenceRoles(input.evidencePaths).filter((role) =>
+			requiredEvidenceRoles ? requiredEvidenceRoles.includes(role) : true,
+		),
 	);
 	if (!matchedDraft && !evidenceComplete) {
 		throw new Error(
@@ -382,6 +411,7 @@ export const prepareCatalogSubmissionReview = (input: {
 			(verificationBundle?.conflicts.length ?? 0) +
 			retainedEvidenceConflictCount,
 		sourceAutoPublishEligible: sourceCanAutoPublish,
+		requiredEvidenceRoles,
 		existingCatalogMatch: Boolean(input.existingComparison),
 		existingCatalogAction: input.existingComparison
 			? "update_review"

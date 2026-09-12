@@ -30,6 +30,20 @@
 	scroll-padding-block: $app-gap-sm $app-gap-lg;
 }
 
+@media (min-width: $app-breakpoint-privileged-desktop) {
+	:global(
+		.sheet-base__panel.sheet-base__panel--right.privileged-tool-right-sheet-panel
+	) {
+		max-width: none;
+		padding-inline: max(
+				$app-privileged-desktop-gutter,
+				env(safe-area-inset-left)
+			)
+			max($app-privileged-desktop-gutter, env(safe-area-inset-right));
+		border-inline: 1px solid $app-shell-border-subtle;
+	}
+}
+
 @media (max-width: $app-breakpoint-xs),
 	(max-height: $app-breakpoint-height-compact) {
 	.privileged-tool-right-sheet__header {

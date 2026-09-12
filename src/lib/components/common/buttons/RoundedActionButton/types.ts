@@ -1,6 +1,8 @@
 import type { Snippet } from "svelte";
 import type {
 	ButtonClickHandler,
+	ButtonKeyboardHandler,
+	ButtonPointerHandler,
 	ButtonType,
 } from "$lib/components/common/buttons/types";
 
@@ -12,6 +14,7 @@ export type RoundedActionButtonContentAlign =
 
 export type RoundedActionButtonProps = {
 	element?: HTMLButtonElement | null;
+	className?: string;
 	id?: string;
 	type?: ButtonType;
 	variant?: RoundedActionButtonVariant;
@@ -27,5 +30,11 @@ export type RoundedActionButtonProps = {
 	"aria-expanded"?: boolean | "true" | "false";
 	"aria-pressed"?: boolean | "true" | "false";
 	onclick?: ButtonClickHandler;
+	onkeydown?: ButtonKeyboardHandler;
+	onpointerdown?: ButtonPointerHandler;
+	onpointermove?: ButtonPointerHandler;
+	onpointerup?: ButtonPointerHandler;
+	onpointercancel?: ButtonPointerHandler;
+	onlostpointercapture?: ButtonPointerHandler;
 	children?: Snippet;
 };

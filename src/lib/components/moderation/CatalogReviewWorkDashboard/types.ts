@@ -2,4 +2,6 @@ import type { CatalogReviewWorkSummary } from "$lib/utils/moderation/catalogRevi
 
 export type CatalogReviewWorkDashboardProps = {
 	reviewWork: CatalogReviewWorkSummary;
+	hideConflicts?: boolean;
+	hideHeading?: boolean;
 };

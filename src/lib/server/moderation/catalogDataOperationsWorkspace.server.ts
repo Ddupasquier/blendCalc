@@ -1,8 +1,4 @@
 import type { RequestEvent } from "@sveltejs/kit";
-import {
-	readCatalogMonitorModerationSummary,
-	readCatalogDataOperationsHealth,
-} from "$lib/server/moderation/catalogDataOperations.server";
 import { requireModeratorPermission } from "$lib/server/moderation/moderationAccess.server";
 import { readPrivilegedToolReviewSummary } from "$lib/server/moderation/privilegedToolReviewSummary.server";
 
@@ -17,16 +13,12 @@ export const loadCatalogDataOperationsWorkspace = async (
 		"data_operations.catalog_health.read",
 		returnPath,
 	);
-	const [dashboard, catalogMonitor, actionSummary] = await Promise.all([
-		readCatalogDataOperationsHealth(locals.supabase),
-		readCatalogMonitorModerationSummary(locals.supabase),
-		readPrivilegedToolReviewSummary(locals.supabase).catch(() => null),
-	]);
+	const actionSummary = await readPrivilegedToolReviewSummary(
+		locals.supabase,
+	).catch(() => null);
 
 	return {
 		viewerRole: role,
-		dashboard,
-		catalogMonitor,
 		actionCount: actionSummary?.pendingCatalogDataOperations ?? null,
 		actionSubjects: actionSummary?.catalogDataOperationSubjects ?? null,
 		actionSubjectsTruncated:

@@ -5,6 +5,7 @@
 	import type { TextFieldProps } from "./types";
 
 	let {
+		element = $bindable(),
 		id,
 		name,
 		label,
@@ -82,6 +83,7 @@
 	{:else}
 		<div class="text-field__control">
 			<input
+				bind:this={element}
 				{id}
 				{name}
 				type={inputType}

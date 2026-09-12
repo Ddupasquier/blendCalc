@@ -393,7 +393,14 @@ front-package photo. An unchanged match remains `Already saved`, and the same us
 cannot create another pending proposal against the same base revision.
 
 Independent users may submit separate correction evidence against the same active
-revision. The system never averages conflicting values or silently chooses a provider.
+revision. Correction evidence is field-specific: unchanged canonical identity and an
+eligible trusted product image stay attached, while only the evidence role needed for a
+changed field family is requested. A nutrient-only correction needs nutrition evidence,
+not duplicate barcode and front-package photos. A legally redistributable provider
+observation that exactly supports the submitted change may satisfy that requirement
+without another user photo; a provider image alone does not prove nutrient values. The
+server derives these requirements from the actual submitted differences rather than a
+client-supplied hint. The system never averages conflicting values or silently chooses a provider.
 The first approved correction advances the revision; every other pending correction
 must then be re-compared before it can change the catalog.
 
@@ -660,9 +667,12 @@ revision; the monitor never overwrites `shared_products` directly.
 Rejecting or superseding an unlinked provider observation also resolves only open
 conflicts whose `observed_values` cite that observation's immutable snapshot. It never
 changes canonical values or clears an unrelated conflict. Catalog reviewers may close
-one unlinked conflict while retaining the current canonical value when a required
-evidence note explains why it remains authoritative. A linked correction must be
-reviewed instead so its approval or rejection owns the outcome.
+one unlinked conflict while retaining the stored canonical value when the review shows
+the exact field or nutrient, unit and reporting basis, stored value and source, and every
+competing observation, and a required evidence note explains why the stored value remains
+authoritative. The shortcut is unavailable when the stored value cannot be identified.
+A linked correction must be reviewed instead so its approval or rejection owns the
+outcome.
 
 ### Readiness And Operational Issues
 
@@ -686,6 +696,16 @@ coverage counts, and normalized open issues without exposing raw observations or
 evidence. Catalog review and data operations share the contract while retaining
 separate route and database permissions.
 
+All privileged catalog reads pass through the shared queue-admission service before
+returning work. It performs only current-state, exact-evidence decisions: legacy
+submissions already satisfied by the active product close as accepted no-ops; stale
+submission bases and superseded provider snapshots close without counting as moderator
+rejections; provider-generated conflicts have one provider-review owner; and exact
+normalized identity equivalence never becomes a human task. Immutable admission
+receipts preserve the compared product/revision or provider evidence. Any unsupported
+nutrition, serving, category, provenance, policy, or conflicting evidence remains in
+the human queue.
+
 An AAL2 data operator may finish an exact API-publication issue snapshot as
 `accepted_withheld` only after every offered evidence-only repair has returned no safe
 candidate. The append-only disposition removes that fingerprint from actionable queues,
@@ -694,12 +714,26 @@ readiness reasons remain queryable, the active product remains usable in blendCa
 a changed issue timestamp or issue set produces a new fingerprint that reopens review.
 
 Nonpublication revision and provenance diagnostics are a separate work category. An
-API-ready product remains published while those checks are open. After every available
+API-ready product remains published while those checks are open. Missing historical
+field-by-field revision audit details remain discoverable in the neutral revision-audit
+diagnostic and on the product passport, but do not inflate the red required-operator
+queue or its Profile count. After every available
 exact-evidence check is inconclusive, an AAL2 data operator may record
 `accepted_evidence_gap`; this removes only the matching diagnostic fingerprint from the
 actionable queue and does not rewrite product data or revision history. Raw diagnostics
 remain queryable, and changed product, revision, observation, or submission evidence
 produces a new fingerprint that reopens the follow-up.
+
+Revision differences are durable data, not a UI guess. Every revision after Revision 1
+must link to and differ from its exact predecessor. If the writer does not supply a
+valid structured summary, the database derives leaf-level before/after rows from the
+two immutable snapshots and stores human-readable field labels. Existing reconstructable
+gaps are backfilled through that same comparison and leave the work queue. Identical
+future snapshots are rejected rather than becoming repeat checks; only a legacy row
+whose stored history truly cannot establish a difference uses the explicit
+evidence-unavailable disposition. The UI renders that state as unavailable historical
+audit detail; it never creates placeholder old and new values that could be mistaken for
+real evidence.
 
 ### Official Recall Matching
 
@@ -935,6 +969,10 @@ Packaged products and generic foods use different evidence paths:
 3. Generic search can return active national dataset records. These keep their original
    food/preparation identity and are not automatically merged into a packaged barcode
    product.
+   Import-enabled releases remain operationally incomplete until their canonical import
+   completion time and exact source-file SHA-256 are present. An AAL2 data-operations
+   preview/apply workflow may fill only those missing facts and must clear the owning
+   health occurrence; it does not change imported foods or publication policy.
 4. A database-backed completeness profile checks whether required nutrients are
    reported. It does not change missing, trace, or unmapped values into zero.
 5. Optional label recognition may suggest missing packaged-label values, but the user

@@ -20,6 +20,24 @@ export const focusPrivilegedWorkspaceTarget = (
 
 	event.preventDefault();
 	replaceShallowRouteHash(`#${targetId}`);
-	target.scrollIntoView({ block: "start" });
+	const scrollRegion = target.closest<HTMLElement>(".view-body--scroll");
+	if (scrollRegion) {
+		const targetBounds = target.getBoundingClientRect();
+		const scrollRegionBounds = scrollRegion.getBoundingClientRect();
+		const scrollPaddingTop = Number.parseFloat(
+			window.getComputedStyle(scrollRegion).scrollPaddingTop,
+		);
+		scrollRegion.scrollTo({
+			top: Math.max(
+				0,
+				scrollRegion.scrollTop +
+					targetBounds.top -
+					scrollRegionBounds.top -
+					(Number.isFinite(scrollPaddingTop) ? scrollPaddingTop : 0),
+			),
+		});
+	} else {
+		target.scrollIntoView({ block: "start" });
+	}
 	target.focus({ preventScroll: true });
 };

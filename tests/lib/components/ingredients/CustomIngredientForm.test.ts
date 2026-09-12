@@ -3038,6 +3038,8 @@ describe("CustomIngredientForm", () => {
 				initialFood,
 				submissionIntent: "catalog_correction",
 				catalogSubmissionOnly: true,
+				catalogCorrectionEvidenceRoles: [],
+				allowBarcodeAutofill: false,
 				inline: false,
 				showScanButton: false,
 			},
@@ -3048,6 +3050,16 @@ describe("CustomIngredientForm", () => {
 				"Current Catalog Cereal",
 			),
 		);
+		expect(
+			screen.getByText(
+				"This correction keeps the existing catalog identity. Provider autofill is disabled during privileged review.",
+			),
+		).toBeVisible();
+		await fireEvent.blur(screen.getByLabelText(/upc \/ barcode/i));
+		expect(barcodeLookupMocks.lookupBarcodeProduct).not.toHaveBeenCalled();
+		expect(
+			screen.queryByText(/autofill available from/i),
+		).not.toBeInTheDocument();
 		await goToStep("Share");
 
 		expect(
@@ -3057,18 +3069,20 @@ describe("CustomIngredientForm", () => {
 			screen.queryByLabelText(/add after saving/i),
 		).not.toBeInTheDocument();
 
-		const photo = new File([new Uint8Array([0xff, 0xd8, 0xff])], "label.jpg", {
-			type: "image/jpeg",
-		});
-		for (const label of [
-			"Choose existing front of package",
-			"Choose existing nutrition facts label",
-			"Choose existing barcode",
-		]) {
-			await fireEvent.change(screen.getByLabelText(label), {
-				target: { files: [photo] },
-			});
-		}
+		expect(
+			screen.queryByLabelText("Choose existing front of package"),
+		).not.toBeInTheDocument();
+		expect(
+			screen.queryByLabelText("Choose existing nutrition facts label"),
+		).not.toBeInTheDocument();
+		expect(
+			screen.queryByLabelText("Choose existing barcode"),
+		).not.toBeInTheDocument();
+		expect(
+			screen.getByText(
+				"The existing provider records already cover these fields. No new photos are required.",
+			),
+		).toBeVisible();
 
 		await fireEvent.click(
 			screen.getByRole("button", { name: /submit correction/i }),

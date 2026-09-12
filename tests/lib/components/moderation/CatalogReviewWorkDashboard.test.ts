@@ -166,4 +166,55 @@ describe("CatalogReviewWorkDashboard", () => {
 			),
 		).toBeVisible();
 	});
+
+	it("keeps direct product decisions while hiding duplicate conflict links", () => {
+		render(CatalogReviewWorkDashboard, {
+			props: {
+				hideConflicts: true,
+				hideHeading: true,
+				reviewWork: {
+					conflicts: [
+						{
+							id: "conflict-id",
+							productId: "product-id",
+							barcode: "00011110129505",
+							productName: "Peanut Butter",
+							fieldPath: "ingredients",
+							observedValues: [],
+							severity: "high",
+							createdAt: "2026-08-22T12:00:00.000Z",
+						},
+					],
+					providerChanges: [],
+					safetyMatches: [
+						{
+							id: "match-id",
+							sharedProductId: "product-id",
+							barcode: "00011110129505",
+							productName: "Peanut Butter",
+							brandOwner: "QA Foods",
+							alertProductDescription: "12 oz Peanut Butter",
+							classification: "Class I",
+							reason: null,
+							packageDescription: null,
+							codeInformation: null,
+							sourceUrl: "https://example.test/recall",
+							sourceName: "FDA",
+							matchEvidence: {},
+							requiresPackageCheck: false,
+							detectedAt: "2026-08-22T12:00:00.000Z",
+						},
+					],
+					counts: { conflicts: 1, providerChanges: 0, safetyMatches: 1 },
+					issueLimit: 20,
+				},
+			},
+		});
+
+		expect(screen.getByText("Possible recall matches")).toBeVisible();
+		expect(screen.queryByText("Product conflicts")).not.toBeInTheDocument();
+		expect(
+			screen.queryByText("Queues in priority order"),
+		).not.toBeInTheDocument();
+	});
 });

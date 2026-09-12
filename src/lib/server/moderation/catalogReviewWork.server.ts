@@ -5,12 +5,14 @@ import {
 	type CatalogReviewWorkSummary,
 } from "$lib/utils/moderation/catalogReviewWork";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { runPrivilegedQueueAdmission } from "$lib/server/moderation/privilegedQueueAdmission.server";
 
 const DEFAULT_REVIEW_LIMIT = 20;
 
 export const readCatalogReviewWork = async (
 	supabase: SupabaseClient<Database>,
 ): Promise<CatalogReviewWorkSummary> => {
+	await runPrivilegedQueueAdmission(supabase, ["catalog_review"]);
 	const { data, error } = await supabase.rpc(
 		"get_catalog_review_work_summary",
 		{

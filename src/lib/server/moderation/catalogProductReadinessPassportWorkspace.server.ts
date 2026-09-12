@@ -1,6 +1,7 @@
 import type { RequestEvent } from "@sveltejs/kit";
 import { readCatalogProductReadinessPassport } from "$lib/server/moderation/catalogProductReadinessPassport.server";
 import { requireModeratorPermission } from "$lib/server/moderation/moderationAccess.server";
+import { runPrivilegedQueueAdmission } from "$lib/server/moderation/privilegedQueueAdmission.server";
 import type { AppPermission } from "$lib/utils/moderation/moderation";
 
 type CatalogProductReadinessPassportLoadEvent = Pick<
@@ -20,6 +21,7 @@ export const loadCatalogProductReadinessPassportWorkspace = async (
 	);
 	const productId = params.productId ?? "";
 	if (!productId) throw new TypeError("Catalog product ID is required.");
+	await runPrivilegedQueueAdmission(locals.supabase, ["catalog_review"]);
 
 	return {
 		viewerRole: role,

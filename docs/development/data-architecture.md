@@ -88,6 +88,14 @@ Durable writes use narrowly scoped Supabase functions. The database function:
 
 Client checks may provide faster feedback, but they are never the final authority.
 
+Privileged dataset-import evidence follows the same boundary. The focused application
+route calls AAL2 permission-checked database functions. Preview records the exact
+release snapshot and proposed missing fields without editing canonical data. Apply
+accepts only that current same-operator preview, writes the completion time, SHA-256,
+and source reference into `generic_food_datasets`, appends private audit history, and
+rolls back unless the normalized health finding clears. Browser code never writes the
+dataset or its audit table directly.
+
 Nutrition-label OCR is a separate asynchronous processing boundary. After explicit user
 action, the browser prepares a bounded crop and uploads it through an authenticated app
 route. The server normalizes it again, stores it in a private temporary bucket, creates
@@ -299,14 +307,24 @@ launcher badge while leaving the detailed issue rows available inside the worksp
 The product-readiness passport is the bounded per-product projection of that model for
 privileged review and operations. It exposes status and coverage summaries while raw
 evidence remains behind its existing server and database boundaries.
+Before a privileged summary or focused catalog workspace returns records, the shared
+server admission service invokes bounded database-owned catalog admission, rechecks
+legacy submissions with the same current product comparator used at intake, and runs
+only issue-code-authorized exact data repairs through the existing audited dry-run/apply
+boundary. The subsequent read and every badge use the actionable views, so automatic
+resolution, correction ownership, and human ambiguity cannot be counted differently.
 Approved catalog-health repairs follow the same boundary. An AAL2 data operator first
 runs a non-mutating exact-evidence check, then may apply only the candidates returned by
 that current check. Immutable run and item records preserve what was considered and
 what changed; unresolved evidence cannot be promoted by the repair path. Revision
 repairs use a dedicated private handler behind the same public RPC: exact approved
 submissions or source observations may restore a missing baseline, and an existing
-valid structured revision summary may restore its queryable field-change rows. No
-snapshot comparison or best-effort inference is permitted.
+valid structured revision summary may restore its queryable field-change rows. When
+the immutable predecessor and successor snapshots both exist, their exact leaf-level
+differences are also authoritative revision evidence: the database stores those
+before/after rows, backfills historical gaps, and rejects identical successor snapshots.
+Best-effort inference from provider data or a current canonical record remains
+prohibited.
 Canonical product images follow the same evidence-first rule without creating routine
 review work. The database selects one exact licensed or moderator-approved front image
 only when no eligible canonical image exists, keeps later alternatives as candidates,

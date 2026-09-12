@@ -16,7 +16,6 @@
 	import ProfileIdentitySummary from "$lib/components/profile/ProfileIdentitySummary/ProfileIdentitySummary.svelte";
 	import ProfileImageSettings from "$lib/components/profile/ProfileImageSettings/ProfileImageSettings.svelte";
 	import ProfilePrivilegedToolsLauncher from "$lib/components/profile/ProfilePrivilegedToolsLauncher/ProfilePrivilegedToolsLauncher.svelte";
-	import ProfilePrivilegedToolsSheet from "$lib/components/profile/ProfilePrivilegedToolsSheet/ProfilePrivilegedToolsSheet.svelte";
 	import ProfileSettingsMenu from "$lib/components/profile/ProfileSettingsMenu/ProfileSettingsMenu.svelte";
 	import ProfileSessionSettings from "$lib/components/profile/ProfileSessionSettings/ProfileSessionSettings.svelte";
 	import ProfileTutorialSettings from "$lib/components/profile/ProfileTutorialSettings/ProfileTutorialSettings.svelte";
@@ -123,10 +122,6 @@
 			noScroll: true,
 			replaceState: true,
 		});
-	};
-
-	const navigateToModeratorDestination = (href: string) => {
-		void goto(href);
 	};
 </script>
 
@@ -243,15 +238,6 @@
 	/>
 </RightSheet>
 
-{#if data.privilegedToolAccess}
-	<ProfilePrivilegedToolsSheet
-		open={activeSettingsRoute === PROFILE_SETTINGS_ROUTES.privilegedTools}
-		access={data.privilegedToolAccess}
-		onClose={closeSettingsRoute}
-		onNavigate={navigateToModeratorDestination}
-	/>
-{/if}
-
 <ViewFrame appShell>
 	<ViewTop
 		className="profile-page__top"
@@ -292,11 +278,7 @@
 			/>
 
 			{#if data.privilegedToolAccess}
-				<ProfilePrivilegedToolsLauncher
-					access={data.privilegedToolAccess}
-					onOpen={() =>
-						openSettingsRoute(PROFILE_SETTINGS_ROUTES.privilegedTools)}
-				/>
+				<ProfilePrivilegedToolsLauncher access={data.privilegedToolAccess} />
 			{/if}
 
 			<ProfileTutorialSettings />

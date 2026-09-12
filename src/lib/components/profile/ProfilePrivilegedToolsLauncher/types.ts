@@ -2,5 +2,4 @@ import type { ProfilePrivilegedToolAccess } from "$lib/utils/moderation/profileP
 
 export type ProfilePrivilegedToolsLauncherProps = {
 	access: ProfilePrivilegedToolAccess;
-	onOpen: () => void;
 };
