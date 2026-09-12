@@ -54,7 +54,7 @@
 	font-weight: $app-font-weight-semibold;
 }
 
-@media (min-width: ($app-breakpoint-md + 1px)) {
+@media (min-width: $app-breakpoint-privileged-desktop) {
 	.food-warning-follow-up-list {
 		grid-template-columns: repeat(
 			auto-fit,

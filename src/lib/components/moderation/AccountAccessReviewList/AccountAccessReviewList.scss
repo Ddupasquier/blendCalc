@@ -107,7 +107,7 @@
 	background: $app-shell-surface-panel;
 }
 
-@media (min-width: ($app-breakpoint-md + 1px)) {
+@media (min-width: $app-breakpoint-privileged-desktop) {
 	.account-access__search,
 	.account-access__empty {
 		width: min(100%, $app-privileged-card-grid-max-width);

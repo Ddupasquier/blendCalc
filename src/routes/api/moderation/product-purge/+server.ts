@@ -1,5 +1,6 @@
 import { requireModeratorApiPermission } from "$lib/server/moderation/moderationAccess.server";
 import { PRODUCT_EVIDENCE_BUCKET } from "$lib/server/products/productEvidence.server";
+import { readLimitedJson } from "$lib/server/security/requestBody.server";
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
 import type {
 	CatalogProductPurgePreview,
@@ -16,8 +17,14 @@ type PurgeRequest = {
 	reason?: unknown;
 };
 
+const PURGE_REQUEST_MAX_BYTES = 8 * 1024;
+
 const readRequest = async (request: Request) => {
-	const body = (await request.json()) as PurgeRequest;
+	const payload = await readLimitedJson(request, PURGE_REQUEST_MAX_BYTES);
+	const body =
+		payload && typeof payload === "object" && !Array.isArray(payload)
+			? (payload as PurgeRequest)
+			: {};
 	const action = body.action === "purge" ? "purge" : "preview";
 	const rawBarcode = typeof body.barcode === "string" ? body.barcode : "";
 	const barcode = normalizeBarcode(rawBarcode);

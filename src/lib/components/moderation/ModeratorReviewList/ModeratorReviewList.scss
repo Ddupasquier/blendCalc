@@ -26,7 +26,7 @@
 	color: $app-shell-text-muted;
 }
 
-@media (min-width: ($app-breakpoint-md + 1px)) {
+@media (min-width: $app-breakpoint-privileged-desktop) {
 	.moderator-review-list__items {
 		grid-template-columns: repeat(
 			auto-fit,

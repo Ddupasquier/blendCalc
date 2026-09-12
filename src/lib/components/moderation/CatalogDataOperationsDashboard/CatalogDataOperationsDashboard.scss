@@ -244,7 +244,7 @@
 	text-align: center;
 }
 
-@media (min-width: ($app-breakpoint-md + 1px)) {
+@media (min-width: $app-breakpoint-privileged-desktop) {
 	.catalog-data-operations__sections {
 		grid-template-columns: repeat(
 			auto-fit,

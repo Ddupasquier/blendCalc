@@ -4,7 +4,10 @@
 	import SelectField from "$lib/components/common/forms/SelectField/SelectField.svelte";
 	import TextField from "$lib/components/common/forms/TextField/TextField.svelte";
 	import type { CatalogConflictEvidence } from "$lib/server/moderation/catalogCorrectionHandoff.server";
-	import type { CatalogConflictDecisionWorkbenchProps } from "./types";
+	import type {
+		CatalogConflictDecision,
+		CatalogConflictDecisionWorkbenchProps,
+	} from "./types";
 
 	let { productId, handoff }: CatalogConflictDecisionWorkbenchProps = $props();
 	const findings = $derived(
@@ -14,13 +17,6 @@
 				finding.status === "needs_correction",
 		),
 	);
-	type Decision = {
-		outcome: string;
-		observationIndex: string;
-		note: string;
-		replacementValue: string;
-		evidenceReference: string;
-	};
 	const createInitialDecisions = () =>
 		Object.fromEntries(
 			handoff.findings
@@ -40,7 +36,9 @@
 					},
 				]),
 		);
-	let decisions = $state<Record<string, Decision>>(createInitialDecisions());
+	let decisions = $state<Record<string, CatalogConflictDecision>>(
+		createInitialDecisions(),
+	);
 
 	const decisionOptions = [
 		{
@@ -56,7 +54,10 @@
 			label: "Cannot determine from current evidence",
 		},
 	] as const;
-	const updateDecision = (id: string, patch: Partial<Decision>) => {
+	const updateDecision = (
+		id: string,
+		patch: Partial<CatalogConflictDecision>,
+	) => {
 		decisions = {
 			...decisions,
 			[id]: { ...decisions[id], ...patch },

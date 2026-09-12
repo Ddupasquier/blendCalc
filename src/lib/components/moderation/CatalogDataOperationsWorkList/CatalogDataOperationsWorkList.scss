@@ -91,7 +91,7 @@
 	border-left: $app-warning-border;
 }
 
-@media (min-width: ($app-breakpoint-md + 1px)) {
+@media (min-width: $app-breakpoint-privileged-desktop) {
 	.catalog-data-operations-work-list__items {
 		grid-template-columns: repeat(
 			auto-fit,
