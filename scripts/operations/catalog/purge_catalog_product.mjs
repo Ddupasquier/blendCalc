@@ -2,9 +2,8 @@
  * Purpose: Preview or atomically purge every Supabase database record selected
  * for one exact UPC / GTIN. Local Supabase is the default and safest target.
  *
- * Preview: npm run catalog:product:purge -- preview 00869759000149
- * Apply: npm run catalog:product:purge -- apply 00869759000149 \
- *   --confirm=00869759000149 --reason="Confirmed disposable test product"
+ * Preview: `npm run catalog:product:purge -- preview 00869759000149`
+ * Run: `npm run catalog:product:purge -- apply 00869759000149 --confirm=00869759000149 --reason="Confirmed disposable test product"`
  */
 
 import { config } from "dotenv";
