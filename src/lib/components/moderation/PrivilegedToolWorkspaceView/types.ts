@@ -12,5 +12,6 @@ export type PrivilegedToolWorkspaceViewProps = {
 	feedbackTone?: StatusMessageTone;
 	guide: PrivilegedWorkspaceGuideProps;
 	onClose: () => void;
+	sidebar?: Snippet;
 	children: Snippet;
 };

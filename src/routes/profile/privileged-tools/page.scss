@@ -1,0 +1,44 @@
+@use "../../../styles/variables" as *;
+
+.profile-privileged-tools-page__heading {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr);
+	align-items: start;
+	gap: $app-gap-sm;
+	min-width: 0;
+}
+
+.profile-privileged-tools-page__body {
+	width: 100%;
+	margin: 0 auto;
+	padding: 0 0 max($app-gap-lg, env(safe-area-inset-bottom));
+}
+
+@media (min-width: ($app-breakpoint-md + 1px)) {
+	:global(.view-frame.view-frame--app-shell.profile-privileged-tools-page) {
+		padding-inline: max(
+				$app-privileged-desktop-gutter,
+				env(safe-area-inset-left)
+			)
+			max($app-privileged-desktop-gutter, env(safe-area-inset-right));
+	}
+}
+
+.profile-privileged-tools-page__heading :global(.view-header) {
+	position: relative;
+	min-width: 0;
+	padding-right: calc(#{$app-shell-action-icon-size} + #{$app-gap-sm});
+}
+
+.profile-privileged-tools-page__heading :global(.privileged-action-badge) {
+	position: absolute;
+	top: 0;
+	right: 0;
+}
+
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
+	.profile-privileged-tools-page__body {
+		padding-bottom: max($app-gap-md, env(safe-area-inset-bottom));
+	}
+}

@@ -38,6 +38,7 @@
 		lookingUpBarcode,
 		validatingBarcodeShare,
 		requiresCatalogEvidence,
+		catalogCorrectionEvidenceRoles = undefined,
 		showOptionalProductImageUpload,
 		trustedProductImage,
 		frontPhoto,
@@ -124,6 +125,15 @@
 		evidenceProgress?.phase === "uploading" && evidenceProgress.total
 			? evidenceProgress.loaded / evidenceProgress.total
 			: null,
+	);
+	const requiresFrontEvidence = $derived(
+		catalogCorrectionEvidenceRoles?.includes("front") ?? true,
+	);
+	const requiresNutritionEvidence = $derived(
+		catalogCorrectionEvidenceRoles?.includes("nutrition") ?? true,
+	);
+	const requiresBarcodeEvidence = $derived(
+		catalogCorrectionEvidenceRoles?.includes("barcode") ?? true,
 	);
 </script>
 
@@ -275,64 +285,77 @@
 			aria-labelledby="product-evidence-title"
 		>
 			<div>
-				<strong id="product-evidence-title">Photos for catalog review</strong>
+				<strong id="product-evidence-title">
+					{catalogCorrectionEvidenceRoles?.length === 0
+						? "Evidence for catalog review"
+						: "Photos for catalog review"}
+				</strong>
 				<p>
-					These private photos let a moderator confirm the package, available
-					label details, and barcode before other users can find the product.
+					{catalogCorrectionEvidenceRoles?.length === 0
+						? "The existing provider records already cover these fields. No new photos are required."
+						: catalogCorrectionEvidenceRoles
+							? "Existing trusted evidence stays attached. Add only the photo types needed to support the fields this correction changes."
+							: "These private photos let a moderator confirm the package, available label details, and barcode before other users can find the product."}
 				</p>
 			</div>
-			<ProductImageEvidenceInput
-				trustedImage={trustedProductImage}
-				{frontPhoto}
-				placement={imagePlacement}
-				foodName={normalizedName || "Unnamed ingredient"}
-				brandName={brandOwner}
-				category={activeCategory}
-				required
-				requireFreshPhoto={catalogSubmissionOnly}
-				uploadStatus={getEvidencePhotoStatus(
-					"front",
-					Boolean(frontPhoto),
-					evidenceProgress,
-				)}
-				uploadProgress={evidenceUploadProgress}
-				{onFrontPhotoChange}
-				onPlacementChange={onImagePlacementChange}
-			/>
-			<PhotoUploadInput
-				id="custom-product-nutrition-photo"
-				name="custom-product-nutrition-photo"
-				prompt={labelEvidencePrompt}
-				description={labelEvidenceDescription}
-				photoCount={1}
-				files={nutritionPhoto ? [nutritionPhoto] : []}
-				capture="environment"
-				required
-				status={getEvidencePhotoStatus(
-					"nutrition",
-					Boolean(nutritionPhoto),
-					evidenceProgress,
-				)}
-				progress={evidenceUploadProgress}
-				onFilesChange={(files) => onNutritionPhotoChange(files[0] ?? null)}
-			/>
-			<PhotoUploadInput
-				id="custom-product-barcode-photo"
-				name="custom-product-barcode-photo"
-				prompt="Barcode"
-				description="Show the full barcode and its printed digits in clear focus."
-				photoCount={1}
-				files={barcodePhoto ? [barcodePhoto] : []}
-				capture="environment"
-				required
-				status={getEvidencePhotoStatus(
-					"barcode",
-					Boolean(barcodePhoto),
-					evidenceProgress,
-				)}
-				progress={evidenceUploadProgress}
-				onFilesChange={(files) => onBarcodePhotoChange(files[0] ?? null)}
-			/>
+			{#if requiresFrontEvidence || frontPhoto || trustedProductImageUrl}
+				<ProductImageEvidenceInput
+					trustedImage={trustedProductImage}
+					{frontPhoto}
+					placement={imagePlacement}
+					foodName={normalizedName || "Unnamed ingredient"}
+					brandName={brandOwner}
+					category={activeCategory}
+					required={requiresFrontEvidence}
+					requireFreshPhoto={catalogSubmissionOnly && requiresFrontEvidence}
+					uploadStatus={getEvidencePhotoStatus(
+						"front",
+						Boolean(frontPhoto),
+						evidenceProgress,
+					)}
+					uploadProgress={evidenceUploadProgress}
+					{onFrontPhotoChange}
+					onPlacementChange={onImagePlacementChange}
+				/>
+			{/if}
+			{#if requiresNutritionEvidence || nutritionPhoto}
+				<PhotoUploadInput
+					id="custom-product-nutrition-photo"
+					name="custom-product-nutrition-photo"
+					prompt={labelEvidencePrompt}
+					description={labelEvidenceDescription}
+					photoCount={1}
+					files={nutritionPhoto ? [nutritionPhoto] : []}
+					capture="environment"
+					required={requiresNutritionEvidence}
+					status={getEvidencePhotoStatus(
+						"nutrition",
+						Boolean(nutritionPhoto),
+						evidenceProgress,
+					)}
+					progress={evidenceUploadProgress}
+					onFilesChange={(files) => onNutritionPhotoChange(files[0] ?? null)}
+				/>
+			{/if}
+			{#if requiresBarcodeEvidence || barcodePhoto}
+				<PhotoUploadInput
+					id="custom-product-barcode-photo"
+					name="custom-product-barcode-photo"
+					prompt="Barcode"
+					description="Show the full barcode and its printed digits in clear focus."
+					photoCount={1}
+					files={barcodePhoto ? [barcodePhoto] : []}
+					capture="environment"
+					required={requiresBarcodeEvidence}
+					status={getEvidencePhotoStatus(
+						"barcode",
+						Boolean(barcodePhoto),
+						evidenceProgress,
+					)}
+					progress={evidenceUploadProgress}
+					onFilesChange={(files) => onBarcodePhotoChange(files[0] ?? null)}
+				/>
+			{/if}
 		</section>
 	{:else if showOptionalProductImageUpload}
 		<section class="share-step__evidence" aria-labelledby="product-image-title">

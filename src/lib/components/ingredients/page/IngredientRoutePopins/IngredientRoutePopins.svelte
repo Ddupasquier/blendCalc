@@ -10,6 +10,7 @@
 	import NutritionDetailView from "$lib/components/ingredients/nutrition/NutritionDetailView/NutritionDetailView.svelte";
 	import { isPrivateCustomFood } from "$lib/utils/food/records/foodClassification";
 	import { getIngredientListLabel } from "$lib/utils/ingredients/ingredientListUi";
+	import { parseCatalogCorrectionEvidenceRoles } from "$lib/utils/products/productEvidenceRequirements";
 	import type { IngredientRoutePopinsProps } from "./types";
 
 	let {
@@ -76,6 +77,9 @@
 		const value = page.url.searchParams.get("returnTo");
 		return value?.startsWith("/profile/privileged-tools/") ? value : null;
 	});
+	const catalogCorrectionEvidenceRoles = $derived(
+		parseCatalogCorrectionEvidenceRoles(page.url.searchParams.get("evidence")),
+	);
 </script>
 
 <IngredientActionSheet
@@ -186,6 +190,7 @@
 	initialFood={correctionFood ?? undefined}
 	submissionIntent="catalog_correction"
 	catalogSubmissionOnly
+	{catalogCorrectionEvidenceRoles}
 	returnHref={correctionReturnHref}
 	onClose={onCloseCorrection}
 	onCreate={onCreateManualIngredient}

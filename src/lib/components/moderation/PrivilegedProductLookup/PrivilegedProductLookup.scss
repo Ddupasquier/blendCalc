@@ -1,0 +1,445 @@
+@use "../../../../styles/variables" as *;
+
+.privileged-product-lookup-toolbar,
+.privileged-product-lookup {
+	display: none;
+}
+
+@media (min-width: ($app-breakpoint-md + 1px)) {
+	.privileged-product-lookup-toolbar {
+		display: grid;
+		gap: $app-gap-xs;
+		width: 100%;
+		min-width: 0;
+		padding: $app-gap-sm;
+		background: $app-shell-surface-panel;
+		border: 1px solid $app-shell-border-subtle;
+		border-radius: $app-shell-radius-card;
+	}
+
+	.privileged-product-lookup-toolbar--open {
+		border-color: $app-shell-accent-primary;
+	}
+
+	.privileged-product-lookup-toolbar__label {
+		color: $app-shell-text-muted;
+		font-size: $app-font-size-xs;
+		font-weight: $app-font-weight-heavy;
+		letter-spacing: $app-letter-spacing-wider;
+		text-transform: uppercase;
+	}
+
+	.privileged-product-lookup-toolbar :global(.rounded-action-button) {
+		width: 100%;
+		min-height: 2.45rem;
+		border-radius: $app-shell-radius-control;
+		font-size: $app-font-size-sm;
+	}
+
+	.privileged-product-lookup {
+		position: fixed;
+		top: 5rem;
+		right: $app-gap-lg;
+		z-index: 100;
+		display: grid;
+		grid-template-rows: auto minmax(0, 1fr);
+		width: min(42rem, calc(100vw - (2 * #{$app-gap-lg})));
+		max-height: calc(100vh - 6rem);
+		overflow: hidden;
+		color: $app-shell-text-primary;
+		background: $app-shell-surface-page;
+		border: 1px solid $app-shell-border-subtle;
+		border-radius: $app-shell-radius-sheet;
+	}
+
+	.privileged-product-lookup--comparing {
+		width: min(70rem, calc(100vw - (2 * #{$app-gap-lg})));
+	}
+
+	.privileged-product-lookup__header {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		align-items: center;
+		gap: $app-gap-sm;
+		padding: $app-gap-sm;
+		background: $app-shell-surface-panel;
+		border-bottom: 1px solid $app-shell-border-subtle;
+	}
+
+	.privileged-product-lookup__drag-handle {
+		display: flex;
+		align-items: center;
+		gap: $app-gap-sm;
+		min-width: 0;
+		padding: $app-gap-xs $app-gap-sm;
+		color: $app-shell-text-primary;
+		background: transparent;
+		border: 0;
+		border-radius: $app-shell-radius-control;
+		text-align: left;
+		cursor: grab;
+		touch-action: none;
+		user-select: none;
+
+		&:active {
+			cursor: grabbing;
+		}
+
+		&:focus-visible {
+			outline: $app-focus-outline;
+			outline-offset: $app-focus-outline-offset;
+		}
+
+		span {
+			display: grid;
+			min-width: 0;
+		}
+
+		strong {
+			font-size: $app-font-size-md;
+		}
+
+		small {
+			color: $app-shell-text-muted;
+			font-size: $app-font-size-xs;
+		}
+	}
+
+	.privileged-product-lookup__body {
+		display: grid;
+		align-content: start;
+		gap: $app-gap-md;
+		min-height: 0;
+		padding: $app-gap-md;
+		overflow: auto;
+	}
+
+	.privileged-product-lookup__scope {
+		:global(.segmented-control) {
+			width: 100%;
+		}
+	}
+
+	.privileged-product-lookup__scope-help {
+		margin: -#{$app-gap-xs} 0 0;
+		color: $app-shell-text-muted;
+		font-size: $app-font-size-xs;
+		line-height: $app-line-height-body;
+	}
+
+	.privileged-product-lookup__search {
+		display: grid;
+		gap: $app-gap-xs;
+
+		label {
+			color: $app-shell-text-muted;
+			font-size: $app-font-size-xs;
+			font-weight: $app-font-weight-bold;
+			letter-spacing: $app-letter-spacing-label;
+			text-transform: uppercase;
+		}
+	}
+
+	.privileged-product-lookup__search-row {
+		display: grid;
+		grid-template-columns: auto minmax(0, 1fr) auto;
+		align-items: center;
+		gap: $app-gap-sm;
+		min-height: $app-shell-control-height;
+		padding-inline-start: $app-shell-control-padding-x;
+		background: $app-shell-surface-control;
+		border: 1px solid $app-shell-border-subtle;
+		border-radius: $app-shell-radius-control;
+
+		&:focus-within {
+			border-color: $app-shell-accent-primary;
+		}
+
+		input {
+			width: 100%;
+			min-width: 0;
+			height: 100%;
+			padding: 0;
+			color: $app-shell-text-primary;
+			background: transparent;
+			border: 0;
+			outline: 0;
+			font: inherit;
+		}
+
+		:global(.rounded-action-button) {
+			align-self: stretch;
+			min-width: 6rem;
+			border-radius: $app-shell-radius-control;
+			font-size: $app-font-size-sm;
+		}
+	}
+
+	.privileged-product-lookup__results,
+	.privileged-product-lookup__selection {
+		display: grid;
+		gap: $app-gap-sm;
+	}
+
+	.privileged-product-lookup__section-heading {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: $app-gap-sm;
+
+		h2 {
+			margin: 0;
+			font-size: $app-font-size-lg;
+		}
+
+		span {
+			padding: $app-gap-2xs $app-gap-sm;
+			color: $app-shell-text-muted;
+			background: $app-shell-surface-control;
+			border-radius: $app-shell-radius-pill;
+			font-size: $app-font-size-xs;
+			font-weight: $app-font-weight-bold;
+		}
+	}
+
+	.privileged-product-lookup__result-list {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: $app-gap-sm;
+		max-height: 15rem;
+		overflow: auto;
+	}
+
+	.privileged-product-lookup__result {
+		display: grid;
+		gap: $app-gap-sm;
+		padding: $app-gap-sm;
+		background: $app-shell-surface-panel;
+		border: 1px solid $app-shell-border-subtle;
+		border-radius: $app-shell-radius-card;
+
+		> div:first-child {
+			display: grid;
+			gap: $app-gap-2xs;
+		}
+
+		strong,
+		span,
+		small {
+			min-width: 0;
+			overflow-wrap: anywhere;
+		}
+
+		span,
+		small {
+			color: $app-shell-text-muted;
+			font-size: $app-font-size-xs;
+		}
+	}
+
+	.privileged-product-lookup__result--selected {
+		border-color: $app-shell-accent-primary;
+	}
+
+	.privileged-product-lookup__result-actions {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: $app-gap-xs;
+
+		:global(.rounded-action-button) {
+			min-height: 2.25rem;
+			font-size: $app-font-size-xs;
+		}
+	}
+
+	.privileged-product-lookup__product-columns {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(min(18rem, 100%), 1fr));
+		gap: $app-gap-sm;
+	}
+
+	.privileged-product-lookup__product-card {
+		padding: $app-gap-md;
+		background: $app-shell-surface-panel;
+		border: 1px solid $app-shell-border-subtle;
+		border-radius: $app-shell-radius-card;
+
+		small {
+			color: $app-shell-accent-primary;
+			font-size: $app-font-size-xs;
+			font-weight: $app-font-weight-bold;
+			text-transform: uppercase;
+		}
+
+		h3,
+		p {
+			margin: $app-gap-xs 0 0;
+		}
+
+		p {
+			color: $app-shell-text-muted;
+			font-size: $app-font-size-sm;
+		}
+
+		dl {
+			display: grid;
+			gap: $app-gap-xs;
+			margin: $app-gap-sm 0 0;
+		}
+
+		dl div {
+			display: grid;
+			grid-template-columns: 6rem minmax(0, 1fr);
+			gap: $app-gap-sm;
+		}
+
+		dt {
+			color: $app-shell-text-muted;
+			font-size: $app-font-size-xs;
+		}
+
+		dd {
+			margin: 0;
+			font-size: $app-font-size-xs;
+			font-weight: $app-font-weight-semibold;
+			overflow-wrap: anywhere;
+		}
+	}
+
+	.privileged-product-lookup__comparison-controls {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: $app-gap-md;
+
+		p {
+			margin: 0;
+			color: $app-shell-text-muted;
+			font-size: $app-font-size-xs;
+		}
+
+		:global(.checkbox-field) {
+			display: inline-flex;
+			align-items: center;
+			gap: $app-gap-xs;
+			white-space: nowrap;
+			font-size: $app-font-size-xs;
+			font-weight: $app-font-weight-bold;
+		}
+	}
+
+	.privileged-product-lookup__comparison-table {
+		display: grid;
+		min-width: 36rem;
+		border: 1px solid $app-shell-border-subtle;
+		border-radius: $app-shell-radius-card;
+		overflow: hidden;
+	}
+
+	.privileged-product-lookup__comparison-header,
+	.privileged-product-lookup__comparison-row {
+		display: grid;
+		grid-template-columns: minmax(10rem, 1.15fr) repeat(2, minmax(9rem, 1fr));
+	}
+
+	.privileged-product-lookup__comparison-header {
+		background: $app-shell-surface-control;
+
+		span {
+			font-size: $app-font-size-xs;
+			font-weight: $app-font-weight-bold;
+		}
+	}
+
+	.privileged-product-lookup__comparison-header span,
+	.privileged-product-lookup__comparison-row > span {
+		padding: $app-gap-sm;
+		border-right: 1px solid $app-shell-border-subtle;
+
+		&:last-child {
+			border-right: 0;
+		}
+	}
+
+	.privileged-product-lookup__comparison-row {
+		border-top: 1px solid $app-shell-border-subtle;
+		border-left: 0.22rem solid transparent;
+
+		> span:first-child {
+			display: grid;
+			gap: $app-gap-2xs;
+		}
+
+		em {
+			width: fit-content;
+			padding: $app-gap-2xs $app-gap-xs;
+			color: $app-shell-text-primary;
+			background: $app-shell-surface-control;
+			border-radius: $app-shell-radius-pill;
+			font-size: $app-font-size-2xs;
+			font-style: normal;
+			font-weight: $app-font-weight-bold;
+			text-transform: uppercase;
+		}
+
+		small {
+			color: $app-shell-text-muted;
+			font-size: $app-font-size-2xs;
+			font-weight: $app-font-weight-regular;
+		}
+	}
+
+	.privileged-product-lookup__comparison-row[data-status="different"],
+	.privileged-product-lookup__comparison-row[data-status="missing"] {
+		background: color-mix(in srgb, $app-shell-accent-danger 12%, transparent);
+		border-left-color: $app-shell-accent-danger;
+	}
+
+	.privileged-product-lookup__comparison-row[data-status="not-comparable"] {
+		background: color-mix(in srgb, $app-shell-accent-info 13%, transparent);
+		border-left-color: $app-shell-accent-info;
+	}
+
+	.privileged-product-lookup__nutrition {
+		padding: $app-gap-md;
+		background: $app-shell-surface-panel;
+		border-radius: $app-shell-radius-card;
+
+		h3,
+		p {
+			margin: 0;
+		}
+
+		ul {
+			display: grid;
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			gap: 0 $app-gap-lg;
+			margin: $app-gap-sm 0 0;
+			padding: 0;
+			list-style: none;
+		}
+
+		li {
+			display: flex;
+			justify-content: space-between;
+			gap: $app-gap-sm;
+			padding-block: $app-gap-xs;
+			border-bottom: 1px solid $app-shell-border-subtle;
+			font-size: $app-font-size-xs;
+		}
+
+		li > span {
+			display: grid;
+			gap: $app-gap-2xs;
+		}
+
+		li small {
+			color: $app-shell-text-muted;
+			font-size: $app-font-size-2xs;
+		}
+
+		strong {
+			white-space: nowrap;
+		}
+	}
+}

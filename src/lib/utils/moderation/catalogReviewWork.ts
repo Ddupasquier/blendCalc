@@ -24,6 +24,133 @@ export type CatalogReviewWorkSummary = {
 	issueLimit: number;
 };
 
+export type CatalogReviewProductSummary = {
+	productId: string;
+	barcode: string;
+	productName: string;
+	brandOwner: string | null;
+	oldestReviewAt: string;
+	counts: {
+		conflicts: number;
+		providerChanges: number;
+		safetyMatches: number;
+		total: number;
+	};
+};
+
+type MutableCatalogReviewProductSummary = Omit<
+	CatalogReviewProductSummary,
+	"counts"
+> & {
+	counts: CatalogReviewProductSummary["counts"];
+};
+
+const compareReviewDates = (left: string, right: string) =>
+	Date.parse(left) - Date.parse(right);
+
+export const groupCatalogReviewWorkByProduct = (
+	reviewWork: CatalogReviewWorkSummary,
+): CatalogReviewProductSummary[] => {
+	const products = new Map<string, MutableCatalogReviewProductSummary>();
+	const addReview = (input: {
+		productId: string;
+		barcode: string;
+		productName: string;
+		brandOwner?: string | null;
+		reviewAt: string;
+		category: "conflicts" | "providerChanges" | "safetyMatches";
+	}) => {
+		const existing = products.get(input.productId);
+		if (existing) {
+			existing.counts[input.category] += 1;
+			existing.counts.total += 1;
+			if (compareReviewDates(input.reviewAt, existing.oldestReviewAt) < 0) {
+				existing.oldestReviewAt = input.reviewAt;
+			}
+			if (!existing.brandOwner && input.brandOwner) {
+				existing.brandOwner = input.brandOwner;
+			}
+			return;
+		}
+		products.set(input.productId, {
+			productId: input.productId,
+			barcode: input.barcode,
+			productName: input.productName,
+			brandOwner: input.brandOwner ?? null,
+			oldestReviewAt: input.reviewAt,
+			counts: {
+				conflicts: input.category === "conflicts" ? 1 : 0,
+				providerChanges: input.category === "providerChanges" ? 1 : 0,
+				safetyMatches: input.category === "safetyMatches" ? 1 : 0,
+				total: 1,
+			},
+		});
+	};
+
+	for (const match of reviewWork.safetyMatches) {
+		addReview({
+			productId: match.sharedProductId,
+			barcode: match.barcode,
+			productName: match.productName,
+			brandOwner: match.brandOwner,
+			reviewAt: match.detectedAt,
+			category: "safetyMatches",
+		});
+	}
+	for (const conflict of reviewWork.conflicts) {
+		addReview({
+			productId: conflict.productId,
+			barcode: conflict.barcode,
+			productName: conflict.productName,
+			reviewAt: conflict.createdAt,
+			category: "conflicts",
+		});
+	}
+	for (const change of reviewWork.providerChanges) {
+		addReview({
+			productId: change.sharedProductId,
+			barcode: change.barcode,
+			productName: change.productName,
+			reviewAt: change.createdAt,
+			category: "providerChanges",
+		});
+	}
+
+	return [...products.values()].sort((left, right) => {
+		const safetyPriority =
+			Number(right.counts.safetyMatches > 0) -
+			Number(left.counts.safetyMatches > 0);
+		if (safetyPriority !== 0) return safetyPriority;
+		return compareReviewDates(left.oldestReviewAt, right.oldestReviewAt);
+	});
+};
+
+export const filterCatalogReviewWorkForProduct = (
+	reviewWork: CatalogReviewWorkSummary,
+	productId: string,
+): CatalogReviewWorkSummary => {
+	const conflicts = reviewWork.conflicts.filter(
+		(conflict) => conflict.productId === productId,
+	);
+	const providerChanges = reviewWork.providerChanges.filter(
+		(change) => change.sharedProductId === productId,
+	);
+	const safetyMatches = reviewWork.safetyMatches.filter(
+		(match) => match.sharedProductId === productId,
+	);
+	return {
+		conflicts,
+		providerChanges,
+		safetyMatches,
+		counts: {
+			conflicts: conflicts.length,
+			providerChanges: providerChanges.length,
+			safetyMatches: safetyMatches.length,
+		},
+		issueLimit: reviewWork.issueLimit,
+	};
+};
+
 const readRecord = (value: unknown, field: string): JsonRecord => {
 	if (!value || typeof value !== "object" || Array.isArray(value)) {
 		throw new TypeError(`Invalid catalog review-work field: ${field}`);

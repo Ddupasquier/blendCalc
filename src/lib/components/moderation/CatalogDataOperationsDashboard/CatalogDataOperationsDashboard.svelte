@@ -1,21 +1,14 @@
 <script lang="ts">
 	import TextBadge from "$lib/components/common/badges/TextBadge/TextBadge.svelte";
-	import RoundedActionLink from "$lib/components/common/buttons/RoundedActionLink/RoundedActionLink.svelte";
 	import CollapsibleSection from "$lib/components/common/disclosure/CollapsibleSection/CollapsibleSection.svelte";
 	import {
 		getCatalogHealthStatusLabel,
 		getCatalogIssueReasonLabel,
-		getCatalogResolutionActionLabel,
 	} from "$lib/utils/moderation/catalogHealthMessages";
 	import type { CatalogDataOperationsDashboardProps } from "./types";
 
-	let {
-		dashboard,
-		catalogMonitor,
-		actionCount,
-		actionSubjects,
-		actionSubjectsTruncated,
-	}: CatalogDataOperationsDashboardProps = $props();
+	let { dashboard, catalogMonitor }: CatalogDataOperationsDashboardProps =
+		$props();
 
 	const numberFormatter = new Intl.NumberFormat();
 	const dateFormatter = new Intl.DateTimeFormat(undefined, {
@@ -25,14 +18,39 @@
 
 	const operationalOverviewItems = $derived([
 		{
-			label: "Products available in blendCalc",
+			label: "Active shared catalog",
 			value: dashboard.overview.activeProducts,
+			detail: "Products available in blendCalc search",
+			tone: "info" as const,
+		},
+		{
+			label: "Public blendCalcAPI v1",
+			value: dashboard.overview.publicationReadyProducts,
+			detail: "Shared products passing publication checks",
 			tone: "success" as const,
 		},
 		{
-			label: "Products ready for blendCalcAPI v1",
-			value: dashboard.overview.publicationReadyProducts,
-			tone: "success" as const,
+			label: "Shared catalog only",
+			value: Math.max(
+				0,
+				dashboard.overview.activeProducts -
+					dashboard.overview.publicationReadyProducts,
+			),
+			detail: "Available in blendCalc but withheld from the public API",
+			tone: "warning" as const,
+		},
+		{
+			label: "API publication coverage",
+			value:
+				dashboard.overview.activeProducts === 0
+					? "—"
+					: `${Math.round(
+							(dashboard.overview.publicationReadyProducts /
+								dashboard.overview.activeProducts) *
+								100,
+						)}%`,
+			detail: "Share of the active catalog available through v1",
+			tone: "neutral" as const,
 		},
 	]);
 	const diagnosticItems = $derived([
@@ -57,40 +75,17 @@
 			action: "Inspect first mapping",
 		},
 		{
-			title: "Revision evidence",
+			title: "Historical revision audit",
 			count: dashboard.issues.revisions.length,
 			description:
-				"Products whose revision history does not yet explain a recorded change.",
+				"Older revisions missing field-by-field audit details. These checks do not change the current product or its blendCalcAPI status.",
 			href: dashboard.issues.revisions[0]
 				? `/profile/privileged-tools/data-operations/products/${encodeURIComponent(dashboard.issues.revisions[0].productId)}`
 				: null,
-			action: "Inspect first revision",
+			action: "Inspect first audit gap",
 		},
 	]);
 	const formatNumber = (value: number) => numberFormatter.format(value);
-	const getSubjectTypeLabel = (subjectType: string) => {
-		switch (subjectType) {
-			case "shared_product":
-				return "Catalog product";
-			case "nutrient_mapping":
-				return "Nutrient identity";
-			case "generic_food_dataset":
-				return "Dataset";
-			case "product_data_source":
-				return "Product source";
-			case "food_preference":
-				return "Food-warning policy";
-			default:
-				return "Data operation";
-		}
-	};
-	const getDestinationLabel = (subjectType: string) => {
-		if (subjectType === "nutrient_mapping") return "Review nutrient identity";
-		if (subjectType === "generic_food_dataset") {
-			return "Record dataset evidence";
-		}
-		return "Open product readiness";
-	};
 	const formatDate = (value: string | null) => {
 		if (!value) return "Not recorded";
 		const date = new Date(value);
@@ -102,129 +97,27 @@
 
 <section class="catalog-data-operations" aria-label="Catalog data operations">
 	<p class="catalog-data-operations__generated">
-		Updated {formatDate(dashboard.generatedAt)} · Source activity covers the last
+		Health snapshot updated {formatDate(dashboard.generatedAt)} · Source activity
+		covers the last
 		{dashboard.metricWindowDays} days.
 	</p>
 
 	<section
-		class="catalog-data-operations__required-work"
-		aria-labelledby="catalog-data-operations-required-work-title"
-	>
-		<header class="catalog-data-operations__section-heading">
-			<div>
-				<h2 id="catalog-data-operations-required-work-title">Required work</h2>
-				<p>
-					This is the same deduplicated workload shown in the Admin tools
-					launcher.
-				</p>
-			</div>
-		</header>
-		{#if actionCount === null || actionSubjects === null}
-			<article class="catalog-data-operations__required-card">
-				<header>
-					<strong>Queue status unavailable</strong>
-					<TextBadge label="Unknown" tone="warning" />
-				</header>
-				<p>
-					Use the diagnostic checks below, but do not treat a missing total as
-					an all-clear.
-				</p>
-			</article>
-		{:else if actionCount === 0}
-			<article class="catalog-data-operations__required-card" data-clear="true">
-				<header>
-					<strong>No tracked operator work</strong>
-					<TextBadge label="Clear" tone="success" />
-				</header>
-				<p>
-					No enabled data-operations issue currently needs a person. The
-					diagnostics below remain available for investigation.
-				</p>
-			</article>
-		{:else}
-			<div class="catalog-data-operations__required-list">
-				{#each actionSubjects as subject (`${subject.subjectType}:${subject.subjectKey}`)}
-					<article
-						class="catalog-data-operations__required-card"
-						data-severity={subject.severity}
-					>
-						<header>
-							<div>
-								<span class="catalog-data-operations__required-type">
-									{getSubjectTypeLabel(subject.subjectType)}
-								</span>
-								<strong>{subject.displayName}</strong>
-								{#if subject.context}
-									<small>{subject.context}</small>
-								{/if}
-							</div>
-							<TextBadge
-								label={`${formatNumber(subject.issueCount)} ${subject.issueCount === 1 ? "finding" : "findings"}`}
-								tone="warning"
-							/>
-						</header>
-						<ul aria-label={`Findings for ${subject.displayName}`}>
-							{#each subject.issues as issue}
-								<li>
-									<strong>{issue.summary}</strong>
-									<span>
-										Next: {getCatalogResolutionActionLabel(
-											issue.resolutionAction,
-										)}
-									</span>
-								</li>
-							{/each}
-						</ul>
-						{#if subject.destination}
-							<div class="catalog-data-operations__required-action">
-								<strong>What happens next</strong>
-								<p>
-									Opening the focused review changes nothing. It shows the
-									evidence and enables only the decisions or repairs supported
-									for this subject.
-								</p>
-								<RoundedActionLink
-									href={subject.destination}
-									variant="primary"
-									fullWidth
-								>
-									{getDestinationLabel(subject.subjectType)}
-								</RoundedActionLink>
-							</div>
-						{:else}
-							<div
-								class="catalog-data-operations__required-action"
-								data-unavailable="true"
-							>
-								<strong>Cannot finish this in the app yet</strong>
-								<p>{subject.missingPrerequisite}</p>
-								<p>
-									Nothing changes until that workflow records reviewed evidence.
-								</p>
-							</div>
-						{/if}
-					</article>
-				{/each}
-				{#if actionSubjectsTruncated}
-					<p class="catalog-data-operations__required-limit" role="status">
-						Showing the first {formatNumber(actionSubjects.length)} of {formatNumber(
-							actionCount,
-						)} named subjects. Finish or repair these first, then refresh for the
-						next batch.
-					</p>
-				{/if}
-			</div>
-		{/if}
-	</section>
-
-	<section
 		class="catalog-data-operations__overview"
-		aria-label="Catalog coverage"
+		aria-label="Catalog and API reach"
 	>
 		{#each operationalOverviewItems as item (item.label)}
 			<article>
-				<TextBadge label={formatNumber(item.value)} tone={item.tone} />
-				<span>{item.label}</span>
+				<header>
+					<span>{item.label}</span>
+					<TextBadge
+						label={typeof item.value === "number"
+							? formatNumber(item.value)
+							: item.value}
+						tone={item.tone}
+					/>
+				</header>
+				<p>{item.detail}</p>
 			</article>
 		{/each}
 	</section>
@@ -239,8 +132,8 @@
 					Diagnostic checks
 				</h2>
 				<p>
-					These broader checks can overlap. Use them to investigate the required
-					work above; they do not add to the red action total.
+					These broader checks can overlap. Use them to investigate catalog
+					conditions; they do not add to the red action total.
 				</p>
 			</div>
 		</header>
@@ -272,13 +165,12 @@
 		</div>
 	</section>
 
-	<header
-		class="catalog-data-operations__section-heading catalog-data-operations__section-heading--details"
-	>
+	<header class="catalog-data-operations__section-heading">
 		<div>
 			<h2>Details and system health</h2>
 			<p>
-				Open these sections for diagnostics, evidence, and the full queue lists.
+				Open a section when you need its supporting records or operating
+				details.
 			</p>
 		</div>
 	</header>
@@ -572,7 +464,6 @@
 				? "Clear"
 				: `${dashboard.issues.publication.length} ${dashboard.issues.publication.length === 1 ? "match" : "matches"}`}
 			tone={dashboard.issues.publication.length > 0 ? "warning" : "neutral"}
-			open={dashboard.issues.publication.length > 0}
 			surface="panel"
 		>
 			<div class="catalog-data-operations__stack">
@@ -607,8 +498,6 @@
 			tone={dashboard.issues.nutrientMappings.length > 0
 				? "warning"
 				: "neutral"}
-			open={dashboard.issues.publication.length === 0 &&
-				dashboard.issues.nutrientMappings.length > 0}
 			surface="panel"
 		>
 			<div class="catalog-data-operations__stack">
@@ -641,9 +530,6 @@
 				? "Clear"
 				: `${dashboard.issues.revisions.length} ${dashboard.issues.revisions.length === 1 ? "match" : "matches"}`}
 			tone={dashboard.issues.revisions.length > 0 ? "warning" : "neutral"}
-			open={dashboard.issues.publication.length === 0 &&
-				dashboard.issues.nutrientMappings.length === 0 &&
-				dashboard.issues.revisions.length > 0}
 			surface="panel"
 		>
 			<div class="catalog-data-operations__stack">

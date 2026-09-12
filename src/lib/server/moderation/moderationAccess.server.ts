@@ -85,3 +85,16 @@ export const requireModeratorPermission = async (
 
 	return { ...access, permissions };
 };
+
+export const requireModeratorApiPermission = async (
+	locals: App.Locals,
+	permission: AppPermission,
+): Promise<ModeratorPermissionAccess> => {
+	const access = await requireModeratorApiAccess(locals);
+	const permissions = await readAppRolePermissions(access.role);
+	if (!permissions.includes(permission)) {
+		throwAppError(403, "ACCESS_DENIED");
+	}
+
+	return { ...access, permissions };
+};

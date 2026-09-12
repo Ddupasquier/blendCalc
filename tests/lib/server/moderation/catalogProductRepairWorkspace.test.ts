@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
 	finishCatalogProductReview: vi.fn(),
 	finishCatalogProductDiagnosticReview: vi.fn(),
 	readCatalogCorrectionHandoff: vi.fn(),
+	runPrivilegedQueueAdmission: vi.fn(),
 }));
 
 vi.mock("$lib/server/moderation/moderationAccess.server", () => ({
@@ -25,6 +26,10 @@ vi.mock(
 
 vi.mock("$lib/server/moderation/catalogCorrectionHandoff.server", () => ({
 	readCatalogCorrectionHandoff: mocks.readCatalogCorrectionHandoff,
+}));
+
+vi.mock("$lib/server/moderation/privilegedQueueAdmission.server", () => ({
+	runPrivilegedQueueAdmission: mocks.runPrivilegedQueueAdmission,
 }));
 
 vi.mock(
@@ -125,6 +130,9 @@ describe("catalog product repair workspace", () => {
 			"product-id",
 			catalogProductReadinessPassportFixture.issues,
 		);
+		expect(mocks.runPrivilegedQueueAdmission).toHaveBeenCalledWith(supabase, [
+			"data_operations",
+		]);
 	});
 
 	it("runs a dry run only after checking the repair permission", async () => {

@@ -6,6 +6,51 @@ export const PRODUCT_EVIDENCE_ROLES = [
 
 export type ProductEvidenceRole = (typeof PRODUCT_EVIDENCE_ROLES)[number];
 
+const CORRECTION_FIELD_EVIDENCE_ROLES: Record<
+	string,
+	readonly ProductEvidenceRole[]
+> = {
+	productName: ["front"],
+	brandOwner: ["front"],
+	category: ["front"],
+	servingWeightGrams: ["nutrition"],
+	householdServing: ["nutrition"],
+	ingredients: ["nutrition"],
+	allergens: ["nutrition"],
+	traces: ["nutrition"],
+	barcode: ["barcode"],
+	gtinUpc: ["barcode"],
+};
+
+export const getCatalogCorrectionEvidenceRoles = (
+	fieldPaths: readonly string[],
+): ProductEvidenceRole[] => {
+	if (fieldPaths.length === 0) return [...PRODUCT_EVIDENCE_ROLES];
+
+	return [
+		...new Set(
+			fieldPaths.flatMap((fieldPath) =>
+				fieldPath.startsWith("nutrient:")
+					? ["nutrition" as const]
+					: (CORRECTION_FIELD_EVIDENCE_ROLES[fieldPath] ??
+						PRODUCT_EVIDENCE_ROLES),
+			),
+		),
+	];
+};
+
+export const parseCatalogCorrectionEvidenceRoles = (
+	value: string | null | undefined,
+): ProductEvidenceRole[] | undefined => {
+	if (!value) return undefined;
+	if (value === "none") return [];
+	const requested = value.split(",").map((role) => role.trim());
+	const roles = PRODUCT_EVIDENCE_ROLES.filter((role) =>
+		requested.includes(role),
+	);
+	return roles.length > 0 ? roles : undefined;
+};
+
 export const getTrustedSourceEvidencePolicy = ({
 	hasExactSourceMatch,
 	hasSourceChanges,

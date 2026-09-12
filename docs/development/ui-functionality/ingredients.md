@@ -407,9 +407,22 @@ short explanation, optional package date, and optional current-label photo. It s
 private, is idempotent while pending, and does not change product data immediately.
 
 Products with a barcode may offer `Report incorrect information`. The routed correction
-sheet starts from the current canonical record, requires current package evidence, and
-creates no duplicate private food or list item. The active catalog record remains
-unchanged until review.
+sheet starts from the current canonical record, carries the changed field families from
+the initiating review, and requests only the evidence roles needed to prove those
+changes. An unchanged trusted catalog image continues to satisfy front-package evidence,
+and the canonical GTIN continues to satisfy product identity. When every changed field
+also has an eligible provider observation, the Share step explains that the existing
+records cover the correction and requests no duplicate photos. If a field has no usable
+provider evidence, the sheet requests only that field family's evidence role. The server
+derives the required roles again from the submitted differences and provider matches and
+does not trust the route hint. The flow creates no duplicate private food or list item,
+and the active catalog record remains unchanged until review.
+
+When the same correction sheet is launched from a privileged product workspace, it is
+embedded over the current privileged route instead of navigating through Fridge or
+another Ingredients list. That privileged entry point disables barcode/provider autofill
+and preserves the canonical identity already under review; ordinary Ingredients manual
+entry and correction routes retain their existing autofill behavior.
 
 ## Fridge And Shopping List
 

@@ -68,6 +68,15 @@ const foodWarningReport = {
 				sourceText: "Contains: Peanuts",
 				confidence: "confirmed",
 			},
+			{
+				slug: "peanut",
+				label: "Peanut",
+				category: "allergen",
+				factType: "ingredient_present",
+				sourceType: "label_ingredient_field",
+				sourceText: "PEANUTS",
+				confidence: "confirmed",
+			},
 		],
 	},
 	preferenceType: "allergen",
@@ -175,34 +184,40 @@ describe("focused moderator review lists", () => {
 				"No Peanut warning was active when this report was created.",
 			),
 		).toBeVisible();
-		expect(screen.getByText("Contains: Peanut")).toBeVisible();
+		expect(
+			screen.getByText(
+				"Peanut is confirmed by both the package allergen statement and the package ingredient list.",
+			),
+		).toBeVisible();
+		expect(screen.getByText("Contains: Peanut")).not.toBeVisible();
 		expect(
 			screen.getByText("Open the user’s package-label evidence"),
-		).toBeVisible();
+		).not.toBeVisible();
 		expect(screen.getByText(/"issueParams"/)).not.toBeVisible();
 
 		const decision = screen.getByRole("combobox", {
-			name: "1. Is the user’s report supported?",
-		});
-		const nextStep = screen.getByRole("combobox", {
-			name: "2. What should happen next?",
+			name: "What does the evidence support?",
 		});
 		const saveReview = screen.getByRole("button", { name: "Save review" });
-		expect(nextStep).toBeDisabled();
+		expect(
+			screen.queryByRole("combobox", { name: "Who owns the correction?" }),
+		).not.toBeInTheDocument();
 		expect(saveReview).toBeDisabled();
 		expect(
 			screen.getByText(
-				"Yes confirms the report and can create follow-up work. No dismisses it and preserves the current warning behavior.",
+				"Choose between the current warning and the user’s report.",
 			),
 		).toBeVisible();
 
 		await fireEvent.click(decision);
 		await fireEvent.click(
 			screen.getByRole("option", {
-				name: "Yes — blendCalc missed this warning",
+				name: "The user’s report is correct",
 			}),
 		);
-		expect(nextStep).toBeEnabled();
+		const nextStep = screen.getByRole("combobox", {
+			name: "Who owns the correction?",
+		});
 		await fireEvent.click(nextStep);
 		await fireEvent.click(
 			screen.getByRole("option", {
@@ -211,13 +226,49 @@ describe("focused moderator review lists", () => {
 		);
 		await fireEvent.input(
 			screen.getByRole("textbox", {
-				name: "3. What evidence supports this decision?",
+				name: "Evidence checked",
 			}),
 			{ target: { value: "The package label confirms the missing warning." } },
 		);
 		expect(saveReview).toBeEnabled();
 
+		await fireEvent.click(screen.getByText("Evidence details"));
+		expect(screen.getByText("Contains: Peanut")).toBeVisible();
+		expect(
+			screen.getByText("Open the user’s package-label evidence"),
+		).toBeVisible();
 		await fireEvent.click(screen.getByText("Technical record details"));
 		expect(screen.getByText(/"issueParams"/)).toBeVisible();
+	});
+
+	it("keeps a supported current warning to one decision and one audit note", async () => {
+		render(FoodWarningReportReviewList, {
+			props: { reports: [foodWarningReport] },
+		});
+
+		await fireEvent.click(
+			screen.getByRole("combobox", {
+				name: "What does the evidence support?",
+			}),
+		);
+		await fireEvent.click(
+			screen.getByRole("option", {
+				name: "The current warning is correct",
+			}),
+		);
+
+		expect(
+			screen.queryByRole("combobox", { name: "Who owns the correction?" }),
+		).not.toBeInTheDocument();
+		const submit = screen.getByRole("button", {
+			name: "Dismiss and close report",
+		});
+		expect(submit).toBeDisabled();
+
+		await fireEvent.input(
+			screen.getByRole("textbox", { name: "Evidence checked" }),
+			{ target: { value: "Current package evidence confirms the warning." } },
+		);
+		expect(submit).toBeEnabled();
 	});
 });

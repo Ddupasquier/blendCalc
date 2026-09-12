@@ -16,6 +16,10 @@
 	gap: $app-gap-sm;
 }
 
+.food-warning-follow-up-review {
+	width: min(100%, $app-privileged-card-grid-max-width);
+}
+
 .food-warning-follow-up-review > section {
 	padding: $app-shell-card-padding;
 	background: $app-shell-surface-soft;

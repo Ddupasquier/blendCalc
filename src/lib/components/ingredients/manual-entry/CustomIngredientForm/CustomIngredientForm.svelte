@@ -75,6 +75,8 @@
 		initialFood,
 		submissionIntent = "catalog_share",
 		catalogSubmissionOnly = false,
+		catalogCorrectionEvidenceRoles = undefined,
+		allowBarcodeAutofill = true,
 		ingredientListIndex = emptyIngredientListIndex,
 	}: CustomIngredientFormProps = $props();
 
@@ -133,6 +135,7 @@
 		onScannerClose: () => onScannerClose?.(),
 		onLookupStateChange: (lookingUp) => onLookupStateChange(lookingUp),
 		onError: setSubmissionError,
+		getAllowAutofill: () => allowBarcodeAutofill,
 	});
 	const destinationAction = $derived(
 		getManualEntryDestinationAction({
@@ -222,6 +225,7 @@
 		outcome,
 		onReset: resetForm,
 		getCatalogSubmissionOnly: () => catalogSubmissionOnly,
+		getCatalogCorrectionEvidenceRoles: () => catalogCorrectionEvidenceRoles,
 		getDestinationAction: () => destinationAction,
 	});
 
@@ -471,6 +475,7 @@
 		barcodeValidationMessage: barcode.barcodeValidationMessage,
 		checkingBarcodeReference: barcode.barcodeReferenceLookupPending,
 		barcodeSuggestion: barcode.barcodeSuggestion,
+		allowBarcodeAutofill,
 		onNameChange: barcode.setManualName,
 		onBrandChange: handleBrandChange,
 		onCategoryChange: handleCategoryChange,
@@ -586,6 +591,7 @@
 		lookingUpBarcode: barcode.state.lookingUpBarcode,
 		validatingBarcodeShare: form.data.validatingBarcodeShare,
 		requiresCatalogEvidence: barcode.requiresCatalogEvidence,
+		catalogCorrectionEvidenceRoles,
 		showOptionalProductImageUpload: barcode.showOptionalProductImageUpload,
 		trustedProductImage: barcode.trustedProductImage,
 		frontPhoto: form.data.frontPhoto,

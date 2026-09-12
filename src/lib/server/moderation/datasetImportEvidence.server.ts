@@ -98,8 +98,10 @@ export const previewDatasetImportEvidence = async (
 		{
 			p_dataset_key: request.datasetKey,
 			p_release_version: request.releaseVersion,
-			p_imported_at: request.importedAt,
-			p_source_file_sha256: request.sourceFileSha256,
+			// Postgres accepts null for these optional inputs. The generated RPC
+			// signature cannot express nullable function arguments.
+			p_imported_at: request.importedAt as string,
+			p_source_file_sha256: request.sourceFileSha256 as string,
 			p_evidence_reference: request.evidenceReference,
 		},
 	);

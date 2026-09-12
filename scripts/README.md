@@ -84,6 +84,7 @@ The guard never deletes files, caches, containers, volumes, or databases.
 | `operations/recovery/`     | Protected hosted backups and offline verification                       |
 | `operations/releases/`     | Application and API version consistency                                 |
 | `operations/users/`        | Privileged role and account operations                                  |
+| `operations/catalog/`      | Privileged catalog inspection and destructive product operations        |
 | `qa/catalog/`              | Disposable catalog and image-moderation fixtures                        |
 | `qa/database/`             | Deterministic hosted database and API checks                            |
 | `seeds/catalog/`           | Category, product-source, serving, and nutrient-reference discovery     |
@@ -346,6 +347,8 @@ for retention, restore drills, and incident procedures.
 | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
 | `npm run moderate -- role <email> <moderator\|admin\|developer\|none> --user-id=<uuid>` | Grant or revoke an application role after email and Auth ID agree         |
 | `npm run moderate -- ban <email> <reason>`                                              | Ban an account and record moderation history                              |
+| `npm run catalog:product:purge -- preview <UPC>`                                        | Preview the exact local Supabase deletion graph for one product           |
+| `npm run catalog:product:purge -- apply <UPC> --confirm=<UPC> --reason="<reason>"`      | Atomically delete that confirmed local graph and verify it is absent      |
 | `npm run blendCalcAPI:publication -- list`                                              | Read publication concerns and active holds                                |
 | `npm run blendCalcAPI:publication -- hold ...`                                          | Immediately withhold one exact product, image, dataset release, or source |
 | `npm run blendCalcAPI:publication -- release ...`                                       | Release a reviewed hold while preserving its history                      |
@@ -354,6 +357,11 @@ for retention, restore drills, and incident procedures.
 These commands require service-role credentials and an authorized actor where
 documented. They never authorize unrelated Git commits, migration pushes, or application
 deployments.
+
+Catalog product purge defaults to the disposable local stack and refuses any non-local
+URL. `--hosted` is an explicit override for an intentional live operation; preview,
+exact UPC confirmation, and a reason remain mandatory. The database audit stores counts
+without retaining the deleted product identity.
 
 ## API References And Releases
 

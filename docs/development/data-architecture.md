@@ -307,6 +307,12 @@ launcher badge while leaving the detailed issue rows available inside the worksp
 The product-readiness passport is the bounded per-product projection of that model for
 privileged review and operations. It exposes status and coverage summaries while raw
 evidence remains behind its existing server and database boundaries.
+Before a privileged summary or focused catalog workspace returns records, the shared
+server admission service invokes bounded database-owned catalog admission, rechecks
+legacy submissions with the same current product comparator used at intake, and runs
+only issue-code-authorized exact data repairs through the existing audited dry-run/apply
+boundary. The subsequent read and every badge use the actionable views, so automatic
+resolution, correction ownership, and human ambiguity cannot be counted differently.
 Approved catalog-health repairs follow the same boundary. An AAL2 data operator first
 runs a non-mutating exact-evidence check, then may apply only the candidates returned by
 that current check. Immutable run and item records preserve what was considered and

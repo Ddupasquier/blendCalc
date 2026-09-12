@@ -24,7 +24,14 @@
 	const titleId = $derived(`${id}-title`);
 </script>
 
-<RightSheet {id} open labelledby={titleId} {onClose}>
+<RightSheet
+	{id}
+	open
+	labelledby={titleId}
+	className="privileged-tool-right-sheet-shell"
+	panelClass="privileged-tool-right-sheet-panel"
+	{onClose}
+>
 	<ViewFrame className="privileged-tool-right-sheet">
 		<ViewTop>
 			<div class="privileged-tool-right-sheet__header">

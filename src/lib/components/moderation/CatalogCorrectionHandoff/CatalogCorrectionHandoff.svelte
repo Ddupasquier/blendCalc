@@ -2,16 +2,19 @@
 	import { enhance } from "$app/forms";
 	import type { SubmitFunction } from "@sveltejs/kit";
 	import ActionButton from "$lib/components/common/buttons/ActionButton/ActionButton.svelte";
+	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
 	import RoundedActionLink from "$lib/components/common/buttons/RoundedActionLink/RoundedActionLink.svelte";
 	import TextBadge from "$lib/components/common/badges/TextBadge/TextBadge.svelte";
 	import TextField from "$lib/components/common/forms/TextField/TextField.svelte";
 	import { getCatalogFieldLabel } from "$lib/utils/moderation/catalogHealthMessages";
+	import { getCatalogCorrectionEvidenceRoles } from "$lib/utils/products/productEvidenceRequirements";
 	import type { CatalogCorrectionHandoffProps } from "./types";
 
 	let {
 		handoff,
 		returnPath,
 		allowConflictResolution = false,
+		onOpenCorrection,
 	}: CatalogCorrectionHandoffProps = $props();
 	let pendingConflictId = $state<string | null>(null);
 	let resolutionNotes = $state<Record<string, string>>({});
@@ -26,10 +29,34 @@
 	const correctionAlreadyPending = $derived(
 		submittedFindings.length > 0 || handoff.pendingSubmissionId !== null,
 	);
+	const providerEvidenceCoversCorrection = $derived(
+		activeFindings.length > 0 &&
+			activeFindings.every((finding) =>
+				finding.evidence.some(
+					(observation) => observation.redistributionAllowed,
+				),
+			),
+	);
+	const correctionEvidenceRoles = $derived(
+		providerEvidenceCoversCorrection
+			? []
+			: getCatalogCorrectionEvidenceRoles(
+					activeFindings.flatMap((finding) => finding.affectedFieldPaths),
+				),
+	);
 	const correctionHref = $derived(
 		handoff.applicationFoodId === null
 			? null
-			: `/ingredients/fridge/nutrition/${handoff.applicationFoodId}/correct-information?actions=hide&returnTo=${encodeURIComponent(returnPath)}`,
+			: `/ingredients/fridge/nutrition/${handoff.applicationFoodId}/correct-information?${new URLSearchParams(
+					{
+						actions: "hide",
+						returnTo: returnPath,
+						evidence:
+							correctionEvidenceRoles.length > 0
+								? correctionEvidenceRoles.join(",")
+								: "none",
+					},
+				).toString()}`,
 	);
 	const enhanceResolution: SubmitFunction = ({ formData, cancel }) => {
 		if (pendingConflictId) {
@@ -198,9 +225,19 @@
 					Approval applies only the reviewed changes; rejection leaves the
 					current catalog product unchanged.
 				</p>
-				<RoundedActionLink href={correctionHref} variant="primary" fullWidth>
-					Open prefilled correction
-				</RoundedActionLink>
+				{#if onOpenCorrection}
+					<RoundedActionButton
+						variant="primary"
+						fullWidth
+						onclick={() => onOpenCorrection(correctionEvidenceRoles)}
+					>
+						Open prefilled correction
+					</RoundedActionButton>
+				{:else}
+					<RoundedActionLink href={correctionHref} variant="primary" fullWidth>
+						Open prefilled correction
+					</RoundedActionLink>
+				{/if}
 			</div>
 		{:else}
 			<div class="catalog-correction-handoff__outcome" data-tone="warning">

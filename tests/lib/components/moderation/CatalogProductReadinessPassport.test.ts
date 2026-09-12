@@ -1,9 +1,63 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import CatalogProductReadinessPassport from "$lib/components/moderation/CatalogProductReadinessPassport/CatalogProductReadinessPassport.svelte";
 import { catalogProductReadinessPassportFixture } from "../../../fixtures/catalogProductReadinessPassport";
+import { focusPrivilegedWorkspaceTarget } from "$lib/utils/moderation/privilegedWorkspaceNavigation";
+
+const navigationMocks = vi.hoisted(() => ({
+	replaceShallowRouteHash: vi.fn(),
+}));
+
+vi.mock("$lib/utils/navigation/shallowRouteNavigation", () => navigationMocks);
 
 describe("CatalogProductReadinessPassport", () => {
+	it("scrolls only the owning workspace body when focusing a safe repair", () => {
+		const outerSheet = document.createElement("div");
+		const scrollRegion = document.createElement("div");
+		const target = document.createElement("section");
+		const trigger = document.createElement("a");
+		const scrollTo = vi.fn(({ top }: ScrollToOptions) => {
+			scrollRegion.scrollTop = Number(top);
+		});
+		const scrollIntoView = vi.fn();
+		const focus = vi.fn();
+
+		scrollRegion.className = "view-body--scroll";
+		scrollRegion.scrollTop = 120;
+		target.id = "safe-repair-target";
+		Object.defineProperty(scrollRegion, "scrollTo", { value: scrollTo });
+		Object.defineProperty(target, "scrollIntoView", {
+			value: scrollIntoView,
+		});
+		Object.defineProperty(target, "focus", { value: focus });
+		Object.defineProperty(scrollRegion, "getBoundingClientRect", {
+			value: () => ({ top: 60 }),
+		});
+		Object.defineProperty(target, "getBoundingClientRect", {
+			value: () => ({ top: 540 }),
+		});
+		outerSheet.scrollTop = 0;
+		scrollRegion.append(target);
+		outerSheet.append(scrollRegion, trigger);
+		document.body.append(outerSheet);
+
+		const event = new MouseEvent("click", {
+			bubbles: true,
+			cancelable: true,
+			button: 0,
+		});
+		focusPrivilegedWorkspaceTarget(event, target.id);
+
+		expect(event.defaultPrevented).toBe(true);
+		expect(navigationMocks.replaceShallowRouteHash).toHaveBeenCalledWith(
+			"#safe-repair-target",
+		);
+		expect(scrollTo).toHaveBeenCalledWith({ top: 600 });
+		expect(scrollIntoView).not.toHaveBeenCalled();
+		expect(focus).toHaveBeenCalledWith({ preventScroll: true });
+		expect(outerSheet.scrollTop).toBe(0);
+	});
+
 	it("separates app availability from blendCalcAPI publication and keeps supporting evidence collapsed", async () => {
 		render(CatalogProductReadinessPassport, {
 			props: {
@@ -241,6 +295,40 @@ describe("CatalogProductReadinessPassport", () => {
 		expect(
 			screen.queryByText(/keeping it out of the public API/u),
 		).not.toBeInTheDocument();
+	});
+
+	it("labels an unreconstructable legacy revision without fabricating a change", async () => {
+		render(CatalogProductReadinessPassport, {
+			props: {
+				passport: {
+					...catalogProductReadinessPassportFixture,
+					revisionHistory: [
+						{
+							...catalogProductReadinessPassportFixture.revisionHistory[0],
+							number: 2,
+							changes: [],
+						},
+						catalogProductReadinessPassportFixture.revisionHistory[1],
+					],
+				},
+			},
+		});
+
+		const revisionSummary = screen
+			.getByText("Revision and verification")
+			.closest("summary");
+		await fireEvent.click(revisionSummary as HTMLElement);
+		expect(
+			screen.getByText(/Historical audit details are unavailable/u),
+		).toBeVisible();
+		expect(
+			screen.getByText(/This does not affect the current product/u),
+		).toBeVisible();
+		expect(
+			screen.getAllByText(
+				"Initial catalog record; there is no preceding revision.",
+			),
+		).toHaveLength(1);
 	});
 
 	it("keeps other readiness work usable when detailed revision history is unavailable", async () => {

@@ -11,6 +11,7 @@ import {
 	runCatalogHealthRepair,
 } from "$lib/server/moderation/catalogHealthRepair.server";
 import { requireModeratorPermission } from "$lib/server/moderation/moderationAccess.server";
+import { runPrivilegedQueueAdmission } from "$lib/server/moderation/privilegedQueueAdmission.server";
 import { readLimitedFormData } from "$lib/server/security/requestBody.server";
 import type { CatalogHealthRepairActionData } from "$lib/utils/moderation/catalogHealthRepair";
 import type { CatalogProductReviewDispositionActionData } from "$lib/utils/moderation/catalogProductReviewDisposition";
@@ -60,6 +61,7 @@ export const loadCatalogProductRepairWorkspace = async ({
 		"data_operations.catalog_health.read",
 		getCatalogProductRepairRoute(productId),
 	);
+	await runPrivilegedQueueAdmission(locals.supabase, ["data_operations"]);
 
 	const passport = await readCatalogProductReadinessPassport(
 		locals.supabase,

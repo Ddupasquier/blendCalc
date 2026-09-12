@@ -1,0 +1,137 @@
+@use "../../../../styles/variables" as *;
+
+.profile-privileged-tools-dashboard,
+.profile-privileged-tools-dashboard__main,
+.profile-privileged-tools-dashboard__section {
+	display: grid;
+	align-content: start;
+	min-width: 0;
+}
+
+.profile-privileged-tools-dashboard {
+	gap: $app-gap-md;
+	width: 100%;
+}
+
+.profile-privileged-tools-dashboard__main {
+	gap: $app-gap-lg;
+}
+
+.profile-privileged-tools-dashboard__tools {
+	display: none;
+}
+
+.profile-privileged-tools-dashboard__overview {
+	display: grid;
+	gap: $app-gap-xs;
+	padding: $app-gap-md;
+	background: $app-shell-surface-soft;
+	border: $app-border;
+	border-left: 0.3rem solid $app-primary;
+	border-radius: $app-shell-radius-card;
+}
+
+.profile-privileged-tools-dashboard__overview[data-tone="attention"] {
+	border-left-color: $app-shell-accent-danger;
+}
+
+.profile-privileged-tools-dashboard__overview[data-tone="unavailable"] {
+	border-left-color: $app-warning-strong;
+}
+
+.profile-privileged-tools-dashboard__overview header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: $app-gap-sm;
+}
+
+.profile-privileged-tools-dashboard__overview header > span {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-heavy;
+	letter-spacing: $app-letter-spacing-wider;
+	text-transform: uppercase;
+}
+
+.profile-privileged-tools-dashboard__overview > strong {
+	font-size: $app-font-size-xl;
+	line-height: $app-line-height-heading;
+}
+
+.profile-privileged-tools-dashboard__overview p,
+.profile-privileged-tools-dashboard__section > header p {
+	margin: 0;
+	color: $app-shell-text-muted;
+}
+
+.profile-privileged-tools-dashboard__section {
+	gap: $app-gap-sm;
+}
+
+.profile-privileged-tools-dashboard__section > header {
+	display: grid;
+	gap: $app-gap-2xs;
+}
+
+.profile-privileged-tools-dashboard__section > header h2 {
+	margin: 0;
+	font-size: $app-font-size-xl;
+}
+
+.profile-privileged-tools-dashboard__section > header p {
+	font-size: $app-font-size-sm;
+}
+
+.profile-privileged-tools-dashboard__link-grid {
+	display: grid;
+	grid-template-columns: repeat(
+		auto-fit,
+		minmax(
+			min($app-privileged-card-grid-min-width, 100%),
+			$app-privileged-card-grid-max-width
+		)
+	);
+	align-items: stretch;
+	gap: $app-gap-sm;
+}
+
+.profile-privileged-tools-dashboard__diagnostics {
+	padding-top: $app-gap-md;
+	border-top: $app-border;
+}
+
+@media (min-width: ($app-breakpoint-md + 1px)) {
+	.profile-privileged-tools-dashboard {
+		grid-template-columns: minmax(14rem, 18rem) minmax(0, 1fr);
+		align-items: start;
+		gap: $app-gap-lg;
+	}
+
+	.profile-privileged-tools-dashboard__tools {
+		position: sticky;
+		top: 0;
+		display: block;
+		min-width: 0;
+	}
+
+	.profile-privileged-tools-dashboard__overview {
+		width: min(100%, $app-privileged-card-grid-max-width);
+	}
+}
+
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
+	.profile-privileged-tools-dashboard__main {
+		gap: $app-gap-md;
+	}
+
+	.profile-privileged-tools-dashboard__overview {
+		padding: $app-gap-sm;
+	}
+
+	.profile-privileged-tools-dashboard__overview > strong,
+	.profile-privileged-tools-dashboard__section > header h2 {
+		font-size: $app-font-size-lg;
+	}
+}

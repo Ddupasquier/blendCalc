@@ -393,7 +393,14 @@ front-package photo. An unchanged match remains `Already saved`, and the same us
 cannot create another pending proposal against the same base revision.
 
 Independent users may submit separate correction evidence against the same active
-revision. The system never averages conflicting values or silently chooses a provider.
+revision. Correction evidence is field-specific: unchanged canonical identity and an
+eligible trusted product image stay attached, while only the evidence role needed for a
+changed field family is requested. A nutrient-only correction needs nutrition evidence,
+not duplicate barcode and front-package photos. A legally redistributable provider
+observation that exactly supports the submitted change may satisfy that requirement
+without another user photo; a provider image alone does not prove nutrient values. The
+server derives these requirements from the actual submitted differences rather than a
+client-supplied hint. The system never averages conflicting values or silently chooses a provider.
 The first approved correction advances the revision; every other pending correction
 must then be re-compared before it can change the catalog.
 
@@ -689,6 +696,16 @@ coverage counts, and normalized open issues without exposing raw observations or
 evidence. Catalog review and data operations share the contract while retaining
 separate route and database permissions.
 
+All privileged catalog reads pass through the shared queue-admission service before
+returning work. It performs only current-state, exact-evidence decisions: legacy
+submissions already satisfied by the active product close as accepted no-ops; stale
+submission bases and superseded provider snapshots close without counting as moderator
+rejections; provider-generated conflicts have one provider-review owner; and exact
+normalized identity equivalence never becomes a human task. Immutable admission
+receipts preserve the compared product/revision or provider evidence. Any unsupported
+nutrition, serving, category, provenance, policy, or conflicting evidence remains in
+the human queue.
+
 An AAL2 data operator may finish an exact API-publication issue snapshot as
 `accepted_withheld` only after every offered evidence-only repair has returned no safe
 candidate. The append-only disposition removes that fingerprint from actionable queues,
@@ -697,7 +714,10 @@ readiness reasons remain queryable, the active product remains usable in blendCa
 a changed issue timestamp or issue set produces a new fingerprint that reopens review.
 
 Nonpublication revision and provenance diagnostics are a separate work category. An
-API-ready product remains published while those checks are open. After every available
+API-ready product remains published while those checks are open. Missing historical
+field-by-field revision audit details remain discoverable in the neutral revision-audit
+diagnostic and on the product passport, but do not inflate the red required-operator
+queue or its Profile count. After every available
 exact-evidence check is inconclusive, an AAL2 data operator may record
 `accepted_evidence_gap`; this removes only the matching diagnostic fingerprint from the
 actionable queue and does not rewrite product data or revision history. Raw diagnostics
@@ -711,7 +731,9 @@ two immutable snapshots and stores human-readable field labels. Existing reconst
 gaps are backfilled through that same comparison and leave the work queue. Identical
 future snapshots are rejected rather than becoming repeat checks; only a legacy row
 whose stored history truly cannot establish a difference uses the explicit
-evidence-unavailable disposition.
+evidence-unavailable disposition. The UI renders that state as unavailable historical
+audit detail; it never creates placeholder old and new values that could be mistaken for
+real evidence.
 
 ### Official Recall Matching
 

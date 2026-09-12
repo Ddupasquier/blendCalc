@@ -13,6 +13,10 @@
 	min-width: 0;
 }
 
+.dataset-evidence {
+	width: min(100%, $app-privileged-card-grid-max-width);
+}
+
 .dataset-evidence,
 .dataset-evidence__summary,
 .dataset-evidence__preview,

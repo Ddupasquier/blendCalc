@@ -1,0 +1,101 @@
+@use "../../../../styles/variables" as *;
+
+.catalog-review-product-rail,
+.catalog-review-product-rail > header > div,
+.catalog-review-product-rail__reasons,
+.catalog-review-product-rail__pending,
+.catalog-review-product-rail__diagnostics {
+	display: grid;
+	min-width: 0;
+	gap: $app-gap-sm;
+}
+
+.catalog-review-product-rail {
+	padding: $app-shell-card-padding;
+	background: $app-shell-surface-panel;
+	border: 1px solid $app-shell-border-subtle;
+	border-radius: $app-shell-radius-card;
+}
+
+.catalog-review-product-rail > header {
+	display: flex;
+	justify-content: space-between;
+	align-items: start;
+	gap: $app-gap-sm;
+}
+
+.catalog-review-product-rail > header span {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-semibold;
+	letter-spacing: $app-letter-spacing-label;
+	text-transform: uppercase;
+}
+
+.catalog-review-product-rail h2,
+.catalog-review-product-rail h3,
+.catalog-review-product-rail p,
+.catalog-review-product-rail ul,
+.catalog-review-product-rail dl {
+	margin: 0;
+}
+
+.catalog-review-product-rail h2 {
+	font-size: $app-font-size-md;
+}
+
+.catalog-review-product-rail p,
+.catalog-review-product-rail li,
+.catalog-review-product-rail code,
+.catalog-review-product-rail dt {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+}
+
+.catalog-review-product-rail code {
+	overflow-wrap: anywhere;
+}
+
+.catalog-review-product-rail__status {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: $app-gap-xs;
+}
+
+.catalog-review-product-rail__status > div {
+	display: grid;
+	gap: $app-gap-inline-compact;
+	min-width: 0;
+	padding: $app-gap-xs;
+	background: $app-shell-surface-soft;
+	border-radius: $app-radius-sm;
+}
+
+.catalog-review-product-rail__status dd {
+	margin: 0;
+	font-weight: $app-font-weight-semibold;
+	overflow-wrap: anywhere;
+}
+
+.catalog-review-product-rail__reasons,
+.catalog-review-product-rail__pending,
+.catalog-review-product-rail__diagnostics {
+	padding-top: $app-gap-sm;
+	border-top: 1px solid $app-shell-border-subtle;
+}
+
+.catalog-review-product-rail__reasons h3 {
+	font-size: $app-font-size-sm;
+}
+
+.catalog-review-product-rail__reasons ul {
+	display: grid;
+	gap: $app-gap-xs;
+	padding-left: $app-gap-lg;
+}
+
+.catalog-review-product-rail__clear {
+	padding: $app-gap-sm;
+	background: $app-shell-accent-soft;
+	border-radius: $app-shell-radius-control;
+}

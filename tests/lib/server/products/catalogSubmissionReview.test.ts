@@ -79,6 +79,40 @@ describe("catalog submission evidence review", () => {
 		).toBe(true);
 	});
 
+	it("requires only evidence for unsupported fields in a catalog correction", () => {
+		expect(
+			evaluateCatalogSubmissionEvidence({
+				hasSourceMatch: true,
+				sourceCanAutoPublish: false,
+				needsSourceComparisonReview: true,
+				hasCanonicalImage: true,
+				evidencePaths: { nutrition: "nutrition.jpg" },
+				catalogCorrectionFieldPaths: ["nutrient:1093"],
+				sourceSupportsCorrection: false,
+			}),
+		).toMatchObject({
+			evidenceComplete: true,
+			requiredEvidenceRoles: ["nutrition"],
+		});
+	});
+
+	it("reuses legally publishable provider evidence for an exact correction", () => {
+		expect(
+			evaluateCatalogSubmissionEvidence({
+				hasSourceMatch: true,
+				sourceCanAutoPublish: true,
+				needsSourceComparisonReview: true,
+				hasCanonicalImage: true,
+				evidencePaths: {},
+				catalogCorrectionFieldPaths: ["nutrient:1093"],
+				sourceSupportsCorrection: true,
+			}),
+		).toMatchObject({
+			evidenceComplete: true,
+			requiredEvidenceRoles: [],
+		});
+	});
+
 	it("marks an extreme retained-evidence serving disagreement as untrusted", () => {
 		const servingMessage =
 			"Submitted serving weight (1,814.37 g) differs from the trusted comparison value (28 g).";
