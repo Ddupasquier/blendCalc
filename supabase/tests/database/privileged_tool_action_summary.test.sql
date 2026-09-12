@@ -1,6 +1,6 @@
 begin;
 
-select plan(24);
+select plan(25);
 
 select has_function(
 	'public',
@@ -45,12 +45,10 @@ select
 	) as product_submissions,
 	(
 		select count(*)
-		from public.shared_product_conflicts conflict
-		where conflict.status = 'open'
+		from public.catalog_actionable_product_conflicts
 	) + (
 		select count(*)
-		from public.catalog_provider_change_reviews review
-		where review.status = 'pending'
+		from public.catalog_actionable_provider_change_reviews
 	) + (
 		select count(*)
 		from public.official_food_safety_alert_matches alert_match
@@ -93,6 +91,7 @@ select
 			where occurrence.status = 'open'
 				and issue.enabled
 				and issue.responsible_group = 'data_operations'
+				and occurrence.issue_code <> 'CATALOG_REVISION_EXPLANATION_MISSING'
 			group by occurrence.subject_type, occurrence.subject_key
 		) actionable_subjects
 	) as data_operations;
@@ -286,6 +285,19 @@ select ok(
 			<> jsonb_array_length(subject -> 'issues')
 	),
 	'each subject count agrees with its complete finding list'
+);
+
+select ok(
+	not exists (
+		select 1
+		from jsonb_array_elements(
+			public.get_privileged_tool_action_summary()
+				-> 'catalogDataOperationSubjects'
+		) subject
+		cross join jsonb_array_elements(subject -> 'issues') issue
+		where issue ->> 'code' = 'CATALOG_REVISION_EXPLANATION_MISSING'
+	),
+	'historical revision-audit diagnostics stay outside required operator work'
 );
 
 select ok(
