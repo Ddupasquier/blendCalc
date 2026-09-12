@@ -5,9 +5,13 @@ const readSource = (path: string) => readFileSync(path, "utf8");
 
 describe("Profile privileged tools architecture", () => {
 	it("uses focused Profile routes instead of hash jumps into one page", () => {
-		const actionSheet = readSource(
-			"src/lib/components/profile/ProfilePrivilegedToolsSheet/ProfilePrivilegedToolsSheet.svelte",
+		const dashboard = readSource(
+			"src/lib/components/profile/ProfilePrivilegedToolsDashboard/ProfilePrivilegedToolsDashboard.svelte",
 		);
+		const landingPage = readSource(
+			"src/routes/profile/privileged-tools/+page.svelte",
+		);
+		const profilePage = readSource("src/routes/profile/+page.svelte");
 		const routeState = readSource("src/lib/utils/profile/profileRouteState.ts");
 
 		for (const routeName of [
@@ -20,7 +24,10 @@ describe("Profile privileged tools architecture", () => {
 		]) {
 			expect(routeState).toContain(`privileged-tools/${routeName}`);
 		}
-		expect(actionSheet).not.toContain("/moderation#");
+		expect(dashboard).not.toContain("/moderation#");
+		expect(landingPage).toContain("ProfilePrivilegedToolsDashboard");
+		expect(landingPage).toContain("<ViewFrame");
+		expect(profilePage).not.toContain("ProfilePrivilegedToolsSheet");
 	});
 
 	it("loads only the data domain owned by each focused moderation route", () => {

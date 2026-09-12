@@ -82,15 +82,18 @@ web workflow from blocking administrators or developers.
 
 ## Review Interface
 
-Profile links elevated users to the focused right sheets allowed by their current
-database permission rows. **Review work** includes product submissions, catalog
+Profile links elevated users to a full privileged-tools landing dashboard and then to
+the focused right sheets allowed by their current database permission rows. **Review work** includes product submissions, catalog
 conflicts/provider changes/possible recalls, food-warning reports, reported profile
 images, and account access. **Data operations** includes source, dataset, publication,
 mapping, revision, and automated-monitoring health for administrators and developers.
 The launcher first names the exact work status and moves nonzero queues into a single
 **Needs attention** group in safety-first order. Zero-count queues, account lookup, and
-standing diagnostics remain visible under secondary headings without appearing to be
-waiting work. Each focused sheet uses the same review order: concise start guidance
+standing workspaces remain visible under secondary headings without appearing to be
+waiting work. Cross-workspace diagnostics remain on the landing page only. Data
+operators see the active shared catalog, public blendCalcAPI v1, shared-catalog-only
+count, publication coverage, monitoring, sources, datasets, policy, and broad diagnostic
+matches without treating those signals as queue work. Each focused sheet uses the same review order: concise start guidance
 with an explicit completion condition, queue or result status, record identity and key facts,
 closed supporting-evidence disclosures, then the decision controls. One shared
 information action explains when to use the tool, its steps, completion condition,
@@ -116,16 +119,14 @@ plus destructive controls behind deliberate disclosures, so it has no action bad
 does not contribute to the Profile aggregate. Catalog review work contains only
 decisions a reviewer can make and badges their exact combined total. Data operations
 badges distinct affected subjects with open enabled issues assigned to that work group,
-rather than summing overlapping dashboard metrics. Its three actionable summaries use
-diagnostic-match wording and direct first-record links; those broader, potentially
-overlapping checks never add to the red operator-work total. Required work appears
-separately from the exact same query as its badge count. It groups overlapping findings
+rather than summing overlapping dashboard metrics. Its Required work list comes from the
+exact same query as its badge count. It groups overlapping findings
 into one card per affected subject, names that subject, lists every finding and next
 action, and links directly to an available focused workflow. When no in-app workflow
 exists, the card names the missing prerequisite and makes clear that nothing was
-changed. Source, dataset, policy, and monitor badges show explicit informational units
-or health states. It opens only the first non-clear diagnostic and never duplicates
-review queues. The
+changed. Broader catalog diagnostics use match wording and direct first-record links on
+the landing page, never add to the red operator-work total, and never duplicate review
+queues. The
 visual consistency never replaces each route's independent server, database, AAL2, and
 permission checks.
 
@@ -240,17 +241,34 @@ current catalog revision when available, package-observation date, bounded expla
 and optional normalized private label photo. Repeated reports of the same product,
 policy, preference, or warning remain idempotent while one is pending.
 
+An incorrect-match report does not enter the human queue when all of the following are
+still exact at submission: the active policy version, the current immutable catalog
+revision, and every confirmed compatibility fact captured with the warning. The
+database dismisses that report with no follow-up and stores an immutable system receipt
+containing the rule version, policy, revision, and matched canonical facts. Reports
+about stale source data, the wrong evidence type, another problem, missing warnings, a
+changed policy or product revision, missing evidence, or any non-confirmed or
+non-matching fact always remain pending. The migration introducing this rule applies
+the same conservative check to existing pending reports and backfills a missing
+revision only when the current revision provably predates the report.
+
 The `/moderation` warning-report queue is restricted to moderators, administrators, and
 developers.
-Reviewers must:
+For reports that still require a reviewer:
 
 1. Compare the report with its preserved evidence, source observations, policy version,
    and catalog revision.
-2. Mark the report `confirmed` when corrective work is needed, or `dismissed` when the
-   warning is supported.
-3. Record the next action as rule review, source correction, product correction, or
-   duplicate.
-4. Leave a concise internal note explaining the decision.
+2. Choose `The user's report is correct` (`confirmed`) when corrective work is needed,
+   or `The current warning is correct` (`dismissed`) when current behavior is supported.
+3. Choose rule review, source correction, product correction, duplicate, or no further
+   work only when the user's report is correct. Dismissal always records `none` and
+   creates no correction-routing field or follow-up.
+4. Leave a concise private note naming the evidence checked.
+
+The review card summarizes duplicate facts into one human sentence, such as `Soy is
+confirmed by both the package allergen statement and the package ingredient list.` Raw
+fact rows, source identifiers, policy parameters, and revision identifiers stay in a
+closed evidence-details disclosure.
 
 Resolving feedback does not silently edit a product or compatibility rule. Confirmed
 reports create a traceable follow-up owned by the appropriate workflow:
@@ -384,6 +402,24 @@ open material conflicts, provider changes, and possible official recall matches.
 `get_catalog_review_work_summary` requires current `moderation.catalog.review`
 permission and AAL2, and it returns only those bounded review queues.
 
+Privileged queue reads run one conservative admission pass before returning work. The
+pass validates current state, removes provider rows superseded by a newer snapshot,
+closes provider changes already reflected by the canonical catalog, resolves only
+case/punctuation-equivalent product-name or brand conflicts, and routes a
+provider-generated conflict through its single owning provider review instead of
+displaying both. Every automatic resolution or routing appends an immutable
+`privileged_queue_admission_decisions` receipt. Nutrition, serving, provenance,
+category, package, policy, and other differences remain visible unless exact stored
+evidence proves the outcome.
+
+The same pass rechecks legacy pending product submissions against the active catalog
+with the current product-resolution policy. A semantic exact match closes as an
+accepted no-op (`queue_resolution = already_available`). A legacy new-product row for
+a barcode that has since entered the catalog, or an update based on a noncurrent
+revision, closes through the non-punitive `auto_declined` state and directs the author
+to submit any remaining difference against the current product. These system outcomes
+never increment moderator rejection enforcement.
+
 `/profile/privileged-tools/data-operations` is the operational workspace for
 administrators and developers. It contains blendCalc and blendCalcAPI readiness counts, automated
 monitor state and runs, source activity, dataset import/licence state, warning-policy
@@ -465,6 +501,13 @@ from that revision's existing valid structured summary. Missing or ambiguous evi
 remains unresolved and never creates a guessed value or historical change. A terminal
 accepted-withheld disposition acknowledges that exact unresolved state; it is not an
 evidence approval or catalog-submission rejection.
+
+Before data-operations work is returned, the shared admission service runs that same
+dry-run/apply boundary for up to 25 oldest repairable occurrences. It applies only
+exact candidates already authorized by the issue-code handler and preserves the
+ordinary user-attributed run/item audit. A current zero-candidate dry run suppresses
+repeat checks until the occurrence evidence timestamp changes. Unrepairable or
+ambiguous occurrences remain in Required work.
 
 Revision history no longer depends on a manually supplied summary when the immutable
 predecessor and successor snapshots already prove the distinction. The database stores

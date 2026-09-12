@@ -20,10 +20,24 @@ export type CatalogCorrectionFinding = {
 	comparisonBasis: string | null;
 	affectedFieldPaths: string[];
 	detail?: string;
-	currentValue: { source: string; value: string } | null;
-	evidence: Array<{ source: string; value: string }>;
+	currentValue: CatalogConflictEvidence | null;
+	evidence: CatalogConflictEvidence[];
 	status: "needs_correction" | "correction_submitted" | "resolved";
 	submissionId: string | null;
+};
+
+export type CatalogConflictEvidence = {
+	index: number | null;
+	source: string;
+	sourceKey: string;
+	sourceReference: string | null;
+	value: string;
+	amountPer100g: number | null;
+	unit: string | null;
+	observedAt: string | null;
+	sourceType: string | null;
+	sourceUrl: string | null;
+	redistributionAllowed: boolean | null;
 };
 
 type JsonRecord = Record<string, Json | undefined>;
@@ -135,9 +149,18 @@ const readCurrentFoodValue = (
 
 export type CatalogCorrectionHandoff = {
 	applicationFoodId: number | null;
+	servingWeightGrams?: number | null;
+	decisionWorkbenchAvailable?: boolean;
 	pendingSubmissionId: string | null;
 	findings: CatalogCorrectionFinding[];
 };
+
+const isActionableConflictViewUnavailable = (error: {
+	code?: string;
+	message?: string;
+}) =>
+	["42P01", "PGRST205"].includes(error.code ?? "") ||
+	(error.message ?? "").includes("catalog_actionable_product_conflicts");
 
 const readApplicationFoodId = (food: Json): number | null => {
 	if (!food || typeof food !== "object" || Array.isArray(food)) return null;
@@ -146,54 +169,69 @@ const readApplicationFoodId = (food: Json): number | null => {
 	return Number.isSafeInteger(numeric) && numeric !== 0 ? numeric : null;
 };
 
+const readServingWeightGrams = (food: Json): number | null => {
+	const record = readJsonRecord(food);
+	if (!record) return null;
+	const rawValue = record.customServingWeightGrams ?? record.servingSize;
+	const value = typeof rawValue === "number" ? rawValue : Number(rawValue);
+	return Number.isFinite(value) && value > 0 ? value : null;
+};
+
 export const readCatalogCorrectionHandoff = async (
 	sharedProductId: string,
 	readinessIssues: CatalogProductReadinessIssue[] = [],
 ): Promise<CatalogCorrectionHandoff> => {
 	const admin = getSupabaseAdminClient();
-	const [
-		productResult,
-		conflictResult,
-		providerResult,
-		originResult,
-		pendingSubmissionResult,
-	] = await Promise.all([
-		admin
-			.from("shared_products")
-			.select(
-				"food, product_name, brand_owner, source, source_reference, canonical_provenance",
-			)
-			.eq("id", sharedProductId)
-			.maybeSingle(),
-		admin
-			.from("shared_product_conflicts")
-			.select("id, field_path, observed_values")
-			.eq("shared_product_id", sharedProductId)
-			.eq("status", "open")
-			.order("created_at", { ascending: true }),
-		admin
-			.from("catalog_provider_change_reviews")
-			.select("id, material_field_paths")
-			.eq("shared_product_id", sharedProductId)
-			.eq("status", "pending")
-			.order("created_at", { ascending: true }),
-		admin
-			.from("catalog_correction_origins")
-			.select(
-				"id, origin_type, provider_change_review_id, shared_product_conflict_id, food_compatibility_feedback_id, affected_field_paths, status, submission_id",
-			)
-			.eq("shared_product_id", sharedProductId)
-			.in("status", ["waiting_for_correction", "linked", "resolved"]),
-		admin
-			.from("shared_product_submissions")
-			.select("id")
-			.eq("target_shared_product_id", sharedProductId)
-			.eq("status", "pending")
-			.eq("submission_intent", "catalog_correction")
-			.order("created_at", { ascending: false })
-			.limit(1)
-			.maybeSingle(),
-	]);
+	const actionableConflictResult = await admin
+		.from("catalog_actionable_product_conflicts")
+		.select("id, field_path, observed_values")
+		.eq("shared_product_id", sharedProductId)
+		.eq("status", "open")
+		.order("created_at", { ascending: true });
+	const decisionWorkbenchAvailable = !(
+		actionableConflictResult.error &&
+		isActionableConflictViewUnavailable(actionableConflictResult.error)
+	);
+	const conflictResult = decisionWorkbenchAvailable
+		? actionableConflictResult
+		: await admin
+				.from("shared_product_conflicts")
+				.select("id, field_path, observed_values")
+				.eq("shared_product_id", sharedProductId)
+				.eq("status", "open")
+				.order("created_at", { ascending: true });
+	const [productResult, providerResult, originResult, pendingSubmissionResult] =
+		await Promise.all([
+			admin
+				.from("shared_products")
+				.select(
+					"food, product_name, brand_owner, source, source_reference, canonical_provenance, last_verified_at",
+				)
+				.eq("id", sharedProductId)
+				.maybeSingle(),
+			admin
+				.from("catalog_provider_change_reviews")
+				.select("id, material_field_paths")
+				.eq("shared_product_id", sharedProductId)
+				.eq("status", "pending")
+				.order("created_at", { ascending: true }),
+			admin
+				.from("catalog_correction_origins")
+				.select(
+					"id, origin_type, provider_change_review_id, shared_product_conflict_id, food_compatibility_feedback_id, affected_field_paths, status, submission_id",
+				)
+				.eq("shared_product_id", sharedProductId)
+				.in("status", ["waiting_for_correction", "linked", "resolved"]),
+			admin
+				.from("shared_product_submissions")
+				.select("id")
+				.eq("target_shared_product_id", sharedProductId)
+				.eq("status", "pending")
+				.eq("submission_intent", "catalog_correction")
+				.order("created_at", { ascending: false })
+				.limit(1)
+				.maybeSingle(),
+		]);
 
 	const error =
 		productResult.error ??
@@ -202,9 +240,18 @@ export const readCatalogCorrectionHandoff = async (
 		originResult.error ??
 		pendingSubmissionResult.error;
 	if (error) throw error;
+	const actionableConflicts = (conflictResult.data ?? []).filter(
+		(
+			conflict,
+		): conflict is typeof conflict & {
+			id: string;
+			field_path: string;
+			observed_values: Json;
+		} => Boolean(conflict.id && conflict.field_path),
+	);
 
 	const origins = originResult.data ?? [];
-	const conflictSnapshotIds = (conflictResult.data ?? []).flatMap((conflict) =>
+	const conflictSnapshotIds = actionableConflicts.flatMap((conflict) =>
 		Array.isArray(conflict.observed_values)
 			? conflict.observed_values.flatMap((value) => {
 					if (!value || typeof value !== "object" || Array.isArray(value))
@@ -216,7 +263,7 @@ export const readCatalogCorrectionHandoff = async (
 	);
 	const nutrientIds = [
 		...new Set(
-			(conflictResult.data ?? []).flatMap((conflict) => {
+			actionableConflicts.flatMap((conflict) => {
 				const nutrientId = readNutrientId(conflict.field_path);
 				return nutrientId === null ? [] : [nutrientId];
 			}),
@@ -227,7 +274,7 @@ export const readCatalogCorrectionHandoff = async (
 			conflictSnapshotIds.length > 0
 				? admin
 						.from("catalog_provider_product_snapshots")
-						.select("id, provider_key, observed_at")
+						.select("id, provider_key, source_reference, observed_at")
 						.in("id", conflictSnapshotIds)
 				: Promise.resolve({ data: [], error: null }),
 			nutrientIds.length > 0
@@ -258,7 +305,7 @@ export const readCatalogCorrectionHandoff = async (
 				...(currentNutrientResult.data ?? []).map(
 					(nutrient) => nutrient.source,
 				),
-				...(conflictResult.data ?? []).flatMap((conflict) =>
+				...actionableConflicts.flatMap((conflict) =>
 					Array.isArray(conflict.observed_values)
 						? conflict.observed_values.flatMap((value) => {
 								const record = readJsonRecord(value);
@@ -276,7 +323,9 @@ export const readCatalogCorrectionHandoff = async (
 		providerKeys.length > 0
 			? await admin
 					.from("product_data_sources")
-					.select("key, display_name")
+					.select(
+						"key, display_name, source_type, homepage_url, api_redistribution_allowed",
+					)
 					.in("key", providerKeys)
 			: { data: [], error: null };
 	if (sourceResult.error) throw sourceResult.error;
@@ -285,6 +334,9 @@ export const readCatalogCorrectionHandoff = async (
 			source.key,
 			source.display_name,
 		]),
+	);
+	const sources = new Map(
+		(sourceResult.data ?? []).map((source) => [source.key, source]),
 	);
 	const snapshots = new Map(
 		(snapshotResult.data ?? []).map((snapshot) => [snapshot.id, snapshot]),
@@ -308,95 +360,162 @@ export const readCatalogCorrectionHandoff = async (
 				? ("resolved" as const)
 				: ("needs_correction" as const);
 
-	const conflictFindings: CatalogCorrectionFinding[] = (
-		conflictResult.data ?? []
-	).map((conflict) => {
-		const origin = origins.find(
-			(candidate) => candidate.shared_product_conflict_id === conflict.id,
-		);
-		const nutrientId = readNutrientId(conflict.field_path);
-		const nutrientDefinition =
-			nutrientId === null ? undefined : nutrientDefinitions.get(nutrientId);
-		const currentNutrient =
-			nutrientId === null ? undefined : currentNutrients.get(nutrientId);
-		const observedRecords = Array.isArray(conflict.observed_values)
-			? conflict.observed_values
-					.map(readJsonRecord)
-					.filter((record): record is JsonRecord => record !== null)
-			: [];
-		const comparisonBases = [
-			...new Set(
-				observedRecords.flatMap((record) =>
-					typeof record.basis === "string" ? [record.basis] : [],
+	const conflictFindings: CatalogCorrectionFinding[] = actionableConflicts.map(
+		(conflict) => {
+			const origin = origins.find(
+				(candidate) => candidate.shared_product_conflict_id === conflict.id,
+			);
+			const nutrientId = readNutrientId(conflict.field_path);
+			const nutrientDefinition =
+				nutrientId === null ? undefined : nutrientDefinitions.get(nutrientId);
+			const currentNutrient =
+				nutrientId === null ? undefined : currentNutrients.get(nutrientId);
+			const observedRecords = Array.isArray(conflict.observed_values)
+				? conflict.observed_values
+						.map(readJsonRecord)
+						.filter((record): record is JsonRecord => record !== null)
+				: [];
+			const comparisonBases = [
+				...new Set(
+					observedRecords.flatMap((record) =>
+						typeof record.basis === "string" ? [record.basis] : [],
+					),
 				),
-			),
-		];
-		const fieldLabel = nutrientDefinition
-			? nutrientDefinition.nutrient_name
-			: getCatalogFieldLabel(conflict.field_path);
-		const currentValue = currentNutrient
-			? {
-					source: formatSource(
-						currentNutrient.source,
-						currentNutrient.source_reference,
-						sourceNames,
-					),
-					value: formatValueWithContext(
-						currentNutrient.amount_per_100g,
-						currentNutrient.unit_name,
-						"per 100 g",
-					),
-				}
-			: productResult.data
-				? readCurrentFoodValue(
-						productResult.data,
-						conflict.field_path,
-						sourceNames,
-					)
-				: null;
-		return {
-			id: conflict.id,
-			type: "catalog_conflict",
-			label: "Open catalog conflict",
-			fieldLabel,
-			comparisonBasis:
-				comparisonBases.length === 1
-					? comparisonBases[0]
-					: comparisonBases.length > 1
-						? "Multiple reporting bases"
-						: null,
-			affectedFieldPaths: origin?.affected_field_paths ?? [conflict.field_path],
-			currentValue,
-			evidence: Array.isArray(conflict.observed_values)
-				? conflict.observed_values.map((value, index) => {
-						const record = readJsonRecord(value) ?? {};
-						const snapshotId =
-							typeof record.snapshotId === "string" ? record.snapshotId : null;
-						const snapshot = snapshotId ? snapshots.get(snapshotId) : undefined;
-						const source =
-							typeof record.source === "string"
-								? formatSource(
-										record.source,
-										record.sourceReference,
-										sourceNames,
-									)
-								: snapshot
-									? `${sourceNames.get(snapshot.provider_key) ?? snapshot.provider_key} observation from ${new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(new Date(snapshot.observed_at))}`
-									: `Observed value ${index + 1}`;
-						return {
-							source,
-							value: formatValueWithContext(
-								record.value ?? value,
-								record.unitName ?? record.unit,
-								record.basis,
-							),
-						};
-					})
-				: [],
-			status: getStatus(origin),
-			submissionId: origin?.submission_id ?? null,
-		};
-	});
+			];
+			const fieldLabel = nutrientDefinition
+				? nutrientDefinition.nutrient_name
+				: getCatalogFieldLabel(conflict.field_path);
+			const currentValue = currentNutrient
+				? {
+						index: null,
+						source: formatSource(
+							currentNutrient.source,
+							currentNutrient.source_reference,
+							sourceNames,
+						),
+						sourceKey: currentNutrient.source,
+						sourceReference: currentNutrient.source_reference,
+						value: formatValueWithContext(
+							currentNutrient.amount_per_100g,
+							currentNutrient.unit_name,
+							"per 100 g",
+						),
+						amountPer100g: Number(currentNutrient.amount_per_100g),
+						unit: formatUnit(currentNutrient.unit_name),
+						observedAt: productResult.data?.last_verified_at ?? null,
+						sourceType:
+							sources.get(currentNutrient.source)?.source_type ?? null,
+						sourceUrl:
+							sources.get(currentNutrient.source)?.homepage_url ?? null,
+						redistributionAllowed:
+							sources.get(currentNutrient.source)?.api_redistribution_allowed ??
+							null,
+					}
+				: productResult.data
+					? (() => {
+							const value = readCurrentFoodValue(
+								productResult.data,
+								conflict.field_path,
+								sourceNames,
+							);
+							return value
+								? {
+										...value,
+										index: null,
+										sourceKey: productResult.data.source,
+										sourceReference: productResult.data.source_reference,
+										amountPer100g: null,
+										unit: null,
+										observedAt: productResult.data.last_verified_at,
+										sourceType:
+											sources.get(productResult.data.source)?.source_type ??
+											null,
+										sourceUrl:
+											sources.get(productResult.data.source)?.homepage_url ??
+											null,
+										redistributionAllowed:
+											sources.get(productResult.data.source)
+												?.api_redistribution_allowed ?? null,
+									}
+								: null;
+						})()
+					: null;
+			return {
+				id: conflict.id,
+				type: "catalog_conflict",
+				label: "Open catalog conflict",
+				fieldLabel,
+				comparisonBasis:
+					comparisonBases.length === 1
+						? comparisonBases[0]
+						: comparisonBases.length > 1
+							? "Multiple reporting bases"
+							: null,
+				affectedFieldPaths: origin?.affected_field_paths ?? [
+					conflict.field_path,
+				],
+				currentValue,
+				evidence: Array.isArray(conflict.observed_values)
+					? conflict.observed_values.map((value, index) => {
+							const record = readJsonRecord(value) ?? {};
+							const snapshotId =
+								typeof record.snapshotId === "string"
+									? record.snapshotId
+									: null;
+							const snapshot = snapshotId
+								? snapshots.get(snapshotId)
+								: undefined;
+							const sourceKey =
+								typeof record.source === "string"
+									? record.source
+									: (snapshot?.provider_key ?? "unknown");
+							const sourceMetadata = sources.get(sourceKey);
+							const sourceLabel =
+								typeof record.source === "string"
+									? formatSource(
+											record.source,
+											record.sourceReference,
+											sourceNames,
+										)
+									: snapshot
+										? `${sourceNames.get(snapshot.provider_key) ?? snapshot.provider_key} observation from ${new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(new Date(snapshot.observed_at))}`
+										: `Observed value ${index + 1}`;
+							return {
+								index,
+								source: sourceLabel,
+								sourceKey,
+								sourceReference:
+									typeof record.sourceReference === "string"
+										? record.sourceReference
+										: (snapshot?.source_reference ?? null),
+								value: formatValueWithContext(
+									record.value ?? value,
+									record.unitName ?? record.unit,
+									record.basis,
+								),
+								amountPer100g:
+									typeof record.value === "number" ? record.value : null,
+								unit:
+									typeof (record.unitName ?? record.unit) === "string"
+										? formatUnit(String(record.unitName ?? record.unit))
+										: null,
+								observedAt:
+									snapshot?.observed_at ??
+									(typeof record.observedAt === "string"
+										? record.observedAt
+										: null),
+								sourceType: sourceMetadata?.source_type ?? null,
+								sourceUrl: sourceMetadata?.homepage_url ?? null,
+								redistributionAllowed:
+									sourceMetadata?.api_redistribution_allowed ?? null,
+							};
+						})
+					: [],
+				status: getStatus(origin),
+				submissionId: origin?.submission_id ?? null,
+			};
+		},
+	);
 	const providerFindings: CatalogCorrectionFinding[] = (
 		providerResult.data ?? []
 	).map((review) => {
@@ -451,6 +570,10 @@ export const readCatalogCorrectionHandoff = async (
 		applicationFoodId: productResult.data
 			? readApplicationFoodId(productResult.data.food)
 			: null,
+		servingWeightGrams: productResult.data
+			? readServingWeightGrams(productResult.data.food)
+			: null,
+		decisionWorkbenchAvailable,
 		pendingSubmissionId: pendingSubmissionResult.data?.id ?? null,
 		findings: [
 			...conflictFindings,

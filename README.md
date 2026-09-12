@@ -201,6 +201,8 @@ the exact migration source already exists on remote `main`.
 | `node scripts/seeds/nutrition/seed_open_food_facts_nutrient_mapping_candidates.mjs` | Preview observed Open Food Facts identities with cautious canonical review candidates.                    |
 | `npm run generate:api-structures`                                                   | Regenerate documentation-only provider payload references.                                                |
 | `npm run moderate -- ...`                                                           | Run privileged role or account operations.                                                                |
+| `npm run catalog:product:purge -- preview <UPC>`                                    | Preview every Supabase record selected for a catalog product purge.                                       |
+| `npm run catalog:product:purge -- apply <UPC> --confirm=<UPC> --reason="<reason>"`  | Delete the confirmed product graph from local Supabase; add `--hosted` only for an intentional live run.  |
 | `npm run blendCalcAPI:publication -- ...`                                           | Review concerns and manage reversible blendCalcAPI publication holds.                                     |
 | `npm run version:check`                                                             | Verify Node, app, build, API, OpenAPI, test, and documentation versions.                                  |
 | `npm run version:bump -- patch\|minor\|major`                                       | Update application version files without committing or tagging.                                           |

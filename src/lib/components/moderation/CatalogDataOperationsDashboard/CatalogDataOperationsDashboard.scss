@@ -13,9 +13,6 @@
 .catalog-data-operations__action-queues,
 .catalog-data-operations__action-grid,
 .catalog-data-operations__action-card,
-.catalog-data-operations__required-work,
-.catalog-data-operations__required-list,
-.catalog-data-operations__required-card,
 .catalog-data-operations__section-heading > div {
 	display: grid;
 	gap: $app-gap-sm;
@@ -31,9 +28,7 @@
 
 .catalog-data-operations__section-heading h2,
 .catalog-data-operations__section-heading p,
-.catalog-data-operations__action-card p,
-.catalog-data-operations__required-card p,
-.catalog-data-operations__required-card ul {
+.catalog-data-operations__action-card p {
 	margin: 0;
 }
 
@@ -42,25 +37,26 @@
 }
 
 .catalog-data-operations__section-heading p,
-.catalog-data-operations__action-card p,
-.catalog-data-operations__required-card p,
-.catalog-data-operations__required-card ul {
+.catalog-data-operations__action-card p {
 	color: $app-shell-text-muted;
 	font-size: $app-font-size-sm;
 }
 
-.catalog-data-operations__section-heading--details {
-	padding-top: $app-gap-sm;
-	border-top: $app-border;
-}
-
 .catalog-data-operations__action-grid {
-	grid-template-columns: 1fr;
+	grid-template-columns: repeat(
+		auto-fit,
+		minmax(
+			min($app-privileged-card-grid-min-width, 100%),
+			$app-privileged-card-grid-max-width
+		)
+	);
+	align-items: stretch;
 }
 
-.catalog-data-operations__action-card,
-.catalog-data-operations__required-card {
+.catalog-data-operations__action-card {
+	grid-template-rows: auto minmax(0, 1fr) auto;
 	align-content: start;
+	height: 100%;
 	padding: $app-shell-card-padding-compact;
 	background: $app-shell-surface-panel;
 	border: $app-warning-border;
@@ -71,60 +67,11 @@
 	border: $app-border;
 }
 
-.catalog-data-operations__required-card[data-clear="true"] {
-	border: $app-border;
-}
-
-.catalog-data-operations__action-card header,
-.catalog-data-operations__required-card header {
+.catalog-data-operations__action-card header {
 	display: flex;
 	align-items: start;
 	justify-content: space-between;
 	gap: $app-gap-xs;
-}
-
-.catalog-data-operations__required-card header > div,
-.catalog-data-operations__required-card li,
-.catalog-data-operations__required-action {
-	display: grid;
-	gap: $app-gap-inline-compact;
-	min-width: 0;
-}
-
-.catalog-data-operations__required-card header small,
-.catalog-data-operations__required-card li span,
-.catalog-data-operations__required-limit {
-	color: $app-shell-text-muted;
-	font-size: $app-font-size-sm;
-}
-
-.catalog-data-operations__required-type {
-	color: $app-shell-text-muted;
-	font-size: $app-font-size-xs;
-	font-weight: $app-font-weight-bold;
-	letter-spacing: $app-letter-spacing-wide;
-	text-transform: uppercase;
-}
-
-.catalog-data-operations__required-card ul {
-	display: grid;
-	gap: $app-gap-xs;
-	padding-left: $app-gap-lg;
-}
-
-.catalog-data-operations__required-action {
-	padding: $app-gap-sm;
-	background: $app-shell-surface-soft;
-	border-radius: $app-shell-radius-control;
-}
-
-.catalog-data-operations__required-action p,
-.catalog-data-operations__required-limit {
-	margin: 0;
-}
-
-.catalog-data-operations__required-action[data-unavailable="true"] {
-	border-left: $app-warning-border;
 }
 
 .catalog-data-operations__action-card a,
@@ -163,21 +110,44 @@
 
 .catalog-data-operations__overview {
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+	grid-template-columns: repeat(
+		auto-fit,
+		minmax(
+			min($app-privileged-card-grid-min-width, 100%),
+			$app-privileged-card-grid-max-width
+		)
+	);
+	align-items: stretch;
 	gap: $app-gap-sm;
 }
 
 .catalog-data-operations__overview article {
-	display: flex;
-	align-items: center;
+	display: grid;
 	gap: $app-gap-sm;
 	min-width: 0;
+	height: 100%;
 	padding: $app-shell-card-padding-compact;
 	background: $app-shell-surface-panel;
 	border: $app-border;
 	border-radius: $app-shell-radius-card;
 	font-size: $app-font-size-sm;
+}
+
+.catalog-data-operations__overview article header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: $app-gap-sm;
+}
+
+.catalog-data-operations__overview article header > span {
+	color: $app-shell-text-primary;
 	font-weight: $app-font-weight-semibold;
+}
+
+.catalog-data-operations__overview article p {
+	margin: 0;
+	color: $app-shell-text-muted;
 }
 
 .catalog-data-operations__sections,
@@ -272,6 +242,23 @@
 	margin: 0;
 	padding: $app-gap-sm;
 	text-align: center;
+}
+
+@media (min-width: ($app-breakpoint-md + 1px)) {
+	.catalog-data-operations__sections {
+		grid-template-columns: repeat(
+			auto-fit,
+			minmax(
+				min($app-privileged-card-grid-min-width, 100%),
+				$app-privileged-card-grid-max-width
+			)
+		);
+		align-items: start;
+	}
+
+	.catalog-data-operations__sections > :global(.collapsible-section) {
+		width: 100%;
+	}
 }
 
 @media (max-width: $app-breakpoint-xs) {

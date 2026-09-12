@@ -1,0 +1,179 @@
+@use "../../../../styles/variables" as *;
+
+.catalog-conflict-workbench,
+.catalog-conflict-workbench > ol,
+.catalog-conflict-workbench__finding,
+.catalog-conflict-workbench__decision {
+	display: grid;
+	min-width: 0;
+	gap: $app-gap-md;
+}
+
+.catalog-conflict-workbench {
+	padding-bottom: 5.5rem;
+}
+
+.catalog-conflict-workbench__heading,
+.catalog-conflict-workbench__finding {
+	padding: $app-shell-card-padding;
+	background: $app-shell-surface-panel;
+	border-radius: $app-shell-radius-card;
+}
+
+.catalog-conflict-workbench__heading {
+	display: flex;
+	justify-content: space-between;
+	align-items: start;
+	gap: $app-gap-lg;
+}
+
+.catalog-conflict-workbench__heading > div,
+.catalog-conflict-workbench__finding > header {
+	display: grid;
+	gap: $app-gap-inline-compact;
+}
+
+.catalog-conflict-workbench__heading span,
+.catalog-conflict-workbench__finding > header span {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-semibold;
+	letter-spacing: $app-letter-spacing-label;
+	text-transform: uppercase;
+}
+
+.catalog-conflict-workbench h2,
+.catalog-conflict-workbench h3,
+.catalog-conflict-workbench p,
+.catalog-conflict-workbench ol {
+	margin: 0;
+}
+
+.catalog-conflict-workbench__heading p,
+.catalog-conflict-workbench__finding > header p,
+.catalog-conflict-workbench__outcome-copy,
+.catalog-conflict-workbench__finish span {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+}
+
+.catalog-conflict-workbench > ol {
+	padding: 0;
+	list-style: none;
+}
+
+.catalog-conflict-workbench__comparison {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+	gap: $app-gap-sm;
+}
+
+.catalog-conflict-workbench__comparison article {
+	display: grid;
+	align-content: start;
+	gap: $app-gap-xs;
+	min-width: 0;
+	padding: $app-gap-md;
+	background: $app-shell-surface-soft;
+	border: 1px solid $app-shell-border-subtle;
+	border-radius: $app-shell-radius-control;
+}
+
+.catalog-conflict-workbench__comparison article[data-current="true"] {
+	border-color: $app-shell-accent-info;
+}
+
+.catalog-conflict-workbench__comparison article > span {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-semibold;
+	text-transform: uppercase;
+}
+
+.catalog-conflict-workbench__comparison small {
+	color: $app-shell-text-muted;
+}
+
+.catalog-conflict-workbench__comparison dl {
+	display: grid;
+	gap: $app-gap-xs;
+	margin: $app-gap-xs 0 0;
+}
+
+.catalog-conflict-workbench__comparison dl > div {
+	display: grid;
+	grid-template-columns: minmax(6rem, auto) 1fr;
+	gap: $app-gap-sm;
+}
+
+.catalog-conflict-workbench__comparison dt {
+	color: $app-shell-text-muted;
+}
+
+.catalog-conflict-workbench__comparison dd {
+	margin: 0;
+	overflow-wrap: anywhere;
+}
+
+.catalog-conflict-workbench__comparison a {
+	color: $app-shell-accent-primary;
+	font-weight: $app-font-weight-semibold;
+}
+
+.catalog-conflict-workbench__decision {
+	padding-top: $app-gap-md;
+	border-top: 1px solid $app-shell-border-subtle;
+}
+
+.catalog-conflict-workbench__outcome-copy {
+	padding: $app-gap-sm;
+	background: $app-shell-surface-soft;
+	border-radius: $app-shell-radius-control;
+}
+
+.catalog-conflict-workbench__number-label {
+	display: grid;
+	gap: $app-gap-xs;
+	font-weight: $app-font-weight-semibold;
+}
+
+:global(.catalog-conflict-workbench__number-input) {
+	width: 100%;
+	min-height: $app-control-height;
+	padding: $app-gap-sm;
+	color: $app-shell-text-primary;
+	background: $app-shell-surface-soft;
+	border: 1px solid $app-shell-border-subtle;
+	border-radius: $app-shell-radius-control;
+}
+
+.catalog-conflict-workbench__finish {
+	position: sticky;
+	bottom: 0;
+	z-index: 2;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: $app-gap-md;
+	padding: $app-gap-md;
+	background: $app-shell-surface-panel;
+	border: 1px solid $app-shell-border-subtle;
+	border-radius: $app-shell-radius-card;
+}
+
+.catalog-conflict-workbench__finish > div {
+	display: grid;
+	gap: $app-gap-inline-compact;
+}
+
+@media (max-width: $app-breakpoint-sm) {
+	.catalog-conflict-workbench__heading,
+	.catalog-conflict-workbench__finish {
+		align-items: stretch;
+		flex-direction: column;
+	}
+
+	.catalog-conflict-workbench__comparison {
+		grid-template-columns: 1fr;
+	}
+}

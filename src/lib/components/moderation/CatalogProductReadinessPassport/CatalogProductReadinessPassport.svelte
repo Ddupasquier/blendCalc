@@ -404,7 +404,16 @@
 									: ""}
 							</p>
 							{#if revision.changes.length === 0}
-								<p>Initial catalog record; there is no preceding revision.</p>
+								{#if revision.number === 1}
+									<p>Initial catalog record; there is no preceding revision.</p>
+								{:else}
+									<p>
+										<strong>Historical audit details are unavailable.</strong>
+										The original field-by-field change was not retained, and the stored
+										snapshots do not prove it. This does not affect the current product
+										or its blendCalcAPI status.
+									</p>
+								{/if}
 							{:else}
 								<ul>
 									{#each revision.changes.slice(0, 6) as change (change.fieldPath)}

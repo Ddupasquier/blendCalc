@@ -57,6 +57,7 @@
 }
 
 .catalog-review-work__record {
+	height: 100%;
 	padding: $app-shell-card-padding-compact;
 	background: $app-shell-surface-soft;
 	border-radius: $app-shell-radius-card;
@@ -158,6 +159,25 @@
 
 .catalog-review-work__changes > section > header {
 	align-items: center;
+}
+
+@media (min-width: ($app-breakpoint-md + 1px)) {
+	.catalog-review-work__stack {
+		grid-template-columns: repeat(
+			auto-fit,
+			minmax(
+				min($app-privileged-card-grid-min-width, 100%),
+				$app-privileged-card-grid-max-width
+			)
+		);
+		align-items: stretch;
+	}
+
+	.catalog-review-work__queue-guidance,
+	.catalog-review-work__empty {
+		grid-column: 1 / -1;
+		max-width: $app-privileged-card-grid-max-width;
+	}
 }
 
 @media (max-width: $app-breakpoint-xs),

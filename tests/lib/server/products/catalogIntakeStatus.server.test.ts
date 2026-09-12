@@ -9,6 +9,7 @@ const createSupabaseMock = (result: {
 	data: {
 		id: string;
 		status: string;
+		queue_resolution?: string | null;
 		created_at: string;
 		updated_at: string;
 	} | null;
@@ -28,28 +29,33 @@ const createSupabaseMock = (result: {
 
 describe("catalog intake status reads", () => {
 	it.each([
-		["pending", "pending"],
-		["approved", "accepted"],
-		["rejected", "declined"],
-		["auto_declined", "declined"],
-	] as const)("maps %s to the safe %s state", async (storedStatus, state) => {
-		const { supabase } = createSupabaseMock({
-			data: {
-				id: submissionId,
-				status: storedStatus,
-				created_at: submittedAt,
-				updated_at: updatedAt,
-			},
-			error: null,
-		});
+		["pending", null, "pending"],
+		["approved", null, "accepted"],
+		["rejected", null, "declined"],
+		["auto_declined", null, "declined"],
+		["auto_declined", "already_available", "accepted"],
+	] as const)(
+		"maps %s / %s to the safe %s state",
+		async (storedStatus, queueResolution, state) => {
+			const { supabase } = createSupabaseMock({
+				data: {
+					id: submissionId,
+					status: storedStatus,
+					queue_resolution: queueResolution,
+					created_at: submittedAt,
+					updated_at: updatedAt,
+				},
+				error: null,
+			});
 
-		await expect(
-			readCatalogIntakeStatus(supabase as never, {
-				submissionId,
-				userId: "owner-id",
-			}),
-		).resolves.toEqual({ id: submissionId, state, submittedAt, updatedAt });
-	});
+			await expect(
+				readCatalogIntakeStatus(supabase as never, {
+					submissionId,
+					userId: "owner-id",
+				}),
+			).resolves.toEqual({ id: submissionId, state, submittedAt, updatedAt });
+		},
+	);
 
 	it("selects only public workflow fields through the owner boundary", async () => {
 		const { supabase, spies } = createSupabaseMock({ data: null, error: null });
@@ -61,7 +67,7 @@ describe("catalog intake status reads", () => {
 
 		expect(spies.from).toHaveBeenCalledWith("shared_product_submissions");
 		expect(spies.select).toHaveBeenCalledWith(
-			"id, status, created_at, updated_at",
+			"id, status, queue_resolution, created_at, updated_at",
 		);
 		expect(spies.id).toHaveBeenCalledWith("id", submissionId);
 		expect(spies.submittedBy).toHaveBeenCalledWith("submitted_by", "owner-id");

@@ -8,6 +8,7 @@
 		title,
 		description,
 		controls,
+		href,
 		actionRequiredCount = 0,
 		actionRequiredLabel = "actions requiring review",
 		variant = "default",
@@ -16,15 +17,7 @@
 	}: ProfileSettingsSheetLauncherProps = $props();
 </script>
 
-<button
-	class="profile-settings-sheet-launcher"
-	class:profile-settings-sheet-launcher--has-count={actionRequiredCount > 0}
-	class:profile-settings-sheet-launcher--privileged={variant === "privileged"}
-	type="button"
-	aria-haspopup="dialog"
-	aria-controls={controls}
-	onclick={onOpen}
->
+{#snippet content()}
 	<CircularIconFrame class="profile-settings-sheet-launcher__icon" decorative>
 		{@render icon()}
 	</CircularIconFrame>
@@ -39,7 +32,30 @@
 		/>
 	{/if}
 	<Chevron class="profile-settings-sheet-launcher__chevron" direction="right" />
-</button>
+{/snippet}
+
+{#if href}
+	<a
+		{href}
+		class="profile-settings-sheet-launcher"
+		class:profile-settings-sheet-launcher--has-count={actionRequiredCount > 0}
+		class:profile-settings-sheet-launcher--privileged={variant === "privileged"}
+	>
+		{@render content()}
+	</a>
+{:else}
+	<button
+		class="profile-settings-sheet-launcher"
+		class:profile-settings-sheet-launcher--has-count={actionRequiredCount > 0}
+		class:profile-settings-sheet-launcher--privileged={variant === "privileged"}
+		type="button"
+		aria-haspopup="dialog"
+		aria-controls={controls}
+		onclick={onOpen}
+	>
+		{@render content()}
+	</button>
+{/if}
 
 <style lang="scss">
 	@use "./ProfileSettingsSheetLauncher.scss";

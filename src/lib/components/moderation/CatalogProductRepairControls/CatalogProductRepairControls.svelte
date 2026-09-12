@@ -65,10 +65,12 @@
 		surface="panel"
 	>
 		<div class="catalog-product-repairs">
-			<StatusMessage
-				tone="info"
-				message="These repairs use exact evidence already stored by blendCalc to reconnect source records or restore missing catalog history. They never guess, invent changes, or replace current product values."
-			/>
+			<div class="catalog-product-repairs__introduction">
+				<StatusMessage
+					tone="info"
+					message="These repairs use exact evidence already stored by blendCalc to reconnect source records or restore missing catalog history. They never guess, invent changes, or replace current product values."
+				/>
+			</div>
 
 			{#each repairableIssues as issue (issue.occurrenceKey)}
 				{@const repairResult = resultForIssue(issue.occurrenceKey)}

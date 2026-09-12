@@ -19,6 +19,8 @@
 		initialFood,
 		submissionIntent = "catalog_share",
 		catalogSubmissionOnly = false,
+		catalogCorrectionEvidenceRoles = undefined,
+		allowBarcodeAutofill = true,
 		returnHref = null,
 		ingredientListIndex,
 	}: ManualEntrySheetProps = $props();
@@ -76,6 +78,8 @@
 		{initialFood}
 		{submissionIntent}
 		{catalogSubmissionOnly}
+		{catalogCorrectionEvidenceRoles}
+		{allowBarcodeAutofill}
 		{ingredientListIndex}
 	/>
 </BottomSheet>

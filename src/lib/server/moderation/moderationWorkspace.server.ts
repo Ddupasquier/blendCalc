@@ -56,6 +56,7 @@ import {
 	listPendingProfileImageReports,
 	reviewProfileImageReport,
 } from "$lib/server/moderation/profileImageReports.server";
+import { runPrivilegedQueueAdmission } from "$lib/server/moderation/privilegedQueueAdmission.server";
 
 const PERMANENT_BAN_DURATION = "876000h";
 const MODERATION_FORM_MAX_BYTES = 512 * 1024;
@@ -218,6 +219,9 @@ export const loadModerationWorkspaceData = async (
 	const includesProfileImageReports =
 		scope === "profile-images" &&
 		hasAppPermission(permissions, "moderation.accounts.manage");
+	if (includesProductSubmissions) {
+		await runPrivilegedQueueAdmission(locals.supabase, ["product_submissions"]);
+	}
 	const [
 		{ admin, users: authUsers },
 		pendingProductSubmissions,
@@ -602,7 +606,11 @@ export const moderationWorkspaceActions = {
 		);
 		const feedbackId = String(formData.get("feedbackId") ?? "");
 		const status = String(formData.get("status") ?? "");
-		const resolutionAction = String(formData.get("resolutionAction") ?? "none");
+		const requestedResolutionAction = String(
+			formData.get("resolutionAction") ?? "none",
+		);
+		const resolutionAction =
+			status === "dismissed" ? "none" : requestedResolutionAction;
 		const reviewNote = String(formData.get("reviewNote") ?? "").trim();
 
 		if (
@@ -619,7 +627,7 @@ export const moderationWorkspaceActions = {
 		) {
 			return fail(400, {
 				compatibilityReviewError:
-					"Complete all three review steps: decide whether the report is supported, choose the follow-up, and record the evidence you checked.",
+					"Choose the supported outcome, record the evidence you checked, and select a correction owner when the user’s report is correct.",
 			});
 		}
 

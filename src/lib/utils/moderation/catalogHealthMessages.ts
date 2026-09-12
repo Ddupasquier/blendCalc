@@ -57,7 +57,7 @@ const CATALOG_ISSUE_REASON_LABELS: Record<string, string> = {
 	serving_source_not_redistributable:
 		"A selected serving source cannot be redistributed through blendCalcAPI v1",
 	structured_change_rows_missing:
-		"The stored revision is missing its exact before-and-after change record",
+		"A past revision is missing its field-by-field audit details",
 	unsupported_nutrient_value_state:
 		"A nutrient value has an unsupported reporting state",
 	unexplained_revision: "Revision changes need evidence",
@@ -99,7 +99,8 @@ const CATALOG_ISSUE_CODE_LABELS: Record<string, string> = {
 	CATALOG_NUTRITION_INCOMPLETE: "Required nutrition is incomplete",
 	CATALOG_PRIMARY_SERVING_MISSING: "An evidence-backed serving is missing",
 	CATALOG_REQUIRED_FIELD_MISSING: "Required product information is missing",
-	CATALOG_REVISION_EXPLANATION_MISSING: "Revision changes need evidence",
+	CATALOG_REVISION_EXPLANATION_MISSING:
+		"A past revision is missing audit details",
 	CATALOG_REVISION_MISSING: "Revision history is missing",
 	CATALOG_SERVING_PROVENANCE_MISSING:
 		"Serving information is missing source evidence",
@@ -133,13 +134,13 @@ const CATALOG_RESOLUTION_ACTION_LABELS: Record<string, string> = {
 	review_product_evidence: "Review current product evidence",
 	review_product_identity: "Review product identity",
 	review_publication_profile: "Review the blendCalcAPI publication profile",
-	review_revision_history: "Review revision history",
+	review_revision_history: "Restore historical revision audit details",
 	review_source_policy: "Review source policy",
 	review_source_redistribution: "Review source redistribution rights",
 	run_nutrient_provenance_repair:
 		"Repair nutrient provenance from existing evidence",
 	run_provenance_repair: "Repair field provenance from existing evidence",
-	run_revision_repair: "Repair revision history from existing evidence",
+	run_revision_repair: "Restore audit details from existing evidence",
 	run_serving_provenance_repair:
 		"Repair serving provenance from existing evidence",
 };

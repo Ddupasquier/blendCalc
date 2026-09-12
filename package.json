@@ -120,6 +120,7 @@
 		"catalog:qa-image-clean": "BLENDCALC_DATABASE_ENVIRONMENT=test node scripts/qa/catalog/seed_image_moderation_submission.mjs cleanup",
 		"qa:deterministic": "node scripts/qa/database/run_deterministic_qa.mjs",
 		"moderate": "node scripts/operations/users/moderate_user.mjs",
+		"catalog:product:purge": "node scripts/operations/catalog/purge_catalog_product.mjs",
 		"blendCalcAPI:publication": "node scripts/operations/blendCalcAPI/manage_blendCalcAPI_publication.mjs"
 	},
 	"devDependencies": {

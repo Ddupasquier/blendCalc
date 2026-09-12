@@ -7,7 +7,7 @@
 	} from "$lib/utils/moderation/profilePrivilegedTools";
 	import type { ProfilePrivilegedToolsLauncherProps } from "./types";
 
-	let { access, onOpen }: ProfilePrivilegedToolsLauncherProps = $props();
+	let { access }: ProfilePrivilegedToolsLauncherProps = $props();
 	const title = $derived(getProfilePrivilegedToolTitle(access.role));
 	const availableToolCount = $derived(
 		getAvailableProfilePrivilegedToolCount(access.permissions),
@@ -30,11 +30,10 @@
 <ProfileSettingsSheetLauncher
 	{title}
 	{description}
-	controls="profile-privileged-tools-sheet"
+	href="/profile/privileged-tools"
 	variant="privileged"
 	actionRequiredCount={summary.totalActionableItems ?? 0}
 	actionRequiredLabel="privileged actions requiring attention"
-	{onOpen}
 >
 	{#snippet icon()}<Crown />{/snippet}
 </ProfileSettingsSheetLauncher>

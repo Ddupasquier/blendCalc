@@ -14,7 +14,7 @@
 .account-access__heading p,
 .account-access__result-count,
 .account-access__empty p {
-	color: $app-muted;
+	color: $app-shell-text-muted;
 }
 
 .account-access__heading h2 {
@@ -24,9 +24,9 @@
 .account-access__search,
 .account-access__empty {
 	padding: $app-gap-md;
-	background: $app-section-bg;
+	background: $app-shell-surface-panel;
 	border: $app-border;
-	border-radius: $app-card-radius;
+	border-radius: $app-shell-radius-card;
 }
 
 .account-access__search-actions {
@@ -42,6 +42,7 @@
 
 .account-access__account {
 	min-width: 0;
+	height: 100%;
 }
 
 .account-access__details {
@@ -52,8 +53,8 @@
 	width: 3.5rem;
 	height: 3.5rem;
 	object-fit: cover;
-	background: $app-accent;
-	border-radius: $app-radius-sm;
+	background: $app-shell-surface-control;
+	border-radius: $app-shell-radius-control;
 }
 
 .account-access__facts {
@@ -96,14 +97,32 @@
 
 .account-access__restriction,
 .account-access__public-reason {
-	color: $app-muted;
-	background: $app-accent;
+	color: $app-shell-text-muted;
+	background: $app-shell-surface-control;
 }
 
 .account-access__action-explanation {
 	margin: 0;
 	color: $app-shell-text-muted;
 	background: $app-shell-surface-panel;
+}
+
+@media (min-width: ($app-breakpoint-md + 1px)) {
+	.account-access__search,
+	.account-access__empty {
+		width: min(100%, $app-privileged-card-grid-max-width);
+	}
+
+	.account-access__list {
+		grid-template-columns: repeat(
+			auto-fit,
+			minmax(
+				min($app-privileged-card-grid-min-width, 100%),
+				$app-privileged-card-grid-max-width
+			)
+		);
+		align-items: stretch;
+	}
 }
 
 @media (max-width: $app-breakpoint-xs),

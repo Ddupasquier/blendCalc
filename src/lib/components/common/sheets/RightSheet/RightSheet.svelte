@@ -6,6 +6,8 @@
 		id,
 		open = false,
 		labelledby,
+		className = "",
+		panelClass = "",
 		onClose = () => {},
 		children,
 	}: RightSheetProps = $props();
@@ -18,6 +20,8 @@
 	{labelledby}
 	modal={false}
 	backdrop={false}
+	{className}
+	{panelClass}
 	{onClose}
 >
 	<div class="right-sheet__content">

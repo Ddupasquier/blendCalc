@@ -1,24 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { catalogDataOperationsHealthFixture } from "../../../fixtures/catalogDataOperationsHealth";
-import { catalogMonitorModerationFixture } from "../../../fixtures/catalogMonitorModeration";
 
 const mocks = vi.hoisted(() => ({
 	requireModeratorPermission: vi.fn(),
-	readCatalogDataOperationsHealth: vi.fn(),
-	readCatalogMonitorModerationSummary: vi.fn(),
 	readCatalogReviewWork: vi.fn(),
 	readCatalogProductReadinessPassport: vi.fn(),
 	readPrivilegedToolReviewSummary: vi.fn(),
+	runPrivilegedQueueAdmission: vi.fn(),
 }));
 
 vi.mock("$lib/server/moderation/moderationAccess.server", () => ({
 	requireModeratorPermission: mocks.requireModeratorPermission,
-}));
-
-vi.mock("$lib/server/moderation/catalogDataOperations.server", () => ({
-	readCatalogDataOperationsHealth: mocks.readCatalogDataOperationsHealth,
-	readCatalogMonitorModerationSummary:
-		mocks.readCatalogMonitorModerationSummary,
 }));
 
 vi.mock("$lib/server/moderation/catalogReviewWork.server", () => ({
@@ -27,6 +18,10 @@ vi.mock("$lib/server/moderation/catalogReviewWork.server", () => ({
 
 vi.mock("$lib/server/moderation/privilegedToolReviewSummary.server", () => ({
 	readPrivilegedToolReviewSummary: mocks.readPrivilegedToolReviewSummary,
+}));
+
+vi.mock("$lib/server/moderation/privilegedQueueAdmission.server", () => ({
+	runPrivilegedQueueAdmission: mocks.runPrivilegedQueueAdmission,
 }));
 
 vi.mock(
@@ -51,26 +46,18 @@ describe("catalog privileged workspaces", () => {
 		});
 	});
 
-	it("requires data-operations permission before loading operational health", async () => {
+	it("requires data-operations permission before loading operator work", async () => {
 		mocks.requireModeratorPermission.mockResolvedValue({
 			user: { id: "developer-id" },
 			role: "developer",
 			permissions: ["data_operations.catalog_health.read"],
 		});
-		mocks.readCatalogDataOperationsHealth.mockResolvedValue(
-			catalogDataOperationsHealthFixture,
-		);
-		mocks.readCatalogMonitorModerationSummary.mockResolvedValue(
-			catalogMonitorModerationFixture,
-		);
 		const supabase = {};
 
 		await expect(
 			loadCatalogDataOperationsWorkspace({ locals: { supabase } } as never),
 		).resolves.toEqual({
 			viewerRole: "developer",
-			dashboard: catalogDataOperationsHealthFixture,
-			catalogMonitor: catalogMonitorModerationFixture,
 			actionCount: 7,
 			actionSubjects: [],
 			actionSubjectsTruncated: true,
@@ -80,12 +67,6 @@ describe("catalog privileged workspaces", () => {
 			"data_operations.catalog_health.read",
 			"/profile/privileged-tools/data-operations",
 		);
-		expect(mocks.readCatalogDataOperationsHealth).toHaveBeenCalledWith(
-			supabase,
-		);
-		expect(mocks.readCatalogMonitorModerationSummary).toHaveBeenCalledWith(
-			supabase,
-		);
 		expect(mocks.readPrivilegedToolReviewSummary).toHaveBeenCalledWith(
 			supabase,
 		);
@@ -93,12 +74,6 @@ describe("catalog privileged workspaces", () => {
 
 	it("keeps the data-operations count unknown when the secure summary cannot be read", async () => {
 		mocks.requireModeratorPermission.mockResolvedValue({ role: "developer" });
-		mocks.readCatalogDataOperationsHealth.mockResolvedValue(
-			catalogDataOperationsHealthFixture,
-		);
-		mocks.readCatalogMonitorModerationSummary.mockResolvedValue(
-			catalogMonitorModerationFixture,
-		);
 		mocks.readPrivilegedToolReviewSummary.mockRejectedValue(
 			new Error("offline"),
 		);
@@ -150,8 +125,6 @@ describe("catalog privileged workspaces", () => {
 		await expect(
 			loadCatalogReviewWorkWorkspace({ locals: { supabase: {} } } as never),
 		).rejects.toMatchObject({ status: 403 });
-		expect(mocks.readCatalogDataOperationsHealth).not.toHaveBeenCalled();
-		expect(mocks.readCatalogMonitorModerationSummary).not.toHaveBeenCalled();
 		expect(mocks.readCatalogReviewWork).not.toHaveBeenCalled();
 	});
 
@@ -181,5 +154,8 @@ describe("catalog privileged workspaces", () => {
 			supabase,
 			"product-id",
 		);
+		expect(mocks.runPrivilegedQueueAdmission).toHaveBeenCalledWith(supabase, [
+			"catalog_review",
+		]);
 	});
 });

@@ -294,17 +294,47 @@ const getActivePolicyVersion = async () => {
 	return data;
 };
 
+const getCurrentSharedProductRevisionId = async (
+	sharedProductId: string | null,
+) => {
+	if (!sharedProductId || !UUID_PATTERN.test(sharedProductId)) return null;
+
+	const admin = getSupabaseAdminClient();
+	const { data: product, error: productError } = await admin
+		.from("shared_products")
+		.select("id")
+		.eq("id", sharedProductId)
+		.eq("status", "active")
+		.maybeSingle();
+	if (productError) throw productError;
+	if (!product) return null;
+
+	const { data: revision, error: revisionError } = await admin
+		.from("shared_product_revisions")
+		.select("id")
+		.eq("shared_product_id", product.id)
+		.order("revision_number", { ascending: false })
+		.limit(1)
+		.maybeSingle();
+	if (revisionError) throw revisionError;
+	return revision?.id ?? null;
+};
+
 export const submitFoodCompatibilityFeedback = async (
 	userId: string,
 	input: FoodCompatibilityFeedbackRequest,
 ) => {
 	const admin = getSupabaseAdminClient();
-	const policyVersion = await getActivePolicyVersion();
+	const [policyVersion, sharedProductRevisionId] = await Promise.all([
+		getActivePolicyVersion(),
+		getCurrentSharedProductRevisionId(input.sharedProductId),
+	]);
 	const reportFingerprint = createHash("sha256")
 		.update(
 			JSON.stringify({
 				policyVersion: policyVersion.version_number,
 				sharedProductId: input.sharedProductId,
+				sharedProductRevisionId,
 				sourceKey: input.sourceKey,
 				sourceId: input.sourceId,
 				barcode: input.barcode,
@@ -316,6 +346,7 @@ export const submitFoodCompatibilityFeedback = async (
 		reported_by: userId,
 		policy_version_id: policyVersion.id,
 		shared_product_id: input.sharedProductId,
+		shared_product_revision_id: sharedProductRevisionId,
 		source_key: input.sourceKey,
 		source_id: input.sourceId,
 		barcode: input.barcode,

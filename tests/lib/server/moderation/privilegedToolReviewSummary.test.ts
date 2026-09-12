@@ -7,6 +7,15 @@ import {
 } from "$lib/server/moderation/privilegedToolReviewSummary.server";
 import type { Database } from "$lib/types/database.types";
 
+const admissionMocks = vi.hoisted(() => ({
+	runPrivilegedQueueAdmission: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock(
+	"$lib/server/moderation/privilegedQueueAdmission.server",
+	() => admissionMocks,
+);
+
 const completeCounts = {
 	pendingProductSubmissions: 3,
 	pendingCatalogReviewItems: 4,
@@ -72,6 +81,10 @@ describe("Profile privileged tool action summary", () => {
 			}),
 		);
 		expect(rpc).toHaveBeenCalledOnce();
+		expect(admissionMocks.runPrivilegedQueueAdmission).toHaveBeenCalledWith(
+			supabase,
+			["catalog_review", "product_submissions", "data_operations"],
+		);
 		expect(rpc).toHaveBeenCalledWith("get_privileged_tool_action_summary");
 	});
 
@@ -164,6 +177,36 @@ describe("Profile privileged tool action summary", () => {
 						missingPrerequisite: null,
 					}),
 				],
+			}),
+		);
+	});
+
+	it("keeps historical revision audit gaps out of required operator work", async () => {
+		const historicalAuditSubject = {
+			...completeCounts.catalogDataOperationSubjects[0],
+			issueCount: 1,
+			severity: "attention",
+			resolutionAction: "run_revision_repair",
+			issues: [
+				{
+					code: "CATALOG_REVISION_EXPLANATION_MISSING",
+					sourceReason: "structured_change_rows_missing",
+					resolutionAction: "run_revision_repair",
+					severity: "attention",
+					parameters: { revisionNumber: 2 },
+				},
+			],
+		};
+		const { supabase } = createSupabase({
+			...completeCounts,
+			catalogDataOperationSubjects: [historicalAuditSubject],
+		});
+
+		await expect(readPrivilegedToolReviewSummary(supabase)).resolves.toEqual(
+			expect.objectContaining({
+				pendingCatalogDataOperations: 0,
+				totalActionableItems: 11,
+				catalogDataOperationSubjects: [],
 			}),
 		);
 	});

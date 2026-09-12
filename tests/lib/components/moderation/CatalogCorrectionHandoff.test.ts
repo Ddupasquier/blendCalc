@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/svelte";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/svelte";
+import { describe, expect, it, vi } from "vitest";
 import CatalogCorrectionHandoff from "$lib/components/moderation/CatalogCorrectionHandoff/CatalogCorrectionHandoff.svelte";
 
 const finding = {
@@ -10,17 +10,44 @@ const finding = {
 	comparisonBasis: "per 100 g",
 	affectedFieldPaths: ["nutrient:1093"],
 	currentValue: {
+		index: null,
 		source: "USDA FoodData Central · record 373595",
+		sourceKey: "usda",
+		sourceReference: "373595",
 		value: "59 mg · per 100 g",
+		amountPer100g: 59,
+		unit: "mg",
+		observedAt: "2026-08-01T00:00:00Z",
+		sourceType: "government_dataset",
+		sourceUrl: "https://fdc.nal.usda.gov/",
+		redistributionAllowed: true,
 	},
 	evidence: [
 		{
+			index: 0,
 			source: "USDA FoodData Central · record 373595",
+			sourceKey: "usda",
+			sourceReference: "373595",
 			value: "59 mg · per 100 g",
+			amountPer100g: 59,
+			unit: "mg",
+			observedAt: "2026-08-01T00:00:00Z",
+			sourceType: "government_dataset",
+			sourceUrl: "https://fdc.nal.usda.gov/",
+			redistributionAllowed: true,
 		},
 		{
+			index: 1,
 			source: "Open Food Facts · record 00000000772914",
+			sourceKey: "open-food-facts",
+			sourceReference: "00000000772914",
 			value: "40 mg · per 100 g",
+			amountPer100g: 40,
+			unit: "mg",
+			observedAt: "2026-08-02T00:00:00Z",
+			sourceType: "community_database",
+			sourceUrl: "https://world.openfoodfacts.org/",
+			redistributionAllowed: true,
 		},
 	],
 	status: "needs_correction" as const,
@@ -63,8 +90,61 @@ describe("CatalogCorrectionHandoff", () => {
 			screen.getByRole("link", { name: "Open prefilled correction" }),
 		).toHaveAttribute(
 			"href",
-			"/ingredients/fridge/nutrition/123/correct-information?actions=hide&returnTo=%2Fprofile%2Fprivileged-tools%2Fcatalog-review-work%2Fproducts%2Fproduct-id",
+			"/ingredients/fridge/nutrition/123/correct-information?actions=hide&returnTo=%2Fprofile%2Fprivileged-tools%2Fcatalog-review-work%2Fproducts%2Fproduct-id&evidence=none",
 		);
+	});
+
+	it("requests field-specific photos when no observation can be reused", () => {
+		render(CatalogCorrectionHandoff, {
+			props: {
+				handoff: {
+					applicationFoodId: 123,
+					pendingSubmissionId: null,
+					findings: [
+						{
+							...finding,
+							evidence: finding.evidence.map((observation) => ({
+								...observation,
+								redistributionAllowed: false,
+							})),
+						},
+					],
+				},
+				returnPath:
+					"/profile/privileged-tools/catalog-review-work/products/product-id",
+			},
+		});
+
+		expect(
+			screen.getByRole("link", { name: "Open prefilled correction" }),
+		).toHaveAttribute(
+			"href",
+			"/ingredients/fridge/nutrition/123/correct-information?actions=hide&returnTo=%2Fprofile%2Fprivileged-tools%2Fcatalog-review-work%2Fproducts%2Fproduct-id&evidence=nutrition",
+		);
+	});
+
+	it("opens an embedded correction without navigating away", async () => {
+		const onOpenCorrection = vi.fn();
+		render(CatalogCorrectionHandoff, {
+			props: {
+				handoff: {
+					applicationFoodId: 123,
+					pendingSubmissionId: null,
+					findings: [finding],
+				},
+				returnPath:
+					"/profile/privileged-tools/catalog-review-work/products/product-id",
+				onOpenCorrection,
+			},
+		});
+
+		expect(
+			screen.queryByRole("link", { name: "Open prefilled correction" }),
+		).not.toBeInTheDocument();
+		await fireEvent.click(
+			screen.getByRole("button", { name: "Open prefilled correction" }),
+		);
+		expect(onOpenCorrection).toHaveBeenCalledWith([]);
 	});
 
 	it("offers an evidence-gated terminal outcome when the current value is correct", () => {

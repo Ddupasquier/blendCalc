@@ -9,6 +9,7 @@ export const catalogProductReadinessPassportFixture: CatalogProductReadinessPass
 			brandOwner: "Signature Select",
 			sharedCatalogStatus: "Waiting for review",
 			blendCalcAPIV1Status: "Withheld",
+			apiWithholdingReasons: ["A stored nutrient conflict is unresolved."],
 			searchableInBlendcalc: true,
 			usableInBlendcalc: true,
 			openMaterialConflictCount: 1,

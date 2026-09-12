@@ -18,6 +18,7 @@ export type IdentityStepProps = {
 	barcodeValidationMessage: string;
 	checkingBarcodeReference: boolean;
 	barcodeSuggestion: ManualEntryBarcodeSuggestion;
+	allowBarcodeAutofill?: boolean;
 	onNameChange: (value: string) => void;
 	onBrandChange: (value: string) => void;
 	onCategoryChange: (option: FoodCategoryPickerOption) => void;

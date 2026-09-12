@@ -823,7 +823,7 @@ test("logout ends the session without deleting durable account data", async ({
 	});
 });
 
-test("privileged tools stay hidden from regular accounts and use the shared sheet for elevated accounts", async ({
+test("privileged tools stay hidden from regular accounts and use a landing dashboard for elevated accounts", async ({
 	page,
 }, testInfo) => {
 	test.skip(
@@ -833,9 +833,9 @@ test("privileged tools stay hidden from regular accounts and use the shared shee
 	await deleteLocalQaAuthenticatorFactorsForEmail(moderatorEmail);
 	await page.goto("/profile");
 	await waitForAppReady(page);
-	await expect(
-		page.getByRole("button", { name: /Moderator tools/ }),
-	).toHaveCount(0);
+	await expect(page.getByRole("link", { name: /Moderator tools/ })).toHaveCount(
+		0,
+	);
 
 	await signInLocalQaAccount({
 		page,
@@ -843,50 +843,16 @@ test("privileged tools stay hidden from regular accounts and use the shared shee
 		nextPath: "/profile",
 	});
 
-	await page.getByRole("button", { name: /Moderator tools/ }).click();
-	await expect(page).toHaveURL(/\/profile\/privileged-tools$/);
-	const privilegedToolsSheet = page.getByRole("dialog", {
-		name: "Moderator tools",
+	const unverifiedLauncher = page.getByRole("link", {
+		name: /Moderator tools/,
 	});
-	await expect(privilegedToolsSheet).toBeVisible();
-	await expect(
-		privilegedToolsSheet.getByRole("heading", { name: "Moderator tools" }),
-	).toHaveCount(1);
-	await expect(
-		privilegedToolsSheet.locator(
-			".bottom-sheet__title-accessory .privileged-action-badge",
-		),
-	).toHaveCount(1);
-	for (const actionName of [
-		"Product submissions",
-		"Catalog review work",
-		"Food warning reports",
-		"Profile images",
-		"Account access",
-	]) {
-		await expect(
-			privilegedToolsSheet.getByRole("button", {
-				name: new RegExp(actionName),
-			}),
-		).toBeEnabled();
-	}
-	await expect(
-		privilegedToolsSheet.getByText("Verify once to see today's work"),
-	).toBeVisible();
-	await expect(
-		privilegedToolsSheet.getByText(
-			"Open any protected tool and complete authenticator verification. Counts will appear without exposing review work first.",
-		),
-	).toBeVisible();
-	await expect(
-		privilegedToolsSheet.getByText("Verify your identity to check this queue"),
-	).toHaveCount(4);
-
-	await privilegedToolsSheet
-		.getByRole("button", { name: /Product submissions/ })
-		.click();
+	await expect(unverifiedLauncher).toHaveAttribute(
+		"href",
+		"/profile/privileged-tools",
+	);
+	await unverifiedLauncher.click();
 	await expect(page).toHaveURL(
-		/\/auth\/mfa\/enroll\?next=%2Fprofile%2Fprivileged-tools%2Fproduct-submissions$/,
+		/\/auth\/mfa\/enroll\?next=%2Fprofile%2Fprivileged-tools$/,
 	);
 	await expect(
 		page.getByRole("heading", { name: "Set up your authenticator." }),
@@ -898,6 +864,31 @@ test("privileged tools stay hidden from regular accounts and use the shared shee
 		await page.reload();
 		await waitForAppReady(page);
 
+		await expect(page).toHaveURL(
+			(url) => url.pathname === "/profile/privileged-tools",
+		);
+		await expect(
+			page.getByRole("heading", { name: "Moderator tools" }),
+		).toBeVisible();
+		await expect(
+			page.getByRole("dialog", { name: "Moderator tools" }),
+		).toHaveCount(0);
+		await expect(
+			page.getByRole("button", { name: "Product lookup", exact: true }),
+		).toBeVisible();
+		for (const actionName of [
+			"Product submissions",
+			"Catalog review work",
+			"Food warning reports",
+			"Profile images",
+			"Account access",
+		]) {
+			await expect(
+				page.getByRole("link", { name: new RegExp(actionName) }),
+			).toBeVisible();
+		}
+
+		await page.getByRole("link", { name: /Product submissions/ }).click();
 		await expect(page).toHaveURL(
 			/\/profile\/privileged-tools\/product-submissions$/,
 		);
@@ -1020,7 +1011,7 @@ test("privileged tools stay hidden from regular accounts and use the shared shee
 
 		await page.goto("/profile");
 		await waitForAppReady(page);
-		const verifiedLauncher = page.getByRole("button", {
+		const verifiedLauncher = page.getByRole("link", {
 			name: /Moderator tools/,
 		});
 		const aggregateBadge = verifiedLauncher.locator(
@@ -1031,20 +1022,24 @@ test("privileged tools stay hidden from regular accounts and use the shared shee
 		expect(aggregateCount).toBeGreaterThan(0);
 
 		await verifiedLauncher.click();
-		const verifiedToolsSheet = page.getByRole("dialog", {
-			name: "Moderator tools",
-		});
-		const actionCounts = await verifiedToolsSheet
-			.locator(".bottom-sheet-action .action-required-count-badge")
+		await expect(page).toHaveURL(/\/profile\/privileged-tools$/);
+		const privilegedToolsDashboard = page.locator(
+			".profile-privileged-tools-dashboard",
+		);
+		const actionCounts = await privilegedToolsDashboard
+			.locator(".profile-privileged-tool-link .action-required-count-badge")
 			.evaluateAll((badges) =>
 				badges.map((badge) => Number(badge.textContent ?? "0")),
 			);
 		expect(actionCounts.reduce((sum, count) => sum + count, 0)).toBe(
 			aggregateCount,
 		);
-		const emptyCatalogReviewAction = verifiedToolsSheet.getByRole("button", {
-			name: /Catalog review work/,
-		});
+		const emptyCatalogReviewAction = privilegedToolsDashboard.getByRole(
+			"link",
+			{
+				name: /Catalog review work/,
+			},
+		);
 		await expect(emptyCatalogReviewAction).toBeEnabled();
 		await expect(emptyCatalogReviewAction).toContainText(
 			"Nothing is waiting for review",
@@ -1053,8 +1048,8 @@ test("privileged tools stay hidden from regular accounts and use the shared shee
 			emptyCatalogReviewAction.locator(".action-required-count-badge"),
 		).toHaveCount(0);
 		await expect(
-			verifiedToolsSheet
-				.getByRole("button", { name: /Account access/ })
+			privilegedToolsDashboard
+				.getByRole("link", { name: /Account access/ })
 				.locator(".action-required-count-badge"),
 		).toHaveCount(0);
 
@@ -1107,7 +1102,7 @@ test("privileged tools stay hidden from regular accounts and use the shared shee
 test("administrators can open data operations after direct AAL2 verification", async ({
 	page,
 }, testInfo) => {
-	test.setTimeout(90_000);
+	test.setTimeout(150_000);
 	test.skip(
 		testInfo.project.name !== "desktop-chromium",
 		"One isolated Chromium project owns the shared administrator MFA persona.",
@@ -1138,9 +1133,96 @@ test("administrators can open data operations after direct AAL2 verification", a
 			name: "Data operations",
 		});
 		await expect(dataOperationsSheet).toBeVisible();
+		const originalViewport = page.viewportSize();
+		const privilegedPanel = dataOperationsSheet.locator(
+			".privileged-tool-right-sheet-panel",
+		);
+		const privilegedWorkspace = dataOperationsSheet.locator(
+			".privileged-tool-workspace-view",
+		);
+		const productLookupLauncher = page.getByRole("button", {
+			name: "Product lookup",
+			exact: true,
+		});
+		await page.setViewportSize({ width: 680, height: 900 });
+		await expect(productLookupLauncher).toBeHidden();
+		await expect
+			.poll(async () => (await privilegedPanel.boundingBox())?.width ?? 0)
+			.toBeLessThanOrEqual(520);
+		await expect
+			.poll(() =>
+				privilegedWorkspace.evaluate(
+					(element) => getComputedStyle(element).gridTemplateColumns,
+				),
+			)
+			.not.toContain(" ");
+		await page.setViewportSize({ width: 681, height: 900 });
+		await expect(productLookupLauncher).toBeVisible();
 		await expect(
-			dataOperationsSheet.getByRole("region", { name: "Catalog coverage" }),
+			privilegedWorkspace
+				.locator(".privileged-tool-workspace-view__guide")
+				.getByRole("button", { name: "Product lookup", exact: true }),
 		).toBeVisible();
+		await expect
+			.poll(async () => (await privilegedPanel.boundingBox())?.width ?? 0)
+			.toBeGreaterThan(520);
+		await expect
+			.poll(async () => (await privilegedPanel.boundingBox())?.width ?? 0)
+			.toBe(681);
+		await expect
+			.poll(() =>
+				privilegedWorkspace.evaluate(
+					(element) => getComputedStyle(element).gridTemplateColumns,
+				),
+			)
+			.toContain(" ");
+		await page.setViewportSize({ width: 1920, height: 900 });
+		await expect
+			.poll(async () => (await privilegedPanel.boundingBox())?.width ?? 0)
+			.toBe(1920);
+		await expect
+			.poll(() =>
+				privilegedPanel.evaluate((element) => {
+					const styles = getComputedStyle(element);
+					return [styles.paddingLeft, styles.paddingRight];
+				}),
+			)
+			.toEqual(["240px", "240px"]);
+		await page.setViewportSize({ width: 2400, height: 900 });
+		await expect
+			.poll(async () => (await privilegedPanel.boundingBox())?.width ?? 0)
+			.toBe(2400);
+		const requiredWorkCards = dataOperationsSheet.locator(
+			".catalog-data-operations-work-list__card",
+		);
+		expect(await requiredWorkCards.count()).toBeGreaterThan(1);
+		const requiredWorkCardGeometry = await requiredWorkCards.evaluateAll(
+			(cards) =>
+				cards.map((card) => {
+					const bounds = card.getBoundingClientRect();
+					return {
+						height: Math.round(bounds.height),
+						left: Math.round(bounds.left),
+						top: Math.round(bounds.top),
+						width: bounds.width,
+					};
+				}),
+		);
+		expect(
+			Math.max(...requiredWorkCardGeometry.map(({ width }) => width)),
+		).toBeLessThanOrEqual(640);
+		expect(
+			new Set(requiredWorkCardGeometry.map(({ left }) => left)).size,
+		).toBeGreaterThan(1);
+		const firstRowTop = Math.min(
+			...requiredWorkCardGeometry.map(({ top }) => top),
+		);
+		const firstRowHeights = requiredWorkCardGeometry
+			.filter(({ top }) => top === firstRowTop)
+			.map(({ height }) => height);
+		expect(firstRowHeights.length).toBeGreaterThan(1);
+		expect(new Set(firstRowHeights).size).toBe(1);
+		if (originalViewport) await page.setViewportSize(originalViewport);
 		await expect(
 			dataOperationsSheet.getByRole("region", { name: "Required work" }),
 		).toBeVisible();
@@ -1220,18 +1302,38 @@ test("administrators can open data operations after direct AAL2 verification", a
 				.getByText("Canadian Nutrient File 2026"),
 		).toHaveCount(0);
 		await page.setViewportSize({ width: 1280, height: 800 });
+		await page.goto("/profile/privileged-tools");
+		await waitForAppReady(page);
+		const privilegedLandingFrame = page.locator(
+			".profile-privileged-tools-page",
+		);
+		await expect
+			.poll(
+				async () => (await privilegedLandingFrame.boundingBox())?.width ?? 0,
+			)
+			.toBe(1280);
+		await expect
+			.poll(() =>
+				privilegedLandingFrame.evaluate(
+					(element) => getComputedStyle(element).maxWidth,
+				),
+			)
+			.toBe("none");
+		const privilegedToolsLanding = page.locator(
+			".profile-privileged-tools-dashboard",
+		);
 		await expect(
-			dataOperationsSheet.getByRole("region", { name: "Diagnostic checks" }),
+			privilegedToolsLanding.getByRole("region", { name: "Diagnostic checks" }),
 		).toBeVisible();
 		await expect(
-			dataOperationsSheet.getByText(
-				"These broader checks can overlap. Use them to investigate the required work above; they do not add to the red action total.",
+			privilegedToolsLanding.getByText(
+				"These broader checks can overlap. Use them to investigate catalog conditions; they do not add to the red action total.",
 			),
 		).toBeVisible();
 		await expect(
-			dataOperationsSheet.getByText("Automated catalog monitoring"),
+			privilegedToolsLanding.getByText("Automated catalog monitoring"),
 		).toBeVisible();
-		const nutrientMappingGaps = dataOperationsSheet
+		const nutrientMappingGaps = privilegedToolsLanding
 			.locator("details")
 			.filter({ hasText: "Nutrient mapping gaps" });
 		await nutrientMappingGaps.locator("summary").click();
@@ -1253,6 +1355,16 @@ test("administrators can open data operations after direct AAL2 verification", a
 		const nutrientMappingSheet = page.getByRole("dialog", {
 			name: "Review nutrient mapping",
 		});
+		await expect
+			.poll(
+				async () =>
+					(
+						await nutrientMappingSheet
+							.locator(".nutrient-mapping-review")
+							.boundingBox()
+					)?.width ?? 0,
+			)
+			.toBeLessThanOrEqual(640);
 		await nutrientMappingSheet
 			.getByRole("combobox", {
 				name: "1. What does the evidence support?",
@@ -1291,13 +1403,18 @@ test("administrators can open data operations after direct AAL2 verification", a
 			nutrientPicker.getByText(/\d+ compatible nutrients available/u),
 		).toBeVisible();
 
-		await page.goto(dataOperationsPath);
-		const namedMissingNutrients = dataOperationsSheet.getByText(
+		await page.goto("/profile/privileged-tools");
+		await waitForAppReady(page);
+		const publicationGaps = privilegedToolsLanding
+			.locator("details")
+			.filter({ hasText: "blendCalcAPI publication gaps" });
+		await publicationGaps.locator("summary").click();
+		const namedMissingNutrients = publicationGaps.getByText(
 			"A required nutrient is missing: Fatty acids, total saturated",
 		);
 		expect(await namedMissingNutrients.count()).toBeGreaterThan(0);
 		await expect(namedMissingNutrients.first()).toBeVisible();
-		await dataOperationsSheet
+		await privilegedToolsLanding
 			.getByRole("link", { name: "Inspect first product" })
 			.click();
 		const productReadinessSheet = page.getByRole("dialog", {
@@ -1400,13 +1517,12 @@ test("administrators can open data operations after direct AAL2 verification", a
 			390,
 		);
 
-		await page.goto(dataOperationsPath);
+		await page.goto("/profile/privileged-tools");
 		await waitForAppReady(page);
-		await expect(
-			dataOperationsSheet
-				.locator("summary")
-				.filter({ hasText: "Revision history gaps" }),
-		).toContainText("Clear");
+		const revisionHistoryGaps = privilegedToolsLanding
+			.locator("details")
+			.filter({ hasText: "Revision history gaps" });
+		await expect(revisionHistoryGaps.locator("summary")).toContainText("Clear");
 
 		const displayConflict = await seedLocalQaCatalogValueConflict();
 		displayConflictId = displayConflict.id;
@@ -1415,18 +1531,14 @@ test("administrators can open data operations after direct AAL2 verification", a
 		const catalogReviewSheet = page.getByRole("dialog", {
 			name: "Catalog review work",
 		});
-		const productConflicts = catalogReviewSheet
-			.locator("details")
-			.filter({ hasText: "Product conflicts" });
-		if (!(await productConflicts.getAttribute("open"))) {
-			await productConflicts.locator("summary").click();
-		}
-		const sodiumConflict = productConflicts
-			.getByRole("link")
-			.filter({ hasText: "643 versus 400" })
+		const conflictProduct = catalogReviewSheet
+			.locator(
+				`a[href="/profile/privileged-tools/catalog-review-work/products/${displayConflict.productId}"]`,
+			)
 			.first();
-		await expect(sodiumConflict).toBeVisible();
-		await sodiumConflict.click();
+		await expect(conflictProduct).toContainText("1 conflict");
+		await expect(conflictProduct).toContainText("1 item");
+		await conflictProduct.click();
 		const conflictReadinessSheet = page.getByRole("dialog", {
 			name: "Product readiness",
 		});
@@ -1434,39 +1546,53 @@ test("administrators can open data operations after direct AAL2 verification", a
 			conflictReadinessSheet.getByText("Sodium, Na", { exact: true }),
 		).toBeVisible();
 		await expect(
-			conflictReadinessSheet.getByText(
-				"Stored catalog value — this is what “keep” preserves",
-			),
+			conflictReadinessSheet.getByRole("heading", {
+				name: "Decide the 1 actual conflict",
+			}),
 		).toBeVisible();
 		await expect(
-			conflictReadinessSheet.getByText(
-				"Current source: USDA FoodData Central · record 1862061",
-			),
+			conflictReadinessSheet.getByText("Stored value", { exact: true }),
+		).toBeVisible();
+		await expect(
+			conflictReadinessSheet
+				.getByText("USDA FoodData Central · record 1862061")
+				.first(),
 		).toBeVisible();
 		await expect(
 			conflictReadinessSheet.getByText("643 mg · per 100 g").first(),
 		).toBeVisible();
 		await expect(
+			conflictReadinessSheet.getByText("180.04 mg per 28 g serving").first(),
+		).toBeVisible();
+		await expect(
 			conflictReadinessSheet.getByText("400 mg · per 100 g"),
 		).toBeVisible();
 		await expect(
+			conflictReadinessSheet.getByRole("combobox", {
+				name: "What should happen to Sodium, Na?",
+			}),
+		).toBeVisible();
+		await expect(
 			conflictReadinessSheet.getByRole("button", {
-				name: "Keep stored value and resolve conflict",
+				name: "Finish product review",
 			}),
 		).toBeDisabled();
 
 		await page.goto("/profile");
 		await waitForAppReady(page);
-		await page.getByRole("button", { name: /Admin tools/ }).click();
-		const adminToolsSheet = page.getByRole("dialog", { name: "Admin tools" });
+		await page.getByRole("link", { name: /Admin tools/ }).click();
+		await expect(page).toHaveURL(/\/profile\/privileged-tools$/);
+		const adminToolsDashboard = page.locator(
+			".profile-privileged-tools-dashboard",
+		);
 		await expect(
-			adminToolsSheet
-				.getByRole("button", { name: /Catalog data operations/ })
+			adminToolsDashboard
+				.getByRole("link", { name: /Catalog data operations/ })
 				.locator(".action-required-count-badge"),
 		).toBeVisible();
 		await expect(
-			adminToolsSheet
-				.getByRole("button", { name: /Account access/ })
+			adminToolsDashboard
+				.getByRole("link", { name: /Account access/ })
 				.locator(".action-required-count-badge"),
 		).toHaveCount(0);
 	} finally {

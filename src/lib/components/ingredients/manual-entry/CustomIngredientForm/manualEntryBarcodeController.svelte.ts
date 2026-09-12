@@ -35,6 +35,7 @@ type ManualEntryBarcodeControllerOptions = {
 	onScannerClose?: () => void;
 	onLookupStateChange: (lookingUp: boolean) => void;
 	onError: (message: string) => void;
+	getAllowAutofill?: () => boolean;
 };
 
 type BarcodeScanCompletion = {
@@ -48,6 +49,7 @@ export const createManualEntryBarcodeController = ({
 	onScannerClose,
 	onLookupStateChange,
 	onError,
+	getAllowAutofill = () => true,
 }: ManualEntryBarcodeControllerOptions) => {
 	const state = $state({
 		lookingUpBarcode: false,
@@ -213,7 +215,7 @@ export const createManualEntryBarcodeController = ({
 			: null,
 	);
 	const barcodeSuggestion = $derived(
-		form.data.barcodeReferenceDraft
+		getAllowAutofill() && form.data.barcodeReferenceDraft
 			? {
 					name: form.data.barcodeReferenceDraft.name,
 					brandOwner: form.data.barcodeReferenceDraft.brandOwner,
@@ -250,6 +252,7 @@ export const createManualEntryBarcodeController = ({
 
 	const checkManualBarcodeReference = async () => {
 		clearBarcodeLookupDebounce();
+		if (!getAllowAutofill()) return;
 		const lookupPlan = getManualBarcodeReferencePlan({
 			barcode: form.data.barcode,
 			normalizedName: validation.normalizedName,
@@ -314,6 +317,7 @@ export const createManualEntryBarcodeController = ({
 
 	const scheduleManualBarcodeReferenceCheck = () => {
 		clearBarcodeLookupDebounce();
+		if (!getAllowAutofill()) return;
 		if (!normalizeBarcode(form.data.barcode.trim())) return;
 		manualBarcodeLookupQueued = true;
 		barcodeLookupDebounce = setTimeout(() => {

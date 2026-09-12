@@ -1,6 +1,7 @@
 import type { ManualEntryCreateHandler } from "$lib/components/ingredients/manual-entry/types";
 import type { FoodItem } from "$lib/utils/food/types";
 import type { CatalogSubmissionIntent } from "$lib/utils/products/catalog";
+import type { ProductEvidenceRole } from "$lib/utils/products/productEvidenceRequirements";
 import type { CloudIngredientListIndex } from "$lib/utils/storage/supabase/lists";
 
 export type ManualEntrySheetProps = {
@@ -16,6 +17,8 @@ export type ManualEntrySheetProps = {
 	initialFood?: FoodItem;
 	submissionIntent?: CatalogSubmissionIntent;
 	catalogSubmissionOnly?: boolean;
+	catalogCorrectionEvidenceRoles?: ProductEvidenceRole[];
+	allowBarcodeAutofill?: boolean;
 	returnHref?: string | null;
 	ingredientListIndex?: CloudIngredientListIndex;
 };

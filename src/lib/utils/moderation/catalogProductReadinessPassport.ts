@@ -56,6 +56,7 @@ export type CatalogProductReadinessPassport = {
 		brandOwner: string | null;
 		sharedCatalogStatus: string;
 		blendCalcAPIV1Status: string;
+		apiWithholdingReasons: string[];
 		searchableInBlendcalc: boolean;
 		usableInBlendcalc: boolean;
 		openMaterialConflictCount: number;
@@ -303,6 +304,12 @@ export const parseCatalogProductReadinessPassport = (
 			blendCalcAPIV1Status: readString(
 				product.blendCalcAPIV1Status,
 				"product.blendCalcAPIV1Status",
+			),
+			apiWithholdingReasons: readArray(
+				product.apiWithholdingReasons,
+				"product.apiWithholdingReasons",
+			).map((reason, index) =>
+				readString(reason, `product.apiWithholdingReasons[${index}]`),
 			),
 			searchableInBlendcalc: readBoolean(
 				product.searchableInBlendcalc,

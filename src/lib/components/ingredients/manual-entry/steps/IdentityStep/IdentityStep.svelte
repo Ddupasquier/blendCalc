@@ -21,6 +21,7 @@
 		barcodeValidationMessage,
 		checkingBarcodeReference,
 		barcodeSuggestion = null,
+		allowBarcodeAutofill = true,
 		onNameChange,
 		onBrandChange,
 		onCategoryChange,
@@ -64,8 +65,9 @@
 			/>
 		</InputLoadingFrame>
 		<small class="manual-entry-field__info">
-			We’ll check trusted sources and offer autofill if existing data is
-			available.
+			{allowBarcodeAutofill
+				? "We’ll check trusted sources and offer autofill if existing data is available."
+				: "This correction keeps the existing catalog identity. Provider autofill is disabled during privileged review."}
 		</small>
 		{#if !checkingBarcodeReference && barcodeValidationMessage}
 			<small class="manual-entry-field__status" role="status">

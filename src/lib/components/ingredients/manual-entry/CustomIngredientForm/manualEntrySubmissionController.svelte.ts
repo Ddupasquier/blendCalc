@@ -13,6 +13,7 @@ import type { ManualEntryOutcomeController } from "./manualEntryOutcomeControlle
 import { applyCardImagePlacementToFoodImage } from "$lib/utils/food/images/foodImages";
 import type { ManualEntryDestinationAction } from "$lib/components/ingredients/manual-entry/utils/listMembership";
 import type { SharedProductSubmissionProgress } from "$lib/utils/products/catalog";
+import type { ProductEvidenceRole } from "$lib/utils/products/productEvidenceRequirements";
 
 type ManualEntrySubmissionControllerOptions = {
 	form: ManualEntryFormState;
@@ -22,6 +23,7 @@ type ManualEntrySubmissionControllerOptions = {
 	outcome: ManualEntryOutcomeController;
 	onReset: () => void;
 	getCatalogSubmissionOnly?: () => boolean;
+	getCatalogCorrectionEvidenceRoles?: () => ProductEvidenceRole[] | undefined;
 	getDestinationAction?: () => ManualEntryDestinationAction;
 };
 
@@ -33,6 +35,7 @@ export const createManualEntrySubmissionController = ({
 	outcome,
 	onReset,
 	getCatalogSubmissionOnly = () => false,
+	getCatalogCorrectionEvidenceRoles = () => undefined,
 	getDestinationAction = () => ({
 		kind: "add",
 		label: "Add Ingredient",
@@ -67,6 +70,7 @@ export const createManualEntrySubmissionController = ({
 		state.evidenceProgress = null;
 		outcome.resetBeforeSubmit();
 		const catalogSubmissionOnly = getCatalogSubmissionOnly();
+		const catalogCorrectionEvidenceRoles = getCatalogCorrectionEvidenceRoles();
 		const reviewedUpdate = barcode.reviewedUpdateSelected;
 		const destinationAction = catalogSubmissionOnly
 			? null
@@ -87,7 +91,12 @@ export const createManualEntrySubmissionController = ({
 			servingMeasureAmountRequiredMessage,
 			barcode: form.data.barcode,
 			requiresCatalogEvidence: barcode.requiresCatalogEvidence,
-			requiresFreshFrontPhoto: catalogSubmissionOnly,
+			requiredEvidenceRoles: catalogSubmissionOnly
+				? catalogCorrectionEvidenceRoles
+				: undefined,
+			requiresFreshFrontPhoto:
+				catalogSubmissionOnly &&
+				Boolean(catalogCorrectionEvidenceRoles?.includes("front")),
 			hasTrustedProductImage: barcode.hasTrustedProductImage,
 			frontPhoto: form.data.frontPhoto,
 			nutritionPhoto: form.data.nutritionPhoto,

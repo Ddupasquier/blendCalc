@@ -9,7 +9,10 @@ describe("catalog product readiness passport repository", () => {
 				data:
 					functionName === "get_catalog_product_revision_context"
 						? catalogProductReadinessPassportFixture.revisionHistory
-						: catalogProductReadinessPassportFixture,
+						: functionName === "get_catalog_product_api_withholding_reasons"
+							? catalogProductReadinessPassportFixture.product
+									.apiWithholdingReasons
+							: catalogProductReadinessPassportFixture,
 				error: null,
 			}),
 		);
@@ -26,6 +29,10 @@ describe("catalog product readiness passport repository", () => {
 		expect(rpc).toHaveBeenCalledWith("get_catalog_product_revision_context", {
 			p_shared_product_id: "product-id",
 		});
+		expect(rpc).toHaveBeenCalledWith(
+			"get_catalog_product_api_withholding_reasons",
+			{ p_shared_product_id: "product-id" },
+		);
 	});
 
 	it("keeps missing products distinct from contract or database failures", async () => {
@@ -67,7 +74,13 @@ describe("catalog product readiness passport repository", () => {
 									"Could not find the function get_catalog_product_revision_context",
 							},
 						}
-					: { data: legacyPassport, error: null },
+					: functionName === "get_catalog_product_api_withholding_reasons"
+						? {
+								data: catalogProductReadinessPassportFixture.product
+									.apiWithholdingReasons,
+								error: null,
+							}
+						: { data: legacyPassport, error: null },
 			),
 		);
 
@@ -78,5 +91,42 @@ describe("catalog product readiness passport repository", () => {
 			revisionHistory: [],
 			revisionHistoryAvailable: false,
 		});
+	});
+
+	it("derives API withholding reasons while the detailed reason RPC is still rolling out", async () => {
+		const rpc = vi.fn().mockImplementation((functionName: string) =>
+			Promise.resolve(
+				functionName === "get_catalog_product_api_withholding_reasons"
+					? {
+							data: null,
+							error: {
+								code: "PGRST202",
+								message:
+									"Could not find the function get_catalog_product_api_withholding_reasons",
+							},
+						}
+					: functionName === "get_catalog_product_revision_context"
+						? {
+								data: catalogProductReadinessPassportFixture.revisionHistory,
+								error: null,
+							}
+						: {
+								data: catalogProductReadinessPassportFixture,
+								error: null,
+							},
+			),
+		);
+
+		const passport = await readCatalogProductReadinessPassport(
+			{ rpc } as never,
+			"product-id",
+		);
+
+		expect(passport.product.apiWithholdingReasons).toEqual(
+			expect.arrayContaining([
+				"Selected nutrition is missing source evidence",
+				"1 stored field has conflicting source values.",
+			]),
+		);
 	});
 });

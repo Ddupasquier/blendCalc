@@ -85,6 +85,49 @@
 		shared_observation_metadata: "Stored source observation",
 		shared_submission_metadata: "Reviewed submission evidence",
 	};
+	const formatList = (values: string[]) => {
+		if (values.length === 1) return values[0];
+		if (values.length === 2) return `both ${values[0]} and ${values[1]}`;
+		return `${values.slice(0, -1).join(", ")}, and ${values.at(-1)}`;
+	};
+	const getEvidenceSummary = (facts: StoredWarningFact[]) => {
+		if (facts.length === 0) {
+			return "No matching evidence was captured with this report. Check the package or source record before deciding.";
+		}
+
+		const factsByLabel: Array<{
+			label: string;
+			facts: StoredWarningFact[];
+		}> = [];
+		for (const fact of facts) {
+			const existingGroup = factsByLabel.find(
+				(group) => group.label === fact.label,
+			);
+			if (existingGroup) existingGroup.facts.push(fact);
+			else factsByLabel.push({ label: fact.label, facts: [fact] });
+		}
+
+		return factsByLabel
+			.map(({ label, facts: matchingFacts }) => {
+				const sources = [
+					...new Set(
+						matchingFacts.map((fact) =>
+							(
+								evidenceSourceLabels[fact.sourceType] ??
+								formatReadableLabel(fact.sourceType)
+							).toLocaleLowerCase(),
+						),
+					),
+				].map((source) => `the ${source}`);
+				const confidence = matchingFacts.every(
+					(fact) => fact.confidence === "confirmed",
+				)
+					? "is confirmed by"
+					: "is supported by";
+				return `${label} ${confidence} ${formatList(sources)}.`;
+			})
+			.join(" ");
+	};
 
 	const getReportClaim = (report: FoodWarningReport) =>
 		report.feedbackType === "missing_warning"
@@ -129,7 +172,7 @@
 			[reportId]: {
 				...getDecision(reportId),
 				status,
-				resolutionAction: "",
+				resolutionAction: status === "dismissed" ? "none" : "",
 			},
 		};
 	};
@@ -148,59 +191,37 @@
 		};
 	};
 
-	const getResolutionOptions = (status: "" | "confirmed" | "dismissed") => [
+	const getResolutionOptions = () => [
 		{
 			value: "",
-			label:
-				status === ""
-					? "Choose the report decision first"
-					: "Choose what should happen next",
+			label: "Choose what should happen next",
 			disabled: true,
 			hidden: true,
 			placeholder: true,
 		},
-		...(status === "dismissed"
-			? [
-					{
-						value: "none",
-						label: "No follow-up — current warning is supported",
-					},
-					{
-						value: "duplicate",
-						label: "Close as duplicate — work is already tracked",
-					},
-				]
-			: [
-					{
-						value: "rule_review",
-						label: "Review warning policy — the rule may be wrong",
-					},
-					{
-						value: "source_correction",
-						label: "Correct source mapping — imported evidence is wrong",
-					},
-					{
-						value: "product_correction",
-						label: "Correct product data — stored food facts are wrong",
-					},
-					{
-						value: "duplicate",
-						label: "Close as duplicate — work is already tracked",
-					},
-					{
-						value: "none",
-						label: "No follow-up — the issue was already resolved",
-					},
-				]),
+		{
+			value: "rule_review",
+			label: "Review warning policy — the rule may be wrong",
+		},
+		{
+			value: "source_correction",
+			label: "Correct source mapping — imported evidence is wrong",
+		},
+		{
+			value: "product_correction",
+			label: "Correct product data — stored food facts are wrong",
+		},
+		{
+			value: "duplicate",
+			label: "Close as duplicate — work is already tracked",
+		},
+		{
+			value: "none",
+			label: "No follow-up — the issue was already resolved",
+		},
 	];
 
-	const getResolutionExplanation = (
-		status: "" | "confirmed" | "dismissed",
-		resolutionAction: string,
-	) => {
-		if (!status) {
-			return "Choose the report decision first. The valid follow-up choices will then appear.";
-		}
+	const getResolutionExplanation = (resolutionAction: string) => {
 		switch (resolutionAction) {
 			case "rule_review":
 				return "Saving creates one open warning-policy review owned by the Food warning policy team. It does not edit or activate a policy.";
@@ -211,9 +232,7 @@
 			case "duplicate":
 				return "Saving closes this report as work already tracked. It creates no new follow-up and leaves current warning behavior unchanged.";
 			case "none":
-				return status === "dismissed"
-					? "Saving dismisses this report, creates no follow-up, and leaves current warning behavior unchanged."
-					: "Saving confirms and closes this report because no further work remains. It creates no follow-up and changes no live data.";
+				return "Saving confirms and closes this report because no further work remains. It creates no follow-up and changes no live data.";
 			default:
 				return "Choose the exact follow-up or closeout that the reviewed evidence supports.";
 		}
@@ -264,6 +283,7 @@
 	>
 		{#each reports as report (report.id)}
 			{@const storedFacts = readStoredFacts(report.factSnapshot)}
+			{@const evidenceSummary = getEvidenceSummary(storedFacts)}
 			{@const decision = getDecision(report.id)}
 			<ModeratorReviewCard
 				title={report.foodDescription}
@@ -286,18 +306,14 @@
 					<div>
 						<span>Why blendCalc behaved this way</span>
 						<strong>{getCurrentWarningExplanation(report)}</strong>
-						<p>
-							{storedFacts.length > 0
-								? `${storedFacts.length} stored ${storedFacts.length === 1 ? "fact was" : "facts were"} used. Review ${storedFacts.length === 1 ? "it" : "them"} below before deciding.`
-								: "No matching fact was captured with this report. Do not assume the food is safe; inspect the available package and source evidence."}
-						</p>
+						<p>{evidenceSummary}</p>
 					</div>
 				</div>
 
-				<dl
-					class="food-warning-report-review__facts food-warning-report-review__report-facts"
-				>
-					{#if report.feedbackType === "missing_warning"}
+				{#if report.feedbackType === "missing_warning"}
+					<dl
+						class="food-warning-report-review__facts food-warning-report-review__report-facts"
+					>
 						<div>
 							<dt>Affected setting</dt>
 							<dd>{report.preferenceValue ?? "Not recorded"}</dd>
@@ -310,15 +326,8 @@
 									: "Not recorded"}
 							</dd>
 						</div>
-					{:else}
-						<div>
-							<dt>Warning under review</dt>
-							<dd>
-								{getCurrentWarningExplanation(report)}
-							</dd>
-						</div>
-					{/if}
-				</dl>
+					</dl>
+				{/if}
 
 				{#if report.reportDetails}
 					<div class="food-warning-report-review__report-note">
@@ -327,13 +336,13 @@
 					</div>
 				{/if}
 
-				<CollapsibleSection title="Evidence to compare" surface="panel" open>
+				<CollapsibleSection title="Evidence details" surface="panel">
 					<div class="food-warning-report-review__evidence">
 						{#if storedFacts.length > 0}
 							<div class="food-warning-report-review__stored-facts">
-								<strong>Evidence currently used by blendCalc</strong>
+								<strong>Stored records</strong>
 								<ul>
-									{#each storedFacts as fact}
+									{#each storedFacts as fact (`${fact.label}:${fact.factType}:${fact.sourceType}:${fact.sourceText ?? ""}`)}
 										<li>
 											<strong
 												>{formatReadableLabel(fact.factType)}: {fact.label}</strong
@@ -414,19 +423,16 @@
 					<input type="hidden" name="feedbackId" value={report.id} />
 					<header class="food-warning-report-review__decision-heading">
 						<span>Record the outcome</span>
-						<h3>Finish this review in three steps</h3>
-						<ol>
-							<li>Decide whether the user’s report is supported.</li>
-							<li>Route any required correction to the team that owns it.</li>
-							<li>
-								Write what evidence you checked so the decision is auditable.
-							</li>
-						</ol>
+						<h3>Choose the supported outcome</h3>
+						<p>
+							Keep the current behavior when the evidence supports it. Route a
+							correction only when the user’s report is right.
+						</p>
 					</header>
 					<SelectField
 						id={`compatibility-outcome-${report.id}`}
 						name="status"
-						label="1. Is the user’s report supported?"
+						label="What does the evidence support?"
 						value={decision.status}
 						options={[
 							{
@@ -438,47 +444,42 @@
 							},
 							{
 								value: "confirmed",
-								label:
-									report.feedbackType === "missing_warning"
-										? "Yes — blendCalc missed this warning"
-										: "Yes — the current warning is not supported",
+								label: "The user’s report is correct",
 							},
 							{
 								value: "dismissed",
-								label:
-									report.feedbackType === "missing_warning"
-										? "No — current warning coverage is correct"
-										: "No — the current warning is supported",
+								label: "The current warning is correct",
 							},
 						]}
 						helper={decision.status === "confirmed"
-							? "Yes closes the report as supported and can create the correction work selected below. It does not change live product data or policy by itself."
+							? "This confirms the report. Choose who owns the correction below; saving does not change live product data or policy by itself."
 							: decision.status === "dismissed"
-								? "No closes the report as unsupported or duplicate, creates no new correction work, and leaves current warning behavior unchanged."
-								: "Yes confirms the report and can create follow-up work. No dismisses it and preserves the current warning behavior."}
+								? "This closes the report with no follow-up and leaves the current warning behavior unchanged."
+								: "Choose between the current warning and the user’s report."}
 						onValueChange={(value) =>
 							setDecisionStatus(report.id, value as "confirmed" | "dismissed")}
 						disabled={pendingReportId !== null}
 						required
 					/>
-					<SelectField
-						id={`compatibility-action-${report.id}`}
-						name="resolutionAction"
-						label="2. What should happen next?"
-						value={decision.resolutionAction}
-						options={getResolutionOptions(decision.status)}
-						helper={getResolutionExplanation(
-							decision.status,
-							decision.resolutionAction,
-						)}
-						onValueChange={(value) => setResolutionAction(report.id, value)}
-						disabled={pendingReportId !== null || !decision.status}
-						required
-					/>
+					{#if decision.status === "confirmed"}
+						<SelectField
+							id={`compatibility-action-${report.id}`}
+							name="resolutionAction"
+							label="Who owns the correction?"
+							value={decision.resolutionAction}
+							options={getResolutionOptions()}
+							helper={getResolutionExplanation(decision.resolutionAction)}
+							onValueChange={(value) => setResolutionAction(report.id, value)}
+							disabled={pendingReportId !== null}
+							required
+						/>
+					{:else if decision.status === "dismissed"}
+						<input type="hidden" name="resolutionAction" value="none" />
+					{/if}
 					<TextField
 						id={`compatibility-review-note-${report.id}`}
 						name="reviewNote"
-						label="3. What evidence supports this decision?"
+						label="Evidence checked"
 						placeholder="Example: Package allergen statement lists soy; current warning is supported."
 						helper="Name the package, source, policy, or stored fact you checked. This note is saved privately."
 						maxlength={2000}
@@ -495,7 +496,7 @@
 						busy={pendingReportId === report.id}
 						disabled={pendingReportId !== null ||
 							!decision.status ||
-							!decision.resolutionAction ||
+							(decision.status === "confirmed" && !decision.resolutionAction) ||
 							!decision.reviewNote.trim()}
 						>{decision.status === "confirmed"
 							? [

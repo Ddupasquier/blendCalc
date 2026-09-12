@@ -9,6 +9,8 @@
 }
 
 .moderator-review-card {
+	grid-template-rows: auto minmax(0, 1fr);
+	height: 100%;
 	padding: $app-shell-card-padding;
 	background: $app-shell-surface-panel;
 	border: $app-border;

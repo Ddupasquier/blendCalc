@@ -3,6 +3,7 @@
 .catalog-product-review-disposition {
 	display: grid;
 	gap: $app-gap-sm;
+	width: min(100%, $app-privileged-card-grid-max-width);
 	padding: $app-shell-card-padding;
 	background: $app-shell-surface-soft;
 	border: $app-border;

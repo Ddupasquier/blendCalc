@@ -26,6 +26,23 @@
 	color: $app-shell-text-muted;
 }
 
+@media (min-width: ($app-breakpoint-md + 1px)) {
+	.moderator-review-list__items {
+		grid-template-columns: repeat(
+			auto-fit,
+			minmax(
+				min($app-privileged-card-grid-min-width, 100%),
+				$app-privileged-card-grid-max-width
+			)
+		);
+		align-items: stretch;
+	}
+
+	.moderator-review-list__empty {
+		width: min(100%, $app-privileged-card-grid-max-width);
+	}
+}
+
 @media (max-width: $app-breakpoint-xs),
 	(max-height: $app-breakpoint-height-compact) {
 	.moderator-review-list,
