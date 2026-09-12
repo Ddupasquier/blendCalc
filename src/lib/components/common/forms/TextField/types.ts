@@ -5,6 +5,7 @@ import type {
 } from "svelte/elements";
 
 export type TextFieldProps = {
+	element?: HTMLInputElement | null;
 	id: string;
 	name?: string;
 	label: string;

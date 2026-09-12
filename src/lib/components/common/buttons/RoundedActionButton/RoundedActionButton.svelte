@@ -4,6 +4,7 @@
 
 	let {
 		element = $bindable(),
+		className,
 		id,
 		type = "button",
 		variant = "primary",
@@ -19,6 +20,12 @@
 		"aria-expanded": ariaExpanded = undefined,
 		"aria-pressed": ariaPressed = undefined,
 		onclick,
+		onkeydown,
+		onpointerdown,
+		onpointermove,
+		onpointerup,
+		onpointercancel,
+		onlostpointercapture,
 		children,
 	}: RoundedActionButtonProps = $props();
 </script>
@@ -27,7 +34,7 @@
 	bind:this={element}
 	{id}
 	{type}
-	class="rounded-action-button"
+	class={`rounded-action-button${className ? ` ${className}` : ""}`}
 	class:rounded-action-button--full={fullWidth}
 	data-variant={variant}
 	data-content-align={contentAlign}
@@ -41,6 +48,12 @@
 	aria-pressed={ariaPressed}
 	disabled={disabled || busy}
 	{onclick}
+	{onkeydown}
+	{onpointerdown}
+	{onpointermove}
+	{onpointerup}
+	{onpointercancel}
+	{onlostpointercapture}
 >
 	{#if busy}
 		<LoadingSpinner size="small" decorative />

@@ -82,13 +82,14 @@ $app-shell-nav-height: 4.85rem;
 $app-shell-nav-height-compact: 4.25rem;
 $app-shell-padding-x: 1rem;
 $app-shell-padding-y: 1.2rem;
-$app-privileged-desktop-gutter: clamp($app-gap-lg, calc(20vw - 7rem), 15rem);
+$app-privileged-desktop-gutter: clamp(1.5rem, calc(20vw - 7rem), 15rem);
 $app-privileged-card-grid-min-width: 32rem;
 $app-privileged-card-grid-max-width: 40rem;
 
 $app-breakpoint-xs: 420px;
 $app-breakpoint-sm: 520px;
 $app-breakpoint-md: 680px;
+$app-breakpoint-privileged-desktop: 681px;
 $app-breakpoint-height-compact: 700px;
 
 // Shared app shell

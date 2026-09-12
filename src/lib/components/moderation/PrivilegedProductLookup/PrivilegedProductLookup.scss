@@ -5,7 +5,7 @@
 	display: none;
 }
 
-@media (min-width: ($app-breakpoint-md + 1px)) {
+@media (min-width: $app-breakpoint-privileged-desktop) {
 	.privileged-product-lookup-toolbar {
 		display: grid;
 		gap: $app-gap-xs;
@@ -66,7 +66,7 @@
 		border-bottom: 1px solid $app-shell-border-subtle;
 	}
 
-	.privileged-product-lookup__drag-handle {
+	:global(.rounded-action-button.privileged-product-lookup__drag-handle) {
 		display: flex;
 		align-items: center;
 		gap: $app-gap-sm;
@@ -130,41 +130,17 @@
 	.privileged-product-lookup__search {
 		display: grid;
 		gap: $app-gap-xs;
-
-		label {
-			color: $app-shell-text-muted;
-			font-size: $app-font-size-xs;
-			font-weight: $app-font-weight-bold;
-			letter-spacing: $app-letter-spacing-label;
-			text-transform: uppercase;
-		}
 	}
 
 	.privileged-product-lookup__search-row {
 		display: grid;
-		grid-template-columns: auto minmax(0, 1fr) auto;
-		align-items: center;
+		grid-template-columns: minmax(0, 1fr) auto;
+		align-items: end;
 		gap: $app-gap-sm;
-		min-height: $app-shell-control-height;
-		padding-inline-start: $app-shell-control-padding-x;
-		background: $app-shell-surface-control;
-		border: 1px solid $app-shell-border-subtle;
-		border-radius: $app-shell-radius-control;
 
-		&:focus-within {
-			border-color: $app-shell-accent-primary;
-		}
-
-		input {
+		:global(.text-field) {
 			width: 100%;
 			min-width: 0;
-			height: 100%;
-			padding: 0;
-			color: $app-shell-text-primary;
-			background: transparent;
-			border: 0;
-			outline: 0;
-			font: inherit;
 		}
 
 		:global(.rounded-action-button) {

@@ -2,7 +2,6 @@
 	import { onMount, tick } from "svelte";
 	import Barcode from "$lib/assets/icons/Barcode/Barcode.svelte";
 	import GripVertical from "$lib/assets/icons/GripVertical/GripVertical.svelte";
-	import Search from "$lib/assets/icons/Search/Search.svelte";
 	import X from "$lib/assets/icons/X/X.svelte";
 	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton/CircleIconButton.svelte";
 	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
@@ -11,6 +10,7 @@
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import PrivilegedProductPurge from "$lib/components/moderation/PrivilegedProductPurge/PrivilegedProductPurge.svelte";
 	import CheckboxField from "$lib/components/common/forms/CheckboxField/CheckboxField.svelte";
+	import TextField from "$lib/components/common/forms/TextField/TextField.svelte";
 	import { getUserFacingErrorMessage } from "$lib/utils/errors/userFacingErrors";
 	import { formatNutritionAmount } from "$lib/utils/food/nutrients/nutritionDisplay";
 	import { formatNutrientUnitNameForDisplay } from "$lib/utils/food/nutrients/nutrientUnitNames";
@@ -331,10 +331,12 @@
 		aria-label="Product lookup and comparison"
 	>
 		<header class="privileged-product-lookup__header">
-			<button
+			<RoundedActionButton
 				type="button"
-				class="privileged-product-lookup__drag-handle"
-				aria-label="Move product lookup. Use arrow keys to move; hold Shift for larger steps."
+				variant="quiet"
+				contentAlign="start"
+				className="privileged-product-lookup__drag-handle"
+				ariaLabel="Move product lookup. Use arrow keys to move; hold Shift for larger steps."
 				onpointerdown={startDrag}
 				onpointermove={moveDrag}
 				onpointerup={finishDrag}
@@ -347,7 +349,7 @@
 					<strong>Product lookup</strong>
 					<small>Drag this handle to keep it beside your work.</small>
 				</span>
-			</button>
+			</RoundedActionButton>
 			<CircleIconButton
 				label="Close product lookup"
 				variant="ghost"
@@ -381,17 +383,17 @@
 					void searchProducts();
 				}}
 			>
-				<label for={searchInputId}>Product name or UPC / GTIN</label>
 				<div class="privileged-product-lookup__search-row">
-					<Search size={19} />
-					<input
-						bind:this={searchInputElement}
-						bind:value={query}
+					<TextField
+						bind:element={searchInputElement}
 						id={searchInputId}
+						label="Product name or UPC / GTIN"
 						type="search"
 						placeholder="Example: Greek yogurt or 00076808006568"
 						autocomplete="off"
-						maxlength="120"
+						maxlength={120}
+						value={query}
+						oninput={(event) => (query = event.currentTarget.value)}
 					/>
 					<RoundedActionButton type="submit" busy={loading}>
 						Look up

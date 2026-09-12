@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
-	import type { PageData } from "./$types";
 	import BackButton from "$lib/components/common/buttons/BackButton/BackButton.svelte";
 	import PrivilegedActionBadge from "$lib/components/common/badges/PrivilegedActionBadge/PrivilegedActionBadge.svelte";
 	import ViewBody from "$lib/components/common/view/ViewBody/ViewBody.svelte";
@@ -11,8 +10,9 @@
 	import { APP_NAME } from "$lib/config/brand";
 	import { formatDocumentTitle } from "$lib/config/pageMetadata";
 	import { getProfilePrivilegedToolTitle } from "$lib/utils/moderation/profilePrivilegedTools";
+	import type { ProfilePrivilegedToolsPageProps } from "./types";
 
-	let { data }: { data: PageData } = $props();
+	let { data }: ProfilePrivilegedToolsPageProps = $props();
 	const title = $derived(getProfilePrivilegedToolTitle(data.access.role));
 </script>
 
