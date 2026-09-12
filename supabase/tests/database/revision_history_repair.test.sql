@@ -276,7 +276,7 @@ select ok(
 			)
 	)
 	and (
-		select count(*) = 2
+		select count(*) = 1
 		from public.catalog_health_issue_occurrences occurrence
 		where occurrence.issue_code = 'CATALOG_REVISION_EXPLANATION_MISSING'
 			and occurrence.shared_product_id in (
@@ -309,8 +309,7 @@ from (
 		('submission-occurrence', '73300000-0000-4000-8000-000000000011'::uuid, 'CATALOG_REVISION_MISSING'),
 		('observation-occurrence', '73300000-0000-4000-8000-000000000021'::uuid, 'CATALOG_REVISION_MISSING'),
 		('unrecoverable-occurrence', '73300000-0000-4000-8000-000000000031'::uuid, 'CATALOG_REVISION_MISSING'),
-		('structured-occurrence', '73300000-0000-4000-8000-000000000041'::uuid, 'CATALOG_REVISION_EXPLANATION_MISSING'),
-		('unexplained-occurrence', '73300000-0000-4000-8000-000000000051'::uuid, 'CATALOG_REVISION_EXPLANATION_MISSING')
+		('structured-occurrence', '73300000-0000-4000-8000-000000000041'::uuid, 'CATALOG_REVISION_EXPLANATION_MISSING')
 ) fixture(key, product_id, issue_code);
 
 set local role authenticated;
@@ -538,23 +537,18 @@ select ok(
 	'the restored change projection closes its normalized issue'
 );
 
-insert into revision_repair_test_state (key, value)
-select 'unexplained-result', public.run_catalog_health_repair(
-	(select value #>> '{}' from revision_repair_test_state where key = 'unexplained-occurrence'),
-	false,
-	null
-);
-
 reset role;
 
 select ok(
-	(select (value ->> 'unresolvedCount')::integer = 1 from revision_repair_test_state where key = 'unexplained-result')
-	and not exists (
+	exists (
 		select 1
 		from public.shared_product_revision_changes revision_change
 		where revision_change.revision_id = '73300000-0000-4000-8000-000000000052'
+			and revision_change.field_path = 'description'
+			and revision_change.previous_value = '"Unexplained Revision Original"'::jsonb
+			and revision_change.new_value = '"Unexplained Revision Updated"'::jsonb
 	),
-	'unrecoverable field-level history stays explicitly unresolved'
+	'exact predecessor and current snapshots automatically preserve the field-level difference'
 );
 
 select ok(
@@ -570,7 +564,7 @@ select ok(
 		from public.catalog_health_repair_runs run
 		where run.issue_code = 'CATALOG_REVISION_EXPLANATION_MISSING'
 			and run.mode = 'dry_run'
-			and run.status = 'completed_with_unresolved'
+			and run.status = 'completed'
 	),
 	'every revision repair outcome remains in the shared audit history'
 );
@@ -584,12 +578,12 @@ reset role;
 
 select is(
 	(select (value #>> '{overview,revisionHistoryGaps}')::integer from revision_repair_test_state where key = 'dashboard'),
-	2,
-	'the data-operations summary counts only the two unresolved fixture products'
+	1,
+	'the data-operations summary counts only the unresolved baseline fixture product'
 );
 
 select ok(
-	(select jsonb_array_length(value #> '{issues,revisions}') >= 2 from revision_repair_test_state where key = 'dashboard'),
+	(select jsonb_array_length(value #> '{issues,revisions}') >= 1 from revision_repair_test_state where key = 'dashboard'),
 	'the data-operations dashboard retains bounded unresolved revision links'
 );
 

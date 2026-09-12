@@ -174,7 +174,7 @@ select
 	product.barcode,
 	product.product_name,
 	product.category_option_id,
-	product.food,
+	product.food || '{"ingredients":"Tomatoes, onion","servingSize":125,"servingSizeUnit":"g"}'::jsonb,
 	true,
 	'product_update',
 	product.id,
@@ -237,9 +237,11 @@ select
 	product.id,
 	2,
 	product.category_option_id,
-	product.food,
+	submission.food,
 	product.source
 from public.shared_products product
+join public.shared_product_submissions submission
+	on submission.id = product.approved_submission_id
 where product.id = '11111111-1111-4111-8111-111111111111'::uuid;
 
 select is(
