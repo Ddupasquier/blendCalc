@@ -24,6 +24,7 @@ policies, or core data ownership changes.
 | [Nutrition Completeness and National Datasets](#nutrition-completeness-and-national-datasets) | completeness profiles, generic foods, exact source identifiers, CNF, CoFID, and future national food datasets                               |
 | [Product Source Policies](#product-source-policies)                                           | source evaluations and source-specific lifecycle policy                                                                                     |
 | [Database Functions](#rpc--database-functions)                                                | Shared trigger helpers, validation, search, publication, and API read functions                                                             |
+| [Rehearsal Export](#rehearsal-export-boundary)                                                | Explicit versioned read views, isolated owner/reader roles, and migration receipts                                                          |
 | [Storage](#storage-buckets)                                                                   | Private avatar and product-submission evidence buckets                                                                                      |
 | [Schema Update Checklist](#update-checklist)                                                  | Required migration, documentation, type, backfill, and test work                                                                            |
 
@@ -2466,6 +2467,37 @@ category, or serving fields.
 | `custom_access_token_hook`                             | Supabase Auth hook that adds the current database-owned `user`, `moderator`, `admin`, or `developer` role to newly issued JWTs as `app_role`                                                                                    |
 | `authorize_app_permission`                             | Requires an AAL2 session, then checks the signed `app_role` claim against database-owned role permissions for protected RLS policies                                                                                            |
 | `set_app_user_role`                                    | Service-only atomic role assignment/revocation with a matching moderation audit action                                                                                                                                          |
+
+## Rehearsal Export Boundary
+
+Migration `20260912143000_rehearsal_export_boundary.sql` defines the additive local
+Rehearsal extraction surface. The schema is not exposed through the Supabase Data API.
+It contains 126 explicit versioned `security_barrier` table views generated from the
+reviewed sanitization manifest plus `migration_history_v1`, which exposes only migration
+version, name, ordered statement count, and SHA-256—not migration SQL. A locked
+`source_scopes` registry binds each provisioned login to one approved owner UUID and the
+SHA-256 of that account's lowercased email. `source_scope_v1` exposes only the current
+`session_user` receipt; the reader cannot inspect the registry.
+
+`rehearsal_export_owner` and `rehearsal_export_reader` are inert `NOLOGIN` roles. The
+owner receives only explicit source-column `SELECT` and one matching forced-RLS policy
+per included table. The reader receives only export-schema `USAGE` and view `SELECT`.
+Neither role may create databases, roles, schemas, temporary objects, replicate, bypass
+RLS, or assume the owner. Excluded secret, enforcement, and ephemeral tables never get
+views or grants. A separately provisioned disposable login may inherit the reader with
+owner-role `SET` disabled and a read-only session default.
+
+`rehearsal_storage_reader` is a separate inert `NOLOGIN` JWT role granted to the local
+Supabase Authenticator. It receives Storage schema usage and object/bucket `SELECT`
+only. Its RLS policy admits public `food-image-assets` plus `profile-avatars` and
+`product-submission-evidence` objects whose first path segment matches the fixed owner
+UUID in protected JWT `app_metadata`. It receives no insert, update, delete, source-table,
+or application-schema permission. Exported bytes are bounded and checksummed before
+they enter an immutable local baseline.
+
+`pg_net` bootstrap grants require a separate elevated credential-provisioning hardening
+step and an independent zero-executable-network-function preflight. Applying this
+migration alone must never be treated as permission to extract hosted data.
 
 ## Storage Buckets
 
