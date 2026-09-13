@@ -330,10 +330,11 @@ select policies_are(
 	'public',
 	'product_precautionary_statements',
 	array[
+		'rehearsal_export_owner_read',
 		'Service role manages product precautionary statements',
 		'Users can read active catalog precautionary statements'
 	],
-	'precautionary evidence has explicit read and service-write policies'
+	'precautionary evidence has explicit app and Rehearsal read plus service-write policies'
 );
 
 select has_function(
