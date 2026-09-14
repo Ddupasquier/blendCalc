@@ -7,7 +7,7 @@ import {
 	waitForAppReady,
 } from "./support/browserTest";
 import { execFile } from "node:child_process";
-import type { Locator } from "@playwright/test";
+import type { Locator, Page } from "@playwright/test";
 import {
 	getAuthenticatedBrowserStatePath,
 	getLocalQaAccountForWorker,
@@ -31,6 +31,23 @@ const tinyPng = Buffer.from(
 );
 
 const moderatorEmail = "qa-moderator@blendcalc.local";
+const adminEmail = "qa-admin@blendcalc.local";
+const dataOperationsPath = "/profile/privileged-tools/data-operations";
+
+const signInLocalQaAdministratorWithAal2 = async (page: Page) => {
+	await deleteLocalQaAuthenticatorFactorsForEmail(adminEmail);
+	await signInLocalQaAccount({
+		page,
+		email: adminEmail,
+		nextPath: "/profile",
+	});
+	await page.goto(dataOperationsPath);
+	await expect(page).toHaveURL(
+		/\/auth\/mfa\/enroll\?next=%2Fprofile%2Fprivileged-tools%2Fdata-operations$/,
+	);
+	await finishLocalQaAuthenticatorEnrollment(page);
+	await expect(page).toHaveURL((url) => url.pathname === dataOperationsPath);
+};
 
 const runImageModerationFixture = async (command: "seed" | "cleanup") =>
 	new Promise<void>((resolve, reject) => {
@@ -1099,515 +1116,557 @@ test("privileged tools stay hidden from regular accounts and use a landing dashb
 	}
 });
 
-test("administrators can open data operations after direct AAL2 verification", async ({
-	page,
-}, testInfo) => {
-	test.setTimeout(150_000);
-	test.skip(
-		testInfo.project.name !== "desktop-chromium",
-		"One isolated Chromium project owns the shared administrator MFA persona.",
-	);
-	const adminEmail = "qa-admin@blendcalc.local";
-	const dataOperationsPath = "/profile/privileged-tools/data-operations";
-	await deleteLocalQaAuthenticatorFactorsForEmail(adminEmail);
-	const revisionHistoryFixture = await seedLocalQaCatalogRevisionHistory();
-	const pendingMappingId = await createLocalQaPendingNutrientMapping();
-	const resolvedMappingId = await recheckLocalQaDeterministicNutrientMapping();
-	await resetLocalQaDatasetImportEvidence("cnf-2026");
-	let displayConflictId: string | null = null;
+test.describe("administrator data operations", () => {
+	test.describe.configure({ mode: "serial" });
 
-	try {
-		await signInLocalQaAccount({
-			page,
-			email: adminEmail,
-			nextPath: "/profile",
-		});
-		await page.goto(dataOperationsPath);
-		await expect(page).toHaveURL(
-			/\/auth\/mfa\/enroll\?next=%2Fprofile%2Fprivileged-tools%2Fdata-operations$/,
+	test("uses direct AAL2 verification for responsive data operations and dataset evidence", async ({
+		page,
+	}, testInfo) => {
+		test.skip(
+			testInfo.project.name !== "desktop-chromium",
+			"One isolated Chromium project owns the shared administrator MFA persona.",
 		);
-		await finishLocalQaAuthenticatorEnrollment(page);
+		await resetLocalQaDatasetImportEvidence("cnf-2026");
 
-		await expect(page).toHaveURL((url) => url.pathname === dataOperationsPath);
-		const dataOperationsSheet = page.getByRole("dialog", {
-			name: "Data operations",
-		});
-		await expect(dataOperationsSheet).toBeVisible();
-		const originalViewport = page.viewportSize();
-		const privilegedPanel = dataOperationsSheet.locator(
-			".privileged-tool-right-sheet-panel",
-		);
-		const privilegedWorkspace = dataOperationsSheet.locator(
-			".privileged-tool-workspace-view",
-		);
-		const productLookupLauncher = page.getByRole("button", {
-			name: "Product lookup",
-			exact: true,
-		});
-		await page.setViewportSize({ width: 680, height: 900 });
-		await expect(productLookupLauncher).toBeHidden();
-		await expect
-			.poll(async () => (await privilegedPanel.boundingBox())?.width ?? 0)
-			.toBeLessThanOrEqual(520);
-		await expect
-			.poll(() =>
-				privilegedWorkspace.evaluate(
-					(element) => getComputedStyle(element).gridTemplateColumns,
-				),
-			)
-			.not.toContain(" ");
-		await page.setViewportSize({ width: 681, height: 900 });
-		await expect(productLookupLauncher).toBeVisible();
-		await expect(
-			privilegedWorkspace
-				.locator(".privileged-tool-workspace-view__guide")
-				.getByRole("button", { name: "Product lookup", exact: true }),
-		).toBeVisible();
-		await expect
-			.poll(async () => (await privilegedPanel.boundingBox())?.width ?? 0)
-			.toBeGreaterThan(520);
-		await expect
-			.poll(async () => (await privilegedPanel.boundingBox())?.width ?? 0)
-			.toBe(681);
-		await expect
-			.poll(() =>
-				privilegedWorkspace.evaluate(
-					(element) => getComputedStyle(element).gridTemplateColumns,
-				),
-			)
-			.toContain(" ");
-		await page.setViewportSize({ width: 1920, height: 900 });
-		await expect
-			.poll(async () => (await privilegedPanel.boundingBox())?.width ?? 0)
-			.toBe(1920);
-		await expect
-			.poll(() =>
-				privilegedPanel.evaluate((element) => {
-					const styles = getComputedStyle(element);
-					return [styles.paddingLeft, styles.paddingRight];
-				}),
-			)
-			.toEqual(["240px", "240px"]);
-		await page.setViewportSize({ width: 2400, height: 900 });
-		await expect
-			.poll(async () => (await privilegedPanel.boundingBox())?.width ?? 0)
-			.toBe(2400);
-		const requiredWorkCards = dataOperationsSheet.locator(
-			".catalog-data-operations-work-list__card",
-		);
-		expect(await requiredWorkCards.count()).toBeGreaterThan(1);
-		const requiredWorkCardGeometry = await requiredWorkCards.evaluateAll(
-			(cards) =>
-				cards.map((card) => {
-					const bounds = card.getBoundingClientRect();
-					return {
-						height: Math.round(bounds.height),
-						left: Math.round(bounds.left),
-						top: Math.round(bounds.top),
-						width: bounds.width,
-					};
-				}),
-		);
-		expect(
-			Math.max(...requiredWorkCardGeometry.map(({ width }) => width)),
-		).toBeLessThanOrEqual(640);
-		expect(
-			new Set(requiredWorkCardGeometry.map(({ left }) => left)).size,
-		).toBeGreaterThan(1);
-		const firstRowTop = Math.min(
-			...requiredWorkCardGeometry.map(({ top }) => top),
-		);
-		const firstRowHeights = requiredWorkCardGeometry
-			.filter(({ top }) => top === firstRowTop)
-			.map(({ height }) => height);
-		expect(firstRowHeights.length).toBeGreaterThan(1);
-		expect(new Set(firstRowHeights).size).toBe(1);
-		if (originalViewport) await page.setViewportSize(originalViewport);
-		await expect(
-			dataOperationsSheet.getByRole("region", { name: "Required work" }),
-		).toBeVisible();
-		const requiredWork = dataOperationsSheet.getByRole("region", {
-			name: "Required work",
-		});
-		await expect(
-			requiredWork.getByText("Canadian Nutrient File 2026"),
-		).toBeVisible();
-		await expect(
-			requiredWork.getByText("UK Composition of Foods Integrated Dataset 2021"),
-		).toBeVisible();
-		await expect(
-			requiredWork.getByText("Other tracked operational issues"),
-		).toHaveCount(0);
-		await expect(
-			requiredWork.getByText("Cannot finish this in the app yet"),
-		).toHaveCount(0);
-		await expect(
-			requiredWork.getByText(
-				"Nothing changes until that workflow records reviewed evidence.",
-			),
-		).toHaveCount(0);
-
-		const cnfDatasetCard = requiredWork
-			.locator("article")
-			.filter({ hasText: "Canadian Nutrient File 2026" });
-		await expect(
-			cnfDatasetCard.getByRole("link", { name: "Record dataset evidence" }),
-		).toBeVisible();
-		await page.setViewportSize({ width: 390, height: 844 });
-		await cnfDatasetCard
-			.getByRole("link", { name: "Record dataset evidence" })
-			.click();
-		const datasetEvidenceSheet = page.getByRole("dialog", {
-			name: "Record dataset evidence",
-		});
-		await expect(datasetEvidenceSheet).toBeVisible();
-		const datasetEvidenceBox = await datasetEvidenceSheet.boundingBox();
-		expect(datasetEvidenceBox?.x ?? -1).toBeGreaterThanOrEqual(0);
-		expect(
-			(datasetEvidenceBox?.x ?? 0) + (datasetEvidenceBox?.width ?? 0),
-		).toBeLessThanOrEqual(390);
-		await datasetEvidenceSheet
-			.getByLabel("2. When did the import finish? (UTC)")
-			.fill("2026-09-10T21:30");
-		await datasetEvidenceSheet
-			.getByLabel("3. What is the source file SHA-256?")
-			.fill("a".repeat(64));
-		await datasetEvidenceSheet
-			.getByRole("button", { name: "Preview evidence" })
-			.click();
-		await expect(
-			datasetEvidenceSheet.getByText("This will complete the dataset evidence"),
-		).toBeVisible();
-		const applyDatasetEvidence = datasetEvidenceSheet.getByRole("button", {
-			name: "Apply evidence and finish",
-		});
-		await expect(applyDatasetEvidence).toBeDisabled();
-		await datasetEvidenceSheet
-			.getByLabel("Why is this evidence trustworthy?")
-			.fill("Verified against the retained browser QA import record.");
-		await applyDatasetEvidence.scrollIntoViewIfNeeded();
-		await expect(applyDatasetEvidence).toBeInViewport();
-		await applyDatasetEvidence.click();
-		await expect(page).toHaveURL(
-			(url) =>
-				url.pathname === dataOperationsPath &&
-				url.searchParams.get("datasetEvidence") === "recorded",
-		);
-		await expect(
-			dataOperationsSheet.getByText("Dataset evidence recorded"),
-		).toBeVisible();
-		await expect(
-			dataOperationsSheet
-				.getByRole("region", { name: "Required work" })
-				.getByText("Canadian Nutrient File 2026"),
-		).toHaveCount(0);
-		await page.setViewportSize({ width: 1280, height: 800 });
-		await page.goto("/profile/privileged-tools");
-		await waitForAppReady(page);
-		const privilegedLandingFrame = page.locator(
-			".profile-privileged-tools-page",
-		);
-		await expect
-			.poll(
-				async () => (await privilegedLandingFrame.boundingBox())?.width ?? 0,
-			)
-			.toBe(1280);
-		await expect
-			.poll(() =>
-				privilegedLandingFrame.evaluate(
-					(element) => getComputedStyle(element).maxWidth,
-				),
-			)
-			.toBe("none");
-		const privilegedToolsLanding = page.locator(
-			".profile-privileged-tools-dashboard",
-		);
-		await expect(
-			privilegedToolsLanding.getByRole("region", { name: "Diagnostic checks" }),
-		).toBeVisible();
-		await expect(
-			privilegedToolsLanding.getByText(
-				"These broader checks can overlap. Use them to investigate catalog conditions; they do not add to the red action total.",
-			),
-		).toBeVisible();
-		await expect(
-			privilegedToolsLanding.getByText("Automated catalog monitoring"),
-		).toBeVisible();
-		const nutrientMappingGaps = privilegedToolsLanding
-			.locator("details")
-			.filter({ hasText: "Nutrient mapping gaps" });
-		await nutrientMappingGaps.locator("summary").click();
-		await expect(
-			nutrientMappingGaps.locator(
-				`a[href$="/nutrient-mappings/${pendingMappingId}"]`,
-			),
-		).toBeVisible();
-		await expect(
-			nutrientMappingGaps.locator(
-				`a[href$="/nutrient-mappings/${resolvedMappingId}"]`,
-			),
-		).toHaveCount(0);
-
-		await page.goto(
-			`${dataOperationsPath}/nutrient-mappings/${pendingMappingId}`,
-		);
-		await waitForAppReady(page);
-		const nutrientMappingSheet = page.getByRole("dialog", {
-			name: "Review nutrient mapping",
-		});
-		await expect
-			.poll(
-				async () =>
-					(
-						await nutrientMappingSheet
-							.locator(".nutrient-mapping-review")
-							.boundingBox()
-					)?.width ?? 0,
-			)
-			.toBeLessThanOrEqual(640);
-		await nutrientMappingSheet
-			.getByRole("combobox", {
-				name: "1. What does the evidence support?",
-			})
-			.click();
-		await nutrientMappingSheet
-			.getByRole("option", {
-				name: "Approve — evidence proves an exact identity",
-			})
-			.click();
-		const nutrientPicker = nutrientMappingSheet.getByRole("group", {
-			name: "Confirmed nutrient",
-		});
-		const nutrientSearch = nutrientPicker.getByRole("searchbox", {
-			name: "Find a compatible nutrient",
-		});
-		await nutrientSearch.fill("arachidonic");
-		await expect(
-			nutrientPicker.getByText(/1 of \d+ compatible nutrients match/u),
-		).toBeVisible();
-		await nutrientPicker
-			.getByRole("button", { name: /arachidonic.*855.*G/iu })
-			.click();
-		await expect(nutrientPicker.getByText(/arachidonic · G$/iu)).toBeVisible();
-		await nutrientSearch.fill("not-a-real-nutrient");
-		await expect(
-			nutrientPicker
-				.getByRole("status")
-				.filter({ hasText: "No compatible nutrient matches" }),
-		).toContainText("Your current selection is unchanged");
-		await expect(nutrientPicker.getByText(/arachidonic · G$/iu)).toBeVisible();
-		await nutrientPicker
-			.getByRole("button", { name: "Clear find a compatible nutrient" })
-			.click();
-		await expect(
-			nutrientPicker.getByText(/\d+ compatible nutrients available/u),
-		).toBeVisible();
-
-		await page.goto("/profile/privileged-tools");
-		await waitForAppReady(page);
-		const publicationGaps = privilegedToolsLanding
-			.locator("details")
-			.filter({ hasText: "blendCalcAPI publication gaps" });
-		await publicationGaps.locator("summary").click();
-		const namedMissingNutrients = publicationGaps.getByText(
-			"A required nutrient is missing: Fatty acids, total saturated",
-		);
-		expect(await namedMissingNutrients.count()).toBeGreaterThan(0);
-		await expect(namedMissingNutrients.first()).toBeVisible();
-		await privilegedToolsLanding
-			.getByRole("link", { name: "Inspect first product" })
-			.click();
-		const productReadinessSheet = page.getByRole("dialog", {
-			name: "Product readiness",
-		});
-		await expect(productReadinessSheet).toBeVisible();
-		await expect(
-			productReadinessSheet.getByText(
-				"The product stays available in blendCalc.",
-			),
-		).toBeVisible();
-		await expect(
-			productReadinessSheet.getByText(
-				"It stays withheld from public blendCalcAPI v1.",
-			),
-		).toBeVisible();
-		await expect(
-			productReadinessSheet.getByLabel(
-				"Why can this product not be published yet?",
-			),
-		).toBeVisible();
-		await expect(
-			productReadinessSheet.getByRole("button", {
-				name: "Finish review — keep out of public API",
-			}),
-		).toBeDisabled();
-		const correctionLink = productReadinessSheet.getByRole("link", {
-			name: "Open prefilled correction",
-		});
-		await expect(correctionLink).toBeVisible();
-		await expect(productReadinessSheet).toContainText(
-			"Opening it changes nothing; only an approved submission creates a new product revision.",
-		);
-		await correctionLink.click();
-		const correctionSheet = page.getByRole("dialog", {
-			name: "Correct Product Information",
-		});
-		await expect(correctionSheet).toBeVisible();
-		await expect(
-			correctionSheet.getByRole("link", {
-				name: "Return to originating review",
-			}),
-		).toHaveAttribute(
-			"href",
-			/\/profile\/privileged-tools\/data-operations\/products\//,
-		);
-		await correctionSheet
-			.getByRole("link", { name: "Return to originating review" })
-			.click();
-		await expect(
-			page.getByRole("dialog", { name: "Product readiness" }),
-		).toBeVisible();
-
-		await page.goto(dataOperationsPath);
-		await dataOperationsSheet
-			.getByRole("button", { name: "About Data operations" })
-			.click();
-		const informationSheet = page.getByRole("dialog", {
-			name: "About data operations",
-		});
-		await expect(
-			informationSheet.getByRole("heading", { name: "When to use this" }),
-		).toBeVisible();
-		await expect(
-			informationSheet.getByRole("heading", { name: "Done when" }),
-		).toBeVisible();
-		await informationSheet.getByRole("button", { name: "Got it" }).click();
-
-		await page.setViewportSize({ width: 390, height: 844 });
-		await page.goto(
-			`${dataOperationsPath}/products/${revisionHistoryFixture.productId}`,
-		);
-		await waitForAppReady(page);
-		const revisionHistorySheet = page.getByRole("dialog", {
-			name: "Product readiness",
-		});
-		await expect(
-			revisionHistorySheet.getByText("Revision 2 needs change evidence"),
-		).toHaveCount(0);
-		await revisionHistorySheet
-			.getByText("Revision and verification", { exact: true })
-			.click();
-		await expect(
-			revisionHistorySheet.getByRole("heading", {
-				name: "What changed in each revision",
-			}),
-		).toBeVisible();
-		const explainedRevision = revisionHistorySheet
-			.locator(".catalog-product-passport__revision-history > ol > li")
-			.filter({ hasText: "Revision 2" });
-		await expect(explainedRevision).toContainText(
-			"Ingredient evidence confidence was added: Source Verified.",
-		);
-		await expect(explainedRevision).toContainText(
-			"Ingredient evidence source was added: Usda.",
-		);
-		const historyBox = await explainedRevision.boundingBox();
-		expect(historyBox?.x ?? -1).toBeGreaterThanOrEqual(0);
-		expect((historyBox?.x ?? 0) + (historyBox?.width ?? 0)).toBeLessThanOrEqual(
-			390,
-		);
-
-		await page.goto("/profile/privileged-tools");
-		await waitForAppReady(page);
-		const revisionHistoryGaps = privilegedToolsLanding
-			.locator("details")
-			.filter({ hasText: "Revision history gaps" });
-		await expect(revisionHistoryGaps.locator("summary")).toContainText("Clear");
-
-		const displayConflict = await seedLocalQaCatalogValueConflict();
-		displayConflictId = displayConflict.id;
-		await page.goto("/profile/privileged-tools/catalog-review-work");
-		await waitForAppReady(page);
-		const catalogReviewSheet = page.getByRole("dialog", {
-			name: "Catalog review work",
-		});
-		const conflictProduct = catalogReviewSheet
-			.locator(
-				`a[href="/profile/privileged-tools/catalog-review-work/products/${displayConflict.productId}"]`,
-			)
-			.first();
-		await expect(conflictProduct).toContainText("1 conflict");
-		await expect(conflictProduct).toContainText("1 item");
-		await conflictProduct.click();
-		const conflictReadinessSheet = page.getByRole("dialog", {
-			name: "Product readiness",
-		});
-		await expect(
-			conflictReadinessSheet.getByText("Sodium, Na", { exact: true }),
-		).toBeVisible();
-		await expect(
-			conflictReadinessSheet.getByRole("heading", {
-				name: "Decide the 1 actual conflict",
-			}),
-		).toBeVisible();
-		await expect(
-			conflictReadinessSheet.getByText("Stored value", { exact: true }),
-		).toBeVisible();
-		await expect(
-			conflictReadinessSheet
-				.getByText("USDA FoodData Central · record 1862061")
-				.first(),
-		).toBeVisible();
-		await expect(
-			conflictReadinessSheet.getByText("643 mg · per 100 g").first(),
-		).toBeVisible();
-		await expect(
-			conflictReadinessSheet.getByText("180.04 mg per 28 g serving").first(),
-		).toBeVisible();
-		await expect(
-			conflictReadinessSheet.getByText("400 mg · per 100 g"),
-		).toBeVisible();
-		await expect(
-			conflictReadinessSheet.getByRole("combobox", {
-				name: "What should happen to Sodium, Na?",
-			}),
-		).toBeVisible();
-		await expect(
-			conflictReadinessSheet.getByRole("button", {
-				name: "Finish product review",
-			}),
-		).toBeDisabled();
-
-		await page.goto("/profile");
-		await waitForAppReady(page);
-		await page.getByRole("link", { name: /Admin tools/ }).click();
-		await expect(page).toHaveURL(/\/profile\/privileged-tools$/);
-		const adminToolsDashboard = page.locator(
-			".profile-privileged-tools-dashboard",
-		);
-		await expect(
-			adminToolsDashboard
-				.getByRole("link", { name: /Catalog data operations/ })
-				.locator(".action-required-count-badge"),
-		).toBeVisible();
-		await expect(
-			adminToolsDashboard
-				.getByRole("link", { name: /Account access/ })
-				.locator(".action-required-count-badge"),
-		).toHaveCount(0);
-	} finally {
 		try {
-			await resetLocalQaDatasetImportEvidence("cnf-2026");
-			if (displayConflictId) {
-				await deleteLocalQaCatalogValueConflict(displayConflictId);
-			}
+			await signInLocalQaAdministratorWithAal2(page);
+			const dataOperationsSheet = page.getByRole("dialog", {
+				name: "Data operations",
+			});
+			await expect(dataOperationsSheet).toBeVisible();
+			const originalViewport = page.viewportSize();
+			const privilegedPanel = dataOperationsSheet.locator(
+				".privileged-tool-right-sheet-panel",
+			);
+			const privilegedWorkspace = dataOperationsSheet.locator(
+				".privileged-tool-workspace-view",
+			);
+			const productLookupLauncher = page.getByRole("button", {
+				name: "Product lookup",
+				exact: true,
+			});
+			await page.setViewportSize({ width: 680, height: 900 });
+			await expect(productLookupLauncher).toBeHidden();
+			await expect
+				.poll(async () => (await privilegedPanel.boundingBox())?.width ?? 0)
+				.toBeLessThanOrEqual(520);
+			await expect
+				.poll(() =>
+					privilegedWorkspace.evaluate(
+						(element) => getComputedStyle(element).gridTemplateColumns,
+					),
+				)
+				.not.toContain(" ");
+			await page.setViewportSize({ width: 681, height: 900 });
+			await expect(productLookupLauncher).toBeVisible();
+			await expect(
+				privilegedWorkspace
+					.locator(".privileged-tool-workspace-view__guide")
+					.getByRole("button", { name: "Product lookup", exact: true }),
+			).toBeVisible();
+			await expect
+				.poll(async () => (await privilegedPanel.boundingBox())?.width ?? 0)
+				.toBeGreaterThan(520);
+			await expect
+				.poll(async () => (await privilegedPanel.boundingBox())?.width ?? 0)
+				.toBe(681);
+			await expect
+				.poll(() =>
+					privilegedWorkspace.evaluate(
+						(element) => getComputedStyle(element).gridTemplateColumns,
+					),
+				)
+				.toContain(" ");
+			await page.setViewportSize({ width: 1920, height: 900 });
+			await expect
+				.poll(async () => (await privilegedPanel.boundingBox())?.width ?? 0)
+				.toBe(1920);
+			await expect
+				.poll(() =>
+					privilegedPanel.evaluate((element) => {
+						const styles = getComputedStyle(element);
+						return [styles.paddingLeft, styles.paddingRight];
+					}),
+				)
+				.toEqual(["240px", "240px"]);
+			await page.setViewportSize({ width: 2400, height: 900 });
+			await expect
+				.poll(async () => (await privilegedPanel.boundingBox())?.width ?? 0)
+				.toBe(2400);
+			const requiredWorkCards = dataOperationsSheet.locator(
+				".catalog-data-operations-work-list__card",
+			);
+			expect(await requiredWorkCards.count()).toBeGreaterThan(1);
+			const requiredWorkCardGeometry = await requiredWorkCards.evaluateAll(
+				(cards) =>
+					cards.map((card) => {
+						const bounds = card.getBoundingClientRect();
+						return {
+							height: Math.round(bounds.height),
+							left: Math.round(bounds.left),
+							top: Math.round(bounds.top),
+							width: bounds.width,
+						};
+					}),
+			);
+			expect(
+				Math.max(...requiredWorkCardGeometry.map(({ width }) => width)),
+			).toBeLessThanOrEqual(640);
+			expect(
+				new Set(requiredWorkCardGeometry.map(({ left }) => left)).size,
+			).toBeGreaterThan(1);
+			const firstRowTop = Math.min(
+				...requiredWorkCardGeometry.map(({ top }) => top),
+			);
+			const firstRowHeights = requiredWorkCardGeometry
+				.filter(({ top }) => top === firstRowTop)
+				.map(({ height }) => height);
+			expect(firstRowHeights.length).toBeGreaterThan(1);
+			expect(new Set(firstRowHeights).size).toBe(1);
+			if (originalViewport) await page.setViewportSize(originalViewport);
+			await expect(
+				dataOperationsSheet.getByRole("region", { name: "Required work" }),
+			).toBeVisible();
+			const requiredWork = dataOperationsSheet.getByRole("region", {
+				name: "Required work",
+			});
+			await expect(
+				requiredWork.getByText("Canadian Nutrient File 2026"),
+			).toBeVisible();
+			await expect(
+				requiredWork.getByText(
+					"UK Composition of Foods Integrated Dataset 2021",
+				),
+			).toBeVisible();
+			await expect(
+				requiredWork.getByText("Other tracked operational issues"),
+			).toHaveCount(0);
+			await expect(
+				requiredWork.getByText("Cannot finish this in the app yet"),
+			).toHaveCount(0);
+			await expect(
+				requiredWork.getByText(
+					"Nothing changes until that workflow records reviewed evidence.",
+				),
+			).toHaveCount(0);
+
+			const cnfDatasetCard = requiredWork
+				.locator("article")
+				.filter({ hasText: "Canadian Nutrient File 2026" });
+			await expect(
+				cnfDatasetCard.getByRole("link", { name: "Record dataset evidence" }),
+			).toBeVisible();
+			await page.setViewportSize({ width: 390, height: 844 });
+			await cnfDatasetCard
+				.getByRole("link", { name: "Record dataset evidence" })
+				.click();
+			const datasetEvidenceSheet = page.getByRole("dialog", {
+				name: "Record dataset evidence",
+			});
+			await expect(datasetEvidenceSheet).toBeVisible();
+			const datasetEvidenceBox = await datasetEvidenceSheet.boundingBox();
+			expect(datasetEvidenceBox?.x ?? -1).toBeGreaterThanOrEqual(0);
+			expect(
+				(datasetEvidenceBox?.x ?? 0) + (datasetEvidenceBox?.width ?? 0),
+			).toBeLessThanOrEqual(390);
+			await datasetEvidenceSheet
+				.getByLabel("2. When did the import finish? (UTC)")
+				.fill("2026-09-10T21:30");
+			await datasetEvidenceSheet
+				.getByLabel("3. What is the source file SHA-256?")
+				.fill("a".repeat(64));
+			await datasetEvidenceSheet
+				.getByRole("button", { name: "Preview evidence" })
+				.click();
+			await expect(
+				datasetEvidenceSheet.getByText(
+					"This will complete the dataset evidence",
+				),
+			).toBeVisible();
+			const applyDatasetEvidence = datasetEvidenceSheet.getByRole("button", {
+				name: "Apply evidence and finish",
+			});
+			await expect(applyDatasetEvidence).toBeDisabled();
+			await datasetEvidenceSheet
+				.getByLabel("Why is this evidence trustworthy?")
+				.fill("Verified against the retained browser QA import record.");
+			await applyDatasetEvidence.scrollIntoViewIfNeeded();
+			await expect(applyDatasetEvidence).toBeInViewport();
+			await applyDatasetEvidence.click();
+			await expect(page).toHaveURL(
+				(url) =>
+					url.pathname === dataOperationsPath &&
+					url.searchParams.get("datasetEvidence") === "recorded",
+			);
+			await expect(
+				dataOperationsSheet.getByText("Dataset evidence recorded"),
+			).toBeVisible();
+			await expect(
+				dataOperationsSheet
+					.getByRole("region", { name: "Required work" })
+					.getByText("Canadian Nutrient File 2026"),
+			).toHaveCount(0);
+		} finally {
 			try {
+				await resetLocalQaDatasetImportEvidence("cnf-2026");
+			} finally {
+				await deleteLocalQaAuthenticatorFactorsForEmail(adminEmail);
+			}
+		}
+	});
+
+	test("keeps deterministic nutrient mappings out of administrator diagnostics", async ({
+		page,
+	}, testInfo) => {
+		test.skip(
+			testInfo.project.name !== "desktop-chromium",
+			"One isolated Chromium project owns the shared administrator MFA persona.",
+		);
+		const pendingMappingId = await createLocalQaPendingNutrientMapping();
+		const resolvedMappingId =
+			await recheckLocalQaDeterministicNutrientMapping();
+
+		try {
+			await signInLocalQaAdministratorWithAal2(page);
+			await page.setViewportSize({ width: 1280, height: 800 });
+			await page.goto("/profile/privileged-tools");
+			await waitForAppReady(page);
+			const privilegedLandingFrame = page.locator(
+				".profile-privileged-tools-page",
+			);
+			await expect
+				.poll(
+					async () => (await privilegedLandingFrame.boundingBox())?.width ?? 0,
+				)
+				.toBe(1280);
+			await expect
+				.poll(() =>
+					privilegedLandingFrame.evaluate(
+						(element) => getComputedStyle(element).maxWidth,
+					),
+				)
+				.toBe("none");
+			const privilegedToolsLanding = page.locator(
+				".profile-privileged-tools-dashboard",
+			);
+			await expect(
+				privilegedToolsLanding.getByRole("region", {
+					name: "Diagnostic checks",
+				}),
+			).toBeVisible();
+			await expect(
+				privilegedToolsLanding.getByText(
+					"These broader checks can overlap. Use them to investigate catalog conditions; they do not add to the red action total.",
+				),
+			).toBeVisible();
+			await expect(
+				privilegedToolsLanding.getByText("Automated catalog monitoring"),
+			).toBeVisible();
+			const nutrientMappingGaps = privilegedToolsLanding
+				.locator("details")
+				.filter({ hasText: "Nutrient mapping gaps" });
+			await nutrientMappingGaps.locator("summary").click();
+			await expect(
+				nutrientMappingGaps.locator(
+					`a[href$="/nutrient-mappings/${pendingMappingId}"]`,
+				),
+			).toBeVisible();
+			await expect(
+				nutrientMappingGaps.locator(
+					`a[href$="/nutrient-mappings/${resolvedMappingId}"]`,
+				),
+			).toHaveCount(0);
+
+			await page.goto(
+				`${dataOperationsPath}/nutrient-mappings/${pendingMappingId}`,
+			);
+			await waitForAppReady(page);
+			const nutrientMappingSheet = page.getByRole("dialog", {
+				name: "Review nutrient mapping",
+			});
+			await expect
+				.poll(
+					async () =>
+						(
+							await nutrientMappingSheet
+								.locator(".nutrient-mapping-review")
+								.boundingBox()
+						)?.width ?? 0,
+				)
+				.toBeLessThanOrEqual(640);
+			await nutrientMappingSheet
+				.getByRole("combobox", {
+					name: "1. What does the evidence support?",
+				})
+				.click();
+			await nutrientMappingSheet
+				.getByRole("option", {
+					name: "Approve — evidence proves an exact identity",
+				})
+				.click();
+			const nutrientPicker = nutrientMappingSheet.getByRole("group", {
+				name: "Confirmed nutrient",
+			});
+			const nutrientSearch = nutrientPicker.getByRole("searchbox", {
+				name: "Find a compatible nutrient",
+			});
+			await nutrientSearch.fill("arachidonic");
+			await expect(
+				nutrientPicker.getByText(/1 of \d+ compatible nutrients match/u),
+			).toBeVisible();
+			await nutrientPicker
+				.getByRole("button", { name: /arachidonic.*855.*G/iu })
+				.click();
+			await expect(
+				nutrientPicker.getByText(/arachidonic · G$/iu),
+			).toBeVisible();
+			await nutrientSearch.fill("not-a-real-nutrient");
+			await expect(
+				nutrientPicker
+					.getByRole("status")
+					.filter({ hasText: "No compatible nutrient matches" }),
+			).toContainText("Your current selection is unchanged");
+			await expect(
+				nutrientPicker.getByText(/arachidonic · G$/iu),
+			).toBeVisible();
+			await nutrientPicker
+				.getByRole("button", { name: "Clear find a compatible nutrient" })
+				.click();
+			await expect(
+				nutrientPicker.getByText(/\d+ compatible nutrients available/u),
+			).toBeVisible();
+		} finally {
+			try {
+				await deleteLocalQaPendingNutrientMapping(pendingMappingId);
+			} finally {
+				await deleteLocalQaAuthenticatorFactorsForEmail(adminEmail);
+			}
+		}
+	});
+
+	test("keeps product repair, revision, and conflict evidence reachable after AAL2 verification", async ({
+		page,
+	}, testInfo) => {
+		test.skip(
+			testInfo.project.name !== "desktop-chromium",
+			"One isolated Chromium project owns the shared administrator MFA persona.",
+		);
+		const revisionHistoryFixture = await seedLocalQaCatalogRevisionHistory();
+		let displayConflictId: string | null = null;
+
+		try {
+			await signInLocalQaAdministratorWithAal2(page);
+
+			await page.goto("/profile/privileged-tools");
+			await waitForAppReady(page);
+			const privilegedToolsLanding = page.locator(
+				".profile-privileged-tools-dashboard",
+			);
+			const publicationGaps = privilegedToolsLanding
+				.locator("details")
+				.filter({ hasText: "blendCalcAPI publication gaps" });
+			await publicationGaps.locator("summary").click();
+			const namedMissingNutrients = publicationGaps.getByText(
+				"A required nutrient is missing: Fatty acids, total saturated",
+			);
+			expect(await namedMissingNutrients.count()).toBeGreaterThan(0);
+			await expect(namedMissingNutrients.first()).toBeVisible();
+			await privilegedToolsLanding
+				.getByRole("link", { name: "Inspect first product" })
+				.click();
+			const productReadinessSheet = page.getByRole("dialog", {
+				name: "Product readiness",
+			});
+			await expect(productReadinessSheet).toBeVisible();
+			await expect(
+				productReadinessSheet.getByText(
+					"The product stays available in blendCalc.",
+				),
+			).toBeVisible();
+			await expect(
+				productReadinessSheet.getByText(
+					"It stays withheld from public blendCalcAPI v1.",
+				),
+			).toBeVisible();
+			await expect(
+				productReadinessSheet.getByLabel(
+					"Why can this product not be published yet?",
+				),
+			).toBeVisible();
+			await expect(
+				productReadinessSheet.getByRole("button", {
+					name: "Finish review — keep out of public API",
+				}),
+			).toBeDisabled();
+			const correctionLink = productReadinessSheet.getByRole("link", {
+				name: "Open prefilled correction",
+			});
+			await expect(correctionLink).toBeVisible();
+			await expect(productReadinessSheet).toContainText(
+				"Opening it changes nothing; only an approved submission creates a new product revision.",
+			);
+			await correctionLink.click();
+			const correctionSheet = page.getByRole("dialog", {
+				name: "Correct Product Information",
+			});
+			await expect(correctionSheet).toBeVisible();
+			await expect(
+				correctionSheet.getByRole("link", {
+					name: "Return to originating review",
+				}),
+			).toHaveAttribute(
+				"href",
+				/\/profile\/privileged-tools\/data-operations\/products\//,
+			);
+			await correctionSheet
+				.getByRole("link", { name: "Return to originating review" })
+				.click();
+			await expect(
+				page.getByRole("dialog", { name: "Product readiness" }),
+			).toBeVisible();
+
+			await page.goto(dataOperationsPath);
+			await waitForAppReady(page);
+			const dataOperationsSheet = page.getByRole("dialog", {
+				name: "Data operations",
+			});
+			await dataOperationsSheet
+				.getByRole("button", { name: "About Data operations" })
+				.click();
+			const informationSheet = page.getByRole("dialog", {
+				name: "About data operations",
+			});
+			await expect(
+				informationSheet.getByRole("heading", { name: "When to use this" }),
+			).toBeVisible();
+			await expect(
+				informationSheet.getByRole("heading", { name: "Done when" }),
+			).toBeVisible();
+			await informationSheet.getByRole("button", { name: "Got it" }).click();
+
+			await page.setViewportSize({ width: 390, height: 844 });
+			await page.goto(
+				`${dataOperationsPath}/products/${revisionHistoryFixture.productId}`,
+			);
+			await waitForAppReady(page);
+			const revisionHistorySheet = page.getByRole("dialog", {
+				name: "Product readiness",
+			});
+			await expect(
+				revisionHistorySheet.getByText("Revision 2 needs change evidence"),
+			).toHaveCount(0);
+			await revisionHistorySheet
+				.getByText("Revision and verification", { exact: true })
+				.click();
+			await expect(
+				revisionHistorySheet.getByRole("heading", {
+					name: "What changed in each revision",
+				}),
+			).toBeVisible();
+			const explainedRevision = revisionHistorySheet
+				.locator(".catalog-product-passport__revision-history > ol > li")
+				.filter({ hasText: "Revision 2" });
+			await expect(explainedRevision).toContainText(
+				"Ingredient evidence confidence was added: Source Verified.",
+			);
+			await expect(explainedRevision).toContainText(
+				"Ingredient evidence source was added: Usda.",
+			);
+			const historyBox = await explainedRevision.boundingBox();
+			expect(historyBox?.x ?? -1).toBeGreaterThanOrEqual(0);
+			expect(
+				(historyBox?.x ?? 0) + (historyBox?.width ?? 0),
+			).toBeLessThanOrEqual(390);
+
+			await page.goto("/profile/privileged-tools");
+			await waitForAppReady(page);
+			const revisionHistoryGaps = privilegedToolsLanding
+				.locator("details")
+				.filter({ hasText: "Revision history gaps" });
+			await expect(revisionHistoryGaps.locator("summary")).toContainText(
+				"Clear",
+			);
+
+			const displayConflict = await seedLocalQaCatalogValueConflict();
+			displayConflictId = displayConflict.id;
+			await page.goto("/profile/privileged-tools/catalog-review-work");
+			await waitForAppReady(page);
+			const catalogReviewSheet = page.getByRole("dialog", {
+				name: "Catalog review work",
+			});
+			const conflictProduct = catalogReviewSheet
+				.locator(
+					`a[href="/profile/privileged-tools/catalog-review-work/products/${displayConflict.productId}"]`,
+				)
+				.first();
+			await expect(conflictProduct).toContainText("1 conflict");
+			await expect(conflictProduct).toContainText("1 item");
+			await conflictProduct.click();
+			const conflictReadinessSheet = page.getByRole("dialog", {
+				name: "Product readiness",
+			});
+			await expect(
+				conflictReadinessSheet.getByText("Sodium, Na", { exact: true }),
+			).toBeVisible();
+			await expect(
+				conflictReadinessSheet.getByRole("heading", {
+					name: "Decide the 1 actual conflict",
+				}),
+			).toBeVisible();
+			await expect(
+				conflictReadinessSheet.getByText("Stored value", { exact: true }),
+			).toBeVisible();
+			await expect(
+				conflictReadinessSheet
+					.getByText("USDA FoodData Central · record 1862061")
+					.first(),
+			).toBeVisible();
+			await expect(
+				conflictReadinessSheet.getByText("643 mg · per 100 g").first(),
+			).toBeVisible();
+			await expect(
+				conflictReadinessSheet.getByText("180.04 mg per 28 g serving").first(),
+			).toBeVisible();
+			await expect(
+				conflictReadinessSheet.getByText("400 mg · per 100 g"),
+			).toBeVisible();
+			await expect(
+				conflictReadinessSheet.getByRole("combobox", {
+					name: "What should happen to Sodium, Na?",
+				}),
+			).toBeVisible();
+			await expect(
+				conflictReadinessSheet.getByRole("button", {
+					name: "Finish product review",
+				}),
+			).toBeDisabled();
+
+			await page.goto("/profile");
+			await waitForAppReady(page);
+			await page.getByRole("link", { name: /Admin tools/ }).click();
+			await expect(page).toHaveURL(/\/profile\/privileged-tools$/);
+			const adminToolsDashboard = page.locator(
+				".profile-privileged-tools-dashboard",
+			);
+			await expect(
+				adminToolsDashboard
+					.getByRole("link", { name: /Catalog data operations/ })
+					.locator(".action-required-count-badge"),
+			).toBeVisible();
+			await expect(
+				adminToolsDashboard
+					.getByRole("link", { name: /Account access/ })
+					.locator(".action-required-count-badge"),
+			).toHaveCount(0);
+		} finally {
+			try {
+				if (displayConflictId) {
+					await deleteLocalQaCatalogValueConflict(displayConflictId);
+				}
 				await cleanupLocalQaCatalogRevisionHistory();
 			} finally {
-				await deleteLocalQaPendingNutrientMapping(pendingMappingId);
+				await deleteLocalQaAuthenticatorFactorsForEmail(adminEmail);
 			}
-		} finally {
-			await deleteLocalQaAuthenticatorFactorsForEmail(adminEmail);
 		}
-	}
+	});
 });
