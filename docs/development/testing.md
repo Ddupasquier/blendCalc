@@ -299,6 +299,9 @@ The checked-in workflows use Node.js 24 and a clean dependency install:
   On a full candidate, source checks and browser jobs run concurrently, and desktop
   Chromium is split across two isolated shards. Desktop Chromium owns every routed interaction, mobile Chromium owns
   compact/touch contracts, and Firefox/WebKit own tagged compatibility smoke coverage. Its
+  browser jobs use the maintained browser-verification wrapper so each isolated runner
+  starts, configures, and cleans up both the application database and the separate
+  blendCalcAPI database before testing public API routes. Its
   source job supplies compile-only local public Supabase placeholders so Svelte can
   generate `$env/static/public` types without production credentials or database
   access;

@@ -242,8 +242,6 @@ jobs:
         run: npm ci
       - name: Install browser
         run: npx playwright install --with-deps ${{ matrix.browser }}
-      - name: Prepare isolated test database
-        run: npm run test:e2e:prepare
       - name: Run browser project
         env:
           PLAYWRIGHT_PROJECT: ${{ matrix.project }}
@@ -253,7 +251,7 @@ jobs:
           if [[ -n "$PLAYWRIGHT_SHARD" ]]; then
             args+=(--shard="$PLAYWRIGHT_SHARD")
           fi
-          npx playwright test "${args[@]}"
+          npm run test:e2e -- "${args[@]}"
       - name: Upload failure evidence
         if: failure()
         uses: actions/upload-artifact@v4
