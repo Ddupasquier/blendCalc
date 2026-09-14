@@ -86,6 +86,12 @@ assertion in the same change.
 
 ## Development Workflow
 
+Test application and Playwright processes run with an allowlisted environment assembled
+from the disposable local application and blendCalcAPI stacks. They do not layer the
+developer's base `.env` file or inherit hosted/provider credentials from the parent
+shell. A non-loopback database or Playwright base URL fails before the application or
+browser starts.
+
 ### Fast Change Loop
 
 Run the smallest relevant test while editing:
@@ -293,6 +299,9 @@ The checked-in workflows use Node.js 24 and a clean dependency install:
   On a full candidate, source checks and browser jobs run concurrently, and desktop
   Chromium is split across two isolated shards. Desktop Chromium owns every routed interaction, mobile Chromium owns
   compact/touch contracts, and Firefox/WebKit own tagged compatibility smoke coverage. Its
+  browser jobs use the maintained browser-verification wrapper so each isolated runner
+  starts, configures, and cleans up both the application database and the separate
+  blendCalcAPI database before testing public API routes. Its
   source job supplies compile-only local public Supabase placeholders so Svelte can
   generate `$env/static/public` types without production credentials or database
   access;
@@ -345,6 +354,22 @@ artifacts, snapshots, and authoring rules.
 All destructive database verification uses the disposable local Supabase stack. It
 must not copy production records, call external food providers during routine tests, or
 reset a linked project. See [Database Testing](database-testing.md).
+
+Compile and unit-test commands run through the hermetic TEST command wrapper. The
+wrapper allowlists process settings, disables Vite environment-file loading, strips
+ambient hosted credentials and provider secrets, and supplies only loopback database
+targets. Browser verification uses the same process boundary with credentials derived
+from its disposable local application and isolated blendCalcAPI stacks.
+
+Rehearsal is not a replacement for TEST. TEST proves deterministic fixtures and routine
+browser behavior; Rehearsal proves schema evolution against a sanitized,
+production-shaped snapshot on a separately restored local stack. Generate or select a
+verified baseline, run `npm run rehearsal -- run`, and use
+`npm run rehearsal:app:prove` for the maintained application/CSP/Auth/API proof. Launch
+`npm run dev:rehearsal` for direct review of only the flows affected by candidate
+migrations. A Rehearsal pass requires the database verifier plus focused application
+evidence; it never proves production-side
+effects, Storage bytes, external providers, real email, OAuth, or hosted configuration.
 
 Automation can complete a QA task only when it proves every step and expected outcome
 with the required corpus, project, route, and viewport. Physical devices, named

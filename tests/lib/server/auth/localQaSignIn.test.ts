@@ -41,10 +41,18 @@ const localAccounts = [
 
 const localRuntime = {
 	appUrl: new URL("http://localhost:5174/auth"),
-	databaseEnvironment: "test",
+	runtimeEnvironment: "test",
 	supabaseUrl: "http://127.0.0.1:54321",
 	password: "disposable-local-password",
 	accountsBase64: Buffer.from(JSON.stringify(localAccounts)).toString("base64"),
+};
+
+const rehearsalRuntime = {
+	appUrl: new URL("http://localhost:5175/auth"),
+	runtimeEnvironment: "rehearsal",
+	supabaseUrl: "http://127.0.0.1:58321",
+	rehearsalEmail: "rehearsal-developer@blendcalc.local",
+	rehearsalPassword: "local-rehearsal-password",
 };
 
 describe("local QA sign-in boundary", () => {
@@ -64,6 +72,7 @@ describe("local QA sign-in boundary", () => {
 			"developer",
 		]);
 		expect(JSON.stringify(pageData)).not.toContain("disposable-local-password");
+		expect(pageData?.experience).toBe("qa");
 		expect(pageData?.accounts).toContainEqual(
 			expect.objectContaining({
 				key: "user",
@@ -73,6 +82,50 @@ describe("local QA sign-in boundary", () => {
 		);
 	});
 
+	it("offers only the restored owner snapshot in the exact Rehearsal runtime", () => {
+		const pageData = getLocalQaSignInPageData(rehearsalRuntime);
+
+		expect(pageData).toEqual({
+			experience: "rehearsal",
+			accounts: [
+				{
+					key: "rehearsalDeveloper",
+					displayName: "Owner snapshot",
+					email: "rehearsal-developer@blendcalc.local",
+					role: "developer",
+					purpose: "Your production-shaped data in the isolated local sandbox",
+				},
+			],
+		});
+		expect(JSON.stringify(pageData)).not.toContain("local-rehearsal-password");
+		expect(
+			getLocalQaSignInCredentials("rehearsalDeveloper", rehearsalRuntime),
+		).toEqual({
+			email: "rehearsal-developer@blendcalc.local",
+			password: "local-rehearsal-password",
+		});
+	});
+
+	it.each([
+		[
+			"wrong application port",
+			{ appUrl: new URL("http://localhost:5174/auth") },
+		],
+		["wrong database port", { supabaseUrl: "http://127.0.0.1:54321" }],
+		[
+			"hosted application",
+			{ appUrl: new URL("https://staging.example.com/auth") },
+		],
+		["hosted database", { supabaseUrl: "https://example.supabase.co" }],
+		["missing email", { rehearsalEmail: "" }],
+		["non-local email", { rehearsalEmail: "person@example.com" }],
+		["missing password", { rehearsalPassword: "" }],
+	])("keeps Rehearsal quick sign-in unavailable with %s", (_name, override) => {
+		expect(
+			getLocalQaSignInPageData({ ...rehearsalRuntime, ...override }),
+		).toBeNull();
+	});
+
 	it.each([
 		[
 			"ordinary local development",
@@ -80,7 +133,7 @@ describe("local QA sign-in boundary", () => {
 		],
 		["a hosted app", { appUrl: new URL("https://www.blendcalc.food/auth") }],
 		["a hosted database", { supabaseUrl: "https://example.supabase.co" }],
-		["a non-test database mode", { databaseEnvironment: "production" }],
+		["a non-test runtime", { runtimeEnvironment: "production" }],
 		["a missing generated password", { password: "" }],
 		["missing generated accounts", { accountsBase64: "" }],
 		["malformed generated accounts", { accountsBase64: "not-json" }],
@@ -128,6 +181,12 @@ describe("local QA sign-in boundary", () => {
 				...localRuntime,
 				appUrl: new URL("https://www.blendcalc.food/auth"),
 			}),
+		).toBeNull();
+		expect(
+			getLocalQaBrowserRateLimitClientAddress(
+				"rehearsalDeveloper|desktop-webkit",
+				rehearsalRuntime,
+			),
 		).toBeNull();
 	});
 });

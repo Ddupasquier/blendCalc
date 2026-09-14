@@ -136,6 +136,7 @@
 		onLookupStateChange: (lookingUp) => onLookupStateChange(lookingUp),
 		onError: setSubmissionError,
 		getAllowAutofill: () => allowBarcodeAutofill,
+		waitForReferenceData: referenceData.waitUntilLoaded,
 	});
 	const destinationAction = $derived(
 		getManualEntryDestinationAction({

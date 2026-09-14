@@ -18,6 +18,7 @@
 		class="toggle-switch__input"
 		type="checkbox"
 		role="switch"
+		autocomplete="off"
 		aria-label={ariaLabel}
 		{checked}
 		{disabled}

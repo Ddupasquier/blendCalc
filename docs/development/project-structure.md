@@ -208,6 +208,9 @@ not duplicate the same assertion across runners.
   `releases`, `security`, or `users`).
 - Reusable script code lives under the matching domain in `scripts/lib`; maintained
   reference catalogs remain in `scripts/lib/reference-data`.
+- Cross-command environment construction and local service helpers live in
+  `scripts/lib/environment`; executable launchers live in
+  `scripts/operations/environment`.
 - Do not add executable scripts directly inside a broad operation folder. Add another
   domain folder only when it owns a real script, and remove it when its final file is
   removed.
@@ -231,6 +234,16 @@ schema until application runtime code consumes it. It is deliberately outside th
 `supabase/` directory so one CLI link or migration command cannot silently target both
 projects. Every command for this project must pass the explicit
 `infrastructure/blendCalcAPI` workdir.
+
+`infrastructure/rehearsal/` owns project-specific Rehearsal configuration and reviewed
+sanitization policy. Generic extraction, sanitization, migration-ledger, baseline, and
+safety machinery belongs under `scripts/lib/rehearsal/`; executable generators and
+operations remain under their matching `scripts/generators/rehearsal/` and
+`scripts/operations/rehearsal/` owners. This boundary is intentionally package-shaped,
+but it remains internal until its interfaces prove reusable through BlendCalc. The
+`infrastructure/rehearsal/package/` directory owns the prospective public contract,
+security, compatibility, changelog, CI example, and MIT license; it contains no
+runtime source, secret, or baseline and is not a publishable package by itself.
 
 ## Documentation
 

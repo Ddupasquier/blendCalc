@@ -4,6 +4,7 @@ const mocks = vi.hoisted(() => ({ fetch: vi.fn() }));
 
 vi.mock("$env/dynamic/private", () => ({
 	env: {
+		BLENDCALC_RUNTIME_ENVIRONMENT: "production",
 		MODERATION_EMAIL_FROM: "blendCalc <moderation@noreply.blendcalc.food>",
 		MODERATION_SUPPORT_EMAIL: "support@blendcalc.food",
 		RESEND_API_KEY: "test-key",

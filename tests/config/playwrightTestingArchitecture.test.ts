@@ -54,6 +54,9 @@ describe("Playwright browser-testing architecture", () => {
 			'name: "blendcalc-local-qa-browser-partition"',
 		);
 		expect(browserTestSupport).toContain("context.addCookies");
+		expect(browserTestSupport).toContain(
+			'cookie.name === "blendcalc-local-qa-browser-partition"',
+		);
 		expect(
 			browserTestSupport.match(/getLocalQaBrowserRateLimitPartition/g),
 		).toHaveLength(3);
@@ -193,6 +196,15 @@ describe("Playwright browser-testing architecture", () => {
 		expect(verificationWorkflow).not.toContain("needs: source");
 		expect(verificationWorkflow).toContain('shard: "1/2"');
 		expect(verificationWorkflow).toContain('shard: "2/2"');
+		expect(verificationWorkflow).toContain('npm run test:e2e -- "${args[@]}"');
+		expect(nightlyWorkflow).toContain(
+			"npm run test:e2e -- --project=${{ matrix.project }}",
+		);
+		expect(verificationWorkflow).not.toContain("run: npx playwright test");
+		expect(nightlyWorkflow).not.toContain("run: npx playwright test");
+		for (const workflow of [verificationWorkflow, nightlyWorkflow]) {
+			expect(workflow).not.toContain("run: npm run test:e2e:prepare");
+		}
 		expect(verificationWorkflow).toContain(
 			"if: needs.verification-plan.outputs.mode == 'full'",
 		);

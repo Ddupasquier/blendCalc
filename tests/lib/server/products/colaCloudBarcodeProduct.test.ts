@@ -2,6 +2,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { lookupColaCloudBarcodeProduct } from "$lib/server/products/sources/colaCloudBarcodeProduct.server";
 import type { ProductReferenceCatalog } from "$lib/utils/food/reference/productReferenceCatalog";
 
+vi.mock("$env/dynamic/private", () => ({
+	env: { BLENDCALC_RUNTIME_ENVIRONMENT: "production" },
+}));
+
 vi.mock("$lib/server/products/sourceMetrics.server", () => ({
 	createProductSourceRequestTrace: () => ({
 		apiRequestCount: 0,

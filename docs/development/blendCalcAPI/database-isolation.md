@@ -87,7 +87,9 @@ privilege boundary.
 
 The root Supabase CLI link must remain attached to the application project. Local API
 database work uses `infrastructure/blendCalcAPI`, distinct ports, a distinct project ref,
-and distinct credentials. No generic linked migration command may target both projects.
+and distinct credentials. Its local Auth service issues those local-only keys with sign-up
+disabled; it stores no application users and does not change the server-only API
+boundary. No generic linked migration command may target both projects.
 
 ## Safe Request Logs
 

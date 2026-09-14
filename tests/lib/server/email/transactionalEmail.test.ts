@@ -22,6 +22,7 @@ const input = {
 	idempotencyKey: "test-message-1",
 	replyTo: "support@blendcalc.food",
 	tags: [{ name: "category", value: "test_message" }],
+	runtimeEnvironment: "production" as const,
 };
 
 describe("transactional email", () => {
@@ -58,6 +59,15 @@ describe("transactional email", () => {
 		).resolves.toMatchObject({
 			status: "failed",
 			errorCode: "email_sender_not_approved",
+		});
+		expect(mocks.fetch).not.toHaveBeenCalled();
+	});
+
+	it("returns a deterministic local sink receipt without contacting the provider", async () => {
+		const localInput = { ...input, runtimeEnvironment: "test" as const };
+		await expect(sendTransactionalEmail(localInput)).resolves.toMatchObject({
+			status: "sent",
+			providerMessageId: expect.stringMatching(/^local-sink-[a-f0-9]{24}$/),
 		});
 		expect(mocks.fetch).not.toHaveBeenCalled();
 	});

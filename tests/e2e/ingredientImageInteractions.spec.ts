@@ -5,6 +5,7 @@ import {
 	test,
 	waitForAppReady,
 } from "./support/browserTest";
+import { serveDeterministicOpenFoodFactsImages } from "./support/deterministicProviderImages";
 
 test.describe.configure({ mode: "serial" });
 
@@ -20,6 +21,10 @@ const representativeImageProducts = [
 		name: "Gochu Jang Hot & Sweet Chili Sauce",
 	},
 ] as const;
+
+test.beforeEach(async ({ page }) => {
+	await serveDeterministicOpenFoodFactsImages(page);
+});
 
 test("@mobile ingredient cards use thumbnails while visible details prioritize the full image", async ({
 	page,

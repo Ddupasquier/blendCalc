@@ -15,6 +15,7 @@ describe("ToggleSwitch", () => {
 		});
 
 		const toggle = screen.getByRole("switch", { name: "Share with community" });
+		expect(toggle).toHaveAttribute("autocomplete", "off");
 		await fireEvent.click(toggle);
 
 		expect(onChange).toHaveBeenCalledWith(true);

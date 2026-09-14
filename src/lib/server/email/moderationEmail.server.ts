@@ -8,6 +8,10 @@ import {
 	TRANSACTIONAL_EMAIL_ADDRESSES,
 	type TransactionalEmailResult,
 } from "$lib/server/email/transactionalEmail.server";
+import {
+	isSafeLocalRuntimeEnvironment,
+	readBlendCalcRuntimeEnvironment,
+} from "$lib/server/environment/runtimeEnvironment.server";
 
 export type ModerationReason =
 	| "profile_image_policy_violation"
@@ -50,6 +54,14 @@ const REASON_DETAILS: Record<
 };
 
 const getEmailConfiguration = () => {
+	if (isSafeLocalRuntimeEnvironment(readBlendCalcRuntimeEnvironment())) {
+		return {
+			configured: true as const,
+			apiKey: "local-email-sink",
+			from: `blendCalc <${TRANSACTIONAL_EMAIL_ADDRESSES.moderation}>`,
+			supportEmail: "support@blendcalc.local",
+		};
+	}
 	const apiKey = env.RESEND_API_KEY?.trim();
 	const from = env.MODERATION_EMAIL_FROM?.trim();
 	const supportEmail = env.MODERATION_SUPPORT_EMAIL?.trim();

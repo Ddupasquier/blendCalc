@@ -8,13 +8,13 @@ const packageJson = JSON.parse(
 describe("local authentication test environment", () => {
 	it("isolates Cloudflare's public test widget from ordinary browser tests", () => {
 		expect(packageJson.scripts["dev:test:auth"]).toContain(
-			"PUBLIC_TURNSTILE_SITE_KEY=1x00000000000000000000AA",
+			"run_application_environment.mjs test --auth",
 		);
-		expect(packageJson.scripts["dev:test:auth"]).toContain(
-			"BLENDCALC_DATABASE_ENVIRONMENT=test",
+		const launcher = readFileSync(
+			"scripts/operations/environment/run_application_environment.mjs",
+			"utf8",
 		);
-		expect(packageJson.scripts["dev:test"]).not.toContain(
-			"PUBLIC_TURNSTILE_SITE_KEY=",
-		);
+		expect(launcher).toContain("1x00000000000000000000AA");
+		expect(packageJson.scripts["dev:test"]).not.toContain("--auth");
 	});
 });

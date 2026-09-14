@@ -10,7 +10,7 @@ const isLocalHostname = (hostname) =>
 	hostname === "127.0.0.1" || hostname === "localhost" || hostname === "::1";
 
 export const loadQaDatabaseEnvironment = () => {
-	const testMode = process.env.BLENDCALC_DATABASE_ENVIRONMENT === "test";
+	const testMode = process.env.BLENDCALC_RUNTIME_ENVIRONMENT === "test";
 
 	if (testMode) {
 		config({ path: ".env.test.local", override: true, quiet: true });
