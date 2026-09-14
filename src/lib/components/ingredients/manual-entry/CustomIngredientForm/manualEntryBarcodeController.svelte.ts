@@ -36,6 +36,7 @@ type ManualEntryBarcodeControllerOptions = {
 	onLookupStateChange: (lookingUp: boolean) => void;
 	onError: (message: string) => void;
 	getAllowAutofill?: () => boolean;
+	waitForReferenceData?: () => Promise<void>;
 };
 
 type BarcodeScanCompletion = {
@@ -50,6 +51,7 @@ export const createManualEntryBarcodeController = ({
 	onLookupStateChange,
 	onError,
 	getAllowAutofill = () => true,
+	waitForReferenceData = () => Promise.resolve(),
 }: ManualEntryBarcodeControllerOptions) => {
 	const state = $state({
 		lookingUpBarcode: false,
@@ -433,13 +435,14 @@ export const createManualEntryBarcodeController = ({
 
 		applyBarcodeProductDraft(draft);
 		form.data.barcodeReferenceDraft = null;
+		await tick();
+		await validation.goToStep("share");
+		await waitForReferenceData();
 		form.data.barcodeMessage = getBarcodeImportMessage(
 			draft,
 			validation.nutrientFields,
 			"autofill",
 		);
-		await tick();
-		await validation.goToStep("share");
 	};
 
 	const keepManualBarcodeEntry = () => {

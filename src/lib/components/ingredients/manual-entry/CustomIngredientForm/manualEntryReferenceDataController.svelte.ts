@@ -21,8 +21,9 @@ export const createManualEntryReferenceDataController = () => {
 		regulatoryDisclosureProfileError: "",
 	});
 	let loadGeneration = 0;
+	let loadCompletion: Promise<void> | null = null;
 
-	const load = async () => {
+	const performLoad = async () => {
 		const generation = ++loadGeneration;
 		state.loadingNutrients = true;
 		state.loadingNutrientRelationshipRules = true;
@@ -71,6 +72,12 @@ export const createManualEntryReferenceDataController = () => {
 			}
 		}
 	};
+	const load = () => {
+		const completion = performLoad();
+		loadCompletion = completion;
+		return completion;
+	};
+	const waitUntilLoaded = () => loadCompletion ?? Promise.resolve();
 
 	const destroy = () => {
 		loadGeneration += 1;
@@ -79,6 +86,7 @@ export const createManualEntryReferenceDataController = () => {
 	return {
 		state,
 		load,
+		waitUntilLoaded,
 		destroy,
 	};
 };
