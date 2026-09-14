@@ -5,6 +5,7 @@ import {
 	createFrameSources,
 	createImageSources,
 	createScriptSources,
+	createSvelteKitOutputDirectory,
 	createWorkerSources,
 	readViteMode,
 } from "../../config/contentSecurityPolicy.js";
@@ -111,6 +112,14 @@ describe("content security policy", () => {
 		expect(() =>
 			readViteMode([], { BLENDCALC_RUNTIME_ENVIRONMENT: "prodution" }),
 		).toThrow("BLENDCALC_RUNTIME_ENVIRONMENT is invalid.");
+	});
+
+	it("isolates Rehearsal generated application state from test commands", () => {
+		expect(createSvelteKitOutputDirectory("rehearsal")).toBe(
+			".svelte-kit/rehearsal",
+		);
+		expect(createSvelteKitOutputDirectory("test")).toBe(".svelte-kit");
+		expect(createSvelteKitOutputDirectory("production")).toBe(".svelte-kit");
 	});
 
 	it("runs validation commands through the hermetic test environment", () => {

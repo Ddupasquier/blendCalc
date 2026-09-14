@@ -186,6 +186,10 @@ only those loopback application and database endpoints, clears hosted applicatio
 provider-data credentials, and uses the same fail-closed external-request and local
 email-sink boundaries as TEST. A separately declared Google identity exchange is the
 only external Rehearsal exception; its callback and resulting Auth state remain local.
+Rehearsal writes SvelteKit's generated runtime state beneath
+`.svelte-kit/rehearsal/`, separate from the default build/test output. Running a test or
+build while port `5175` is open therefore cannot replace the live app's compiled public
+environment or CSP with another runtime's values.
 
 The database manager generates `.rehearsal/runtime.env`. Do not hand-edit or commit it.
 It contains only derived local endpoints, the fixed local owner-snapshot credential,
