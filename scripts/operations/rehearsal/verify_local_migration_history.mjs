@@ -13,7 +13,7 @@ import {
 	compareSourceToReplay,
 	createMigrationReplayReceipt,
 	readMigrationFileInventory,
-} from "../../lib/rehearsal/migration_history.mjs";
+} from "@rehearsal/db/migrations";
 
 const repositoryRoot = fileURLToPath(new URL("../../..", import.meta.url));
 const applicationMigrations = new URL(

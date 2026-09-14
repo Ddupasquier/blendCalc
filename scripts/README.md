@@ -114,7 +114,7 @@ the real Google flow can return to port `58321`. The app launcher never receives
 OAuth values.
 `operations/environment/run_test_command.mjs` provides the same fail-closed boundary
 for compile and unit-test commands without requiring the database stacks to be running.
-The executable owners are
+The executable owners are the `@rehearsal/db` CLI,
 `scripts/operations/environment/run_application_environment.mjs`,
 `scripts/operations/environment/run_test_command.mjs`,
 `scripts/operations/database/manage_local_database.mjs`, and
@@ -194,8 +194,8 @@ an Auth identity whose purpose metadata is not exact. It preserves the shared ex
 boundary, active baseline, and local Rehearsal runtime so a completed refresh stays
 usable after every hosted credential has been revoked.
 
-`operations/database/manage_rehearsal_database.mjs` owns the persistent local runtime.
-It restores only an atomically verified baseline under ignored `.rehearsal/`, checks the
+The `@rehearsal/db` dependency owns the persistent local runtime. It restores only an
+atomically verified baseline under ignored `.rehearsal/`, checks the
 exact migration-file prefix, streams records into PostgreSQL without constructing one
 unbounded SQL argument, recreates referenced Auth identities as synthetic local users,
 overlays the approved owner persona with one local developer login in an excluded
@@ -218,36 +218,27 @@ project-owned invariants. Run `reset` whenever an exact baseline-data comparison
 required.
 
 `npm run rehearsal -- doctor`, `explain`, `run --dry-run`, `inspect baseline`, and
-`inspect migrations` expose the versioned package-shaped developer contract. The
+`inspect migrations` expose the versioned package developer contract. The
 initializer previews a typed configuration and writes only with an explicit `--write`.
-Human and `--json` output share one redacted result/error model. The maintained public
-contract draft, configuration reference, safety boundaries, support matrix, and CI
-example live in
-[`infrastructure/rehearsal/package/README.md`](../infrastructure/rehearsal/package/README.md).
-
-`npm run rehearsal:fixture:prove` copies the synthetic non-BlendCalc project under
-`tests/fixtures/rehearsal-project` into a temporary directory, installs the exact
-prospective npm tarball, restores its one-row baseline through disposable local
-Supabase, proves its valid candidate, proves its invalid PostgreSQL candidate fails,
-removes the runtime, and prints phase timings. It never reads environment files or
-contacts a hosted project.
+Human and `--json` output share one redacted result/error model. The public configuration,
+safety, compatibility, command, and support contracts live in the standalone
+`rehearsal-db` repository; this repository documents only BlendCalc-owned integration.
 
 `npm run rehearsal:app:prove` is BlendCalc's project-owned application proof. It starts
-the app against the already verified Rehearsal runtime, verifies the exact CSP boundary,
-performs the restored owner-snapshot Auth exchange, requires its local database-owned
-`developer` claim, creates and removes an ordinary local account plus its application profile,
-proves Google OAuth initiation uses Google's chooser plus the port `58321` local
-callback, and checks the isolated blendCalcAPI route cannot fail from a missing or
-hosted target. It stops only the app process and leaves the local database stacks
-available. Completing the external Google consent/callback remains a direct browser
-check because Rehearsal never stores a real Google account credential. Runtime
-verification separately performs a matching Google-owner claim inside a rollback and
-proves the owner profile, list topology, and Storage pointers survive the identity swap.
-
-`npm run rehearsal:package:audit` assembles the prospective npm tarball in a temporary
-directory from an explicit source allowlist, runs `npm pack --dry-run --json`, scans for
-secret-like content and forbidden paths, verifies the zero-runtime-dependency surface,
-and removes the preview. It never publishes a package.
+the app against the already verified Rehearsal runtime and waits for that newly started
+process's directive-level CSP instead of accepting an older listener on port `5175`.
+It renders restored profile-avatar and private submission-evidence Storage bytes in a
+real headless browser; proves a reset-invalidated session clears once without retaining
+privileged access or retrying the dead token; performs the restored owner-snapshot Auth
+exchange; requires its local database-owned `developer` claim; creates and removes an
+ordinary local account plus its application profile; proves Google OAuth initiation
+uses Google's chooser plus the port `58321` local callback; and checks the isolated
+blendCalcAPI route cannot fail from a missing or hosted target. It stops only the app
+process and leaves the local database stacks available. Completing the external Google
+consent/callback remains a direct browser check because Rehearsal never stores a real
+Google account credential. Runtime verification separately performs a matching
+Google-owner claim inside a rollback and proves the owner profile, list topology, and
+Storage pointers survive the identity swap.
 
 | Command                                                                 | Behavior                                                                                             |
 | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
@@ -274,8 +265,6 @@ and removes the preview. It never publishes a package.
 | `npm run rehearsal -- doctor\|explain\|run --dry-run`                   | Validate readiness or inspect the immutable package-shaped plan without mutating state.              |
 | `npm run rehearsal -- inspect baseline\|inspect migrations`             | Inspect safe provenance and exact migration classifications.                                         |
 | `npm run rehearsal:app:prove`                                           | Prove the BlendCalc application, CSP, Auth, and API boundaries against Rehearsal.                    |
-| `npm run rehearsal:fixture:prove`                                       | Prove valid and invalid candidates against an unrelated synthetic local Supabase project.            |
-| `npm run rehearsal:package:audit`                                       | Prove the prospective dependency and tarball allowlists without publishing.                          |
 | `npm run rehearsal:sanitization:generate`                               | Regenerate the schema-only sanitization policy for deliberate review.                                |
 | `npm run rehearsal:sanitization:check`                                  | Fail when the reviewed policy no longer exactly covers the local schema.                             |
 | `npm run rehearsal:export-migration:generate`                           | Regenerate the explicit export-boundary migration for deliberate review.                             |

@@ -236,14 +236,12 @@ projects. Every command for this project must pass the explicit
 `infrastructure/blendCalcAPI` workdir.
 
 `infrastructure/rehearsal/` owns project-specific Rehearsal configuration and reviewed
-sanitization policy. Generic extraction, sanitization, migration-ledger, baseline, and
-safety machinery belongs under `scripts/lib/rehearsal/`; executable generators and
-operations remain under their matching `scripts/generators/rehearsal/` and
-`scripts/operations/rehearsal/` owners. This boundary is intentionally package-shaped,
-but it remains internal until its interfaces prove reusable through BlendCalc. The
-`infrastructure/rehearsal/package/` directory owns the prospective public contract,
-security, compatibility, changelog, CI example, and MIT license; it contains no
-runtime source, secret, or baseline and is not a publishable package by itself.
+sanitization policy. The reusable baseline, migration-ledger, local-runtime, diagnostics,
+and safety engine is owned by the `@rehearsal/db` dependency. BlendCalc-owned extraction,
+sanitization, identity mapping, provider isolation, adapters, generators, and application
+proofs remain under their matching `scripts/lib/rehearsal/`,
+`scripts/generators/rehearsal/`, and `scripts/operations/rehearsal/` owners. Do not copy
+generic package source or package documentation back into this repository.
 
 ## Documentation
 

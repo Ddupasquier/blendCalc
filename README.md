@@ -159,64 +159,62 @@ and personas live in [Database Testing](docs/development/database-testing.md).
 
 ### Database And QA
 
-| Command                                                         | Purpose                                                              |
-| --------------------------------------------------------------- | -------------------------------------------------------------------- |
-| `npm run db:test:start`                                         | Start local Supabase and repair missing QA baseline data.            |
-| `npm run db:test:reset`                                         | Recreate the exact local QA baseline.                                |
-| `npm run db:test:verify`                                        | Recreate and test local Supabase, then stop owned services.          |
-| `npm run db:test:status`                                        | Show local Supabase service status.                                  |
-| `npm run db:test:stop`                                          | Stop local Supabase.                                                 |
-| `npm run db:local:start`                                        | Start local Supabase without resetting developer data.               |
-| `npm run db:local:status`                                       | Show local application Supabase endpoints.                           |
-| `npm run db:local:stop`                                         | Stop local Supabase while retaining developer data.                  |
-| `npm run db:rehearsal:prove-export-boundary`                    | Prove the export authorization design in a disposable local DB.      |
-| `npm run db:rehearsal:prove-installed-boundary`                 | Exercise read-only DB/Storage export and atomic baseline creation.   |
-| `npm run db:rehearsal:refresh-local`                            | Retain a verified baseline produced from the local export surface.   |
-| `npm run db:rehearsal:provision-source -- --dry-run`            | Preview the bounded production-reader provisioning operation.        |
-| `npm run db:rehearsal:refresh`                                  | Refresh from provisioned least-privilege production readers.         |
-| `npm run db:rehearsal:deprovision-source -- --dry-run`          | Preview cleanup of temporary production-source access.               |
-| `npm run db:rehearsal:start`                                    | Start or restore the persistent sanitized Rehearsal runtime.         |
-| `npm run db:rehearsal:reset`                                    | Recreate Rehearsal from the active immutable baseline.               |
-| `npm run db:rehearsal:status`                                   | Show local Rehearsal endpoints and baseline identity.                |
-| `npm run db:rehearsal:stop`                                     | Stop Rehearsal while retaining its local database volume.            |
-| `npm run db:rehearsal:discard`                                  | Remove only the disposable Rehearsal runtime volume.                 |
-| `npm run db:rehearsal:candidates`                               | List migrations after the immutable baseline prefix.                 |
-| `npm run db:rehearsal:migrate`                                  | Apply the exact confirmed candidate-migration receipt.               |
-| `npm run db:rehearsal:verify`                                   | Verify artifact, migration, runtime, and project invariants.         |
-| `npm run db:rehearsal:run`                                      | Reset, migrate, and verify Rehearsal as one fail-closed workflow.    |
-| `npm run db:rehearsal:verify-local-history`                     | Verify installed migration statements against local source.          |
-| `npm run rehearsal -- doctor`                                   | Report whether the package-shaped Rehearsal contract is ready.       |
-| `npm run rehearsal -- explain`                                  | Print the immutable local execution plan without changing state.     |
-| `npm run rehearsal -- run --dry-run`                            | Return the same plan through the run surface without side effects.   |
-| `npm run rehearsal -- inspect baseline`                         | Inspect verified baseline provenance without exposing row data.      |
-| `npm run rehearsal -- inspect migrations`                       | Explain represented, applied, and candidate migration identities.    |
-| `npm run rehearsal:app:prove`                                   | Prove BlendCalc against the isolated Rehearsal app and API stacks.   |
-| `npm run rehearsal:fixture:prove`                               | Exercise valid and invalid migrations in an unrelated local fixture. |
-| `npm run rehearsal:package:audit`                               | Audit the prospective dependency and npm tarball surface locally.    |
-| `npm run rehearsal:sanitization:check`                          | Verify exact schema coverage by the reviewed sanitization policy.    |
-| `npm run rehearsal:export-migration:check`                      | Verify the generated export migration is current.                    |
-| `npm run supabase -- <args>`                                    | Run the repository-installed Supabase CLI.                           |
-| `npm run blendCalcAPI:db:start`                                 | Start the isolated local API publication database.                   |
-| `npm run blendCalcAPI:db:status`                                | Show the isolated local API database endpoints.                      |
-| `npm run blendCalcAPI:db:reset`                                 | Replay the isolated API publication migrations locally.              |
-| `npm run blendCalcAPI:db:test`                                  | Run isolated API publication database policy tests.                  |
-| `npm run blendCalcAPI:db:stop`                                  | Stop the isolated local API publication database.                    |
-| `npm run blendCalcAPI:db:push:dry`                              | Preview isolated hosted API-database migrations.                     |
-| `npm run blendCalcAPI:db:push`                                  | Apply reviewed isolated migrations with confirmation.                |
-| `npm run blendCalcAPI:db:types`                                 | Generate isolated publication-database TypeScript types.             |
-| `npm run recovery:blendCalcAPI -- --backup-dir=<absolute-path>` | Restore and verify both database tiers in disposable local stacks.   |
-| `npm run db:link`                                               | Link the CLI to the configured blendCalc Supabase project.           |
-| `npm run db:new -- <name>`                                      | Create a forward-only migration.                                     |
-| `npm run db:push:dry`                                           | Preview linked migrations without applying them.                     |
-| `npm run db:push`                                               | Confirm and apply migrations already reviewed on remote `main`.      |
-| `npm run db:push:auto`                                          | Apply the same reviewed migrations without another prompt.           |
-| `npm run db:lint`                                               | Run linked Supabase database linting.                                |
-| `npm run db:types`                                              | Regenerate linked Supabase TypeScript types.                         |
-| `npm run qa:deterministic`                                      | Run safe, read-only deterministic hosted data checks.                |
-| `npm run catalog:qa-seed -- <email> <mode>`                     | Add disposable local catalog review fixtures.                        |
-| `npm run catalog:qa-clean -- <email>`                           | Remove those catalog fixtures.                                       |
-| `npm run catalog:qa-image-seed -- <email> <mode>`               | Add disposable local image-review fixtures.                          |
-| `npm run catalog:qa-image-clean -- <email>`                     | Remove those image fixtures.                                         |
+| Command                                                         | Purpose                                                            |
+| --------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `npm run db:test:start`                                         | Start local Supabase and repair missing QA baseline data.          |
+| `npm run db:test:reset`                                         | Recreate the exact local QA baseline.                              |
+| `npm run db:test:verify`                                        | Recreate and test local Supabase, then stop owned services.        |
+| `npm run db:test:status`                                        | Show local Supabase service status.                                |
+| `npm run db:test:stop`                                          | Stop local Supabase.                                               |
+| `npm run db:local:start`                                        | Start local Supabase without resetting developer data.             |
+| `npm run db:local:status`                                       | Show local application Supabase endpoints.                         |
+| `npm run db:local:stop`                                         | Stop local Supabase while retaining developer data.                |
+| `npm run db:rehearsal:prove-export-boundary`                    | Prove the export authorization design in a disposable local DB.    |
+| `npm run db:rehearsal:prove-installed-boundary`                 | Exercise read-only DB/Storage export and atomic baseline creation. |
+| `npm run db:rehearsal:refresh-local`                            | Retain a verified baseline produced from the local export surface. |
+| `npm run db:rehearsal:provision-source -- --dry-run`            | Preview the bounded production-reader provisioning operation.      |
+| `npm run db:rehearsal:refresh`                                  | Refresh from provisioned least-privilege production readers.       |
+| `npm run db:rehearsal:deprovision-source -- --dry-run`          | Preview cleanup of temporary production-source access.             |
+| `npm run db:rehearsal:start`                                    | Start or restore the persistent sanitized Rehearsal runtime.       |
+| `npm run db:rehearsal:reset`                                    | Recreate Rehearsal from the active immutable baseline.             |
+| `npm run db:rehearsal:status`                                   | Show local Rehearsal endpoints and baseline identity.              |
+| `npm run db:rehearsal:stop`                                     | Stop Rehearsal while retaining its local database volume.          |
+| `npm run db:rehearsal:discard`                                  | Remove only the disposable Rehearsal runtime volume.               |
+| `npm run db:rehearsal:candidates`                               | List migrations after the immutable baseline prefix.               |
+| `npm run db:rehearsal:migrate`                                  | Apply the exact confirmed candidate-migration receipt.             |
+| `npm run db:rehearsal:verify`                                   | Verify artifact, migration, runtime, and project invariants.       |
+| `npm run db:rehearsal:run`                                      | Reset, migrate, and verify Rehearsal as one fail-closed workflow.  |
+| `npm run db:rehearsal:verify-local-history`                     | Verify installed migration statements against local source.        |
+| `npm run rehearsal -- doctor`                                   | Report whether the package-shaped Rehearsal contract is ready.     |
+| `npm run rehearsal -- explain`                                  | Print the immutable local execution plan without changing state.   |
+| `npm run rehearsal -- run --dry-run`                            | Return the same plan through the run surface without side effects. |
+| `npm run rehearsal -- inspect baseline`                         | Inspect verified baseline provenance without exposing row data.    |
+| `npm run rehearsal -- inspect migrations`                       | Explain represented, applied, and candidate migration identities.  |
+| `npm run rehearsal:app:prove`                                   | Prove BlendCalc against the isolated Rehearsal app and API stacks. |
+| `npm run rehearsal:sanitization:check`                          | Verify exact schema coverage by the reviewed sanitization policy.  |
+| `npm run rehearsal:export-migration:check`                      | Verify the generated export migration is current.                  |
+| `npm run supabase -- <args>`                                    | Run the repository-installed Supabase CLI.                         |
+| `npm run blendCalcAPI:db:start`                                 | Start the isolated local API publication database.                 |
+| `npm run blendCalcAPI:db:status`                                | Show the isolated local API database endpoints.                    |
+| `npm run blendCalcAPI:db:reset`                                 | Replay the isolated API publication migrations locally.            |
+| `npm run blendCalcAPI:db:test`                                  | Run isolated API publication database policy tests.                |
+| `npm run blendCalcAPI:db:stop`                                  | Stop the isolated local API publication database.                  |
+| `npm run blendCalcAPI:db:push:dry`                              | Preview isolated hosted API-database migrations.                   |
+| `npm run blendCalcAPI:db:push`                                  | Apply reviewed isolated migrations with confirmation.              |
+| `npm run blendCalcAPI:db:types`                                 | Generate isolated publication-database TypeScript types.           |
+| `npm run recovery:blendCalcAPI -- --backup-dir=<absolute-path>` | Restore and verify both database tiers in disposable local stacks. |
+| `npm run db:link`                                               | Link the CLI to the configured blendCalc Supabase project.         |
+| `npm run db:new -- <name>`                                      | Create a forward-only migration.                                   |
+| `npm run db:push:dry`                                           | Preview linked migrations without applying them.                   |
+| `npm run db:push`                                               | Confirm and apply migrations already reviewed on remote `main`.    |
+| `npm run db:push:auto`                                          | Apply the same reviewed migrations without another prompt.         |
+| `npm run db:lint`                                               | Run linked Supabase database linting.                              |
+| `npm run db:types`                                              | Regenerate linked Supabase TypeScript types.                       |
+| `npm run qa:deterministic`                                      | Run safe, read-only deterministic hosted data checks.              |
+| `npm run catalog:qa-seed -- <email> <mode>`                     | Add disposable local catalog review fixtures.                      |
+| `npm run catalog:qa-clean -- <email>`                           | Remove those catalog fixtures.                                     |
+| `npm run catalog:qa-image-seed -- <email> <mode>`               | Add disposable local image-review fixtures.                        |
+| `npm run catalog:qa-image-clean -- <email>`                     | Remove those image fixtures.                                       |
 
 Never reset a linked or production database. Real migration pushes fail closed unless
 the exact migration source already exists on remote `main`.

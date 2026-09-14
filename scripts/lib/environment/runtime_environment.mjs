@@ -7,14 +7,14 @@
 import {
 	assertLoopbackUrl,
 	createCleanProcessEnvironment,
-} from "../rehearsal/process_environment.mjs";
+} from "@rehearsal/db/process-environment";
 
 export {
 	assertLoopbackUrl,
 	createCleanProcessEnvironment,
 	isLoopbackUrl,
 	pickEnvironmentVariables,
-} from "../rehearsal/process_environment.mjs";
+} from "@rehearsal/db/process-environment";
 
 export const BLENDCALC_RUNTIME_ENVIRONMENTS = Object.freeze([
 	"local",

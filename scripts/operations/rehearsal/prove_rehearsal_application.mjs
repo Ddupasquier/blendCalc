@@ -9,13 +9,26 @@ import { spawn } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+	combineChunks,
+	createChunks,
+	stringFromBase64URL,
+	stringToBase64URL,
+} from "@supabase/ssr";
+import { chromium } from "playwright";
 import { parse } from "dotenv";
-import { createCleanProcessEnvironment } from "../../lib/rehearsal/process_environment.mjs";
-import { redactDiagnosticValue } from "../../lib/rehearsal/diagnostics.mjs";
+import { redactDiagnosticValue } from "@rehearsal/db/diagnostics";
+import { createCleanProcessEnvironment } from "@rehearsal/db/process-environment";
+import {
+	assertLoadedRehearsalStorageImage,
+	assertRehearsalContentSecurityPolicy,
+} from "../../lib/rehearsal/application_proof.mjs";
 
 const repositoryRoot = fileURLToPath(new URL("../../..", import.meta.url));
 const runtimeEnvironmentPath = join(repositoryRoot, ".rehearsal/runtime.env");
 const applicationUrl = "http://localhost:5175";
+const blendCalcAPISupabaseUrl = "http://127.0.0.1:55321";
+const authCookieNamePattern = /-auth-token(?:\.\d+)?$/u;
 const requiredVariables = [
 	"PUBLIC_SUPABASE_URL",
 	"PUBLIC_SUPABASE_PUBLISHABLE_KEY",
@@ -27,6 +40,131 @@ const requiredVariables = [
 
 const wait = (milliseconds) =>
 	new Promise((resolveWait) => setTimeout(resolveWait, milliseconds));
+
+const countRefreshTokenFailures = (output) =>
+	output.match(/refresh_token_not_found/gu)?.length ?? 0;
+
+const readRenderedImages = (page) =>
+	page.locator("img").evaluateAll((images) =>
+		images.map((image) => {
+			const url = new URL(image.currentSrc || image.src, window.location.href);
+			return {
+				origin: url.origin,
+				pathname: url.pathname,
+				complete: image.complete,
+				naturalWidth: image.naturalWidth,
+				naturalHeight: image.naturalHeight,
+			};
+		}),
+	);
+
+const encodeStorageObjectPath = (path) =>
+	path.split("/").map(encodeURIComponent).join("/");
+
+const createSignedSubmissionEvidenceUrl = async ({
+	applicationSupabaseUrl,
+	serviceRoleKey,
+}) => {
+	const submissionsResponse = await fetch(
+		`${applicationSupabaseUrl}/rest/v1/shared_product_submissions?select=evidence_paths&evidence_complete=eq.true&limit=25`,
+		{
+			headers: {
+				apikey: serviceRoleKey,
+				authorization: `Bearer ${serviceRoleKey}`,
+			},
+			signal: AbortSignal.timeout(10_000),
+		},
+	);
+	if (!submissionsResponse.ok) {
+		throw new Error(
+			`Rehearsal submission-evidence lookup returned ${submissionsResponse.status}.`,
+		);
+	}
+	const submissions = await submissionsResponse.json();
+	const evidencePath = submissions
+		.flatMap((submission) => Object.values(submission.evidence_paths ?? {}))
+		.find((value) => typeof value === "string" && value.trim());
+	if (!evidencePath) {
+		throw new Error(
+			"The active Rehearsal baseline has no submission-evidence image to prove.",
+		);
+	}
+
+	const signedResponse = await fetch(
+		`${applicationSupabaseUrl}/storage/v1/object/sign/product-submission-evidence/${encodeStorageObjectPath(evidencePath)}`,
+		{
+			method: "POST",
+			headers: {
+				apikey: serviceRoleKey,
+				authorization: `Bearer ${serviceRoleKey}`,
+				"content-type": "application/json",
+			},
+			body: JSON.stringify({ expiresIn: 60 }),
+			signal: AbortSignal.timeout(10_000),
+		},
+	);
+	if (!signedResponse.ok) {
+		throw new Error(
+			`Rehearsal submission-evidence signing returned ${signedResponse.status}.`,
+		);
+	}
+	const signed = await signedResponse.json();
+	if (typeof signed.signedURL !== "string" || !signed.signedURL) {
+		throw new Error("Rehearsal Storage omitted the signed evidence URL.");
+	}
+	const signedPath = signed.signedURL.startsWith("/storage/")
+		? signed.signedURL
+		: `/storage/v1${signed.signedURL.startsWith("/") ? "" : "/"}${signed.signedURL}`;
+	return new URL(signedPath, applicationSupabaseUrl).toString();
+};
+
+const replaceBrowserSessionWithExpiredResetSession = async (context) => {
+	const cookies = await context.cookies(applicationUrl);
+	const authCookies = cookies.filter(({ name }) =>
+		authCookieNamePattern.test(name),
+	);
+	if (authCookies.length === 0) {
+		throw new Error("Rehearsal browser proof did not receive an Auth cookie.");
+	}
+	const baseName = authCookies[0].name.replace(/\.\d+$/u, "");
+	const encodedSession = await combineChunks(
+		baseName,
+		async (name) =>
+			authCookies.find((cookie) => cookie.name === name)?.value ?? null,
+	);
+	if (!encodedSession?.startsWith("base64-")) {
+		throw new Error("Rehearsal Auth cookie did not use the expected encoding.");
+	}
+	const session = JSON.parse(stringFromBase64URL(encodedSession.slice(7)));
+	if (!session?.access_token || !session?.refresh_token) {
+		throw new Error("Rehearsal Auth cookie omitted its session tokens.");
+	}
+	session.expires_at = Math.floor(Date.now() / 1_000) - 60;
+	session.expires_in = 0;
+	session.refresh_token = "rehearsal-reset-invalidated-refresh-token";
+
+	const replacementChunks = createChunks(
+		baseName,
+		`base64-${stringToBase64URL(JSON.stringify(session))}`,
+	);
+	await context.clearCookies({
+		name: new RegExp(
+			`^${baseName.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&")}(?:\\.\\d+)?$`,
+			"u",
+		),
+	});
+	await context.addCookies(
+		replacementChunks.map(({ name, value }) => ({
+			name,
+			value,
+			url: applicationUrl,
+			httpOnly: false,
+			secure: false,
+			sameSite: "Lax",
+		})),
+	);
+	return baseName;
+};
 
 const stopProcessGroup = async (child) => {
 	if (child.exitCode !== null) return;
@@ -48,23 +186,192 @@ const stopProcessGroup = async (child) => {
 	}
 };
 
-const waitForApplication = async ({ output }) => {
+const waitForRehearsalLaunch = async ({ output, child }) => {
 	const deadline = Date.now() + 90_000;
 	while (Date.now() < deadline) {
+		if (
+			output.value.includes("Starting BlendCalc REHEARSAL on localhost:5175")
+		) {
+			return;
+		}
+		if (child.exitCode !== null) {
+			throw new Error(
+				`BlendCalc Rehearsal exited before its launcher became ready. Safe process output:\n${redactDiagnosticValue(output.value)}`,
+			);
+		}
+		await wait(100);
+	}
+	throw new Error(
+		`BlendCalc Rehearsal launcher did not become ready. Safe process output:\n${redactDiagnosticValue(output.value)}`,
+	);
+};
+
+const waitForApplication = async ({ output, child, runtimeEnvironment }) => {
+	const deadline = Date.now() + 90_000;
+	let lastReadinessError = null;
+	while (Date.now() < deadline) {
+		if (child.exitCode !== null) {
+			throw new Error(
+				`BlendCalc Rehearsal exited before becoming ready. Safe process output:\n${redactDiagnosticValue(output.value)}`,
+			);
+		}
 		try {
 			const response = await fetch(applicationUrl, {
 				headers: { accept: "text/html" },
 				signal: AbortSignal.timeout(3_000),
 			});
-			if (response.ok) return response;
-		} catch {
+			if (response.ok) {
+				assertRehearsalContentSecurityPolicy(
+					response.headers.get("content-security-policy") ?? "",
+					{
+						applicationSupabaseUrl: runtimeEnvironment.PUBLIC_SUPABASE_URL,
+						blendCalcAPIUrl: blendCalcAPISupabaseUrl,
+					},
+				);
+				return response;
+			}
+		} catch (error) {
+			lastReadinessError = error;
 			// Vite and the two isolated Supabase stacks may still be starting.
 		}
 		await wait(500);
 	}
 	throw new Error(
-		`BlendCalc Rehearsal did not become ready on localhost. Safe process output:\n${redactDiagnosticValue(output.value)}`,
+		`BlendCalc Rehearsal did not become ready on localhost${lastReadinessError instanceof Error ? `: ${lastReadinessError.message}` : "."} Safe process output:\n${redactDiagnosticValue(output.value)}`,
 	);
+};
+
+const proveBrowserStorageAndResetSession = async ({
+	runtimeEnvironment,
+	output,
+}) => {
+	const browser = await chromium.launch({ headless: true });
+	const context = await browser.newContext();
+	const page = await context.newPage();
+	const browserProblems = [];
+	page.on("console", (message) => {
+		if (["warning", "error"].includes(message.type())) {
+			browserProblems.push(message.type());
+		}
+	});
+	page.on("pageerror", () => browserProblems.push("pageerror"));
+
+	try {
+		await page.goto(`${applicationUrl}/auth?next=%2Fprofile`, {
+			waitUntil: "domcontentloaded",
+		});
+		await page
+			.getByRole("button", { name: "Continue as Owner snapshot" })
+			.click();
+		await page.waitForURL((url) => new URL(url).pathname === "/profile", {
+			timeout: 30_000,
+		});
+		await page.waitForFunction(
+			(expectedOrigin) =>
+				[...document.images].some((image) => {
+					const url = new URL(
+						image.currentSrc || image.src,
+						window.location.href,
+					);
+					return (
+						url.origin === expectedOrigin &&
+						url.pathname.includes("/storage/v1/object/sign/profile-avatars/") &&
+						image.complete &&
+						image.naturalWidth > 0 &&
+						image.naturalHeight > 0
+					);
+				}),
+			new URL(runtimeEnvironment.PUBLIC_SUPABASE_URL).origin,
+			{ timeout: 15_000 },
+		);
+		assertLoadedRehearsalStorageImage(await readRenderedImages(page), {
+			applicationSupabaseUrl: runtimeEnvironment.PUBLIC_SUPABASE_URL,
+			bucket: "profile-avatars",
+		});
+
+		const evidenceUrl = await createSignedSubmissionEvidenceUrl({
+			applicationSupabaseUrl: runtimeEnvironment.PUBLIC_SUPABASE_URL,
+			serviceRoleKey: runtimeEnvironment.SUPABASE_SERVICE_ROLE_KEY,
+		});
+		await page.evaluate(
+			(url) =>
+				new Promise((resolve, reject) => {
+					const image = new Image();
+					image.alt = "Rehearsal submission evidence proof";
+					image.hidden = true;
+					image.addEventListener("load", () => {
+						document.body.append(image);
+						resolve(undefined);
+					});
+					image.addEventListener("error", () =>
+						reject(new Error("Submission evidence image failed to load.")),
+					);
+					image.src = url;
+				}),
+			evidenceUrl,
+		);
+		assertLoadedRehearsalStorageImage(await readRenderedImages(page), {
+			applicationSupabaseUrl: runtimeEnvironment.PUBLIC_SUPABASE_URL,
+			bucket: "product-submission-evidence",
+		});
+
+		const authCookieBaseName =
+			await replaceBrowserSessionWithExpiredResetSession(context);
+		const failuresBeforeRecovery = countRefreshTokenFailures(output.value);
+		await page.goto(`${applicationUrl}/profile/privileged-tools`, {
+			waitUntil: "domcontentloaded",
+		});
+		if (new URL(page.url()).pathname.startsWith("/profile/privileged-tools")) {
+			throw new Error(
+				"A reset-invalidated Rehearsal session retained privileged access.",
+			);
+		}
+		if (
+			(await page.locator("body").innerText()).includes(
+				"refresh_token_not_found",
+			)
+		) {
+			throw new Error(
+				"Rehearsal exposed its reset-invalidated refresh token error in the page.",
+			);
+		}
+		const failuresAfterFirstRecovery = countRefreshTokenFailures(output.value);
+		await page.goto(`${applicationUrl}/profile/privileged-tools`, {
+			waitUntil: "domcontentloaded",
+		});
+		await wait(250);
+		const failuresAfterSecondRecovery = countRefreshTokenFailures(output.value);
+		if (failuresAfterSecondRecovery !== failuresAfterFirstRecovery) {
+			throw new Error(
+				"Rehearsal retried a reset-invalidated refresh token after clearing the session.",
+			);
+		}
+		if (failuresAfterFirstRecovery - failuresBeforeRecovery > 2) {
+			throw new Error(
+				"Rehearsal made an unbounded reset-session refresh attempt.",
+			);
+		}
+		const remainingAuthCookies = (await context.cookies(applicationUrl)).filter(
+			({ name }) =>
+				new RegExp(
+					`^${authCookieBaseName.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&")}(?:\\.\\d+)?$`,
+					"u",
+				).test(name),
+		);
+		if (remainingAuthCookies.length > 0) {
+			throw new Error(
+				"Rehearsal retained the reset-invalidated browser Auth cookie.",
+			);
+		}
+		if (browserProblems.length > 0) {
+			throw new Error(
+				`Rehearsal browser proof observed ${browserProblems.length} warning or error event(s).`,
+			);
+		}
+	} finally {
+		await context.close();
+		await browser.close();
+	}
 };
 
 const main = async () => {
@@ -101,26 +408,22 @@ const main = async () => {
 		});
 	}
 	try {
-		const homeResponse = await waitForApplication({ output });
+		await waitForRehearsalLaunch({ output, child });
+		const homeResponse = await waitForApplication({
+			output,
+			child,
+			runtimeEnvironment,
+		});
 		const html = await homeResponse.text();
 		if (!/blendCalc/iu.test(html)) {
 			throw new Error("The Rehearsal application response was not BlendCalc.");
 		}
 		const contentSecurityPolicy =
 			homeResponse.headers.get("content-security-policy") ?? "";
-		for (const source of ["http://127.0.0.1:58321", "http://127.0.0.1:55321"]) {
-			if (!contentSecurityPolicy.includes(source)) {
-				throw new Error(`Rehearsal CSP is missing ${source}.`);
-			}
-		}
-		for (const forbidden of [
-			"http://127.0.0.1:54321",
-			"https://*.supabase.co",
-		]) {
-			if (contentSecurityPolicy.includes(forbidden)) {
-				throw new Error(`Rehearsal CSP permits forbidden source ${forbidden}.`);
-			}
-		}
+		assertRehearsalContentSecurityPolicy(contentSecurityPolicy, {
+			applicationSupabaseUrl: runtimeEnvironment.PUBLIC_SUPABASE_URL,
+			blendCalcAPIUrl: blendCalcAPISupabaseUrl,
+		});
 
 		const authResponse = await fetch(
 			`${runtimeEnvironment.PUBLIC_SUPABASE_URL}/auth/v1/token?grant_type=password`,
@@ -313,8 +616,13 @@ const main = async () => {
 			);
 		}
 
+		await proveBrowserStorageAndResetSession({
+			runtimeEnvironment,
+			output,
+		});
+
 		console.log(
-			"Verified the Rehearsal app, exact CSP isolation, restored owner profile and local developer claims, ordinary local account creation, local Google OAuth initiation, and local blendCalcAPI route.",
+			"Verified the Rehearsal app, directive-level CSP isolation, restored owner profile and Storage images, reset-session recovery, local developer claims, ordinary local account creation, local Google OAuth initiation, and local blendCalcAPI route.",
 		);
 	} finally {
 		await stopProcessGroup(child);
