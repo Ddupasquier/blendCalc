@@ -5,6 +5,9 @@ const { createServerClient } = vi.hoisted(() => ({
 }));
 
 vi.mock("$app/environment", () => ({ dev: true }));
+vi.mock("$env/dynamic/private", () => ({
+	env: { BLENDCALC_RUNTIME_ENVIRONMENT: "production" },
+}));
 vi.mock("$env/static/public", () => ({
 	PUBLIC_SUPABASE_PUBLISHABLE_KEY: "publishable-key",
 	PUBLIC_SUPABASE_URL: "https://example.supabase.co",

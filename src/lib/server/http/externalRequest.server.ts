@@ -1,3 +1,8 @@
+import {
+	assertExternalRequestAllowed,
+	type BlendCalcRuntimeEnvironment,
+} from "$lib/server/environment/runtimeEnvironment.server";
+
 const RETRYABLE_STATUS_CODES = new Set([408, 429, 500, 502, 503, 504]);
 
 const DEFAULT_TIMEOUT_MILLISECONDS = 8_000;
@@ -13,6 +18,7 @@ type ExternalRequestPolicy = RequestInit & {
 	onAttemptFailure?: () => void;
 	fetcher?: typeof fetch;
 	sleep?: (milliseconds: number) => Promise<void>;
+	runtimeEnvironment?: BlendCalcRuntimeEnvironment;
 };
 
 const wait = (milliseconds: number) =>
@@ -45,8 +51,14 @@ export const fetchWithExternalRequestPolicy = async (
 		onAttemptFailure,
 		fetcher = fetch,
 		sleep = wait,
+		runtimeEnvironment,
 		...requestInit
 	} = policy;
+	assertExternalRequestAllowed(
+		input,
+		runtimeEnvironment,
+		requestInit.method ?? (input instanceof Request ? input.method : "GET"),
+	);
 	const headers = new Headers(requestInit.headers);
 	const method = (requestInit.method ?? "GET").toUpperCase();
 	const attempts = Math.max(1, Math.min(3, Math.floor(maxAttempts)));

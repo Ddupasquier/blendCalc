@@ -23,17 +23,19 @@ const scriptFiles = (await collectScriptFiles(scriptsRoot)).filter(
 	(filePath) => !filePath.includes(ignoredOutputDirectory),
 );
 const executableDomainsByOperation = {
-	audits: ["catalog", "food-sources", "security"],
+	audits: ["catalog", "food-sources", "rehearsal", "security"],
 	backfills: ["catalog", "images"],
-	generators: ["api"],
+	generators: ["api", "rehearsal"],
 	imports: ["nutrition"],
 	operations: [
 		"auth",
 		"blendCalcAPI",
 		"catalog",
 		"database",
+		"environment",
 		"quality",
 		"recovery",
+		"rehearsal",
 		"releases",
 		"users",
 	],
@@ -44,12 +46,14 @@ const sharedLibraryDomains = [
 	"auth",
 	"barcode",
 	"catalog",
+	"environment",
 	"images",
 	"nutrition",
 	"qa",
 	"quality",
 	"reference-data",
 	"recovery",
+	"rehearsal",
 	"releases",
 	"security",
 ];
@@ -159,7 +163,8 @@ describe("repository script headers", () => {
 		"documents purpose and execution for %s",
 		async (filePath) => {
 			const source = await readFile(filePath, "utf8");
-			const header = source.match(/^\/\*\*[\s\S]*?\*\//u)?.[0] ?? "";
+			const header =
+				source.match(/^(?:#![^\n]+\n)?\/\*\*[\s\S]*?\*\//u)?.[0] ?? "";
 
 			expect(header).toContain("Purpose:");
 			if (filePath.includes(`${path.sep}lib${path.sep}`)) {

@@ -1,6 +1,8 @@
 import { createSupabaseServerClient } from "$lib/supabase/server";
 import { randomUUID } from "node:crypto";
 import { readVerifiedAuthUser } from "$lib/server/auth/verifiedAuthUser.server";
+import { isDisposableDatabaseRuntimeEnvironment } from "$lib/server/environment/runtimeEnvironment.server";
+import { env } from "$env/dynamic/private";
 import { applySecurityHeaders } from "$lib/utils/http/securityHeaders";
 import { isActiveAccountBlock } from "$lib/utils/moderation/moderation";
 import { APP_BUILD_VERSION, APP_VERSION } from "$lib/config/version";
@@ -26,7 +28,6 @@ import {
 	normalizeThemePreference,
 	THEME_PREFERENCE_COOKIE,
 } from "$lib/utils/theme/themePreference";
-import { env } from "$env/dynamic/private";
 import { recordBlendCalcAPIRequestObservation } from "$lib/server/blendCalcAPI/operations/blendCalcAPIOperations.server";
 import { getLocalQaBrowserRateLimitClientAddress } from "$lib/server/auth/localQaSignIn.server";
 import {
@@ -143,7 +144,9 @@ export const handle: Handle = async ({ event, resolve }) => {
 	let authResult: ReturnType<App.Locals["getVerifiedUser"]> | null = null;
 	event.locals.getVerifiedUser = () => {
 		authResult ??= readVerifiedAuthUser(event.locals.supabase, {
-			requireCurrentAuthRecord: env.BLENDCALC_DATABASE_ENVIRONMENT === "test",
+			requireCurrentAuthRecord: isDisposableDatabaseRuntimeEnvironment(
+				env.BLENDCALC_RUNTIME_ENVIRONMENT,
+			),
 		});
 		return authResult;
 	};

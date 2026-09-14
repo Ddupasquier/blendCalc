@@ -6,7 +6,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("$env/dynamic/private", () => ({
 	env: {
-		BLENDCALC_DATABASE_ENVIRONMENT: "test",
+		BLENDCALC_RUNTIME_ENVIRONMENT: "test",
 		BLENDCALC_TEST_ACCOUNT_PASSWORD: "generated-local-password",
 		BLENDCALC_TEST_ACCOUNTS_BASE64: Buffer.from(
 			JSON.stringify([
@@ -74,6 +74,7 @@ describe("local QA sign-in route", () => {
 		expect(JSON.stringify(result.localQaSignIn)).not.toContain(
 			"generated-local-password",
 		);
+		expect(result.localQaSignIn).toMatchObject({ experience: "qa" });
 	});
 
 	it("signs in the selected maintained persona without accepting an email or password", async () => {

@@ -16,7 +16,7 @@ import {
 	refreshRemoteMainReference,
 } from "../../lib/releases/databaseMigrationPromotion.mjs";
 
-config({ path: ".env.blendCalcAPI.local", quiet: true });
+config({ path: ".env.blendCalcAPI.hosted.local", quiet: true });
 
 const workdir = "infrastructure/blendCalcAPI";
 const migrationsDirectory = `${workdir}/supabase/migrations`;
@@ -84,7 +84,7 @@ const dbPassword =
 	getKeychainPassword();
 if (!dbPassword) {
 	console.error(
-		`Missing isolated database password. Store it in the ${keychainService} Keychain item or .env.blendCalcAPI.local.`,
+		`Missing isolated database password. Store it in the ${keychainService} Keychain item or .env.blendCalcAPI.hosted.local.`,
 	);
 	process.exit(1);
 }

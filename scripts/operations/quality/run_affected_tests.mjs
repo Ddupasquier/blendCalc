@@ -215,22 +215,22 @@ const runAffectedBrowserTests = (selection) => {
 	const projectArguments = selection.projects.flatMap((project) => [
 		`--project=${project}`,
 	]);
-	let browserTestStatus;
-	try {
-		browserTestStatus = runCommandWithInheritedOutput("npx", [
-			"playwright",
-			"test",
+	if (shouldPrepareBrowserEnvironment) {
+		const browserTestStatus = runCommandWithInheritedOutput("node", [
+			"scripts/operations/quality/run_browser_verification.mjs",
 			...selection.specs,
 			...projectArguments,
 		]);
-	} finally {
-		if (shouldPrepareBrowserEnvironment) {
-			runCommand("node", [
-				"scripts/operations/database/manage_test_database.mjs",
-				"stop",
-			]);
-		}
+		if (browserTestStatus !== 0) process.exit(browserTestStatus);
+		return;
 	}
+	let browserTestStatus;
+	browserTestStatus = runCommandWithInheritedOutput("npx", [
+		"playwright",
+		"test",
+		...selection.specs,
+		...projectArguments,
+	]);
 	if (browserTestStatus !== 0) process.exit(browserTestStatus);
 };
 

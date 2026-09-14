@@ -23,6 +23,9 @@ describe("affected-test selection", () => {
 		expect(selectorSource).toContain("browserDomainMappings");
 		expect(selectorSource).toContain('"chromium", "firefox", "webkit"');
 		expect(selectorSource).toContain("runCommandWithInheritedOutput");
+		expect(selectorSource).toContain(
+			'"scripts/operations/quality/run_browser_verification.mjs"',
+		);
 		expect(verifyWorkflow).toContain(
 			"run_affected_tests.mjs browser --install-browsers",
 		);

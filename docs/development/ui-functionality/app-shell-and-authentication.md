@@ -51,9 +51,17 @@ welcome, and guided tutorial. Auth configuration and security details remain in
   failed submission or add redundant prose explaining that automated sign-ins are
   blocked. Submit its one-time token with supported Supabase email Auth calls.
 - Keep authenticated routes unavailable to signed-out visitors.
-- In the isolated local test app only, default to a maintained QA-account picker and
-  provide an explicit toggle back to the unchanged real sign-in flow. Never expose that
-  quick path in ordinary development or any hosted environment.
+- In isolated local test and Rehearsal apps, default to a server-owned easy-auth account
+  picker and provide an explicit toggle back to the unchanged real sign-in flow. Test
+  offers the maintained QA personas; Rehearsal offers only its restored owner snapshot.
+  Never serialize either password or expose either quick path in ordinary
+  development or any hosted environment.
+- Rehearsal's real sign-in flow must be real, not decorative: Google uses its normal
+  account chooser and returns through the isolated local Auth callback. The authenticated
+  identity and all subsequent writes remain in the disposable Rehearsal database. Do
+  not map any account except the fixed source owner: require the lowercased Google email
+  to match the source-bound SHA-256 receipt, transfer the complete owner graph and
+  Storage paths atomically, and leave every nonmatching account as a fresh local user.
 
 ## Privileged Identity Verification
 

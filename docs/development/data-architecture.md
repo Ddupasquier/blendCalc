@@ -147,6 +147,78 @@ progress, and aggregate goal match.
 
 ## External Sources
 
+Local, test, and Rehearsal runtimes are safe local environments. Their process launchers
+remove provider, email, cron, hosted-database, and deployment credentials, while the
+shared server request boundary rejects non-loopback application, database, and provider
+requests. The sole safe-runtime exception is a `GET` or `HEAD` to the exact Open Food
+Facts image host so already-stored public product images remain usable without enabling
+provider data APIs or writes. Hosted staging and production retain the source policies
+below. This runtime guard is defense in depth; new server integrations must still use
+the shared external-request owner rather than a direct `fetch`.
+
+Rehearsal additionally permits an explicitly declared external identity-provider
+exchange. For BlendCalc that is a dedicated Google OAuth Web client whose callback is
+the loopback Rehearsal Auth service. Its credential is passed only to the local Supabase
+CLI/Auth container; it never enters Vite or application server state. Google proves the
+identity, while the resulting user, profile, session, and mutations exist only in the
+disposable local database. This exception does not enable hosted Supabase, hosted
+blendCalcAPI, provider enrichment, or general application egress.
+
+Transactional email in a safe local runtime returns a deterministic local sink receipt
+without contacting Resend. This keeps moderation and operational flows testable while
+making real delivery impossible.
+
+Rehearsal production extraction uses a database capability boundary rather than a
+service-role client or a read-only transaction alone. The additive local design
+separates a dedicated disposable login, a no-login reader group, and an unreachable
+no-login view owner. The login may inherit only `SELECT` on explicit versioned
+security-barrier views in the non-Data-API `rehearsal_export` schema; it receives no
+source-schema usage, direct table access, writable function path, schema creation,
+temporary-object creation, or owner-role assumption capability. A serializable
+read-only transaction provides a single consistent snapshot while source ACLs remain
+the hard mutation boundary.
+
+The export stream carries a preflight receipt, every reviewed table in deterministic
+primary-key order, an ordered hashed migration ledger, and a completion receipt. Every
+record is encoded as one bounded stream envelope before local sanitization. Baseline
+activation is atomic and checksummed; a failed generation never replaces the prior
+active baseline. Supabase may restore public `pg_net` function execution during service
+bootstrap, so credential provisioning must use an elevated revocation and the export
+preflight must independently prove that the login has zero executable network paths.
+The migration and all proofs currently remain local to the DEV-081 branch; no production
+export schema or credential exists until separate review and authorization.
+
+An activated baseline also stores the exact migration-file prefix that shaped its
+source. The Rehearsal manager refuses any edited, reordered, removed, or database-only
+history before restore, then classifies only later files as candidates. It restores the
+sanitized stream into a dedicated local Supabase workdir, verifies exact counts and
+references inside the restore transaction, and applies candidates only when their
+ordered SHA-256 receipt is explicitly confirmed. A failure discards that runtime.
+
+Auth records are reconstructed as synthetic local placeholders only for retained public
+foreign keys. The export credential fixes one approved source owner UUID and stores only
+the SHA-256 of that account's lowercased email. That owner's non-secret private
+application rows remain exact while their UUID and owner-scoped Storage paths are
+pseudonymized; other users' identities and private values remain sanitized. Public
+catalog, nutrient, category, ingredient, warning, moderation, source, and image metadata
+remain exact.
+
+After count verification, the restored owner persona receives a fixed local quick-login
+identity and a developer-role overlay excluded from the baseline. The 5175 easy-auth
+action reads that generated credential only on the server and leaves privileged TOTP
+enforcement intact. A real Google callback may claim the same restored persona only when
+the signed-in email matches the fixed SHA-256 receipt. The local service transaction
+moves all owner foreign keys and Storage pointers to the Google Auth UUID, removes the
+placeholder Auth identity, and refreshes the local session. A different Google account
+stays a new empty local user and can never claim the owner's data.
+
+The database export login and Storage reader are separate. The Storage JWT role has only
+object `SELECT`; RLS exposes the public product-image bucket plus the fixed owner's
+prefixes in the private avatar and submission-evidence buckets. Every downloaded byte is
+bounded, checksummed in the immutable baseline, and restored to the local 58321 Storage
+service. Source credentials, hosted writes, background jobs, provider enrichment, and
+all non-identity hosted side effects remain outside Rehearsal by design.
+
 External food APIs are enrichment inputs, not live UI databases. Server code checks
 blendCalc data first, requests only missing permitted fields, records field-level source
 and license information, and stores accepted data in Supabase. Public/catalog reads do

@@ -76,12 +76,15 @@ The guard never deletes files, caches, containers, volumes, or databases.
 | `backfills/catalog/`       | Idempotent catalog and saved-source enrichment                          |
 | `backfills/images/`        | Image discovery, metadata repair, and automatic placement               |
 | `generators/api/`          | Documentation-only external provider references                         |
+| `generators/rehearsal/`    | Reviewed Rehearsal schema-policy manifests                              |
 | `imports/nutrition/`       | Licensed national nutrition dataset imports                             |
 | `operations/blendCalcAPI/` | blendCalcAPI correction review and reversible publication controls      |
 | `operations/auth/`         | Auth environment verification                                           |
 | `operations/database/`     | Local database management and linked migration delivery                 |
+| `operations/environment/`  | Safe local/test application and verification process launchers          |
 | `operations/quality/`      | Repository linting and formatting verification helpers                  |
 | `operations/recovery/`     | Protected hosted backups and offline verification                       |
+| `operations/rehearsal/`    | Disposable production-shaped migration-rehearsal proofs                 |
 | `operations/releases/`     | Application and API version consistency                                 |
 | `operations/users/`        | Privileged role and account operations                                  |
 | `operations/catalog/`      | Privileged catalog inspection and destructive product operations        |
@@ -91,7 +94,9 @@ The guard never deletes files, caches, containers, volumes, or databases.
 | `seeds/food-safety/`       | Ingredient, allergen, trace, and dietary evidence discovery             |
 | `seeds/nutrition/`         | Manual-entry nutrient-policy observations                               |
 | `lib/<domain>/`            | Reusable script-only code; never run directly                           |
+| `lib/environment/`         | Clean process environments and local Supabase service helpers           |
 | `lib/reference-data/`      | Reviewed source queries, unit standards, and cautious matching catalogs |
+| `lib/rehearsal/`           | Reusable Rehearsal safety, restore, migration, and verification helpers |
 
 ## Local Database And QA
 
@@ -100,6 +105,150 @@ start or reset only localhost Supabase, writes an ignored test environment, appl
 `supabase/seed.sql`, and repairs the maintained personas in
 `lib/qa/local_qa_personas.mjs`.
 
+`operations/environment/run_application_environment.mjs` owns `dev:local`, `dev:test`,
+and `dev:rehearsal`. It starts the required local database workdirs and launches Vite
+with an allowlisted environment. It never reads privileged or hosted environment files.
+For Rehearsal only, the database manager reads the exact two-variable allowlist in
+ignored `.env.rehearsal-auth.local` and passes it exclusively to local Supabase Auth so
+the real Google flow can return to port `58321`. The app launcher never receives those
+OAuth values.
+`operations/environment/run_test_command.mjs` provides the same fail-closed boundary
+for compile and unit-test commands without requiring the database stacks to be running.
+The executable owners are
+`scripts/operations/environment/run_application_environment.mjs`,
+`scripts/operations/environment/run_test_command.mjs`,
+`scripts/operations/database/manage_local_database.mjs`, and
+`scripts/operations/database/manage_blendcalc_api_local_database.mjs`.
+
+`npm run db:rehearsal:prove-export-boundary` creates a uniquely named disposable
+database and three temporary least-privilege roles inside the local application
+PostgreSQL container. It proves that the login can read one explicit, versioned,
+security-barrier export view while direct source reads, mutations, source/network
+function calls, owner-role assumption, schema creation, and temporary objects fail. The
+command verifies that no side effect occurred and removes the exact disposable database
+and roles before returning. It never reads environment files, hosted credentials, or
+production data and does not install the proposed export-boundary migration.
+
+`npm run rehearsal:sanitization:generate` inventories only the running local
+application database schema and writes the reviewed table-and-column policy to
+`infrastructure/rehearsal/application/sanitization-policy.json`. The manifest records
+an explicit action for every current column; generation never reads table rows. Review
+the entire diff before accepting a generated change. Routine verification uses
+`npm run rehearsal:sanitization:check`, which fails when a table or column was added,
+removed, renamed, or retyped without a corresponding reviewed manifest update.
+
+`node scripts/generators/rehearsal/generate_export_boundary_migration.mjs --write`
+generates the additive `rehearsal_export` migration from that reviewed manifest. Use
+`npm run rehearsal:export-migration:check` during routine verification; it fails when
+the checked-in migration no longer matches the policy. The migration contains explicit
+versioned security-barrier views, an inert owner, an inert reader group, forced-RLS
+policies, and a hashed migration receipt. It does not create a login credential.
+
+`npm run db:rehearsal:verify-local-history` compares every local migration file with the
+installed local Supabase ledger, including an exact ordered-statement SHA-256. It fails
+on edits, omissions, reordering, duplicate versions, filename mismatches, and database
+versions not represented locally.
+
+`npm run db:rehearsal:prove-installed-boundary` creates one disposable local login,
+connects through the installed export surface, streams every included table in a single
+serializable read-only transaction, sanitizes all records, atomically activates and
+verifies a temporary checksummed baseline, and removes both the login and artifact. It
+also creates a disposable Auth identity with the real `rehearsal_storage_reader` JWT,
+downloads a bounded local object through Storage RLS, and cleans up that identity and
+object. The command performs an elevated local `pg_net` grant cleanup that Supabase may
+undo at container restart, then proves the local database login has no executable
+network path. Hosted Supabase owns those grants and can restore them. Production
+provisioning therefore rotates a random database credential that expires within 30
+minutes, and the fixed export accepts it only inside one serializable read-only
+transaction after verifying that every `net` function uses invoker rights.
+
+`npm run db:rehearsal:refresh` is the hosted-source consumer and remains unusable until
+the reviewed boundary is deployed and its two read-only identities are provisioned. It
+reads exactly five values from owner-only `.env.rehearsal-source.local`: a dedicated
+`rehearsal_*` PostgreSQL URL, the Storage URL and publishable key, and a short-lived
+Storage-reader access/refresh token pair. It accepts no service-role key or reusable
+Storage password. The database preflight returns the fixed owner UUID and email hash;
+the separate Storage JWT must contain the `rehearsal_storage_reader` role and the same
+owner scope before any byte is accepted. Sanitized identifiers remain stable across
+refreshes through one random 32-byte key in ignored
+`.rehearsal/sanitization.key`. The key is created once with owner-only permissions,
+never leaves the machine, and is never written into a baseline or log.
+After a replacement verifies and becomes active, refresh retains that generation and
+one verified fallback, then removes older immutable generations through path-checked
+cleanup.
+
+`npm run db:rehearsal:provision-source -- --dry-run` validates the linked project and
+requires exactly one Google-linked admin or developer as the approved source owner. The
+confirmed command creates or rotates one ephemeral `rehearsal_*` database login, binds
+its export scope to that owner, creates or rotates one dedicated Auth/Storage reader,
+proves both credentials, and atomically
+writes only the five allowed values to ignored `.env.rehearsal-source.local` with mode 600. It uses `.env.moderation.local` only inside the provisioning process; no privileged
+value enters the generated source environment, command line, logs, or baseline. Hosted
+CAPTCHA remains enabled because provisioning mints the Storage session through a
+non-delivery Admin magic link rather than password authentication.
+
+`npm run db:rehearsal:deprovision-source -- --dry-run` previews removal of only that
+temporary database login and owner scope, the dedicated read-only Storage identity,
+and the ignored source credential file. The confirmed command is idempotent and refuses
+an Auth identity whose purpose metadata is not exact. It preserves the shared export
+boundary, active baseline, and local Rehearsal runtime so a completed refresh stays
+usable after every hosted credential has been revoked.
+
+`operations/database/manage_rehearsal_database.mjs` owns the persistent local runtime.
+It restores only an atomically verified baseline under ignored `.rehearsal/`, checks the
+exact migration-file prefix, streams records into PostgreSQL without constructing one
+unbounded SQL argument, recreates referenced Auth identities as synthetic local users,
+overlays the approved owner persona with one local developer login in an excluded
+authorization table, restores every checksummed Storage object into local Storage, and recreates
+the excluded catalog-monitor singleton in a disabled state so diagnostic reads retain
+their contract without enabling worker side effects. The exact public catalog and
+approved owner's non-secret private state are preserved; other identities and private
+values remain sanitized. A failed restore or candidate migration discards the runtime instead of
+leaving a database that could be mistaken for a verified Rehearsal.
+
+`db:rehearsal:migrate` accepts candidate migrations only after their ordered filename
+and content hashes produce the exact receipt printed by `db:rehearsal:candidates`.
+`db:rehearsal:run` performs reset, candidate application, and verification as one
+fail-closed operation. With no candidates it still proves the restored baseline.
+Reset verifies every restored table count and foreign key before the runtime becomes
+available. Later `verify` calls intentionally allow local row changes because Rehearsal
+is a writable sandbox and candidate data migrations may alter counts; they continue to
+verify the immutable source artifact, migration history, runtime boundary, and
+project-owned invariants. Run `reset` whenever an exact baseline-data comparison is
+required.
+
+`npm run rehearsal -- doctor`, `explain`, `run --dry-run`, `inspect baseline`, and
+`inspect migrations` expose the versioned package-shaped developer contract. The
+initializer previews a typed configuration and writes only with an explicit `--write`.
+Human and `--json` output share one redacted result/error model. The maintained public
+contract draft, configuration reference, safety boundaries, support matrix, and CI
+example live in
+[`infrastructure/rehearsal/package/README.md`](../infrastructure/rehearsal/package/README.md).
+
+`npm run rehearsal:fixture:prove` copies the synthetic non-BlendCalc project under
+`tests/fixtures/rehearsal-project` into a temporary directory, installs the exact
+prospective npm tarball, restores its one-row baseline through disposable local
+Supabase, proves its valid candidate, proves its invalid PostgreSQL candidate fails,
+removes the runtime, and prints phase timings. It never reads environment files or
+contacts a hosted project.
+
+`npm run rehearsal:app:prove` is BlendCalc's project-owned application proof. It starts
+the app against the already verified Rehearsal runtime, verifies the exact CSP boundary,
+performs the restored owner-snapshot Auth exchange, requires its local database-owned
+`developer` claim, creates and removes an ordinary local account plus its application profile,
+proves Google OAuth initiation uses Google's chooser plus the port `58321` local
+callback, and checks the isolated blendCalcAPI route cannot fail from a missing or
+hosted target. It stops only the app process and leaves the local database stacks
+available. Completing the external Google consent/callback remains a direct browser
+check because Rehearsal never stores a real Google account credential. Runtime
+verification separately performs a matching Google-owner claim inside a rollback and
+proves the owner profile, list topology, and Storage pointers survive the identity swap.
+
+`npm run rehearsal:package:audit` assembles the prospective npm tarball in a temporary
+directory from an explicit source allowlist, runs `npm pack --dry-run --json`, scans for
+secret-like content and forbidden paths, verifies the zero-runtime-dependency surface,
+and removes the preview. It never publishes a package.
+
 | Command                                                                 | Behavior                                                                                             |
 | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
 | `npm run db:test:start`                                                 | Start local Supabase and restore missing baseline fixtures without moving current tester list items. |
@@ -107,6 +256,30 @@ start or reset only localhost Supabase, writes an ignored test environment, appl
 | `npm run db:test:verify`                                                | Recreate and test the local database, then stop the stack and manager-started Colima.                |
 | `npm run db:test:status`                                                | Report local service status.                                                                         |
 | `npm run db:test:stop`                                                  | Stop local Supabase.                                                                                 |
+| `npm run db:rehearsal:prove-export-boundary`                            | Prove the least-privilege design in an isolated disposable local database.                           |
+| `npm run db:rehearsal:prove-installed-boundary`                         | Stream, sanitize, verify, and clean a temporary baseline through the installed local boundary.       |
+| `npm run db:rehearsal:verify-local-history`                             | Compare installed migration statements with immutable local migration source.                        |
+| `npm run db:rehearsal:refresh-local`                                    | Produce and retain a verified baseline from the installed local export boundary.                     |
+| `npm run db:rehearsal:provision-source -- --dry-run`                    | Preview the confirmed least-privilege production source provisioning operation.                      |
+| `npm run db:rehearsal:deprovision-source -- --dry-run`                  | Preview revocation of the temporary production-source identities and local credential file.          |
+| `npm run db:rehearsal:start`                                            | Start the persistent runtime, restoring it when no verified runtime exists.                          |
+| `npm run db:rehearsal:reset`                                            | Discard and recreate the runtime from the active immutable baseline.                                 |
+| `npm run db:rehearsal:status`                                           | Report runtime health, endpoints, baseline identity, and candidate state.                            |
+| `npm run db:rehearsal:stop`                                             | Stop the runtime while retaining its local database volume.                                          |
+| `npm run db:rehearsal:discard`                                          | Remove only the disposable Rehearsal runtime and its database volume.                                |
+| `npm run db:rehearsal:candidates`                                       | Print the exact ordered candidate files and confirmation receipt.                                    |
+| `npm run db:rehearsal:migrate -- --confirm-candidates=<sha256>`         | Apply only the candidate list matching the supplied immutable receipt.                               |
+| `npm run db:rehearsal:verify`                                           | Verify artifact, migration, runtime-boundary, configuration, and project identity invariants.        |
+| `npm run db:rehearsal:run`                                              | Reset, apply zero or confirmed candidates, and verify in one fail-closed workflow.                   |
+| `npm run rehearsal -- doctor\|explain\|run --dry-run`                   | Validate readiness or inspect the immutable package-shaped plan without mutating state.              |
+| `npm run rehearsal -- inspect baseline\|inspect migrations`             | Inspect safe provenance and exact migration classifications.                                         |
+| `npm run rehearsal:app:prove`                                           | Prove the BlendCalc application, CSP, Auth, and API boundaries against Rehearsal.                    |
+| `npm run rehearsal:fixture:prove`                                       | Prove valid and invalid candidates against an unrelated synthetic local Supabase project.            |
+| `npm run rehearsal:package:audit`                                       | Prove the prospective dependency and tarball allowlists without publishing.                          |
+| `npm run rehearsal:sanitization:generate`                               | Regenerate the schema-only sanitization policy for deliberate review.                                |
+| `npm run rehearsal:sanitization:check`                                  | Fail when the reviewed policy no longer exactly covers the local schema.                             |
+| `npm run rehearsal:export-migration:generate`                           | Regenerate the explicit export-boundary migration for deliberate review.                             |
+| `npm run rehearsal:export-migration:check`                              | Fail when the export migration differs from its reviewed generator inputs.                           |
 | `npm run qa:deterministic`                                              | Run read-only hosted invariants without creating users or Fridge records.                            |
 | `npm run catalog:qa-seed -- <email> <reviewable\|incomplete\|both>`     | Add local product-review fixtures.                                                                   |
 | `npm run catalog:qa-clean -- <email>`                                   | Remove product-review fixtures created for that email.                                               |

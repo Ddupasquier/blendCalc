@@ -1,4 +1,10 @@
+import { createHash } from "node:crypto";
 import { fetchWithExternalRequestPolicy } from "$lib/server/http/externalRequest.server";
+import {
+	isSafeLocalRuntimeEnvironment,
+	readBlendCalcRuntimeEnvironment,
+	type BlendCalcRuntimeEnvironment,
+} from "$lib/server/environment/runtimeEnvironment.server";
 
 const RESEND_EMAIL_ENDPOINT = "https://api.resend.com/emails";
 export const TRANSACTIONAL_EMAIL_DOMAIN = "noreply.blendcalc.food";
@@ -24,6 +30,7 @@ type SendTransactionalEmailInput = {
 	idempotencyKey: string;
 	replyTo?: string;
 	tags?: TransactionalEmailTag[];
+	runtimeEnvironment?: BlendCalcRuntimeEnvironment;
 };
 
 type TransactionalEmailLayoutInput = {
@@ -106,12 +113,23 @@ export const sendTransactionalEmail = async ({
 	idempotencyKey,
 	replyTo,
 	tags,
+	runtimeEnvironment = readBlendCalcRuntimeEnvironment(),
 }: SendTransactionalEmailInput): Promise<TransactionalEmailResult> => {
 	if (!isApprovedTransactionalSender(from)) {
 		return {
 			status: "failed",
 			errorCode: "email_sender_not_approved",
 			errorMessage: `Transactional email must use ${TRANSACTIONAL_EMAIL_DOMAIN}.`,
+		};
+	}
+	if (isSafeLocalRuntimeEnvironment(runtimeEnvironment)) {
+		const receipt = createHash("sha256")
+			.update(`${runtimeEnvironment}:${idempotencyKey}`)
+			.digest("hex")
+			.slice(0, 24);
+		return {
+			status: "sent",
+			providerMessageId: `local-sink-${receipt}`,
 		};
 	}
 

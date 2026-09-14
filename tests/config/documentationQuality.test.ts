@@ -4,7 +4,13 @@ import { dirname, relative, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const trackedRepositoryPaths = new Set(
-	execFileSync("git", ["ls-files"], { encoding: "utf8" })
+	execFileSync(
+		"git",
+		["ls-files", "--cached", "--others", "--exclude-standard"],
+		{
+			encoding: "utf8",
+		},
+	)
 		.trim()
 		.split("\n")
 		.filter(Boolean),

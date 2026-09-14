@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
 	searchUsdaBrandedFoods: vi.fn(),
 	searchUsdaFoods: vi.fn(),
 	createCatalogFoodFromDraft: vi.fn(),
+	readBlendCalcRuntimeEnvironment: vi.fn(),
 }));
 
 vi.mock("$lib/server/moderation/moderationAccess.server", () => ({
@@ -38,6 +39,9 @@ vi.mock("$lib/server/products/usdaCache.server", () => ({
 vi.mock("$lib/server/products/catalogFood.server", () => ({
 	createCatalogFoodFromDraft: mocks.createCatalogFoodFromDraft,
 }));
+vi.mock("$lib/server/environment/runtimeEnvironment.server", () => ({
+	readBlendCalcRuntimeEnvironment: mocks.readBlendCalcRuntimeEnvironment,
+}));
 
 import { GET } from "../../src/routes/api/moderation/product-lookup/+server";
 
@@ -63,6 +67,7 @@ describe("privileged product lookup route", () => {
 		mocks.lookupUsdaBarcodeProduct.mockResolvedValue(null);
 		mocks.lookupOpenFoodFactsBarcodeProduct.mockResolvedValue(null);
 		mocks.getProductReferenceCatalog.mockResolvedValue({ sources: [] });
+		mocks.readBlendCalcRuntimeEnvironment.mockReturnValue("production");
 	});
 
 	it("requires privileged API access and returns only active stored catalog search results", async () => {
@@ -128,6 +133,23 @@ describe("privileged product lookup route", () => {
 		expect(
 			body.results.map((result: { providerKey: string }) => result.providerKey),
 		).toEqual(["usda", "open-food-facts"]);
+	});
+
+	it("explains that live providers are disabled in Rehearsal without making a request", async () => {
+		mocks.readBlendCalcRuntimeEnvironment.mockReturnValue("rehearsal");
+		const response = await GET({
+			locals: {},
+			url: new URL(
+				"http://localhost/api/moderation/product-lookup?scope=live&q=yogurt",
+			),
+		} as never);
+		const body = await response.json();
+
+		expect(response.status).toBe(200);
+		expect(body.results).toEqual([]);
+		expect(body.note).toContain("disabled in Rehearsal");
+		expect(mocks.searchUsdaBrandedFoods).not.toHaveBeenCalled();
+		expect(mocks.lookupOpenFoodFactsBarcodeProduct).not.toHaveBeenCalled();
 	});
 
 	it("uses the branded USDA provider search for live name lookups", async () => {

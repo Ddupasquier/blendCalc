@@ -2495,9 +2495,13 @@ UUID in protected JWT `app_metadata`. It receives no insert, update, delete, sou
 or application-schema permission. Exported bytes are bounded and checksummed before
 they enter an immutable local baseline.
 
-`pg_net` bootstrap grants require a separate elevated credential-provisioning hardening
-step and an independent zero-executable-network-function preflight. Applying this
-migration alone must never be treated as permission to extract hosted data.
+Supabase owns `pg_net` under an internal role and may restore its `PUBLIC` grants during
+platform bootstrap. The source database credential is therefore randomly rotated,
+expires within 30 minutes, and is accepted only inside the fixed serializable read-only
+export transaction. That preflight verifies that every callable `net` function uses
+invoker rights, while the export login has no direct source-table access or database
+creation privileges. Applying the migration alone must never be treated as permission
+to extract hosted data.
 
 ## Storage Buckets
 
