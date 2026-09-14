@@ -95,3 +95,6 @@ export const createWorkerSources = (mode = readViteMode()) => [
 	"blob:",
 	...(SAFE_LOCAL_MODES.has(mode) ? [] : ["https://cdn.jsdelivr.net"]),
 ];
+
+export const createSvelteKitOutputDirectory = (mode = readViteMode()) =>
+	mode === "rehearsal" ? ".svelte-kit/rehearsal" : ".svelte-kit";

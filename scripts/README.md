@@ -233,16 +233,20 @@ removes the runtime, and prints phase timings. It never reads environment files 
 contacts a hosted project.
 
 `npm run rehearsal:app:prove` is BlendCalc's project-owned application proof. It starts
-the app against the already verified Rehearsal runtime, verifies the exact CSP boundary,
-performs the restored owner-snapshot Auth exchange, requires its local database-owned
-`developer` claim, creates and removes an ordinary local account plus its application profile,
-proves Google OAuth initiation uses Google's chooser plus the port `58321` local
-callback, and checks the isolated blendCalcAPI route cannot fail from a missing or
-hosted target. It stops only the app process and leaves the local database stacks
-available. Completing the external Google consent/callback remains a direct browser
-check because Rehearsal never stores a real Google account credential. Runtime
-verification separately performs a matching Google-owner claim inside a rollback and
-proves the owner profile, list topology, and Storage pointers survive the identity swap.
+the app against the already verified Rehearsal runtime and waits for that newly started
+process's directive-level CSP instead of accepting an older listener on port `5175`.
+It renders restored profile-avatar and private submission-evidence Storage bytes in a
+real headless browser; proves a reset-invalidated session clears once without retaining
+privileged access or retrying the dead token; performs the restored owner-snapshot Auth
+exchange; requires its local database-owned `developer` claim; creates and removes an
+ordinary local account plus its application profile; proves Google OAuth initiation
+uses Google's chooser plus the port `58321` local callback; and checks the isolated
+blendCalcAPI route cannot fail from a missing or hosted target. It stops only the app
+process and leaves the local database stacks available. Completing the external Google
+consent/callback remains a direct browser check because Rehearsal never stores a real
+Google account credential. Runtime verification separately performs a matching
+Google-owner claim inside a rollback and proves the owner profile, list topology, and
+Storage pointers survive the identity swap.
 
 `npm run rehearsal:package:audit` assembles the prospective npm tarball in a temporary
 directory from an explicit source allowlist, runs `npm pack --dry-run --json`, scans for

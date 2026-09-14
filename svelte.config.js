@@ -6,6 +6,7 @@ import {
 	createFrameSources,
 	createImageSources,
 	createScriptSources,
+	createSvelteKitOutputDirectory,
 	createWorkerSources,
 } from "./config/contentSecurityPolicy.js";
 
@@ -28,6 +29,7 @@ const config = {
 			filename.split(/[/\\]/).includes("node_modules") ? undefined : true,
 	},
 	kit: {
+		outDir: createSvelteKitOutputDirectory(),
 		version: {
 			name: buildVersion,
 		},
