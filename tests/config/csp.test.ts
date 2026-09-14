@@ -2,7 +2,10 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
 	createConnectSources,
+	createFrameSources,
 	createImageSources,
+	createScriptSources,
+	createWorkerSources,
 	readViteMode,
 } from "../../config/contentSecurityPolicy.js";
 
@@ -30,52 +33,87 @@ describe("content security policy", () => {
 	});
 
 	it("limits on-device OCR assets to the Tesseract CDN and local workers", () => {
-		const configSource = readFileSync("svelte.config.js", "utf8");
-
-		expect(configSource).toContain("'https://cdn.jsdelivr.net'");
-		expect(configSource).toContain(
-			"'worker-src': ['self', 'blob:', 'https://cdn.jsdelivr.net']",
+		expect(createScriptSources("production")).toContain(
+			"https://cdn.jsdelivr.net",
 		);
-		expect(configSource).toContain("'wasm-unsafe-eval'");
+		expect(createWorkerSources("production")).toContain(
+			"https://cdn.jsdelivr.net",
+		);
+		expect(createScriptSources("production")).toContain("wasm-unsafe-eval");
+		expect(createScriptSources("test")).not.toContain(
+			"https://cdn.jsdelivr.net",
+		);
 	});
 
 	it("allows only the official Turnstile origin for the Auth challenge", () => {
-		const configSource = readFileSync("svelte.config.js", "utf8");
-
 		expect(createConnectSources("production")).toContain(
 			"https://challenges.cloudflare.com",
 		);
-		expect(configSource).toContain(
-			"'frame-src': ['self', 'https://challenges.cloudflare.com']",
+		expect(createFrameSources("production")).toContain(
+			"https://challenges.cloudflare.com",
 		);
-		expect(configSource).toContain("'https://challenges.cloudflare.com'");
+		expect(createScriptSources("production")).toContain(
+			"https://challenges.cloudflare.com",
+		);
+		expect(createFrameSources("local")).not.toContain(
+			"https://challenges.cloudflare.com",
+		);
 	});
 
-	it("allows the local Supabase stack only in test mode", () => {
+	it("allows only local Supabase stacks in safe local modes", () => {
+		expect(createConnectSources("local")).toContain("http://127.0.0.1:54321");
 		expect(createConnectSources("test")).toContain("http://127.0.0.1:54321");
 		expect(createConnectSources("test")).toContain("ws://127.0.0.1:54321");
+		expect(createConnectSources("test")).toContain("http://127.0.0.1:55321");
+		expect(createConnectSources("test")).toContain(
+			"https://images.openfoodfacts.org",
+		);
+		expect(createConnectSources("test")).not.toContain(
+			"https://api.nal.usda.gov",
+		);
 		expect(createConnectSources("production")).not.toContain(
 			"http://127.0.0.1:54321",
 		);
 		expect(createConnectSources("production")).not.toContain(
 			"ws://127.0.0.1:54321",
 		);
+		expect(createConnectSources("rehearsal")).toContain(
+			"http://127.0.0.1:58321",
+		);
+		expect(createConnectSources("rehearsal")).toContain("ws://127.0.0.1:58321");
+		expect(createConnectSources("rehearsal")).not.toContain(
+			"http://127.0.0.1:54321",
+		);
 	});
 
-	it("allows local Supabase images only in test mode", () => {
+	it("allows local storage and the read-only product image host in test mode", () => {
 		expect(createImageSources("test")).toContain("http://127.0.0.1:54321");
+		expect(createImageSources("test")).toContain(
+			"https://images.openfoodfacts.org",
+		);
+		expect(createImageSources("test")).not.toContain("https:");
 		expect(createImageSources("production")).not.toContain(
+			"http://127.0.0.1:54321",
+		);
+		expect(createImageSources("rehearsal")).toContain("http://127.0.0.1:58321");
+		expect(createImageSources("rehearsal")).not.toContain(
 			"http://127.0.0.1:54321",
 		);
 	});
 
 	it("detects test-database mode before Vite loads mode-specific env files", () => {
-		expect(readViteMode([], { BLENDCALC_DATABASE_ENVIRONMENT: "test" })).toBe(
+		expect(readViteMode([], { BLENDCALC_RUNTIME_ENVIRONMENT: "test" })).toBe(
 			"test",
 		);
 	});
 
-	it("preserves test-database CSP while validation commands regenerate SvelteKit output", () => {
+	it("fails closed when the configured runtime mode is invalid", () => {
+		expect(() =>
+			readViteMode([], { BLENDCALC_RUNTIME_ENVIRONMENT: "prodution" }),
+		).toThrow("BLENDCALC_RUNTIME_ENVIRONMENT is invalid.");
+	});
+
+	it("runs validation commands through the hermetic test environment", () => {
 		const packageMetadata = JSON.parse(
 			readFileSync("package.json", "utf8"),
 		) as {
@@ -84,7 +122,7 @@ describe("content security policy", () => {
 
 		for (const command of ["check", "check:watch", "test", "test:watch"]) {
 			expect(packageMetadata.scripts[command]).toContain(
-				"BLENDCALC_DATABASE_ENVIRONMENT=test",
+				"scripts/operations/environment/run_test_command.mjs",
 			);
 		}
 	});

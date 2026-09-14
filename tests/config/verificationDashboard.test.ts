@@ -113,16 +113,16 @@ describe("visible verification dashboard", () => {
 
 	it("keeps forced-color terminal output free of conflicting NO_COLOR warnings", () => {
 		expect(dashboardSource).toContain("getChildProcessEnvironment");
-		expect(dashboardSource).toContain("NO_COLOR: _ignoredNoColor");
+		expect(dashboardSource).toContain("delete environment.NO_COLOR");
 	});
 
 	it("provides compile-only public configuration in clean feature worktrees", () => {
 		expect(packageMetadata.scripts.check).toContain(
-			"PUBLIC_SUPABASE_URL=http://127.0.0.1:54321",
-		);
-		expect(packageMetadata.scripts.check).toContain(
-			"PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_local_compile_only",
+			"scripts/operations/environment/run_test_command.mjs",
 		);
 		expect(dashboardSource).toContain("compileOnlyPublicEnvironment");
+		expect(dashboardSource).toContain(
+			'PUBLIC_SUPABASE_URL: "http://127.0.0.1:54321"',
+		);
 	});
 });

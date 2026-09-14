@@ -5,7 +5,10 @@ const { createClient } = vi.hoisted(() => ({
 }));
 
 vi.mock("$env/dynamic/private", () => ({
-	env: { SUPABASE_SERVICE_ROLE_KEY: "service-role-key" },
+	env: {
+		BLENDCALC_RUNTIME_ENVIRONMENT: "production",
+		SUPABASE_SERVICE_ROLE_KEY: "service-role-key",
+	},
 }));
 vi.mock("$env/static/public", () => ({
 	PUBLIC_SUPABASE_URL: "https://example.supabase.co",

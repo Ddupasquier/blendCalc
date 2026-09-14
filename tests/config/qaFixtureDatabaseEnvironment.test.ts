@@ -22,7 +22,7 @@ describe("QA fixture database environment", () => {
 			"catalog:qa-image-clean",
 		]) {
 			expect(packageMetadata.scripts[command]).toContain(
-				"BLENDCALC_DATABASE_ENVIRONMENT=test",
+				"scripts/operations/environment/run_test_command.mjs",
 			);
 		}
 	});

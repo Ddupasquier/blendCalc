@@ -19,6 +19,8 @@ import { readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { createClient } from "@supabase/supabase-js";
 import WebSocket from "ws";
+import { createCleanProcessEnvironment } from "../../lib/environment/runtime_environment.mjs";
+import { runRehearsalExportAuthorizationProof } from "../../lib/rehearsal/export_authorization_boundary.mjs";
 import {
 	getLocalQaCatalogBarcodes,
 	localQaPrivateFoods,
@@ -60,6 +62,7 @@ const runCommand = (command, args, { capture = false, input } = {}) => {
 	const result = spawnSync(command, args, {
 		cwd: repositoryRoot,
 		encoding: "utf8",
+		env: createCleanProcessEnvironment(),
 		input,
 		stdio: shouldPipe ? ["pipe", "pipe", "pipe"] : "inherit",
 	});
@@ -80,6 +83,7 @@ const runCommand = (command, args, { capture = false, input } = {}) => {
 const commandSucceeds = (command, args) =>
 	spawnSync(command, args, {
 		cwd: repositoryRoot,
+		env: createCleanProcessEnvironment(),
 		stdio: "ignore",
 	}).status === 0;
 
@@ -249,7 +253,10 @@ const applyLocalQaSeed = async () => {
 			"--dbname",
 			"postgres",
 		],
-		{ capture: true, input: seedSql },
+		{
+			capture: true,
+			input: `truncate table public.request_rate_limits;\n${seedSql}`,
+		},
 	);
 };
 
@@ -1087,6 +1094,18 @@ const main = async () => {
 			try {
 				await resetLocalStack();
 				await runDatabaseTests();
+				{
+					const proof = runRehearsalExportAuthorizationProof();
+					console.log(
+						`Rehearsal export authorization proof passed ${proof.checks} checks and removed its disposable database and roles.`,
+					);
+				}
+				runCommand("node", [
+					"scripts/operations/rehearsal/verify_local_migration_history.mjs",
+				]);
+				runCommand("node", [
+					"scripts/operations/rehearsal/prove_installed_export_boundary.mjs",
+				]);
 				printAccounts();
 			} finally {
 				if (!keepRuntimeRunning) stopLocalStack();

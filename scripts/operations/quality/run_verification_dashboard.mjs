@@ -16,6 +16,7 @@ import {
 	invalidateReleaseReceipt,
 	recordReleaseReceipt,
 } from "../../lib/quality/release_verification_receipt.mjs";
+import { createCleanProcessEnvironment } from "../../lib/environment/runtime_environment.mjs";
 
 const repositoryRoot = fileURLToPath(new URL("../../..", import.meta.url));
 const historyPath = fileURLToPath(
@@ -75,6 +76,7 @@ const fullUnitStages = [
 ];
 
 const compileOnlyPublicEnvironment = {
+	BLENDCALC_RUNTIME_ENVIRONMENT: "production",
 	PUBLIC_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_local_compile_only",
 	PUBLIC_SUPABASE_URL: "http://127.0.0.1:54321",
 };
@@ -353,13 +355,20 @@ const updateTestProgress = (state, line) => {
 };
 
 const getChildProcessEnvironment = (stageEnvironment = {}) => {
-	if (!process.env.FORCE_COLOR) {
-		return { ...process.env, ...stageEnvironment };
-	}
-
-	const { NO_COLOR: _ignoredNoColor, ...environmentWithoutNoColor } =
-		process.env;
-	return { ...environmentWithoutNoColor, ...stageEnvironment };
+	const environment = createCleanProcessEnvironment({
+		overrides: stageEnvironment,
+		passthroughKeys: [
+			"BLENDCALC_ALLOW_RESOURCE_PRESSURE",
+			"NODE_OPTIONS",
+			"PLAYWRIGHT_ENFORCE_DURATION_BUDGETS",
+			"PLAYWRIGHT_EXHAUSTIVE_MATRIX",
+			"PLAYWRIGHT_PROGRESS_REPORTER",
+			"PLAYWRIGHT_WORKERS",
+			"TEST_BASE_REF",
+		],
+	});
+	if (environment.FORCE_COLOR) delete environment.NO_COLOR;
+	return environment;
 };
 
 const runStage = async (verificationStage, state, render) => {

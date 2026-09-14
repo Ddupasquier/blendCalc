@@ -16,20 +16,22 @@ the variables consumed by that environment. Secrets never belong in tracked file
 | Run privileged scripts      | [Privileged Local Operations](#privileged-local-operations) |
 | Operate the API database    | [blendCalcAPI Database](#blendcalcapi-database)             |
 | Run tests                   | [Test Environment](#test-environment)                       |
+| Run Rehearsal               | [Rehearsal Environment](#rehearsal-environment)             |
 | Configure Vercel            | [Vercel](#vercel)                                           |
 | Configure Edge Functions    | [Supabase Edge Functions](#supabase-edge-functions)         |
 | Add or rotate a variable    | [Synchronization Workflow](#synchronization-workflow)       |
 
 ## Environment Files
 
-| Tracked contract                  | Ignored values                                                 | Consumer                                          |
-| --------------------------------- | -------------------------------------------------------------- | ------------------------------------------------- |
-| `.env.example`                    | `.env`                                                         | Local SvelteKit application and server routes     |
-| `.env.blendCalcAPI.example`       | `.env.blendCalcAPI.local`                                      | Isolated blendCalcAPI database operations         |
-| `.env.moderation.example`         | `.env.moderation.local`                                        | Privileged scripts and linked Supabase operations |
-| `.env.test`                       | `.env.test.local`                                              | Disposable local database and Playwright          |
-| `.env.vercel.example`             | `.env.vercel.production.local` and `.env.vercel.preview.local` | Vercel Production and Preview deployments         |
-| `supabase/functions/.env.example` | `supabase/functions/.env.local`                                | Supabase Edge Functions                           |
+| Tracked contract                                                                 | Ignored values                                                                       | Consumer                                           |
+| -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | -------------------------------------------------- |
+| `.env.example`                                                                   | `.env`                                                                               | Optional loopback-only local application overrides |
+| `.env.blendCalcAPI.hosted.example`                                               | `.env.blendCalcAPI.hosted.local`                                                     | Guarded hosted blendCalcAPI migration operations   |
+| `.env.moderation.example`                                                        | `.env.moderation.local`                                                              | Privileged scripts and linked Supabase operations  |
+| `.env.test`                                                                      | `.env.test.local`                                                                    | Disposable local database and Playwright           |
+| `.env.rehearsal`, `.env.rehearsal-auth.example`, `.env.rehearsal-source.example` | `.rehearsal/runtime.env`, `.env.rehearsal-auth.local`, `.env.rehearsal-source.local` | Production-shaped local Rehearsal                  |
+| `.env.vercel.example`                                                            | `.env.vercel.production.local` and `.env.vercel.preview.local`                       | Vercel Production and Preview deployments          |
+| `supabase/functions/.env.example`                                                | `supabase/functions/.env.local`                                                      | Supabase Edge Functions                            |
 
 The ignored mirrors are local inventory and development inputs. Vercel and Supabase
 remain authoritative for deployed values. Never copy a secret into a public variable,
@@ -54,19 +56,26 @@ Remove those links with the auxiliary checkout after its work is safely integrat
 
 ## Local Application
 
-Copy `.env.example` to `.env`. This is the single local SvelteKit environment file; do
-not split its values across a second root `.env.local`. It owns browser-safe Supabase
-configuration plus server-only credentials consumed by the local SvelteKit process.
+`npm run dev` aliases `npm run dev:local`. The launcher starts or validates both local
+Supabase workdirs, derives their local credentials from `supabase status`, builds a new
+allowlisted child environment, disables Vite environment-file layering, and starts the
+application at `http://localhost:5173`. It preserves existing local database state.
+
+The launcher never reads `.env`, `.env.moderation.local`, a Vercel pull, or the hosted
+blendCalcAPI file. Provider APIs, email delivery, cron credentials, hosted Supabase
+tokens, and other non-loopback application requests are absent and denied. The only
+external safe-runtime exception is read-only rendering and processing of an exact,
+already-stored Open Food Facts image URL. `.env.example` remains a loopback-only
+reference for tools that intentionally read `.env`; do not place hosted values in that
+file.
 
 ```bash
 cp .env.example .env
 ```
 
-Only variables beginning with `PUBLIC_` may be read by browser code. `FDC_API_KEY`,
-`COLA_CLOUD_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `CRON_SECRET`, isolated blendCalcAPI
-credentials, email credentials, and relay secrets must remain server-only. Set
-`BLENDCALC_API_READ_MODE` to `source`, `shadow`, or `isolated`; local development uses
-`source` unless the isolated read path is under direct test.
+Only variables beginning with `PUBLIC_` may be read by browser code. Local and test
+runtimes always use `BLENDCALC_API_READ_MODE=isolated`; missing or invalid read modes
+fail instead of silently falling back to the production source path.
 
 ## Native Application
 
@@ -122,28 +131,34 @@ introduce a duplicate provider-key variable or serialize the credential.
 
 ## blendCalcAPI Database
 
-Copy `.env.blendCalcAPI.example` to `.env.blendCalcAPI.local`. This file belongs only to
-the isolated publication database and must never replace the app project's public or
-service-role variables.
+Local blendCalcAPI lifecycle commands derive credentials from the isolated workdir and
+receive a clean process environment. They do not require an environment file:
 
 ```bash
-cp .env.blendCalcAPI.example .env.blendCalcAPI.local
+npm run blendCalcAPI:db:start
+npm run blendCalcAPI:db:status
 ```
 
-The root Supabase link remains attached to the blendCalc application project. Every
-blendCalcAPI database command must use `infrastructure/blendCalcAPI` as its explicit
-workdir and verify `BLENDCALC_API_SUPABASE_PROJECT_ID` before a hosted write. The
-database password may instead use the dedicated `blendCalcAPI-supabase-db-password`
-macOS Keychain item. Do not reuse the application database password or Keychain name.
+Guarded hosted migrations use `.env.blendCalcAPI.hosted.local`, copied from
+`.env.blendCalcAPI.hosted.example`. The root Supabase link remains attached to the
+blendCalc application project. Every blendCalcAPI database command uses
+`infrastructure/blendCalcAPI` as its explicit workdir, and a hosted write verifies
+`BLENDCALC_API_SUPABASE_PROJECT_ID`. The database password may instead use the dedicated
+`blendCalcAPI-supabase-db-password` macOS Keychain item. Do not reuse the application
+database password or Keychain name.
 
 ## Test Environment
 
-`.env.test` contains safe, tracked defaults such as the port and database-environment
-label. The local database manager writes private keys and seeded account credentials to
-`.env.test.local`. Do not hand-maintain or commit that generated file.
+`.env.test` contains safe tracked defaults and the explicit `test` runtime label. The
+local database manager writes private application-database keys and seeded account
+credentials to `.env.test.local`. Do not hand-maintain or commit that generated file.
+The test application launcher adds local blendCalcAPI credentials directly from its
+separate workdir.
 
-Playwright uses port `5174` and the disposable local Supabase stack. Test credentials
-must never point at production.
+Playwright uses port `5174`, the disposable local application Supabase stack, and the
+isolated local blendCalcAPI stack. Its orchestrator discards the parent shell
+environment, passes only approved test controls, rejects a non-loopback base URL, and
+supplies generated local credentials. Test credentials must never point at production.
 
 After `npm run db:test:reset`, `npm run dev:test` serves the local test sign-in page with
 a Quick QA login dropdown. The dropdown reads the maintained seeded persona catalog and
@@ -160,6 +175,106 @@ the key cleared so provider UI cannot make unrelated browser tests nondeterminis
 Local Supabase does not prove hosted CAPTCHA enforcement; use this mode to verify the
 visible widget and token-carrying form flow, then verify enforcement and real email
 delivery on an approved hosted origin.
+
+## Rehearsal Environment
+
+Rehearsal is a third local-only runtime, separate from ordinary development and the
+synthetic QA database. `npm run db:rehearsal:reset` restores the active checksummed
+sanitized baseline into its own Supabase workdir on ports `58320` through `58329`;
+`npm run dev:rehearsal` serves the app at `http://localhost:5175`. The launcher accepts
+only those loopback application and database endpoints, clears hosted application and
+provider-data credentials, and uses the same fail-closed external-request and local
+email-sink boundaries as TEST. A separately declared Google identity exchange is the
+only external Rehearsal exception; its callback and resulting Auth state remain local.
+
+The database manager generates `.rehearsal/runtime.env`. Do not hand-edit or commit it.
+It contains only derived local endpoints, the fixed local owner-snapshot credential,
+and nonreversible owner receipts used to exercise authenticated and MFA-protected flows.
+TOTP enrollment is enabled in the isolated Rehearsal Auth service. Email delivery, SMS, Edge Functions, Realtime,
+analytics, provider enrichment, hosted Supabase, and hosted blendCalcAPI remain
+unavailable. New password or Google identities are written only to the disposable local
+Auth database.
+
+Google OAuth requires a dedicated local Web client. Do not reuse a hosted Supabase
+secret or put it in `.rehearsal/runtime.env`:
+
+1. In Google Cloud, create an OAuth 2.0 **Web application** client for Rehearsal.
+2. Add `http://127.0.0.1:58321/auth/v1/callback` as an exact authorized redirect URI.
+3. Copy `.env.rehearsal-auth.example` to `.env.rehearsal-auth.local`.
+4. Put the Web client ID and secret in the two named variables, then run
+   `chmod 600 .env.rehearsal-auth.local`.
+5. Run `npm run rehearsal -- doctor`; **Local service credentials** must pass.
+6. Run `npm run db:rehearsal:reset`, then `npm run dev:rehearsal`.
+
+The ignored credential file is read through an exact two-variable allowlist and is
+passed only to the local Supabase CLI. It is never inherited by Vite, app server code,
+the browser, a baseline, or a diagnostic report.
+
+Each restore also recreates the excluded catalog-monitor singleton in a disabled state.
+That keeps operational diagnostics readable without copying invocation history or
+allowing Rehearsal to schedule provider work. Browser sessions are revalidated against
+the current local Auth database, so a reset invalidates the old session cleanly and the
+next protected navigation returns to Rehearsal sign-in.
+
+The Rehearsal sign-in page defaults to the same easy-auth experience used for local QA,
+but offers only the restored owner snapshot. The password stays server-side in the generated
+owner-only runtime file. Turning on **Test the real sign-in flow** restores the ordinary
+Google and email/password controls. Google always opens its account chooser, returns
+through local Auth on port `58321`, and then returns to the initiating route on port
+`5175`. Easy auth still creates a normal local session and does not bypass TOTP for
+privileged routes.
+
+The production refresh fixes one approved source owner account. That owner's non-secret
+private application rows are kept exact under a pseudonymous placeholder; every other
+identity and private value remains sanitized or excluded. When the same owner uses
+Google, the callback compares the signed-in email with the source-bound SHA-256 receipt
+and atomically transfers the complete owner graph and private Storage paths to that
+local Google UUID. A different Google account remains a fresh local account. Neither
+path can read or mutate production after the baseline has been created.
+
+The active baseline under ignored `.rehearsal/` contains sanitized table records,
+exact row and file checksums, bounded checksummed Storage bytes, and an immutable
+migration-source prefix. Public product/catalog data and the approved owner's private
+application state remain production-faithful; unrelated private values do not. The
+artifact never contains production credentials. A random owner-only
+`.rehearsal/sanitization.key` remains local and makes pseudonyms reproducible across
+refreshes without deriving them from a guessable production identifier. It is not part
+of any baseline and must never be copied, logged, or committed. Production refresh
+retains the active verified generation and one verified fallback; older generations are
+removed only after activation succeeds. `db:rehearsal:migrate` requires the exact
+candidate digest reported by `db:rehearsal:candidates`; use
+`db:rehearsal:run` to reset, apply the confirmed candidate set, and verify the result.
+Local-source refresh exists to prove the complete machinery without production access.
+`npm run rehearsal:app:prove` starts the application briefly against those verified
+local services, proves the Rehearsal-only CSP, owner-snapshot Auth exchange and
+database-owned developer claim, and isolated API route, then stops the app while leaving
+the database stacks available for manual review.
+
+The production refresh credential is separate from the OAuth client and from generated
+runtime credentials. Only after the export migration and least-privilege source
+identities have been separately authorized:
+
+1. Run `npm run db:rehearsal:provision-source -- --dry-run` and review the exact linked
+   project, fixed-owner rule, ephemeral source role, and ignored output path.
+2. Repeat with the reported `--confirm-project=<project-ref>`. The operation creates or
+   rotates the ephemeral database reader, mints a short-lived Storage session without
+   weakening hosted CAPTCHA, proves both scopes, and writes owner-only ignored
+   `.env.rehearsal-source.local` atomically; never hand-edit or copy credentials from
+   command output.
+3. Run `npm run db:rehearsal:refresh` twice to build and independently reproduce the
+   sanitized production-derived baseline.
+4. Run `npm run db:rehearsal:deprovision-source -- --dry-run`, then its reported
+   `--confirm-project=<project-ref>` form. Confirm that the temporary database role,
+   Storage identity, and local source-token file are absent; the active baseline is
+   retained.
+5. Run `npm run db:rehearsal:reset` and `npm run db:rehearsal:verify` before starting
+   `npm run dev:rehearsal`.
+
+The refresh accepts neither a source service-role key, a reusable Storage password, nor
+a writable database login.
+Its PostgreSQL scope is fixed to one owner in `rehearsal_export.source_scopes`; its
+Storage JWT can read only public product images and that owner's private avatar and
+submission-evidence prefixes.
 
 ## Local Resource Safety
 

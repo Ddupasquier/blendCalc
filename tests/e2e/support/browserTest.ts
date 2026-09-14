@@ -259,7 +259,19 @@ export const signInLocalQaAccount = async ({
 	let lastFailure = "The local QA sign-in did not complete.";
 
 	for (let attempt = 1; attempt <= 3; attempt += 1) {
+		const rateLimitPartition = (await page.context().cookies(baseURL)).find(
+			(cookie) => cookie.name === "blendcalc-local-qa-browser-partition",
+		);
 		await page.context().clearCookies();
+		if (rateLimitPartition) {
+			await page.context().addCookies([
+				{
+					name: rateLimitPartition.name,
+					value: rateLimitPartition.value,
+					url: baseURL,
+				},
+			]);
+		}
 		const response = await page.request.post("/auth?/emailSignIn", {
 			headers: { origin: baseURL },
 			form: { email, next: nextPath, password },

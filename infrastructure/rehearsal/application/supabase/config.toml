@@ -1,0 +1,87 @@
+project_id = "blendcalc-rehearsal"
+
+[api]
+enabled = true
+port = 58321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+auto_expose_new_tables = false
+
+[db]
+port = 58322
+shadow_port = 58320
+health_timeout = "2m"
+major_version = 17
+
+[db.pooler]
+enabled = false
+port = 58329
+
+[db.migrations]
+enabled = true
+schema_paths = []
+
+[db.seed]
+enabled = false
+sql_paths = []
+
+[realtime]
+enabled = false
+
+[studio]
+enabled = true
+port = 58323
+api_url = "http://127.0.0.1"
+
+[local_smtp]
+enabled = false
+
+[storage]
+enabled = true
+file_size_limit = "50MiB"
+
+[auth]
+enabled = true
+site_url = "http://localhost:5175"
+additional_redirect_urls = [
+	"http://localhost:5175/auth/callback",
+	"http://127.0.0.1:5175/auth/callback",
+]
+enable_signup = true
+enable_anonymous_sign_ins = false
+minimum_password_length = 15
+
+[auth.email]
+enable_signup = true
+enable_confirmations = false
+secure_password_change = true
+
+[auth.hook.before_user_created]
+enabled = true
+uri = "pg-functions://postgres/public/reject_blocked_signup"
+
+[auth.hook.custom_access_token]
+enabled = true
+uri = "pg-functions://postgres/public/custom_access_token_hook"
+
+[auth.mfa]
+max_enrolled_factors = 10
+
+[auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true
+
+[auth.external.google]
+enabled = true
+client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
+secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
+redirect_uri = "http://127.0.0.1:58321/auth/v1/callback"
+skip_nonce_check = true
+email_optional = false
+
+[edge_runtime]
+enabled = false
+
+[analytics]
+enabled = false

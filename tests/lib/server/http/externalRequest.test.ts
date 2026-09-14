@@ -13,6 +13,7 @@ describe("fetchWithExternalRequestPolicy", () => {
 			"https://example.com",
 			{
 				fetcher,
+				runtimeEnvironment: "production",
 				sleep,
 			},
 		);
@@ -34,6 +35,7 @@ describe("fetchWithExternalRequestPolicy", () => {
 			"https://example.com",
 			{
 				fetcher,
+				runtimeEnvironment: "production",
 			},
 		);
 
@@ -56,6 +58,7 @@ describe("fetchWithExternalRequestPolicy", () => {
 				fetcher,
 				sleep,
 				maxAttempts: 1,
+				runtimeEnvironment: "production",
 			},
 		);
 
@@ -71,6 +74,7 @@ describe("fetchWithExternalRequestPolicy", () => {
 		await fetchWithExternalRequestPolicy("https://example.com", {
 			method: "POST",
 			fetcher: withoutKey,
+			runtimeEnvironment: "production",
 		});
 
 		const withKey = vi
@@ -81,6 +85,7 @@ describe("fetchWithExternalRequestPolicy", () => {
 			method: "POST",
 			headers: { "Idempotency-Key": "request-1" },
 			fetcher: withKey,
+			runtimeEnvironment: "production",
 			sleep: vi.fn().mockResolvedValue(undefined),
 		});
 
@@ -103,7 +108,50 @@ describe("fetchWithExternalRequestPolicy", () => {
 				fetcher,
 				timeoutMilliseconds: 5,
 				maxAttempts: 1,
+				runtimeEnvironment: "production",
 			}),
 		).rejects.toThrow("External request timed out.");
+	});
+
+	it.each(["local", "test", "rehearsal"] as const)(
+		"rejects non-loopback requests in the %s runtime before calling fetch",
+		async (runtimeEnvironment) => {
+			const fetcher = vi.fn();
+			await expect(
+				fetchWithExternalRequestPolicy("https://example.com", {
+					fetcher,
+					runtimeEnvironment,
+				}),
+			).rejects.toThrow(
+				`External network requests are disabled in the ${runtimeEnvironment} runtime.`,
+			);
+			expect(fetcher).not.toHaveBeenCalled();
+		},
+	);
+
+	it("allows loopback requests in a safe local runtime", async () => {
+		const fetcher = vi.fn().mockResolvedValue(new Response("ok"));
+		await expect(
+			fetchWithExternalRequestPolicy("http://127.0.0.1:54321/rest/v1", {
+				fetcher,
+				runtimeEnvironment: "test",
+			}),
+		).resolves.toHaveProperty("status", 200);
+	});
+
+	it("allows only read-only requests to the trusted product-image host", async () => {
+		const fetcher = vi.fn().mockResolvedValue(new Response("image"));
+		await expect(
+			fetchWithExternalRequestPolicy(
+				"https://images.openfoodfacts.org/example.jpg",
+				{ fetcher, runtimeEnvironment: "test" },
+			),
+		).resolves.toHaveProperty("status", 200);
+		await expect(
+			fetchWithExternalRequestPolicy(
+				"https://images.openfoodfacts.org/example.jpg",
+				{ fetcher, method: "POST", runtimeEnvironment: "test" },
+			),
+		).rejects.toThrow("External network requests are disabled");
 	});
 });

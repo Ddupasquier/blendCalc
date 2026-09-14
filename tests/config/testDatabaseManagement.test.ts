@@ -37,6 +37,7 @@ describe("local test database management", () => {
 			"Applying deterministic local QA reference fixtures",
 		);
 		expect(script).toContain("supabase/seed.sql");
+		expect(script).toContain("truncate table public.request_rate_limits");
 	});
 
 	it("waits for both Auth and PostgREST before account seeding", () => {

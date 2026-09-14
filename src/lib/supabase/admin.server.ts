@@ -1,6 +1,7 @@
 import { env } from "$env/dynamic/private";
 import { PUBLIC_SUPABASE_URL } from "$env/static/public";
 import type { Database } from "$lib/types/database.types";
+import { assertRuntimeUrlMatchesEnvironment } from "$lib/server/environment/runtimeEnvironment.server";
 import { createClient } from "@supabase/supabase-js";
 import type { WebSocketLikeConstructor } from "@supabase/realtime-js";
 import WebSocket from "ws";
@@ -18,6 +19,10 @@ export const getSupabaseAdminClient = () => {
 	if (!serviceRoleKey) {
 		throw new Error("SUPABASE_SERVICE_ROLE_KEY is not configured.");
 	}
+	assertRuntimeUrlMatchesEnvironment(
+		"PUBLIC_SUPABASE_URL",
+		PUBLIC_SUPABASE_URL,
+	);
 
 	adminClient = createClient<Database>(PUBLIC_SUPABASE_URL, serviceRoleKey, {
 		auth: {

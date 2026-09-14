@@ -48,6 +48,7 @@ const jsdomTestFiles = [
 ];
 
 export default defineConfig({
+	envDir: process.env.BLENDCALC_DISABLE_VITE_ENV_FILES === "true" ? false : ".",
 	plugins: [sveltekit(), svelteTesting()],
 	optimizeDeps: {
 		exclude: [

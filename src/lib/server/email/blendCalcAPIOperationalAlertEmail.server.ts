@@ -9,11 +9,23 @@ import {
 	TRANSACTIONAL_EMAIL_ADDRESSES,
 	type TransactionalEmailResult,
 } from "$lib/server/email/transactionalEmail.server";
+import {
+	isSafeLocalRuntimeEnvironment,
+	readBlendCalcRuntimeEnvironment,
+} from "$lib/server/environment/runtimeEnvironment.server";
 import type { BlendCalcAPIOperationalAlert } from "$lib/server/blendCalcAPI/operations/blendCalcAPIOperationalAlerts.server";
 
 type AlertEmailResult = TransactionalEmailResult;
 
 const configuration = () => {
+	if (isSafeLocalRuntimeEnvironment(readBlendCalcRuntimeEnvironment())) {
+		return {
+			configured: true as const,
+			apiKey: "local-email-sink",
+			from: `blendCalc API <${TRANSACTIONAL_EMAIL_ADDRESSES.operations}>`,
+			to: ["operations@blendcalc.local"],
+		};
+	}
 	const apiKey = env.RESEND_API_KEY?.trim();
 	const from = env.API_ALERT_EMAIL_FROM?.trim();
 	const to = (env.API_ALERT_EMAIL_TO ?? "")

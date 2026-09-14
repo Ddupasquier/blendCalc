@@ -54,6 +54,9 @@ describe("Playwright browser-testing architecture", () => {
 			'name: "blendcalc-local-qa-browser-partition"',
 		);
 		expect(browserTestSupport).toContain("context.addCookies");
+		expect(browserTestSupport).toContain(
+			'cookie.name === "blendcalc-local-qa-browser-partition"',
+		);
 		expect(
 			browserTestSupport.match(/getLocalQaBrowserRateLimitPartition/g),
 		).toHaveLength(3);

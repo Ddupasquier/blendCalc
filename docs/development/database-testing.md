@@ -76,6 +76,127 @@ fixed-ID submissions are not recreated by `start` after they have been reviewed;
 | `npm run db:test:stop`   | Stop the local Supabase stack while retaining its Docker volume.                                                                               |
 | `npm run dev:test`       | Start SvelteKit in test mode against `.env.test.local` at `http://localhost:5174`.                                                             |
 
+`dev:test` also starts the isolated local blendCalcAPI workdir and injects both sets of
+local credentials through a clean process environment. The tracked `.env` file and
+ambient hosted credentials are not loaded into the test application.
+
+### Rehearsal export authorization proof
+
+`npm run db:rehearsal:prove-export-boundary` exercises the proposed production export
+authorization model without installing a migration or reading production. It uses the
+already-running local application PostgreSQL container only as a host, creates a unique
+disposable database, and removes that database plus all three proof roles on success or
+failure.
+
+The proof separates a login, an inherited reader group, and an unreachable no-login
+view owner. The login receives `CONNECT`, one export-schema `USAGE`, and `SELECT` on one
+explicit versioned security-barrier view. The owner receives only column-level source
+`SELECT` plus the matching forced-RLS policy and loses schema `CREATE` after the view is
+defined. Negative connections prove that disabling the soft read-only session default
+does not bypass ACLs, and that direct reads, writes, source/network functions, role
+assumption, schema creation, temporary objects, and predicate-based function injection
+remain unavailable. This is the Phase 2 mechanism proof; it does not authorize or
+install the final export surface.
+
+The complete `npm run db:test:verify` workflow reruns this proof after the pgTAP suite,
+so a database handoff cannot silently lose the demonstrated role, view, denial, or
+cleanup behavior.
+
+The additive local migration installs the full reviewed boundary. Run
+`npm run db:rehearsal:prove-installed-boundary` to verify it through a real disposable
+password login rather than an administrative session. The command streams all 126
+included table views and the migration receipt from one serializable read-only
+transaction, applies every reviewed sanitization action, activates a checksummed
+baseline atomically, and exercises a separate disposable Auth identity whose JWT can
+read only approved public product images and the fixed owner's private Storage prefix.
+The proof downloads and checksums a real byte object, verifies the table, row, and asset
+manifests, and deletes the exact temporary identities, role, object, and artifact even
+on failure. It never reads a hosted environment file.
+
+Supabase's `pg_net` bootstrap can restore `PUBLIC` execution on internal network
+functions after a container restart. The installed local proof may clean up that broad
+grant, but a hosted source cannot depend on changing platform-owned ACLs. Production
+provisioning therefore creates a random database credential that expires within 30
+minutes. The source preflight accepts it only inside the fixed serializable read-only
+transaction, verifies that every `net` function uses invoker rights, and separately
+requires no source-table or database-creation capability. Merely applying the export
+migration is not an authorization boundary.
+
+The Rehearsal sanitizer has a separate schema-only coverage gate. Run
+`npm run rehearsal:sanitization:generate` only when intentionally reviewing a schema
+classification change, then inspect every changed table and column action. Routine
+verification runs `npm run rehearsal:sanitization:check`; it reads the local catalog,
+never row values, and fails closed if the tracked manifest differs from the exact local
+migration schema.
+
+Use `npm run rehearsal:export-migration:check` to prove the generated export migration
+still matches that manifest, and `npm run db:rehearsal:verify-local-history` to compare
+the installed migration ledger with immutable local migration source by ordered
+statement hash. These checks distinguish a genuinely pending migration from an edited,
+missing, duplicated, renamed, reordered, or database-only migration.
+
+### Rehearsal baseline and migration run
+
+`npm run db:rehearsal:refresh-local` retains a verified baseline produced through the
+installed local export surface. It is the safe mechanism proof used before a separately
+authorized production extraction exists. The active artifact contains sanitized NDJSON,
+checksummed Storage objects, table counts and checksums, the export receipt, and hashes
+for the exact local migration prefix. Activation is atomic; a failed refresh leaves the
+previous baseline current.
+
+After the reviewed export migration and its dedicated credentials are separately
+authorized and provisioned, `npm run db:rehearsal:refresh` uses only the five values in
+ignored `.env.rehearsal-source.local`. The database credential must be a dedicated
+ephemeral `rehearsal_*` login fixed to one owner scope. Storage uses a short-lived
+access/refresh token pair for a separate Auth identity with the
+`rehearsal_storage_reader` JWT role. Neither credential can write source data, and the
+refresh never accepts a service-role key or reusable Storage password.
+
+Provision those identities only through
+`npm run db:rehearsal:provision-source -- --dry-run`, followed by its exact
+`--confirm-project=<project-ref>` form after review. The operation requires one
+Google-linked admin or developer owner, uses the linked Supabase session pooler while
+verifying the underlying ephemeral `rehearsal_*` database role and read-only export
+transaction, verifies the Storage JWT owner claim, and
+writes the ignored five-value source environment with owner-only permissions.
+The refresh creates or reuses an owner-only 32-byte key at
+`.rehearsal/sanitization.key`; stable pseudonyms make repeated snapshots comparable
+without placing the key in either the source environment or baseline.
+
+After the production refresh succeeds, run
+`npm run db:rehearsal:deprovision-source -- --dry-run` and then its exact confirmed
+form. It removes only the temporary source login/scope, dedicated Storage identity, and
+ignored source-token file while preserving the export boundary, verified baseline, and
+local runtime. A later refresh begins by provisioning a new short-lived source again.
+
+Use `npm run db:rehearsal:reset` to recreate the isolated database from that artifact.
+The restore uses a bounded COPY stream, creates synthetic Auth placeholders for every
+retained user reference, restores public records with trigger execution suppressed,
+resets identity sequences, restores checksummed Storage bytes into the local Storage
+service, re-enables normal trigger behavior, and checks every table count and foreign
+key before committing. The approved owner profile keeps its exact private application
+state while its Auth UUID is pseudonymized; all other identities remain pseudonymous
+and their private free text stays sanitized. The adapter adds the local developer-role
+overlay only after restore verification and does not rename the owner profile.
+
+Public catalog, nutrient, category, ingredient, warning, source, moderation, and image
+metadata remain exact so the application is production-faithful. A matching Google
+identity can claim the restored owner persona only when its lowercased email hashes to
+the fixed source receipt. That transaction moves every owner foreign key and private
+Storage pointer to the new local Auth UUID, removes the placeholder Auth row, refreshes
+the JWT, and never contacts hosted Supabase. Runtime verification executes the complete
+claim inside a rollback and proves the owner profile and list counts survive.
+
+Run `npm run db:rehearsal:candidates` before migration rehearsal. If migrations follow
+the baseline prefix, apply only that exact ordered set with
+`npm run db:rehearsal:migrate -- --confirm-candidates=<sha256>`. Any changed prefix,
+different candidate bytes, failed migration, reset-time count mismatch, foreign-key violation, or
+non-loopback target fails closed. `npm run db:rehearsal:run` composes reset, migration,
+and verification; when there are no candidates it verifies the restored baseline only.
+The standalone `verify` command does not require live row counts to remain identical
+afterward: normal sandbox interactions and data migrations are expected to change local
+rows. Use `reset` to prove and recover the exact baseline again.
+
 ## Production Migration Promotion
 
 Local verification and production delivery are separate gates. A migration can be

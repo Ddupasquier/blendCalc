@@ -11,7 +11,6 @@ const collectTrackedSourceFiles = (): string[] =>
 describe("FoodData Central environment configuration", () => {
 	it("documents the server-owned key in each environment that uses USDA lookups", () => {
 		for (const environmentExamplePath of [
-			".env.example",
 			".env.moderation.example",
 			".env.vercel.example",
 		]) {

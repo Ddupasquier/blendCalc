@@ -46,7 +46,7 @@ const runImageModerationFixture = async (command: "seed" | "cleanup") =>
 				cwd: process.cwd(),
 				env: {
 					...process.env,
-					BLENDCALC_DATABASE_ENVIRONMENT: "test",
+					BLENDCALC_RUNTIME_ENVIRONMENT: "test",
 				},
 				maxBuffer: 256 * 1024,
 			},

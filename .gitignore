@@ -30,10 +30,14 @@ Thumbs.db
 .env
 .env.*
 !.env.example
-!.env.blendCalcAPI.example
+!.env.blendCalcAPI.hosted.example
 !.env.moderation.example
 !.env.test
+!.env.rehearsal
+!.env.rehearsal-auth.example
+!.env.rehearsal-source.example
 !.env.vercel.example
+/.rehearsal/
 
 # Isolated Supabase workdir state
 infrastructure/blendCalcAPI/supabase/.branches/

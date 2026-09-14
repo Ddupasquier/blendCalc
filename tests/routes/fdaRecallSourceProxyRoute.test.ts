@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
 	privateEnvironment: {
+		BLENDCALC_RUNTIME_ENVIRONMENT: "production",
 		FDA_RECALL_PROXY_SECRET: "",
 	},
 }));

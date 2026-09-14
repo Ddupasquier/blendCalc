@@ -46,7 +46,7 @@ describe("readVerifiedAuthUser", () => {
 		await expect(readVerifiedAuthUser(supabase)).resolves.toBeNull();
 	});
 
-	it("checks the current Auth record when destructive test resets can stale the JWT", async () => {
+	it("checks the current Auth record when disposable resets can stale the JWT", async () => {
 		const getClaims = vi.fn();
 		const getUser = vi.fn().mockResolvedValue({
 			data: {

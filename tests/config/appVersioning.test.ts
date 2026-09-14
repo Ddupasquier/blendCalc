@@ -57,7 +57,7 @@ describe("blendCalc versioning", () => {
 
 	it("guards every interactive project runtime before startup", () => {
 		const guardedLifecycleScripts = [
-			"predev",
+			"predev:local",
 			"predev:test",
 			"prebuild",
 			"prepreview",

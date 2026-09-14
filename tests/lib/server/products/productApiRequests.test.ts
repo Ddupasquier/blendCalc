@@ -16,6 +16,10 @@ const {
 	recordProductSourceStaleFallback: vi.fn(),
 }));
 
+vi.mock("$env/dynamic/private", () => ({
+	env: { BLENDCALC_RUNTIME_ENVIRONMENT: "production" },
+}));
+
 vi.mock("$lib/server/products/sourceMetrics.server", () => ({
 	recordProductSourceApiError,
 	recordProductSourceApiRequest,

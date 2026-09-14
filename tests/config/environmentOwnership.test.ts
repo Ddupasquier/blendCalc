@@ -16,23 +16,29 @@ const readEnvironmentValue = (path: string, key: string) => {
 
 const expectedEnvironmentKeys = {
 	".env.example": [
-		"API_ALERT_EMAIL_FROM",
-		"API_ALERT_EMAIL_TO",
 		"BLENDCALC_API_READ_MODE",
 		"BLENDCALC_API_SUPABASE_SERVICE_ROLE_KEY",
 		"BLENDCALC_API_SUPABASE_URL",
-		"COLA_CLOUD_API_KEY",
-		"CRON_SECRET",
-		"FDC_API_KEY",
-		"FDA_RECALL_PROXY_SECRET",
-		"MODERATION_EMAIL_FROM",
-		"MODERATION_SUPPORT_EMAIL",
+		"BLENDCALC_RUNTIME_ENVIRONMENT",
 		"PUBLIC_SITE_URL",
 		"PUBLIC_SUPABASE_PUBLISHABLE_KEY",
 		"PUBLIC_SUPABASE_URL",
 		"PUBLIC_TURNSTILE_SITE_KEY",
-		"RESEND_API_KEY",
 		"SUPABASE_SERVICE_ROLE_KEY",
+	],
+	".env.blendCalcAPI.hosted.example": [
+		"BLENDCALC_API_SUPABASE_DB_PASSWORD",
+		"BLENDCALC_API_SUPABASE_PROJECT_ID",
+	],
+	".env.rehearsal": [
+		"BLENDCALC_API_READ_MODE",
+		"BLENDCALC_RUNTIME_ENVIRONMENT",
+		"PUBLIC_SITE_URL",
+		"PUBLIC_TURNSTILE_SITE_KEY",
+	],
+	".env.rehearsal-auth.example": [
+		"SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID",
+		"SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET",
 	],
 	".env.moderation.example": [
 		"COLA_CLOUD_API_KEY",
@@ -52,7 +58,8 @@ const expectedEnvironmentKeys = {
 		"SUPABASE_SERVICE_ROLE_KEY",
 	],
 	".env.test": [
-		"BLENDCALC_DATABASE_ENVIRONMENT",
+		"BLENDCALC_API_READ_MODE",
+		"BLENDCALC_RUNTIME_ENVIRONMENT",
 		"PUBLIC_SITE_URL",
 		"PUBLIC_SUPABASE_PUBLISHABLE_KEY",
 		"PUBLIC_SUPABASE_URL",
@@ -124,7 +131,7 @@ describe("environment ownership", () => {
 	});
 
 	it("keeps every tracked transactional sender on its purpose-specific identity", () => {
-		for (const path of [".env.example", ".env.vercel.example"]) {
+		for (const path of [".env.vercel.example"]) {
 			expect(readEnvironmentValue(path, "MODERATION_EMAIL_FROM"), path).toBe(
 				"blendCalc <moderation@noreply.blendcalc.food>",
 			);

@@ -18,6 +18,7 @@ import {
 	throwAppError,
 } from "$lib/server/errors/appError.server";
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
+import { readBlendCalcRuntimeEnvironment } from "$lib/server/environment/runtimeEnvironment.server";
 import { normalizeBarcode } from "$lib/utils/barcode/barcode";
 import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
 import { normalizeFdcFood } from "$lib/utils/food/sources/fdc";
@@ -146,6 +147,14 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 	}
 	const scope: PrivilegedProductLookupScope =
 		scopeValue === "live" ? "live" : "stored";
+	if (scope === "live" && readBlendCalcRuntimeEnvironment() === "rehearsal") {
+		return json({
+			query,
+			scope,
+			results: [],
+			note: "Live provider APIs are disabled in Rehearsal. Use Stored in blendCalc to inspect the restored production snapshot.",
+		});
+	}
 
 	try {
 		if (scope === "stored") {
