@@ -61,10 +61,7 @@ const readGeneratedRehearsalEnvironment = () => {
 
 const startApplicationSupabase = () => {
 	if (runtimeEnvironment === "rehearsal") {
-		runPreparation("node", [
-			"scripts/operations/database/manage_rehearsal_database.mjs",
-			"start",
-		]);
+		runPreparation("npm", ["run", "rehearsal", "--", "start"]);
 		const generated = readGeneratedRehearsalEnvironment();
 		return {
 			apiUrl: generated.PUBLIC_SUPABASE_URL,

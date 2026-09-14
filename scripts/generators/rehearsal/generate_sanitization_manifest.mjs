@@ -10,6 +10,7 @@ import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { format } from "prettier";
+import { validateSanitizationCoverage } from "@rehearsal/db";
 import { createCleanProcessEnvironment } from "../../lib/environment/runtime_environment.mjs";
 import {
 	compileSanitizationManifest,
@@ -171,10 +172,12 @@ const migrationCutoff = migrationNames.at(-1)?.slice(0, 14);
 if (!migrationCutoff)
 	throw new Error("No application migration cutoff was found.");
 
+const schemaTables = JSON.parse(schemaResult.stdout.trim());
 const manifest = compileSanitizationManifest({
-	tables: JSON.parse(schemaResult.stdout.trim()),
+	tables: schemaTables,
 	migrationCutoff,
 });
+validateSanitizationCoverage({ policy: manifest, schemaTables });
 const serialized = await format(serializeSanitizationManifest(manifest), {
 	parser: "json",
 	printWidth: 80,

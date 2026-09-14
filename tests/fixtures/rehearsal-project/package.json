@@ -1,9 +1,0 @@
-{
-	"name": "rehearsal-fixture-project",
-	"private": true,
-	"type": "module",
-	"scripts": {
-		"dev": "node -e \"console.log('synthetic fixture app')\"",
-		"proof": "node -e \"console.log('synthetic fixture proof passed')\""
-	}
-}

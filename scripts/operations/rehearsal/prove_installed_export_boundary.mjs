@@ -17,7 +17,7 @@ import {
 	createAndActivateBaseline,
 	removeBaselineArtifactRoot,
 	verifyActiveBaseline,
-} from "../../lib/rehearsal/baseline_artifact.mjs";
+} from "@rehearsal/db/baseline";
 import { createCleanProcessEnvironment } from "../../lib/environment/runtime_environment.mjs";
 import {
 	createSanitizationContext,
@@ -31,7 +31,7 @@ import {
 import {
 	createMigrationReplayReceipt,
 	readMigrationSourceBundle,
-} from "../../lib/rehearsal/migration_history.mjs";
+} from "@rehearsal/db/migrations";
 import { readLocalSupabaseEnvironment } from "../../lib/environment/local_supabase.mjs";
 import {
 	createStorageAssetInventory,

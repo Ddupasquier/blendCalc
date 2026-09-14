@@ -17,8 +17,8 @@ import {
 } from "@supabase/ssr";
 import { chromium } from "playwright";
 import { parse } from "dotenv";
-import { createCleanProcessEnvironment } from "../../lib/rehearsal/process_environment.mjs";
-import { redactDiagnosticValue } from "../../lib/rehearsal/diagnostics.mjs";
+import { redactDiagnosticValue } from "@rehearsal/db/diagnostics";
+import { createCleanProcessEnvironment } from "@rehearsal/db/process-environment";
 import {
 	assertLoadedRehearsalStorageImage,
 	assertRehearsalContentSecurityPolicy,
