@@ -1,0 +1,31 @@
+name: Rehearsal
+
+on:
+  pull_request:
+    paths:
+      - "supabase/migrations/**"
+      - "rehearsal.config.ts"
+
+jobs:
+  migration-rehearsal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx rehearsal doctor --json
+      - run: npx rehearsal run --dry-run --json
+      - name: Capture the exact reviewed candidate digest
+        id: candidate
+        shell: bash
+        run: |
+          npx rehearsal explain --json > rehearsal-plan.json
+          digest="$(node -e 'const plan = require("./rehearsal-plan.json"); process.stdout.write(plan.data.migrations.candidateSha256)')"
+          printf 'sha256=%s\n' "$digest" >> "$GITHUB_OUTPUT"
+          rm rehearsal-plan.json
+      - name: Rehearse the reviewed candidate digest
+        run: npx rehearsal run --confirm-candidates="${{ steps.candidate.outputs.sha256 }}" --json
