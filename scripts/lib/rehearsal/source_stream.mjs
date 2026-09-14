@@ -93,9 +93,17 @@ copy (
 		'networkFunctionPathsDenied', current_setting('transaction_read_only')::boolean
 			and not exists (
 				select 1
+				from pg_namespace network_schema
+				where network_schema.nspname = 'net'
+					and has_schema_privilege(current_user, network_schema.oid, 'usage')
+			)
+			and not exists (
+				select 1
 				from pg_proc network_function
-				where network_function.pronamespace = 'net'::regnamespace
-					and network_function.prosecdef
+				join pg_namespace network_schema
+					on network_schema.oid = network_function.pronamespace
+				where network_schema.nspname = 'net'
+					and has_function_privilege(current_user, network_function.oid, 'execute')
 			),
 		'ownerUnreachable', not pg_has_role(current_user, 'rehearsal_export_owner', 'set'),
 		'ownerUserId', (select owner_user_id from rehearsal_export.source_scope_v1),
@@ -141,29 +149,53 @@ export const assertSourcePreflight = ({
 	expectedOwnerEmailSha256,
 	requireEphemeralCredential = false,
 }) => {
-	if (
-		preflight?.kind !== "preflight" ||
-		preflight.database !== expectedDatabase ||
-		preflight.role !== expectedRole ||
-		preflight.transactionReadOnly !== true ||
-		preflight.roleSafe !== true ||
-		preflight.cannotCreateDatabaseObjects !== true ||
-		preflight.exportSchemaVisible !== true ||
-		preflight.sourceSchemasHidden !== true ||
-		preflight.networkFunctionPathsDenied !== true ||
-		(requireEphemeralCredential && preflight.credentialIsEphemeral !== true) ||
-		preflight.ownerUnreachable !== true ||
-		!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu.test(
-			preflight.ownerUserId ?? "",
-		) ||
-		!/^[a-f0-9]{64}$/u.test(preflight.ownerEmailSha256 ?? "") ||
-		(expectedOwnerUserId !== undefined &&
-			preflight.ownerUserId !== expectedOwnerUserId) ||
-		(expectedOwnerEmailSha256 !== undefined &&
-			preflight.ownerEmailSha256 !== expectedOwnerEmailSha256)
-	) {
+	const failedInvariants = [
+		["recordType", preflight?.kind === "preflight"],
+		["database", preflight?.database === expectedDatabase],
+		["role", preflight?.role === expectedRole],
+		["transactionReadOnly", preflight?.transactionReadOnly === true],
+		["roleSafe", preflight?.roleSafe === true],
+		[
+			"cannotCreateDatabaseObjects",
+			preflight?.cannotCreateDatabaseObjects === true,
+		],
+		["exportSchemaVisible", preflight?.exportSchemaVisible === true],
+		["sourceSchemasHidden", preflight?.sourceSchemasHidden === true],
+		[
+			"networkFunctionPathsDenied",
+			preflight?.networkFunctionPathsDenied === true,
+		],
+		[
+			"credentialIsEphemeral",
+			!requireEphemeralCredential || preflight?.credentialIsEphemeral === true,
+		],
+		["ownerUnreachable", preflight?.ownerUnreachable === true],
+		[
+			"ownerUserIdFormat",
+			/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu.test(
+				preflight?.ownerUserId ?? "",
+			),
+		],
+		[
+			"ownerEmailReceiptFormat",
+			/^[a-f0-9]{64}$/u.test(preflight?.ownerEmailSha256 ?? ""),
+		],
+		[
+			"ownerUserId",
+			expectedOwnerUserId === undefined ||
+				preflight?.ownerUserId === expectedOwnerUserId,
+		],
+		[
+			"ownerEmailReceipt",
+			expectedOwnerEmailSha256 === undefined ||
+				preflight?.ownerEmailSha256 === expectedOwnerEmailSha256,
+		],
+	]
+		.filter(([, passed]) => !passed)
+		.map(([name]) => name);
+	if (failedInvariants.length > 0) {
 		throw new Error(
-			"The Rehearsal source authorization preflight failed closed.",
+			`The Rehearsal source authorization preflight failed closed: ${failedInvariants.join(", ")}.`,
 		);
 	}
 	if (

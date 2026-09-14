@@ -118,7 +118,8 @@ try {
 	// hardening operation; the export preflight below independently verifies it.
 	runContainerPsql({
 		user: "supabase_admin",
-		sql: "revoke execute on all functions in schema net from public;",
+		sql: `revoke usage on schema net from public;
+revoke execute on all functions in schema net from public;`,
 	});
 	const ownerSourceUserId = runContainerPsql({
 		user: "postgres",

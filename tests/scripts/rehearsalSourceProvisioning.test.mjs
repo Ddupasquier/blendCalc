@@ -52,6 +52,10 @@ describe("Rehearsal production source provisioning", () => {
 		expect(sql).toContain(
 			"revoke all on schema public, auth, storage, extensions, net",
 		);
+		expect(sql).toContain("revoke usage on schema net from public");
+		expect(sql).toContain(
+			"revoke execute on all functions in schema net from public",
+		);
 		expect(sql).toContain("default_transaction_read_only = on");
 		expect(sql).toContain("grant rehearsal_export_reader");
 		expect(sql).toContain("not membership.set_option");

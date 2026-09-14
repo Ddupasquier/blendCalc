@@ -75,6 +75,10 @@ export const buildRehearsalSourceProvisioningSql = ({
 	}
 	assertOwner({ ownerUserId, ownerEmailSha256 });
 	return `begin;
+-- Supabase may restore pg_net's implicit PUBLIC schema grant after a database
+-- restart. Revoke both layers before creating or rotating the source login.
+revoke usage on schema net from public;
+revoke execute on all functions in schema net from public;
 do $create_rehearsal_source$
 begin
 	if not exists (select 1 from pg_roles where rolname = ${quoteLiteral(loginRole)}) then

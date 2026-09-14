@@ -60,7 +60,13 @@ describe("Rehearsal consistent source stream", () => {
 		);
 		expect(sql).toContain("rehearsal_export.source_scope_v1");
 		expect(sql).toContain("role_state.rolvaliduntil");
-		expect(sql).toContain("and network_function.prosecdef");
+		expect(sql).toContain(
+			"has_schema_privilege(current_user, network_schema.oid, 'usage')",
+		);
+		expect(sql).toContain(
+			"has_function_privilege(current_user, network_function.oid, 'execute')",
+		);
+		expect(sql).not.toContain("network_function.prosecdef");
 		expect(sql).toContain('from "rehearsal_export"."profiles_v1"');
 		expect(sql).toContain('order by "user_id"');
 		expect(sql).not.toContain("blendcalc_api_keys_v1");
@@ -98,7 +104,24 @@ describe("Rehearsal consistent source stream", () => {
 				],
 				...ownerOptions,
 			}),
-		).toThrow("failed closed");
+		).toThrow("failed closed: sourceSchemasHidden");
+		expect(() =>
+			assertSourcePreflight({
+				preflight: {
+					...preflight,
+					roleSafe: false,
+					cannotCreateDatabaseObjects: false,
+				},
+				expectedDatabase: "synthetic_source",
+				expectedRole: "rehearsal_export_login",
+				expectedViews: [
+					"migration_history_v1",
+					"profiles_v1",
+					"source_scope_v1",
+				],
+				...ownerOptions,
+			}),
+		).toThrow("failed closed: roleSafe, cannotCreateDatabaseObjects");
 		expect(() =>
 			assertSourcePreflight({
 				preflight,
