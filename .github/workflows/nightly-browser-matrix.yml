@@ -47,10 +47,8 @@ jobs:
         run: npm ci
       - name: Install browser
         run: npx playwright install --with-deps ${{ matrix.browser }}
-      - name: Prepare isolated test database
-        run: npm run test:e2e:prepare
       - name: Run exhaustive browser project
-        run: npx playwright test --project=${{ matrix.project }}
+        run: npm run test:e2e -- --project=${{ matrix.project }}
       - name: Upload failure and timing evidence
         if: always()
         uses: actions/upload-artifact@v4
