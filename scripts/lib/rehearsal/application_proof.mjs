@@ -1,3 +1,8 @@
+/**
+ * Purpose: Validate exact Rehearsal browser CSP, restored Storage assets, and bounded
+ * stale-session recovery behavior. Do not run directly.
+ */
+
 const SELF_SOURCE = "'self'";
 const OPEN_FOOD_FACTS_IMAGE_SOURCE = "https://images.openfoodfacts.org";
 
