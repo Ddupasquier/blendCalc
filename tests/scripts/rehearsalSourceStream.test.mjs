@@ -59,12 +59,15 @@ describe("Rehearsal consistent source stream", () => {
 			"begin transaction isolation level serializable read only deferrable",
 		);
 		expect(sql).toContain("rehearsal_export.source_scope_v1");
-		expect(sql).toContain("role_state.rolvaliduntil");
+		expect(sql).toContain("'role', session_user");
+		expect(sql).toContain("where role_state.rolname = session_user");
+		expect(sql).toContain("coalesce((");
+		expect(sql).not.toContain("where role_state.rolname = current_user");
 		expect(sql).toContain(
-			"has_schema_privilege(current_user, network_schema.oid, 'usage')",
+			"has_schema_privilege(session_user, network_schema.oid, 'usage')",
 		);
 		expect(sql).toContain(
-			"has_function_privilege(current_user, network_function.oid, 'execute')",
+			"has_function_privilege(session_user, network_function.oid, 'execute')",
 		);
 		expect(sql).not.toContain("network_function.prosecdef");
 		expect(sql).toContain('from "rehearsal_export"."profiles_v1"');

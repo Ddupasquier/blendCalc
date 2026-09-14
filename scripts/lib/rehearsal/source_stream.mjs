@@ -73,29 +73,37 @@ copy (
 	select ${encodeStreamRecordSql(`json_build_object(
 		'kind', 'preflight',
 		'database', current_database(),
-		'role', current_user,
+		'role', session_user,
 		'transactionReadOnly', current_setting('transaction_read_only')::boolean,
-		'roleSafe', not role_state.rolsuper
-			and not role_state.rolcreatedb
-			and not role_state.rolcreaterole
-			and not role_state.rolreplication
-			and not role_state.rolbypassrls,
-		'cannotCreateDatabaseObjects', not has_database_privilege(current_user, current_database(), 'create')
-			and not has_database_privilege(current_user, current_database(), 'temporary'),
-		'exportSchemaVisible', has_schema_privilege(current_user, ${quoteLiteral(exportSchema)}, 'usage'),
-		'sourceSchemasHidden', not has_schema_privilege(current_user, 'public', 'usage')
-			and not has_schema_privilege(current_user, 'auth', 'usage')
-			and not has_schema_privilege(current_user, 'storage', 'usage')
-			and not has_schema_privilege(current_user, 'extensions', 'usage'),
-		'credentialIsEphemeral', role_state.rolvaliduntil is not null
-			and role_state.rolvaliduntil > clock_timestamp()
-			and role_state.rolvaliduntil <= clock_timestamp() + interval '30 minutes',
+		'roleSafe', coalesce((
+			select not role_state.rolsuper
+				and not role_state.rolcreatedb
+				and not role_state.rolcreaterole
+				and not role_state.rolreplication
+				and not role_state.rolbypassrls
+			from pg_roles role_state
+			where role_state.rolname = session_user
+		), false),
+		'cannotCreateDatabaseObjects', not has_database_privilege(session_user, current_database(), 'create')
+			and not has_database_privilege(session_user, current_database(), 'temporary'),
+		'exportSchemaVisible', has_schema_privilege(session_user, ${quoteLiteral(exportSchema)}, 'usage'),
+		'sourceSchemasHidden', not has_schema_privilege(session_user, 'public', 'usage')
+			and not has_schema_privilege(session_user, 'auth', 'usage')
+			and not has_schema_privilege(session_user, 'storage', 'usage')
+			and not has_schema_privilege(session_user, 'extensions', 'usage'),
+		'credentialIsEphemeral', coalesce((
+			select role_state.rolvaliduntil is not null
+				and role_state.rolvaliduntil > clock_timestamp()
+				and role_state.rolvaliduntil <= clock_timestamp() + interval '30 minutes'
+			from pg_roles role_state
+			where role_state.rolname = session_user
+		), false),
 		'networkFunctionPathsDenied', current_setting('transaction_read_only')::boolean
 			and not exists (
 				select 1
 				from pg_namespace network_schema
 				where network_schema.nspname = 'net'
-					and has_schema_privilege(current_user, network_schema.oid, 'usage')
+					and has_schema_privilege(session_user, network_schema.oid, 'usage')
 			)
 			and not exists (
 				select 1
@@ -103,9 +111,9 @@ copy (
 				join pg_namespace network_schema
 					on network_schema.oid = network_function.pronamespace
 				where network_schema.nspname = 'net'
-					and has_function_privilege(current_user, network_function.oid, 'execute')
+					and has_function_privilege(session_user, network_function.oid, 'execute')
 			),
-		'ownerUnreachable', not pg_has_role(current_user, 'rehearsal_export_owner', 'set'),
+		'ownerUnreachable', not pg_has_role(session_user, 'rehearsal_export_owner', 'set'),
 		'ownerUserId', (select owner_user_id from rehearsal_export.source_scope_v1),
 		'ownerEmailSha256', (select owner_email_sha256 from rehearsal_export.source_scope_v1),
 		'migrationHistory', (
@@ -125,8 +133,6 @@ copy (
 			order by table_name
 		)
 	)`)}
-	from pg_roles role_state
-	where role_state.rolname = current_user
 ) to stdout;
 ${copyStatements.join("\n")}
 copy (
