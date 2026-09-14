@@ -71,16 +71,16 @@ intended contract, then update the owning source and its maintained explanation 
 
 ## Accounts, Security, And Operations
 
-| Document                                                                       | Responsibility                                                                                       |
-| ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
-| [Authentication](authentication.md)                                            | Origins, callbacks, OAuth, password policy, MFA, Auth configuration, and verification                |
-| [Hosted Security](hosted-security.md)                                          | Production network controls, backups, recovery drills, hosted Auth baseline, and incident procedures |
-| [User Profiles](user-profiles.md)                                              | Profile identity, appearance, avatars, privacy, and food-preference persistence                      |
-| [Moderation](moderation.md)                                                    | Roles, account controls, review workflows, notifications, and privileged boundaries                  |
-| [Versioning](versioning.md)                                                    | Independent app, API, build, schema, catalog, image-placement, and browser-state versions            |
-| [Environment Configuration](environment.md)                                    | Local, test, Vercel, privileged-operation, and Edge Function variable ownership                      |
-| [Rehearsal Package Contract](../../infrastructure/rehearsal/package/README.md) | Internal draft of the reusable CLI, configuration, safety, compatibility, and CI contract            |
-| [Google Discovery Strategy](google-discovery-strategy.md)                      | Google Search, Discover, and Play eligibility, quality, measurement, and experiment order            |
+| Document                                                      | Responsibility                                                                                       |
+| ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| [Authentication](authentication.md)                           | Origins, callbacks, OAuth, password policy, MFA, Auth configuration, and verification                |
+| [Hosted Security](hosted-security.md)                         | Production network controls, backups, recovery drills, hosted Auth baseline, and incident procedures |
+| [User Profiles](user-profiles.md)                             | Profile identity, appearance, avatars, privacy, and food-preference persistence                      |
+| [Moderation](moderation.md)                                   | Roles, account controls, review workflows, notifications, and privileged boundaries                  |
+| [Versioning](versioning.md)                                   | Independent app, API, build, schema, catalog, image-placement, and browser-state versions            |
+| [Environment Configuration](environment.md)                   | Local, test, Vercel, privileged-operation, and Edge Function variable ownership                      |
+| [Rehearsal environment](environment.md#rehearsal-environment) | BlendCalc-owned configuration, source authorization, refresh, identity, and application proof        |
+| [Google Discovery Strategy](google-discovery-strategy.md)     | Google Search, Discover, and Play eligibility, quality, measurement, and experiment order            |
 
 ## Testing
 
