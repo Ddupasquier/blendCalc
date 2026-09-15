@@ -10,7 +10,7 @@ import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { format } from "prettier";
-import { validateSanitizationCoverage } from "@rehearsal/db";
+import { validateSanitizationCoverage } from "@rehearsal-db/core";
 import { createCleanProcessEnvironment } from "../../lib/environment/runtime_environment.mjs";
 import {
 	compileSanitizationManifest,

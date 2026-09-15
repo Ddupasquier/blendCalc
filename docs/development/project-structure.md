@@ -237,7 +237,7 @@ projects. Every command for this project must pass the explicit
 
 `infrastructure/rehearsal/` owns project-specific Rehearsal configuration and reviewed
 sanitization policy. The reusable baseline, migration-ledger, local-runtime, diagnostics,
-and safety engine is owned by the `@rehearsal/db` dependency. BlendCalc-owned extraction,
+and safety engine is owned by the `@rehearsal-db/core` dependency. BlendCalc-owned extraction,
 sanitization, identity mapping, provider isolation, adapters, generators, and application
 proofs remain under their matching `scripts/lib/rehearsal/`,
 `scripts/generators/rehearsal/`, and `scripts/operations/rehearsal/` owners. Do not copy

@@ -114,7 +114,7 @@ the real Google flow can return to port `58321`. The app launcher never receives
 OAuth values.
 `operations/environment/run_test_command.mjs` provides the same fail-closed boundary
 for compile and unit-test commands without requiring the database stacks to be running.
-The executable owners are the `@rehearsal/db` CLI,
+The executable owners are the `@rehearsal-db/core` CLI,
 `scripts/operations/environment/run_application_environment.mjs`,
 `scripts/operations/environment/run_test_command.mjs`,
 `scripts/operations/database/manage_local_database.mjs`, and
@@ -194,7 +194,7 @@ an Auth identity whose purpose metadata is not exact. It preserves the shared ex
 boundary, active baseline, and local Rehearsal runtime so a completed refresh stays
 usable after every hosted credential has been revoked.
 
-The `@rehearsal/db` dependency owns the persistent local runtime. It restores only an
+The `@rehearsal-db/core` dependency owns the persistent local runtime. It restores only an
 atomically verified baseline under ignored `.rehearsal/`, checks the
 exact migration-file prefix, streams records into PostgreSQL without constructing one
 unbounded SQL argument, recreates referenced Auth identities as synthetic local users,

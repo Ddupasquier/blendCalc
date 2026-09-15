@@ -13,7 +13,7 @@ import {
 	compareSourceToReplay,
 	createMigrationReplayReceipt,
 	readMigrationFileInventory,
-} from "@rehearsal/db/migrations";
+} from "@rehearsal-db/core/migrations";
 
 const repositoryRoot = fileURLToPath(new URL("../../..", import.meta.url));
 const applicationMigrations = new URL(
