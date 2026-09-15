@@ -20,7 +20,6 @@ import {
 } from "../../lib/nutrition/nutrition_dataset_import.mjs";
 
 config({ path: ".env.moderation.local", quiet: true });
-config({ path: ".env", quiet: true });
 
 const DATASET_KEY = "cnf-2026";
 const SOURCE_KEY = "health-canada-cnf";

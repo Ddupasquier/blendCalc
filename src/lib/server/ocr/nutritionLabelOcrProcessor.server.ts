@@ -10,6 +10,7 @@ import {
 	type NutritionLabelOcrJobResult,
 } from "../../utils/food/ocr/nutritionLabelOcrJobs.js";
 import { readNutritionLabelOcrMappings } from "../../utils/food/ocr/nutritionLabelOcrMappings.js";
+import { createServerTesseractWorkerOptions } from "./serverTesseractCache.server.js";
 
 export const NUTRITION_LABEL_OCR_TEMPORARY_BUCKET =
 	"nutrition-label-ocr-temporary";
@@ -60,16 +61,17 @@ const terminateSharedWorker = async () => {
 
 const getSharedWorker = () => {
 	if (!workerPromise) {
-		workerPromise = createWorker("eng", 1, { logger: () => undefined }).then(
-			async (worker) => {
-				await worker.setParameters({
-					debug_file: "/dev/null",
-					preserve_interword_spaces: "1",
-					tessedit_pageseg_mode: PSM.SPARSE_TEXT,
-				});
-				return worker;
-			},
-		);
+		workerPromise = createWorker("eng", 1, {
+			...createServerTesseractWorkerOptions(),
+			logger: () => undefined,
+		}).then(async (worker) => {
+			await worker.setParameters({
+				debug_file: "/dev/null",
+				preserve_interword_spaces: "1",
+				tessedit_pageseg_mode: PSM.SPARSE_TEXT,
+			});
+			return worker;
+		});
 	}
 	return workerPromise;
 };

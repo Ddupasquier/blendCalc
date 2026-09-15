@@ -31,8 +31,6 @@ import {
 } from "../../lib/barcode/barcodeNutritionAudit.mjs";
 
 config({ path: ".env.moderation.local", quiet: true });
-config({ path: ".env.local", quiet: true });
-config({ path: ".env", quiet: true });
 
 const APP_USER_AGENT = createAppUserAgent("barcode provider experience audit");
 const DEFAULT_SAMPLE_SIZE = 50;

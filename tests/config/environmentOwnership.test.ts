@@ -1,4 +1,5 @@
-import { readFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const readEnvironmentKeys = (path: string): string[] =>
@@ -14,33 +15,29 @@ const readEnvironmentValue = (path: string, key: string) => {
 	return line?.slice(key.length + 1).replace(/^"|"$/g, "") ?? null;
 };
 
+const listTrackedScriptFiles = (): string[] =>
+	execFileSync("git", ["ls-files", "scripts"], { encoding: "utf8" })
+		.trim()
+		.split("\n")
+		.filter((path) => /\.(?:cjs|js|mjs|ts)$/.test(path));
+
 const expectedEnvironmentKeys = {
-	".env.example": [
-		"BLENDCALC_API_READ_MODE",
-		"BLENDCALC_API_SUPABASE_SERVICE_ROLE_KEY",
-		"BLENDCALC_API_SUPABASE_URL",
-		"BLENDCALC_RUNTIME_ENVIRONMENT",
-		"PUBLIC_SITE_URL",
-		"PUBLIC_SUPABASE_PUBLISHABLE_KEY",
-		"PUBLIC_SUPABASE_URL",
-		"PUBLIC_TURNSTILE_SITE_KEY",
-		"SUPABASE_SERVICE_ROLE_KEY",
-	],
-	".env.blendCalcAPI.hosted.example": [
+	"config/environments/blendcalc-api-hosted.example.env": [
 		"BLENDCALC_API_SUPABASE_DB_PASSWORD",
 		"BLENDCALC_API_SUPABASE_PROJECT_ID",
 	],
-	".env.rehearsal": [
-		"BLENDCALC_API_READ_MODE",
-		"BLENDCALC_RUNTIME_ENVIRONMENT",
-		"PUBLIC_SITE_URL",
-		"PUBLIC_TURNSTILE_SITE_KEY",
-	],
-	".env.rehearsal-auth.example": [
+	"config/environments/rehearsal-auth.example.env": [
 		"SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID",
 		"SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET",
 	],
-	".env.moderation.example": [
+	"config/environments/rehearsal-source.example.env": [
+		"REHEARSAL_SOURCE_DATABASE_URL",
+		"REHEARSAL_SOURCE_STORAGE_ACCESS_TOKEN",
+		"REHEARSAL_SOURCE_STORAGE_PUBLISHABLE_KEY",
+		"REHEARSAL_SOURCE_STORAGE_REFRESH_TOKEN",
+		"REHEARSAL_SOURCE_STORAGE_URL",
+	],
+	"config/environments/privileged-operations.example.env": [
 		"COLA_CLOUD_API_KEY",
 		"FDC_API_KEY",
 		"PUBLIC_SUPABASE_PUBLISHABLE_KEY",
@@ -57,15 +54,7 @@ const expectedEnvironmentKeys = {
 		"SUPABASE_PROJECT_ID",
 		"SUPABASE_SERVICE_ROLE_KEY",
 	],
-	".env.test": [
-		"BLENDCALC_API_READ_MODE",
-		"BLENDCALC_RUNTIME_ENVIRONMENT",
-		"PUBLIC_SITE_URL",
-		"PUBLIC_SUPABASE_PUBLISHABLE_KEY",
-		"PUBLIC_SUPABASE_URL",
-		"PUBLIC_TURNSTILE_SITE_KEY",
-	],
-	".env.vercel.example": [
+	"config/environments/vercel.example.env": [
 		"API_ALERT_EMAIL_FROM",
 		"API_ALERT_EMAIL_TO",
 		"BLENDCALC_API_READ_MODE",
@@ -126,12 +115,41 @@ describe("environment ownership", () => {
 		for (const path of Object.keys(expectedEnvironmentKeys)) {
 			expect(guide).toContain(`\`${path}\``);
 		}
-		expect(gitignore).toContain("!.env.vercel.example");
+		expect(gitignore).toContain(".env.*");
 		expect(gitignore).toContain("!supabase/functions/.env.example");
 	});
 
+	it("keeps root dotenv files local and disables ambient Vite layering", () => {
+		const viteConfiguration = readFileSync("vite.config.ts", "utf8");
+
+		for (const removedContract of [
+			".env.example",
+			".env.test",
+			".env.rehearsal",
+			".env.moderation.example",
+			".env.vercel.example",
+		]) {
+			expect(existsSync(removedContract), removedContract).toBe(false);
+		}
+		expect(viteConfiguration).toMatch(/envDir:\s*false/);
+		expect(viteConfiguration).not.toContain("BLENDCALC_DISABLE_VITE_ENV_FILES");
+	});
+
+	it("prevents maintained scripts from loading ambient root dotenv files", () => {
+		for (const path of listTrackedScriptFiles()) {
+			const source = readFileSync(path, "utf8");
+			expect(source, path).not.toMatch(/import\s+["']dotenv\/config["']/);
+			expect(source, path).not.toMatch(
+				/config\(\{\s*path:\s*["']\.env(?:\.local)?["']/,
+			);
+			expect(source, path).not.toMatch(
+				/config\(\{\s*path:\s*path\.join\([^)]*,\s*["']\.env["']\)/,
+			);
+		}
+	});
+
 	it("keeps every tracked transactional sender on its purpose-specific identity", () => {
-		for (const path of [".env.vercel.example"]) {
+		for (const path of ["config/environments/vercel.example.env"]) {
 			expect(readEnvironmentValue(path, "MODERATION_EMAIL_FROM"), path).toBe(
 				"blendCalc <moderation@noreply.blendcalc.food>",
 			);
@@ -144,7 +162,7 @@ describe("environment ownership", () => {
 		}
 		expect(
 			readEnvironmentValue(
-				".env.moderation.example",
+				"config/environments/privileged-operations.example.env",
 				"SUPABASE_AUTH_SMTP_ADMIN_EMAIL",
 			),
 		).toBe("accounts@noreply.blendcalc.food");

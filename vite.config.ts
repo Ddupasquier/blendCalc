@@ -1,6 +1,12 @@
 import { sveltekit } from "@sveltejs/kit/vite";
 import { svelteTesting } from "@testing-library/svelte/vite";
 import { defineConfig } from "vitest/config";
+import {
+	createInactiveSvelteKitOutputWatchPattern,
+	readViteMode,
+} from "./config/contentSecurityPolicy.js";
+
+const viteMode = readViteMode();
 
 const browserDependentUtilityTests = [
 	"tests/lib/utils/accessibility/backdropDismissal.test.ts",
@@ -48,7 +54,9 @@ const jsdomTestFiles = [
 ];
 
 export default defineConfig({
-	envDir: process.env.BLENDCALC_DISABLE_VITE_ENV_FILES === "true" ? false : ".",
+	// Environment ownership is explicit at each launcher or deployment boundary.
+	// Never layer ambient repository dotenv files into Vite.
+	envDir: false,
 	plugins: [sveltekit(), svelteTesting()],
 	optimizeDeps: {
 		exclude: [
@@ -64,7 +72,11 @@ export default defineConfig({
 	},
 	server: {
 		watch: {
-			ignored: ["**/playwright-report/**", "**/test-results/**"],
+			ignored: [
+				"**/playwright-report/**",
+				"**/test-results/**",
+				createInactiveSvelteKitOutputWatchPattern(viteMode),
+			],
 		},
 	},
 	test: {

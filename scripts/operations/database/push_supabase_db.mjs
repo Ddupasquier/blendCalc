@@ -16,7 +16,6 @@ import {
 } from "../../lib/releases/databaseMigrationPromotion.mjs";
 
 config({ path: ".env.moderation.local", quiet: true });
-config({ path: ".env", quiet: true });
 
 const isDryRun = process.argv.includes("--dry-run");
 const shouldConfirmAutomatically = process.argv.includes("--yes");
@@ -44,17 +43,21 @@ if (!isDryRun) {
 
 const getKeychainPassword = () => {
 	try {
-		return execFileSync("security", [
-			"find-generic-password",
-			"-s",
-			keychainService,
-			"-a",
-			process.env.USER ?? "",
-			"-w",
-		], {
-			encoding: "utf8",
-			stdio: ["ignore", "pipe", "ignore"],
-		}).trim();
+		return execFileSync(
+			"security",
+			[
+				"find-generic-password",
+				"-s",
+				keychainService,
+				"-a",
+				process.env.USER ?? "",
+				"-w",
+			],
+			{
+				encoding: "utf8",
+				stdio: ["ignore", "pipe", "ignore"],
+			},
+		).trim();
 	} catch {
 		return "";
 	}
@@ -67,7 +70,7 @@ if (!dbPassword) {
 	console.error(
 		[
 			"Missing Supabase database password.",
-			"Copy .env.moderation.example to .env.moderation.local and add SUPABASE_DB_PASSWORD, or store it once in macOS Keychain:",
+			"Copy config/environments/privileged-operations.example.env to .env.moderation.local and add SUPABASE_DB_PASSWORD, or store it once in macOS Keychain:",
 			`read -s -p "Supabase DB password: " DB_PASS; echo; security add-generic-password -a "$USER" -s ${keychainService} -w "$DB_PASS" -U; unset DB_PASS`,
 			"Then run npm run db:push:auto again.",
 		].join("\n"),

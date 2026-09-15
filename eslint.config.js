@@ -7,6 +7,7 @@ import typescript from "typescript-eslint";
 export default defineConfig(
 	globalIgnores([
 		".svelte-kit/**",
+		".svelte-kit-rehearsal/**",
 		".vercel/**",
 		"android/**",
 		"build/**",

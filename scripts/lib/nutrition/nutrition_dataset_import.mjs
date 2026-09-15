@@ -15,7 +15,6 @@ import { createClient } from "@supabase/supabase-js";
 import WebSocket from "ws";
 
 config({ path: ".env.moderation.local", quiet: true });
-config({ path: ".env", quiet: true });
 
 const WRITE_RETRY_COUNT = 3;
 
@@ -110,14 +109,15 @@ export const createBatchWriter = ({
 		const rows = batch;
 		batch = [];
 		processed += rows.length;
-		const request = (dryRun
-			? Promise.resolve()
-			: withRetries(async () => {
-				const { error } = await supabase
-					.from(table)
-					.upsert(rows, { onConflict });
-				if (error) throw error;
-			}, `${table} batch`)
+		const request = (
+			dryRun
+				? Promise.resolve()
+				: withRetries(async () => {
+						const { error } = await supabase
+							.from(table)
+							.upsert(rows, { onConflict });
+						if (error) throw error;
+					}, `${table} batch`)
 		).finally(() => pending.delete(request));
 		pending.add(request);
 		if (pending.size >= concurrency) await Promise.race(pending);

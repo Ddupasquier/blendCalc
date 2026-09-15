@@ -4,6 +4,7 @@ import {
 	createConnectSources,
 	createFrameSources,
 	createImageSources,
+	createInactiveSvelteKitOutputWatchPattern,
 	createScriptSources,
 	createSvelteKitOutputDirectory,
 	createWorkerSources,
@@ -116,10 +117,16 @@ describe("content security policy", () => {
 
 	it("isolates Rehearsal generated application state from test commands", () => {
 		expect(createSvelteKitOutputDirectory("rehearsal")).toBe(
-			".svelte-kit/rehearsal",
+			".svelte-kit-rehearsal",
 		);
 		expect(createSvelteKitOutputDirectory("test")).toBe(".svelte-kit");
 		expect(createSvelteKitOutputDirectory("production")).toBe(".svelte-kit");
+		expect(createInactiveSvelteKitOutputWatchPattern("rehearsal")).toBe(
+			"**/.svelte-kit/**",
+		);
+		expect(createInactiveSvelteKitOutputWatchPattern("local")).toBe(
+			"**/.svelte-kit-rehearsal/**",
+		);
 	});
 
 	it("runs validation commands through the hermetic test environment", () => {

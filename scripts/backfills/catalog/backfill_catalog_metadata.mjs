@@ -24,7 +24,6 @@ import { createAppUserAgent } from "../../lib/releases/app_version.mjs";
 import { extractExplicitAllergenDeclarations } from "../../../src/lib/server/products/allergenDeclarations.server.js";
 
 config({ path: ".env.moderation.local", quiet: true });
-config({ path: ".env", quiet: true });
 
 const isDryRun = process.argv.includes("--dry-run");
 const cachedOnly = process.argv.includes("--cached-only");

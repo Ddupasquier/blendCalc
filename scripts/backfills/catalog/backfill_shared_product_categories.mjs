@@ -23,7 +23,6 @@ import {
 import { createAppUserAgent } from "../../lib/releases/app_version.mjs";
 
 config({ path: ".env.moderation.local", quiet: true });
-config({ path: ".env", quiet: true });
 
 const isDryRun = process.argv.includes("--dry-run");
 const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;

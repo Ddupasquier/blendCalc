@@ -98,7 +98,6 @@ export const createSafeLocalApplicationEnvironment = ({
 		passthroughKeys,
 		overrides: {
 			...additionalEnvironment,
-			BLENDCALC_DISABLE_VITE_ENV_FILES: "true",
 			BLENDCALC_RUNTIME_ENVIRONMENT: runtimeEnvironment,
 			PUBLIC_SITE_URL: applicationUrl,
 			PUBLIC_SUPABASE_URL: applicationSupabase.apiUrl,

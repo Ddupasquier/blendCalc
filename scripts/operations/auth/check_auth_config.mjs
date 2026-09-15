@@ -4,7 +4,9 @@
  * Run: `npm run check:auth`
  */
 
-import "dotenv/config";
+import { config } from "dotenv";
+
+config({ path: ".env.moderation.local", quiet: true });
 
 const failures = [];
 const warnings = [];
@@ -33,7 +35,8 @@ const siteUrlValue = process.env.PUBLIC_SITE_URL?.trim();
 const siteUrl = siteUrlValue ? requireUrl("PUBLIC_SITE_URL") : null;
 const publishableKey = process.env.PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim();
 
-if (!publishableKey) failures.push("PUBLIC_SUPABASE_PUBLISHABLE_KEY is missing.");
+if (!publishableKey)
+	failures.push("PUBLIC_SUPABASE_PUBLISHABLE_KEY is missing.");
 if (!siteUrlValue) {
 	warnings.push(
 		"PUBLIC_SITE_URL is empty. That is valid locally, but production must set the canonical HTTPS origin.",
@@ -46,7 +49,9 @@ if (supabaseUrl && publishableKey) {
 			headers: { apikey: publishableKey },
 		});
 		if (!response.ok) {
-			failures.push(`Supabase Auth health check returned HTTP ${response.status}.`);
+			failures.push(
+				`Supabase Auth health check returned HTTP ${response.status}.`,
+			);
 		}
 	} catch (error) {
 		failures.push(`Supabase Auth health check failed: ${error.message}`);

@@ -18,7 +18,6 @@ import { createAppUserAgent } from "../../lib/releases/app_version.mjs";
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(scriptDirectory, "../../..");
 config({ path: path.join(projectRoot, ".env.moderation.local"), quiet: true });
-config({ path: path.join(projectRoot, ".env"), quiet: true });
 
 const FDC_BASE_URL = "https://api.nal.usda.gov/fdc/v1";
 const OPEN_FOOD_FACTS_SEARCH_URL =

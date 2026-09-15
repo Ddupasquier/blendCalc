@@ -3,8 +3,10 @@
 ## Purpose
 
 This document owns environment-variable placement for local development, tests,
-Vercel, privileged operations, and Supabase Edge Functions. Each example contains only
-the variables consumed by that environment. Secrets never belong in tracked files.
+Vercel, privileged operations, and Supabase Edge Functions. Tracked key-name templates
+live together under `config/environments/`, except for the Supabase-owned Edge Function
+template. Each template contains only the variables consumed by that environment.
+Secrets never belong in tracked files.
 
 ## Quick Navigation
 
@@ -23,23 +25,25 @@ the variables consumed by that environment. Secrets never belong in tracked file
 
 ## Environment Files
 
-| Tracked contract                                                                 | Ignored values                                                                       | Consumer                                           |
-| -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | -------------------------------------------------- |
-| `.env.example`                                                                   | `.env`                                                                               | Optional loopback-only local application overrides |
-| `.env.blendCalcAPI.hosted.example`                                               | `.env.blendCalcAPI.hosted.local`                                                     | Guarded hosted blendCalcAPI migration operations   |
-| `.env.moderation.example`                                                        | `.env.moderation.local`                                                              | Privileged scripts and linked Supabase operations  |
-| `.env.test`                                                                      | `.env.test.local`                                                                    | Disposable local database and Playwright           |
-| `.env.rehearsal`, `.env.rehearsal-auth.example`, `.env.rehearsal-source.example` | `.rehearsal/runtime.env`, `.env.rehearsal-auth.local`, `.env.rehearsal-source.local` | Production-shaped local Rehearsal                  |
-| `.env.vercel.example`                                                            | `.env.vercel.production.local` and `.env.vercel.preview.local`                       | Vercel Production and Preview deployments          |
-| `supabase/functions/.env.example`                                                | `supabase/functions/.env.local`                                                      | Supabase Edge Functions                            |
+| Tracked contract                                        | Ignored values                                                 | Consumer                                          |
+| ------------------------------------------------------- | -------------------------------------------------------------- | ------------------------------------------------- |
+| None; values are derived from local services            | None                                                           | Ordinary local application                        |
+| `config/environments/blendcalc-api-hosted.example.env`  | `.env.blendCalcAPI.hosted.local`                               | Guarded hosted blendCalcAPI migration operations  |
+| `config/environments/privileged-operations.example.env` | `.env.moderation.local`                                        | Privileged scripts and linked Supabase operations |
+| None; the database manager generates the contract       | `.env.test.local`                                              | Disposable local database and Playwright          |
+| `config/environments/rehearsal-auth.example.env`        | `.rehearsal/runtime.env`, `.env.rehearsal-auth.local`          | Local Rehearsal runtime and Google identity       |
+| `config/environments/rehearsal-source.example.env`      | `.env.rehearsal-source.local`                                  | Temporary production-source readers               |
+| `config/environments/vercel.example.env`                | `.env.vercel.production.local` and `.env.vercel.preview.local` | Vercel Production and Preview deployments         |
+| `supabase/functions/.env.example`                       | `supabase/functions/.env.local`                                | Supabase Edge Functions                           |
 
 The ignored mirrors are local inventory and development inputs. Vercel and Supabase
 remain authoritative for deployed values. Never copy a secret into a public variable,
 command argument, issue, log, test fixture, or documentation example.
 
-The tracked `.env.test` intentionally clears `PUBLIC_TURNSTILE_SITE_KEY`. Automated
-browser authentication runs only against disposable local Supabase and must not inherit
-a developer's real Turnstile configuration from `.env`.
+Vite never loads repository dotenv files. Maintained launchers and deployment providers
+must pass an explicit allowlisted process environment. Automated browser authentication
+runs only against disposable local Supabase and receives an explicit empty Turnstile
+site key unless `npm run dev:test:auth` selects the official local test key.
 
 ### Branches And Auxiliary Worktrees
 
@@ -56,7 +60,7 @@ Remove those links with the auxiliary checkout after its work is safely integrat
 
 ## Local Application
 
-`npm run dev` aliases `npm run dev:local`. The launcher starts or validates both local
+`npm run dev` aliases `npm run dev:local`. No environment file is required. The launcher starts or validates both local
 Supabase workdirs, derives their local credentials from `supabase status`, builds a new
 allowlisted child environment, disables Vite environment-file layering, and starts the
 application at `http://localhost:5173`. It preserves existing local database state.
@@ -65,13 +69,8 @@ The launcher never reads `.env`, `.env.moderation.local`, a Vercel pull, or the 
 blendCalcAPI file. Provider APIs, email delivery, cron credentials, hosted Supabase
 tokens, and other non-loopback application requests are absent and denied. The only
 external safe-runtime exception is read-only rendering and processing of an exact,
-already-stored Open Food Facts image URL. `.env.example` remains a loopback-only
-reference for tools that intentionally read `.env`; do not place hosted values in that
-file.
-
-```bash
-cp .env.example .env
-```
+already-stored Open Food Facts image URL. Maintained tools do not use `.env` or
+`.env.local` as fallback credential stores.
 
 Only variables beginning with `PUBLIC_` may be read by browser code. Local and test
 runtimes always use `BLENDCALC_API_READ_MODE=isolated`; missing or invalid read modes
@@ -100,12 +99,12 @@ scanning remain physical-device verification gates.
 
 ## Privileged Local Operations
 
-Copy `.env.moderation.example` to `.env.moderation.local`. Use it for linked migrations,
+Copy `config/environments/privileged-operations.example.env` to `.env.moderation.local`. Use it for linked migrations,
 role management, hosted audits, publication controls, provider-backed maintenance, and
 other scripts that require elevated access.
 
 ```bash
-cp .env.moderation.example .env.moderation.local
+cp config/environments/privileged-operations.example.env .env.moderation.local
 ```
 
 Confirm the target project before every write. Local test-database commands do not use
@@ -140,7 +139,7 @@ npm run blendCalcAPI:db:status
 ```
 
 Guarded hosted migrations use `.env.blendCalcAPI.hosted.local`, copied from
-`.env.blendCalcAPI.hosted.example`. The root Supabase link remains attached to the
+`config/environments/blendcalc-api-hosted.example.env`. The root Supabase link remains attached to the
 blendCalc application project. Every blendCalcAPI database command uses
 `infrastructure/blendCalcAPI` as its explicit workdir, and a hosted write verifies
 `BLENDCALC_API_SUPABASE_PROJECT_ID`. The database password may instead use the dedicated
@@ -149,9 +148,10 @@ database password or Keychain name.
 
 ## Test Environment
 
-`.env.test` contains safe tracked defaults and the explicit `test` runtime label. The
-local database manager writes private application-database keys and seeded account
-credentials to `.env.test.local`. Do not hand-maintain or commit that generated file.
+The local database manager writes the complete private application-database contract
+and seeded account credentials to `.env.test.local`. The launcher supplies the safe
+runtime label, site URL, isolated API mode, and empty Turnstile setting directly. Do not
+hand-maintain or commit the generated file.
 The test application launcher adds local blendCalcAPI credentials directly from its
 separate workdir.
 
@@ -187,9 +187,16 @@ provider-data credentials, and uses the same fail-closed external-request and lo
 email-sink boundaries as TEST. A separately declared Google identity exchange is the
 only external Rehearsal exception; its callback and resulting Auth state remain local.
 Rehearsal writes SvelteKit's generated runtime state beneath
-`.svelte-kit/rehearsal/`, separate from the default build/test output. Running a test or
-build while port `5175` is open therefore cannot replace the live app's compiled public
+`.svelte-kit-rehearsal/`, separate from the default build/test output. Each development
+server ignores the inactive runtime's generated directory, so running a test or build
+while port `5175` is open cannot replace or hot-reload the live app's compiled public
 environment or CSP with another runtime's values.
+
+Local Supabase Auth cookies are namespaced by service port. Ordinary local/TEST sessions
+use the application database's cookie, while Rehearsal uses its own cookie. Resetting or
+switching one disposable Auth service therefore cannot make another runtime attempt to
+refresh that service's stale token. Hosted deployments retain Supabase's standard cookie
+contract.
 
 The database manager generates `.rehearsal/runtime.env`. Do not hand-edit or commit it.
 It contains only derived local endpoints, the fixed local owner-snapshot credential,
@@ -204,7 +211,8 @@ secret or put it in `.rehearsal/runtime.env`:
 
 1. In Google Cloud, create an OAuth 2.0 **Web application** client for Rehearsal.
 2. Add `http://127.0.0.1:58321/auth/v1/callback` as an exact authorized redirect URI.
-3. Copy `.env.rehearsal-auth.example` to `.env.rehearsal-auth.local`.
+3. Run
+   `cp config/environments/rehearsal-auth.example.env .env.rehearsal-auth.local`.
 4. Put the Web client ID and secret in the two named variables, then run
    `chmod 600 .env.rehearsal-auth.local`.
 5. Run `npm run rehearsal -- doctor`; **Local service credentials** must pass.
@@ -305,7 +313,7 @@ only when postponing the work is less safe than proceeding.
 
 ## Vercel
 
-`.env.vercel.example` lists only values consumed by the deployed SvelteKit app and
+`config/environments/vercel.example.env` lists only values consumed by the deployed SvelteKit app and
 Vercel-owned operations. Configure each value in the narrowest required environment:
 
 - Production credentials belong in Production only unless a Preview genuinely needs
@@ -386,13 +394,34 @@ use different names at a boundary—for example, the local app uses `FDC_API_KEY
 the catalog-monitor Edge Function uses `USDA_API_KEY`—but that mapping must remain
 explicit here and at the adapter boundary.
 
+## Legacy Local File Cleanup
+
+The maintained tools no longer read `.env`, `.env.local`, or
+`.env.blendCalcAPI.local`. Older checkouts may still have one or more of these ignored
+files. Do not delete them until their key names—not their values—have been compared with
+the current owners:
+
+1. Put privileged Supabase and provider values in `.env.moderation.local`, using
+   `config/environments/privileged-operations.example.env` as the key-name checklist.
+2. Put isolated hosted blendCalcAPI migration values in
+   `.env.blendCalcAPI.hosted.local`, using
+   `config/environments/blendcalc-api-hosted.example.env` as the checklist.
+3. Confirm Vercel owns deployed application values; ignored `.env.vercel.*.local` files
+   are inventory snapshots only.
+4. Confirm `npm run dev`, `npm run check`, and the intended privileged dry run work
+   without the legacy files.
+5. Remove only the obsolete ignored files after that comparison. Never copy values into
+   a tracked template or command line.
+
 ## Ownership Check
 
 Before handoff, verify:
 
-- every runtime variable appears in exactly the appropriate example;
+- every manually configured runtime variable appears in exactly the appropriate
+  template;
 - every example variable has a real consumer or documented platform purpose;
-- the root local application uses `.env` rather than a duplicate `.env.local`;
+- ordinary local, TEST, and Rehearsal launchers construct explicit environments without
+  ambient root dotenv layering;
 - removed aliases no longer appear in source or deployed configuration;
 - no tracked file contains a secret value; and
 - local mirrors and deployed settings contain the names required by their consumers.

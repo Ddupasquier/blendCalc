@@ -10,6 +10,7 @@ import type { Database } from "$lib/types/database.types";
 import type { Cookies } from "@sveltejs/kit";
 import WebSocket from "ws";
 import { assertRuntimeUrlMatchesEnvironment } from "$lib/server/environment/runtimeEnvironment.server";
+import { getLocalSupabaseAuthCookieName } from "$lib/supabase/authCookie";
 
 const websocketTransport = WebSocket as unknown as WebSocketLikeConstructor;
 
@@ -30,11 +31,16 @@ export const createSupabaseServerClient = (cookies: Cookies) => {
 			});
 		},
 	};
+	const localAuthCookieName =
+		getLocalSupabaseAuthCookieName(PUBLIC_SUPABASE_URL);
 
 	return createServerClient<Database>(
 		PUBLIC_SUPABASE_URL,
 		PUBLIC_SUPABASE_PUBLISHABLE_KEY,
 		{
+			...(localAuthCookieName
+				? { cookieOptions: { name: localAuthCookieName } }
+				: {}),
 			realtime: {
 				transport: websocketTransport,
 			},

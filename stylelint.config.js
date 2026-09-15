@@ -2,6 +2,7 @@ export default {
 	extends: ["stylelint-config-recommended-scss"],
 	ignoreFiles: [
 		".svelte-kit/**",
+		".svelte-kit-rehearsal/**",
 		".vercel/**",
 		"build/**",
 		"coverage/**",

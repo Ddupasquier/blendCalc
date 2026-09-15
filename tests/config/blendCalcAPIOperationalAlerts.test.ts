@@ -23,7 +23,9 @@ describe("blendCalcAPI operational alert architecture", () => {
 		]) {
 			expect(environment).toContain(name);
 		}
-		expect(read(".env.vercel.example")).toContain("API_ALERT_EMAIL_TO=");
+		expect(read("config/environments/vercel.example.env")).toContain(
+			"API_ALERT_EMAIL_TO=",
+		);
 	});
 
 	it("keeps key anomaly evidence aggregate and service-only", () => {
