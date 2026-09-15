@@ -1,4 +1,4 @@
-import { defineRehearsalConfig } from "@rehearsal/db";
+import { defineRehearsalConfig } from "@rehearsal-db/core";
 
 export default defineRehearsalConfig({
 	schemaVersion: 1,

@@ -11,12 +11,12 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { createInterface } from "node:readline";
 import { fileURLToPath } from "node:url";
-import { readRehearsalServiceEnvironment } from "@rehearsal/db/service-environment";
+import { readRehearsalServiceEnvironment } from "@rehearsal-db/core/service-environment";
 import {
 	createAndActivateBaseline,
 	pruneBaselineGenerations,
 	verifyActiveBaseline,
-} from "@rehearsal/db/baseline";
+} from "@rehearsal-db/core/baseline";
 import {
 	createSanitizationContext,
 	sanitizeRow,
@@ -33,7 +33,7 @@ import {
 import {
 	createMigrationReplayReceipt,
 	readMigrationSourceBundle,
-} from "@rehearsal/db/migrations";
+} from "@rehearsal-db/core/migrations";
 import { parseRehearsalSourceDatabaseUrl } from "../../lib/rehearsal/source_connection.mjs";
 import { createRehearsalSourcePsqlInvocation } from "../../lib/rehearsal/postgres_client.mjs";
 import { loadOrCreateSanitizationKey } from "../../lib/rehearsal/sanitization_key.mjs";

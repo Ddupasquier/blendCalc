@@ -4,7 +4,7 @@
  */
 
 import { spawnSync } from "node:child_process";
-import { createCleanProcessEnvironment } from "@rehearsal/db/process-environment";
+import { createCleanProcessEnvironment } from "@rehearsal-db/core/process-environment";
 
 export const parseSupabaseStatusEnvironment = (output) => {
 	const values = {};

@@ -158,7 +158,7 @@
 		"@capacitor/cli": "8.4.3",
 		"@eslint/js": "^10.0.1",
 		"@playwright/test": "^1.62.1",
-		"@rehearsal/db": "https://github.com/Ddupasquier/rehearsal-db/archive/89cffac1fcc855a03020a8eba58a7adf1aa6796c.tar.gz",
+		"@rehearsal-db/core": "0.1.0-beta.1",
 		"@sveltejs/adapter-vercel": "^6.3.4",
 		"@sveltejs/kit": "^2.70.1",
 		"@sveltejs/vite-plugin-svelte": "^7.2.0",

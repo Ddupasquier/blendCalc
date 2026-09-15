@@ -4,7 +4,7 @@
  * Do not run directly; this module is reusable Rehearsal infrastructure.
  */
 
-import { createCleanProcessEnvironment } from "@rehearsal/db/process-environment";
+import { createCleanProcessEnvironment } from "@rehearsal-db/core/process-environment";
 
 const POSTGRES_CLIENT_IMAGE = "postgres:17-alpine";
 
