@@ -1,6 +1,6 @@
 /**
- * Purpose: Launch BlendCalc against the verified local Rehearsal runtime and prove
- * the application, CSP, isolated API route, and synthetic Auth exchange work together.
+ * Purpose: Launch BlendCalc against the verified local Rehearsal runtime and prove its
+ * project-specific application, CSP, isolated API route, and synthetic Auth exchange.
  * Run: `npm run rehearsal:app:prove`. It starts and stops only the local app process;
  * the isolated Rehearsal and blendCalcAPI database containers remain available.
  */

@@ -1,7 +1,7 @@
 /**
  * Purpose: Define and compile BlendCalc's deny-by-default Rehearsal sanitization
- * policy without reading row data. Do not run directly; this module is reusable script
- * infrastructure.
+ * policy without reading row data. Do not run directly; this module is project-owned
+ * privacy policy.
  */
 
 import { createHash } from "node:crypto";

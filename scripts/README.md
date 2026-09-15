@@ -96,7 +96,7 @@ The guard never deletes files, caches, containers, volumes, or databases.
 | `lib/<domain>/`            | Reusable script-only code; never run directly                           |
 | `lib/environment/`         | Clean process environments and local Supabase service helpers           |
 | `lib/reference-data/`      | Reviewed source queries, unit standards, and cautious matching catalogs |
-| `lib/rehearsal/`           | Reusable Rehearsal safety, restore, migration, and verification helpers |
+| `lib/rehearsal/`           | BlendCalc export, sanitization, identity, asset, and proof helpers      |
 
 ## Local Database And QA
 

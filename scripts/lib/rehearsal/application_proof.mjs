@@ -1,6 +1,6 @@
 /**
- * Purpose: Validate exact Rehearsal browser CSP, restored Storage assets, and bounded
- * stale-session recovery behavior. Do not run directly.
+ * Purpose: Validate BlendCalc-specific Rehearsal browser CSP, restored Storage assets,
+ * and bounded stale-session recovery behavior. Do not run directly.
  */
 
 const SELF_SOURCE = "'self'";

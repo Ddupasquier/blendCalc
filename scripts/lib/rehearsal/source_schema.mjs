@@ -1,6 +1,7 @@
 /**
- * Purpose: Capture the exact linked production public schema as a bounded,
- * data-free Rehearsal baseline input. Do not run directly.
+ * Purpose: Capture BlendCalc's exact linked production public schema as a bounded,
+ * data-free Rehearsal baseline input. Do not run directly; the package validates the
+ * dump while this repository owns authorization to acquire it.
  */
 
 import {

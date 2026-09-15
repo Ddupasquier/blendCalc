@@ -1,7 +1,7 @@
 /**
- * Purpose: Exercise the installed Rehearsal export views through a disposable login,
- * stream every local source row through the sanitizer, verify an atomic baseline, and
- * remove all proof artifacts.
+ * Purpose: Exercise BlendCalc's installed Rehearsal export views through a disposable
+ * login, stream every local source row through the project sanitizer, verify an atomic
+ * baseline, and remove all proof artifacts.
  * Run: `npm run db:rehearsal:prove-installed-boundary` against local Supabase only.
  */
 

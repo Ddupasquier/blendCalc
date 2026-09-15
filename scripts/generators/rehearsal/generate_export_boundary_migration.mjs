@@ -1,6 +1,6 @@
 /**
- * Purpose: Generate or verify the explicit Rehearsal export-boundary migration from
- * the reviewed sanitization manifest.
+ * Purpose: Generate or verify BlendCalc's explicit Rehearsal export-boundary migration
+ * from its reviewed sanitization manifest.
  * Run: `npm run rehearsal:export-migration:generate` or
  * `npm run rehearsal:export-migration:check`.
  */

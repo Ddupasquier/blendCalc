@@ -1,6 +1,6 @@
 /**
- * Purpose: Load or create the private machine-local key that keeps Rehearsal
- * pseudonyms stable across baseline refreshes. Do not run directly.
+ * Purpose: Load or create the private machine-local key that keeps BlendCalc-specific
+ * Rehearsal pseudonyms stable across baseline refreshes. Do not run directly.
  */
 
 import { randomBytes } from "node:crypto";

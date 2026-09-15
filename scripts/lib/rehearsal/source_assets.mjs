@@ -1,6 +1,7 @@
 /**
- * Purpose: Inventory the exact Storage objects represented by a Rehearsal export and
- * stream them through a dedicated read-only Storage Auth identity. Do not run directly.
+ * Purpose: Inventory the exact BlendCalc Storage objects represented by a Rehearsal
+ * export and stream them through a dedicated read-only Storage Auth identity.
+ * Do not run directly; object selection and private-asset policy remain project-owned.
  */
 
 import { createClient } from "@supabase/supabase-js";

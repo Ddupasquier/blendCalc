@@ -1,7 +1,7 @@
 /**
- * Purpose: Build the bounded SQL and environment records used to provision a
- * dedicated Rehearsal source without embedding project credentials in tracked code.
- * Do not run directly; this module is reusable Rehearsal infrastructure.
+ * Purpose: Build the bounded SQL and environment records used to provision
+ * BlendCalc's dedicated Rehearsal source without embedding project credentials in
+ * tracked code. Do not run directly; source authorization is project-owned.
  */
 
 const UUID_PATTERN =

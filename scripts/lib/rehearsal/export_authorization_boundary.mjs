@@ -1,7 +1,7 @@
 /**
- * Purpose: Prove the proposed Rehearsal export authorization boundary against a
- * disposable local PostgreSQL database. Do not run directly; this module is reusable
- * script infrastructure.
+ * Purpose: Prove BlendCalc's Rehearsal export authorization boundary against a
+ * disposable local PostgreSQL database. Do not run directly; this is project-owned
+ * security infrastructure.
  */
 
 import { randomBytes } from "node:crypto";
@@ -155,7 +155,7 @@ revoke ${quoteIdentifier(ownerRole)} from postgres;
 revoke create on schema rehearsal_export from ${quoteIdentifier(ownerRole)};
 `;
 
-export const buildClusterInspectionSql = ({
+const buildClusterInspectionSql = ({
 	database,
 	ownerRole,
 	readerRole,
@@ -192,7 +192,7 @@ where owner.rolname = ${quoteLiteral(ownerRole)}
 	and login.rolname = ${quoteLiteral(loginRole)};
 `;
 
-export const buildDatabaseInspectionSql = ({ ownerRole, loginRole }) => `
+const buildDatabaseInspectionSql = ({ ownerRole, loginRole }) => `
 select concat_ws('|',
 	case when has_schema_privilege(${quoteLiteral(loginRole)}, 'rehearsal_export', 'usage')
 		then 'export-schema-visible' else 'export-schema-hidden' end,

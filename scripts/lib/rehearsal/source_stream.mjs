@@ -1,7 +1,7 @@
 /**
- * Purpose: Build and parse one consistent, read-only PostgreSQL export stream for a
- * reviewed Rehearsal view manifest. Do not run directly; this module is reusable
- * script infrastructure.
+ * Purpose: Build and parse BlendCalc's consistent, read-only PostgreSQL export stream
+ * for its reviewed Rehearsal view manifest. Do not run directly; source selection is
+ * project-owned.
  */
 
 const identifierPattern = /^[a-z][a-z0-9_]{0,62}$/u;

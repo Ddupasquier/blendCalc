@@ -1,7 +1,7 @@
 /**
- * Purpose: Parse a dedicated PostgreSQL source URL while keeping a Supabase pooler
- * connection username distinct from the database role observed after connection.
- * Do not run directly; this module is reusable Rehearsal infrastructure.
+ * Purpose: Parse BlendCalc's dedicated PostgreSQL source URL while keeping a Supabase
+ * pooler connection username distinct from the database role observed after
+ * connection. Do not run directly; production-source authorization is project-owned.
  */
 
 const DEDICATED_ROLE_PATTERN = /^rehearsal_[a-z0-9_]+$/u;

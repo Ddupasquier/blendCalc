@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Purpose: Provision and verify the two least-privilege production identities used
- * by Rehearsal, then atomically write their five-value ignored source environment.
+ * Purpose: Provision and verify BlendCalc's two least-privilege production identities
+ * used by Rehearsal, then atomically write their five-value ignored source environment.
  * Run: `npm run db:rehearsal:provision-source -- --dry-run`, then repeat with the
  * reported `--confirm-project=<project-ref>` after reviewing the exact scope.
  * Writes: One ephemeral hosted DB role/scope, one dedicated hosted Auth identity, and
