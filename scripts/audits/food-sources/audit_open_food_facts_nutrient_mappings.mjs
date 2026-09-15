@@ -12,8 +12,6 @@ import { createClient } from "@supabase/supabase-js";
 import { auditOpenFoodFactsNutrientMappings } from "../../lib/nutrition/openFoodFactsNutrientMappingAudit.mjs";
 
 config({ path: ".env.moderation.local", quiet: true });
-config({ path: ".env.local", quiet: true });
-config({ path: ".env", quiet: true });
 
 const reportArgument = process.argv.find((value) =>
 	value.startsWith("--report="),

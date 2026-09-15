@@ -181,7 +181,7 @@ SUPABASE_DB_PASSWORD=YOUR_REMOTE_POSTGRES_DATABASE_PASSWORD
 Start from the tracked template:
 
 ```sh
-cp .env.moderation.example .env.moderation.local
+cp config/environments/privileged-operations.example.env .env.moderation.local
 ```
 
 `SUPABASE_DB_PASSWORD` is the remote Postgres database password used by

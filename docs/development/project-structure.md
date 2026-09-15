@@ -10,13 +10,13 @@ Visual implementation and token selection follow the Ingredients-derived system 
 
 ## Quick Navigation
 
-| Area                    | Sections                                                                                                                   |
-| ----------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| Change isolation        | [Feature Branches](#feature-branches)                                                                                      |
-| Application placement   | [Application Source](#application-source), [Components](#components), [Routes](#routes), and [Domain Logic](#domain-logic) |
-| Naming and verification | [Naming](#naming) and [Tests](#tests)                                                                                      |
-| Supporting material     | [Infrastructure](#infrastructure), [Scripts](#scripts), and [Documentation](#documentation)                                |
-| Final placement check   | [Ownership Check](#ownership-check)                                                                                        |
+| Area                    | Sections                                                                                                                         |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Change isolation        | [Feature Branches](#feature-branches)                                                                                            |
+| Application placement   | [Application Source](#application-source), [Components](#components), [Routes](#routes), and [Domain Logic](#domain-logic)       |
+| Naming and verification | [Naming](#naming) and [Tests](#tests)                                                                                            |
+| Supporting material     | [Repository Root](#repository-root), [Infrastructure](#infrastructure), [Scripts](#scripts), and [Documentation](#documentation) |
+| Final placement check   | [Ownership Check](#ownership-check)                                                                                              |
 
 ## Feature Branches
 
@@ -54,6 +54,28 @@ Read-only investigation does not require a branch. Creating a branch or worktree
 not authorize a commit, content push, merge, deployment, or database change. Publishing
 the initial unchanged branch pointer is required workflow setup, not permission to push
 later commits.
+
+## Repository Root
+
+The root contains only conventional ecosystem entry points and files that must remain
+immediately discoverable. Environment key-name templates are grouped under
+`config/environments/`; secret-bearing dotenv files remain ignored but visible for
+normal maintenance, while generated Rehearsal state is selectively hidden in the
+repository-owned VS Code Explorer settings.
+
+| Root owner                     | Files                                                                                                    | Classification and reason                                                                                                                       |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Onboarding and agent discovery | `README.md`, `AGENTS.md`                                                                                 | Keep at root so people and supported agent tooling find the governing entry point immediately. `AGENTS.md` remains machine-local and untracked. |
+| Package and runtime            | `package.json`, `package-lock.json`, `.npmrc`, `.nvmrc`, `.node-version`                                 | Keep at root for npm and runtime-manager discovery. Both Node selectors intentionally enforce Node 24 for different tools.                      |
+| SvelteKit and TypeScript       | `svelte.config.js`, `vite.config.ts`, `tsconfig.json`                                                    | Keep at their conventional tool-discovery locations. Vite accepts only the explicit process environment supplied by launchers or deployment.    |
+| Quality tools                  | `eslint.config.js`, `stylelint.config.js`, `playwright.config.ts`, `.prettierrc.json`, `.prettierignore` | Keep at conventional discovery paths; relocating them would require fragile wrapper arguments or reduce editor compatibility.                   |
+| Deployment and native shells   | `vercel.json`, `capacitor.config.ts`                                                                     | Keep at the root expected by Vercel and Capacitor.                                                                                              |
+| Repository metadata            | `.gitignore`                                                                                             | Keep at Git's conventional root location.                                                                                                       |
+| Editor integration             | `.vscode/settings.json`, `.vscode/tasks.json`                                                            | Track only shared Node-terminal, focused Explorer, and verification-task behavior. Other workspace state remains ignored.                       |
+
+Downloaded OCR language models, build output, test reports, local databases, Rehearsal
+artifacts, and dotenv values are generated state rather than root architecture. They
+must remain ignored and must not become tracked placeholders.
 
 ## Application Source
 
@@ -220,6 +242,11 @@ not duplicate the same assertion across runners.
 - Keep the directory map and maintenance requirements in `scripts/README.md` current.
 
 ## Infrastructure
+
+`config/contentSecurityPolicy.js` owns build-time CSP source composition.
+`config/environments/` owns tracked, value-free environment templates for manually
+configured consumers. Runtime values stay in each documented ignored destination or
+deployment provider; the templates are never loaded as an application environment.
 
 `capacitor.config.ts` owns shared native shell configuration. `mobile/web/` contains the
 bundled local bootstrap copied into each platform, while `ios/` and `android/` contain

@@ -20,7 +20,6 @@ import {
 } from "../../lib/barcode/barcode_candidates.mjs";
 
 config({ path: ".env.moderation.local", quiet: true });
-config({ path: ".env", quiet: true });
 
 const isDryRun = process.argv.includes("--dry-run");
 const limitArgument = process.argv.find((argument) =>

@@ -31,7 +31,8 @@ backups, recovery, hosted audits, and incident response live in
 
 ## Environment Variables
 
-Local `.env`:
+Ordinary local development derives these values from the local services and passes them
+through the allowlisted application launcher; it does not read a root `.env` file:
 
 ```text
 PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co

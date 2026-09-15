@@ -1,0 +1,18 @@
+{
+	"files.exclude": {
+		"**/.DS_Store": true,
+		"**/.rehearsal": true,
+		"**/.svelte-kit-rehearsal": true
+	},
+	"terminal.integrated.profiles.osx": {
+		"zsh (Node 24)": {
+			"path": "/bin/zsh",
+			"args": [
+				"-l",
+				"-c",
+				"source \"$HOME/.nvm/nvm.sh\" && nvm use --silent && exec /bin/zsh -l"
+			]
+		}
+	},
+	"terminal.integrated.defaultProfile.osx": "zsh (Node 24)"
+}
