@@ -1,7 +1,7 @@
 /**
- * Purpose: Prove that a Rehearsal export login can read only explicit versioned views
- * and cannot mutate data, invoke source/network functions, assume the view owner, or
- * leave disposable database objects behind.
+ * Purpose: Prove that BlendCalc's Rehearsal export login can read only its explicit
+ * versioned views and cannot mutate data, invoke source/network functions, assume the
+ * view owner, or leave disposable database objects behind.
  * Run: `npm run db:rehearsal:prove-export-boundary`.
  */
 

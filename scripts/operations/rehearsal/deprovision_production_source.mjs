@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Purpose: Remove the temporary production identities and local credential file used
- * by a completed Rehearsal refresh without changing the shared export boundary.
+ * Purpose: Remove BlendCalc's temporary production identities and local credential
+ * file used by a completed Rehearsal refresh without changing the export boundary.
  * Run: `npm run db:rehearsal:deprovision-source -- --dry-run`, then repeat with the
  * reported `--confirm-project=<project-ref>` after reviewing the exact scope.
  * Writes: Removes only the dedicated hosted DB login/scope, dedicated hosted Auth

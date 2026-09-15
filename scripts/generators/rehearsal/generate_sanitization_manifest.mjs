@@ -1,6 +1,6 @@
 /**
- * Purpose: Generate or verify the explicit table-and-column Rehearsal sanitization
- * manifest from the isolated local application database schema.
+ * Purpose: Generate or verify BlendCalc's explicit table-and-column Rehearsal
+ * sanitization manifest from the isolated local application database schema.
  * Run: `npm run rehearsal:sanitization:generate` or
  * `npm run rehearsal:sanitization:check`.
  */
