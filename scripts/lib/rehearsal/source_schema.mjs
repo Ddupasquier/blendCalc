@@ -6,7 +6,7 @@
 import {
 	assertProductionSchemaDump,
 	captureSupabasePublicSchema,
-} from "@rehearsal/db/schema";
+} from "@rehearsal-db/core/schema";
 
 const PROJECT_REFERENCE_PATTERN = /^[a-z0-9]{20}$/u;
 
