@@ -18,9 +18,9 @@ the final instruction to read before running it.
   standalone commands.
 - Do not add an npm alias merely to make a one-time investigation easier to type.
 
-All commands require Node.js 24. Database-writing and privileged workflows normally
-load ignored credentials from `.env.moderation.local`; provider-only audits may use
-`.env`. The exact variable ownership is defined in
+All commands require Node.js 24. Database-writing, provider, and privileged workflows
+load their exact ignored credentials from `.env.moderation.local`; no maintained script
+falls back to ambient `.env` or `.env.local` files. The exact variable ownership is defined in
 [Environment Configuration](../docs/development/environment.md). Never pass secrets on
 the command line or place generated data in tracked files.
 

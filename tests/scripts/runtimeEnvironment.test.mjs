@@ -66,12 +66,12 @@ describe("script runtime environments", () => {
 			},
 		});
 		expect(environment).toMatchObject({
-			BLENDCALC_DISABLE_VITE_ENV_FILES: "true",
 			BLENDCALC_RUNTIME_ENVIRONMENT: "test",
 			BLENDCALC_API_READ_MODE: "isolated",
 			PUBLIC_SUPABASE_URL: "http://127.0.0.1:54321",
 			BLENDCALC_API_SUPABASE_URL: "http://127.0.0.1:55321",
 		});
+		expect(environment).not.toHaveProperty("BLENDCALC_DISABLE_VITE_ENV_FILES");
 		expect(environment).not.toHaveProperty("FDC_API_KEY");
 	});
 

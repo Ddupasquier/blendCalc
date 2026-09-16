@@ -15,7 +15,6 @@ export const loadQaDatabaseEnvironment = () => {
 	if (testMode) {
 		config({ path: ".env.test.local", override: true, quiet: true });
 	} else {
-		config({ path: ".env", quiet: true });
 		config({ path: ".env.moderation.local", override: true, quiet: true });
 	}
 

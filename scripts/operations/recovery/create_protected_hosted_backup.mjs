@@ -26,7 +26,6 @@ import {
 } from "../../lib/recovery/protectedBackup.mjs";
 
 config({ path: ".env.moderation.local", quiet: true });
-config({ path: ".env", quiet: true });
 
 const getArgumentValue = (name) =>
 	process.argv

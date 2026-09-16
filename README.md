@@ -63,13 +63,16 @@ Dependency install scripts are deny-by-default. Reviewed package versions are li
 
 ### 2. Configure The Environment
 
-Ordinary local development needs no hosted credentials. `npm run dev` derives the two
-local Supabase environments and launches the app with an allowlisted process
-environment. `.env.example` documents optional loopback-only overrides. Use the ignored
-`.env.moderation.local` only for privileged CLI and linked-database operations.
+Ordinary local development needs no environment file or hosted credentials. `npm run
+dev` derives the two local Supabase environments and launches the app with an
+allowlisted process environment. Vite does not layer ambient repository dotenv files.
+Use the ignored `.env.moderation.local` only for privileged CLI and linked-database
+operations.
 
-Each runtime has a separate tracked example so Edge Function, Vercel, test, and
-privileged-operation variables do not leak into environments that never consume them.
+Manually configured runtimes have consumer-specific key-name templates under
+`config/environments/` so Edge Function, Vercel, Rehearsal, and privileged-operation
+variables do not leak into environments that never consume them. TEST and ordinary
+local values are generated from their local services instead of copied from examples.
 See [Environment Configuration](docs/development/environment.md) for the file map,
 deployment ownership, and synchronization workflow. Never prefix a server secret with
 `PUBLIC_` or `VITE_`; ignored value files must never be committed.

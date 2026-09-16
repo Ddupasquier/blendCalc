@@ -16,7 +16,6 @@ import {
 } from "../../lib/catalog/blendCalcAPIPerformanceAudit.mjs";
 
 config({ path: ".env.test.local", quiet: true });
-config({ path: ".env", quiet: true });
 
 const readArgument = (name, fallback) =>
 	process.argv

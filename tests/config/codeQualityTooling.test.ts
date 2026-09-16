@@ -24,12 +24,16 @@ describe("code quality tooling", () => {
 
 	it("keeps generated output outside maintained lint ownership", () => {
 		const eslintConfiguration = readText("eslint.config.js");
+		const prettierIgnore = readText(".prettierignore");
 		const stylelintConfiguration = readText("stylelint.config.js");
 
 		expect(eslintConfiguration).toContain('".vercel/**"');
+		expect(eslintConfiguration).toContain('".svelte-kit-rehearsal/**"');
 		expect(eslintConfiguration).toContain('"supabase/.temp/**"');
 		expect(stylelintConfiguration).toContain('".vercel/**"');
+		expect(stylelintConfiguration).toContain('".svelte-kit-rehearsal/**"');
 		expect(stylelintConfiguration).toContain('"supabase/.temp/**"');
+		expect(prettierIgnore).toContain(".svelte-kit-rehearsal/");
 	});
 
 	it("enforces lint and new-file formatting in source verification", () => {
