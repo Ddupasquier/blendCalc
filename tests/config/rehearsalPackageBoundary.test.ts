@@ -103,22 +103,22 @@ describe("Rehearsal package consumer boundary", () => {
 		}
 	});
 
-	it("delegates generic lifecycle commands directly to the package CLI", () => {
-		const expectedCommands = {
-			"db:rehearsal:start": "rehearsal start",
-			"db:rehearsal:reset": "rehearsal reset",
-			"db:rehearsal:status": "rehearsal status",
-			"db:rehearsal:stop": "rehearsal stop",
-			"db:rehearsal:discard": "rehearsal discard",
-			"db:rehearsal:candidates": "rehearsal candidates",
-			"db:rehearsal:migrate": "rehearsal migrate",
-			"db:rehearsal:verify": "rehearsal verify",
-			"db:rehearsal:run": "rehearsal run",
-			rehearsal: "rehearsal",
-		};
-
-		for (const [name, command] of Object.entries(expectedCommands)) {
-			expect(packageMetadata.scripts?.[name], name).toBe(command);
+	it("delegates the argument-based lifecycle command directly to the package CLI", () => {
+		expect(packageMetadata.scripts?.rehearsal).toBe("rehearsal");
+		for (const action of [
+			"start",
+			"reset",
+			"status",
+			"stop",
+			"discard",
+			"candidates",
+			"migrate",
+			"verify",
+			"run",
+		]) {
+			expect(packageMetadata.scripts).not.toHaveProperty(
+				`db:rehearsal:${action}`,
+			);
 		}
 	});
 });
