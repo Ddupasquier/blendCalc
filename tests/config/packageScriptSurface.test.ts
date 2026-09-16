@@ -4,6 +4,9 @@ import { describe, expect, it } from "vitest";
 const readText = (filePath: string) => readFileSync(filePath, "utf8");
 const packageConfiguration = JSON.parse(readText("package.json"));
 const scripts = packageConfiguration.scripts as Record<string, string>;
+const verificationDashboard = readText(
+	"scripts/operations/quality/run_verification_dashboard.mjs",
+);
 
 const removedNarrowAliases = [
 	"audit:blendCalcAPI-catalog",
@@ -51,5 +54,9 @@ describe("root npm script surface", () => {
 		]) {
 			expect(scripts).toHaveProperty(command);
 		}
+		expect(verificationDashboard).toContain(
+			'["run", "db:test", "--", "verify", "--keep-running"]',
+		);
+		expect(verificationDashboard).not.toContain("db:test:verify");
 	});
 });

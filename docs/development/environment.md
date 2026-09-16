@@ -253,9 +253,10 @@ artifact never contains production credentials. A random owner-only
 refreshes without deriving them from a guessable production identifier. It is not part
 of any baseline and must never be copied, logged, or committed. Production refresh
 retains the active verified generation and one verified fallback; older generations are
-removed only after activation succeeds. `db:rehearsal:migrate` requires the exact
-candidate digest reported by `db:rehearsal:candidates`; use
-`db:rehearsal:run` to reset, apply the confirmed candidate set, and verify the result.
+removed only after activation succeeds. `npm run rehearsal -- migrate` requires the
+exact candidate digest reported by `npm run rehearsal -- candidates`; use
+`npm run rehearsal -- run` to reset, apply the confirmed candidate set, and verify the
+result.
 Local-source refresh exists to prove the complete machinery without production access.
 `npm run rehearsal:app:prove` starts the application briefly against those verified
 local services, proves the Rehearsal-only CSP, owner-snapshot Auth exchange and

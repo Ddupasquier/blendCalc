@@ -56,11 +56,12 @@ the replacement activates. A partial or failed sync never alters the active gene
 The prior complete generation remains available for an immediate operator rollback.
 
 Backup recovery starts from the canonical blendCalc backup, not from the isolated read
-model. The maintained `recovery:blendCalcAPI` drill restores the backup at its recorded
-migration point, migrates it forward, rebuilds the isolated generation, verifies
-count/content-hash parity, and exercises the real rollback contract in two disposable
-local Supabase stacks. The API database is therefore reproducible output and is never a
-source of truth.
+model. The maintained
+`node scripts/operations/recovery/run_blendcalc_api_recovery_drill.mjs` operation restores
+the backup at its recorded migration point, migrates it forward, rebuilds the isolated
+generation, verifies count/content-hash parity, and exercises the real rollback contract
+in two disposable local Supabase stacks. The API database is therefore reproducible
+output and is never a source of truth.
 
 Generation state is:
 

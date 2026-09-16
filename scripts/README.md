@@ -206,10 +206,11 @@ approved owner's non-secret private state are preserved; other identities and pr
 values remain sanitized. A failed restore or candidate migration discards the runtime instead of
 leaving a database that could be mistaken for a verified Rehearsal.
 
-`db:rehearsal:migrate` accepts candidate migrations only after their ordered filename
-and content hashes produce the exact receipt printed by `db:rehearsal:candidates`.
-`db:rehearsal:run` performs reset, candidate application, and verification as one
-fail-closed operation. With no candidates it still proves the restored baseline.
+`npm run rehearsal -- migrate` accepts candidate migrations only after their ordered
+filename and content hashes produce the exact receipt printed by
+`npm run rehearsal -- candidates`. `npm run rehearsal -- run` performs reset, candidate
+application, and verification as one fail-closed operation. With no candidates it still
+proves the restored baseline.
 Reset verifies every restored table count and foreign key before the runtime becomes
 available. Later `verify` calls intentionally allow local row changes because Rehearsal
 is a writable sandbox and candidate data migrations may alter counts; they continue to
