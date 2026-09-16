@@ -2,8 +2,8 @@
  * Purpose: Sample USDA and Open Food Facts payloads and regenerate documentation-only
  * TypeScript structure references under `docs/development/api-structures`. It reads observed query
  * terms from Supabase unless explicit queries are supplied, but never mutates the DB.
- * Run: `npm run generate:api-structures`
- * Targeted run: `npm run generate:api-structures -- --query="almond milk" --samples=2`
+ * Run: `node scripts/generators/api/generate_api_structures.mjs`
+ * Targeted run: `node scripts/generators/api/generate_api_structures.mjs --query="almond milk" --samples=2`
  */
 
 import { createClient } from "@supabase/supabase-js";
@@ -422,13 +422,13 @@ The generator does not seed or mutate Supabase. It reads existing observed query
 ## Regenerate
 
 \`\`\`bash
-npm run generate:api-structures
+node scripts/generators/api/generate_api_structures.mjs
 \`\`\`
 
 The generator uses existing Supabase API-observation tables for sample queries. You can pass explicit query terms for targeted inspection:
 
 \`\`\`bash
-npm run generate:api-structures -- --query="almond milk" --query="protein bar" --samples=2
+node scripts/generators/api/generate_api_structures.mjs --query="almond milk" --query="protein bar" --samples=2
 \`\`\`
 
 ## Current coverage

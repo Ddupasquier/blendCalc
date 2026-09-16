@@ -140,14 +140,14 @@ attachments, chat, or CI artifacts. They contain user data.
 Perform the maintained drill against disposable local Supabase only:
 
 ```bash
-npm run recovery:blendCalcAPI -- --backup-dir="/absolute/path/to/backup"
+node scripts/operations/recovery/run_blendcalc_api_recovery_drill.mjs --backup-dir="/absolute/path/to/backup"
 ```
 
 Backups created before migration manifests were added must provide an independently
 verified schema cutoff, for example:
 
 ```bash
-npm run recovery:blendCalcAPI -- \
+node scripts/operations/recovery/run_blendcalc_api_recovery_drill.mjs \
   --backup-dir="/absolute/path/to/legacy-backup" \
   --legacy-migration-cutoff=20260810120000
 ```
@@ -230,13 +230,13 @@ static deployment runner genuinely requires direct database access.
 1. Remove the elevated role immediately:
 
    ```bash
-   npm run moderate -- role user@example.com none --user-id=<verified-user-id>
+   node scripts/operations/users/moderate_user.mjs role user@example.com none --user-id=<verified-user-id>
    ```
 
 2. Ban the account if the identity itself may be compromised:
 
    ```bash
-   npm run moderate -- ban user@example.com compromised_privileged_account
+   node scripts/operations/users/moderate_user.mjs ban user@example.com compromised_privileged_account
    ```
 
 3. Revoke active sessions in Supabase Auth, remove untrusted MFA factors, rotate any

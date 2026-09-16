@@ -1,7 +1,7 @@
 /**
  * Purpose: Define blendCalcAPI response budgets and pure latency-summary helpers for
  * the authenticated browser performance audit. Do not run directly.
- * Parent workflow: `npm run audit:blendCalcAPI-performance`
+ * Parent workflow: `node scripts/audits/catalog/audit_blendCalcAPI_response_performance.mjs`
  */
 
 export const BLENDCALC_API_RESPONSE_TARGETS = Object.freeze({

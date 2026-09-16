@@ -1,8 +1,8 @@
 /**
  * Purpose: Manage the non-destructive local application Supabase lifecycle without
  * loading hosted credentials.
- * Run: `npm run db:local:start`, `npm run db:local:status`, or
- * `npm run db:local:stop`.
+ * Run: `npm run db:local -- start`, `npm run db:local -- status`, or
+ * `npm run db:local -- stop`.
  */
 
 import { fileURLToPath } from "node:url";

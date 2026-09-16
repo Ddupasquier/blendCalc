@@ -2,7 +2,7 @@
 /**
  * Purpose: Build an immutable local Rehearsal baseline from the installed hosted
  * read-only database and Storage boundaries. It never receives a source write token.
- * Run: `npm run db:rehearsal:refresh` after provisioning the reviewed source roles.
+ * Run: `node scripts/operations/rehearsal/refresh_production_baseline.mjs` after provisioning the reviewed source roles.
  */
 
 import { createHash } from "node:crypto";

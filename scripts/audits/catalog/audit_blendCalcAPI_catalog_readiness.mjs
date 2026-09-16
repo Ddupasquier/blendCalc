@@ -2,9 +2,9 @@
  * Purpose: Audit every active shared-products catalog row against blendCalcAPI v1
  * publication gate and print its canonical provenance, normalized data coverage, asset
  * coverage, and any reason the row is withheld from API reads. This script is read-only.
- * Run: `npm run audit:blendCalcAPI-catalog`
- * JSON: `npm run audit:blendCalcAPI-catalog -- --json`
- * Strict: `npm run audit:blendCalcAPI-catalog -- --strict`
+ * Run: `node scripts/audits/catalog/audit_blendCalcAPI_catalog_readiness.mjs`
+ * JSON: `node scripts/audits/catalog/audit_blendCalcAPI_catalog_readiness.mjs --json`
+ * Strict: `node scripts/audits/catalog/audit_blendCalcAPI_catalog_readiness.mjs --strict`
  */
 
 import { config } from "dotenv";

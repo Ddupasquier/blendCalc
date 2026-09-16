@@ -93,7 +93,7 @@ npm run mobile:sync
 npm run mobile:doctor
 ```
 
-Use `npm run mobile:open:ios` or `npm run mobile:open:android` to continue in the native
+Use `npm run mobile:open -- ios` or `npm run mobile:open -- android` to continue in the native
 IDE. The iOS project declares its camera usage message; Android declares camera access
 and API 26 as its minimum SDK for the barcode scanner. OAuth deep links and live barcode
 scanning remain physical-device verification gates.
@@ -135,8 +135,8 @@ Local blendCalcAPI lifecycle commands derive credentials from the isolated workd
 receive a clean process environment. They do not require an environment file:
 
 ```bash
-npm run blendCalcAPI:db:start
-npm run blendCalcAPI:db:status
+npm run blendCalcAPI:db -- start
+npm run blendCalcAPI:db -- status
 ```
 
 Guarded hosted migrations use `.env.blendCalcAPI.hosted.local`, copied from
@@ -160,7 +160,7 @@ isolated local blendCalcAPI stack. Its orchestrator discards the parent shell
 environment, passes only approved test controls, rejects a non-loopback base URL, and
 supplies generated local credentials. Test credentials must never point at production.
 
-After `npm run db:test:reset`, `npm run dev:test` serves the local test sign-in page with
+After `npm run db:test -- reset`, `npm run dev:test` serves the local test sign-in page with
 a Quick QA login dropdown. The dropdown reads the maintained seeded persona catalog and
 uses the generated password only on the server. Turn on **Test the real sign-in flow**
 when the password, Google, registration, recovery, CAPTCHA, or MFA experience is the
@@ -179,7 +179,7 @@ delivery on an approved hosted origin.
 ## Rehearsal Environment
 
 Rehearsal is a third local-only runtime, separate from ordinary development and the
-synthetic QA database. `npm run db:rehearsal:reset` restores the active checksummed
+synthetic QA database. `npm run rehearsal -- reset` restores the active checksummed
 sanitized baseline into its own Supabase workdir on ports `58320` through `58329`;
 `npm run dev:rehearsal` serves the app at `http://localhost:5175`. The launcher accepts
 only those loopback application and database endpoints, clears hosted application and
@@ -208,7 +208,7 @@ secret or put it in `.rehearsal/runtime.env`:
 4. Put the Web client ID and secret in the two named variables, then run
    `chmod 600 .env.rehearsal-auth.local`.
 5. Run `npm run rehearsal -- doctor`; **Local service credentials** must pass.
-6. Run `npm run db:rehearsal:reset`, then `npm run dev:rehearsal`.
+6. Run `npm run rehearsal -- reset`, then `npm run dev:rehearsal`.
 
 The ignored credential file is read through an exact two-variable allowlist and is
 passed only to the local Supabase CLI. It is never inherited by Vite, app server code,
@@ -258,20 +258,20 @@ The production refresh credential is separate from the OAuth client and from gen
 runtime credentials. Only after the export migration and least-privilege source
 identities have been separately authorized:
 
-1. Run `npm run db:rehearsal:provision-source -- --dry-run` and review the exact linked
+1. Run `node scripts/operations/rehearsal/provision_production_source.mjs --dry-run` and review the exact linked
    project, fixed-owner rule, ephemeral source role, and ignored output path.
 2. Repeat with the reported `--confirm-project=<project-ref>`. The operation creates or
    rotates the ephemeral database reader, mints a short-lived Storage session without
    weakening hosted CAPTCHA, proves both scopes, and writes owner-only ignored
    `.env.rehearsal-source.local` atomically; never hand-edit or copy credentials from
    command output.
-3. Run `npm run db:rehearsal:refresh` twice to build and independently reproduce the
+3. Run `node scripts/operations/rehearsal/refresh_production_baseline.mjs` twice to build and independently reproduce the
    sanitized production-derived baseline.
-4. Run `npm run db:rehearsal:deprovision-source -- --dry-run`, then its reported
+4. Run `node scripts/operations/rehearsal/deprovision_production_source.mjs --dry-run`, then its reported
    `--confirm-project=<project-ref>` form. Confirm that the temporary database role,
    Storage identity, and local source-token file are absent; the active baseline is
    retained.
-5. Run `npm run db:rehearsal:reset` and `npm run db:rehearsal:verify` before starting
+5. Run `npm run rehearsal -- reset` and `npm run rehearsal -- verify` before starting
    `npm run dev:rehearsal`.
 
 The refresh accepts neither a source service-role key, a reusable Storage password, nor

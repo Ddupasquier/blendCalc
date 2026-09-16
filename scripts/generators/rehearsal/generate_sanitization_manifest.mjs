@@ -1,8 +1,8 @@
 /**
  * Purpose: Generate or verify the explicit table-and-column Rehearsal sanitization
  * manifest from the isolated local application database schema.
- * Run: `npm run rehearsal:sanitization:generate` or
- * `npm run rehearsal:sanitization:check`.
+ * Run: `node scripts/generators/rehearsal/generate_sanitization_manifest.mjs --write` or
+ * `node scripts/generators/rehearsal/generate_sanitization_manifest.mjs --check`.
  */
 
 import { spawnSync } from "node:child_process";

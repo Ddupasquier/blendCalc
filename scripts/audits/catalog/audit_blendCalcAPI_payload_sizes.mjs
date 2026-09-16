@@ -1,9 +1,9 @@
 /**
  * Purpose: Measure uncompressed and gzip-estimated response sizes for every
  * authenticated blendCalcAPI v1 read shape without changing catalog data.
- * Start the local production preview with `npm run test:e2e:session:start` first.
- * Run: `npm run audit:blendCalcAPI-payloads`
- * Structured output: `npm run audit:blendCalcAPI-payloads -- --json`
+ * Start the local production preview with `npm run test:e2e:prepare && npm run test:e2e:server` first.
+ * Run: `node scripts/audits/catalog/audit_blendCalcAPI_payload_sizes.mjs`
+ * Structured output: `node scripts/audits/catalog/audit_blendCalcAPI_payload_sizes.mjs --json`
  */
 
 import { gzipSync } from "node:zlib";

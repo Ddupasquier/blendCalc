@@ -3,11 +3,11 @@
  * reversible publication holds without deleting canonical products, revisions, images,
  * or evidence. This is a privileged hosted operation requiring service-role credentials
  * and an elevated actor email in `.env.moderation.local`.
- * Run: `npm run blendCalcAPI:publication -- list`
- * List: `npm run blendCalcAPI:publication -- list`
- * Hold: `npm run blendCalcAPI:publication -- hold product 00021130493609 rights-review --actor-email=moderator@example.com --public-message="Temporarily unavailable while publication rights are reviewed." --internal-note="Rights-holder report received."`
- * Release: `npm run blendCalcAPI:publication -- release <hold-uuid> --actor-email=moderator@example.com --note="Evidence reviewed; publication may resume."`
- * Resolve: `npm run blendCalcAPI:publication -- resolve <concern-uuid> resolved publication-hold --actor-email=moderator@example.com --note="Placed a publication hold."`
+ * Run: `node scripts/operations/blendCalcAPI/manage_blendCalcAPI_publication.mjs list`
+ * List: `node scripts/operations/blendCalcAPI/manage_blendCalcAPI_publication.mjs list`
+ * Hold: `node scripts/operations/blendCalcAPI/manage_blendCalcAPI_publication.mjs hold product 00021130493609 rights-review --actor-email=moderator@example.com --public-message="Temporarily unavailable while publication rights are reviewed." --internal-note="Rights-holder report received."`
+ * Release: `node scripts/operations/blendCalcAPI/manage_blendCalcAPI_publication.mjs release <hold-uuid> --actor-email=moderator@example.com --note="Evidence reviewed; publication may resume."`
+ * Resolve: `node scripts/operations/blendCalcAPI/manage_blendCalcAPI_publication.mjs resolve <concern-uuid> resolved publication-hold --actor-email=moderator@example.com --note="Placed a publication hold."`
  */
 
 import { config } from "dotenv";
@@ -32,10 +32,10 @@ const options = new Map(
 
 const usage = () => {
 	console.error(`Usage:
-  npm run blendCalcAPI:publication -- list
-  npm run blendCalcAPI:publication -- hold <product|image|dataset|source> <reference> <reason> --actor-email=<email> --public-message=<message> --internal-note=<note> [--concern-id=<uuid>]
-  npm run blendCalcAPI:publication -- release <hold-uuid> --actor-email=<email> --note=<note>
-  npm run blendCalcAPI:publication -- resolve <concern-uuid> <resolved|dismissed> <action> --actor-email=<email> --note=<note>
+  node scripts/operations/blendCalcAPI/manage_blendCalcAPI_publication.mjs list
+  node scripts/operations/blendCalcAPI/manage_blendCalcAPI_publication.mjs hold <product|image|dataset|source> <reference> <reason> --actor-email=<email> --public-message=<message> --internal-note=<note> [--concern-id=<uuid>]
+  node scripts/operations/blendCalcAPI/manage_blendCalcAPI_publication.mjs release <hold-uuid> --actor-email=<email> --note=<note>
+  node scripts/operations/blendCalcAPI/manage_blendCalcAPI_publication.mjs resolve <concern-uuid> <resolved|dismissed> <action> --actor-email=<email> --note=<note>
 
 Hold reasons: accuracy-review, rights-review, attribution-review, privacy-review, source-retirement, legal-request
 Resolution actions: product-correction, image-correction, source-policy-correction, publication-hold, no-change`);

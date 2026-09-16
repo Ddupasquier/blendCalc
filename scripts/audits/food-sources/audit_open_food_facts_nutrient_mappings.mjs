@@ -2,7 +2,7 @@
  * Purpose: Compare the complete current Open Food Facts nutrient taxonomy with
  * blendCalc's reviewed mapping catalog. This command is read-only and writes an
  * ignored JSON report; --strict exits nonzero while a review candidate is unqueued.
- * Run: `npm run audit:off-nutrient-mappings`
+ * Run: `node scripts/audits/food-sources/audit_open_food_facts_nutrient_mappings.mjs`
  */
 
 import { mkdir, writeFile } from "node:fs/promises";

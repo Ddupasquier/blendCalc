@@ -78,7 +78,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Rebuild and verify database
-        run: npm run db:test:verify
+        run: npm run db:test -- verify
 
   database-gate:
     name: Database Verification

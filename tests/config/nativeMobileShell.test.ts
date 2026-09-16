@@ -27,16 +27,11 @@ describe("native mobile shell", () => {
 			/^\^?3\./,
 		);
 		expect(packageJson.devDependencies["@capacitor/cli"]).toBe("8.4.3");
-		for (const scriptName of [
-			"mobile:sync",
-			"mobile:sync:ios",
-			"mobile:sync:android",
-			"mobile:open:ios",
-			"mobile:open:android",
-			"mobile:doctor",
-		]) {
+		for (const scriptName of ["mobile:sync", "mobile:open", "mobile:doctor"]) {
 			expect(packageJson.scripts[scriptName]).toBeTruthy();
 		}
+		expect(packageJson.scripts["mobile:sync"]).toBe("cap sync");
+		expect(packageJson.scripts["mobile:open"]).toBe("cap open");
 	});
 
 	it("declares native camera access and the scanner minimum Android SDK", () => {

@@ -1,8 +1,8 @@
 /**
  * Purpose: Generate or verify the explicit Rehearsal export-boundary migration from
  * the reviewed sanitization manifest.
- * Run: `npm run rehearsal:export-migration:generate` or
- * `npm run rehearsal:export-migration:check`.
+ * Run: `node scripts/generators/rehearsal/generate_export_boundary_migration.mjs --write` or
+ * `node scripts/generators/rehearsal/generate_export_boundary_migration.mjs --check`.
  */
 
 import { readFile, writeFile } from "node:fs/promises";

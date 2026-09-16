@@ -1,9 +1,9 @@
 /**
  * Purpose: Preview or push isolated blendCalcAPI migrations using a dedicated link and
  * credentials after every migration has identical reviewed source on remote main.
- * Preview: `npm run blendCalcAPI:db:push:dry`
+ * Preview: `npm run blendCalcAPI:db:push -- --dry-run`
  * Execute with confirmation: `npm run blendCalcAPI:db:push`
- * Execute without confirmation: `npm run blendCalcAPI:db:push:auto`
+ * Execute without confirmation: `npm run blendCalcAPI:db:push -- --yes`
  */
 
 import { execFileSync } from "node:child_process";

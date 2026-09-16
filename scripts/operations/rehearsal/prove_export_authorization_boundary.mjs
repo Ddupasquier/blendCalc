@@ -2,7 +2,7 @@
  * Purpose: Prove that a Rehearsal export login can read only explicit versioned views
  * and cannot mutate data, invoke source/network functions, assume the view owner, or
  * leave disposable database objects behind.
- * Run: `npm run db:rehearsal:prove-export-boundary`.
+ * Run: `node scripts/operations/rehearsal/prove_export_authorization_boundary.mjs`.
  */
 
 import { runRehearsalExportAuthorizationProof } from "../../lib/rehearsal/export_authorization_boundary.mjs";

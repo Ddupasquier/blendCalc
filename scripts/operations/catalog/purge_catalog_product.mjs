@@ -2,8 +2,8 @@
  * Purpose: Preview or atomically purge every Supabase database record selected
  * for one exact UPC / GTIN. Local Supabase is the default and safest target.
  *
- * Preview: `npm run catalog:product:purge -- preview 00869759000149`
- * Run: `npm run catalog:product:purge -- apply 00869759000149 --confirm=00869759000149 --reason="Confirmed disposable test product"`
+ * Preview: `node scripts/operations/catalog/purge_catalog_product.mjs preview 00869759000149`
+ * Run: `node scripts/operations/catalog/purge_catalog_product.mjs apply 00869759000149 --confirm=00869759000149 --reason="Confirmed disposable test product"`
  */
 
 import { config } from "dotenv";
@@ -29,8 +29,8 @@ config({
 
 const usage = () => {
 	console.error(`Usage:
-  npm run catalog:product:purge -- preview <UPC_OR_GTIN>
-  npm run catalog:product:purge -- apply <UPC_OR_GTIN> --confirm=<UPC_OR_GTIN> --reason="<reason>"
+  node scripts/operations/catalog/purge_catalog_product.mjs preview <UPC_OR_GTIN>
+  node scripts/operations/catalog/purge_catalog_product.mjs apply <UPC_OR_GTIN> --confirm=<UPC_OR_GTIN> --reason="<reason>"
 
 The disposable local Supabase stack is used by default. Add --hosted only after
 reviewing the preview and intentionally targeting the linked environment.`);

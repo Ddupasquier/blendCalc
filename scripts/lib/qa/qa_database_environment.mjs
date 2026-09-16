@@ -24,7 +24,7 @@ export const loadQaDatabaseEnvironment = () => {
 	if (!supabaseUrl || !serviceRoleKey) {
 		throw new Error(
 			testMode
-				? "Run npm run db:test:start to create .env.test.local before using QA fixture commands."
+				? "Run npm run db:test -- start to create .env.test.local before using QA fixture commands."
 				: "Add PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY to .env.moderation.local.",
 		);
 	}

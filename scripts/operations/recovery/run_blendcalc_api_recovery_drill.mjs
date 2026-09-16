@@ -1,7 +1,7 @@
 /**
  * Purpose: Restore a protected blendCalc backup into disposable local Supabase,
  * migrate it forward, rebuild the isolated blendCalcAPI publication model, and prove rollback.
- * Run: `npm run recovery:blendCalcAPI -- --backup-dir=/absolute/path/to/backup`
+ * Run: `node scripts/operations/recovery/run_blendcalc_api_recovery_drill.mjs --backup-dir=/absolute/path/to/backup`
  * Legacy backup: add `--legacy-migration-cutoff=<14-digit-version>` only after verifying its schema point.
  */
 

@@ -1,9 +1,9 @@
 /**
  * Purpose: Run a bounded, authenticated, read-only blendCalcAPI load audit for
  * common, broad, empty, warmed-cache, and mixed concurrent request paths.
- * Start the local production preview with `npm run test:e2e:session:start` first.
- * Run: `npm run audit:blendCalcAPI-load`
- * Structured output: `npm run audit:blendCalcAPI-load -- --json`
+ * Start the local production preview with `npm run test:e2e:prepare && npm run test:e2e:server` first.
+ * Run: `node scripts/audits/catalog/audit_blendCalcAPI_read_load.mjs`
+ * Structured output: `node scripts/audits/catalog/audit_blendCalcAPI_read_load.mjs --json`
  */
 
 import { chromium } from "@playwright/test";

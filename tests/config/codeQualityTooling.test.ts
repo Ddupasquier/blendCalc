@@ -6,11 +6,9 @@ const packageConfiguration = JSON.parse(readText("package.json"));
 
 describe("code quality tooling", () => {
 	it("runs code and style linting through one blocking command", () => {
-		expect(packageConfiguration.scripts.lint).toBe(
-			"npm run lint:code && npm run lint:styles",
-		);
-		expect(packageConfiguration.scripts["lint:code"]).toContain("eslint .");
-		expect(packageConfiguration.scripts["lint:styles"]).toContain("stylelint");
+		expect(packageConfiguration.scripts.lint).toContain("eslint .");
+		expect(packageConfiguration.scripts.lint).toContain("stylelint");
+		expect(packageConfiguration.scripts.lint).not.toContain("npm run lint");
 	});
 
 	it("checks new files without concealing the full formatting audit", () => {

@@ -2,7 +2,7 @@
  * Purpose: Define and evaluate the bounded blendCalcAPI pre-beta read-load corpus.
  * This library contains no network or database access.
  * Do not run directly; use the parent workflow below.
- * Parent workflow: `npm run audit:blendCalcAPI-load`
+ * Parent workflow: `node scripts/audits/catalog/audit_blendCalcAPI_read_load.mjs`
  */
 
 export const BLENDCALC_API_LOAD_TARGETS = Object.freeze({

@@ -85,10 +85,10 @@ local Supabase stack. See [Testing Strategy: Parallelism](testing.md#parallelism
 npm run test:e2e:install
 npm run test:e2e
 npm run test:e2e:affected
-npm run test:e2e:compatibility
-npm run test:e2e:nightly
-npm run test:e2e:session:start
-npm run test:e2e:chromium
+npm run test:e2e -- --grep @compatibility
+PLAYWRIGHT_EXHAUSTIVE_MATRIX=true npm run test:e2e
+npm run test:e2e:prepare && npm run test:e2e:server
+npm run test:e2e -- --project=desktop-chromium --project=mobile-chromium
 npm run test:e2e:headed
 npm run test:e2e:ui
 npm run test:e2e:update
@@ -98,12 +98,17 @@ npm run test:e2e:update
   mobile-tagged coverage in mobile Chromium, and compatibility-tagged smoke coverage in
   Firefox, WebKit, and mobile WebKit.
 - `test:e2e:affected` selects specs from changed application ownership and prepares the
-  environment; `test:e2e:affected:run` reuses an existing prepared session.
-- `test:e2e:compatibility` runs only the tagged cross-engine compatibility contract.
-- `test:e2e:nightly` runs every scenario in all five projects.
-- `test:e2e:session:start` prepares Supabase and one production test build, then keeps
-  the app available on port `5174` for repeated direct Playwright commands.
-- `test:e2e:chromium` is the focused local pass for desktop and 360×740 phone layouts.
+  environment. Run the browser selector directly after manual preparation when reusing
+  an existing session.
+- `npm run test:e2e -- --grep @compatibility` runs only the tagged cross-engine
+  compatibility contract.
+- `PLAYWRIGHT_EXHAUSTIVE_MATRIX=true npm run test:e2e` runs every scenario in all five
+  projects.
+- `npm run test:e2e:prepare && npm run test:e2e:server` prepares Supabase and one
+  production test build, then keeps the app available on port `5174` for repeated direct
+  Playwright commands.
+- `npm run test:e2e -- --project=desktop-chromium --project=mobile-chromium` is the
+  focused local pass for desktop and 360×740 phone layouts.
 - `test:e2e:headed` shows the desktop Chromium run.
 - `test:e2e:ui` opens Playwright's test explorer.
 - `test:e2e:update` deliberately refreshes tracked Chromium visual baselines.
@@ -117,11 +122,11 @@ current Mix and Saved Recipes compositions at desktop Chromium and the shared 36
 phone viewport. Profile and Moderation remain outside snapshot approval until their
 planned visual rebuilds are complete.
 
-After `npm run test:e2e:session:start` prepares the database, build, and preview server,
+After `npm run test:e2e:prepare && npm run test:e2e:server` prepares the database, build, and preview server,
 use another terminal for focused iteration without repeating setup:
 
 ```bash
-PLAYWRIGHT_SKIP_WEB_SERVER=1 npm run test:e2e:affected:run
+PLAYWRIGHT_SKIP_WEB_SERVER=1 node scripts/operations/quality/run_affected_tests.mjs browser
 PLAYWRIGHT_SKIP_WEB_SERVER=1 npx playwright test --project=desktop-chromium
 npx playwright test tests/e2e/affectedInteractions.spec.ts --project=desktop-chromium
 npx playwright test --last-failed

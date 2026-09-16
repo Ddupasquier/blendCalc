@@ -2,7 +2,7 @@
  * Purpose: Aggregate privacy-safe source metrics, selected canonical field evidence,
  * active field coverage, and unresolved source disagreements for the source-quality
  * audit. This module performs no database reads. Do not run directly.
- * Parent workflow: `npm run report:source-quality -- --days=30 --origin=runtime`
+ * Parent workflow: `node scripts/audits/food-sources/report_product_source_quality.mjs --days=30 --origin=runtime`
  */
 
 const numericMetricFields = [

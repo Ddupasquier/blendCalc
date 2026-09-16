@@ -2,8 +2,9 @@
  * Purpose: Seed deterministic reviewable and/or incomplete shared-product submissions,
  * including private evidence, for an existing moderator account; the paired cleanup
  * command removes fixtures created for that email. This writes QA rows and storage files.
- * Seed: `npm run catalog:qa-seed -- moderator@example.com both`
- * Cleanup: `npm run catalog:qa-clean -- moderator@example.com`
+ * Seed: `node scripts/qa/catalog/seed_catalog_submission.mjs seed moderator@example.com both`
+ * Run it through `scripts/operations/environment/run_test_command.mjs -- node` as shown
+ * in the usage output and maintained documentation so it receives only test credentials.
  */
 
 import { randomUUID } from "node:crypto";
@@ -21,10 +22,10 @@ const qaProductPrefix = "[QA] Questionable Chips";
 
 const usage = () => {
 	console.error(`Usage:
-  npm run catalog:qa-seed -- moderator@example.com
-  npm run catalog:qa-seed -- moderator@example.com reviewable
-  npm run catalog:qa-seed -- moderator@example.com incomplete
-  npm run catalog:qa-clean -- moderator@example.com`);
+  node scripts/operations/environment/run_test_command.mjs -- node scripts/qa/catalog/seed_catalog_submission.mjs seed moderator@example.com
+  node scripts/operations/environment/run_test_command.mjs -- node scripts/qa/catalog/seed_catalog_submission.mjs seed moderator@example.com reviewable
+  node scripts/operations/environment/run_test_command.mjs -- node scripts/qa/catalog/seed_catalog_submission.mjs seed moderator@example.com incomplete
+  node scripts/operations/environment/run_test_command.mjs -- node scripts/qa/catalog/seed_catalog_submission.mjs cleanup moderator@example.com`);
 };
 
 if (!email || (command === "seed" && !allowedModes.has(rawMode))) {
@@ -61,7 +62,8 @@ const calculateGtinCheckDigit = (body) => {
 	const sum = [...body]
 		.reverse()
 		.reduce(
-			(total, digit, index) => total + Number(digit) * (index % 2 === 0 ? 3 : 1),
+			(total, digit, index) =>
+				total + Number(digit) * (index % 2 === 0 ? 3 : 1),
 			0,
 		);
 	return String((10 - (sum % 10)) % 10);
@@ -73,7 +75,11 @@ const createQaBarcode = async () => {
 		const body = `099999${suffix}`;
 		const barcode = `${body}${calculateGtinCheckDigit(body)}`;
 		const [{ data: product }, { data: submission }] = await Promise.all([
-			supabase.from("shared_products").select("id").eq("barcode", barcode).maybeSingle(),
+			supabase
+				.from("shared_products")
+				.select("id")
+				.eq("barcode", barcode)
+				.maybeSingle(),
 			supabase
 				.from("shared_product_submissions")
 				.select("id")
@@ -103,13 +109,55 @@ const createFood = (barcode, mode) => ({
 	customServingWeightGrams: 28,
 	reportedNutrientIds: [1008, 1004, 1005, 1079, 2000, 1003, 1093],
 	foodNutrients: [
-		{ nutrientId: 1008, nutrientName: "Energy", nutrientNumber: "208", unitName: "KCAL", value: 571 },
-		{ nutrientId: 1004, nutrientName: "Total lipid (fat)", nutrientNumber: "204", unitName: "G", value: 35.7 },
-		{ nutrientId: 1005, nutrientName: "Carbohydrate, by difference", nutrientNumber: "205", unitName: "G", value: 53.6 },
-		{ nutrientId: 1079, nutrientName: "Fiber, total dietary", nutrientNumber: "291", unitName: "G", value: 3.6 },
-		{ nutrientId: 2000, nutrientName: "Sugars, total including NLEA", nutrientNumber: "269", unitName: "G", value: 7.1 },
-		{ nutrientId: 1003, nutrientName: "Protein", nutrientNumber: "203", unitName: "G", value: 7.1 },
-		{ nutrientId: 1093, nutrientName: "Sodium, Na", nutrientNumber: "307", unitName: "MG", value: 1786 },
+		{
+			nutrientId: 1008,
+			nutrientName: "Energy",
+			nutrientNumber: "208",
+			unitName: "KCAL",
+			value: 571,
+		},
+		{
+			nutrientId: 1004,
+			nutrientName: "Total lipid (fat)",
+			nutrientNumber: "204",
+			unitName: "G",
+			value: 35.7,
+		},
+		{
+			nutrientId: 1005,
+			nutrientName: "Carbohydrate, by difference",
+			nutrientNumber: "205",
+			unitName: "G",
+			value: 53.6,
+		},
+		{
+			nutrientId: 1079,
+			nutrientName: "Fiber, total dietary",
+			nutrientNumber: "291",
+			unitName: "G",
+			value: 3.6,
+		},
+		{
+			nutrientId: 2000,
+			nutrientName: "Sugars, total including NLEA",
+			nutrientNumber: "269",
+			unitName: "G",
+			value: 7.1,
+		},
+		{
+			nutrientId: 1003,
+			nutrientName: "Protein",
+			nutrientNumber: "203",
+			unitName: "G",
+			value: 7.1,
+		},
+		{
+			nutrientId: 1093,
+			nutrientName: "Sodium, Na",
+			nutrientNumber: "307",
+			unitName: "MG",
+			value: 1786,
+		},
 	],
 });
 
@@ -141,15 +189,17 @@ const uploadQaEvidence = async (userId) => {
 
 const seedSubmission = async (user, mode) => {
 	const barcode = await createQaBarcode();
-	const evidencePaths = mode === "reviewable" ? await uploadQaEvidence(user.id) : {};
+	const evidencePaths =
+		mode === "reviewable" ? await uploadQaEvidence(user.id) : {};
 	const evidenceComplete = mode === "reviewable";
 	const food = createFood(barcode, mode);
-	const issues = mode === "reviewable"
-		? [
-				"QA fixture: the uploaded images intentionally do not match the entered product.",
-				"QA fixture: sodium is unusually high and should be checked against the label.",
-			]
-		: ["QA fixture: required package evidence is intentionally missing."];
+	const issues =
+		mode === "reviewable"
+			? [
+					"QA fixture: the uploaded images intentionally do not match the entered product.",
+					"QA fixture: sodium is unusually high and should be checked against the label.",
+				]
+			: ["QA fixture: required package evidence is intentionally missing."];
 
 	const { data, error } = await supabase
 		.from("shared_product_submissions")
@@ -198,7 +248,9 @@ const cleanupQaSubmissions = async (user) => {
 		.contains("validation_report", { qaSeed: true });
 	if (error) throw error;
 
-	const approved = (data ?? []).filter((submission) => submission.status === "approved");
+	const approved = (data ?? []).filter(
+		(submission) => submission.status === "approved",
+	);
 	if (approved.length > 0) {
 		throw new Error(
 			"A QA fixture was approved. Retire its shared product before removing the audit record.",
@@ -240,7 +292,9 @@ try {
 		if (rawMode === "incomplete" || rawMode === "both") {
 			await seedSubmission(user, "incomplete");
 		}
-		console.log("Open /moderation to review the QA submission(s). Reject them when finished.");
+		console.log(
+			"Open /moderation to review the QA submission(s). Reject them when finished.",
+		);
 	} else {
 		usage();
 		process.exitCode = 1;

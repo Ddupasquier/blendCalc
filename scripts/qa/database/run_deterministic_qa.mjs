@@ -4,7 +4,7 @@
  * reads, generic-food source fidelity, search pagination, category pagination,
  * image/serving fixtures, and API privacy.
  * It performs read-only Supabase requests and never creates users or Fridge records.
- * Run: `npm run qa:deterministic`
+ * Run: `node scripts/qa/database/run_deterministic_qa.mjs`
  */
 
 import { readFile } from "node:fs/promises";

@@ -107,51 +107,49 @@ intentionally omitted.
 
 ### Development And Verification
 
-| Command                                                             | Purpose                                                                   |
-| ------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| `npm run dev`                                                       | Start safe local databases plus the app on port `5173`.                   |
-| `npm run dev:local`                                                 | Explicit form of the safe local development command.                      |
-| `npm run dev:test`                                                  | Start port `5174` with disposable Supabase and Quick QA login.            |
-| `npm run dev:test:auth`                                             | Start port `5174` with the official local Turnstile test widget.          |
-| `npm run dev:rehearsal`                                             | Start port `5175` against the restored sanitized Rehearsal database.      |
-| `npm run mobile:sync`                                               | Copy the bundled mobile bootstrap and synchronize both native projects.   |
-| `npm run mobile:open:ios`                                           | Open the generated iOS project in Xcode.                                  |
-| `npm run mobile:open:android`                                       | Open the generated Android project in Android Studio.                     |
-| `npm run mobile:doctor`                                             | Check the local Capacitor and native toolchains.                          |
-| `npm run build`                                                     | Create the production build.                                              |
-| `npm run verify:vercel-routes`                                      | Verify generated parameterized API routes after a production build.       |
-| `npm run preview`                                                   | Preview the production build.                                             |
-| `npm run check`                                                     | Run TypeScript and Svelte diagnostics.                                    |
-| `npm run check:watch`                                               | Keep TypeScript and Svelte diagnostics running while editing.             |
-| `npm run check:auth`                                                | Validate authentication environment and endpoint configuration.           |
-| `npm run auth:configure-hosted -- --turnstile\|--smtp\|--templates` | Apply one explicit hosted Supabase Auth setting.                          |
-| `npm run lint`                                                      | Run the maintained TypeScript, Svelte, and SCSS lint contract.            |
-| `npm run lint:code`                                                 | Run ESLint for application, test, and script code.                        |
-| `npm run lint:code:all`                                             | Include tracked migration warnings while auditing code.                   |
-| `npm run lint:styles`                                               | Run Stylelint for component and app-wide SCSS.                            |
-| `npm run format -- <paths...>`                                      | Apply the maintained Prettier layout to selected source or documentation. |
-| `npm run format:check`                                              | Verify newly added supported files match the maintained layout.           |
-| `npm run format:check:all`                                          | Audit remaining legacy formatting debt without rewriting it.              |
-| `npm run resources:check`                                           | Check local disk, swap, and process memory before heavy work.             |
-| `npm test`                                                          | Run the non-browser Vitest suite with compact output.                     |
-| `npm run test:affected`                                             | Run Vitest files related to the current branch and working-tree changes.  |
-| `npm run test:focused -- <path>`                                    | Run one focused Vitest file or directory in its configured runtime.       |
-| `npm run test:watch -- <path>`                                      | Run focused Vitest checks in watch mode.                                  |
-| `npm run test:e2e`                                                  | Run the bounded authenticated Playwright release tiers.                   |
-| `npm run test:e2e:affected`                                         | Prepare and run browser specs selected from changed feature ownership.    |
-| `npm run test:e2e:chromium`                                         | Run desktop Chromium plus compact/touch Chromium coverage.                |
-| `npm run test:e2e:compatibility`                                    | Run tagged compatibility smoke coverage across maintained projects.       |
-| `npm run test:e2e:nightly`                                          | Run every browser scenario in every maintained project.                   |
-| `npm run test:e2e:session:start`                                    | Prepare Supabase and keep one test build running on port `5174`.          |
-| `npm run test:e2e:headed`                                           | Run desktop Chromium in a visible browser.                                |
-| `npm run test:e2e:ui`                                               | Open Playwright's interactive test explorer.                              |
-| `npm run test:e2e:update`                                           | Review and update tracked Chromium visual snapshots.                      |
-| `npm run test:e2e:install`                                          | Install Chromium, Firefox, and WebKit for Playwright.                     |
-| `npm run verify:quick`                                              | Show source checks and affected Vitest in the live dashboard.             |
-| `npm run verify:feature`                                            | Run source gates plus affected Vitest and browser coverage.               |
-| `npm run verify:release`                                            | Run the bounded blocking release profile in the dashboard.                |
-| `npm run verify:promotion`                                          | Reuse a fresh Release Check for an identical clean promoted tree.         |
-| `npm run verify:nightly`                                            | Run exhaustive nonblocking browser confidence in the dashboard.           |
+| Command                                                                    | Purpose                                                                   |
+| -------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `npm run dev`                                                              | Start safe local databases plus the app on port `5173`.                   |
+| `npm run dev:local`                                                        | Explicit form of the safe local development command.                      |
+| `npm run dev:test`                                                         | Start port `5174` with disposable Supabase and Quick QA login.            |
+| `npm run dev:test:auth`                                                    | Start port `5174` with the official local Turnstile test widget.          |
+| `npm run dev:rehearsal`                                                    | Start port `5175` against the restored sanitized Rehearsal database.      |
+| `npm run mobile:sync`                                                      | Copy the bundled mobile bootstrap and synchronize both native projects.   |
+| `npm run mobile:open -- ios`                                               | Open the generated iOS project in Xcode.                                  |
+| `npm run mobile:open -- android`                                           | Open the generated Android project in Android Studio.                     |
+| `npm run mobile:doctor`                                                    | Check the local Capacitor and native toolchains.                          |
+| `npm run build`                                                            | Create the production build.                                              |
+| `npm run verify:vercel-routes`                                             | Verify generated parameterized API routes after a production build.       |
+| `npm run preview`                                                          | Preview the production build.                                             |
+| `npm run check`                                                            | Run TypeScript and Svelte diagnostics.                                    |
+| `npm run check:watch`                                                      | Keep TypeScript and Svelte diagnostics running while editing.             |
+| `npm run check:auth`                                                       | Validate authentication environment and endpoint configuration.           |
+| `npm run auth:configure-hosted -- --turnstile\|--smtp\|--templates`        | Apply one explicit hosted Supabase Auth setting.                          |
+| `npm run lint`                                                             | Run the maintained TypeScript, Svelte, and SCSS lint contract.            |
+| `npx eslint . --cache --cache-location .cache/eslint`                      | Include tracked migration warnings while auditing code.                   |
+| `npm run format -- <paths...>`                                             | Apply the maintained Prettier layout to selected source or documentation. |
+| `npm run format:check`                                                     | Verify newly added supported files match the maintained layout.           |
+| `npm run format:check:all`                                                 | Audit remaining legacy formatting debt without rewriting it.              |
+| `npm run resources:check`                                                  | Check local disk, swap, and process memory before heavy work.             |
+| `npm test`                                                                 | Run the non-browser Vitest suite with compact output.                     |
+| `npm run test:affected`                                                    | Run Vitest files related to the current branch and working-tree changes.  |
+| `npm run test:focused -- <path>`                                           | Run one focused Vitest file or directory in its configured runtime.       |
+| `npm run test:watch -- <path>`                                             | Run focused Vitest checks in watch mode.                                  |
+| `npm run test:e2e`                                                         | Run the bounded authenticated Playwright release tiers.                   |
+| `npm run test:e2e:affected`                                                | Prepare and run browser specs selected from changed feature ownership.    |
+| `npm run test:e2e -- --project=desktop-chromium --project=mobile-chromium` | Run desktop Chromium plus compact/touch Chromium coverage.                |
+| `npm run test:e2e -- --grep @compatibility`                                | Run tagged compatibility smoke coverage across maintained projects.       |
+| `PLAYWRIGHT_EXHAUSTIVE_MATRIX=true npm run test:e2e`                       | Run every browser scenario in every maintained project.                   |
+| `npm run test:e2e:prepare && npm run test:e2e:server`                      | Prepare Supabase and keep one test build running on port `5174`.          |
+| `npm run test:e2e:headed`                                                  | Run desktop Chromium in a visible browser.                                |
+| `npm run test:e2e:ui`                                                      | Open Playwright's interactive test explorer.                              |
+| `npm run test:e2e:update`                                                  | Review and update tracked Chromium visual snapshots.                      |
+| `npm run test:e2e:install`                                                 | Install Chromium, Firefox, and WebKit for Playwright.                     |
+| `npm run verify:quick`                                                     | Show source checks and affected Vitest in the live dashboard.             |
+| `npm run verify:feature`                                                   | Run source gates plus affected Vitest and browser coverage.               |
+| `npm run verify:release`                                                   | Run the bounded blocking release profile in the dashboard.                |
+| `npm run verify:promotion`                                                 | Reuse a fresh Release Check for an identical clean promoted tree.         |
+| `npm run verify:nightly`                                                   | Run exhaustive nonblocking browser confidence in the dashboard.           |
 
 Use the [Testing Strategy](docs/development/testing.md) to choose a test layer. Browser
 setup lives in [Browser Testing](docs/development/browser-testing.md); database fixtures
@@ -159,86 +157,86 @@ and personas live in [Database Testing](docs/development/database-testing.md).
 
 ### Database And QA
 
-| Command                                                         | Purpose                                                            |
-| --------------------------------------------------------------- | ------------------------------------------------------------------ |
-| `npm run db:test:start`                                         | Start local Supabase and repair missing QA baseline data.          |
-| `npm run db:test:reset`                                         | Recreate the exact local QA baseline.                              |
-| `npm run db:test:verify`                                        | Recreate and test local Supabase, then stop owned services.        |
-| `npm run db:test:status`                                        | Show local Supabase service status.                                |
-| `npm run db:test:stop`                                          | Stop local Supabase.                                               |
-| `npm run db:local:start`                                        | Start local Supabase without resetting developer data.             |
-| `npm run db:local:status`                                       | Show local application Supabase endpoints.                         |
-| `npm run db:local:stop`                                         | Stop local Supabase while retaining developer data.                |
-| `npm run db:rehearsal:prove-export-boundary`                    | Prove the export authorization design in a disposable local DB.    |
-| `npm run db:rehearsal:prove-installed-boundary`                 | Exercise read-only DB/Storage export and atomic baseline creation. |
-| `npm run db:rehearsal:refresh-local`                            | Retain a verified baseline produced from the local export surface. |
-| `npm run db:rehearsal:provision-source -- --dry-run`            | Preview the bounded production-reader provisioning operation.      |
-| `npm run db:rehearsal:refresh`                                  | Refresh from provisioned least-privilege production readers.       |
-| `npm run db:rehearsal:deprovision-source -- --dry-run`          | Preview cleanup of temporary production-source access.             |
-| `npm run db:rehearsal:start`                                    | Start or restore the persistent sanitized Rehearsal runtime.       |
-| `npm run db:rehearsal:reset`                                    | Recreate Rehearsal from the active immutable baseline.             |
-| `npm run db:rehearsal:status`                                   | Show local Rehearsal endpoints and baseline identity.              |
-| `npm run db:rehearsal:stop`                                     | Stop Rehearsal while retaining its local database volume.          |
-| `npm run db:rehearsal:discard`                                  | Remove only the disposable Rehearsal runtime volume.               |
-| `npm run db:rehearsal:candidates`                               | List migrations after the immutable baseline prefix.               |
-| `npm run db:rehearsal:migrate`                                  | Apply the exact confirmed candidate-migration receipt.             |
-| `npm run db:rehearsal:verify`                                   | Verify artifact, migration, runtime, and project invariants.       |
-| `npm run db:rehearsal:run`                                      | Reset, migrate, and verify Rehearsal as one fail-closed workflow.  |
-| `npm run db:rehearsal:verify-local-history`                     | Verify installed migration statements against local source.        |
-| `npm run rehearsal -- doctor`                                   | Report whether the package-shaped Rehearsal contract is ready.     |
-| `npm run rehearsal -- explain`                                  | Print the immutable local execution plan without changing state.   |
-| `npm run rehearsal -- run --dry-run`                            | Return the same plan through the run surface without side effects. |
-| `npm run rehearsal -- inspect baseline`                         | Inspect verified baseline provenance without exposing row data.    |
-| `npm run rehearsal -- inspect migrations`                       | Explain represented, applied, and candidate migration identities.  |
-| `npm run rehearsal:app:prove`                                   | Prove BlendCalc against the isolated Rehearsal app and API stacks. |
-| `npm run rehearsal:sanitization:check`                          | Verify exact schema coverage by the reviewed sanitization policy.  |
-| `npm run rehearsal:export-migration:check`                      | Verify the generated export migration is current.                  |
-| `npm run supabase -- <args>`                                    | Run the repository-installed Supabase CLI.                         |
-| `npm run blendCalcAPI:db:start`                                 | Start the isolated local API publication database.                 |
-| `npm run blendCalcAPI:db:status`                                | Show the isolated local API database endpoints.                    |
-| `npm run blendCalcAPI:db:reset`                                 | Replay the isolated API publication migrations locally.            |
-| `npm run blendCalcAPI:db:test`                                  | Run isolated API publication database policy tests.                |
-| `npm run blendCalcAPI:db:stop`                                  | Stop the isolated local API publication database.                  |
-| `npm run blendCalcAPI:db:push:dry`                              | Preview isolated hosted API-database migrations.                   |
-| `npm run blendCalcAPI:db:push`                                  | Apply reviewed isolated migrations with confirmation.              |
-| `npm run blendCalcAPI:db:types`                                 | Generate isolated publication-database TypeScript types.           |
-| `npm run recovery:blendCalcAPI -- --backup-dir=<absolute-path>` | Restore and verify both database tiers in disposable local stacks. |
-| `npm run db:link`                                               | Link the CLI to the configured blendCalc Supabase project.         |
-| `npm run db:new -- <name>`                                      | Create a forward-only migration.                                   |
-| `npm run db:push:dry`                                           | Preview linked migrations without applying them.                   |
-| `npm run db:push`                                               | Confirm and apply migrations already reviewed on remote `main`.    |
-| `npm run db:push:auto`                                          | Apply the same reviewed migrations without another prompt.         |
-| `npm run db:lint`                                               | Run linked Supabase database linting.                              |
-| `npm run db:types`                                              | Regenerate linked Supabase TypeScript types.                       |
-| `npm run qa:deterministic`                                      | Run safe, read-only deterministic hosted data checks.              |
-| `npm run catalog:qa-seed -- <email> <mode>`                     | Add disposable local catalog review fixtures.                      |
-| `npm run catalog:qa-clean -- <email>`                           | Remove those catalog fixtures.                                     |
-| `npm run catalog:qa-image-seed -- <email> <mode>`               | Add disposable local image-review fixtures.                        |
-| `npm run catalog:qa-image-clean -- <email>`                     | Remove those image fixtures.                                       |
+| Command                                                                                                                                        | Purpose                                                            |
+| ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `npm run db:test -- start`                                                                                                                     | Start local Supabase and repair missing QA baseline data.          |
+| `npm run db:test -- reset`                                                                                                                     | Recreate the exact local QA baseline.                              |
+| `npm run db:test -- verify`                                                                                                                    | Recreate and test local Supabase, then stop owned services.        |
+| `npm run db:test -- status`                                                                                                                    | Show local Supabase service status.                                |
+| `npm run db:test -- stop`                                                                                                                      | Stop local Supabase.                                               |
+| `npm run db:local -- start`                                                                                                                    | Start local Supabase without resetting developer data.             |
+| `npm run db:local -- status`                                                                                                                   | Show local application Supabase endpoints.                         |
+| `npm run db:local -- stop`                                                                                                                     | Stop local Supabase while retaining developer data.                |
+| `node scripts/operations/rehearsal/prove_export_authorization_boundary.mjs`                                                                    | Prove the export authorization design in a disposable local DB.    |
+| `node scripts/operations/rehearsal/prove_installed_export_boundary.mjs`                                                                        | Exercise read-only DB/Storage export and atomic baseline creation. |
+| `node scripts/operations/rehearsal/prove_installed_export_boundary.mjs --retain-local-baseline`                                                | Retain a verified baseline produced from the local export surface. |
+| `node scripts/operations/rehearsal/provision_production_source.mjs --dry-run`                                                                  | Preview the bounded production-reader provisioning operation.      |
+| `node scripts/operations/rehearsal/refresh_production_baseline.mjs`                                                                            | Refresh from provisioned least-privilege production readers.       |
+| `node scripts/operations/rehearsal/deprovision_production_source.mjs --dry-run`                                                                | Preview cleanup of temporary production-source access.             |
+| `npm run rehearsal -- start`                                                                                                                   | Start or restore the persistent sanitized Rehearsal runtime.       |
+| `npm run rehearsal -- reset`                                                                                                                   | Recreate Rehearsal from the active immutable baseline.             |
+| `npm run rehearsal -- status`                                                                                                                  | Show local Rehearsal endpoints and baseline identity.              |
+| `npm run rehearsal -- stop`                                                                                                                    | Stop Rehearsal while retaining its local database volume.          |
+| `npm run rehearsal -- discard`                                                                                                                 | Remove only the disposable Rehearsal runtime volume.               |
+| `npm run rehearsal -- candidates`                                                                                                              | List migrations after the immutable baseline prefix.               |
+| `npm run rehearsal -- migrate`                                                                                                                 | Apply the exact confirmed candidate-migration receipt.             |
+| `npm run rehearsal -- verify`                                                                                                                  | Verify artifact, migration, runtime, and project invariants.       |
+| `npm run rehearsal -- run`                                                                                                                     | Reset, migrate, and verify Rehearsal as one fail-closed workflow.  |
+| `node scripts/operations/rehearsal/verify_local_migration_history.mjs`                                                                         | Verify installed migration statements against local source.        |
+| `npm run rehearsal -- doctor`                                                                                                                  | Report whether the package-shaped Rehearsal contract is ready.     |
+| `npm run rehearsal -- explain`                                                                                                                 | Print the immutable local execution plan without changing state.   |
+| `npm run rehearsal -- run --dry-run`                                                                                                           | Return the same plan through the run surface without side effects. |
+| `npm run rehearsal -- inspect baseline`                                                                                                        | Inspect verified baseline provenance without exposing row data.    |
+| `npm run rehearsal -- inspect migrations`                                                                                                      | Explain represented, applied, and candidate migration identities.  |
+| `npm run rehearsal:app:prove`                                                                                                                  | Prove BlendCalc against the isolated Rehearsal app and API stacks. |
+| `node scripts/generators/rehearsal/generate_sanitization_manifest.mjs --check`                                                                 | Verify exact schema coverage by the reviewed sanitization policy.  |
+| `node scripts/generators/rehearsal/generate_export_boundary_migration.mjs --check`                                                             | Verify the generated export migration is current.                  |
+| `npm run supabase -- <args>`                                                                                                                   | Run the repository-installed Supabase CLI.                         |
+| `npm run blendCalcAPI:db -- start`                                                                                                             | Start the isolated local API publication database.                 |
+| `npm run blendCalcAPI:db -- status`                                                                                                            | Show the isolated local API database endpoints.                    |
+| `npm run blendCalcAPI:db -- reset`                                                                                                             | Replay the isolated API publication migrations locally.            |
+| `npm run blendCalcAPI:db -- test`                                                                                                              | Run isolated API publication database policy tests.                |
+| `npm run blendCalcAPI:db -- stop`                                                                                                              | Stop the isolated local API publication database.                  |
+| `npm run blendCalcAPI:db:push -- --dry-run`                                                                                                    | Preview isolated hosted API-database migrations.                   |
+| `npm run blendCalcAPI:db:push`                                                                                                                 | Apply reviewed isolated migrations with confirmation.              |
+| `npm run blendCalcAPI:db:types`                                                                                                                | Generate isolated publication-database TypeScript types.           |
+| `node scripts/operations/recovery/run_blendcalc_api_recovery_drill.mjs --backup-dir=<absolute-path>`                                           | Restore and verify both database tiers in disposable local stacks. |
+| `npm run db:link`                                                                                                                              | Link the CLI to the configured blendCalc Supabase project.         |
+| `npm run db:new -- <name>`                                                                                                                     | Create a forward-only migration.                                   |
+| `npm run db:push:dry`                                                                                                                          | Preview linked migrations without applying them.                   |
+| `npm run db:push`                                                                                                                              | Confirm and apply migrations already reviewed on remote `main`.    |
+| `npm run db:push:auto`                                                                                                                         | Apply the same reviewed migrations without another prompt.         |
+| `npm run db:lint`                                                                                                                              | Run linked Supabase database linting.                              |
+| `npm run db:types`                                                                                                                             | Regenerate linked Supabase TypeScript types.                       |
+| `node scripts/qa/database/run_deterministic_qa.mjs`                                                                                            | Run safe, read-only deterministic hosted data checks.              |
+| `node scripts/operations/environment/run_test_command.mjs -- node scripts/qa/catalog/seed_catalog_submission.mjs seed <email> <mode>`          | Add disposable local catalog review fixtures.                      |
+| `node scripts/operations/environment/run_test_command.mjs -- node scripts/qa/catalog/seed_catalog_submission.mjs cleanup <email>`              | Remove those catalog fixtures.                                     |
+| `node scripts/operations/environment/run_test_command.mjs -- node scripts/qa/catalog/seed_image_moderation_submission.mjs seed <email> <mode>` | Add disposable local image-review fixtures.                        |
+| `node scripts/operations/environment/run_test_command.mjs -- node scripts/qa/catalog/seed_image_moderation_submission.mjs cleanup <email>`     | Remove those image fixtures.                                       |
 
 Never reset a linked or production database. Real migration pushes fail closed unless
 the exact migration source already exists on remote `main`.
 
 ### Data, Catalog, And Operations
 
-| Command                                                                             | Purpose                                                                                                   |
-| ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `npm run import:nutrition:cnf -- --dry-run`                                         | Validate the Canadian Nutrient File import without writing.                                               |
-| `npm run import:nutrition:cofid -- --dry-run`                                       | Validate the UK CoFID import without writing.                                                             |
-| `npm run audit:blendCalcAPI-catalog`                                                | Audit blendCalcAPI publication readiness and field lineage.                                               |
-| `npm run audit:blendCalcAPI-catalog -- --json`                                      | Reassess active products and print machine-repair, review, and unresolved readiness ownership as JSON.    |
-| `npm run audit:blendCalcAPI-performance`                                            | Measure authenticated product, category, search, and browser-cached repeat response budgets.              |
-| `npm run audit:blendCalcAPI-payloads`                                               | Measure authenticated blendCalcAPI response sizes without changing catalog data.                          |
-| `npm run report:source-quality`                                                     | Report stored provider coverage, reliability, and request cost.                                           |
-| `npm run audit:off-nutrient-mappings`                                               | Reconcile Open Food Facts taxonomy and anonymous observed key/unit identities with mapping review status. |
-| `node scripts/seeds/nutrition/seed_open_food_facts_nutrient_mapping_candidates.mjs` | Preview observed Open Food Facts identities with cautious canonical review candidates.                    |
-| `npm run generate:api-structures`                                                   | Regenerate documentation-only provider payload references.                                                |
-| `npm run moderate -- ...`                                                           | Run privileged role or account operations.                                                                |
-| `npm run catalog:product:purge -- preview <UPC>`                                    | Preview every Supabase record selected for a catalog product purge.                                       |
-| `npm run catalog:product:purge -- apply <UPC> --confirm=<UPC> --reason="<reason>"`  | Delete the confirmed product graph from local Supabase; add `--hosted` only for an intentional live run.  |
-| `npm run blendCalcAPI:publication -- ...`                                           | Review concerns and manage reversible blendCalcAPI publication holds.                                     |
-| `npm run version:check`                                                             | Verify Node, app, build, API, OpenAPI, test, and documentation versions.                                  |
-| `npm run version:bump -- patch\|minor\|major`                                       | Update application version files without committing or tagging.                                           |
+| Command                                                                                                     | Purpose                                                                                                   |
+| ----------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `npm run import:nutrition:cnf -- --dry-run`                                                                 | Validate the Canadian Nutrient File import without writing.                                               |
+| `npm run import:nutrition:cofid -- --dry-run`                                                               | Validate the UK CoFID import without writing.                                                             |
+| `node scripts/audits/catalog/audit_blendCalcAPI_catalog_readiness.mjs`                                      | Audit blendCalcAPI publication readiness and field lineage.                                               |
+| `node scripts/audits/catalog/audit_blendCalcAPI_catalog_readiness.mjs --json`                               | Reassess active products and print machine-repair, review, and unresolved readiness ownership as JSON.    |
+| `node scripts/audits/catalog/audit_blendCalcAPI_response_performance.mjs`                                   | Measure authenticated product, category, search, and browser-cached repeat response budgets.              |
+| `node scripts/audits/catalog/audit_blendCalcAPI_payload_sizes.mjs`                                          | Measure authenticated blendCalcAPI response sizes without changing catalog data.                          |
+| `node scripts/audits/food-sources/report_product_source_quality.mjs`                                        | Report stored provider coverage, reliability, and request cost.                                           |
+| `node scripts/audits/food-sources/audit_open_food_facts_nutrient_mappings.mjs`                              | Reconcile Open Food Facts taxonomy and anonymous observed key/unit identities with mapping review status. |
+| `node scripts/seeds/nutrition/seed_open_food_facts_nutrient_mapping_candidates.mjs`                         | Preview observed Open Food Facts identities with cautious canonical review candidates.                    |
+| `node scripts/generators/api/generate_api_structures.mjs`                                                   | Regenerate documentation-only provider payload references.                                                |
+| `node scripts/operations/users/moderate_user.mjs ...`                                                       | Run privileged role or account operations.                                                                |
+| `node scripts/operations/catalog/purge_catalog_product.mjs preview <UPC>`                                   | Preview every Supabase record selected for a catalog product purge.                                       |
+| `node scripts/operations/catalog/purge_catalog_product.mjs apply <UPC> --confirm=<UPC> --reason="<reason>"` | Delete the confirmed product graph from local Supabase; add `--hosted` only for an intentional live run.  |
+| `node scripts/operations/blendCalcAPI/manage_blendCalcAPI_publication.mjs ...`                              | Review concerns and manage reversible blendCalcAPI publication holds.                                     |
+| `npm run version:check`                                                                                     | Verify Node, app, build, API, OpenAPI, test, and documentation versions.                                  |
+| `npm run version:bump -- patch\|minor\|major`                                                               | Update application version files without committing or tagging.                                           |
 
 Writing commands are deliberately not implied by their preview examples. Read
 [Repository Scripts](scripts/README.md) before running imports, seeds, backfills,

@@ -412,5 +412,5 @@ console.table(
 );
 
 console.log(
-	`Recorded an equal-barcode benchmark for ${products.length} products. Run npm run report:source-quality -- --origin=benchmark to compare results.`,
+	`Recorded an equal-barcode benchmark for ${products.length} products. Run node scripts/audits/food-sources/report_product_source_quality.mjs --origin=benchmark to compare results.`,
 );

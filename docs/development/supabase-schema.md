@@ -430,7 +430,7 @@ Notes:
   conversion is not approved remain in the parent food JSON's private
   `nutrientSourceReview` evidence, including the source amount and its reported basis.
   They do not create `food_nutrients` rows. The read-only
-  `npm run audit:off-nutrient-mappings` command reconciles the complete provider
+  `node scripts/audits/food-sources/audit_open_food_facts_nutrient_mappings.mjs` command reconciles the complete provider
   taxonomy against approved, queued, unqueued-candidate, and unsupported mapping
   identities. Existing successful Open Food Facts cache refreshes populate the private
   `nutrient_source_mapping_observations` identity/count table without an extra provider
@@ -660,9 +660,9 @@ Notes:
   saved barcodes to each source for a fair coverage comparison.
 - Cache hits, cache misses, stale-on-provider-error fallbacks, and reuse of an identical
   in-flight request are separate counters, so coalescing does not inflate cache hits.
-- Run `npm run report:source-quality` for runtime activity, or run
+- Run `node scripts/audits/food-sources/report_product_source_quality.mjs` for runtime activity, or run
   `node scripts/audits/food-sources/benchmark_product_sources.mjs --limit=10` followed by
-  `npm run report:source-quality -- --origin=benchmark` for a direct comparison.
+  `node scripts/audits/food-sources/report_product_source_quality.mjs --origin=benchmark` for a direct comparison.
 - Add `--reset-today` to the benchmark command when comparing request-count code
   changes; it deletes only the current UTC day's synthetic benchmark rows and never
   deletes runtime source metrics.
