@@ -192,15 +192,15 @@ value into `.env.moderation.local`.
 Bootstrap the first admin from the terminal:
 
 ```sh
-npm run moderate -- role your-email@example.com admin
+node scripts/operations/users/moderate_user.mjs role your-email@example.com admin
 ```
 
 Other role commands:
 
 ```sh
-npm run moderate -- role moderator@example.com moderator
-npm run moderate -- role developer@example.com developer --user-id=<expected-user-uuid>
-npm run moderate -- role moderator@example.com none
+node scripts/operations/users/moderate_user.mjs role moderator@example.com moderator
+node scripts/operations/users/moderate_user.mjs role developer@example.com developer --user-id=<expected-user-uuid>
+node scripts/operations/users/moderate_user.mjs role moderator@example.com none
 ```
 
 Role assignment and removal call the service-only `set_app_user_role` function, which
@@ -215,8 +215,8 @@ Use `/moderation` while signed in with a moderator, admin, or developer role, or
 emergency CLI:
 
 ```sh
-npm run moderate -- ban user@example.com profile_image_policy_violation
-npm run moderate -- unban user@example.com moderator_reversal
+node scripts/operations/users/moderate_user.mjs ban user@example.com profile_image_policy_violation
+node scripts/operations/users/moderate_user.mjs unban user@example.com moderator_reversal
 ```
 
 A block performs four separate operations:
@@ -372,7 +372,7 @@ A hold must include safe public wording and a private internal reason. Product h
 block the existing publication-readiness gate, source/dataset holds block attributed
 fields, and image holds remove only the held asset from API output. Releasing a hold
 records who released it and why; neither action deletes canonical rows, observations,
-revisions, assets, or evidence. Use `npm run blendCalcAPI:publication -- ...` when a rapid
+revisions, assets, or evidence. Use `node scripts/operations/blendCalcAPI/manage_blendCalcAPI_publication.mjs ...` when a rapid
 operator action is needed before a dedicated moderation surface is available.
 
 ## Repeated Catalog Rejections

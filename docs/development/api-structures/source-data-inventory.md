@@ -135,7 +135,7 @@ qualifier evidence, so their missing nutrient fields remain unknown.
 Open Food Facts numeric nutrient fields are handled by exact source key and unit. Values
 without an approved mapping or conversion are retained as private mapping-review
 evidence and excluded from math; they are not discarded, guessed, or exposed by the
-public blendCalcAPI. `npm run audit:off-nutrient-mappings` compares the complete current
+public blendCalcAPI. `node scripts/audits/food-sources/audit_open_food_facts_nutrient_mappings.mjs` compares the complete current
 provider taxonomy with the maintained mapping catalog. Successful existing provider
 cache refreshes retain only anonymous exact key/unit observation counts for this audit;
 they do not cause another provider request or retain a barcode, product, user, amount,

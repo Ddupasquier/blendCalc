@@ -36,13 +36,13 @@ different boundaries:
 ## Lint And Formatting Ownership
 
 `npm run lint` is the blocking TypeScript, JavaScript, Svelte, and SCSS correctness
-check. `npm run lint:code:all` also prints explicitly nonblocking migration warnings for
+check. `npx eslint . --cache --cache-location .cache/eslint` also prints explicitly nonblocking migration warnings for
 older unkeyed Svelte collections, route resolution, and legacy reactive collections.
 
 Prettier is adopted without a repository-wide churn-only rewrite. New supported files
 must pass `npm run format:check` locally and in CI. Use
 `npm run format -- <paths...>` when deliberately normalizing an existing file, and use
-`npm run format:check:all` only to measure the remaining historical formatting debt.
+`npx prettier --check .` only to measure the remaining historical formatting debt.
 Once an existing file is intentionally normalized, keep it formatted in later changes.
 
 ## Ownership Problems To Avoid
@@ -105,9 +105,9 @@ For browser work, prepare the disposable database once, then run the affected sp
 the primary browser:
 
 ```bash
-npm run test:e2e:session:start
+npm run test:e2e:prepare && npm run test:e2e:server
 # In another terminal while the prepared server remains open:
-npm run test:e2e:affected:run
+node scripts/operations/quality/run_affected_tests.mjs browser
 npx playwright test tests/e2e/affectedInteractions.spec.ts --project=desktop-chromium
 ```
 
@@ -214,7 +214,7 @@ npm run verify:feature
 ```
 
 The exact candidate's hosted full run supplies the broader release proof. Run
-`npm run db:test:verify` when migrations, policies, functions, grants, Auth hooks,
+`npm run db:test -- verify` when migrations, policies, functions, grants, Auth hooks,
 Storage behavior, or database-owned reference data changed. Run the maintained
 dependency audit after dependency or lockfile changes. Documentation-only work needs
 only the focused architecture and documentation checks that govern the changed text.

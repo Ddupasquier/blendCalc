@@ -2,8 +2,9 @@
  * Purpose: Seed deterministic image-addition and/or image-adjustment submissions with
  * generated evidence for an existing moderator account; the paired cleanup command
  * removes fixtures created for that email. This writes QA rows and private storage files.
- * Seed: `npm run catalog:qa-image-seed -- moderator@example.com both`
- * Cleanup: `npm run catalog:qa-image-clean -- moderator@example.com`
+ * Seed: `node scripts/qa/catalog/seed_image_moderation_submission.mjs seed moderator@example.com both`
+ * Run it through `scripts/operations/environment/run_test_command.mjs -- node` as shown
+ * in the usage output and maintained documentation so it receives only test credentials.
  */
 
 import { randomUUID } from "node:crypto";
@@ -21,10 +22,10 @@ const qaProductPrefix = "[QA Image]";
 
 const usage = () => {
 	console.error(`Usage:
-  npm run catalog:qa-image-seed -- moderator@example.com
-  npm run catalog:qa-image-seed -- moderator@example.com addition
-  npm run catalog:qa-image-seed -- moderator@example.com adjustment
-  npm run catalog:qa-image-clean -- moderator@example.com`);
+  node scripts/operations/environment/run_test_command.mjs -- node scripts/qa/catalog/seed_image_moderation_submission.mjs seed moderator@example.com
+  node scripts/operations/environment/run_test_command.mjs -- node scripts/qa/catalog/seed_image_moderation_submission.mjs seed moderator@example.com addition
+  node scripts/operations/environment/run_test_command.mjs -- node scripts/qa/catalog/seed_image_moderation_submission.mjs seed moderator@example.com adjustment
+  node scripts/operations/environment/run_test_command.mjs -- node scripts/qa/catalog/seed_image_moderation_submission.mjs cleanup moderator@example.com`);
 };
 
 if (!email || (command === "seed" && !allowedModes.has(rawMode))) {
