@@ -1,10 +1,12 @@
 /**
- * Purpose: Sanitize one Rehearsal row in memory according to an already reviewed
- * explicit manifest. Do not run directly; this module is reusable script
- * infrastructure.
+ * Purpose: Apply BlendCalc-specific identity, structured-field, and privacy
+ * transformations to one Rehearsal row using the reviewed manifest.
+ * Do not run directly; the package owns generic actions while this repository owns
+ * their meaning.
  */
 
 import { createHmac, randomBytes } from "node:crypto";
+import { applySanitizationAction } from "@rehearsal-db/core";
 import { SANITIZATION_ACTIONS } from "./sanitization_policy.mjs";
 
 const uuidPattern =
@@ -449,18 +451,21 @@ export const sanitizeRow = ({
 		sanitized[column.name] =
 			isOwnerRow && !mustRemainPseudonymous
 				? context.preserveOwnerValue(value)
-				: column.action === SANITIZATION_ACTIONS.KEEP_EXACTLY
-					? value
-					: column.action === SANITIZATION_ACTIONS.PSEUDONYMIZE
-						? pseudonymize(
-								value,
+				: applySanitizationAction({
+						action: column.action,
+						value,
+						pseudonymize: (sourceValue) =>
+							pseudonymize(
+								sourceValue,
 								column,
 								context,
 								column.mappingDomain ?? namespace,
-							)
-						: column.action === SANITIZATION_ACTIONS.REPLACE_WITH_SYNTHETIC
-							? replaceWithSynthetic(value, column, context, namespace)
-							: derive(value, column, context, namespace, sanitized);
+							),
+						replace: (sourceValue) =>
+							replaceWithSynthetic(sourceValue, column, context, namespace),
+						derive: (sourceValue) =>
+							derive(sourceValue, column, context, namespace, sanitized),
+					});
 	}
 	assertNoForbiddenCanaries(sanitized, forbiddenCanaries, tablePolicy.name);
 	return sanitized;

@@ -1,3 +1,4 @@
+// BlendCalc-specific consumer configuration for the project-neutral Rehearsal engine.
 import { defineRehearsalConfig } from "@rehearsal-db/core";
 
 export default defineRehearsalConfig({
