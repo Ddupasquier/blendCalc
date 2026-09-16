@@ -16,7 +16,7 @@ which layer owns a test; this guide covers the local database environment.
 ## First Run
 
 ```bash
-npm run db:test:start
+npm run db:test -- start
 ```
 
 This command starts the Docker-compatible runtime when Colima is installed, starts the
@@ -40,9 +40,9 @@ The local account password and emails are printed by the database command and st
 
 ## Seeded Personas
 
-All accounts use `BlendCalc-Local-QA-2026!`. `npm run db:test:start` repairs missing
+All accounts use `BlendCalc-Local-QA-2026!`. `npm run db:test -- start` repairs missing
 baseline records without moving a tester's existing list items. Use
-`npm run db:test:reset` whenever the exact baseline below is required.
+`npm run db:test -- reset` whenever the exact baseline below is required.
 
 | Persona             | Email                                                                 | Deterministic state                                                                                                                                                                                     |
 | ------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -67,14 +67,14 @@ fixed-ID submissions are not recreated by `start` after they have been reviewed;
 
 ## Commands
 
-| Command                  | Purpose                                                                                                                                        |
-| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `npm run db:test:start`  | Start the local stack, apply pending local migrations and reference fixtures, wait for Supabase services, and repair missing persona fixtures. |
-| `npm run db:test:reset`  | Destroy local data, replay every migration, refresh the local gateway, and reseed reference fixtures and QA accounts after services are ready. |
-| `npm run db:test:verify` | Reset and test the local database, then stop the stack and any Colima runtime started by the manager.                                          |
-| `npm run db:test:status` | Print local service URLs and status.                                                                                                           |
-| `npm run db:test:stop`   | Stop the local Supabase stack while retaining its Docker volume.                                                                               |
-| `npm run dev:test`       | Start SvelteKit in test mode against `.env.test.local` at `http://localhost:5174`.                                                             |
+| Command                     | Purpose                                                                                                                                        |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run db:test -- start`  | Start the local stack, apply pending local migrations and reference fixtures, wait for Supabase services, and repair missing persona fixtures. |
+| `npm run db:test -- reset`  | Destroy local data, replay every migration, refresh the local gateway, and reseed reference fixtures and QA accounts after services are ready. |
+| `npm run db:test -- verify` | Reset and test the local database, then stop the stack and any Colima runtime started by the manager.                                          |
+| `npm run db:test -- status` | Print local service URLs and status.                                                                                                           |
+| `npm run db:test -- stop`   | Stop the local Supabase stack while retaining its Docker volume.                                                                               |
+| `npm run dev:test`          | Start SvelteKit in test mode against `.env.test.local` at `http://localhost:5174`.                                                             |
 
 `dev:test` also starts the isolated local blendCalcAPI workdir and injects both sets of
 local credentials through a clean process environment. The tracked `.env` file and
@@ -82,7 +82,7 @@ ambient hosted credentials are not loaded into the test application.
 
 ### Rehearsal export authorization proof
 
-`npm run db:rehearsal:prove-export-boundary` exercises the proposed production export
+`node scripts/operations/rehearsal/prove_export_authorization_boundary.mjs` exercises the proposed production export
 authorization model without installing a migration or reading production. It uses the
 already-running local application PostgreSQL container only as a host, creates a unique
 disposable database, and removes that database plus all three proof roles on success or
@@ -98,12 +98,12 @@ assumption, schema creation, temporary objects, and predicate-based function inj
 remain unavailable. This is the Phase 2 mechanism proof; it does not authorize or
 install the final export surface.
 
-The complete `npm run db:test:verify` workflow reruns this proof after the pgTAP suite,
+The complete `npm run db:test -- verify` workflow reruns this proof after the pgTAP suite,
 so a database handoff cannot silently lose the demonstrated role, view, denial, or
 cleanup behavior.
 
 The additive local migration installs the full reviewed boundary. Run
-`npm run db:rehearsal:prove-installed-boundary` to verify it through a real disposable
+`node scripts/operations/rehearsal/prove_installed_export_boundary.mjs` to verify it through a real disposable
 password login rather than an administrative session. The command streams all 126
 included table views and the migration receipt from one serializable read-only
 transaction, applies every reviewed sanitization action, activates a checksummed
@@ -123,21 +123,21 @@ requires no source-table or database-creation capability. Merely applying the ex
 migration is not an authorization boundary.
 
 The Rehearsal sanitizer has a separate schema-only coverage gate. Run
-`npm run rehearsal:sanitization:generate` only when intentionally reviewing a schema
+`node scripts/generators/rehearsal/generate_sanitization_manifest.mjs --write` only when intentionally reviewing a schema
 classification change, then inspect every changed table and column action. Routine
-verification runs `npm run rehearsal:sanitization:check`; it reads the local catalog,
+verification runs `node scripts/generators/rehearsal/generate_sanitization_manifest.mjs --check`; it reads the local catalog,
 never row values, and fails closed if the tracked manifest differs from the exact local
 migration schema.
 
-Use `npm run rehearsal:export-migration:check` to prove the generated export migration
-still matches that manifest, and `npm run db:rehearsal:verify-local-history` to compare
+Use `node scripts/generators/rehearsal/generate_export_boundary_migration.mjs --check` to prove the generated export migration
+still matches that manifest, and `node scripts/operations/rehearsal/verify_local_migration_history.mjs` to compare
 the installed migration ledger with immutable local migration source by ordered
 statement hash. These checks distinguish a genuinely pending migration from an edited,
 missing, duplicated, renamed, reordered, or database-only migration.
 
 ### Rehearsal baseline and migration run
 
-`npm run db:rehearsal:refresh-local` retains a verified baseline produced through the
+`node scripts/operations/rehearsal/prove_installed_export_boundary.mjs --retain-local-baseline` retains a verified baseline produced through the
 installed local export surface. It is the safe mechanism proof used before a separately
 authorized production extraction exists. The active artifact contains sanitized NDJSON,
 checksummed Storage objects, table counts and checksums, the export receipt, and hashes
@@ -145,7 +145,7 @@ for the exact local migration prefix. Activation is atomic; a failed refresh lea
 previous baseline current.
 
 After the reviewed export migration and its dedicated credentials are separately
-authorized and provisioned, `npm run db:rehearsal:refresh` uses only the five values in
+authorized and provisioned, `node scripts/operations/rehearsal/refresh_production_baseline.mjs` uses only the five values in
 ignored `.env.rehearsal-source.local`. The database credential must be a dedicated
 ephemeral `rehearsal_*` login fixed to one owner scope. Storage uses a short-lived
 access/refresh token pair for a separate Auth identity with the
@@ -153,7 +153,7 @@ access/refresh token pair for a separate Auth identity with the
 refresh never accepts a service-role key or reusable Storage password.
 
 Provision those identities only through
-`npm run db:rehearsal:provision-source -- --dry-run`, followed by its exact
+`node scripts/operations/rehearsal/provision_production_source.mjs --dry-run`, followed by its exact
 `--confirm-project=<project-ref>` form after review. The operation requires one
 Google-linked admin or developer owner, uses the linked Supabase session pooler while
 verifying the underlying ephemeral `rehearsal_*` database role and read-only export
@@ -164,12 +164,12 @@ The refresh creates or reuses an owner-only 32-byte key at
 without placing the key in either the source environment or baseline.
 
 After the production refresh succeeds, run
-`npm run db:rehearsal:deprovision-source -- --dry-run` and then its exact confirmed
+`node scripts/operations/rehearsal/deprovision_production_source.mjs --dry-run` and then its exact confirmed
 form. It removes only the temporary source login/scope, dedicated Storage identity, and
 ignored source-token file while preserving the export boundary, verified baseline, and
 local runtime. A later refresh begins by provisioning a new short-lived source again.
 
-Use `npm run db:rehearsal:reset` to recreate the isolated database from that artifact.
+Use `npm run rehearsal -- reset` to recreate the isolated database from that artifact.
 The restore uses a bounded COPY stream, creates synthetic Auth placeholders for every
 retained user reference, restores public records with trigger execution suppressed,
 resets identity sequences, restores checksummed Storage bytes into the local Storage
@@ -187,11 +187,11 @@ Storage pointer to the new local Auth UUID, removes the placeholder Auth row, re
 the JWT, and never contacts hosted Supabase. Runtime verification executes the complete
 claim inside a rollback and proves the owner profile and list counts survive.
 
-Run `npm run db:rehearsal:candidates` before migration rehearsal. If migrations follow
+Run `npm run rehearsal -- candidates` before migration rehearsal. If migrations follow
 the baseline prefix, apply only that exact ordered set with
-`npm run db:rehearsal:migrate -- --confirm-candidates=<sha256>`. Any changed prefix,
+`npm run rehearsal -- migrate --confirm-candidates=<sha256>`. Any changed prefix,
 different candidate bytes, failed migration, reset-time count mismatch, foreign-key violation, or
-non-loopback target fails closed. `npm run db:rehearsal:run` composes reset, migration,
+non-loopback target fails closed. `npm run rehearsal -- run` composes reset, migration,
 and verification; when there are no candidates it verifies the restored baseline only.
 The standalone `verify` command does not require live row counts to remain identical
 afterward: normal sandbox interactions and data migrations are expected to change local
@@ -298,7 +298,7 @@ Unless a task provides a narrower safe restoration script, restore the determini
 local state with:
 
 ```bash
-npm run db:test:reset
+npm run db:test -- reset
 ```
 
 This reset deletes disposable local QA records, replays all migrations, and recreates

@@ -12,19 +12,20 @@ const imageModerationSeed = readFileSync(
 	"scripts/qa/catalog/seed_image_moderation_submission.mjs",
 	"utf8",
 );
+const scriptDocumentation = readFileSync("scripts/README.md", "utf8");
 
 describe("QA fixture database environment", () => {
-	it("routes every public QA fixture command to test mode", () => {
-		for (const command of [
-			"catalog:qa-seed",
-			"catalog:qa-clean",
-			"catalog:qa-image-seed",
-			"catalog:qa-image-clean",
+	it("routes every documented QA fixture command through test mode", () => {
+		for (const scriptPath of [
+			"scripts/qa/catalog/seed_catalog_submission.mjs",
+			"scripts/qa/catalog/seed_image_moderation_submission.mjs",
 		]) {
-			expect(packageMetadata.scripts[command]).toContain(
-				"scripts/operations/environment/run_test_command.mjs",
+			expect(scriptDocumentation).toContain(
+				`node scripts/operations/environment/run_test_command.mjs -- node ${scriptPath}`,
 			);
 		}
+		expect(packageMetadata.scripts).not.toHaveProperty("catalog:qa-seed");
+		expect(packageMetadata.scripts).not.toHaveProperty("catalog:qa-image-seed");
 	});
 
 	it("loads the generated test environment and rejects non-local targets", () => {

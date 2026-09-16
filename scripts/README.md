@@ -120,7 +120,7 @@ The executable owners are the `@rehearsal-db/core` CLI,
 `scripts/operations/database/manage_local_database.mjs`, and
 `scripts/operations/database/manage_blendcalc_api_local_database.mjs`.
 
-`npm run db:rehearsal:prove-export-boundary` creates a uniquely named disposable
+`node scripts/operations/rehearsal/prove_export_authorization_boundary.mjs` creates a uniquely named disposable
 database and three temporary least-privilege roles inside the local application
 PostgreSQL container. It proves that the login can read one explicit, versioned,
 security-barrier export view while direct source reads, mutations, source/network
@@ -129,27 +129,27 @@ command verifies that no side effect occurred and removes the exact disposable d
 and roles before returning. It never reads environment files, hosted credentials, or
 production data and does not install the proposed export-boundary migration.
 
-`npm run rehearsal:sanitization:generate` inventories only the running local
+`node scripts/generators/rehearsal/generate_sanitization_manifest.mjs --write` inventories only the running local
 application database schema and writes the reviewed table-and-column policy to
 `infrastructure/rehearsal/application/sanitization-policy.json`. The manifest records
 an explicit action for every current column; generation never reads table rows. Review
 the entire diff before accepting a generated change. Routine verification uses
-`npm run rehearsal:sanitization:check`, which fails when a table or column was added,
+`node scripts/generators/rehearsal/generate_sanitization_manifest.mjs --check`, which fails when a table or column was added,
 removed, renamed, or retyped without a corresponding reviewed manifest update.
 
 `node scripts/generators/rehearsal/generate_export_boundary_migration.mjs --write`
 generates the additive `rehearsal_export` migration from that reviewed manifest. Use
-`npm run rehearsal:export-migration:check` during routine verification; it fails when
+`node scripts/generators/rehearsal/generate_export_boundary_migration.mjs --check` during routine verification; it fails when
 the checked-in migration no longer matches the policy. The migration contains explicit
 versioned security-barrier views, an inert owner, an inert reader group, forced-RLS
 policies, and a hashed migration receipt. It does not create a login credential.
 
-`npm run db:rehearsal:verify-local-history` compares every local migration file with the
+`node scripts/operations/rehearsal/verify_local_migration_history.mjs` compares every local migration file with the
 installed local Supabase ledger, including an exact ordered-statement SHA-256. It fails
 on edits, omissions, reordering, duplicate versions, filename mismatches, and database
 versions not represented locally.
 
-`npm run db:rehearsal:prove-installed-boundary` creates one disposable local login,
+`node scripts/operations/rehearsal/prove_installed_export_boundary.mjs` creates one disposable local login,
 connects through the installed export surface, streams every included table in a single
 serializable read-only transaction, sanitizes all records, atomically activates and
 verifies a temporary checksummed baseline, and removes both the login and artifact. It
@@ -162,7 +162,7 @@ provisioning therefore rotates a random database credential that expires within 
 minutes, and the fixed export accepts it only inside one serializable read-only
 transaction after verifying that every `net` function uses invoker rights.
 
-`npm run db:rehearsal:refresh` is the hosted-source consumer and remains unusable until
+`node scripts/operations/rehearsal/refresh_production_baseline.mjs` is the hosted-source consumer and remains unusable until
 the reviewed boundary is deployed and its two read-only identities are provisioned. It
 reads exactly five values from owner-only `.env.rehearsal-source.local`: a dedicated
 `rehearsal_*` PostgreSQL URL, the Storage URL and publishable key, and a short-lived
@@ -177,7 +177,7 @@ After a replacement verifies and becomes active, refresh retains that generation
 one verified fallback, then removes older immutable generations through path-checked
 cleanup.
 
-`npm run db:rehearsal:provision-source -- --dry-run` validates the linked project and
+`node scripts/operations/rehearsal/provision_production_source.mjs --dry-run` validates the linked project and
 requires exactly one Google-linked admin or developer as the approved source owner. The
 confirmed command creates or rotates one ephemeral `rehearsal_*` database login, binds
 its export scope to that owner, creates or rotates one dedicated Auth/Storage reader,
@@ -187,7 +187,7 @@ value enters the generated source environment, command line, logs, or baseline. 
 CAPTCHA remains enabled because provisioning mints the Storage session through a
 non-delivery Admin magic link rather than password authentication.
 
-`npm run db:rehearsal:deprovision-source -- --dry-run` previews removal of only that
+`node scripts/operations/rehearsal/deprovision_production_source.mjs --dry-run` previews removal of only that
 temporary database login and owner scope, the dedicated read-only Storage identity,
 and the ignored source credential file. The confirmed command is idempotent and refuses
 an Auth identity whose purpose metadata is not exact. It preserves the shared export
@@ -240,40 +240,40 @@ Google account credential. Runtime verification separately performs a matching
 Google-owner claim inside a rollback and proves the owner profile, list topology, and
 Storage pointers survive the identity swap.
 
-| Command                                                                 | Behavior                                                                                             |
-| ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `npm run db:test:start`                                                 | Start local Supabase and restore missing baseline fixtures without moving current tester list items. |
-| `npm run db:test:reset`                                                 | Destructively recreate only the local database from migrations and fixtures.                         |
-| `npm run db:test:verify`                                                | Recreate and test the local database, then stop the stack and manager-started Colima.                |
-| `npm run db:test:status`                                                | Report local service status.                                                                         |
-| `npm run db:test:stop`                                                  | Stop local Supabase.                                                                                 |
-| `npm run db:rehearsal:prove-export-boundary`                            | Prove the least-privilege design in an isolated disposable local database.                           |
-| `npm run db:rehearsal:prove-installed-boundary`                         | Stream, sanitize, verify, and clean a temporary baseline through the installed local boundary.       |
-| `npm run db:rehearsal:verify-local-history`                             | Compare installed migration statements with immutable local migration source.                        |
-| `npm run db:rehearsal:refresh-local`                                    | Produce and retain a verified baseline from the installed local export boundary.                     |
-| `npm run db:rehearsal:provision-source -- --dry-run`                    | Preview the confirmed least-privilege production source provisioning operation.                      |
-| `npm run db:rehearsal:deprovision-source -- --dry-run`                  | Preview revocation of the temporary production-source identities and local credential file.          |
-| `npm run db:rehearsal:start`                                            | Start the persistent runtime, restoring it when no verified runtime exists.                          |
-| `npm run db:rehearsal:reset`                                            | Discard and recreate the runtime from the active immutable baseline.                                 |
-| `npm run db:rehearsal:status`                                           | Report runtime health, endpoints, baseline identity, and candidate state.                            |
-| `npm run db:rehearsal:stop`                                             | Stop the runtime while retaining its local database volume.                                          |
-| `npm run db:rehearsal:discard`                                          | Remove only the disposable Rehearsal runtime and its database volume.                                |
-| `npm run db:rehearsal:candidates`                                       | Print the exact ordered candidate files and confirmation receipt.                                    |
-| `npm run db:rehearsal:migrate -- --confirm-candidates=<sha256>`         | Apply only the candidate list matching the supplied immutable receipt.                               |
-| `npm run db:rehearsal:verify`                                           | Verify artifact, migration, runtime-boundary, configuration, and project identity invariants.        |
-| `npm run db:rehearsal:run`                                              | Reset, apply zero or confirmed candidates, and verify in one fail-closed workflow.                   |
-| `npm run rehearsal -- doctor\|explain\|run --dry-run`                   | Validate readiness or inspect the immutable package-shaped plan without mutating state.              |
-| `npm run rehearsal -- inspect baseline\|inspect migrations`             | Inspect safe provenance and exact migration classifications.                                         |
-| `npm run rehearsal:app:prove`                                           | Prove the BlendCalc application, CSP, Auth, and API boundaries against Rehearsal.                    |
-| `npm run rehearsal:sanitization:generate`                               | Regenerate the schema-only sanitization policy for deliberate review.                                |
-| `npm run rehearsal:sanitization:check`                                  | Fail when the reviewed policy no longer exactly covers the local schema.                             |
-| `npm run rehearsal:export-migration:generate`                           | Regenerate the explicit export-boundary migration for deliberate review.                             |
-| `npm run rehearsal:export-migration:check`                              | Fail when the export migration differs from its reviewed generator inputs.                           |
-| `npm run qa:deterministic`                                              | Run read-only hosted invariants without creating users or Fridge records.                            |
-| `npm run catalog:qa-seed -- <email> <reviewable\|incomplete\|both>`     | Add local product-review fixtures.                                                                   |
-| `npm run catalog:qa-clean -- <email>`                                   | Remove product-review fixtures created for that email.                                               |
-| `npm run catalog:qa-image-seed -- <email> <addition\|adjustment\|both>` | Add local image-review fixtures.                                                                     |
-| `npm run catalog:qa-image-clean -- <email>`                             | Remove unapproved image fixtures created for that email.                                             |
+| Command                                                                                                                                                              | Behavior                                                                                             |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `npm run db:test -- start`                                                                                                                                           | Start local Supabase and restore missing baseline fixtures without moving current tester list items. |
+| `npm run db:test -- reset`                                                                                                                                           | Destructively recreate only the local database from migrations and fixtures.                         |
+| `npm run db:test -- verify`                                                                                                                                          | Recreate and test the local database, then stop the stack and manager-started Colima.                |
+| `npm run db:test -- status`                                                                                                                                          | Report local service status.                                                                         |
+| `npm run db:test -- stop`                                                                                                                                            | Stop local Supabase.                                                                                 |
+| `node scripts/operations/rehearsal/prove_export_authorization_boundary.mjs`                                                                                          | Prove the least-privilege design in an isolated disposable local database.                           |
+| `node scripts/operations/rehearsal/prove_installed_export_boundary.mjs`                                                                                              | Stream, sanitize, verify, and clean a temporary baseline through the installed local boundary.       |
+| `node scripts/operations/rehearsal/verify_local_migration_history.mjs`                                                                                               | Compare installed migration statements with immutable local migration source.                        |
+| `node scripts/operations/rehearsal/prove_installed_export_boundary.mjs --retain-local-baseline`                                                                      | Produce and retain a verified baseline from the installed local export boundary.                     |
+| `node scripts/operations/rehearsal/provision_production_source.mjs --dry-run`                                                                                        | Preview the confirmed least-privilege production source provisioning operation.                      |
+| `node scripts/operations/rehearsal/deprovision_production_source.mjs --dry-run`                                                                                      | Preview revocation of the temporary production-source identities and local credential file.          |
+| `npm run rehearsal -- start`                                                                                                                                         | Start the persistent runtime, restoring it when no verified runtime exists.                          |
+| `npm run rehearsal -- reset`                                                                                                                                         | Discard and recreate the runtime from the active immutable baseline.                                 |
+| `npm run rehearsal -- status`                                                                                                                                        | Report runtime health, endpoints, baseline identity, and candidate state.                            |
+| `npm run rehearsal -- stop`                                                                                                                                          | Stop the runtime while retaining its local database volume.                                          |
+| `npm run rehearsal -- discard`                                                                                                                                       | Remove only the disposable Rehearsal runtime and its database volume.                                |
+| `npm run rehearsal -- candidates`                                                                                                                                    | Print the exact ordered candidate files and confirmation receipt.                                    |
+| `npm run rehearsal -- migrate --confirm-candidates=<sha256>`                                                                                                         | Apply only the candidate list matching the supplied immutable receipt.                               |
+| `npm run rehearsal -- verify`                                                                                                                                        | Verify artifact, migration, runtime-boundary, configuration, and project identity invariants.        |
+| `npm run rehearsal -- run`                                                                                                                                           | Reset, apply zero or confirmed candidates, and verify in one fail-closed workflow.                   |
+| `npm run rehearsal -- doctor\|explain\|run --dry-run`                                                                                                                | Validate readiness or inspect the immutable package-shaped plan without mutating state.              |
+| `npm run rehearsal -- inspect baseline\|inspect migrations`                                                                                                          | Inspect safe provenance and exact migration classifications.                                         |
+| `npm run rehearsal:app:prove`                                                                                                                                        | Prove the BlendCalc application, CSP, Auth, and API boundaries against Rehearsal.                    |
+| `node scripts/generators/rehearsal/generate_sanitization_manifest.mjs --write`                                                                                       | Regenerate the schema-only sanitization policy for deliberate review.                                |
+| `node scripts/generators/rehearsal/generate_sanitization_manifest.mjs --check`                                                                                       | Fail when the reviewed policy no longer exactly covers the local schema.                             |
+| `node scripts/generators/rehearsal/generate_export_boundary_migration.mjs --write`                                                                                   | Regenerate the explicit export-boundary migration for deliberate review.                             |
+| `node scripts/generators/rehearsal/generate_export_boundary_migration.mjs --check`                                                                                   | Fail when the export migration differs from its reviewed generator inputs.                           |
+| `node scripts/qa/database/run_deterministic_qa.mjs`                                                                                                                  | Run read-only hosted invariants without creating users or Fridge records.                            |
+| `node scripts/operations/environment/run_test_command.mjs -- node scripts/qa/catalog/seed_catalog_submission.mjs seed <email> <reviewable\|incomplete\|both>`        | Add local product-review fixtures.                                                                   |
+| `node scripts/operations/environment/run_test_command.mjs -- node scripts/qa/catalog/seed_catalog_submission.mjs cleanup <email>`                                    | Remove product-review fixtures created for that email.                                               |
+| `node scripts/operations/environment/run_test_command.mjs -- node scripts/qa/catalog/seed_image_moderation_submission.mjs seed <email> <addition\|adjustment\|both>` | Add local image-review fixtures.                                                                     |
+| `node scripts/operations/environment/run_test_command.mjs -- node scripts/qa/catalog/seed_image_moderation_submission.mjs cleanup <email>`                           | Remove unapproved image fixtures created for that email.                                             |
 
 The full persona inventory, safe reset behavior, and database QA workflow live in
 [Database Testing](../docs/development/database-testing.md).
@@ -334,10 +334,11 @@ reviewed remote source before credentials are loaded or Supabase is called.
 | `npm run db:types`     | Regenerate linked TypeScript database types.                |
 
 The isolated API publication database uses a different Supabase workdir and credential
-set. `npm run blendCalcAPI:db:start`, `blendCalcAPI:db:reset`,
-`blendCalcAPI:db:test`, and `blendCalcAPI:db:stop` operate only its local stack. Hosted
-delivery uses the dedicated `npm run blendCalcAPI:db:push:dry`,
-`npm run blendCalcAPI:db:push`, and `npm run blendCalcAPI:db:push:auto` promotion guard,
+set. `npm run blendCalcAPI:db -- start`, `npm run blendCalcAPI:db -- reset`,
+`npm run blendCalcAPI:db -- test`, and `npm run blendCalcAPI:db -- stop` operate only its
+local stack. Hosted
+delivery uses the dedicated `npm run blendCalcAPI:db:push -- --dry-run`,
+`npm run blendCalcAPI:db:push`, and `npm run blendCalcAPI:db:push -- --yes` promotion guard,
 which verifies the isolated link and exact
 remote-main migration source before reading credentials or writing. Generate the local
 isolated contract with `npm run blendCalcAPI:db:types`; never repoint the root
@@ -349,24 +350,24 @@ and changed write semantics require a later contract migration.
 
 ## Catalog And API Audits
 
-| Command                                                                        | What it checks                                                                                                                                     |
-| ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `npm run audit:blendCalcAPI-catalog`                                           | Every active catalog row's publication status, gate failures, provenance, nutrition, servings, images, and rights metadata                         |
-| `npm run audit:blendCalcAPI-catalog -- --strict`                               | The same audit, failing unless every active row is publication-ready                                                                               |
-| `npm run audit:blendCalcAPI-catalog -- --json`                                 | The same fresh readiness reassessment with DB-owned automated-repair, review-owner, and unresolved-contract classifications as structured output   |
-| `node scripts/audits/catalog/audit_blendCalcAPI_query_plans.mjs`               | Representative and bounded worst-case local PostgreSQL plans; flags only measured high-row sequential scans for index review                       |
-| `npm run audit:blendCalcAPI-payloads`                                          | Read-only authenticated byte-size and gzip-size measurements for every blendCalcAPI v1 read shape                                                  |
-| `node scripts/audits/catalog/audit_catalog_transparency.mjs`                   | Verification dates, revisions, observations, source quality, ingredients, uncertainty, compatibility, API exposure, and app reads                  |
-| `node scripts/audits/catalog/audit_catalog_transparency.mjs --json`            | The same read-only transparency report as structured output                                                                                        |
-| `node scripts/audits/catalog/audit_barcode_nutrition_accuracy.mjs --limit=300` | At least 300 exact GTINs plus every active catalog product across provider evidence, units, servings, normalized values, provenance, and conflicts |
-| `npm run audit:blendCalcAPI-performance`                                       | Authenticated production-preview p50/p95 checks for product, category, first-page search, and browser-cached repeat reads                          |
-| `npm run audit:blendCalcAPI-load`                                              | Bounded authenticated load corpus for common, broad, empty, warmed, and mixed concurrent blendCalcAPI reads                                        |
+| Command                                                                         | What it checks                                                                                                                                     |
+| ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `node scripts/audits/catalog/audit_blendCalcAPI_catalog_readiness.mjs`          | Every active catalog row's publication status, gate failures, provenance, nutrition, servings, images, and rights metadata                         |
+| `node scripts/audits/catalog/audit_blendCalcAPI_catalog_readiness.mjs --strict` | The same audit, failing unless every active row is publication-ready                                                                               |
+| `node scripts/audits/catalog/audit_blendCalcAPI_catalog_readiness.mjs --json`   | The same fresh readiness reassessment with DB-owned automated-repair, review-owner, and unresolved-contract classifications as structured output   |
+| `node scripts/audits/catalog/audit_blendCalcAPI_query_plans.mjs`                | Representative and bounded worst-case local PostgreSQL plans; flags only measured high-row sequential scans for index review                       |
+| `node scripts/audits/catalog/audit_blendCalcAPI_payload_sizes.mjs`              | Read-only authenticated byte-size and gzip-size measurements for every blendCalcAPI v1 read shape                                                  |
+| `node scripts/audits/catalog/audit_catalog_transparency.mjs`                    | Verification dates, revisions, observations, source quality, ingredients, uncertainty, compatibility, API exposure, and app reads                  |
+| `node scripts/audits/catalog/audit_catalog_transparency.mjs --json`             | The same read-only transparency report as structured output                                                                                        |
+| `node scripts/audits/catalog/audit_barcode_nutrition_accuracy.mjs --limit=300`  | At least 300 exact GTINs plus every active catalog product across provider evidence, units, servings, normalized values, provenance, and conflicts |
+| `node scripts/audits/catalog/audit_blendCalcAPI_response_performance.mjs`       | Authenticated production-preview p50/p95 checks for product, category, first-page search, and browser-cached repeat reads                          |
+| `node scripts/audits/catalog/audit_blendCalcAPI_read_load.mjs`                  | Bounded authenticated load corpus for common, broad, empty, warmed, and mixed concurrent blendCalcAPI reads                                        |
 
 The barcode audit writes its detailed report to ignored `scripts/output/`. Provider
 anomalies, source disagreements, app math defects, and legally blocked fields remain
 separate findings; the audit never promotes data merely to improve its pass rate.
 
-Run the performance audit while `npm run test:e2e:session:start` is serving the local
+Run the performance audit while `npm run test:e2e:prepare && npm run test:e2e:server` is serving the local
 production build on port `5174`. It uses the disposable QA account and fails only the
 audit process when a response budget regresses; the budgets never block application
 traffic. Use `--json`, `--samples=15`, `--barcode=<14-digit GTIN>`, or `--query=<term>`
@@ -380,15 +381,15 @@ authorization.
 
 ## Source Coverage And Quality
 
-| Command                                                                                   | Purpose                                                                                                                                          |
-| ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `node scripts/audits/food-sources/benchmark_product_sources.mjs --limit=10`               | Controlled same-barcode provider comparison recorded as benchmark metrics                                                                        |
-| `npm run report:source-quality -- --days=30 --origin=runtime`                             | Runtime requests, cache use, coverage, selected field contributions, missing fields, and unresolved disagreements                                |
-| `npm run report:source-quality -- --days=30 --origin=benchmark`                           | Controlled-benchmark metrics plus current contribution, missing-field, and disagreement evidence                                                 |
-| `npm run report:source-quality -- --days=30 --origin=runtime --json`                      | The same privacy-safe report with field-level counts as structured JSON                                                                          |
-| `node scripts/audits/food-sources/audit_barcode_provider_experience.mjs --sample-size=50` | Read-only USDA, Open Food Facts, and COLA Cloud exact-barcode coverage, latency, source math, and manual-entry experience audit                  |
-| `npm run audit:off-nutrient-mappings`                                                     | Read-only Open Food Facts taxonomy plus anonymous observed key/unit reconciliation against approved, queued, candidate, and unsupported outcomes |
-| `node scripts/audits/food-sources/audit_generic_dataset_contribution.mjs --queries=100`   | Read-only imported-dataset record, nutrient, measure, identity, and bounded search contribution                                                  |
+| Command                                                                                                | Purpose                                                                                                                                          |
+| ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `node scripts/audits/food-sources/benchmark_product_sources.mjs --limit=10`                            | Controlled same-barcode provider comparison recorded as benchmark metrics                                                                        |
+| `node scripts/audits/food-sources/report_product_source_quality.mjs --days=30 --origin=runtime`        | Runtime requests, cache use, coverage, selected field contributions, missing fields, and unresolved disagreements                                |
+| `node scripts/audits/food-sources/report_product_source_quality.mjs --days=30 --origin=benchmark`      | Controlled-benchmark metrics plus current contribution, missing-field, and disagreement evidence                                                 |
+| `node scripts/audits/food-sources/report_product_source_quality.mjs --days=30 --origin=runtime --json` | The same privacy-safe report with field-level counts as structured JSON                                                                          |
+| `node scripts/audits/food-sources/audit_barcode_provider_experience.mjs --sample-size=50`              | Read-only USDA, Open Food Facts, and COLA Cloud exact-barcode coverage, latency, source math, and manual-entry experience audit                  |
+| `node scripts/audits/food-sources/audit_open_food_facts_nutrient_mappings.mjs`                         | Read-only Open Food Facts taxonomy plus anonymous observed key/unit reconciliation against approved, queued, candidate, and unsupported outcomes |
+| `node scripts/audits/food-sources/audit_generic_dataset_contribution.mjs --queries=100`                | Read-only imported-dataset record, nutrient, measure, identity, and bounded search contribution                                                  |
 
 These reports measure coverage and efficiency. They do not establish provider-wide
 trust, merge similar food names, or change field-selection policy. Reviewed UCUM codes
@@ -490,7 +491,7 @@ Create and verify a protected backup outside the repository:
 node scripts/operations/recovery/create_protected_hosted_backup.mjs
 node scripts/operations/recovery/verify_protected_hosted_backup.mjs \
   "/absolute/path/to/backup"
-npm run recovery:blendCalcAPI -- --backup-dir="/absolute/path/to/backup"
+node scripts/operations/recovery/run_blendcalc_api_recovery_drill.mjs --backup-dir="/absolute/path/to/backup"
 ```
 
 The backup workflow reads production without changing it. Verification checks required
@@ -505,16 +506,16 @@ for retention, restore drills, and incident procedures.
 
 ## Privileged Operations
 
-| Command                                                                                 | Responsibility                                                            |
-| --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| `npm run moderate -- role <email> <moderator\|admin\|developer\|none> --user-id=<uuid>` | Grant or revoke an application role after email and Auth ID agree         |
-| `npm run moderate -- ban <email> <reason>`                                              | Ban an account and record moderation history                              |
-| `npm run catalog:product:purge -- preview <UPC>`                                        | Preview the exact local Supabase deletion graph for one product           |
-| `npm run catalog:product:purge -- apply <UPC> --confirm=<UPC> --reason="<reason>"`      | Atomically delete that confirmed local graph and verify it is absent      |
-| `npm run blendCalcAPI:publication -- list`                                              | Read publication concerns and active holds                                |
-| `npm run blendCalcAPI:publication -- hold ...`                                          | Immediately withhold one exact product, image, dataset release, or source |
-| `npm run blendCalcAPI:publication -- release ...`                                       | Release a reviewed hold while preserving its history                      |
-| `npm run blendCalcAPI:publication -- resolve ...`                                       | Record the reviewed outcome of one concern                                |
+| Command                                                                                                             | Responsibility                                                            |
+| ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `node scripts/operations/users/moderate_user.mjs role <email> <moderator\|admin\|developer\|none> --user-id=<uuid>` | Grant or revoke an application role after email and Auth ID agree         |
+| `node scripts/operations/users/moderate_user.mjs ban <email> <reason>`                                              | Ban an account and record moderation history                              |
+| `node scripts/operations/catalog/purge_catalog_product.mjs preview <UPC>`                                           | Preview the exact local Supabase deletion graph for one product           |
+| `node scripts/operations/catalog/purge_catalog_product.mjs apply <UPC> --confirm=<UPC> --reason="<reason>"`         | Atomically delete that confirmed local graph and verify it is absent      |
+| `node scripts/operations/blendCalcAPI/manage_blendCalcAPI_publication.mjs list`                                     | Read publication concerns and active holds                                |
+| `node scripts/operations/blendCalcAPI/manage_blendCalcAPI_publication.mjs hold ...`                                 | Immediately withhold one exact product, image, dataset release, or source |
+| `node scripts/operations/blendCalcAPI/manage_blendCalcAPI_publication.mjs release ...`                              | Release a reviewed hold while preserving its history                      |
+| `node scripts/operations/blendCalcAPI/manage_blendCalcAPI_publication.mjs resolve ...`                              | Record the reviewed outcome of one concern                                |
 
 These commands require service-role credentials and an authorized actor where
 documented. They never authorize unrelated Git commits, migration pushes, or application
@@ -529,7 +530,7 @@ without retaining the deleted product identity.
 
 | Command                                                             | Purpose                                                                             |
 | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `npm run generate:api-structures`                                   | Regenerate sampled, documentation-only USDA and Open Food Facts payload references  |
+| `node scripts/generators/api/generate_api_structures.mjs`           | Regenerate sampled, documentation-only USDA and Open Food Facts payload references  |
 | `npm run check:auth`                                                | Validate Auth-related environment values and endpoint health                        |
 | `npm run auth:configure-hosted -- --turnstile\|--smtp\|--templates` | Apply one explicit hosted Supabase Auth configuration safely                        |
 | `npm run version:check`                                             | Verify Node, app, build, API, OpenAPI, tests, and documentation version consistency |

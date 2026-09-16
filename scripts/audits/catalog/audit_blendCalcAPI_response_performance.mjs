@@ -2,9 +2,9 @@
  * Purpose: Measure authenticated blendCalcAPI product, category, first-page search,
  * and warmed repeat reads against explicit p50/p95 budgets. The audit is
  * read-only and never changes production request handling or catalog data.
- * Start the local production preview with `npm run test:e2e:session:start` first.
- * Run: `npm run audit:blendCalcAPI-performance`
- * Structured output: `npm run audit:blendCalcAPI-performance -- --json`
+ * Start the local production preview with `npm run test:e2e:prepare && npm run test:e2e:server` first.
+ * Run: `node scripts/audits/catalog/audit_blendCalcAPI_response_performance.mjs`
+ * Structured output: `node scripts/audits/catalog/audit_blendCalcAPI_response_performance.mjs --json`
  */
 
 import { chromium } from "@playwright/test";

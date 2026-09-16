@@ -3,9 +3,9 @@
  * selected canonical field contributions, current missing-field outcomes, and unresolved
  * disagreements for runtime or controlled benchmark lookups. This report is read-only
  * and requires Supabase script credentials.
- * Run: `npm run report:source-quality -- --days=30 --origin=runtime`
- * Benchmark report: `npm run report:source-quality -- --days=30 --origin=benchmark`
- * Structured report: `npm run report:source-quality -- --days=30 --origin=runtime --json`
+ * Run: `node scripts/audits/food-sources/report_product_source_quality.mjs --days=30 --origin=runtime`
+ * Benchmark report: `node scripts/audits/food-sources/report_product_source_quality.mjs --days=30 --origin=benchmark`
+ * Structured report: `node scripts/audits/food-sources/report_product_source_quality.mjs --days=30 --origin=runtime --json`
  */
 
 import { config } from "dotenv";

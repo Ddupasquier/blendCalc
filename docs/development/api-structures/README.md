@@ -14,13 +14,13 @@ not be imported into application code.
 Regenerate the sampled references with:
 
 ```bash
-npm run generate:api-structures
+node scripts/generators/api/generate_api_structures.mjs
 ```
 
 For a focused inspection:
 
 ```bash
-npm run generate:api-structures -- --query="almond milk" --query="protein bar" --samples=2
+node scripts/generators/api/generate_api_structures.mjs --query="almond milk" --query="protein bar" --samples=2
 ```
 
 The generator may read stored observation terms and call external APIs, but it never

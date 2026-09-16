@@ -1,9 +1,9 @@
 /**
  * Purpose: Manage the isolated local blendCalcAPI Supabase lifecycle without loading
  * hosted credentials.
- * Run: `npm run blendCalcAPI:db:start`, `npm run blendCalcAPI:db:reset`,
- * `npm run blendCalcAPI:db:test`, `npm run blendCalcAPI:db:status`, or
- * `npm run blendCalcAPI:db:stop`.
+ * Run: `npm run blendCalcAPI:db -- start`, `npm run blendCalcAPI:db -- reset`,
+ * `npm run blendCalcAPI:db -- test`, `npm run blendCalcAPI:db -- status`, or
+ * `npm run blendCalcAPI:db -- stop`.
  */
 
 import { fileURLToPath } from "node:url";
