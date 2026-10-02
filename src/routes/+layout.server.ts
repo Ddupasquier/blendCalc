@@ -31,13 +31,18 @@ const isPublicPath = (pathname: string) => {
 	return PUBLIC_PATHS.has(pathname) || pathname.startsWith("/auth/callback");
 };
 
-export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
+export const load: LayoutServerLoad = async ({
+	locals,
+	url,
+	cookies,
+	route,
+}) => {
 	const user = await locals.getVerifiedUser();
 	const cookieThemePreference = normalizeThemePreference(
 		cookies.get(THEME_PREFERENCE_COOKIE),
 	);
 
-	if (!user && !isPublicPath(url.pathname)) {
+	if (!user && route.id !== null && !isPublicPath(url.pathname)) {
 		throw redirect(
 			303,
 			`/?next=${encodeURIComponent(`${url.pathname}${url.search}`)}`,
