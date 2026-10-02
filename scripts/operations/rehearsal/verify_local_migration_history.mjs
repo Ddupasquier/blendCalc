@@ -1,7 +1,7 @@
 /**
- * Purpose: Verify that a freshly replayed local application database has an exact,
- * content-addressed migration receipt and no blendCalcAPI version collision.
- * Run: `npm run db:rehearsal:verify-local-history` after a local database reset.
+ * Purpose: Verify that BlendCalc's freshly replayed local application database has an
+ * exact package-generated migration receipt and no blendCalcAPI version collision.
+ * Run: `node scripts/operations/rehearsal/verify_local_migration_history.mjs` after a local database reset.
  */
 
 import { spawnSync } from "node:child_process";

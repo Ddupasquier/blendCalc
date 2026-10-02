@@ -272,15 +272,15 @@ not promises enforced inside live request handling.
 | Search first page   | 1,000 ms   | First 15 publication-ready matches for one query |
 | Warm product repeat | 250 ms     | Same exact product URL after one priming read    |
 
-Run `npm run test:e2e:session:start`, then run
-`npm run audit:blendCalcAPI-performance` in another terminal. The audit reports p50,
+Run `npm run test:e2e:prepare && npm run test:e2e:server`, then run
+`node scripts/audits/catalog/audit_blendCalcAPI_response_performance.mjs` in another terminal. The audit reports p50,
 p95, and maximum latency. It uses `cache: no-store` with contract-valid URLs and a
 stable URL for repeat reads so those two measurements cannot be silently conflated. Its
 20-sample minimum keeps nearest-rank p95 distinct from the single slowest request. A
 noisy audit failure does not alter API availability or catalog
 data.
 
-`npm run audit:blendCalcAPI-load` measures the common exact-product path, a broad first
+`node scripts/audits/catalog/audit_blendCalcAPI_read_load.mjs` measures the common exact-product path, a broad first
 search page, an empty search, a warmed product read, and a mixed concurrent read batch.
 The bounded default uses five concurrent clients and fails on any unsuccessful response
 or missed scenario p95 budget. It is a pre-beta regression audit, not a production
@@ -377,7 +377,7 @@ and the absence of upload or request-body operations from v1.
 
 ## Payload Measurement
 
-Run `npm run audit:blendCalcAPI-payloads` against the prepared local preview to measure
+Run `node scripts/audits/catalog/audit_blendCalcAPI_payload_sizes.mjs` against the prepared local preview to measure
 the exact and gzip-estimated byte size of a full product, first search page, maximum
 category page, and maximum revision page. The audit is read-only, authenticates like an
 ordinary app session, and does not turn observational measurements into a production
@@ -476,7 +476,7 @@ Related operational routes are deliberately outside `/api/v1`:
 
 Publication holds are reversible. They never delete the canonical product, revision,
 observation, image, or submitted evidence. The stable operator entry point is
-`npm run blendCalcAPI:publication -- ...`; exact examples live in that script's header and in
+`node scripts/operations/blendCalcAPI/manage_blendCalcAPI_publication.mjs ...`; exact examples live in that script's header and in
 [Repository Scripts](../../../scripts/README.md).
 
 ## Versioning

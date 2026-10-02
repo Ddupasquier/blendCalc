@@ -4,7 +4,7 @@
  * reads, generic-food source fidelity, search pagination, category pagination,
  * image/serving fixtures, and API privacy.
  * It performs read-only Supabase requests and never creates users or Fridge records.
- * Run: `npm run qa:deterministic`
+ * Run: `node scripts/qa/database/run_deterministic_qa.mjs`
  */
 
 import { readFile } from "node:fs/promises";
@@ -13,7 +13,6 @@ import { config } from "dotenv";
 import WebSocket from "ws";
 
 config({ path: ".env.moderation.local", quiet: true });
-config({ path: ".env", quiet: true });
 
 const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;

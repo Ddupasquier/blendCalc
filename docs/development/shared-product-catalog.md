@@ -271,7 +271,7 @@ unchanged.
   anonymous exact key/unit identity, count, and first/last-seen times to
   `nutrient_source_mapping_observations`; they add no provider request and retain no
   user, barcode, product, amount, or raw payload. The complete provider taxonomy is
-  reconciled with `npm run audit:off-nutrient-mappings`; missing and pending identities
+  reconciled with `node scripts/audits/food-sources/audit_open_food_facts_nutrient_mappings.mjs`; missing and pending identities
   stay review work rather than becoming guessed mappings. The preview-first
   `node scripts/seeds/nutrition/seed_open_food_facts_nutrient_mapping_candidates.mjs`
   can place exact key/unit
@@ -448,7 +448,7 @@ publication, and the app read model. Add `--json` for machine-readable output. T
 report classifies each field as populated, sparse, or empty and prints representative
 non-private values.
 
-Run `npm run audit:blendCalcAPI-catalog -- --json` for a fresh product-by-product publication
+Run `node scripts/audits/catalog/audit_blendCalcAPI_catalog_readiness.mjs --json` for a fresh product-by-product publication
 reassessment. It reads the live readiness gate and DB-owned issue contracts, separates
 safe automated repairs from catalog, data-operations, food-policy, external, and system
 work, and reports any blocker whose operational contract is not yet deployed. Source
@@ -1015,11 +1015,11 @@ priority changes.
 ## QA Moderation Fixtures
 
 Create clearly marked pending submissions in the disposable local test database without
-calling outside product APIs. Run `npm run db:test:start` first so the local credentials
+calling outside product APIs. Run `npm run db:test -- start` first so the local credentials
 and seeded moderator account exist:
 
 ```sh
-npm run catalog:qa-seed -- moderator@example.com
+node scripts/operations/environment/run_test_command.mjs -- node scripts/qa/catalog/seed_catalog_submission.mjs seed moderator@example.com
 ```
 
 This creates one complete-but-questionable submission and one submission with missing
@@ -1027,14 +1027,14 @@ evidence. QA fixtures display review flags and cannot be approved, so use the Re
 action to exercise the moderation flow safely. Remove leftover fixtures with:
 
 ```sh
-npm run catalog:qa-clean -- moderator@example.com
+node scripts/operations/environment/run_test_command.mjs -- node scripts/qa/catalog/seed_catalog_submission.mjs cleanup moderator@example.com
 ```
 
 Create fake image-review submissions for the moderated product image flow in the same
 disposable local database:
 
 ```sh
-npm run catalog:qa-image-seed -- moderator@example.com
+node scripts/operations/environment/run_test_command.mjs -- node scripts/qa/catalog/seed_image_moderation_submission.mjs seed moderator@example.com
 ```
 
 This creates one image-addition fixture and one image-adjustment fixture with private
@@ -1043,5 +1043,5 @@ the public image-publish path can be tested; reject them if you only need to che
 moderation UI. Remove unapproved leftovers with:
 
 ```sh
-npm run catalog:qa-image-clean -- moderator@example.com
+node scripts/operations/environment/run_test_command.mjs -- node scripts/qa/catalog/seed_image_moderation_submission.mjs cleanup moderator@example.com
 ```

@@ -6,11 +6,9 @@ const packageConfiguration = JSON.parse(readText("package.json"));
 
 describe("code quality tooling", () => {
 	it("runs code and style linting through one blocking command", () => {
-		expect(packageConfiguration.scripts.lint).toBe(
-			"npm run lint:code && npm run lint:styles",
-		);
-		expect(packageConfiguration.scripts["lint:code"]).toContain("eslint .");
-		expect(packageConfiguration.scripts["lint:styles"]).toContain("stylelint");
+		expect(packageConfiguration.scripts.lint).toContain("eslint .");
+		expect(packageConfiguration.scripts.lint).toContain("stylelint");
+		expect(packageConfiguration.scripts.lint).not.toContain("npm run lint");
 	});
 
 	it("checks new files without concealing the full formatting audit", () => {
@@ -24,12 +22,16 @@ describe("code quality tooling", () => {
 
 	it("keeps generated output outside maintained lint ownership", () => {
 		const eslintConfiguration = readText("eslint.config.js");
+		const prettierIgnore = readText(".prettierignore");
 		const stylelintConfiguration = readText("stylelint.config.js");
 
 		expect(eslintConfiguration).toContain('".vercel/**"');
+		expect(eslintConfiguration).toContain('".svelte-kit-rehearsal/**"');
 		expect(eslintConfiguration).toContain('"supabase/.temp/**"');
 		expect(stylelintConfiguration).toContain('".vercel/**"');
+		expect(stylelintConfiguration).toContain('".svelte-kit-rehearsal/**"');
 		expect(stylelintConfiguration).toContain('"supabase/.temp/**"');
+		expect(prettierIgnore).toContain(".svelte-kit-rehearsal/");
 	});
 
 	it("enforces lint and new-file formatting in source verification", () => {

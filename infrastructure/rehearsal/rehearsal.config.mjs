@@ -1,3 +1,4 @@
+// BlendCalc-specific consumer configuration for the project-neutral Rehearsal engine.
 import { defineRehearsalConfig } from "@rehearsal-db/core";
 
 export default defineRehearsalConfig({
@@ -49,9 +50,9 @@ export default defineRehearsalConfig({
 	},
 	verification: {
 		commands: [
-			"npm run rehearsal:sanitization:check",
-			"npm run rehearsal:export-migration:check",
-			"npm run db:rehearsal:verify-local-history",
+			"node scripts/generators/rehearsal/generate_sanitization_manifest.mjs --check",
+			"node scripts/generators/rehearsal/generate_export_boundary_migration.mjs --check",
+			"node scripts/operations/rehearsal/verify_local_migration_history.mjs",
 		],
 	},
 });

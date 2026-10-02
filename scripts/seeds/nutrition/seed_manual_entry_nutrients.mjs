@@ -25,7 +25,6 @@ import { createSourceNutrientMappingCatalog } from "../../lib/nutrition/source_n
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(scriptDirectory, "../../..");
 config({ path: path.join(projectRoot, ".env.moderation.local"), quiet: true });
-config({ path: path.join(projectRoot, ".env"), quiet: true });
 
 const FDC_API_KEY = process.env.FDC_API_KEY?.trim();
 const SUPABASE_URL = process.env.PUBLIC_SUPABASE_URL;

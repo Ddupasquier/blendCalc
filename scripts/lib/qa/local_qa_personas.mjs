@@ -5,7 +5,7 @@
  * carries one hundred distinct products across Fridge and Shopping List so pagination,
  * filtering, movement, and list performance are testable immediately.
  * Do not run directly. Reset the isolated stack
- * with `npm run db:test:reset` to recreate the exact states below.
+ * with `npm run db:test -- reset` to recreate the exact states below.
  */
 
 export const localQaPassword = "BlendCalc-Local-QA-2026!";

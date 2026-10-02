@@ -13,8 +13,6 @@ import {
 } from "../../lib/nutrition/openFoodFactsNutrientMappingAudit.mjs";
 
 config({ path: ".env.moderation.local", quiet: true });
-config({ path: ".env.local", quiet: true });
-config({ path: ".env", quiet: true });
 
 const apply = process.argv.includes("--apply");
 const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;

@@ -19,7 +19,6 @@ import { createAppUserAgent } from "../../lib/releases/app_version.mjs";
 const APP_USER_AGENT = createAppUserAgent("source quality benchmark");
 
 config({ path: ".env.moderation.local", quiet: true });
-config({ path: ".env", quiet: true });
 
 const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -412,5 +411,5 @@ console.table(
 );
 
 console.log(
-	`Recorded an equal-barcode benchmark for ${products.length} products. Run npm run report:source-quality -- --origin=benchmark to compare results.`,
+	`Recorded an equal-barcode benchmark for ${products.length} products. Run node scripts/audits/food-sources/report_product_source_quality.mjs --origin=benchmark to compare results.`,
 );

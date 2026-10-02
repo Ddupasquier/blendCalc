@@ -97,4 +97,9 @@ export const createWorkerSources = (mode = readViteMode()) => [
 ];
 
 export const createSvelteKitOutputDirectory = (mode = readViteMode()) =>
-	mode === "rehearsal" ? ".svelte-kit/rehearsal" : ".svelte-kit";
+	mode === "rehearsal" ? ".svelte-kit-rehearsal" : ".svelte-kit";
+
+export const createInactiveSvelteKitOutputWatchPattern = (
+	mode = readViteMode(),
+) =>
+	mode === "rehearsal" ? "**/.svelte-kit/**" : "**/.svelte-kit-rehearsal/**";

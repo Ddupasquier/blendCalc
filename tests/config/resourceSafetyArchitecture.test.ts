@@ -15,7 +15,6 @@ describe("resource-safe verification architecture", () => {
 			"verify:feature",
 			"verify:release",
 			"verify:nightly",
-			"db:test:verify",
 		]) {
 			expect(packageMetadata.scripts[command]).toContain(
 				"run_with_resource_limits.mjs",
@@ -27,6 +26,9 @@ describe("resource-safe verification architecture", () => {
 		expect(readSource("vite.config.ts")).toContain("maxWorkers: 4");
 		expect(packageMetadata.scripts.test).toContain("vitest run --reporter=dot");
 		expect(packageMetadata.scripts.test).not.toContain("npm run test:node");
+		expect(
+			readSource("scripts/operations/database/manage_test_database.mjs"),
+		).toContain('if (action === "verify") assertLocalResourceSafety()');
 	});
 
 	it("caps browser workers and cleans up an owned database runtime", () => {
@@ -46,7 +48,8 @@ describe("resource-safe verification architecture", () => {
 		expect(databaseManager).toContain(
 			"if (!keepRuntimeRunning) stopLocalStack()",
 		);
-		expect(dashboard).toContain('"--keep-running"');
+		expect(dashboard).not.toContain('"--keep-running"');
+		expect(dashboard).toContain('["run", "test:e2e"]');
 		expect(dashboard).toContain("stopOwnedDatabaseStack");
 		expect(dashboard).toContain("finally");
 		expect(browserRunner).toContain("manage_test_database.mjs");

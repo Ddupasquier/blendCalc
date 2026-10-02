@@ -25,12 +25,13 @@ import {
 } from "../../lib/images/smart_image_placement.mjs";
 
 config({ path: ".env.moderation.local", quiet: true });
-config({ path: ".env", quiet: true });
 
 const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const dryRun = process.argv.includes("--dry-run");
-const limitArgument = process.argv.find((argument) => argument.startsWith("--limit="));
+const limitArgument = process.argv.find((argument) =>
+	argument.startsWith("--limit="),
+);
 const limit = limitArgument
 	? Number.parseInt(limitArgument.split("=")[1] ?? "", 10)
 	: null;
@@ -69,7 +70,10 @@ const supabase = createClient(supabaseUrl, serviceRoleKey, {
 const fetchAllRows = async (buildQuery) => {
 	const rows = [];
 	for (let from = 0; ; from += PAGE_SIZE) {
-		const { data, error } = await buildQuery().range(from, from + PAGE_SIZE - 1);
+		const { data, error } = await buildQuery().range(
+			from,
+			from + PAGE_SIZE - 1,
+		);
 		if (error) throw error;
 		rows.push(...(data ?? []));
 		if (!data || data.length < PAGE_SIZE) break;
@@ -135,7 +139,9 @@ const fetchOpenFoodFactsIdentity = async (barcode) => {
 		}
 	}
 	if (lastFailureStatus) {
-		throw new Error(`Open Food Facts identity request failed with ${lastFailureStatus}.`);
+		throw new Error(
+			`Open Food Facts identity request failed with ${lastFailureStatus}.`,
+		);
 	}
 	return null;
 };
@@ -164,7 +170,9 @@ const loadCandidates = async () => {
 		fetchAllRows(() =>
 			supabase
 				.from("food_image_assets")
-				.select("id, barcode, shared_product_id, image_url, source, placement_method, placement_version, fit_mode, crop_x, crop_y, crop_zoom, rotation_degrees, crop_source, approved_by, status, image_role")
+				.select(
+					"id, barcode, shared_product_id, image_url, source, placement_method, placement_version, fit_mode, crop_x, crop_y, crop_zoom, rotation_degrees, crop_source, approved_by, status, image_role",
+				)
 				.eq("status", "active")
 				.eq("image_role", "front")
 				.eq("crop_x", 50)
@@ -186,11 +194,7 @@ const loadCandidates = async () => {
 				.select("barcode, food")
 				.not("barcode", "is", null),
 		),
-		fetchAllRows(() =>
-			supabase
-				.from("user_food_list_items")
-				.select("food")
-		),
+		fetchAllRows(() => supabase.from("user_food_list_items").select("food")),
 	]);
 	const productById = new Map(products.map((product) => [product.id, product]));
 	const identityByBarcode = new Map();
@@ -204,14 +208,17 @@ const loadCandidates = async () => {
 	}
 	const rememberFoodIdentity = (barcode, food) => {
 		const canonicalBarcode = normalizeBarcode(barcode);
-		if (!canonicalBarcode || identityByBarcode.has(canonicalBarcode) || !food) return;
+		if (!canonicalBarcode || identityByBarcode.has(canonicalBarcode) || !food)
+			return;
 		const productName = String(
 			food.description ?? food.name ?? food.productName ?? "",
 		).trim();
 		if (!productName) return;
 		identityByBarcode.set(canonicalBarcode, {
 			productName,
-			brandName: String(food.brandOwner ?? food.brandName ?? food.brand ?? "").trim(),
+			brandName: String(
+				food.brandOwner ?? food.brandName ?? food.brand ?? "",
+			).trim(),
 		});
 	};
 	for (const customFood of customFoods) {
@@ -239,14 +246,13 @@ const loadCandidates = async () => {
 					barcodeIdentity?.productName ||
 					"",
 				brandName:
-					getBrandName(image, productById) ||
-					barcodeIdentity?.brandName ||
-					"",
+					getBrandName(image, productById) || barcodeIdentity?.brandName || "",
 			};
 		})
 		.filter((image) => image.image_url);
 	for (const candidate of candidates) {
-		if (candidate.productName || candidate.source !== "open-food-facts") continue;
+		if (candidate.productName || candidate.source !== "open-food-facts")
+			continue;
 		const barcode = normalizeBarcode(candidate.barcode);
 		if (!barcode) continue;
 		try {
@@ -261,7 +267,8 @@ const loadCandidates = async () => {
 	const namedCandidates = candidates.filter(
 		(image) =>
 			image.productName &&
-			(!requestedBarcode || normalizeBarcode(image.barcode) === requestedBarcode),
+			(!requestedBarcode ||
+				normalizeBarcode(image.barcode) === requestedBarcode),
 	);
 	return Number.isFinite(limit) && limit > 0
 		? namedCandidates.slice(0, limit)
@@ -332,7 +339,8 @@ try {
 			});
 			summary.scanned += 1;
 			const upgradesLegacyDefault = candidate.placement_version === 1;
-			const placement = suggestedPlacement ??
+			const placement =
+				suggestedPlacement ??
 				(upgradesLegacyDefault ? createFullImagePlacementUpgrade() : null);
 			if (!placement) {
 				summary.ambiguous += 1;
@@ -369,7 +377,9 @@ try {
 				.maybeSingle();
 			if (error) throw error;
 			if (!data) {
-				throw new Error("Placement changed during the backfill; the row was left untouched.");
+				throw new Error(
+					"Placement changed during the backfill; the row was left untouched.",
+				);
 			}
 			summary.updated += 1;
 		} catch (error) {

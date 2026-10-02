@@ -31,7 +31,8 @@ backups, recovery, hosted audits, and incident response live in
 
 ## Environment Variables
 
-Local `.env`:
+Ordinary local development derives these values from the local services and passes them
+through the allowlisted application launcher; it does not read a root `.env` file:
 
 ```text
 PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
@@ -249,7 +250,7 @@ Quick QA login fails closed unless all of these conditions hold at the same time
 - `BLENDCALC_RUNTIME_ENVIRONMENT` is `test`;
 - the requested application origin is loopback HTTP on port `5174`;
 - the configured Supabase endpoint is loopback HTTP on port `54321`; and
-- `npm run db:test:start` generated the disposable QA password in `.env.test.local`.
+- `npm run db:test -- start` generated the disposable QA password in `.env.test.local`.
 
 The selector is absent on ordinary local development, previews, staging, and
 production. It creates a normal local Supabase session and does not bypass role checks,

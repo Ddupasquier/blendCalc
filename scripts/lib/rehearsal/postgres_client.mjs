@@ -1,7 +1,7 @@
 /**
  * Purpose: Build the isolated Docker-backed PostgreSQL client invocation used for
- * hosted Rehearsal reads without requiring a host psql installation.
- * Do not run directly; this module is reusable Rehearsal infrastructure.
+ * BlendCalc's hosted Rehearsal reads without requiring a host psql installation.
+ * Do not run directly; this module is project-owned source infrastructure.
  */
 
 import { createCleanProcessEnvironment } from "@rehearsal-db/core/process-environment";
