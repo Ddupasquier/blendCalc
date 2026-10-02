@@ -1,6 +1,7 @@
 /**
  * Purpose: Build the explicit production-connected environment used by the 5173
  * development server without restoring ambient Vite dotenv loading.
+ * Do not run directly; imported by the maintained development launcher and tests.
  */
 
 import { realpathSync, readFileSync, statSync } from "node:fs";

@@ -105,7 +105,7 @@ start or reset only localhost Supabase, writes an ignored test environment, appl
 `supabase/seed.sql`, and repairs the maintained personas in
 `lib/qa/local_qa_personas.mjs`.
 
-`operations/environment/run_production_development.mjs` owns `dev:local` and port
+`scripts/operations/environment/run_production_development.mjs` owns `dev:local` and port
 `5173`. It reads only the reviewed production-development allowlist from the ignored,
 owner-only `.env`, verifies the established hosted application/API projects, and starts
 Vite with an explicit production-connected environment. It never reads or receives a
