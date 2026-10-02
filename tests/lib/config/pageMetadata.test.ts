@@ -62,4 +62,13 @@ describe("page metadata", () => {
 			),
 		).toBe("https://www.blendcalc.food/ingredients/shopping");
 	});
+
+	it("gives error documents an honest browser title", () => {
+		expect(getAppDocumentTitle(url("/missing-page"), null, 404)).toBe(
+			"Page Not Found · blendCalc",
+		);
+		expect(getAppDocumentTitle(url("/ingredients/fridge"), null, 500)).toBe(
+			"Something Went Wrong · blendCalc",
+		);
+	});
 });
