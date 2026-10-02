@@ -8,11 +8,15 @@
 	} from "$lib/utils/moderation/catalogHealthMessages";
 	import type { FoodWarningFollowUpListProps } from "./types";
 
-	let { followUps }: FoodWarningFollowUpListProps = $props();
+	let {
+		followUps,
+		productCorrectionTotal = followUps.productCorrections.length,
+		policyReviewTotal = followUps.policyReviews.length,
+		productCorrectionControls,
+		policyReviewControls,
+	}: FoodWarningFollowUpListProps = $props();
 
-	const followUpCount = $derived(
-		followUps.productCorrections.length + followUps.policyReviews.length,
-	);
+	const followUpCount = $derived(productCorrectionTotal + policyReviewTotal);
 	const formatFieldList = (fields: string[]) =>
 		fields.map(getCatalogFieldLabel).join(", ");
 </script>
@@ -29,72 +33,93 @@
 				The report decision is complete. These items are the separate corrective
 				work that must finish before the underlying warning issue is closed.
 			</p>
-			{#each followUps.productCorrections as correction (correction.id)}
-				<article class="food-warning-follow-up-list__item">
-					<header>
-						<div>
-							<strong>{correction.productName}</strong>
-							<span>{correction.barcode}</span>
-						</div>
-						<TextBadge
-							label={correction.status === "linked"
-								? "Correction submitted"
-								: "Correction needed"}
-							tone="warning"
-						/>
-					</header>
-					<p>
-						A confirmed warning report needs evidence-backed updates to
-						{formatFieldList(correction.affectedFieldPaths)}.
-					</p>
-					<a
-						href={`/profile/privileged-tools/catalog-review-work/products/${encodeURIComponent(correction.sharedProductId)}`}
-					>
-						Review product and correction status
-					</a>
-				</article>
-			{/each}
-
-			{#each followUps.policyReviews as reviewCase (reviewCase.id)}
-				<article class="food-warning-follow-up-list__item">
-					<header>
-						<div>
-							<strong>{reviewCase.productName}</strong>
-							<span
-								>{reviewCase.barcode ??
-									reviewCase.sourceKey ??
-									"Source unavailable"}</span
-							>
-						</div>
-						<TextBadge
-							label={getCatalogHealthStatusLabel(reviewCase.status)}
-							tone="warning"
-						/>
-					</header>
-					<p>
-						{reviewCase.caseType === "rule_review"
-							? "The food-warning rule needs an evidence review."
-							: "The source mapping needs an evidence-backed correction."}
-					</p>
-					<p class="food-warning-follow-up-list__owner">
-						Owner: {getCatalogResponsibleGroupLabel(
-							reviewCase.responsibleGroup,
-						)}
-					</p>
-					<p class="food-warning-follow-up-list__owner">
-						Next step: {reviewCase.caseType === "rule_review"
-							? "Compare the active warning rule with its approved policy sources."
-							: "Trace the incorrect source mapping to reviewed package or provider evidence."}
-					</p>
-					<a
-						href={`/profile/privileged-tools/food-warning-reports/follow-ups/${encodeURIComponent(reviewCase.id)}`}
-					>
-						{reviewCase.caseType === "rule_review"
-							? "Review warning rule"
-							: "Review warning source"}
-					</a>
-				</article>
-			{/each}
+			{#if productCorrectionTotal > 0}
+				<section
+					class="food-warning-follow-up-list__queue"
+					aria-label="Product correction follow-ups"
+				>
+					<h3>Product corrections</h3>
+					<div class="food-warning-follow-up-list__cards">
+						{#each followUps.productCorrections as correction (correction.id)}
+							<article class="food-warning-follow-up-list__item">
+								<header>
+									<div>
+										<strong>{correction.productName}</strong>
+										<span>{correction.barcode}</span>
+									</div>
+									<TextBadge
+										label={correction.status === "linked"
+											? "Correction submitted"
+											: "Correction needed"}
+										tone="warning"
+									/>
+								</header>
+								<p>
+									A confirmed warning report needs evidence-backed updates to
+									{formatFieldList(correction.affectedFieldPaths)}.
+								</p>
+								<a
+									href={`/profile/privileged-tools/catalog-review-work/products/${encodeURIComponent(correction.sharedProductId)}`}
+								>
+									Review product and correction status
+								</a>
+							</article>
+						{/each}
+					</div>
+					{#if productCorrectionControls}{@render productCorrectionControls()}{/if}
+				</section>
+			{/if}
+			{#if policyReviewTotal > 0}
+				<section
+					class="food-warning-follow-up-list__queue"
+					aria-label="Policy and source follow-ups"
+				>
+					<h3>Policy and source reviews</h3>
+					<div class="food-warning-follow-up-list__cards">
+						{#each followUps.policyReviews as reviewCase (reviewCase.id)}
+							<article class="food-warning-follow-up-list__item">
+								<header>
+									<div>
+										<strong>{reviewCase.productName}</strong>
+										<span
+											>{reviewCase.barcode ??
+												reviewCase.sourceKey ??
+												"Source unavailable"}</span
+										>
+									</div>
+									<TextBadge
+										label={getCatalogHealthStatusLabel(reviewCase.status)}
+										tone="warning"
+									/>
+								</header>
+								<p>
+									{reviewCase.caseType === "rule_review"
+										? "The food-warning rule needs an evidence review."
+										: "The source mapping needs an evidence-backed correction."}
+								</p>
+								<p class="food-warning-follow-up-list__owner">
+									Owner: {getCatalogResponsibleGroupLabel(
+										reviewCase.responsibleGroup,
+									)}
+								</p>
+								<p class="food-warning-follow-up-list__owner">
+									Next step: {reviewCase.caseType === "rule_review"
+										? "Compare the active warning rule with its approved policy sources."
+										: "Trace the incorrect source mapping to reviewed package or provider evidence."}
+								</p>
+								<a
+									href={`/profile/privileged-tools/food-warning-reports/follow-ups/${encodeURIComponent(reviewCase.id)}`}
+								>
+									{reviewCase.caseType === "rule_review"
+										? "Review warning rule"
+										: "Review warning source"}
+								</a>
+							</article>
+						{/each}
+					</div>
+					{#if policyReviewControls}{@render policyReviewControls()}{/if}
+				</section>
+			{/if}
 		</div>
 	</CollapsibleSection>
 {/if}

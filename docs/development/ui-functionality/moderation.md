@@ -164,6 +164,15 @@ required action after reading the evidence.
 
 ## Food Warning Review And Follow-Up
 
+- Independently page pending reports, policy/source follow-ups, and warning-origin
+  product corrections in ten-row oldest-first batches. Count all actionable rows in
+  the guide and launcher, not only the loaded cards. Use stable `(created_at, id)`
+  cursors with full timestamp precision and sign evidence only for returned reports.
+- Reuse explicit Load more and Return to top controls on the workspace scroll root.
+  Keep cards, drafts, and scroll position during loading; never load on scroll.
+  Guard duplicate requests, time out unavailable reads, and offer retry. Reconcile the
+  already loaded depth after decisions and changed queue totals. If reconciliation
+  fails, retain the cards but require retry before another report decision.
 - Exact incorrect-match disputes are dismissed before queue reads only when the active
   policy, current immutable product revision, and complete confirmed fact snapshot still
   match canonical evidence. The database stores an immutable system receipt. Reports

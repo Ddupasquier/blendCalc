@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { parse } from "dotenv";
 import { readFile } from "node:fs/promises";
 import type { Database, Json } from "$lib/types/database.types";
@@ -155,6 +155,147 @@ const findLocalQaUserByEmail = async (email: string) => {
 	);
 	if (!user) throw new Error(`The local QA account ${email} does not exist.`);
 	return { admin, user };
+};
+
+/** More than two tied-timestamp pages, isolated to disposable local Supabase. */
+export const seedLocalQaFoodWarningQueues = async (email: string) => {
+	const { admin, user } = await findLocalQaUserByEmail(email);
+	const { data: product, error: productError } = await admin
+		.from("shared_product_revisions")
+		.select("id, shared_product_id")
+		.order("created_at", { ascending: false })
+		.limit(1)
+		.single();
+	if (productError) throw productError;
+	const { data: tag, error: tagError } = await admin
+		.from("compatibility_tags")
+		.select("id")
+		.eq("slug", "soy")
+		.single();
+	if (tagError) throw tagError;
+	const reportIds = Array.from({ length: 75 }, () => randomUUID()).sort();
+	const createdAt = "2000-01-01T00:00:00.123456Z";
+	const evidencePath = `${user.id}/${randomUUID()}/paged-warning.png`;
+	const evidenceBytes = Buffer.from(
+		"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+		"base64",
+	);
+	const cleanup = async () => {
+		const { error } = await admin
+			.from("food_compatibility_feedback")
+			.delete()
+			.in("id", reportIds);
+		if (error) throw error;
+		const { error: storageError } = await admin.storage
+			.from("product-submission-evidence")
+			.remove([evidencePath]);
+		if (storageError) throw storageError;
+	};
+	try {
+		const { error: uploadError } = await admin.storage
+			.from("product-submission-evidence")
+			.upload(evidencePath, evidenceBytes, { contentType: "image/png" });
+		if (uploadError) throw uploadError;
+		const { error } = await admin.from("food_compatibility_feedback").insert(
+			reportIds.map((id, index) => ({
+				id,
+				reported_by: user.id,
+				food_description: `QA Paged Warning ${String(index + 1).padStart(2, "0")}`,
+				shared_product_id: product.shared_product_id,
+				shared_product_revision_id: product.id,
+				report_reason: "wrong_evidence_type",
+				feedback_type: "incorrect_warning",
+				warning_id: "qa-allergen-soy",
+				issue_code: "FOOD_ALLERGEN_CONTAINS",
+				report_fingerprint: createHash("sha256").update(id).digest("hex"),
+				created_at: createdAt,
+				...(index === 0
+					? {
+							feedback_type: "missing_warning",
+							report_reason: "missing_warning",
+							warning_id: null,
+							issue_code: null,
+							preference_type: "allergen",
+							preference_value: "Soy",
+							preference_tag_id: tag.id,
+							evidence_path: evidencePath,
+							evidence_sha256: createHash("sha256")
+								.update(evidenceBytes)
+								.digest("hex"),
+						}
+					: {}),
+				...(index >= 25
+					? {
+							status: "confirmed",
+							decision_method: "human",
+							reviewed_by: user.id,
+							reviewed_at: createdAt,
+							review_note: "Reviewed local QA fixture.",
+							resolution_action:
+								index >= 50
+									? "product_correction"
+									: (index - 25) % 2
+										? "source_correction"
+										: "rule_review",
+							follow_up_status: "open",
+						}
+					: {}),
+			})),
+			{ defaultToNull: false },
+		);
+		if (error) throw error;
+		const policyIds = Array.from({ length: 25 }, () => randomUUID()).sort();
+		const { error: policyError } = await admin
+			.from("food_warning_policy_review_cases")
+			.insert(
+				policyIds.map((id, index) => ({
+					id,
+					feedback_id: reportIds[index + 25],
+					created_at: createdAt,
+					case_type: index % 2 ? "source_correction" : "rule_review",
+					responsible_group:
+						index % 2 ? "data_operations" : "food_policy_review",
+					status: index === 2 ? "deferred" : "open",
+					opened_by: user.id,
+				})),
+			);
+		if (policyError) throw policyError;
+		const { error: correctionError } = await admin
+			.from("catalog_correction_origins")
+			.insert(
+				reportIds.slice(50).map((id) => ({
+					food_compatibility_feedback_id: id,
+					shared_product_id: product.shared_product_id,
+					base_revision_id: product.id,
+					origin_type: "food_warning_report",
+					affected_field_paths: ["allergens"],
+					prefilled_food: {},
+					created_at: createdAt,
+				})),
+			);
+		if (correctionError) throw correctionError;
+		return {
+			reportIds: reportIds.slice(0, 25),
+			policyIds,
+			cleanup,
+			resolveLoadedReport: async () => {
+				const { error } = await admin
+					.from("food_compatibility_feedback")
+					.update({
+						status: "dismissed",
+						reviewed_by: user.id,
+						reviewed_at: new Date().toISOString(),
+						review_note: "Concurrent local QA decision.",
+						resolution_action: "none",
+					})
+					.eq("id", reportIds[0]);
+				if (error) throw error;
+			},
+		};
+	} catch (error) {
+		await cleanup();
+		throw error;
+	}
 };
 
 export const getAuthenticatedLocalQaDatabaseClient = async (

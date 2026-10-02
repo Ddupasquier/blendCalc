@@ -1,0 +1,15 @@
+@use "../../../../styles/variables" as *;
+
+.food-warning-queue-controls {
+	display: grid;
+	gap: $app-gap-sm;
+	min-width: 0;
+	// Keep the shared buttons' focus outlines inside the scroll clipping boundary.
+	padding: $app-gap-xs;
+}
+
+.food-warning-queue-controls > p {
+	margin: 0;
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+}

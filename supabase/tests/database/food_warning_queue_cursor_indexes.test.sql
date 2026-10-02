@@ -1,0 +1,10 @@
+begin;
+select plan(6);
+select has_index('public', 'food_compatibility_feedback', 'food_compatibility_feedback_pending_cursor_idx', 'pending report cursor has an index');
+select has_index('public', 'food_warning_policy_review_cases', 'food_warning_policy_review_cases_open_cursor_idx', 'open and deferred policy/source cursor has an index');
+select has_index('public', 'catalog_correction_origins', 'catalog_correction_origins_warning_cursor_idx', 'warning-origin correction cursor has an index');
+select ok((select indexdef like '%(created_at, id)%' and indexdef like '%pending%' from pg_indexes where schemaname = 'public' and indexname = 'food_compatibility_feedback_pending_cursor_idx'), 'report index covers the stable cursor and pending predicate');
+select ok((select indexdef like '%(created_at, id)%' and indexdef like '%open%' and indexdef like '%deferred%' from pg_indexes where schemaname = 'public' and indexname = 'food_warning_policy_review_cases_open_cursor_idx'), 'policy/source index covers the stable cursor and both actionable statuses');
+select ok((select indexdef like '%(created_at, id)%' and indexdef like '%food_warning_report%' and indexdef like '%waiting_for_correction%' and indexdef like '%linked%' from pg_indexes where schemaname = 'public' and indexname = 'catalog_correction_origins_warning_cursor_idx'), 'correction index covers the stable cursor, warning origin, and both actionable statuses');
+select * from finish();
+rollback;

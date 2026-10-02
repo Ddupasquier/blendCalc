@@ -1,19 +1,23 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
-	import FoodWarningFollowUpList from "$lib/components/moderation/FoodWarningFollowUpList/FoodWarningFollowUpList.svelte";
-	import FoodWarningReportReviewList from "$lib/components/moderation/FoodWarningReportReviewList/FoodWarningReportReviewList.svelte";
+	import { untrack } from "svelte";
+	import FoodWarningQueues from "$lib/components/moderation/FoodWarningQueues/FoodWarningQueues.svelte";
 	import PrivilegedToolWorkspaceView from "$lib/components/moderation/PrivilegedToolWorkspaceView/PrivilegedToolWorkspaceView.svelte";
 	import ProfilePage from "../../+page.svelte";
 	import type { FoodWarningReportsPageProps } from "./types";
 
 	let { data, form }: FoodWarningReportsPageProps = $props();
-	const followUpCount = $derived(
-		data.compatibilityFollowUps.productCorrections.length +
-			data.compatibilityFollowUps.policyReviews.length,
+	let scrollContainer = $state<HTMLElement | null>(null);
+	let totals = $state(
+		untrack(() => ({
+			reports: data.foodWarningQueues.reports.total,
+			followUps:
+				data.foodWarningQueues.productCorrections.total +
+				data.foodWarningQueues.policyReviews.total,
+		})),
 	);
-	const totalWorkCount = $derived(
-		data.compatibilityFeedback.length + followUpCount,
-	);
+	const followUpCount = $derived(totals.followUps);
+	const totalWorkCount = $derived(totals.reports + followUpCount);
 
 	const closeAction = () => {
 		void goto("/profile/privileged-tools", { replaceState: true });
@@ -29,13 +33,13 @@
 	guide={{
 		tone: totalWorkCount > 0 ? "attention" : "clear",
 		title:
-			data.compatibilityFeedback.length > 0
-				? `Review ${data.compatibilityFeedback.length} ${data.compatibilityFeedback.length === 1 ? "warning report" : "warning reports"}`
+			totals.reports > 0
+				? `Review ${totals.reports} ${totals.reports === 1 ? "warning report" : "warning reports"}`
 				: followUpCount > 0
 					? `Finish ${followUpCount} warning ${followUpCount === 1 ? "follow-up" : "follow-ups"}`
 					: "No warning reports need a decision",
 		description:
-			data.compatibilityFeedback.length > 0
+			totals.reports > 0
 				? "Start with the oldest report, compare the user's claim with the stored policy and package evidence, then assign the correct follow-up."
 				: followUpCount > 0
 					? "The original reports are reviewed. Complete or deliberately defer the corrective work listed below."
@@ -46,7 +50,14 @@
 		countLabel: "food warning reports and follow-ups requiring review",
 	}}
 	onClose={closeAction}
+	bind:scrollContainer
 >
-	<FoodWarningReportReviewList reports={data.compatibilityFeedback} {form} />
-	<FoodWarningFollowUpList followUps={data.compatibilityFollowUps} />
+	<FoodWarningQueues
+		pages={data.foodWarningQueues}
+		{form}
+		{scrollContainer}
+		onTotalsChange={(nextTotals) => {
+			totals = nextTotals;
+		}}
+	/>
 </PrivilegedToolWorkspaceView>
