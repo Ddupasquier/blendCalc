@@ -1,7 +1,4 @@
-import { shouldSendNoIndexHeader } from "$lib/config/searchDiscovery";
-
-const isAuthPath = (pathname: string) =>
-	pathname === "/auth" || pathname.startsWith("/auth/");
+const isAuthPath = (pathname: string) => pathname === "/auth" || pathname.startsWith("/auth/");
 
 export const applySecurityHeaders = (
 	response: Response,
@@ -18,9 +15,6 @@ export const applySecurityHeaders = (
 		"Permissions-Policy",
 		"camera=(self), microphone=(), geolocation=()",
 	);
-	if (shouldSendNoIndexHeader(url.pathname, response.status)) {
-		response.headers.set("X-Robots-Tag", "noindex, nofollow");
-	}
 
 	if (
 		isAuthenticated ||

@@ -63,16 +63,16 @@ Dependency install scripts are deny-by-default. Reviewed package versions are li
 
 ### 2. Configure The Environment
 
-Ordinary development on port `5173` uses the real hosted BlendCalc application and API
-projects. Its exact allowlist lives in the ignored, owner-only repository-root `.env`;
-start from `config/environments/production-development.example.env`. Vite does not
-layer ambient repository dotenv files—the maintained launcher reads only that reviewed
-contract. Use Rehearsal on port `5175` whenever changes must not affect production.
+Ordinary local development needs no environment file or hosted credentials. `npm run
+dev` derives the two local Supabase environments and launches the app with an
+allowlisted process environment. Vite does not layer ambient repository dotenv files.
+Use the ignored `.env.moderation.local` only for privileged CLI and linked-database
+operations.
 
 Manually configured runtimes have consumer-specific key-name templates under
 `config/environments/` so Edge Function, Vercel, Rehearsal, and privileged-operation
-variables do not leak into environments that never consume them. TEST values are
-generated from local services instead of copied from examples.
+variables do not leak into environments that never consume them. TEST and ordinary
+local values are generated from their local services instead of copied from examples.
 See [Environment Configuration](docs/development/environment.md) for the file map,
 deployment ownership, and synchronization workflow. Never prefix a server secret with
 `PUBLIC_` or `VITE_`; ignored value files must never be committed.
@@ -92,10 +92,8 @@ manual smoke run. The full table, retry, and enablement contract is documented i
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173). This server uses real production
-accounts and data: saves, edits, deletions, privileged actions, provider requests, and
-configured email side effects are real. The isolated test application uses port `5174`
-and is started with `npm run dev:test`.
+Open [http://localhost:5173](http://localhost:5173). The isolated test application uses
+port `5174` and is started with `npm run dev:test`.
 
 Rehearsal uses port `5175`. Before its real Google sign-in flow can run, create the
 dedicated local OAuth file described in
@@ -114,8 +112,8 @@ intentionally omitted.
 
 | Command                                                                    | Purpose                                                                   |
 | -------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| `npm run dev`                                                              | Start production-connected development on port `5173`.                    |
-| `npm run dev:local`                                                        | Explicit form of the production-connected development command.            |
+| `npm run dev`                                                              | Start safe local databases plus the app on port `5173`.                   |
+| `npm run dev:local`                                                        | Explicit form of the safe local development command.                      |
 | `npm run dev:test`                                                         | Start port `5174` with disposable Supabase and Quick QA login.            |
 | `npm run dev:test:auth`                                                    | Start port `5174` with the official local Turnstile test widget.          |
 | `npm run dev:rehearsal`                                                    | Start port `5175` against the restored sanitized Rehearsal database.      |

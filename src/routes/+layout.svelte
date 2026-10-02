@@ -21,11 +21,6 @@
 		getCanonicalAppUrl,
 	} from "$lib/config/pageMetadata";
 	import {
-		getSearchRobotsDirective,
-		isIndexablePublicPath,
-		PUBLIC_ORGANIZATION_STRUCTURED_DATA_JSON,
-	} from "$lib/config/searchDiscovery";
-	import {
 		clearObsoleteAppStorage,
 		setActiveStorageUserId,
 	} from "$lib/utils/storage/client/storageScope";
@@ -164,18 +159,8 @@
 	);
 	const tutorialRouteOpen = $derived(page.url.pathname === "/profile/tutorial");
 	const tutorialVisible = $derived(tutorialOpen || tutorialRouteOpen);
-	const documentTitle = $derived(
-		getAppDocumentTitle(page.url, null, page.status),
-	);
-	const canonicalUrl = $derived(
-		page.status < 400 ? getCanonicalAppUrl(page.url) : null,
-	);
-	const searchRobotsDirective = $derived(
-		getSearchRobotsDirective(page.url.pathname, page.status),
-	);
-	const isIndexablePublicPage = $derived(
-		page.status < 400 && isIndexablePublicPath(page.url.pathname),
-	);
+	const documentTitle = $derived(getAppDocumentTitle(page.url));
+	const canonicalUrl = $derived(getCanonicalAppUrl(page.url));
 
 	$effect.pre(() => {
 		configureServingMeasureCatalog(data.servingMeasureCatalog);
@@ -245,34 +230,23 @@
 	<meta name="theme-color" content={LIGHT_THEME_COLOR} />
 	<meta name="application-version" content={APP_VERSION} />
 	<meta name="application-build" content={APP_BUILD_VERSION} />
-	<meta name="robots" content={searchRobotsDirective} />
 	<link rel="icon" type="image/svg+xml" sizes="any" href="/favicon.ico" />
 	<link rel="shortcut icon" href="/favicon.ico" />
-	{#if canonicalUrl}
-		<link rel="canonical" href={canonicalUrl} />
-	{/if}
-	{#if isIndexablePublicPage}
-		<meta property="og:type" content="website" />
-		<meta property="og:url" content={canonicalUrl} />
-		<meta property="og:title" content={documentTitle} />
-		<meta property="og:description" content={APP_DESCRIPTION} />
-		<meta property="og:image" content={APP_SOCIAL_PREVIEW_URL} />
-		<meta property="og:image:type" content="image/png" />
-		<meta property="og:image:width" content="1200" />
-		<meta property="og:image:height" content="630" />
-		<meta property="og:image:alt" content={APP_SOCIAL_PREVIEW_ALT} />
-		<meta name="twitter:card" content="summary_large_image" />
-		<meta name="twitter:title" content={documentTitle} />
-		<meta name="twitter:description" content={APP_DESCRIPTION} />
-		<meta name="twitter:image" content={APP_SOCIAL_PREVIEW_URL} />
-		<meta name="twitter:image:alt" content={APP_SOCIAL_PREVIEW_ALT} />
-		<svelte:element
-			this={"script"}
-			type="application/ld+json"
-			data-search-identity="organization"
-			>{PUBLIC_ORGANIZATION_STRUCTURED_DATA_JSON}</svelte:element
-		>
-	{/if}
+	<link rel="canonical" href={canonicalUrl} />
+	<meta property="og:type" content="website" />
+	<meta property="og:url" content={canonicalUrl} />
+	<meta property="og:title" content={documentTitle} />
+	<meta property="og:description" content={APP_DESCRIPTION} />
+	<meta property="og:image" content={APP_SOCIAL_PREVIEW_URL} />
+	<meta property="og:image:type" content="image/png" />
+	<meta property="og:image:width" content="1200" />
+	<meta property="og:image:height" content="630" />
+	<meta property="og:image:alt" content={APP_SOCIAL_PREVIEW_ALT} />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content={documentTitle} />
+	<meta name="twitter:description" content={APP_DESCRIPTION} />
+	<meta name="twitter:image" content={APP_SOCIAL_PREVIEW_URL} />
+	<meta name="twitter:image:alt" content={APP_SOCIAL_PREVIEW_ALT} />
 </svelte:head>
 
 <ThemeSynchronizer preference={data.themePreference} />

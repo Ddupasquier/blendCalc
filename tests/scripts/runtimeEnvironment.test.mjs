@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chmodSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import {
 	assertSafeLocalApplicationEnvironment,
 	createCleanProcessEnvironment,
@@ -9,12 +9,6 @@ import {
 	parseSupabaseStatusEnvironment,
 	removeLocalSupabaseProjectResources,
 } from "../../scripts/lib/environment/local_supabase.mjs";
-import {
-	productionDevelopmentEnvironmentKeys,
-	readProductionDevelopmentEnvironment,
-} from "../../scripts/lib/environment/production_development.mjs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
 
 const applicationSupabase = {
 	apiUrl: "http://127.0.0.1:54321",
@@ -28,47 +22,6 @@ const blendCalcAPISupabase = {
 };
 
 describe("script runtime environments", () => {
-	it("loads only the owner-protected production-development allowlist", () => {
-		const repositoryRoot = mkdtempSync(join(tmpdir(), "blendcalc-prod-dev-"));
-		const path = join(repositoryRoot, ".env");
-		const values = Object.fromEntries(
-			productionDevelopmentEnvironmentKeys.map((key) => [key, ""]),
-		);
-		Object.assign(values, {
-			PUBLIC_SUPABASE_URL: "https://wbqsnipoiqjzppjuawpn.supabase.co",
-			PUBLIC_SUPABASE_PUBLISHABLE_KEY: "publishable",
-			SUPABASE_SERVICE_ROLE_KEY: "service-role",
-			BLENDCALC_API_SUPABASE_URL: "https://smmiqvjctelnuzxbzdar.supabase.co",
-			BLENDCALC_API_SUPABASE_SERVICE_ROLE_KEY: "api-service-role",
-			BLENDCALC_API_READ_MODE: "isolated",
-		});
-		writeFileSync(
-			path,
-			Object.entries(values)
-				.map(([key, value]) => `${key}=${value}`)
-				.join("\n"),
-			{ mode: 0o600 },
-		);
-
-		const environment = readProductionDevelopmentEnvironment({
-			repositoryRoot,
-		});
-		expect(environment).toMatchObject({
-			BLENDCALC_RUNTIME_ENVIRONMENT: "production",
-			PUBLIC_SITE_URL: "http://localhost:5173",
-			PUBLIC_SUPABASE_URL: "https://wbqsnipoiqjzppjuawpn.supabase.co",
-			BLENDCALC_API_READ_MODE: "isolated",
-		});
-		expect(environment).not.toHaveProperty(
-			"SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET",
-		);
-
-		chmodSync(path, 0o644);
-		expect(() =>
-			readProductionDevelopmentEnvironment({ repositoryRoot }),
-		).toThrow("owner-only");
-	});
-
 	it("refuses broad or malformed Docker cleanup targets before invoking Docker", () => {
 		for (const projectId of [
 			undefined,

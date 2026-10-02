@@ -1,7 +1,8 @@
 /**
- * Purpose: Start BlendCalc only against validated TEST or Rehearsal application and
- * blendCalcAPI services with an allowlisted child environment.
- * Run: `npm run dev:test`, `npm run dev:test:auth`, or `npm run dev:rehearsal`.
+ * Purpose: Start BlendCalc only against validated local application and blendCalcAPI
+ * services with an allowlisted child environment.
+ * Run: `npm run dev:local`, `npm run dev:test`, `npm run dev:test:auth`, or
+ * `npm run dev:rehearsal`.
  * This command never reads hosted credentials or contacts a hosted database.
  */
 
@@ -23,9 +24,9 @@ const blendCalcAPIWorkdir = "infrastructure/blendCalcAPI";
 const runtimeEnvironment = process.argv[2];
 const useTurnstileTestWidget = process.argv.includes("--auth");
 
-if (!new Set(["test", "rehearsal"]).has(runtimeEnvironment)) {
+if (!new Set(["local", "test", "rehearsal"]).has(runtimeEnvironment)) {
 	throw new Error(
-		"Isolated application launcher accepts only test or rehearsal.",
+		"Application launcher accepts only local, test, or rehearsal.",
 	);
 }
 
@@ -75,6 +76,10 @@ const startApplicationSupabase = () => {
 		]);
 		return readLocalSupabaseEnvironment({ cwd: repositoryRoot });
 	}
+	return startLocalSupabase({
+		cwd: repositoryRoot,
+		exclude: ["edge-runtime", "logflare", "vector"],
+	});
 };
 
 const applicationSupabase = startApplicationSupabase();
@@ -82,7 +87,12 @@ const blendCalcAPISupabase = startLocalSupabase({
 	cwd: repositoryRoot,
 	workdir: blendCalcAPIWorkdir,
 });
-const port = runtimeEnvironment === "test" ? 5174 : 5175;
+const port =
+	runtimeEnvironment === "test"
+		? 5174
+		: runtimeEnvironment === "rehearsal"
+			? 5175
+			: 5173;
 const generatedTestEnvironment =
 	runtimeEnvironment === "test" ? readGeneratedTestEnvironment() : {};
 const generatedRehearsalEnvironment =

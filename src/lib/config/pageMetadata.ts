@@ -9,10 +9,7 @@ export const formatDocumentTitle = (title: string) =>
 export const getAppDocumentTitle = (
 	url: URL,
 	ingredientName?: string | null,
-	status = 200,
 ) => {
-	if (status === 404) return formatDocumentTitle("Page Not Found");
-	if (status >= 500) return formatDocumentTitle("Something Went Wrong");
 	const { pathname } = url;
 
 	if (pathname === "/") {
