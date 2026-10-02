@@ -31,8 +31,10 @@ backups, recovery, hosted audits, and incident response live in
 
 ## Environment Variables
 
-Ordinary local development derives these values from the local services and passes them
-through the allowlisted application launcher; it does not read a root `.env` file:
+Ordinary development on port `5173` uses the real hosted production projects. Its
+allowlisted launcher reads the ignored, owner-only root `.env` using
+`config/environments/production-development.example.env`; saves and deletions affect
+production. The browser-facing Auth settings are:
 
 ```text
 PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
@@ -40,6 +42,11 @@ PUBLIC_SUPABASE_PUBLISHABLE_KEY=YOUR_PUBLISHABLE_KEY
 PUBLIC_SITE_URL=
 PUBLIC_TURNSTILE_SITE_KEY=
 ```
+
+The launcher fixes `PUBLIC_SITE_URL` to `http://localhost:5173`. Disposable TEST on
+`5174` instead derives its values from local services, while Rehearsal on `5175` keeps
+its separate sandbox configuration. See [`environment.md`](environment.md) for the
+complete environment boundaries and key ownership.
 
 Vercel Production and Preview environments:
 
