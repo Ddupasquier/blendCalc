@@ -5,7 +5,10 @@ import {
 	waitForAppReady,
 } from "./support/browserTest";
 import type { Locator, Page } from "@playwright/test";
-import { getAuthenticatedLocalQaDatabaseClient } from "./support/localQaDatabase";
+import {
+	getAuthenticatedLocalQaDatabaseClient,
+	seedLocalQaCatalogReviewPresentation,
+} from "./support/localQaDatabase";
 
 type CapturedEntryAnimation = {
 	duration: number | undefined;
@@ -1471,6 +1474,259 @@ test("nutrition details separate personalized warnings from source allergen disc
 				dietary_restrictions: originalPreferences.dietary_restrictions,
 			})
 			.eq("user_id", userId);
+	}
+});
+
+test("catalog review stays in Food passport, not saved cards or Nutrition Facts @compatibility @mobile", async ({
+	page,
+}, testInfo) => {
+	test.setTimeout(180_000);
+	const supabase = await getAuthenticatedLocalQaDatabaseClient(
+		testInfo.parallelIndex,
+	);
+	const fixture = await seedLocalQaCatalogReviewPresentation(
+		testInfo.parallelIndex,
+	);
+	let originalTheme: string | undefined;
+	try {
+		const { data: profile, error: profileError } = await supabase
+			.from("profiles")
+			.select("appearance_theme")
+			.single();
+		if (profileError) throw profileError;
+		originalTheme = profile.appearance_theme;
+		const { error: themeError } = await supabase.rpc(
+			"save_current_user_appearance_theme",
+			{ p_appearance_theme: "system" },
+		);
+		if (themeError) throw themeError;
+		const modes =
+			testInfo.project.name === "desktop-chromium"
+				? [
+						{
+							name: "compact-light",
+							width: 390,
+							height: 844,
+							dark: false,
+							largeText: false,
+						},
+						{
+							name: "narrow-dark-text",
+							width: 320,
+							height: 740,
+							dark: true,
+							largeText: true,
+						},
+						{
+							name: "desktop-light",
+							width: 1440,
+							height: 900,
+							dark: false,
+							largeText: false,
+						},
+						{
+							name: "desktop-dark",
+							width: 1440,
+							height: 900,
+							dark: true,
+							largeText: false,
+						},
+					]
+				: [
+						{
+							name: "configured",
+							...page.viewportSize()!,
+							dark: false,
+							largeText: false,
+						},
+					];
+		for (const mode of modes) {
+			await page.setViewportSize({ width: mode.width, height: mode.height });
+			await page.emulateMedia({
+				colorScheme: mode.dark ? "dark" : "light",
+				reducedMotion: mode.largeText ? "reduce" : "no-preference",
+			});
+			for (const listType of ["fridge", "shopping"] as const) {
+				if (listType === "shopping") {
+					const { error } = await supabase.rpc("move_user_food_list_items", {
+						p_fdc_ids: fixture.foodIds,
+						p_source_list_type: "fridge",
+						p_target_list_type: "shopping",
+					});
+					if (error) throw error;
+				}
+				await page.goto(`/ingredients/${listType}`);
+				await waitForAppReady(page);
+				if (mode.largeText)
+					await page.addStyleTag({
+						content: "html { font-size: 125% !important; }",
+					});
+				const savedCards = page.locator(".saved-ingredient-card");
+				await expect(savedCards.first()).toBeVisible();
+				for (const foodId of fixture.foodIds) {
+					const card = page.locator(
+						`li[data-food-id="${foodId}"] > .saved-ingredient-card`,
+					);
+					for (
+						let attempts = 0;
+						attempts < 10 && (await card.count()) === 0;
+						attempts++
+					) {
+						const previousCount = await savedCards.count();
+						await page
+							.getByRole("button", { name: "Load more", exact: true })
+							.click();
+						await expect
+							.poll(() => savedCards.count())
+							.toBeGreaterThan(previousCount);
+					}
+					await expect(card).toBeVisible();
+					await expect(
+						card.locator(".ingredient-provenance-badges"),
+					).toHaveCount(0);
+					await expect(
+						card.getByRole("button", { name: /^Preview / }),
+					).toBeEnabled();
+					expect(
+						await card.evaluate(
+							(element) => element.scrollWidth <= element.clientWidth + 1,
+						),
+					).toBe(true);
+				}
+				if (
+					listType === "fridge" &&
+					testInfo.project.name === "desktop-chromium"
+				)
+					await page
+						.locator(
+							`li[data-food-id="${fixture.foodIds[0]}"] > .saved-ingredient-card`,
+						)
+						.screenshot({ path: `test-results/dev093-${mode.name}-card.png` });
+				for (const [index, foodId] of fixture.foodIds.slice(0, 2).entries()) {
+					await page.goto(`/ingredients/${listType}/nutrition/${foodId}`);
+					await waitForAppReady(page);
+					if (mode.largeText)
+						await page.addStyleTag({
+							content: "html { font-size: 125% !important; }",
+						});
+					await expect(
+						page
+							.locator(".nf-heading")
+							.getByLabel("Verification status: Pending"),
+					).toHaveCount(0);
+					const passport = page.locator(".food-passport-panel");
+					const summary = passport.locator("summary").first();
+					await expect(summary).toContainText("Review pending");
+					await expect(summary.locator("..")).not.toHaveAttribute("open", "");
+					await summary.focus();
+					await summary.press("Enter");
+					await expect(summary).toBeFocused();
+					await expect(
+						passport.getByText(
+							index === 0
+								? "Your catalog submission is awaiting review. You can still use this food in your own lists."
+								: "A catalog update is awaiting review. The current accepted record remains in use.",
+							{ exact: true },
+						),
+					).toBeVisible();
+					expect(
+						await passport.evaluate(
+							(element) => element.scrollWidth <= element.clientWidth + 1,
+						),
+					).toBe(true);
+					if (
+						index === 0 &&
+						listType === "fridge" &&
+						testInfo.project.name === "desktop-chromium"
+					)
+						await passport.screenshot({
+							path: `test-results/dev093-${mode.name}-passport.png`,
+						});
+				}
+			}
+			const { error } = await supabase.rpc("move_user_food_list_items", {
+				p_fdc_ids: fixture.foodIds,
+				p_source_list_type: "shopping",
+				p_target_list_type: "fridge",
+			});
+			if (error) throw error;
+		}
+		await page.goto("/ingredients/fridge/nutrition/9100003");
+		await waitForAppReady(page);
+		await expect(
+			page
+				.locator(".nf-heading")
+				.getByRole("img", { name: "Verification status: Verified" }),
+		).toBeVisible();
+		await expect(page.locator(".nf-food-details")).toContainText("Source:");
+		await page.goto(`/ingredients/fridge/nutrition/${fixture.foodIds[2]}`);
+		await waitForAppReady(page);
+		await expect(
+			page.locator(".nf-heading .ingredient-provenance-badges"),
+		).toHaveCount(0);
+		await expect(
+			page.locator(".food-passport-panel summary").first(),
+		).toContainText("Personal");
+		await page.goto("/ingredients/fridge");
+		await waitForAppReady(page);
+		// The public search does not publish new pending submissions. Supply the real
+		// TEST fixture's state at the search UI boundary to preserve its badge contract.
+		const searchPattern = "**/api/foods/search?**";
+		await page.route(searchPattern, async (route) => {
+			if (
+				new URL(route.request().url()).searchParams.get("q") !==
+				"QA Citrus Extract"
+			)
+				return route.continue();
+			await route.fulfill({
+				json: {
+					foods: [fixture.pendingSearchFood],
+					total: 1,
+					hasMore: false,
+					nextOffset: null,
+				},
+			});
+		});
+		await page.getByRole("button", { name: "Open ingredient search" }).click();
+		await page
+			.getByPlaceholder("Search ingredients...")
+			.fill("QA Citrus Extract");
+		await expect(
+			page
+				.getByRole("dialog", { name: "Ingredients" })
+				.getByLabel("Verification status: Pending"),
+		).toBeVisible();
+		await page.unroute(searchPattern);
+		await page.goto("/ingredients/fridge");
+		await waitForAppReady(page);
+		await page.getByRole("button", { name: "Open ingredient search" }).click();
+		await page.getByPlaceholder("Search ingredients...").fill("Greek Yogurt");
+		await expect(
+			page
+				.getByRole("dialog", { name: "Ingredients" })
+				.getByRole("img", { name: "Verification status: Verified" })
+				.first(),
+		).toBeVisible();
+		const { data: rows, error } = await supabase
+			.from("user_food_list_items")
+			.select("trust_status")
+			.in("fdc_id", fixture.foodIds);
+		if (error) throw error;
+		expect(
+			rows?.filter((row) => row.trust_status === "pending-review"),
+		).toHaveLength(2);
+	} finally {
+		try {
+			if (originalTheme) {
+				const { error } = await supabase.rpc(
+					"save_current_user_appearance_theme",
+					{ p_appearance_theme: originalTheme },
+				);
+				expect(error, "Restore the QA account's original theme").toBeNull();
+			}
+		} finally {
+			await fixture.cleanup();
+		}
 	}
 });
 

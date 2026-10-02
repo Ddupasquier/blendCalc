@@ -328,6 +328,8 @@ Nutrition Facts behavior:
   presentation rounding never changes the calculation.
 - Keep source and basis visible without exposing provider errors or internal mapping
   terminology.
+- Keep pending catalog review out of the Nutrition Facts heading. Accepted verification
+  may retain its shield; pending review is explained in the supporting Food passport.
 
 Official safety-notice behavior:
 
@@ -362,7 +364,11 @@ Supporting disclosures appear together at the bottom, in this order when present
 5. moderator image placement.
 
 All supporting disclosures start closed. The closed Food passport shows only its title
-and a bounded status such as `Verified`, `Shared record`, `Personal`, or `Unverified`.
+and a bounded status such as `Verified`, `Shared record`, `Personal`, `Unverified`, or
+`Review pending`. The open summary distinguishes an update to an accepted
+catalog record from a new submission awaiting review; only an existing accepted record
+is described as remaining in use. Saved Fridge and Shopping List cards omit these
+verification badges entirely without suppressing current food warnings.
 Opening it may show database-backed verification dates, accepted revision identity,
 label-observation dates, and a concise inventory of available information. Missing
 passport information remains `Not provided`; it never means zero, none, allergen-free,
