@@ -40,11 +40,12 @@ import {
 	requireAppValue,
 	throwAppError,
 } from "$lib/server/errors/appError.server";
+import { reviewFoodCompatibilityFeedback } from "$lib/server/food-safety/foodCompatibilityFeedback.server";
+import { readFoodWarningQueuePage } from "$lib/server/moderation/foodWarningQueues.server";
 import {
-	listPendingFoodCompatibilityFeedback,
-	listOpenFoodCompatibilityFollowUps,
-	reviewFoodCompatibilityFeedback,
-} from "$lib/server/food-safety/foodCompatibilityFeedback.server";
+	emptyFoodWarningQueuePage,
+	type FoodWarningQueueRows,
+} from "$lib/utils/moderation/foodWarningQueuePagination";
 import { readLimitedFormData } from "$lib/server/security/requestBody.server";
 import {
 	requireModeratorAccess,
@@ -226,7 +227,8 @@ export const loadModerationWorkspaceData = async (
 		{ admin, users: authUsers },
 		pendingProductSubmissions,
 		pendingCompatibilityFeedback,
-		compatibilityFollowUps,
+		productCorrectionPage,
+		policyReviewPage,
 		pendingProfileImageReports,
 	] = await Promise.all([
 		includesAccounts
@@ -236,11 +238,31 @@ export const loadModerationWorkspaceData = async (
 			? listPendingProductSubmissions()
 			: Promise.resolve([]),
 		includesFoodWarningReports
-			? listPendingFoodCompatibilityFeedback()
-			: Promise.resolve([]),
+			? readFoodWarningQueuePage(
+					{ supabase: getSupabaseAdminClient() },
+					"reports",
+				)
+			: Promise.resolve(
+					emptyFoodWarningQueuePage<FoodWarningQueueRows["reports"]>(),
+				),
 		includesFoodWarningReports
-			? listOpenFoodCompatibilityFollowUps()
-			: Promise.resolve({ productCorrections: [], policyReviews: [] }),
+			? readFoodWarningQueuePage(
+					{ supabase: getSupabaseAdminClient() },
+					"productCorrections",
+				)
+			: Promise.resolve(
+					emptyFoodWarningQueuePage<
+						FoodWarningQueueRows["productCorrections"]
+					>(),
+				),
+		includesFoodWarningReports
+			? readFoodWarningQueuePage(
+					{ supabase: getSupabaseAdminClient() },
+					"policyReviews",
+				)
+			: Promise.resolve(
+					emptyFoodWarningQueuePage<FoodWarningQueueRows["policyReviews"]>(),
+				),
 		includesProfileImageReports
 			? listPendingProfileImageReports()
 			: Promise.resolve([]),
@@ -496,35 +518,11 @@ export const loadModerationWorkspaceData = async (
 		users: users.filter((user) => matchesSearch(user, query)),
 		productSubmissions,
 		profileImageReports: pendingProfileImageReports,
-		compatibilityFeedback: pendingCompatibilityFeedback.map((feedback) => {
-			const policyVersion = feedback.policy_version as unknown as {
-				version_number: number;
-			} | null;
-			return {
-				id: feedback.id,
-				feedbackType: feedback.feedback_type,
-				reportedBy: feedback.reported_by,
-				sharedProductId: feedback.shared_product_id,
-				sharedProductRevisionId: feedback.shared_product_revision_id,
-				sourceKey: feedback.source_key,
-				sourceId: feedback.source_id,
-				barcode: feedback.barcode,
-				foodDescription: feedback.food_description,
-				warningId: feedback.warning_id,
-				issueCode: feedback.issue_code,
-				issueParams: feedback.issue_params,
-				factSnapshot: feedback.fact_snapshot,
-				preferenceType: feedback.preference_type,
-				preferenceValue: feedback.preference_value,
-				observedLabelDate: feedback.observed_label_date,
-				evidenceUrl: feedback.evidence_signed_url,
-				reportReason: feedback.report_reason,
-				reportDetails: feedback.report_details,
-				createdAt: feedback.created_at,
-				policyVersion: policyVersion?.version_number ?? null,
-			};
-		}),
-		compatibilityFollowUps,
+		foodWarningQueues: {
+			reports: pendingCompatibilityFeedback,
+			productCorrections: productCorrectionPage,
+			policyReviews: policyReviewPage,
+		},
 	};
 };
 

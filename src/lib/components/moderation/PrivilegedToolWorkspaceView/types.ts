@@ -4,6 +4,7 @@ import type { PrivilegedToolInformationKey } from "$lib/components/moderation/Pr
 import type { PrivilegedWorkspaceGuideProps } from "$lib/components/moderation/PrivilegedWorkspaceGuide/types";
 
 export type PrivilegedToolWorkspaceViewProps = {
+	scrollContainer?: HTMLElement | null;
 	id: string;
 	title: string;
 	subtitle: string;

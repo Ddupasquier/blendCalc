@@ -252,8 +252,21 @@ non-matching fact always remain pending. The migration introducing this rule app
 the same conservative check to existing pending reports and backfills a missing
 revision only when the current revision provably predates the report.
 
-The `/moderation` warning-report queue is restricted to moderators, administrators, and
-developers.
+The `/profile/privileged-tools/food-warning-reports` workspace is restricted to
+moderators, administrators, and developers. Pending reports, policy/source follow-ups,
+and warning-origin product corrections each load ten oldest-first rows. Stable
+`(created_at, id)` cursors preserve tied timestamps and avoid offset gaps when work is
+resolved. Exact totals remain separate from the number of cards loaded. Each list uses
+the shared explicit Load more and Return to top controls; scrolling never fetches work.
+Additional reads require the same role permission and AAL2 session as the initial
+workspace. Only returned reports receive private evidence URLs.
+
+Loading retains displayed cards, drafts, and the workspace scroll position. Failed
+requests time out and offer retry. After a decision, the server refreshes the already
+loaded depth rather than shrinking the screen to its first page. A changed total during
+Load more also reconciles that depth before exposing new cards, removing work resolved
+by another reviewer. An unsuccessful reconciliation retains the cards but disables
+report decisions until retry succeeds.
 For reports that still require a reviewer:
 
 1. Compare the report with its preserved evidence, source observations, policy version,

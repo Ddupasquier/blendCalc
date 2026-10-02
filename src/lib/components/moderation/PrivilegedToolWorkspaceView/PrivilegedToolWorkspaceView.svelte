@@ -16,10 +16,18 @@
 		onClose,
 		sidebar,
 		children,
+		scrollContainer = $bindable(null),
 	}: PrivilegedToolWorkspaceViewProps = $props();
 </script>
 
-<PrivilegedToolRightSheet {id} {title} {subtitle} {informationKey} {onClose}>
+<PrivilegedToolRightSheet
+	{id}
+	{title}
+	{subtitle}
+	{informationKey}
+	{onClose}
+	bind:scrollContainer
+>
 	<div class="privileged-tool-workspace-view">
 		<aside class="privileged-tool-workspace-view__guide">
 			<PrivilegedProductLookup />
