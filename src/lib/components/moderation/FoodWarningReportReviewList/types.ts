@@ -1,14 +1,14 @@
 import type { ModerationActionFeedback } from "$lib/components/moderation/types";
-import type { ModerationWorkspaceData } from "$lib/server/moderation/moderationWorkspace.server";
+import type { FoodWarningReport } from "$lib/utils/moderation/foodWarningQueuePagination";
+export type { FoodWarningReport } from "$lib/utils/moderation/foodWarningQueuePagination";
 
 export type FoodWarningReportReviewListProps = {
-	reports: ModerationWorkspaceData["compatibilityFeedback"];
+	reports: FoodWarningReport[];
+	totalCount?: number;
+	refreshing?: boolean;
 	form?: ModerationActionFeedback;
 	showHeading?: boolean;
 };
-
-export type FoodWarningReport =
-	FoodWarningReportReviewListProps["reports"][number];
 
 export type StoredWarningFact = {
 	label: string;

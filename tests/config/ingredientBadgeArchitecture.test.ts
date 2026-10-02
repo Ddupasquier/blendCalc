@@ -38,7 +38,7 @@ describe("ingredient badge architecture", () => {
 		expect(ingredientBadges).toContain(
 			"$lib/components/common/badges/VerifiedStatusBadge/VerifiedStatusBadge.svelte",
 		);
-		expect(ingredientBadges).toContain('variant === "saved-card"');
+		expect(ingredientBadges).toContain('variant === "detail"');
 		expect(ingredientBadges).toContain(
 			'visibleTrustBadge.value === "verified"',
 		);
@@ -61,7 +61,7 @@ describe("ingredient badge architecture", () => {
 		);
 		expect(nutritionFactsLabel).not.toContain("CustomBadge");
 		expect(nutritionFactsLabel).not.toContain('variant="saved-card"');
-		expect(savedIngredientCard).toContain('variant="saved-card"');
+		expect(savedIngredientCard).not.toContain("IngredientProvenanceBadges");
 		expect(ingredientSearchCard).toContain('variant="search-card"');
 	});
 });

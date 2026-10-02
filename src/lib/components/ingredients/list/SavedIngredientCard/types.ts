@@ -1,5 +1,4 @@
 import type { FoodItem } from "$lib/utils/food/types";
-import type { IngredientProvenanceOption } from "$lib/utils/ingredients/ingredientProvenance";
 
 export type SavedIngredientCardProps = {
 	food: FoodItem;
@@ -12,7 +11,6 @@ export type SavedIngredientCardProps = {
 	moveLabel: string;
 	category: string;
 	warning?: string | null;
-	provenanceOptions?: readonly IngredientProvenanceOption[];
 	tutorialCardTarget?: string;
 	tutorialActionsTarget?: string;
 	onToggle: () => void;

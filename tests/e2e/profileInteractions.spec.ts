@@ -22,8 +22,12 @@ import {
 	recheckLocalQaDeterministicNutrientMapping,
 	resetLocalQaDatasetImportEvidence,
 	seedLocalQaCatalogValueConflict,
+	seedLocalQaFoodWarningQueues,
 } from "./support/localQaDatabase";
 import { finishLocalQaAuthenticatorEnrollment } from "./support/localQaAuthenticator";
+
+// Global privileged queues and MFA personas must not overlap within this file.
+test.describe.configure({ mode: "default" });
 
 const tinyPng = Buffer.from(
 	"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
@@ -1118,6 +1122,266 @@ test("privileged tools stay hidden from regular accounts and use a landing dashb
 
 test.describe("administrator data operations", () => {
 	test.describe.configure({ mode: "serial" });
+
+	test("paginates warning queues with exact totals, concurrent decisions, drafts, retry, and compact bounds @compatibility", async ({
+		page,
+	}, testInfo) => {
+		test.skip(
+			!process.env.CI &&
+				process.env.PLAYWRIGHT_WORKERS !== "1" &&
+				testInfo.project.name !== "desktop-chromium",
+			"Global warning fixtures require an isolated CI project or one local worker.",
+		);
+		const fixture = await seedLocalQaFoodWarningQueues(adminEmail);
+		try {
+			expect(
+				(
+					await page.request.get(
+						"/api/moderation/food-warning-queues?queue=reports",
+					)
+				).status(),
+			).toBe(403);
+			await signInLocalQaAdministratorWithAal2(page);
+			await page.goto("/profile/privileged-tools/food-warning-reports");
+			await waitForAppReady(page);
+			const reports = page.locator("article.moderator-review-card");
+			const reportFooter = page.getByLabel("Reports pagination", {
+				exact: true,
+			});
+			const productFooter = page.getByLabel("Product corrections pagination", {
+				exact: true,
+			});
+			const policyFooter = page.getByLabel(
+				"Policy and source reviews pagination",
+				{ exact: true },
+			);
+			await expect(reports).toHaveCount(10);
+			await expect(reportFooter).toContainText("10 of 25 reports loaded");
+			await expect(productFooter).toContainText(
+				"10 of 25 product corrections loaded",
+			);
+			await expect(policyFooter).toContainText(
+				"10 of 25 policy and source reviews loaded",
+			);
+			await reports
+				.first()
+				.locator("summary")
+				.filter({ hasText: "Evidence details" })
+				.click();
+			const attachment = reports
+				.first()
+				.getByRole("link", { name: "Open the user’s package-label evidence" });
+			await expect(attachment).toBeVisible();
+			const evidenceUrl = await attachment.getAttribute("href");
+			expect(evidenceUrl).toMatch(/\/storage\/v1\/object\/sign\//);
+			expect((await page.request.get(evidenceUrl!)).status()).toBe(200);
+			const firstIds = await reports
+				.locator('input[name="feedbackId"]')
+				.evaluateAll((inputs) =>
+					inputs.map((input) => (input as HTMLInputElement).value),
+				);
+			expect(firstIds).toEqual(fixture.reportIds.slice(0, 10));
+			await reports
+				.nth(1)
+				.getByRole("combobox", { name: "What does the evidence support?" })
+				.click();
+			await reports
+				.nth(1)
+				.getByRole("option", { name: "The current warning is correct" })
+				.click();
+			await reports
+				.nth(1)
+				.getByLabel("Evidence checked")
+				.fill("Draft survives loading and reconciliation.");
+			const scrollRoot = page
+				.getByRole("dialog", { name: "Food warning reports" })
+				.locator(".view-body");
+			await reportFooter
+				.getByRole("button", { name: "Load more reports", exact: true })
+				.scrollIntoViewIfNeeded();
+			// There is no scroll-driven fetch.
+			await expect(reports).toHaveCount(10);
+			await fixture.resolveLoadedReport();
+			await reportFooter
+				.getByRole("button", { name: "Load more reports", exact: true })
+				.focus();
+			await expectFocusOutlineInsideBoundary(
+				reportFooter.getByRole("button", {
+					name: "Load more reports",
+					exact: true,
+				}),
+				scrollRoot,
+			);
+			const scrollBefore = await scrollRoot.evaluate((root) => root.scrollTop);
+			await page.keyboard.press("Enter");
+			await expect(reportFooter).toContainText("20 of 24 reports loaded");
+			await expect
+				.poll(async () =>
+					Math.abs(
+						(await scrollRoot.evaluate((root) => root.scrollTop)) -
+							scrollBefore,
+					),
+				)
+				.toBeLessThanOrEqual(1);
+			await expect(reports.first().getByLabel("Evidence checked")).toHaveValue(
+				"Draft survives loading and reconciliation.",
+			);
+			let failNext = true;
+			await page.route(
+				"**/api/moderation/food-warning-queues?**",
+				async (route) => {
+					if (
+						failNext &&
+						new URL(route.request().url()).searchParams.get("queue") ===
+							"reports"
+					) {
+						failNext = false;
+						await route.fulfill({
+							status: 200,
+							contentType: "application/json",
+							body: "not-json",
+						});
+					} else await route.continue();
+				},
+			);
+			await reportFooter
+				.getByRole("button", { name: "Load more reports", exact: true })
+				.click();
+			await expect(
+				reportFooter.getByRole("button", { name: "Retry reports" }),
+			).toBeVisible();
+			await expect(reports).toHaveCount(20);
+			await reportFooter.getByRole("button", { name: "Retry reports" }).click();
+			await expect(reportFooter).toContainText("24 of 24 reports loaded");
+			await reports
+				.first()
+				.getByRole("button", { name: "Dismiss and close report", exact: true })
+				.click();
+			await expect(reportFooter).toContainText("23 of 23 reports loaded");
+			const allIds = await reports
+				.locator('input[name="feedbackId"]')
+				.evaluateAll((inputs) =>
+					inputs.map((input) => (input as HTMLInputElement).value),
+				);
+			expect(allIds).toEqual(fixture.reportIds.slice(2));
+			await expect(
+				reportFooter.getByRole("button", {
+					name: "Load more reports",
+					exact: true,
+				}),
+			).toHaveCount(0);
+			for (const [footer, countText, buttonName] of [
+				[productFooter, "product corrections", "Load more product corrections"],
+				[
+					policyFooter,
+					"policy and source reviews",
+					"Load more policy and source reviews",
+				],
+			] as const) {
+				await footer
+					.getByRole("button", { name: buttonName, exact: true })
+					.click();
+				await expect(footer).toContainText(`20 of 25 ${countText} loaded`);
+				await footer
+					.getByRole("button", { name: buttonName, exact: true })
+					.click();
+				await expect(footer).toContainText(`25 of 25 ${countText} loaded`);
+				await expect(
+					footer.getByRole("button", { name: buttonName, exact: true }),
+				).toHaveCount(0);
+			}
+			const policyLinks = page
+				.getByRole("region", { name: "Policy and source follow-ups" })
+				.getByRole("link");
+			expect(
+				await policyLinks.evaluateAll((links) =>
+					links.map((link) =>
+						(link as HTMLAnchorElement).href.split("/").at(-1),
+					),
+				),
+			).toEqual(fixture.policyIds);
+			await page.setViewportSize({ width: 390, height: 844 });
+			await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
+			await policyFooter
+				.getByRole("button", { name: "Return to top" })
+				.scrollIntoViewIfNeeded();
+			await expect(policyFooter).toBeInViewport();
+			await expect(scrollRoot).toHaveJSProperty(
+				"scrollWidth",
+				await scrollRoot.evaluate((root) => root.clientWidth),
+			);
+			await page.screenshot({ path: "test-results/dev077-compact-dark.png" });
+			await policyFooter.getByRole("button", { name: "Return to top" }).focus();
+			await page.keyboard.press("Enter");
+			await expect(scrollRoot).toHaveJSProperty("scrollTop", 0);
+			await page.emulateMedia({ colorScheme: "light" });
+			await page.screenshot({ path: "test-results/dev077-compact-light.png" });
+			await page.setViewportSize({ width: 1440, height: 900 });
+			await page.screenshot({ path: "test-results/dev077-desktop-light.png" });
+			await page.emulateMedia({ colorScheme: "dark" });
+			await page.evaluate(() => {
+				document.documentElement.style.fontSize = "125%";
+			});
+			await reportFooter
+				.getByRole("button", { name: "Return to top" })
+				.scrollIntoViewIfNeeded();
+			await expect(scrollRoot).toHaveJSProperty(
+				"scrollWidth",
+				await scrollRoot.evaluate((root) => root.clientWidth),
+			);
+			await page.screenshot({
+				path: "test-results/dev077-desktop-dark-text-zoom.png",
+			});
+			await page.evaluate(() => {
+				document.documentElement.style.fontSize = "";
+			});
+			await page.goto(
+				`/profile/privileged-tools/food-warning-reports/follow-ups/${fixture.policyIds[0]}`,
+			);
+			await waitForAppReady(page);
+			await page
+				.getByRole("combobox", { name: "1. What did the evidence establish?" })
+				.click();
+			await page
+				.getByRole("option", {
+					name: "Defer — a named prerequisite is still missing",
+				})
+				.click();
+			await page
+				.getByLabel("2. What evidence supports this outcome?")
+				.fill("Awaiting a reviewed local policy source.");
+			await page
+				.getByRole("button", { name: "Defer with prerequisite" })
+				.click();
+			await expect(page).toHaveURL(/\/food-warning-reports$/);
+			await expect(policyFooter).toContainText(
+				"10 of 25 policy and source reviews loaded",
+			);
+			await page.goto(
+				`/profile/privileged-tools/food-warning-reports/follow-ups/${fixture.policyIds[0]}`,
+			);
+			await waitForAppReady(page);
+			await page
+				.getByRole("combobox", { name: "1. What did the evidence establish?" })
+				.click();
+			await page
+				.getByRole("option", {
+					name: "Resolved — evidence or an applied change addresses it",
+				})
+				.click();
+			await page
+				.getByLabel("2. What evidence supports this outcome?")
+				.fill("Reviewed local evidence supports the recorded outcome.");
+			await page.getByRole("button", { name: "Resolve follow-up" }).click();
+			await expect(page).toHaveURL(/\/food-warning-reports$/);
+			await expect(policyFooter).toContainText(
+				"10 of 24 policy and source reviews loaded",
+			);
+		} finally {
+			await fixture.cleanup();
+			await deleteLocalQaAuthenticatorFactorsForEmail(adminEmail);
+		}
+	});
 
 	test("uses direct AAL2 verification for responsive data operations and dataset evidence", async ({
 		page,

@@ -10,11 +10,9 @@
 		variant = "detail",
 	}: IngredientProvenanceBadgesProps = $props();
 
-	const trustBadge = $derived(
-		getIngredientTrustBadge(food, provenanceOptions),
-	);
+	const trustBadge = $derived(getIngredientTrustBadge(food, provenanceOptions));
 	const visibleTrustBadge = $derived(
-		variant === "saved-card" && trustBadge?.value === "verified"
+		variant === "detail" && trustBadge?.value === "pending-review"
 			? null
 			: trustBadge,
 	);

@@ -1799,6 +1799,10 @@ Notes:
 - The report stores the warning parameters and exact matching fact snapshot from the
   active policy version. It does not rely on mutable client wording.
 - A unique pending fingerprint makes repeated submissions idempotent.
+- The pending queue uses a partial `(created_at, id)` index restricted to `pending`.
+  Server reads return ten oldest-first rows and an exact, independently queried total;
+  the cursor retains PostgreSQL timestamp precision. Evidence signing is limited to
+  those ten returned rows, not the lookahead row or the entire queue.
 - Incorrect-warning intake records the exact current shared-product revision when one
   exists. `apply_deterministic_food_warning_decision` dismisses only
   `incorrect_match` reports whose policy and revision remain current and whose complete
@@ -1828,6 +1832,8 @@ Notes:
 Rule and source cases remain private operational work. They retain the originating
 feedback and explicit responsible group instead of flattening a confirmed report into
 an ambiguous resolved status.
+An `(created_at, id)` partial index restricted to `open` and `deferred` supports the
+ten-row oldest-first queue; completed cases are excluded from both pages and totals.
 `resolve_food_warning_policy_review_case` requires an AAL2 session with
 `moderation.warnings.review`; Data operations cases additionally require
 `data_operations.catalog_health.repair`. A required private note accompanies every
@@ -1847,6 +1853,10 @@ launcher after the initial report is reviewed.
 | `catalog_correction_origins` | `id`, `shared_product_id`, `base_revision_id`, `origin_type`, `provider_change_review_id`, `shared_product_conflict_id`, `food_compatibility_feedback_id`, `affected_field_paths`, `prefilled_food`, `submission_id`, `status`, `resolved_revision_id`, `resolution_note`, `created_at`, `resolved_at`, `updated_at` |
 
 Each row references exactly one provider change, product conflict, or warning report.
+Warning-report origins have a separate `(created_at, id)` partial index restricted to
+`food_warning_report` origins in `waiting_for_correction` or `linked` status. Their
+ten-row queue and exact total use those same predicates; the broader product-scoped
+work index remains available to the other correction workflows.
 The database validates product and revision identity before linking a real
 `catalog_correction` submission. Matching uses the correction's actual changed fields;
 the prefilled product snapshot is only a safe starting point and never counts as proof

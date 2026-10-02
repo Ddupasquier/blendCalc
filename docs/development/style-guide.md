@@ -851,8 +851,12 @@ reporting interface for every warning in the default view.
   and finally the decision. Long evidence and technical details use shared closed
   disclosures; the decision itself stays easy to find after those disclosures.
 - Compact ingredient cards do not show provider-origin badges.
+- Saved Fridge and Shopping List cards do not show verification badges, including
+  pending catalog review. Review status belongs in Food passport, not beside the food
+  name or in the Nutrition Facts heading; current food-warning edges stay unchanged.
 - Search may show verification because it affects whether a user adds a result.
-- Nutrition detail may show verification and neutral source attribution.
+- Nutrition detail may show accepted verification and neutral source attribution.
+  Food passport explains whether a new catalog submission or an update awaits review.
 - `Custom` means a private unmatched item the user deliberately kept; it does not mean
   every manual entry or every external-source record.
 - Use one crown at the header of the nearest privileged action group. Do not add a

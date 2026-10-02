@@ -18,6 +18,7 @@
 		informationKey,
 		onClose,
 		children,
+		scrollContainer = $bindable(null),
 	}: PrivilegedToolRightSheetProps = $props();
 	let informationOpen = $state(false);
 
@@ -57,7 +58,11 @@
 				</div>
 			</div>
 		</ViewTop>
-		<ViewBody className="privileged-tool-right-sheet__body" scroll>
+		<ViewBody
+			className="privileged-tool-right-sheet__body"
+			scroll
+			bind:element={scrollContainer}
+		>
 			{@render children()}
 		</ViewBody>
 	</ViewFrame>

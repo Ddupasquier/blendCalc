@@ -1436,11 +1436,14 @@ not a lower trust level. USDA, Open Food Facts, national datasets, and future pr
 must never receive blanket verified or unverified status from their names alone. Keep
 origin and field-level provenance internally and show neutral source attribution in
 detailed nutrition views where useful or legally required, but do not show provider or
-`Imported` hierarchy badges on compact saved/search cards. Compact UI may show only
-unresolved actionable states such as `Pending Review`, `Conflict`, or `Incomplete` on
-saved Fridge and Shopping List cards. Search result cards may additionally show the
+`Imported` hierarchy badges on compact saved/search cards. Saved Fridge and Shopping
+List cards omit verification badges, including pending catalog review; current food
+warnings and completeness treatment remain independent. Explain pending catalog review
+inside Food passport rather than on a saved card or the Nutrition Facts heading.
+Distinguish an update to an accepted catalog record from a new submission awaiting its
+first review. Search result cards may show pending review and the
 resolved `Verified` shield because verification helps the user choose a product before
-adding it. Detailed nutrition views show verification plus neutral source attribution.
+adding it. Detailed nutrition views show accepted verification plus neutral source attribution.
 Verified evidence states must share one user-facing label and treatment regardless of
 whether the evidence was an exact source match, corroboration, or moderator approval.
 Badge labels, ordering, enabled states, and tones must come from database reference rows.
@@ -1452,8 +1455,8 @@ snapshots but must never be the authority for whether an item is pending or appr
 Provider and internal acceptance-method filters must not be exposed as consumer trust
 controls. Unknown origin must remain `unknown`; never assign USDA or another provider
 merely because source metadata is absent. Render verification states through the shared
-`IngredientProvenanceBadges` component, use its saved-card variant to omit resolved
-verification after an item is saved, and use its search-card and detail variants to show
+`IngredientProvenanceBadges` component only in search and nutrition headings, and use
+its search-card and detail variants to show
 the unified `VerifiedStatusBadge` where verification informs selection or detail review.
 Retain the database label as the shield's accessible name and tooltip.
 
@@ -2459,11 +2462,11 @@ verified treatments, show a separate visible `Verified` text pill, inline the sh
 SVG, or recreate its circle in ingredient features. Keep the database-provided badge
 label available through the icon's accessible name and tooltip so the icon is
 understandable without relying on color or shape alone. Saved Fridge and Shopping List
-cards must omit the resolved verified shield while retaining unresolved actionable
-states through the saved-card `IngredientProvenanceBadges` variant. Search results use
+cards omit verification badges, including pending catalog review. Catalog review belongs
+in the supporting Food passport, separate from current food warnings. Search results use
 the search-card variant to show the verified shield before a user adds a product.
 Detailed nutrition views use the detail variant and keep the verified shield plus neutral
-source attribution.
+source attribution, but no pending-review badge in the Nutrition Facts heading.
 
 <a id="rule-qa-links"></a>
 
