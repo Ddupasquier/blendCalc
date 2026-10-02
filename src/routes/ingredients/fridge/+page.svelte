@@ -1361,7 +1361,6 @@
 			<SavedIngredientList
 				{activeList}
 				foods={activeVisibleList}
-				{provenanceOptions}
 				activeRawCount={activeRawList.length}
 				{listLoading}
 				{loadingMoreList}

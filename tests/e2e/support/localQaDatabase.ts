@@ -1,9 +1,10 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { randomUUID } from "node:crypto";
+import { randomInt, randomUUID } from "node:crypto";
 import { parse } from "dotenv";
 import { readFile } from "node:fs/promises";
 import type { Database, Json } from "$lib/types/database.types";
 import { getLocalQaAccountForWorker } from "./localQaAccounts";
+import { hasValidGtinCheckDigit } from "../../../src/lib/utils/barcode/barcode";
 
 const localDatabaseHostnames = new Set(["127.0.0.1", "localhost"]);
 const authenticatedLocalQaDatabaseClients = new Map<
@@ -38,6 +39,202 @@ const createLocalQaServiceRoleDatabaseClient = async () => {
 	return createClient<Database>(supabaseUrl, serviceRoleKey, {
 		auth: { autoRefreshToken: false, persistSession: false },
 	});
+};
+
+/** Pending new/update records and a private control, only in the disposable database. */
+export const seedLocalQaCatalogReviewPresentation = async (
+	parallelWorkerIndex: number,
+) => {
+	const admin = await createLocalQaServiceRoleDatabaseClient();
+	const userClient =
+		await getAuthenticatedLocalQaDatabaseClient(parallelWorkerIndex);
+	const {
+		data: { user },
+		error: userError,
+	} = await userClient.auth.getUser();
+	if (userError) throw userError;
+	if (!user)
+		throw new Error("The review-presentation fixture requires a QA user.");
+	const { data: product, error: productError } = await admin
+		.from("shared_products")
+		.select("id, barcode, food")
+		.eq("barcode", "00021130462506")
+		.eq("status", "active")
+		.single();
+	if (productError) throw productError;
+	const { data: revision, error: revisionError } = await admin
+		.from("shared_product_revisions")
+		.select("id")
+		.eq("shared_product_id", product.id)
+		.order("revision_number", { ascending: false })
+		.limit(1)
+		.single();
+	if (revisionError) throw revisionError;
+	const { data: originalListItems, error: originalItemsError } = await admin
+		.from("user_food_list_items")
+		.select(
+			"id,user_id,fdc_id,list_type,food,created_at,updated_at,shared_product_id,shared_product_submission_id,source_key,trust_status",
+		)
+		.eq("user_id", user.id)
+		.eq("shared_product_id", product.id);
+	if (originalItemsError) throw originalItemsError;
+	const foodIds = [-9390001, -9390002, -9390003];
+	const submissionIds = [randomUUID(), randomUUID()];
+	const barcodePrefix = `9${String(randomInt(1_000_000_000_000)).padStart(12, "0")}`;
+	const newBarcode = Array.from(
+		{ length: 10 },
+		(_, digit) => `${barcodePrefix}${digit}`,
+	).find(hasValidGtinCheckDigit)!;
+	const canonical = product.food as Record<string, Json>;
+	const newFood = {
+		fdcId: foodIds[0],
+		description: "QA Citrus Extract",
+		barcode: newBarcode,
+		foodCategory: "Beverages",
+		foodNutrients: [],
+		sourceKey: "open-food-facts",
+	};
+	const updatedFood = {
+		...canonical,
+		fdcId: foodIds[1],
+		barcode: product.barcode,
+	};
+	const privateFood = {
+		fdcId: foodIds[2],
+		description: "QA Personal Blend",
+		customFood: true,
+		foodIdentityType: "private-custom",
+		foodNutrients: [],
+	};
+	const cleanup = async () => {
+		for (const foodId of foodIds) {
+			for (const listType of ["fridge", "shopping"] as const) {
+				const { error } = await userClient.rpc("remove_user_food_list_item", {
+					p_fdc_id: foodId,
+					p_list_type: listType,
+				});
+				if (error) throw error;
+			}
+		}
+		// Update proposals are immutable audit records; resolve, never bypass that guard.
+		const { error: resolveError } = await admin
+			.from("shared_product_submissions")
+			.update({
+				status: "rejected",
+				review_note: "Disposable browser fixture cleanup",
+			})
+			.eq("id", submissionIds[1]);
+		if (resolveError) throw resolveError;
+		const { error } = await admin
+			.from("shared_product_submissions")
+			.delete()
+			.eq("id", submissionIds[0]);
+		if (error) throw error;
+		// Placement deduplicates by catalog identity, not only fdcId. Restore the exact
+		// baseline rows that this temporary update may have replaced in either list.
+		if (originalListItems.length > 0) {
+			const { data: restored, error: restoreError } = await admin
+				.from("user_food_list_items")
+				.upsert(originalListItems)
+				.select("id,fdc_id,list_type,trust_status");
+			if (restoreError) throw restoreError;
+			const describe = (rows: typeof restored) =>
+				rows
+					.map(
+						(row) =>
+							`${row.id}:${row.fdc_id}:${row.list_type}:${row.trust_status}`,
+					)
+					.sort()
+					.join("|");
+			if (describe(restored) !== describe(originalListItems))
+				throw new Error(
+					"The review fixture did not restore its original saved-list baseline.",
+				);
+		}
+	};
+	try {
+		const { error: submissionError } = await admin
+			.from("shared_product_submissions")
+			.insert([
+				{
+					id: submissionIds[0],
+					submitted_by: user.id,
+					barcode: newFood.barcode,
+					product_name: newFood.description,
+					submission_kind: "new_product",
+					change_summary: {},
+					food: newFood,
+					consent_to_share: true,
+					status: "pending",
+					validation_report: {
+						valid: false,
+						issues: ["QA fixture: review required"],
+						qaSeed: true,
+					},
+				},
+				{
+					id: submissionIds[1],
+					submitted_by: user.id,
+					barcode: product.barcode,
+					product_name: "QA Proposed Jelly Label",
+					food: { ...updatedFood, description: "QA Proposed Jelly Label" },
+					consent_to_share: true,
+					status: "pending",
+					submission_kind: "product_update",
+					target_shared_product_id: product.id,
+					base_revision_id: revision.id,
+					change_summary: {
+						changes: [
+							{
+								field: "description",
+								label: "Product name",
+								changeType: "changed",
+								previousValue: canonical.description,
+								submittedValue: "QA Proposed Jelly Label",
+								severity: "low",
+							},
+						],
+					},
+					validation_report: {
+						valid: false,
+						issues: ["QA fixture: update review required"],
+						qaSeed: true,
+					},
+				},
+			]);
+		if (submissionError) throw submissionError;
+		const { error: placeError } = await userClient.rpc(
+			"place_user_food_list_items",
+			{ p_foods: [newFood, updatedFood, privateFood], p_list_type: "fridge" },
+		);
+		if (placeError) throw placeError;
+		const { data: stored, error: storedError } = await userClient
+			.from("user_food_list_items")
+			.select("fdc_id,trust_status,shared_product_id")
+			.in("fdc_id", foodIds);
+		if (storedError) throw storedError;
+		if (
+			stored?.length !== 3 ||
+			stored.filter((row) => row.trust_status === "pending-review").length !==
+				2 ||
+			!stored.find((row) => row.fdc_id === foodIds[1])?.shared_product_id
+		)
+			throw new Error(
+				"The pending-review fixture did not project real new/update states.",
+			);
+		return {
+			foodIds,
+			pendingSearchFood: {
+				...newFood,
+				trustStatus: "pending-review",
+				sharedProductSubmissionId: submissionIds[0],
+			},
+			cleanup,
+		};
+	} catch (error) {
+		await cleanup();
+		throw error;
+	}
 };
 
 export const createLocalQaPendingNutrientMapping = async () => {

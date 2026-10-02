@@ -1,12 +1,10 @@
 import type { FoodItem } from "$lib/utils/food/types";
-import type { IngredientProvenanceOption } from "$lib/utils/ingredients/ingredientProvenance";
 import type { ScrollDirection } from "$lib/utils/navigation/scrollDirection";
 import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
 
 export type SavedIngredientListProps = {
 	activeList: IngredientListKey;
 	foods: FoodItem[];
-	provenanceOptions?: readonly IngredientProvenanceOption[];
 	activeRawCount?: number;
 	listLoading?: boolean;
 	loadingMoreList?: IngredientListKey | null;

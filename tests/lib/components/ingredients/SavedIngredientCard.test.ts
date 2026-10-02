@@ -1,7 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import SavedIngredientCard from "$lib/components/ingredients/list/SavedIngredientCard/SavedIngredientCard.svelte";
-import { ingredientProvenanceOptionsFixture } from "../../../fixtures/referenceCatalogs";
 
 const baseProps = {
 	food: {
@@ -186,23 +185,6 @@ describe("SavedIngredientCard selection mode", () => {
 });
 
 describe("SavedIngredientCard verification metadata", () => {
-	it("does not show resolved verification on the compact card", () => {
-		render(SavedIngredientCard, {
-			props: {
-				...baseProps,
-				food: {
-					...baseProps.food,
-					trustStatus: "source-verified",
-				},
-				provenanceOptions: ingredientProvenanceOptionsFixture,
-			},
-		});
-
-		expect(
-			screen.queryByLabelText("Verification status: Verified"),
-		).not.toBeInTheDocument();
-	});
-
 	it("styles only detached private foods as custom", () => {
 		const { container, rerender } = render(SavedIngredientCard, {
 			props: {
@@ -229,62 +211,10 @@ describe("SavedIngredientCard verification metadata", () => {
 				sharedProductId: "catalog-product-id",
 				trustStatus: "source-verified",
 			},
-			provenanceOptions: ingredientProvenanceOptionsFixture,
 		});
 
 		expect(
 			container.querySelector(".saved-ingredient-card--custom"),
-		).not.toBeInTheDocument();
-		expect(
-			screen.queryByLabelText("Verification status: Verified"),
-		).not.toBeInTheDocument();
-	});
-
-	it("shows pending review without restoring a stale custom treatment", () => {
-		const { container } = render(SavedIngredientCard, {
-			props: {
-				...baseProps,
-				food: {
-					...baseProps.food,
-					customFood: true,
-					sourceKey: "unknown",
-					sharedProductSubmissionId: "pending-submission-id",
-					trustStatus: "pending-review",
-				},
-				provenanceOptions: ingredientProvenanceOptionsFixture,
-			},
-		});
-
-		expect(
-			container.querySelector(".saved-ingredient-card--custom"),
-		).not.toBeInTheDocument();
-		expect(
-			screen.getByLabelText("Verification status: Pending"),
-		).toBeInTheDocument();
-	});
-
-	it("removes pending metadata after rejection without adding a hierarchy badge", () => {
-		const { container } = render(SavedIngredientCard, {
-			props: {
-				...baseProps,
-				food: {
-					...baseProps.food,
-					customFood: false,
-					sourceKey: "unknown",
-					trustStatus: "unverified",
-				},
-				provenanceOptions: ingredientProvenanceOptionsFixture,
-			},
-		});
-
-		expect(
-			container.querySelector(".saved-ingredient-card--custom"),
-		).not.toBeInTheDocument();
-		expect(
-			screen.queryByLabelText("Verification status: Pending"),
-		).not.toBeInTheDocument();
-		expect(
-			screen.queryByLabelText("Verification status: Verified"),
 		).not.toBeInTheDocument();
 	});
 });
