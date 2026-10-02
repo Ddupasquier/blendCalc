@@ -25,25 +25,27 @@ Secrets never belong in tracked files.
 
 ## Environment Files
 
-| Tracked contract                                        | Ignored values                                                 | Consumer                                          |
-| ------------------------------------------------------- | -------------------------------------------------------------- | ------------------------------------------------- |
-| None; values are derived from local services            | None                                                           | Ordinary local application                        |
-| `config/environments/blendcalc-api-hosted.example.env`  | `.env.blendCalcAPI.hosted.local`                               | Guarded hosted blendCalcAPI migration operations  |
-| `config/environments/privileged-operations.example.env` | `.env.moderation.local`                                        | Privileged scripts and linked Supabase operations |
-| None; the database manager generates the contract       | `.env.test.local`                                              | Disposable local database and Playwright          |
-| `config/environments/rehearsal-auth.example.env`        | `.rehearsal/runtime.env`, `.env.rehearsal-auth.local`          | Local Rehearsal runtime and Google identity       |
-| `config/environments/rehearsal-source.example.env`      | `.env.rehearsal-source.local`                                  | Temporary production-source readers               |
-| `config/environments/vercel.example.env`                | `.env.vercel.production.local` and `.env.vercel.preview.local` | Vercel Production and Preview deployments         |
-| `supabase/functions/.env.example`                       | `supabase/functions/.env.local`                                | Supabase Edge Functions                           |
+| Tracked contract                                         | Ignored values                                                 | Consumer                                          |
+| -------------------------------------------------------- | -------------------------------------------------------------- | ------------------------------------------------- |
+| `config/environments/production-development.example.env` | `.env`                                                         | Production-connected app on port `5173`           |
+| `config/environments/blendcalc-api-hosted.example.env`   | `.env.blendCalcAPI.hosted.local`                               | Guarded hosted blendCalcAPI migration operations  |
+| `config/environments/privileged-operations.example.env`  | `.env.moderation.local`                                        | Privileged scripts and linked Supabase operations |
+| None; the database manager generates the contract        | `.env.test.local`                                              | Disposable local database and Playwright          |
+| `config/environments/rehearsal-auth.example.env`         | `.rehearsal/runtime.env`, `.env.rehearsal-auth.local`          | Local Rehearsal runtime and Google identity       |
+| `config/environments/rehearsal-source.example.env`       | `.env.rehearsal-source.local`                                  | Temporary production-source readers               |
+| `config/environments/vercel.example.env`                 | `.env.vercel.production.local` and `.env.vercel.preview.local` | Vercel Production and Preview deployments         |
+| `supabase/functions/.env.example`                        | `supabase/functions/.env.local`                                | Supabase Edge Functions                           |
 
 The ignored mirrors are local inventory and development inputs. Vercel and Supabase
 remain authoritative for deployed values. Never copy a secret into a public variable,
 command argument, issue, log, test fixture, or documentation example.
 
-Vite never loads repository dotenv files. Maintained launchers and deployment providers
-must pass an explicit allowlisted process environment. Automated browser authentication
-runs only against disposable local Supabase and receives an explicit empty Turnstile
-site key unless `npm run dev:test:auth` selects the official local test key.
+Vite never loads repository dotenv files automatically. Maintained launchers and
+deployment providers pass an explicit allowlisted process environment. The 5173
+launcher reads only the reviewed production-development keys from `.env`; automated
+browser authentication runs only against disposable local Supabase and receives an
+explicit empty Turnstile site key unless `npm run dev:test:auth` selects the official
+local test key.
 
 ### Branches And Auxiliary Worktrees
 
@@ -60,21 +62,29 @@ Remove those links with the auxiliary checkout after its work is safely integrat
 
 ## Local Application
 
-`npm run dev` aliases `npm run dev:local`. No environment file is required. The launcher starts or validates both local
-Supabase workdirs, derives their local credentials from `supabase status`, builds a new
-allowlisted child environment, disables Vite environment-file layering, and starts the
-application at `http://localhost:5173`. It preserves existing local database state.
+`npm run dev` aliases `npm run dev:local` and starts the application at
+`http://localhost:5173` against the established hosted production application and API
+projects. It does not start or use the local application Supabase stack. Google sign-in
+therefore authenticates the real hosted account, and its profile, roles, saved foods,
+images, preferences, and other owner data are the real production records.
 
-The launcher never reads `.env`, `.env.moderation.local`, a Vercel pull, or the hosted
-blendCalcAPI file. Provider APIs, email delivery, cron credentials, hosted Supabase
-tokens, and other non-loopback application requests are absent and denied. The only
-external safe-runtime exception is read-only rendering and processing of an exact,
-already-stored Open Food Facts image URL. Maintained tools do not use `.env` or
-`.env.local` as fallback credential stores.
+This boundary is intentionally destructive: saves, edits, deletions, privileged
+actions, provider requests, and configured email side effects from 5173 are real. Use
+Rehearsal on port `5175` for production-shaped work that must remain isolated from
+production.
 
-Only variables beginning with `PUBLIC_` may be read by browser code. Local and test
-runtimes always use `BLENDCALC_API_READ_MODE=isolated`; missing or invalid read modes
-fail instead of silently falling back to the production source path.
+The launcher reads the ignored repository-root `.env` through the exact key list in
+`config/environments/production-development.example.env`, requires mode `600`, verifies
+the two established hosted Supabase project hosts, forces the browser callback origin to
+`http://localhost:5173`, and then passes only the reviewed values to Vite. It does not
+restore ambient dotenv loading and will not accept another hosted project accidentally.
+Google continues through hosted Supabase Auth and returns to `/auth/callback` on 5173;
+the production Auth redirect allowlist must retain that exact local callback.
+
+`npm run db:local -- start` still manages the independent local application database for
+database tooling, but that database is not the default 5173 application target.
+`npm run dev:test` and `npm run dev:rehearsal` remain isolated on ports `5174` and `5175`.
+Only variables beginning with `PUBLIC_` may be read by browser code.
 
 ## Native Application
 
@@ -421,8 +431,8 @@ Before handoff, verify:
 - every manually configured runtime variable appears in exactly the appropriate
   template;
 - every example variable has a real consumer or documented platform purpose;
-- ordinary local, TEST, and Rehearsal launchers construct explicit environments without
-  ambient root dotenv layering;
+- production-connected 5173, TEST, and Rehearsal launchers construct explicit
+  environments without ambient root dotenv layering;
 - removed aliases no longer appear in source or deployed configuration;
 - no tracked file contains a secret value; and
 - local mirrors and deployed settings contain the names required by their consumers.

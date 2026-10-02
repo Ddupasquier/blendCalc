@@ -90,14 +90,20 @@ types. A mismatch is announced, marks the confirmation field invalid, and keeps 
 submission action unavailable until both values match and the password satisfies the
 application policy. Server validation remains authoritative for every submission.
 
-In **Authentication → Sign In / Providers → Google**, use the Google client ID and
-secret. In Google Cloud, configure:
+Google OAuth keeps hosted production and Rehearsal credentials separate:
 
-- JavaScript origin: `http://localhost:5173`
-- Test JavaScript origin: `http://localhost:5174`
-- JavaScript origin: `https://www.blendcalc.food`
-- Redirect URI: the Supabase callback displayed in the Google provider panel, such as
-  `https://YOUR_PROJECT.supabase.co/auth/v1/callback`
+- **Production and production-connected 5173 development:** the hosted Supabase project
+  uses the production Google client and its hosted callback shown in
+  **Authentication → Sign In / Providers → Google**. Supabase then returns the browser
+  to the exact allowlisted application callback, including
+  `http://localhost:5173/auth/callback` during development.
+- **Rehearsal:** JavaScript origin `http://localhost:5175` and exact callback
+  `http://127.0.0.1:58321/auth/v1/callback`. Its ignored credential file is
+  `.env.rehearsal-auth.local`.
+
+Port `5174` is deterministic TEST and does not own a Google client. Never place a Google
+client secret in Vite, browser code, `.env`, `.env.test.local`, or a tracked file; 5173
+receives only the hosted Supabase public URL/key and performs OAuth through hosted Auth.
 
 ## Account Security Settings
 
@@ -252,9 +258,9 @@ Quick QA login fails closed unless all of these conditions hold at the same time
 - the configured Supabase endpoint is loopback HTTP on port `54321`; and
 - `npm run db:test -- start` generated the disposable QA password in `.env.test.local`.
 
-The selector is absent on ordinary local development, previews, staging, and
-production. It creates a normal local Supabase session and does not bypass role checks,
-account blocks, password policies, or privileged MFA requirements.
+The selector is absent on production-connected 5173 development, previews, staging,
+and production. It creates a normal local Supabase session and does not bypass role
+checks, account blocks, password policies, or privileged MFA requirements.
 
 The isolated Rehearsal app at `http://localhost:5175` exposes the same easy-auth toggle
 for its single restored owner snapshot. Its server reads the generated local credential
@@ -276,6 +282,12 @@ rows and private Storage paths from the pseudonymous placeholder to the new loca
 UUID. The placeholder is removed and the session is refreshed so its developer claim is
 current. A nonmatching Google account receives a fresh local profile and cannot claim
 the owner snapshot.
+
+Ordinary development at `http://localhost:5173` uses hosted production Supabase. Google
+therefore signs into the real hosted identity and resolves the same production profile,
+roles, saved foods, images, and preferences shown by the deployed application. This is
+not a sandbox: all subsequent writes and privileged actions affect production. Use
+Rehearsal on `http://localhost:5175` when production-shaped changes must remain local.
 
 ## Verification
 
