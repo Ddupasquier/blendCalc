@@ -15,7 +15,7 @@
 	"scripts": {
 		"dev": "npm run dev:local",
 		"predev:local": "npm run kill:vite && npm run free:dev-port && npm run version:check",
-		"dev:local": "node scripts/operations/environment/run_application_environment.mjs local",
+		"dev:local": "node scripts/operations/environment/run_production_development.mjs",
 		"predev:test": "npm run free:test-port && npm run version:check",
 		"dev:test": "node scripts/operations/environment/run_application_environment.mjs test",
 		"predev:test:auth": "npm run predev:test",
