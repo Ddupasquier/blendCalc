@@ -111,6 +111,13 @@ describe("visible verification dashboard", () => {
 		expect(dashboardSource).toContain('profileKey === "release"');
 	});
 
+	it("gives database and browser verification independent owned runtimes", () => {
+		expect(dashboardSource).not.toContain('"--keep-running"');
+		expect(dashboardSource).not.toContain('["playwright", "test"]');
+		expect(dashboardSource).toContain('["run", "db:test", "--", "verify"]');
+		expect(dashboardSource).toContain('["run", "test:e2e"]');
+	});
+
 	it("keeps forced-color terminal output free of conflicting NO_COLOR warnings", () => {
 		expect(dashboardSource).toContain("getChildProcessEnvironment");
 		expect(dashboardSource).toContain("delete environment.NO_COLOR");

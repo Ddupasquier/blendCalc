@@ -48,7 +48,8 @@ describe("resource-safe verification architecture", () => {
 		expect(databaseManager).toContain(
 			"if (!keepRuntimeRunning) stopLocalStack()",
 		);
-		expect(dashboard).toContain('"--keep-running"');
+		expect(dashboard).not.toContain('"--keep-running"');
+		expect(dashboard).toContain('["run", "test:e2e"]');
 		expect(dashboard).toContain("stopOwnedDatabaseStack");
 		expect(dashboard).toContain("finally");
 		expect(browserRunner).toContain("manage_test_database.mjs");
