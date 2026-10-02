@@ -198,6 +198,10 @@ describe("Playwright browser-testing architecture", () => {
 		);
 		expect(verificationWorkflow).toContain("name: Browser Matrix");
 		expect(verificationWorkflow).toContain("name: Affected Browser Flows");
+		const affectedBrowserJob = verificationWorkflow
+			.split("  browser-affected:")[1]
+			?.split("  browser-gate:")[0];
+		expect(affectedBrowserJob).toContain("PLAYWRIGHT_WORKERS: 1");
 		expect(verificationWorkflow).not.toContain("needs: source");
 		expect(verificationWorkflow).toContain('shard: "1/2"');
 		expect(verificationWorkflow).toContain('shard: "2/2"');
