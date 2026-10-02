@@ -8,4 +8,5 @@ export type PrivilegedToolRightSheetProps = {
 	informationKey: PrivilegedToolInformationKey;
 	onClose: () => void;
 	children: Snippet;
+	scrollContainer?: HTMLElement | null;
 };

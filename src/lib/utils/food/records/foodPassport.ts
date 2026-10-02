@@ -42,8 +42,9 @@ const getPassportIdentity = (food: FoodItem) => {
 	if (food.trustStatus === "pending-review") {
 		return {
 			statusLabel: "Review pending",
-			summary:
-				"An update to this shared food is waiting for review. The current accepted record remains in use.",
+			summary: food.sharedProductId
+				? "A catalog update is awaiting review. The current accepted record remains in use."
+				: "Your catalog submission is awaiting review. You can still use this food in your own lists.",
 		};
 	}
 	if (

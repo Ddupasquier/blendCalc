@@ -7,7 +7,6 @@
 	import CardSelectionIndicator from "$lib/components/common/display/CardSelectionIndicator/CardSelectionIndicator.svelte";
 	import IngredientCardMedia from "$lib/components/ingredients/card/IngredientCardMedia/IngredientCardMedia.svelte";
 	import IngredientMoveIcon from "$lib/components/ingredients/list/IngredientMoveIcon/IngredientMoveIcon.svelte";
-	import IngredientProvenanceBadges from "$lib/components/ingredients/provenance/IngredientProvenanceBadges/IngredientProvenanceBadges.svelte";
 	import { isPrivateCustomFood } from "$lib/utils/food/records/foodClassification";
 	import { getFoodWarningFrameTone } from "$lib/utils/ingredients/ingredientListUi";
 	import { longPress } from "$lib/utils/interaction/longPress";
@@ -24,7 +23,6 @@
 		moveLabel,
 		category,
 		warning = null,
-		provenanceOptions = [],
 		tutorialCardTarget,
 		tutorialActionsTarget,
 		onToggle,
@@ -78,11 +76,6 @@
 	<span class="saved-ingredient-card__copy">
 		<span class="saved-ingredient-card__title-row">
 			<strong title={food.description}>{food.description}</strong>
-			<IngredientProvenanceBadges
-				{food}
-				{provenanceOptions}
-				variant="saved-card"
-			/>
 		</span>
 		<small>{category}</small>
 	</span>

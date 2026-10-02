@@ -22,6 +22,8 @@
 
 	let {
 		reports,
+		totalCount = reports.length,
+		refreshing = false,
 		form = null,
 		showHeading = false,
 	}: FoodWarningReportReviewListProps = $props();
@@ -275,7 +277,7 @@
 
 	<ModeratorReviewList
 		label="Food warning report review queue"
-		itemCount={reports.length}
+		itemCount={totalCount}
 		singularItemLabel="report waiting for review"
 		pluralItemLabel="reports waiting for review"
 		emptyTitle="No food warning reports need review"
@@ -458,7 +460,7 @@
 								: "Choose between the current warning and the user’s report."}
 						onValueChange={(value) =>
 							setDecisionStatus(report.id, value as "confirmed" | "dismissed")}
-						disabled={pendingReportId !== null}
+						disabled={pendingReportId !== null || refreshing}
 						required
 					/>
 					{#if decision.status === "confirmed"}
@@ -470,7 +472,7 @@
 							options={getResolutionOptions()}
 							helper={getResolutionExplanation(decision.resolutionAction)}
 							onValueChange={(value) => setResolutionAction(report.id, value)}
-							disabled={pendingReportId !== null}
+							disabled={pendingReportId !== null || refreshing}
 							required
 						/>
 					{:else if decision.status === "dismissed"}
@@ -487,14 +489,15 @@
 						rows={3}
 						oninput={(event) =>
 							setReviewNote(report.id, event.currentTarget.value)}
-						disabled={pendingReportId !== null}
+						disabled={pendingReportId !== null || refreshing}
 						required
 					/>
 					<ActionButton
 						type="submit"
 						fullWidth
 						busy={pendingReportId === report.id}
-						disabled={pendingReportId !== null ||
+						disabled={refreshing ||
+							pendingReportId !== null ||
 							!decision.status ||
 							(decision.status === "confirmed" && !decision.resolutionAction) ||
 							!decision.reviewNote.trim()}

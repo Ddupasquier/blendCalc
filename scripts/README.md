@@ -105,13 +105,17 @@ start or reset only localhost Supabase, writes an ignored test environment, appl
 `supabase/seed.sql`, and repairs the maintained personas in
 `lib/qa/local_qa_personas.mjs`.
 
-`operations/environment/run_application_environment.mjs` owns `dev:local`, `dev:test`,
-and `dev:rehearsal`. It starts the required local database workdirs and launches Vite
-with an allowlisted environment. It never reads privileged or hosted environment files.
-For Rehearsal only, the database manager reads the exact two-variable allowlist in
-ignored `.env.rehearsal-auth.local` and passes it exclusively to local Supabase Auth so
-the real Google flow can return to port `58321`. The app launcher never receives those
-OAuth values.
+`scripts/operations/environment/run_production_development.mjs` owns `dev:local` and port
+`5173`. It reads only the reviewed production-development allowlist from the ignored,
+owner-only `.env`, verifies the established hosted application/API projects, and starts
+Vite with an explicit production-connected environment. It never reads or receives a
+Google client secret; Google is owned by hosted Supabase Auth. Every 5173 mutation and
+configured side effect is real.
+
+`operations/environment/run_application_environment.mjs` owns `dev:test` and
+`dev:rehearsal`. It starts their local database workdirs and launches Vite with an
+allowlisted isolated environment. Rehearsal independently reads
+`.env.rehearsal-auth.local` and returns through port `58321`.
 `operations/environment/run_test_command.mjs` provides the same fail-closed boundary
 for compile and unit-test commands without requiring the database stacks to be running.
 The executable owners are the `@rehearsal-db/core` CLI,

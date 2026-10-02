@@ -1,13 +1,17 @@
 @use "../../../../styles/variables" as *;
 
 .food-warning-follow-up-list,
+.food-warning-follow-up-list__queue,
+.food-warning-follow-up-list__cards,
 .food-warning-follow-up-list__item,
 .food-warning-follow-up-list__item header > div {
 	display: grid;
 	min-width: 0;
 }
 
-.food-warning-follow-up-list {
+.food-warning-follow-up-list,
+.food-warning-follow-up-list__queue,
+.food-warning-follow-up-list__cards {
 	gap: $app-gap-sm;
 }
 
@@ -55,7 +59,7 @@
 }
 
 @media (min-width: $app-breakpoint-privileged-desktop) {
-	.food-warning-follow-up-list {
+	.food-warning-follow-up-list__cards {
 		grid-template-columns: repeat(
 			auto-fit,
 			minmax(

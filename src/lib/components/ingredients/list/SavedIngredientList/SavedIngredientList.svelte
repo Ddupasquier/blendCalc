@@ -27,7 +27,6 @@
 	let {
 		activeList,
 		foods,
-		provenanceOptions = [],
 		activeRawCount = 0,
 		listLoading = false,
 		loadingMoreList = null,
@@ -323,7 +322,6 @@
 							moveLabel={getIngredientMoveLabel(activeList)}
 							category={getFoodDisplayCategory(food)}
 							{warning}
-							{provenanceOptions}
 							tutorialCardTarget={index === 0 ? "ingredient-card" : undefined}
 							tutorialActionsTarget={index === 0
 								? "ingredient-actions"

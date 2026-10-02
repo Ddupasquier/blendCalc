@@ -4,5 +4,5 @@ import type { IngredientProvenanceOption } from "$lib/utils/ingredients/ingredie
 export type IngredientProvenanceBadgesProps = {
 	food: FoodItem;
 	provenanceOptions?: readonly IngredientProvenanceOption[];
-	variant?: "saved-card" | "search-card" | "detail";
+	variant?: "search-card" | "detail";
 };

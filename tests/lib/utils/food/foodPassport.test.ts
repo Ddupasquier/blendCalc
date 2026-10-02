@@ -10,6 +10,30 @@ const makeFood = (overrides: Partial<FoodItem> = {}): FoodItem => ({
 });
 
 describe("getFoodPassportPresentation", () => {
+	it("explains a pending update without replacing the accepted record", () => {
+		const passport = getFoodPassportPresentation(
+			makeFood({
+				sharedProductId: "product-1",
+				trustStatus: "pending-review",
+			}),
+		);
+		expect(passport.statusLabel).toBe("Review pending");
+		expect(passport.summary).toBe(
+			"A catalog update is awaiting review. The current accepted record remains in use.",
+		);
+	});
+
+	it("explains a new pending submission without inventing an accepted record", () => {
+		const passport = getFoodPassportPresentation(
+			makeFood({ trustStatus: "pending-review" }),
+		);
+		expect(passport.statusLabel).toBe("Review pending");
+		expect(passport.summary).toBe(
+			"Your catalog submission is awaiting review. You can still use this food in your own lists.",
+		);
+		expect(passport.historyRows).toEqual([]);
+	});
+
 	it("summarizes an evolving verified catalog record without exposing technical source ranking", () => {
 		const passport = getFoodPassportPresentation(
 			makeFood({

@@ -167,7 +167,7 @@ describe("Profile privileged tools architecture", () => {
 
 		for (const [routeName, componentName] of [
 			["product-submissions", "ProductSubmissionReviewList"],
-			["food-warning-reports", "FoodWarningReportReviewList"],
+			["food-warning-reports", "FoodWarningQueues"],
 			["profile-images", "ProfileImageReportReviewList"],
 			["account-access", "AccountAccessReviewList"],
 		] as const) {
