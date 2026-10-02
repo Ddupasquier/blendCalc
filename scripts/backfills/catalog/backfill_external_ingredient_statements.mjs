@@ -58,7 +58,6 @@ const limit = limitArgument
 
 if (isLocal) config({ path: ".env.test.local", quiet: true });
 config({ path: ".env.moderation.local", quiet: true });
-config({ path: ".env", quiet: true });
 
 if (
 	requestedScope !== "all" &&

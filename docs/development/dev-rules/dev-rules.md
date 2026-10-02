@@ -2047,7 +2047,7 @@ keep its actions reachable, and scroll its own content rather than the obscured 
 
 Keep external API structure references
 generated and isolated. When the app needs a full understanding of vendor payload shape,
-run `npm run generate:api-structures` and store the generated reference files under
+run `node scripts/generators/api/generate_api_structures.mjs` and store the generated reference files under
 `docs/development/api-structures`. These files are documentation only and must not be imported by
 runtime app code. If runtime types are needed, create curated app-owned types in
 `src/lib/types` or the relevant `src/lib/utils/**` domain.
@@ -2503,7 +2503,7 @@ for both setup and restoration. Never instruct a tester only to edit, disable, i
 update, or delete a row manually. Identify the disposable test-database boundary,
 concrete affected tables or rows, the expected command result, and whether restoration
 deletes other local QA data. Prefer deterministic local SQL for setup and
-`npm run db:test:reset` for restoration when the test does not need to preserve other
+`npm run db:test -- reset` for restoration when the test does not need to preserve other
 disposable fixtures. Never direct destructive QA commands at a linked, staging, or
 production database.
 

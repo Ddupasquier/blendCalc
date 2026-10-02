@@ -1,4 +1,5 @@
 .svelte-kit/
+.svelte-kit-rehearsal/
 .vercel/
 build/
 coverage/

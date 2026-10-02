@@ -88,17 +88,22 @@ describe("Playwright browser-testing architecture", () => {
 		for (const command of [
 			'test:e2e"',
 			'test:e2e:affected"',
-			'test:e2e:chromium"',
-			'test:e2e:compatibility"',
 			'test:e2e:headed"',
-			'test:e2e:nightly"',
-			'test:e2e:session:start"',
 			'test:e2e:ui"',
 			'test:e2e:update"',
 		]) {
 			expect(packageSource).toContain(command);
 		}
-		expect(packageSource).toContain("npm run db:test:start");
+		expect(browserTestingGuide).toContain(
+			"npm run test:e2e -- --project=desktop-chromium --project=mobile-chromium",
+		);
+		expect(browserTestingGuide).toContain(
+			"npm run test:e2e -- --grep @compatibility",
+		);
+		expect(browserTestingGuide).toContain(
+			"PLAYWRIGHT_EXHAUSTIVE_MATRIX=true npm run test:e2e",
+		);
+		expect(packageSource).toContain("npm run db:test -- start");
 		expect(packageSource).toContain("npm run free:test-port");
 		expect(packageSource).toContain("--port 5174 --strictPort");
 		expect(testingStrategy).toContain("## Ownership");
@@ -235,7 +240,7 @@ describe("Playwright browser-testing architecture", () => {
 		]) {
 			expect(workflow).not.toMatch(/actions\/(?:checkout|setup-node)@v[1-4]\b/);
 		}
-		expect(databaseWorkflow).toContain("npm run db:test:verify");
+		expect(databaseWorkflow).toContain("npm run db:test -- verify");
 		expect(databaseWorkflow).toContain("name: Database Verification");
 		expect(databaseWorkflow).toContain(
 			"verify_release_promotion.mjs --against origin/mock-staging",

@@ -2,7 +2,7 @@
  * Purpose: Classify current catalog publication blockers by their database-owned
  * repair contract and summarize a fresh read-only API readiness audit.
  * Do not run directly.
- * Parent workflow: `npm run audit:blendCalcAPI-catalog`
+ * Parent workflow: `node scripts/audits/catalog/audit_blendCalcAPI_catalog_readiness.mjs`
  */
 
 /** @type {Readonly<Record<string, string>>} */

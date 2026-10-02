@@ -596,7 +596,7 @@ Use the ordinary catalog-correction workflow when reviewed label data should rep
 specific canonical fields. Use a publication hold when a rights, attribution, privacy,
 accuracy, or source-retirement concern requires immediate public withholding while the
 evidence is reviewed. Holds are reversible and do not erase source or revision history.
-Use `npm run blendCalcAPI:publication -- list` for the bounded operator queue and the documented
+Use `node scripts/operations/blendCalcAPI/manage_blendCalcAPI_publication.mjs list` for the bounded operator queue and the documented
 `hold`, `release`, and `resolve` subcommands for emergency action.
 
 ## Authoritative Repository Locations

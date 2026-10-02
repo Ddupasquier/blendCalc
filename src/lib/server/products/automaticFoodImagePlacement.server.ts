@@ -1,5 +1,6 @@
 import sharp from "sharp";
 import { createWorker, PSM, type Worker } from "tesseract.js";
+import { createServerTesseractWorkerOptions } from "$lib/server/ocr/serverTesseractCache.server";
 import {
 	createFullImagePlacement,
 	getImagePlacementGeometry,
@@ -18,10 +19,7 @@ const OCR_TARGET_IMAGE_DIMENSION = 1600;
 const REPRESENTATIVE_CARD_MEDIA_LANE_WIDTH = 96;
 const REPRESENTATIVE_CARD_HEIGHT = 68;
 const QUARTER_TURN_RECOGNITION_ATTEMPTS: ImageRotationDegrees[] = [
-	0,
-	90,
-	270,
-	180,
+	0, 90, 270, 180,
 ];
 
 const recognizeQuarterTurns = async ({
@@ -107,7 +105,11 @@ export const suggestAutomaticFoodImagePlacement = async ({
 		horizontalMovement: "left-only",
 		value: createFullImagePlacement(),
 	});
-	const worker = await createWorker("eng");
+	const worker = await createWorker(
+		"eng",
+		undefined,
+		createServerTesseractWorkerOptions(),
+	);
 
 	try {
 		for (const pageSegmentationMode of [PSM.SPARSE_TEXT, PSM.SINGLE_BLOCK]) {

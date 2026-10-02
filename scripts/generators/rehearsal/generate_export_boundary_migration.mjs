@@ -1,8 +1,8 @@
 /**
- * Purpose: Generate or verify the explicit Rehearsal export-boundary migration from
- * the reviewed sanitization manifest.
- * Run: `npm run rehearsal:export-migration:generate` or
- * `npm run rehearsal:export-migration:check`.
+ * Purpose: Generate or verify BlendCalc's explicit Rehearsal export-boundary migration
+ * from its reviewed sanitization manifest.
+ * Run: `node scripts/generators/rehearsal/generate_export_boundary_migration.mjs --write` or
+ * `node scripts/generators/rehearsal/generate_export_boundary_migration.mjs --check`.
  */
 
 import { readFile, writeFile } from "node:fs/promises";
