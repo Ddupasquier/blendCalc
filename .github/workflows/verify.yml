@@ -271,6 +271,9 @@ jobs:
       - preflight
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      # All selected projects share this job's database and privileged fixtures.
+      PLAYWRIGHT_WORKERS: 1
     steps:
       - name: Check out repository history
         uses: actions/checkout@v7

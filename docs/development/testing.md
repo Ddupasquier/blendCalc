@@ -258,6 +258,12 @@ own local Supabase stack, so Chromium, Firefox, WebKit, and compact projects can
 one another. The jobs may use their isolated worker accounts internally, but sharding
 still requires one independent database environment per shard.
 
+The affected-browser feature job is the exception: selected projects share one
+disposable database and privileged reviewer fixtures, so it uses one Playwright worker.
+Run multi-project checks of shared warning queues or MFA reviewer accounts locally with
+`PLAYWRIGHT_WORKERS=1` too. Keep the isolated full-matrix jobs at two workers; do not
+relax assertions or skip projects to hide shared-state races.
+
 ## Quiet Output
 
 Keep successful runs compact and preserve full diagnostics for failures:
