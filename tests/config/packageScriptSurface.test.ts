@@ -55,7 +55,7 @@ describe("root npm script surface", () => {
 			expect(scripts).toHaveProperty(command);
 		}
 		expect(verificationDashboard).toContain(
-			'["run", "db:test", "--", "verify", "--keep-running"]',
+			'["run", "db:test", "--", "verify"]',
 		);
 		expect(verificationDashboard).not.toContain("db:test:verify");
 	});

@@ -103,8 +103,8 @@ const affectedBrowserStage = stage(
 const browserMatrixStage = stage(
 	"playwright-matrix",
 	"Blocking browser tiers",
-	"npx",
-	["playwright", "test"],
+	"npm",
+	["run", "test:e2e"],
 	480_000,
 	{
 		environment: {
@@ -117,8 +117,8 @@ const browserMatrixStage = stage(
 const exhaustiveBrowserMatrixStage = stage(
 	"playwright-exhaustive",
 	"Exhaustive browser matrix",
-	"npx",
-	["playwright", "test"],
+	"npm",
+	["run", "test:e2e"],
 	900_000,
 	{
 		environment: {
@@ -162,7 +162,7 @@ export const verificationProfiles = {
 				"database",
 				"Disposable database",
 				"npm",
-				["run", "db:test", "--", "verify", "--keep-running"],
+				["run", "db:test", "--", "verify"],
 				240_000,
 			),
 			browserMatrixStage,
@@ -187,7 +187,7 @@ export const verificationProfiles = {
 				"database",
 				"Disposable database",
 				"npm",
-				["run", "db:test", "--", "verify", "--keep-running"],
+				["run", "db:test", "--", "verify"],
 				240_000,
 			),
 			exhaustiveBrowserMatrixStage,
