@@ -15,10 +15,9 @@ export type SegmentedControlButtonOption = SegmentedControlOptionBase & {
 };
 
 export type SegmentedControlOption =
-	| SegmentedControlLinkOption
-	| SegmentedControlButtonOption;
+	SegmentedControlLinkOption | SegmentedControlButtonOption;
 
-export type SegmentedControlVariant = "pill" | "progress";
+export type SegmentedControlVariant = "pill" | "compact" | "progress";
 
 type SegmentedControlBaseProps = {
 	label: string;
