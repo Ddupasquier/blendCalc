@@ -227,6 +227,7 @@
 						<div class="nutrition-detail-view__mode">
 							<SegmentedControl
 								label="Adjust viewing amount by"
+								variant="compact"
 								options={viewingModeOptions}
 								value={viewingMode}
 								onSelect={selectViewingMode}

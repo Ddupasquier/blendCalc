@@ -728,6 +728,10 @@ photo` actions. Only the camera action carries the rear-camera hint; cancelling 
 
 ### Nutrition Details
 
+- The Weight/Servings switch uses the shared segmented control's compact variant:
+  label-sized width, right alignment, nonanimated selection, and at least 44px touch
+  targets. Let the amount heading wrap when enlarged text needs more room; never
+  stretch the switch or override the shared control's internal styling.
 - Nutrition Facts may use the high-contrast data treatment and data font; it is an
   intentional domain-specific exception to the soft card palette.
 - Product name is not truncated in the detailed view.

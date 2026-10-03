@@ -51,25 +51,16 @@ h1 {
 
 .nutrition-detail-view__amount-heading {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
 	justify-content: space-between;
 	gap: $app-gap-sm;
 }
 
 .nutrition-detail-view__mode {
-	width: min(13rem, 60%);
-}
-.nutrition-detail-view__mode :global(.segmented-control) {
-	padding: 0.125rem;
-}
-.nutrition-detail-view__mode :global(.segmented-control__selection) {
-	inset-block: 0.125rem;
-	inset-inline-start: 0.125rem;
-	width: calc(50% - 0.125rem);
-}
-.nutrition-detail-view__mode :global(.segmented-control__button) {
-	min-height: 2rem;
-	font-size: $app-font-size-xs;
+	flex: none;
+	max-width: 100%;
+	margin-inline-start: auto;
 }
 
 .nutrition-detail-view__amount-controls {
@@ -129,15 +120,6 @@ h1 {
 		strong {
 			font-size: $app-font-size-sm;
 		}
-	}
-
-	.nutrition-detail-view__mode {
-		width: 100%;
-	}
-
-	.nutrition-detail-view__amount-heading {
-		align-items: stretch;
-		flex-direction: column;
 	}
 
 	.nutrition-detail-view__panel {
