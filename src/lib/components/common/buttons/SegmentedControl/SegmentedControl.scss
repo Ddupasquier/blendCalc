@@ -10,7 +10,8 @@ $liquid-motion-easing: cubic-bezier(0.22, 0.72, 0.22, 1);
 	grid-auto-flow: column;
 }
 
-.segmented-control[data-variant="pill"] {
+.segmented-control[data-variant="pill"],
+.segmented-control[data-variant="compact"] {
 	position: relative;
 	isolation: isolate;
 	padding: $app-gap-xs;
@@ -34,7 +35,8 @@ $liquid-motion-easing: cubic-bezier(0.22, 0.72, 0.22, 1);
 }
 
 .segmented-control__selection--moving {
-	animation: segmented-control-liquid-forward $liquid-motion-duration $liquid-motion-easing;
+	animation: segmented-control-liquid-forward $liquid-motion-duration
+		$liquid-motion-easing;
 }
 
 .segmented-control__selection--moving.segmented-control__selection--backward {
@@ -51,7 +53,8 @@ $liquid-motion-easing: cubic-bezier(0.22, 0.72, 0.22, 1);
 }
 
 .segmented-control__selection-surface--moving {
-	animation: segmented-control-liquid-settle $liquid-motion-duration $liquid-motion-easing;
+	animation: segmented-control-liquid-settle $liquid-motion-duration
+		$liquid-motion-easing;
 }
 
 .segmented-control__selection-surface--moving.segmented-control__selection-surface--backward {
@@ -74,7 +77,8 @@ $liquid-motion-easing: cubic-bezier(0.22, 0.72, 0.22, 1);
 		background-color motion.$duration-state motion.$easing-standard;
 }
 
-.segmented-control[data-variant="pill"] .segmented-control__button {
+.segmented-control[data-variant="pill"] .segmented-control__button,
+.segmented-control[data-variant="compact"] .segmented-control__button {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -82,6 +86,25 @@ $liquid-motion-easing: cubic-bezier(0.22, 0.72, 0.22, 1);
 	border-radius: $app-shell-radius-pill;
 	font-size: $app-font-size-md;
 	font-weight: $app-button-font-weight;
+}
+
+.segmented-control[data-variant="compact"] {
+	grid-auto-columns: max-content;
+	width: max-content;
+	max-width: 100%;
+}
+
+.segmented-control[data-variant="compact"] .segmented-control__button {
+	min-width: $app-shell-control-height-narrow;
+	min-height: $app-shell-control-height-narrow;
+	padding-inline: $app-gap-sm;
+	font-size: $app-font-size-xs;
+	transition: none;
+}
+
+.segmented-control[data-variant="compact"] .segmented-control__label {
+	overflow: visible;
+	text-overflow: clip;
 }
 
 .segmented-control[data-variant="progress"] {
@@ -127,11 +150,13 @@ $liquid-motion-easing: cubic-bezier(0.22, 0.72, 0.22, 1);
 	color: $app-shell-text-primary;
 }
 
-.segmented-control[data-variant="pill"] .segmented-control__button--active {
+.segmented-control[data-variant="pill"] .segmented-control__button--active,
+.segmented-control[data-variant="compact"] .segmented-control__button--active {
 	background: $app-shell-surface-panel;
 }
 
-.segmented-control[data-option-count="2"][data-variant="pill"] .segmented-control__button--active {
+.segmented-control[data-option-count="2"][data-variant="pill"]
+	.segmented-control__button--active {
 	background: transparent;
 }
 
@@ -226,7 +251,8 @@ $liquid-motion-easing: cubic-bezier(0.22, 0.72, 0.22, 1);
 	}
 }
 
-@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
 	.segmented-control[data-variant="pill"] {
 		padding: $app-gap-xs;
 	}
