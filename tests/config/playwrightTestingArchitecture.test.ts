@@ -142,6 +142,22 @@ describe("Playwright browser-testing architecture", () => {
 		expect(gitignore).toContain("*.tsbuildinfo");
 	});
 
+	it("retains only scoped nutrition-switch images after successful desktop review runs", () => {
+		const workflow = readSource(".github/workflows/verify.yml");
+		const reviewUpload = workflow
+			.split("name: Upload nutrition-switch review images")[1]
+			?.split("- name: Upload failure evidence")[0];
+		expect(reviewUpload).toContain(
+			"if: success() && matrix.project == 'desktop-chromium'",
+		);
+		expect(reviewUpload).toContain(
+			"path: test-results/playwright/**/nutrition-viewing-switch-*.png",
+		);
+		expect(reviewUpload).toContain("retention-days: 7");
+		expect(reviewUpload).not.toContain("playwright-report/");
+		expect(reviewUpload).not.toContain("authenticated-browser-state");
+	});
+
 	it("prevents inherited terminal color settings from conflicting with Playwright", () => {
 		const playwrightConfig = readSource("playwright.config.ts");
 		expect(playwrightConfig).toContain("delete process.env.NO_COLOR");
