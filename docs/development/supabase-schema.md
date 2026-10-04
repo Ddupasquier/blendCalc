@@ -2206,6 +2206,20 @@ Notes:
   explicit data-operations permission.
 - `get_catalog_review_work_summary(p_limit)` returns only material conflicts, provider
   changes, and possible recall matches to an AAL2 catalog reviewer.
+- `get_catalog_review_page(p_queue, p_product_id, p_cursor, p_limit)` is the additive
+  progressive read contract for the unique product inbox and exact-product conflict,
+  provider and recall queues. It independently requires AAL2 catalog-review permission,
+  rejects unscoped decision reads and pages larger than 20, and returns exact counts,
+  a timestamp/UUID/priority continuation cursor, and a same-snapshot revision. Product
+  priority puts possible recalls first. The private `catalog_review_page_entries`
+  projection joins the existing actionable views and `needs_review` recall matches;
+  browser roles cannot read it. No new durable queue or duplicate evidence store is
+  created. Three partial product/timestamp/UUID indexes support current decision reads.
+  A revision change requires visible-depth reconciliation, including same-count
+  replacements and priority changes. The existing summary remains for rollout
+  compatibility; decision effects and all-field conflict atomicity are unchanged.
+  `finish_catalog_conflict_review` now accepts at most 200 decisions in one transaction;
+  the server caps that form at 2 MiB and retains the exact-current-ID guard.
 - `get_blendcalc_api_catalog_product_readiness_passport(p_shared_product_id)` returns one bounded
   product contract to an AAL2 catalog reviewer or data-operations reader. It separates
   shared-catalog and blendCalcAPI v1 status, includes the current revision and source-evidence
