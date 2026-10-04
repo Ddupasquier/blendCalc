@@ -13,10 +13,7 @@
 		}
 	},
 	"scripts": {
-		"docs:build": "node scripts/generators/documentation/build_documentation.mjs",
-		"docs:dev": "node scripts/operations/documentation/preview_documentation.mjs",
-		"predocs:test": "npm run version:check",
-		"docs:test": "node scripts/operations/quality/run_with_resource_limits.mjs playwright test --config config/documentation/playwright.config.ts",
+		"docs": "node scripts/operations/documentation/run_documentation.mjs",
 		"dev": "npm run dev:local",
 		"predev:local": "npm run kill:vite && npm run free:dev-port && npm run version:check",
 		"dev:local": "node scripts/operations/environment/run_production_development.mjs",

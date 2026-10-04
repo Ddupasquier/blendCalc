@@ -1,6 +1,6 @@
 /**
  * Purpose: Preview public static documentation on loopback, without app services.
- * Run: `npm run docs:dev -- [--base /blendCalc/] [--port 4178]`
+ * Run: `npm run docs -- dev [--base /blendCalc/] [--port 4178]`
  * Serves generated public docs on loopback only; rebuilds when public sources change.
  * Reads no credentials and does not start the application or any database.
  */
@@ -20,7 +20,7 @@ for (let index = 0; index < args.length; index += 2) {
 	else if (args[index] === "--port") port = Number(args[index + 1]);
 	else
 		throw new Error(
-			"Usage: npm run docs:dev -- [--base /blendCalc/] [--port 4178]",
+			"Usage: npm run docs -- dev [--base /blendCalc/] [--port 4178]",
 		);
 }
 if (!Number.isInteger(port) || port < 1024 || port > 65535)

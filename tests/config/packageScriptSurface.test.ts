@@ -50,6 +50,7 @@ describe("root npm script surface", () => {
 			"blendCalcAPI:db",
 			"db:local",
 			"db:test",
+			"docs",
 			"rehearsal",
 		]) {
 			expect(scripts).toHaveProperty(command);

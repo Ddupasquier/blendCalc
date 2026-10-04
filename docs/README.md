@@ -1,6 +1,6 @@
 # blendCalc Documentation
 
-Preview the branded site with `npm run docs:dev` at
+Preview the branded site with `npm run docs` at
 [http://localhost:4178](http://localhost:4178). See
 [Maintaining this site](development/documentation-site.md) for page metadata and builds.
 

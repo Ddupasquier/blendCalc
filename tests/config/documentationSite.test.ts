@@ -1,3 +1,4 @@
+import { execFileSync, spawnSync } from "node:child_process";
 import {
 	existsSync,
 	mkdtempSync,
@@ -30,6 +31,17 @@ const page = documentationPages.find(
 )!;
 
 describe("public static documentation", () => {
+	it("offers one documentation command with safe help and invalid-command handling", () => {
+		const command = "scripts/operations/documentation/run_documentation.mjs";
+		expect(
+			execFileSync(process.execPath, [command, "--help"], { encoding: "utf8" }),
+		).toContain("[dev|build|test]");
+		const invalid = spawnSync(process.execPath, [command, "publish"], {
+			encoding: "utf8",
+		});
+		expect(invalid.status).toBe(2);
+		expect(invalid.stderr).toContain("Usage: npm run docs");
+	});
 	it("puts user help first and clearly separates developer references", () => {
 		expect(documentationSections.map((section) => section.title)).toEqual([
 			"Start here",

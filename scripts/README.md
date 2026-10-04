@@ -68,9 +68,14 @@ The guard never deletes files, caches, containers, volumes, or databases.
 
 ## Directory Map
 
-Documentation workflows: `npm run docs:build` generates and checks all public pages;
-`npm run docs:dev` serves their loopback preview; `npm run docs:test` runs the independent
+Documentation workflows: `npm run docs -- build` generates and checks all public pages;
+`npm run docs` serves their loopback preview; `npm run docs -- test` runs the independent
 documentation browser matrix. See [Maintaining this site](../docs/development/documentation-site.md).
+
+The family entry point is `scripts/operations/documentation/run_documentation.mjs`.
+It dispatches `scripts/generators/documentation/build_documentation.mjs` and
+`scripts/operations/documentation/preview_documentation.mjs`, or the independent
+documentation browser runner. Use the npm family command instead of adding aliases.
 
 | Path                        | Responsibility                                                          |
 | --------------------------- | ----------------------------------------------------------------------- |
