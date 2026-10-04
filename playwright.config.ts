@@ -30,6 +30,7 @@ if (
 
 export default defineConfig({
 	testDir: "./tests/e2e",
+	testIgnore: "**/documentation/**",
 	outputDir: "test-results/playwright",
 	fullyParallel: true,
 	forbidOnly: Boolean(process.env.CI),
