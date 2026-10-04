@@ -61,6 +61,11 @@ npm install
 Dependency install scripts are deny-by-default. Reviewed package versions are listed in
 `package.json` under `allowScripts`; do not approve new lifecycle scripts globally.
 
+Run `node scripts/operations/quality/audit_dependencies.mjs` to show the full security
+audit and enforce the [dependency safety policy](docs/development/dev-rules/dev-rules.md#rule-dependency-supply-chain).
+Any temporary acceptance is explicit, narrowly pinned and expires automatically; it
+does not mean the vulnerability is fixed. Raw `npm audit` still shows every finding.
+
 ### 2. Configure The Environment
 
 Ordinary development on port `5173` uses the real hosted BlendCalc application and API

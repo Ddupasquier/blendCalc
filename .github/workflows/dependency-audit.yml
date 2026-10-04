@@ -26,4 +26,4 @@ jobs:
           node-version: 24
           cache: npm
       - name: Audit moderate and higher advisories
-        run: npm audit --package-lock-only --ignore-scripts --audit-level=moderate
+        run: node scripts/operations/quality/audit_dependencies.mjs

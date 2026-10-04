@@ -183,9 +183,15 @@ An unchanged main promotion reuses staging. Database verification runs only
 when database-owned files changed. Hosted Auth health runs only when Auth-owned files
 changed, plus its daily drift check and manual runs.
 
-The scheduled Dependency Audit checks the lockfile daily at moderate-or-higher severity
-so advisory drift is found before a release candidate. The same audit runs in the fast
-preflight whenever a complete candidate or dependency-changing branch is verified.
+The scheduled Dependency Audit checks the lockfile daily through
+`node scripts/operations/quality/audit_dependencies.mjs`. The same gate runs in release
+and nightly profiles, promotion reuse, and the CI preflight for full/reused candidates
+or dependency/policy-changing branches. It preserves full findings and requires a clean
+production audit. The narrowly pinned temporary development exception and its fixed
+expiry are governed by the [dependency safety policy](dev-rules/dev-rules.md#rule-dependency-supply-chain).
+Network, parse and execution errors never count as a successful audit. Focused refusal
+coverage lives in `tests/scripts/dependencyAuditPolicy.test.mjs`; it uses synthetic
+public advisory evidence rather than contacting live registries.
 
 #### Work-Quota Closeout
 
