@@ -1,6 +1,6 @@
 /**
  * Purpose: Generate and validate the public static documentation site.
- * Run: `npm run docs:build -- [--base /blendCalc/]`
+ * Run: `npm run docs -- build [--base /blendCalc/]`
  * Writes only generated public documentation beneath dist/documentation.
  * Never reads environment values, private workspace content or application data.
  */
@@ -382,7 +382,7 @@ if (
 				repositoryRoot,
 				`dist/documentation-preview-${args[index + 1]}`,
 			);
-		else throw new Error("Usage: npm run docs:build -- [--base /blendCalc/]");
+		else throw new Error("Usage: npm run docs -- build [--base /blendCalc/]");
 	}
 	console.log("Documentation build:", buildDocumentation({ base, output }));
 }

@@ -16,7 +16,7 @@ It accepts request headers up to 64 KiB so existing localhost sessions on other 
 do not hit Node's smaller default limit. Do not clear app sessions to preview the docs.
 
 ```bash
-npm run docs:dev
+npm run docs
 ```
 
 Open [http://localhost:4178](http://localhost:4178). The preview rebuilds when public
@@ -82,8 +82,8 @@ into the shell or navigation.
 ## Verify The Site
 
 ```bash
-npm run docs:build
-npm run docs:test
+npm run docs -- build
+npm run docs -- test
 npm run test:focused -- tests/config/documentationQuality.test.ts tests/config/documentationSite.test.ts
 npm run format:check
 ```
@@ -112,7 +112,7 @@ Local preview needs neither Pages configuration nor hosted application credentia
 For a project Pages URL such as `https://ddupasquier.github.io/blendCalc/`:
 
 ```bash
-npm run docs:build -- --base /blendCalc/
+npm run docs -- build --base /blendCalc/
 ```
 
 The workflow derives the project path from the repository name and uploads
@@ -125,7 +125,7 @@ configured base path. Use `/` for a custom-domain root.
 To inspect the project-path build before publishing:
 
 ```bash
-npm run docs:dev -- --base /blendCalc/
+npm run docs -- dev --base /blendCalc/
 ```
 
 Open [http://localhost:4178/blendCalc/](http://localhost:4178/blendCalc/).
