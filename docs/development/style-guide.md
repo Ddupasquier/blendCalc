@@ -413,6 +413,9 @@ change together.
 ## Borders, Focus, And Depth
 
 - Use surfaces and borders to create hierarchy. Do not use box shadows.
+  The standalone documentation site is the approved, scoped exception: restrained
+  shadows may separate its illustration and modal surfaces. App components remain
+  shadow-free; documentation presentation stays under `config/documentation/`.
 - Neutral boundaries use `$app-shell-border-subtle`.
 - Ingredient cards keep a transparent `2px` border so selection can become visible
   without changing layout.

@@ -68,35 +68,42 @@ The guard never deletes files, caches, containers, volumes, or databases.
 
 ## Directory Map
 
-| Path                       | Responsibility                                                          |
-| -------------------------- | ----------------------------------------------------------------------- |
-| `audits/catalog/`          | Catalog publication, transparency, and barcode nutrition checks         |
-| `audits/food-sources/`     | Provider coverage, quality, request-cost, and contribution checks       |
-| `audits/security/`         | Hosted infrastructure and Auth checks                                   |
-| `backfills/catalog/`       | Idempotent catalog and saved-source enrichment                          |
-| `backfills/images/`        | Image discovery, metadata repair, and automatic placement               |
-| `generators/api/`          | Documentation-only external provider references                         |
-| `generators/rehearsal/`    | Reviewed Rehearsal schema-policy manifests                              |
-| `imports/nutrition/`       | Licensed national nutrition dataset imports                             |
-| `operations/blendCalcAPI/` | blendCalcAPI correction review and reversible publication controls      |
-| `operations/auth/`         | Auth environment verification                                           |
-| `operations/database/`     | Local database management and linked migration delivery                 |
-| `operations/environment/`  | Safe local/test application and verification process launchers          |
-| `operations/quality/`      | Repository linting and formatting verification helpers                  |
-| `operations/recovery/`     | Protected hosted backups and offline verification                       |
-| `operations/rehearsal/`    | Disposable production-shaped migration-rehearsal proofs                 |
-| `operations/releases/`     | Application and API version consistency                                 |
-| `operations/users/`        | Privileged role and account operations                                  |
-| `operations/catalog/`      | Privileged catalog inspection and destructive product operations        |
-| `qa/catalog/`              | Disposable catalog and image-moderation fixtures                        |
-| `qa/database/`             | Deterministic hosted database and API checks                            |
-| `seeds/catalog/`           | Category, product-source, serving, and nutrient-reference discovery     |
-| `seeds/food-safety/`       | Ingredient, allergen, trace, and dietary evidence discovery             |
-| `seeds/nutrition/`         | Manual-entry nutrient-policy observations                               |
-| `lib/<domain>/`            | Reusable script-only code; never run directly                           |
-| `lib/environment/`         | Clean process environments and local Supabase service helpers           |
-| `lib/reference-data/`      | Reviewed source queries, unit standards, and cautious matching catalogs |
-| `lib/rehearsal/`           | BlendCalc export, sanitization, identity, asset, and proof helpers      |
+Documentation workflows: `npm run docs:build` generates and checks all public pages;
+`npm run docs:dev` serves their loopback preview; `npm run docs:test` runs the independent
+documentation browser matrix. See [Maintaining this site](../docs/development/documentation-site.md).
+
+| Path                        | Responsibility                                                          |
+| --------------------------- | ----------------------------------------------------------------------- |
+| `audits/catalog/`           | Catalog publication, transparency, and barcode nutrition checks         |
+| `audits/food-sources/`      | Provider coverage, quality, request-cost, and contribution checks       |
+| `audits/security/`          | Hosted infrastructure and Auth checks                                   |
+| `backfills/catalog/`        | Idempotent catalog and saved-source enrichment                          |
+| `backfills/images/`         | Image discovery, metadata repair, and automatic placement               |
+| `generators/api/`           | Documentation-only external provider references                         |
+| `generators/documentation/` | Public Markdown-to-site build with link and anchor validation           |
+| `generators/rehearsal/`     | Reviewed Rehearsal schema-policy manifests                              |
+| `imports/nutrition/`        | Licensed national nutrition dataset imports                             |
+| `operations/blendCalcAPI/`  | blendCalcAPI correction review and reversible publication controls      |
+| `operations/auth/`          | Auth environment verification                                           |
+| `operations/database/`      | Local database management and linked migration delivery                 |
+| `operations/environment/`   | Safe local/test application and verification process launchers          |
+| `operations/documentation/` | Loopback-only documentation preview; no app or database startup         |
+| `operations/quality/`       | Repository linting and formatting verification helpers                  |
+| `operations/recovery/`      | Protected hosted backups and offline verification                       |
+| `operations/rehearsal/`     | Disposable production-shaped migration-rehearsal proofs                 |
+| `operations/releases/`      | Application and API version consistency                                 |
+| `operations/users/`         | Privileged role and account operations                                  |
+| `operations/catalog/`       | Privileged catalog inspection and destructive product operations        |
+| `qa/catalog/`               | Disposable catalog and image-moderation fixtures                        |
+| `qa/database/`              | Deterministic hosted database and API checks                            |
+| `seeds/catalog/`            | Category, product-source, serving, and nutrient-reference discovery     |
+| `seeds/food-safety/`        | Ingredient, allergen, trace, and dietary evidence discovery             |
+| `seeds/nutrition/`          | Manual-entry nutrient-policy observations                               |
+| `lib/<domain>/`             | Reusable script-only code; never run directly                           |
+| `lib/environment/`          | Clean process environments and local Supabase service helpers           |
+| `lib/documentation/`        | Static documentation shell and Markdown rendering                       |
+| `lib/reference-data/`       | Reviewed source queries, unit standards, and cautious matching catalogs |
+| `lib/rehearsal/`            | BlendCalc export, sanitization, identity, asset, and proof helpers      |
 
 ## Local Database And QA
 

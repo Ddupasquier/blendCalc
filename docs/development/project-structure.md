@@ -272,8 +272,14 @@ generic package source or package documentation back into this repository.
 
 ## Documentation
 
-The tracked documentation entry point is [`docs/README.md`](../README.md). Product help
-belongs under `docs/user/`; engineering rules, contracts, architecture, testing,
+The tracked documentation entry point is [`docs/README.md`](../README.md).
+
+The public static documentation site reads those Markdown sources without moving them.
+`config/documentation/` owns centralized navigation and presentation;
+the build, rendering helpers and preview follow the existing script ownership folders.
+See [Maintaining the documentation site](documentation-site.md).
+
+Product help belongs under `docs/user/`; engineering rules, contracts, architecture, testing,
 deployment, schema, and API references belong under `docs/development/`. Add detail to
 the document that owns the subject and link to it from supporting documents; do not
 create a second rule set, schema map, provider ledger, API field map, command guide, or

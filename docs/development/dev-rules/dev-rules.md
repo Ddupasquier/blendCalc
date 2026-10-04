@@ -481,6 +481,8 @@ respond to operating-system changes. A theme change must never reload the page, 
 in-progress UI, or fork component markup by theme.
 
 **4.** Do not use box shadows. Use borders, spacing, and background contrast instead.
+The standalone documentation site has a scoped exception for restrained illustration
+and modal shadows. This does not change the application component contract.
 
 **5.** Keep the visual style calm, polished, and not overstimulating. Accent colors
 should be rare and intentional.
