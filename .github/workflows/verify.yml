@@ -254,6 +254,14 @@ jobs:
             args+=(--shard="$PLAYWRIGHT_SHARD")
           fi
           npm run test:e2e -- "${args[@]}"
+      - name: Upload nutrition-switch review images
+        if: success() && matrix.project == 'desktop-chromium'
+        uses: actions/upload-artifact@v4
+        with:
+          name: nutrition-switch-${{ matrix.label }}-${{ github.run_attempt }}
+          path: test-results/playwright/**/nutrition-viewing-switch-*.png
+          if-no-files-found: ignore
+          retention-days: 7
       - name: Upload failure evidence
         if: failure()
         uses: actions/upload-artifact@v4
