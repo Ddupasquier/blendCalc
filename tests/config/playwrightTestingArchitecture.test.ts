@@ -173,7 +173,9 @@ describe("Playwright browser-testing architecture", () => {
 		]) {
 			expect(verificationWorkflow).toContain(`project: ${project}`);
 		}
-		expect(verificationWorkflow).toContain("npm audit --audit-level=moderate");
+		expect(verificationWorkflow).toContain(
+			"node scripts/operations/quality/audit_dependencies.mjs",
+		);
 		expect(verificationWorkflow).toContain(
 			"PUBLIC_SUPABASE_URL: http://127.0.0.1:54321",
 		);
@@ -268,7 +270,7 @@ describe("Playwright browser-testing architecture", () => {
 		expect(hostedAuthWorkflow).not.toContain("secrets.");
 		expect(dependencyAuditWorkflow).toContain('cron: "15 10 * * *"');
 		expect(dependencyAuditWorkflow).toContain(
-			"npm audit --package-lock-only --ignore-scripts --audit-level=moderate",
+			"node scripts/operations/quality/audit_dependencies.mjs",
 		);
 		expect(viteConfig).toContain("maxWorkers: 4");
 	});

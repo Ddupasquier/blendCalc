@@ -8,6 +8,7 @@
 
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { runDependencyAudit } from "../../lib/security/run_dependency_audit.mjs";
 import {
 	verifyMatchingGitTrees,
 	verifyReleaseReceipt,
@@ -33,11 +34,14 @@ if (args.includes("--force-full")) {
 			repositoryRoot,
 			expectedReference,
 		);
+		// Check fresh security evidence only after inexpensive tree validation.
+		await runDependencyAudit({ repositoryRoot });
 		console.log(
 			`Promotion integrity passed: ${currentTree} matches ${expectedReference}.`,
 		);
 	} else {
 		const { receipt } = await verifyReleaseReceipt(repositoryRoot);
+		await runDependencyAudit({ repositoryRoot });
 		console.log(
 			`Promotion Check passed: tree ${receipt.tree} was fully verified at ${receipt.verifiedAt}.`,
 		);

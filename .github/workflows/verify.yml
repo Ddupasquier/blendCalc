@@ -103,10 +103,12 @@ jobs:
           fi
 
           dependencies=false
-          if [[ "$mode" == "full" ]]; then
+          if [[ "$mode" == "full" || "$mode" == "reuse" ]]; then
             dependencies=true
           elif [[ "$mode" == "feature" ]] && ! git diff --quiet "$comparison_base" HEAD -- \
-            package.json package-lock.json npm-shrinkwrap.json; then
+            package.json package-lock.json npm-shrinkwrap.json config/dependencyAuditException.json \
+            scripts/lib/security/dependency_audit_policy.mjs scripts/lib/security/run_dependency_audit.mjs \
+            scripts/operations/quality/audit_dependencies.mjs .github/workflows/verify.yml; then
             dependencies=true
           fi
 
@@ -116,7 +118,6 @@ jobs:
 
   preflight:
     name: Security And Repository Policy Preflight
-    if: needs.verification-plan.outputs.mode != 'reuse'
     needs: verification-plan
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -132,7 +133,7 @@ jobs:
         run: npm ci --ignore-scripts
       - name: Audit dependencies before expensive browser work
         if: needs.verification-plan.outputs.dependencies == 'true'
-        run: npm audit --audit-level=moderate
+        run: node scripts/operations/quality/audit_dependencies.mjs
       - name: Run release policy contracts
         run: >-
           npm run test:focused --
@@ -140,6 +141,7 @@ jobs:
           tests/scripts/projectTicketLifecycle.test.mjs
           tests/config/developmentRulesStructure.test.ts
           tests/config/playwrightTestingArchitecture.test.ts
+          tests/scripts/dependencyAuditPolicy.test.mjs
 
   source:
     name: Source, Tests, And Build
@@ -317,7 +319,7 @@ jobs:
             exit 1
           fi
           if [[ "$MODE" == "reuse" ]]; then
-            [[ "$PREFLIGHT_RESULT" == "skipped" && "$BROWSER_RESULT" == "skipped" && "$AFFECTED_RESULT" == "skipped" ]]
+            [[ "$PREFLIGHT_RESULT" == "success" && "$BROWSER_RESULT" == "skipped" && "$AFFECTED_RESULT" == "skipped" ]]
           elif [[ "$MODE" == "full" ]]; then
             [[ "$PREFLIGHT_RESULT" == "success" && "$BROWSER_RESULT" == "success" && "$AFFECTED_RESULT" == "skipped" ]]
           elif [[ "$MODE" == "feature" ]]; then

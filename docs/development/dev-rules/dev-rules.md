@@ -1,6 +1,6 @@
 # Development Rules
 
-Last reviewed: 2026-09-07
+Last reviewed: 2026-10-04
 
 ## Purpose
 
@@ -244,6 +244,22 @@ or accept a script merely because it is transitive. Re-review a package when its
 script version changes. Remove obsolete dependencies rather than preserving them as
 speculative compatibility, and stop when a required upgrade conflicts with the Node,
 SvelteKit, browser, or deployment compatibility floor.
+
+Use `node scripts/operations/quality/audit_dependencies.mjs` for the blocking audit.
+It shows the full lockfile findings and separately requires a clean production tree.
+The only approved temporary risk acceptance is recorded in
+`config/dependencyAuditException.json`: advisory `GHSA-vfj7-8cjw-p6xm`, exactly eight
+reviewed development-only paths and locked records, from October 4 through October 11,
+2026 at 22:29:58 UTC. This accepts developer/build denial-of-service risk; it does not
+repair the vulnerability. All existing style checks remain mandatory.
+
+The exception fails closed on expiration, production findings, any other advisory or
+affected path, dependency or advisory-condition drift, and execution/network/parse
+errors. The public upstream advisory must still report no patch. Remove the exception
+and install a supported compatible fix as soon as one exists; an extension requires a
+new explicit risk decision. Never renew it automatically. Reused release evidence must
+pass the current audit too, so an earlier success cannot bypass expiry. Raw `npm audit`
+remains available and continues to report the vulnerability.
 
 <a id="rule-test-layer-ownership"></a>
 

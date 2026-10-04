@@ -37,6 +37,20 @@ the command line or place generated data in tracked files.
 
 ## Safety Before Execution
 
+`node scripts/operations/quality/audit_dependencies.mjs` is the shared read-only
+dependency gate for CI, release/nightly verification and promotion reuse. It runs
+bounded, scripts-disabled full and production lockfile audits, prints both reports,
+and checks the public upstream advisory before accepting the one approved temporary
+development-tool risk. The reviewed paths, record digests and absolute deadline live
+in `config/dependencyAuditException.json`; no flag or environment value extends them.
+Audit errors, production findings, drift and expiration fail closed. See the
+[dependency safety policy](../docs/development/dev-rules/dev-rules.md#rule-dependency-supply-chain)
+for risk acceptance and patch-removal requirements. The command never modifies
+dependencies, databases or credentials. The verification dashboard retains even a
+passing audit's complete report under ignored `test-results/verification-dashboard/`
+and prints its location and risk warning at closeout. Raw `npm audit` remains an
+unsuppressed report.
+
 | Workflow type                            | Required practice                                                                                     |
 | ---------------------------------------- | ----------------------------------------------------------------------------------------------------- |
 | Read-only audit                          | Confirm the target environment and use `--json` only when a machine-readable report is needed.        |
