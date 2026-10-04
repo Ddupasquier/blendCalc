@@ -10774,6 +10774,15 @@ export type Database = {
 				Args: { p_shared_product_id: string };
 				Returns: Json;
 			};
+			get_catalog_review_page: {
+				Args: {
+					p_cursor?: Json;
+					p_limit?: number;
+					p_product_id?: string;
+					p_queue: string;
+				};
+				Returns: Json;
+			};
 			get_catalog_review_work_summary: {
 				Args: { p_limit?: number };
 				Returns: Json;
