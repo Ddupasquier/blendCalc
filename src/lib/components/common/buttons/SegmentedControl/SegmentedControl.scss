@@ -97,7 +97,7 @@ $liquid-motion-easing: cubic-bezier(0.22, 0.72, 0.22, 1);
 .segmented-control[data-variant="compact"] .segmented-control__button {
 	min-width: $app-shell-control-height-narrow;
 	min-height: $app-shell-control-height-narrow;
-	padding-inline: $app-gap-sm;
+	padding-inline: $app-gap-xs;
 	font-size: $app-font-size-xs;
 	transition: none;
 }
