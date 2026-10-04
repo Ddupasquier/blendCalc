@@ -244,6 +244,10 @@ not duplicate the same assertion across runners.
 ## Infrastructure
 
 `config/contentSecurityPolicy.js` owns build-time CSP source composition.
+`config/dependencyAuditException.json` owns the single explicitly approved, absolute-
+expiry development-tool risk record. Evaluation belongs in `scripts/lib/security/`;
+the public command is `scripts/operations/quality/audit_dependencies.mjs`. This is
+build/verification policy, never application runtime or a general advisory allowlist.
 `config/environments/` owns tracked, value-free environment templates for manually
 configured consumers. Runtime values stay in each documented ignored destination or
 deployment provider; the templates are never loaded as an application environment.
