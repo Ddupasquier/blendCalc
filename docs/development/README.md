@@ -92,6 +92,10 @@ intended contract, then update the owning source and its maintained explanation 
 
 ## Documentation Maintenance
 
+The [documentation site guide](documentation-site.md) explains local preview, centralized
+page metadata, link checks and static hosting. Its presentation does not replace any
+subject owner listed here.
+
 When a subject changes:
 
 1. Update the implementation or executable contract that owns the behavior.

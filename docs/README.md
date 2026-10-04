@@ -1,5 +1,9 @@
 # blendCalc Documentation
 
+Preview the branded site with `npm run docs:dev` at
+[http://localhost:4178](http://localhost:4178). See
+[Maintaining this site](development/documentation-site.md) for page metadata and builds.
+
 Choose the documentation collection that matches what you need. Product help and
 development contracts stay separate so each audience can find useful information
 without searching through unrelated material.
