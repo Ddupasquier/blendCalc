@@ -126,7 +126,9 @@ for (const width of [320, 390, 1024]) {
 							await page
 								.locator(".nutrition-detail-view .view-top")
 								.screenshot({
-									path: `test-results/nutrition-viewing-switch-${width}-${theme}-${textSize}.png`,
+									path: testInfo.outputPath(
+										`nutrition-viewing-switch-${width}-${theme}-${textSize}.png`,
+									),
 								});
 						}
 					}
