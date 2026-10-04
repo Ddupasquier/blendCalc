@@ -117,52 +117,50 @@ intentionally omitted.
 
 ### Development And Verification
 
-| Command                                                                    | Purpose                                                                     |
-| -------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| `npm run dev`                                                              | Start production-connected development on port `5173`.                      |
-| `npm run dev:local`                                                        | Explicit form of the production-connected development command.              |
-| `npm run dev:test`                                                         | Start port `5174` with disposable Supabase and Quick QA login.              |
-| `npm run dev:test:auth`                                                    | Start port `5174` with the official local Turnstile test widget.            |
-| `npm run dev:rehearsal`                                                    | Start port `5175` against the restored sanitized Rehearsal database.        |
-| `npm run docs:dev`                                                         | Preview the documentation at `http://localhost:4178`, without app services. |
-| `npm run docs:build`                                                       | Build every public documentation page and validate links and anchors.       |
-| `npm run docs:test`                                                        | Run the independent documentation browser matrix without app accounts.      |
-| `npm run mobile:sync`                                                      | Copy the bundled mobile bootstrap and synchronize both native projects.     |
-| `npm run mobile:open -- ios`                                               | Open the generated iOS project in Xcode.                                    |
-| `npm run mobile:open -- android`                                           | Open the generated Android project in Android Studio.                       |
-| `npm run mobile:doctor`                                                    | Check the local Capacitor and native toolchains.                            |
-| `npm run build`                                                            | Create the production build.                                                |
-| `npm run verify:vercel-routes`                                             | Verify generated parameterized API routes after a production build.         |
-| `npm run preview`                                                          | Preview the production build.                                               |
-| `npm run check`                                                            | Run TypeScript and Svelte diagnostics.                                      |
-| `npm run check:watch`                                                      | Keep TypeScript and Svelte diagnostics running while editing.               |
-| `npm run check:auth`                                                       | Validate authentication environment and endpoint configuration.             |
-| `npm run auth:configure-hosted -- --turnstile\|--smtp\|--templates`        | Apply one explicit hosted Supabase Auth setting.                            |
-| `npm run lint`                                                             | Run the maintained TypeScript, Svelte, and SCSS lint contract.              |
-| `npx eslint . --cache --cache-location .cache/eslint`                      | Include tracked migration warnings while auditing code.                     |
-| `npm run format -- <paths...>`                                             | Apply the maintained Prettier layout to selected source or documentation.   |
-| `npm run format:check`                                                     | Verify newly added supported files match the maintained layout.             |
-| `npm run format:check:all`                                                 | Audit remaining legacy formatting debt without rewriting it.                |
-| `npm run resources:check`                                                  | Check local disk, swap, and process memory before heavy work.               |
-| `npm test`                                                                 | Run the non-browser Vitest suite with compact output.                       |
-| `npm run test:affected`                                                    | Run Vitest files related to the current branch and working-tree changes.    |
-| `npm run test:focused -- <path>`                                           | Run one focused Vitest file or directory in its configured runtime.         |
-| `npm run test:watch -- <path>`                                             | Run focused Vitest checks in watch mode.                                    |
-| `npm run test:e2e`                                                         | Run the bounded authenticated Playwright release tiers.                     |
-| `npm run test:e2e:affected`                                                | Prepare and run browser specs selected from changed feature ownership.      |
-| `npm run test:e2e -- --project=desktop-chromium --project=mobile-chromium` | Run desktop Chromium plus compact/touch Chromium coverage.                  |
-| `npm run test:e2e -- --grep @compatibility`                                | Run tagged compatibility smoke coverage across maintained projects.         |
-| `PLAYWRIGHT_EXHAUSTIVE_MATRIX=true npm run test:e2e`                       | Run every browser scenario in every maintained project.                     |
-| `npm run test:e2e:prepare && npm run test:e2e:server`                      | Prepare Supabase and keep one test build running on port `5174`.            |
-| `npm run test:e2e:headed`                                                  | Run desktop Chromium in a visible browser.                                  |
-| `npm run test:e2e:ui`                                                      | Open Playwright's interactive test explorer.                                |
-| `npm run test:e2e:update`                                                  | Review and update tracked Chromium visual snapshots.                        |
-| `npm run test:e2e:install`                                                 | Install Chromium, Firefox, and WebKit for Playwright.                       |
-| `npm run verify:quick`                                                     | Show source checks and affected Vitest in the live dashboard.               |
-| `npm run verify:feature`                                                   | Run source gates plus affected Vitest and browser coverage.                 |
-| `npm run verify:release`                                                   | Run the bounded blocking release profile in the dashboard.                  |
-| `npm run verify:promotion`                                                 | Reuse a fresh Release Check for an identical clean promoted tree.           |
-| `npm run verify:nightly`                                                   | Run exhaustive nonblocking browser confidence in the dashboard.             |
+| Command                                                                    | Purpose                                                                       |
+| -------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `npm run dev`                                                              | Start production-connected development on port `5173`.                        |
+| `npm run dev:local`                                                        | Explicit form of the production-connected development command.                |
+| `npm run dev:test`                                                         | Start port `5174` with disposable Supabase and Quick QA login.                |
+| `npm run dev:test:auth`                                                    | Start port `5174` with the official local Turnstile test widget.              |
+| `npm run dev:rehearsal`                                                    | Start port `5175` against the restored sanitized Rehearsal database.          |
+| `npm run docs -- [dev\|build\|test]`                                       | Preview docs at `http://localhost:4178` (default), build pages, or test them. |
+| `npm run mobile:sync`                                                      | Copy the bundled mobile bootstrap and synchronize both native projects.       |
+| `npm run mobile:open -- ios`                                               | Open the generated iOS project in Xcode.                                      |
+| `npm run mobile:open -- android`                                           | Open the generated Android project in Android Studio.                         |
+| `npm run mobile:doctor`                                                    | Check the local Capacitor and native toolchains.                              |
+| `npm run build`                                                            | Create the production build.                                                  |
+| `npm run verify:vercel-routes`                                             | Verify generated parameterized API routes after a production build.           |
+| `npm run preview`                                                          | Preview the production build.                                                 |
+| `npm run check`                                                            | Run TypeScript and Svelte diagnostics.                                        |
+| `npm run check:watch`                                                      | Keep TypeScript and Svelte diagnostics running while editing.                 |
+| `npm run check:auth`                                                       | Validate authentication environment and endpoint configuration.               |
+| `npm run auth:configure-hosted -- --turnstile\|--smtp\|--templates`        | Apply one explicit hosted Supabase Auth setting.                              |
+| `npm run lint`                                                             | Run the maintained TypeScript, Svelte, and SCSS lint contract.                |
+| `npx eslint . --cache --cache-location .cache/eslint`                      | Include tracked migration warnings while auditing code.                       |
+| `npm run format -- <paths...>`                                             | Apply the maintained Prettier layout to selected source or documentation.     |
+| `npm run format:check`                                                     | Verify newly added supported files match the maintained layout.               |
+| `npm run format:check:all`                                                 | Audit remaining legacy formatting debt without rewriting it.                  |
+| `npm run resources:check`                                                  | Check local disk, swap, and process memory before heavy work.                 |
+| `npm test`                                                                 | Run the non-browser Vitest suite with compact output.                         |
+| `npm run test:affected`                                                    | Run Vitest files related to the current branch and working-tree changes.      |
+| `npm run test:focused -- <path>`                                           | Run one focused Vitest file or directory in its configured runtime.           |
+| `npm run test:watch -- <path>`                                             | Run focused Vitest checks in watch mode.                                      |
+| `npm run test:e2e`                                                         | Run the bounded authenticated Playwright release tiers.                       |
+| `npm run test:e2e:affected`                                                | Prepare and run browser specs selected from changed feature ownership.        |
+| `npm run test:e2e -- --project=desktop-chromium --project=mobile-chromium` | Run desktop Chromium plus compact/touch Chromium coverage.                    |
+| `npm run test:e2e -- --grep @compatibility`                                | Run tagged compatibility smoke coverage across maintained projects.           |
+| `PLAYWRIGHT_EXHAUSTIVE_MATRIX=true npm run test:e2e`                       | Run every browser scenario in every maintained project.                       |
+| `npm run test:e2e:prepare && npm run test:e2e:server`                      | Prepare Supabase and keep one test build running on port `5174`.              |
+| `npm run test:e2e:headed`                                                  | Run desktop Chromium in a visible browser.                                    |
+| `npm run test:e2e:ui`                                                      | Open Playwright's interactive test explorer.                                  |
+| `npm run test:e2e:update`                                                  | Review and update tracked Chromium visual snapshots.                          |
+| `npm run test:e2e:install`                                                 | Install Chromium, Firefox, and WebKit for Playwright.                         |
+| `npm run verify:quick`                                                     | Show source checks and affected Vitest in the live dashboard.                 |
+| `npm run verify:feature`                                                   | Run source gates plus affected Vitest and browser coverage.                   |
+| `npm run verify:release`                                                   | Run the bounded blocking release profile in the dashboard.                    |
+| `npm run verify:promotion`                                                 | Reuse a fresh Release Check for an identical clean promoted tree.             |
+| `npm run verify:nightly`                                                   | Run exhaustive nonblocking browser confidence in the dashboard.               |
 
 Use the [Testing Strategy](docs/development/testing.md) to choose a test layer. Browser
 setup lives in [Browser Testing](docs/development/browser-testing.md); database fixtures
@@ -281,8 +279,8 @@ cache, and external source boundaries.
 
 **[Browse the BlendCalc documentation](https://ddupasquier.github.io/blendCalc/)**
 
-Preview the documentation site with `npm run docs:dev`, then open
-[http://localhost:4178](http://localhost:4178). Build it with `npm run docs:build`.
+Preview the documentation site with `npm run docs`, then open
+[http://localhost:4178](http://localhost:4178). Build it with `npm run docs -- build`.
 No application credentials or database are needed.
 
 Start with the [Documentation Map](docs/README.md). It identifies the one maintained

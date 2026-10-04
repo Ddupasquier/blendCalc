@@ -15,7 +15,7 @@ export default defineConfig({
 		screenshot: "only-on-failure",
 	},
 	webServer: {
-		command: "npm run docs:dev -- --base /blendCalc/ --port 4179",
+		command: "npm run docs -- dev --base /blendCalc/ --port 4179",
 		url: "http://localhost:4179/blendCalc/",
 		reuseExistingServer: false,
 		timeout: 120_000,
