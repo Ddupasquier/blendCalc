@@ -82,7 +82,6 @@ describe("local QA sign-in route", () => {
 		expect(JSON.stringify(result.localQaSignIn)).not.toContain(
 			"generated-local-password",
 		);
-		expect(result.localQaSignIn).toMatchObject({ experience: "qa" });
 	});
 
 	it("signs in the selected maintained persona without accepting an email or password", async () => {

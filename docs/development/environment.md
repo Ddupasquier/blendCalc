@@ -238,13 +238,12 @@ allowing Rehearsal to schedule provider work. Browser sessions are revalidated a
 the current local Auth database, so a reset invalidates the old session cleanly and the
 next protected navigation returns to Rehearsal sign-in.
 
-The Rehearsal sign-in page defaults to the same easy-auth experience used for local QA,
-but offers only the restored owner snapshot. The password stays server-side in the generated
-owner-only runtime file. Turning on **Test the real sign-in flow** restores the ordinary
-Google and email/password controls. Google always opens its account chooser, returns
-through local Auth on port `58321`, and then returns to the initiating route on port
-`5175`. Easy auth still creates a normal local session and does not bypass TOTP for
-privileged routes.
+The Rehearsal sign-in page opens ordinary Google and email/password controls directly.
+It does not expose a generated owner-snapshot shortcut or a quick-login toggle. Easy
+auth remains exclusive to the synthetic QA accounts on `5174`. Google always opens
+its account chooser, returns through local Auth on port `58321`, and then returns to
+the initiating route on port `5175`. Local role checks, account blocks and privileged
+TOTP requirements remain enforced.
 
 The production refresh fixes one approved source owner account. That owner's non-secret
 private application rows are kept exact under a pseudonymous placeholder; every other

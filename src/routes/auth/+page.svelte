@@ -51,9 +51,6 @@
 	const quickQaSignInActive = $derived(
 		Boolean(data.localQaSignIn) && !useRealSignInFlow,
 	);
-	const localSignInExperienceName = $derived(
-		data.localQaSignIn?.experience === "rehearsal" ? "Rehearsal" : "QA",
-	);
 	const passwordConfirmationInvalid = $derived(
 		passwordConfirmation.length > 0 && password !== passwordConfirmation,
 	);
@@ -121,7 +118,7 @@
 	<title
 		>{formatDocumentTitle(
 			quickQaSignInActive
-				? `Local ${localSignInExperienceName} Sign In`
+				? "Local QA Sign In"
 				: authMode === "signUp"
 					? "Create Account"
 					: "Sign In",
@@ -137,16 +134,14 @@
 				<p class="auth-eyebrow">Your food awareness workspace</p>
 				<h1>
 					{quickQaSignInActive
-						? `Choose a ${localSignInExperienceName} account.`
+						? "Choose a QA account."
 						: authMode === "signUp"
 							? "Create your account."
 							: "Welcome back."}
 				</h1>
 				<p>
 					{quickQaSignInActive
-						? data.localQaSignIn?.experience === "rehearsal"
-							? "Start a real session in the sanitized Rehearsal database without typing its local password."
-							: "Start a real session in the isolated test database without typing its disposable password."
+						? "Start a real session in the isolated test database without typing its disposable password."
 						: authMode === "signUp"
 							? "Save your ingredients, recipes, food preferences, and nutrition goals securely to your account."
 							: "Sign in to access your ingredients, recipes, food preferences, and nutrition goals."}
@@ -156,18 +151,14 @@
 
 		{#if data.localQaSignIn}
 			<section class="local-qa-mode" aria-labelledby="local-qa-mode-title">
-				<span class="local-qa-mode__badge"
-					>Local {localSignInExperienceName} only</span
-				>
+				<span class="local-qa-mode__badge">Local QA only</span>
 				<label class="local-qa-mode__toggle" for="use-real-sign-in-flow">
 					<span>
 						<strong id="local-qa-mode-title">Test the real sign-in flow</strong>
 						<small>
 							{useRealSignInFlow
 								? "On — use the normal Google or email sign-in experience."
-								: data.localQaSignIn.experience === "rehearsal"
-									? "Off — continue with the isolated owner snapshot."
-									: "Off — choose a seeded QA account for quick login."}
+								: "Off — choose a seeded QA account for quick login."}
 						</small>
 					</span>
 					<ToggleSwitch
@@ -210,7 +201,7 @@
 				<SelectField
 					id="local-qa-account"
 					name="qaAccount"
-					label={`${localSignInExperienceName} account`}
+					label="QA account"
 					value={qaAccount}
 					options={qaAccountOptions}
 					helper={selectedQaAccount

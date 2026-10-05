@@ -105,8 +105,8 @@ and is started with `npm run dev:test`.
 Rehearsal uses port `5175`. Before its real Google sign-in flow can run, create the
 dedicated local OAuth file described in
 [`docs/development/environment.md`](docs/development/environment.md#rehearsal-environment).
-The Quick Rehearsal owner account remains available alongside that production-style
-sign-in flow. A production refresh preserves the approved owner's private application
+Rehearsal opens ordinary Google and email/password sign-in directly; the Quick QA
+account picker belongs only to TEST on port `5174`. A production refresh preserves the approved owner's private application
 state and exact public catalog while keeping all database and Storage mutations local.
 
 ## Command Guide

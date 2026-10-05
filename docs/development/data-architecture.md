@@ -203,10 +203,11 @@ pseudonymized; other users' identities and private values remain sanitized. Publ
 catalog, nutrient, category, ingredient, warning, moderation, source, and image metadata
 remain exact.
 
-After count verification, the restored owner persona receives a fixed local quick-login
-identity and a developer-role overlay excluded from the baseline. The 5175 easy-auth
-action reads that generated credential only on the server and leaves privileged TOTP
-enforcement intact. Google authentication uses the ordinary application callback;
+After count verification, the restored owner persona receives a fixed local test
+identity and a developer-role overlay excluded from the baseline. Application proofs
+use ordinary email/password sign-in with that server-owned disposable credential;
+the 5175 application does not expose a quick-login shortcut. Privileged TOTP
+enforcement remains intact. Google authentication uses the ordinary application callback;
 copied-account association is a separately reviewed, confirmed operation owned by the
 installed Rehearsal package, not an application callback or compatibility RPC. Its
 declarative policy must restrict association to the fixed source-email receipt and
