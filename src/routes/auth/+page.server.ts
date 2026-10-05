@@ -154,10 +154,7 @@ export const actions: Actions = {
 		});
 		if (!credentials) {
 			return fail(400, {
-				message:
-					localQaSignIn.experience === "rehearsal"
-						? "Choose the Rehearsal account and try again."
-						: "Choose a QA account and try again.",
+				message: "Choose a QA account and try again.",
 				next,
 				signInExperience: "quickQa" as const,
 			});

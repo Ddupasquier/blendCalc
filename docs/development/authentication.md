@@ -269,15 +269,12 @@ The selector is absent on production-connected 5173 development, previews, stagi
 and production. It creates a normal local Supabase session and does not bypass role
 checks, account blocks, password policies, or privileged MFA requirements.
 
-The isolated Rehearsal app at `http://localhost:5175` exposes the same easy-auth toggle
-for its single restored owner snapshot. Its server reads the generated local credential
-from `.rehearsal/runtime.env`; the browser receives only the account summary. This path
-fails closed unless the runtime is exactly `rehearsal`, the
-application uses loopback port `5175`, the Supabase API uses loopback port `58321`, and
-the generated local identity is present. It creates an ordinary Rehearsal Supabase
-session and still requires local TOTP before privileged tools open.
+The isolated Rehearsal app at `http://localhost:5175` uses ordinary Google and
+email/password sign-in directly. It has no generated-account picker or quick-login
+toggle, even if TEST account variables are accidentally inherited. The Quick QA
+selector belongs only to the synthetic TEST environment on `5174`.
 
-The toggle's real-sign-in side is also functional in Rehearsal. Google OAuth uses a
+Google OAuth is also functional in Rehearsal. It uses a
 dedicated local Web client whose only callback is
 `http://127.0.0.1:58321/auth/v1/callback`; the resulting user, identity, profile, session,
 and later writes exist only in the disposable local database. The OAuth credential is

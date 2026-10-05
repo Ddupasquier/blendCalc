@@ -261,7 +261,17 @@ const proveBrowserStorageAndResetSession = async ({
 			waitUntil: "domcontentloaded",
 		});
 		await page
-			.getByRole("button", { name: "Continue as Owner snapshot" })
+			.getByLabel("Email", { exact: true })
+			.fill(runtimeEnvironment.BLENDCALC_REHEARSAL_ACCOUNT_EMAIL);
+		await page
+			.getByLabel("Password", { exact: true })
+			.fill(runtimeEnvironment.BLENDCALC_REHEARSAL_ACCOUNT_PASSWORD);
+		await page
+			.locator('form[action="?/emailSignIn"]')
+			.getByRole("button", {
+				name: "Sign in",
+				exact: true,
+			})
 			.click();
 		await page.waitForURL((url) => new URL(url).pathname === "/profile", {
 			timeout: 30_000,

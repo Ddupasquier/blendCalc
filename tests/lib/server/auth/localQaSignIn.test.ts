@@ -51,8 +51,8 @@ const rehearsalRuntime = {
 	appUrl: new URL("http://localhost:5175/auth"),
 	runtimeEnvironment: "rehearsal",
 	supabaseUrl: "http://127.0.0.1:58321",
-	rehearsalEmail: "rehearsal-developer@blendcalc.local",
-	rehearsalPassword: "local-rehearsal-password",
+	password: localRuntime.password,
+	accountsBase64: localRuntime.accountsBase64,
 };
 
 describe("local QA sign-in boundary", () => {
@@ -72,7 +72,6 @@ describe("local QA sign-in boundary", () => {
 			"developer",
 		]);
 		expect(JSON.stringify(pageData)).not.toContain("disposable-local-password");
-		expect(pageData?.experience).toBe("qa");
 		expect(pageData?.accounts).toContainEqual(
 			expect.objectContaining({
 				key: "user",
@@ -82,28 +81,9 @@ describe("local QA sign-in boundary", () => {
 		);
 	});
 
-	it("offers only the restored owner snapshot in the exact Rehearsal runtime", () => {
-		const pageData = getLocalQaSignInPageData(rehearsalRuntime);
-
-		expect(pageData).toEqual({
-			experience: "rehearsal",
-			accounts: [
-				{
-					key: "rehearsalDeveloper",
-					displayName: "Owner snapshot",
-					email: "rehearsal-developer@blendcalc.local",
-					role: "developer",
-					purpose: "Your production-shaped data in the isolated local sandbox",
-				},
-			],
-		});
-		expect(JSON.stringify(pageData)).not.toContain("local-rehearsal-password");
-		expect(
-			getLocalQaSignInCredentials("rehearsalDeveloper", rehearsalRuntime),
-		).toEqual({
-			email: "rehearsal-developer@blendcalc.local",
-			password: "local-rehearsal-password",
-		});
+	it("does not offer QA accounts or quick credentials in the sandbox", () => {
+		expect(getLocalQaSignInPageData(rehearsalRuntime)).toBeNull();
+		expect(getLocalQaSignInCredentials("user", rehearsalRuntime)).toBeNull();
 	});
 
 	it.each([
@@ -117,9 +97,7 @@ describe("local QA sign-in boundary", () => {
 			{ appUrl: new URL("https://staging.example.com/auth") },
 		],
 		["hosted database", { supabaseUrl: "https://example.supabase.co" }],
-		["missing email", { rehearsalEmail: "" }],
-		["non-local email", { rehearsalEmail: "person@example.com" }],
-		["missing password", { rehearsalPassword: "" }],
+		["missing password", { password: "" }],
 	])("keeps Rehearsal quick sign-in unavailable with %s", (_name, override) => {
 		expect(
 			getLocalQaSignInPageData({ ...rehearsalRuntime, ...override }),
