@@ -1104,7 +1104,7 @@ const main = async () => {
 					);
 				}
 				runCommand("node", [
-					"scripts/operations/rehearsal/verify_local_migration_history.mjs",
+					"scripts/operations/database/verify_local_migration_history.mjs",
 				]);
 				runCommand("node", [
 					"scripts/operations/rehearsal/prove_installed_export_boundary.mjs",

@@ -16,10 +16,14 @@ const readEnvironmentValue = (path: string, key: string) => {
 };
 
 const listTrackedScriptFiles = (): string[] =>
-	execFileSync("git", ["ls-files", "scripts"], { encoding: "utf8" })
+	execFileSync(
+		"git",
+		["ls-files", "--cached", "--others", "--exclude-standard", "scripts"],
+		{ encoding: "utf8" },
+	)
 		.trim()
 		.split("\n")
-		.filter((path) => /\.(?:cjs|js|mjs|ts)$/.test(path));
+		.filter((path) => /\.(?:cjs|js|mjs|ts)$/.test(path) && existsSync(path));
 
 const expectedEnvironmentKeys = {
 	"config/environments/blendcalc-api-hosted.example.env": [

@@ -69,6 +69,7 @@ repository-owned VS Code Explorer settings.
 | Package and runtime            | `package.json`, `package-lock.json`, `.npmrc`, `.nvmrc`, `.node-version`                                 | Keep at root for npm and runtime-manager discovery. Both Node selectors intentionally enforce Node 24 for different tools.                      |
 | SvelteKit and TypeScript       | `svelte.config.js`, `vite.config.ts`, `tsconfig.json`                                                    | Keep at their conventional tool-discovery locations. Vite accepts only the explicit process environment supplied by launchers or deployment.    |
 | Quality tools                  | `eslint.config.js`, `stylelint.config.js`, `playwright.config.ts`, `.prettierrc.json`, `.prettierignore` | Keep at conventional discovery paths; relocating them would require fragile wrapper arguments or reduce editor compatibility.                   |
+| Sandbox tool                   | `rehearsal.config.mjs`                                                                                   | Keep the active, reviewed configuration beside `package.json` for package discovery and easy maintenance.                                       |
 | Deployment and native shells   | `vercel.json`, `capacitor.config.ts`                                                                     | Keep at the root expected by Vercel and Capacitor.                                                                                              |
 | Repository metadata            | `.gitignore`                                                                                             | Keep at Git's conventional root location.                                                                                                       |
 | Editor integration             | `.vscode/settings.json`, `.vscode/tasks.json`                                                            | Track only shared Node-terminal, focused Explorer, and verification-task behavior. Other workspace state remains ignored.                       |
@@ -243,7 +244,10 @@ not duplicate the same assertion across runners.
 
 ## Infrastructure
 
-`config/contentSecurityPolicy.js` owns build-time CSP source composition.
+`config/contentSecurityPolicy.js` owns build-time CSP source composition. Local CSP
+uses the explicitly configured application and publication service origins, rejects
+non-loopback or credential-bearing URLs, and never adds a wildcard to accommodate
+another runtime. Hosted policy remains independent of those local mappings.
 `config/dependencyAuditException.json` owns the single explicitly approved, absolute-
 expiry development-tool risk record. Evaluation belongs in `scripts/lib/security/`;
 the public command is `scripts/operations/quality/audit_dependencies.mjs`. This is
@@ -266,18 +270,24 @@ schema until application runtime code consumes it. It is deliberately outside th
 projects. Every command for this project must pass the explicit
 `infrastructure/blendCalcAPI` workdir.
 
-`infrastructure/rehearsal/` owns project-specific Rehearsal configuration and reviewed
+The root `rehearsal.config.mjs` owns the active Rehearsal entry point.
+`infrastructure/rehearsal/` owns the supporting database configurations and reviewed
 sanitization policy. The reusable baseline, migration-ledger, local-runtime, diagnostics,
-and safety engine is owned by the `@rehearsal-db/core` dependency. BlendCalc-owned extraction,
-sanitization, identity mapping, provider isolation, adapters, generators, and application
-proofs remain under their matching `scripts/lib/rehearsal/`,
-`scripts/generators/rehearsal/`, and `scripts/operations/rehearsal/` owners. Do not copy
+and safety engine is owned by the `@rehearsal-db/core` dependency. Runtime prerequisites,
+local-only rows, account association and dependent database settings are declarations
+under `infrastructure/rehearsal/`, not executable adapters. Ordinary application proofs
+belong to `scripts/operations/quality/`, and local migration-history verification belongs
+to `scripts/operations/database/`. BlendCalc's legacy source extraction, sanitization and
+asset-preparation scripts remain temporarily under `scripts/lib/rehearsal/`,
+`scripts/generators/rehearsal/` and `scripts/operations/rehearsal/` until the complete
+privacy policy has a reviewed and verified declarative replacement. Do not copy
 generic package source or package documentation back into this repository. The ordinary
 `src/routes/auth/callback/` route owns only application authentication; copied-account
 association belongs to the installed package's identity plan/claim workflow. Do not
 restore an application-owned Rehearsal claim helper or compatibility RPC. Retained
-extraction and runtime adapters are separate ownership boundaries, not a reason to
-duplicate package identity execution in the callback.
+source-preparation scripts are not a reason to duplicate package runtime or identity
+execution in the callback. Production-connected development and synthetic QA retain
+their ordinary launchers; Rehearsal starts the sandbox directly through its public CLI.
 
 ## Documentation
 

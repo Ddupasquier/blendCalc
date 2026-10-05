@@ -33,15 +33,47 @@ const readLocalApplicationSupabasePort = (mode) => {
 	return LOCAL_APPLICATION_SUPABASE_PORTS[/** @type {SafeLocalMode} */ (mode)];
 };
 
-/** @param {string} mode */
-const createLocalSupabaseSources = (mode) => {
-	const port = readLocalApplicationSupabasePort(mode);
+/** @param {string} value */
+const localServiceOrigin = (value) => {
+	try {
+		const url = new URL(value);
+		if (
+			!["http:", "https:"].includes(url.protocol) ||
+			!["127.0.0.1", "localhost", "[::1]"].includes(url.hostname) ||
+			url.username ||
+			url.password
+		)
+			throw new Error();
+		return url.origin;
+	} catch {
+		throw new Error(
+			"Local CSP services must use credential-free loopback HTTP URLs.",
+		);
+	}
+};
+
+/** @param {string} origin */
+const websocketOrigin = (origin) => origin.replace(/^http/u, "ws");
+
+/** @param {string} mode @param {Record<string, string | undefined>} environment */
+const localApplicationOrigin = (mode, environment) =>
+	localServiceOrigin(
+		environment.PUBLIC_SUPABASE_URL ??
+			`http://127.0.0.1:${readLocalApplicationSupabasePort(mode)}`,
+	);
+
+/** @param {string} mode @param {Record<string, string | undefined>} environment */
+const createLocalSupabaseSources = (mode, environment) => {
+	const application = localApplicationOrigin(mode, environment);
+	const publication = localServiceOrigin(
+		environment.BLENDCALC_API_SUPABASE_URL ?? "http://127.0.0.1:55321",
+	);
 	return [
 		"self",
-		`http://127.0.0.1:${port}`,
-		`ws://127.0.0.1:${port}`,
-		"http://127.0.0.1:55321",
-		"ws://127.0.0.1:55321",
+		application,
+		websocketOrigin(application),
+		publication,
+		websocketOrigin(publication),
 		"https://images.openfoodfacts.org",
 	];
 };
@@ -61,18 +93,21 @@ export const readViteMode = (
 	return modeIndex >= 0 ? (args[modeIndex + 1] ?? "") : "";
 };
 
-export const createConnectSources = (mode = readViteMode()) =>
+export const createConnectSources = (
+	mode = readViteMode(),
+	environment = {},
+) =>
 	SAFE_LOCAL_MODES.has(mode)
-		? createLocalSupabaseSources(mode)
+		? createLocalSupabaseSources(mode, environment)
 		: HOSTED_CONNECT_SOURCES;
 
-export const createImageSources = (mode = readViteMode()) =>
+export const createImageSources = (mode = readViteMode(), environment = {}) =>
 	SAFE_LOCAL_MODES.has(mode)
 		? [
 				"self",
 				"data:",
 				"blob:",
-				`http://127.0.0.1:${readLocalApplicationSupabasePort(mode)}`,
+				localApplicationOrigin(mode, environment),
 				"https://images.openfoodfacts.org",
 			]
 		: ["self", "data:", "blob:", "https:"];

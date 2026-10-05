@@ -103,6 +103,54 @@ describe("content security policy", () => {
 		);
 	});
 
+	it.each(["local", "test", "rehearsal"])(
+		"uses only the configured local services in %s",
+		(mode) => {
+			const environment = {
+				PUBLIC_SUPABASE_URL: "http://127.0.0.1:58321",
+				BLENDCALC_API_SUPABASE_URL: "http://127.0.0.1:59321",
+			};
+			expect(createConnectSources(mode, environment)).toEqual([
+				"self",
+				"http://127.0.0.1:58321",
+				"ws://127.0.0.1:58321",
+				"http://127.0.0.1:59321",
+				"ws://127.0.0.1:59321",
+				"https://images.openfoodfacts.org",
+			]);
+			expect(createImageSources(mode, environment)).toEqual([
+				"self",
+				"data:",
+				"blob:",
+				"http://127.0.0.1:58321",
+				"https://images.openfoodfacts.org",
+			]);
+		},
+	);
+
+	it.each([
+		"https://hosted.example.invalid",
+		"http://localhost.example.invalid",
+		"http://user:password@127.0.0.1:58321",
+		"file:///tmp/service",
+		"not-a-url",
+	])("refuses unsafe local service %s", (value) => {
+		expect(() =>
+			createConnectSources("test", { BLENDCALC_API_SUPABASE_URL: value }),
+		).toThrow("credential-free loopback");
+		expect(() =>
+			createImageSources("test", { PUBLIC_SUPABASE_URL: value }),
+		).toThrow("credential-free loopback");
+	});
+
+	it("keeps hosted policy independent of local environment mappings", () => {
+		expect(
+			createConnectSources("production", {
+				PUBLIC_SUPABASE_URL: "https://hosted.example.invalid",
+			}),
+		).toEqual(createConnectSources("production"));
+	});
+
 	it("detects test-database mode before Vite loads mode-specific env files", () => {
 		expect(readViteMode([], { BLENDCALC_RUNTIME_ENVIRONMENT: "test" })).toBe(
 			"test",

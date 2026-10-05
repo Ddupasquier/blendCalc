@@ -1,0 +1,69 @@
+{
+	"policyVersion": 1,
+	"prerequisites": {
+		"schemas": ["public"],
+		"extensions": [
+			{
+				"name": "pg_trgm",
+				"schema": "public"
+			}
+		]
+	},
+	"triggers": [
+		{
+			"name": "create_profile_for_new_auth_user",
+			"table": {
+				"schema": "auth",
+				"name": "users"
+			},
+			"timing": "after",
+			"events": ["insert"],
+			"function": {
+				"schema": "public",
+				"name": "create_profile_for_new_auth_user"
+			}
+		},
+		{
+			"name": "record_new_auth_user_marketing_email_consent",
+			"table": {
+				"schema": "auth",
+				"name": "users"
+			},
+			"timing": "after",
+			"events": ["insert"],
+			"function": {
+				"schema": "public",
+				"name": "record_new_auth_user_marketing_email_consent"
+			}
+		}
+	],
+	"localRows": [
+		{
+			"table": {
+				"schema": "public",
+				"name": "app_role_assignments"
+			},
+			"keyColumns": ["user_id"],
+			"values": {
+				"user_id": "b04b74f7-5b2c-4cb2-a12c-618f24da25dd",
+				"role": "developer",
+				"granted_by": null
+			},
+			"identityAssociation": {
+				"identity": "approved-owner",
+				"column": "user_id"
+			}
+		},
+		{
+			"table": {
+				"schema": "public",
+				"name": "catalog_monitor_settings"
+			},
+			"keyColumns": ["id"],
+			"values": {
+				"id": true,
+				"enabled": false
+			}
+		}
+	]
+}

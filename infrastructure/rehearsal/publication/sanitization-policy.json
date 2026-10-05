@@ -1,0 +1,875 @@
+{
+  "policyVersion": 1,
+  "migrationCutoff": "20990101000000",
+  "tables": [
+    {
+      "schema": "blendcalc_api",
+      "name": "api_request_observations",
+      "sourceRows": "STREAM AND SANITIZE",
+      "columns": [
+        {
+          "name": "id",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "YES",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "observed_at",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "operation",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "read_mode",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "response_status",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "total_duration_ms",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "database_duration_ms",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": true,
+          "foreignKey": null
+        },
+        {
+          "name": "result_count",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "cache_validation",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "cache_not_modified",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "database_failed",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        }
+      ]
+    },
+    {
+      "schema": "blendcalc_api",
+      "name": "api_shadow_parity_observations",
+      "sourceRows": "STREAM AND SANITIZE",
+      "columns": [
+        {
+          "name": "id",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "YES",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "observed_at",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "operation",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "matches",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "source_hash",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "target_hash",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": true,
+          "foreignKey": null
+        },
+        {
+          "name": "source_duration_ms",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "target_duration_ms",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": true,
+          "foreignKey": null
+        },
+        {
+          "name": "failure_code",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": true,
+          "foreignKey": null
+        }
+      ]
+    },
+    {
+      "schema": "blendcalc_api",
+      "name": "publication_categories",
+      "sourceRows": "STREAM AND SANITIZE",
+      "columns": [
+        {
+          "name": "generation_id",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "category_key",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "display_name",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "sort_order",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "category_payload",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "content_sha256",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        }
+      ]
+    },
+    {
+      "schema": "blendcalc_api",
+      "name": "publication_generation_events",
+      "sourceRows": "STREAM AND SANITIZE",
+      "columns": [
+        {
+          "name": "id",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "YES",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "generation_id",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "event_type",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "replaced_generation_id",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": true,
+          "foreignKey": null
+        },
+        {
+          "name": "event_at",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        }
+      ]
+    },
+    {
+      "schema": "blendcalc_api",
+      "name": "publication_generations",
+      "sourceRows": "STREAM AND SANITIZE",
+      "columns": [
+        {
+          "name": "id",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "source_project_ref",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "source_catalog_hash",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "status",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "expected_product_count",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "expected_revision_count",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "expected_category_count",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "expected_attribution_count",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "source_snapshot_at",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "created_at",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "ready_at",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": true,
+          "foreignKey": null
+        },
+        {
+          "name": "activated_at",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": true,
+          "foreignKey": null
+        },
+        {
+          "name": "retired_at",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": true,
+          "foreignKey": null
+        },
+        {
+          "name": "failed_at",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": true,
+          "foreignKey": null
+        },
+        {
+          "name": "failure_code",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": true,
+          "foreignKey": null
+        },
+        {
+          "name": "target_catalog_hash",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": true,
+          "foreignKey": null
+        }
+      ]
+    },
+    {
+      "schema": "blendcalc_api",
+      "name": "publication_product_revisions",
+      "sourceRows": "STREAM AND SANITIZE",
+      "columns": [
+        {
+          "name": "generation_id",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "gtin14",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "source_revision_id",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "revision_number",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "published_at",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "revision_payload",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "content_sha256",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        }
+      ]
+    },
+    {
+      "schema": "blendcalc_api",
+      "name": "publication_products",
+      "sourceRows": "STREAM AND SANITIZE",
+      "columns": [
+        {
+          "name": "generation_id",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "source_product_id",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "source_revision_id",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "gtin14",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "product_name",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "brand_owner",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": true,
+          "foreignKey": null
+        },
+        {
+          "name": "category_key",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": true,
+          "foreignKey": null
+        },
+        {
+          "name": "search_text",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "detail_payload",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "search_payload",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "content_sha256",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "source_updated_at",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "category_search_text",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        }
+      ]
+    },
+    {
+      "schema": "blendcalc_api",
+      "name": "publication_source_attributions",
+      "sourceRows": "STREAM AND SANITIZE",
+      "columns": [
+        {
+          "name": "generation_id",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "source_key",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "attribution_payload",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "content_sha256",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        }
+      ]
+    },
+    {
+      "schema": "blendcalc_api",
+      "name": "publication_sync_runs",
+      "sourceRows": "STREAM AND SANITIZE",
+      "columns": [
+        {
+          "name": "id",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "operation",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "status",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "read_mode",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "outcome",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": true,
+          "foreignKey": null
+        },
+        {
+          "name": "generation_id",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": true,
+          "foreignKey": null
+        },
+        {
+          "name": "source_catalog_hash",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": true,
+          "foreignKey": null
+        },
+        {
+          "name": "target_catalog_hash",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": true,
+          "foreignKey": null
+        },
+        {
+          "name": "source_product_count",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": true,
+          "foreignKey": null
+        },
+        {
+          "name": "target_product_count",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": true,
+          "foreignKey": null
+        },
+        {
+          "name": "added_product_count",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": true,
+          "foreignKey": null
+        },
+        {
+          "name": "removed_product_count",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": true,
+          "foreignKey": null
+        },
+        {
+          "name": "duration_ms",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": true,
+          "foreignKey": null
+        },
+        {
+          "name": "failure_code",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": true,
+          "foreignKey": null
+        },
+        {
+          "name": "started_at",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "completed_at",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": true,
+          "foreignKey": null
+        }
+      ]
+    },
+    {
+      "schema": "blendcalc_api",
+      "name": "safe_request_logs",
+      "sourceRows": "STREAM AND SANITIZE",
+      "columns": [
+        {
+          "name": "request_id",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "observed_at",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "expires_at",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "endpoint",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "method",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "response_status",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "duration_ms",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "actor_type",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "actor_hash",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": true,
+          "foreignKey": null
+        },
+        {
+          "name": "rate_limit_result",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "publication_products",
+      "sourceRows": "STREAM AND SANITIZE",
+      "columns": [
+        {
+          "name": "id",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        },
+        {
+          "name": "marker",
+          "action": "KEEP",
+          "generated": "NEVER",
+          "identity": "NO",
+          "nullable": false,
+          "foreignKey": null
+        }
+      ]
+    }
+  ]
+}

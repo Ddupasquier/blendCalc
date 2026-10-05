@@ -1,0 +1,526 @@
+{
+	"identityVersion": 1,
+	"identities": [
+		{
+			"name": "approved-owner",
+			"placeholderUserId": "b04b74f7-5b2c-4cb2-a12c-618f24da25dd",
+			"references": [
+				{
+					"schema": "public",
+					"table": "account_moderation",
+					"column": "user_id",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "account_moderation",
+					"column": "moderated_by",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "app_role_assignments",
+					"column": "user_id",
+					"required": true
+				},
+				{
+					"schema": "public",
+					"table": "app_role_assignments",
+					"column": "granted_by",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "blendcalc_api_clients",
+					"column": "owner_user_id",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "blendcalc_api_clients",
+					"column": "created_by",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "blendcalc_api_keys",
+					"column": "created_by",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "blendcalc_api_publication_concerns",
+					"column": "reporter_user_id",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "blendcalc_api_publication_concerns",
+					"column": "reviewed_by",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "blendcalc_api_publication_holds",
+					"column": "placed_by",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "blendcalc_api_publication_holds",
+					"column": "released_by",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "blocked_signup_emails",
+					"column": "source_user_id",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "blocked_signup_emails",
+					"column": "blocked_by",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "catalog_conflict_review_dispositions",
+					"column": "reviewed_by",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "catalog_health_repair_runs",
+					"column": "requested_by",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "catalog_health_review_dispositions",
+					"column": "reviewed_by",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "catalog_intake_requests",
+					"column": "actor_user_id",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "catalog_product_purge_audit",
+					"column": "requested_by",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "catalog_provider_change_reviews",
+					"column": "reviewed_by",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "custom_foods",
+					"column": "user_id",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "food_compatibility_feedback",
+					"column": "reported_by",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "food_compatibility_feedback",
+					"column": "reviewed_by",
+					"required": false,
+					"strategy": "preserve-audit"
+				},
+				{
+					"schema": "public",
+					"table": "food_compatibility_policy_ingredient_aliases",
+					"column": "reviewed_by",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "food_compatibility_policy_ingredient_relationships",
+					"column": "reviewed_by",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "food_compatibility_policy_preference_term_mappings",
+					"column": "reviewed_by",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "food_image_assets",
+					"column": "approved_by",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "food_image_assets",
+					"column": "canonical_selected_by",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "food_nutrient_measurements",
+					"column": "owner_user_id",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "food_nutrient_qualitative_evidence",
+					"column": "owner_user_id",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "food_nutrients",
+					"column": "owner_user_id",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "food_preference_mapping_requests",
+					"column": "reviewed_by",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "food_servings",
+					"column": "owner_user_id",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "food_warning_policy_review_cases",
+					"column": "opened_by",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "food_warning_policy_review_cases",
+					"column": "resolved_by",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "generic_food_dataset_import_evidence_runs",
+					"column": "recorded_by",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "ingredient_terms",
+					"column": "reviewed_by",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "marketing_email_preference_events",
+					"column": "user_id",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "mix_goal_template_versions",
+					"column": "reviewed_by",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "mix_preferences",
+					"column": "user_id",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "moderation_actions",
+					"column": "target_user_id",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "moderation_actions",
+					"column": "actor_user_id",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "moderation_email_deliveries",
+					"column": "target_user_id",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "nutrient_mapping_review_decisions",
+					"column": "reviewed_by",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "nutrition_label_ocr_jobs",
+					"column": "user_id",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "official_food_safety_alert_matches",
+					"column": "reviewed_by",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "product_safety_alert_notifications",
+					"column": "user_id",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "product_submission_blocks",
+					"column": "user_id",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "product_submission_blocks",
+					"column": "created_by",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "profile_image_policy_acceptances",
+					"column": "user_id",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "profile_image_reports",
+					"column": "reported_by",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "profile_image_reports",
+					"column": "reviewed_by",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "profiles",
+					"column": "user_id",
+					"required": true
+				},
+				{
+					"schema": "public",
+					"table": "saved_drinks",
+					"column": "user_id",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "shared_product_conflicts",
+					"column": "resolved_by",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "shared_product_mass_volume_conversion_policies",
+					"column": "reviewed_by",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "shared_product_observations",
+					"column": "submitted_by",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "shared_product_revisions",
+					"column": "created_by",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "shared_product_submissions",
+					"column": "submitted_by",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "shared_product_submissions",
+					"column": "reviewed_by",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "shared_products",
+					"column": "approved_by",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "user_catalog_submission_enforcement",
+					"column": "user_id",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "user_catalog_submission_enforcement",
+					"column": "latest_rejected_by",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "user_compatibility_rules",
+					"column": "user_id",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "user_food_list_items",
+					"column": "user_id",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "user_food_preferences",
+					"column": "user_id",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "user_marketing_email_preferences",
+					"column": "user_id",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "user_mix_goal_templates",
+					"column": "user_id",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "user_mix_nutrient_goals",
+					"column": "user_id",
+					"required": false
+				},
+				{
+					"schema": "public",
+					"table": "user_tutorial_preferences",
+					"column": "user_id",
+					"required": false
+				}
+			],
+			"assets": [
+				{
+					"bucket": "profile-avatars",
+					"prefix": "b04b74f7-5b2c-4cb2-a12c-618f24da25dd/",
+					"rewritePath": true
+				},
+				{
+					"bucket": "product-submission-evidence",
+					"prefix": "b04b74f7-5b2c-4cb2-a12c-618f24da25dd/",
+					"rewritePath": true
+				}
+			],
+			"pathReferences": [
+				{
+					"schema": "public",
+					"table": "profiles",
+					"column": "avatar_path",
+					"valueType": "text"
+				},
+				{
+					"schema": "public",
+					"table": "profile_image_policy_acceptances",
+					"column": "avatar_path",
+					"valueType": "text"
+				},
+				{
+					"schema": "public",
+					"table": "profile_image_reports",
+					"column": "avatar_path",
+					"valueType": "text"
+				},
+				{
+					"schema": "public",
+					"table": "food_compatibility_feedback",
+					"column": "evidence_path",
+					"valueType": "text"
+				},
+				{
+					"schema": "public",
+					"table": "shared_product_submissions",
+					"column": "evidence_paths",
+					"valueType": "jsonb"
+				}
+			],
+			"tokenHook": {
+				"function": {
+					"schema": "public",
+					"name": "custom_access_token_hook"
+				},
+				"expectedClaims": {
+					"app_role": "developer"
+				}
+			},
+			"signupDefaults": [
+				{
+					"table": {
+						"schema": "public",
+						"table": "user_tutorial_preferences"
+					},
+					"identityColumn": "user_id",
+					"ignoredColumns": [
+						"last_seen_at",
+						"completed_at",
+						"created_at",
+						"updated_at"
+					],
+					"values": {
+						"tutorial_version": 3,
+						"do_not_show_again": true,
+						"remind_after": null
+					}
+				},
+				{
+					"table": {
+						"schema": "public",
+						"table": "profiles"
+					},
+					"identityColumn": "user_id",
+					"ignoredColumns": ["created_at", "updated_at"],
+					"values": {
+						"bio": null,
+						"avatar_path": null,
+						"avatar_alt_text": null,
+						"avatar_moderation_status": "none",
+						"avatar_policy_acknowledged_at": null,
+						"appearance_theme": "system",
+						"cheeky_messages_enabled": true,
+						"display_name": {
+							"kind": "pattern",
+							"pattern": "^User[0-9]{14}$"
+						}
+					}
+				}
+			],
+			"matcher": {
+				"type": "verified-email",
+				"providers": ["google"],
+				"emailEnvironmentVariable": "REHEARSAL_APPROVED_OWNER_EMAIL",
+				"approvedEmailSha256": "165fb54b129afd5bd1267f6bf7483eeee9d3e5fcc98305ba70768dde362243ba"
+			}
+		}
+	]
+}
