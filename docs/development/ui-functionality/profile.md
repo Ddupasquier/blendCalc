@@ -38,6 +38,8 @@ session settings. Detailed privacy and storage rules live in
   moderator, administrator, or developer. Name it `Moderator tools`, `Admin tools`, or
   `Developer tools` from that verified role. Render it as a normal link to the full-page
   `/profile/privileged-tools` dashboard rather than opening a Profile bottom sheet.
+  Its title and work summary wrap without crowding the count or arrow; the card grows
+  with its content, and its keyboard outline stays inside the clipped scroll surface.
 - Each launcher summarizes the saved state without duplicating its complete form.
 - The shared handle, intentional backdrop press, Escape, and browser history close a
   bottom sheet and return to `/profile` without reloading the underlying Profile page.
