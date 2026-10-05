@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+	getAutomaticLocalQaMfaAccount,
 	getLocalQaBrowserRateLimitClientAddress,
 	getLocalQaSignInCredentials,
 	getLocalQaSignInPageData,
@@ -56,6 +57,30 @@ const rehearsalRuntime = {
 };
 
 describe("local QA sign-in boundary", () => {
+	it.each(["moderator", "admin", "developer"])(
+		"keeps automatic MFA scoped to the seeded QA %s after sandbox removal",
+		(key) => {
+			expect(getAutomaticLocalQaMfaAccount(key, localRuntime)).toMatchObject({
+				key,
+				role: key,
+			});
+			expect(getAutomaticLocalQaMfaAccount(key, rehearsalRuntime)).toBeNull();
+			expect(
+				getAutomaticLocalQaMfaAccount(key, {
+					...localRuntime,
+					appUrl: new URL("http://localhost:5173/auth"),
+				}),
+			).toBeNull();
+		},
+	);
+
+	it.each(["user", "unknown"])(
+		"does not automatically verify MFA for %s",
+		(key) => {
+			expect(getAutomaticLocalQaMfaAccount(key, localRuntime)).toBeNull();
+		},
+	);
+
 	it("offers every maintained QA persona without serializing its password", () => {
 		const pageData = getLocalQaSignInPageData(localRuntime);
 
