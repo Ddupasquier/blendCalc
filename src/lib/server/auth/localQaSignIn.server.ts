@@ -133,7 +133,7 @@ export const getAutomaticLocalQaMfaAccount = (
 	input: LocalQaRuntimeInput,
 ) => {
 	const runtime = resolveRuntime(input);
-	if (!runtime.enabled || runtime.experience !== "qa") return null;
+	if (!runtime.enabled) return null;
 	const account = runtime.accounts.find(({ key }) => key === accountKey);
 	return account &&
 		["moderator", "admin", "developer"].includes(account.key) &&
