@@ -15,7 +15,7 @@ const LOCAL_QA_BROWSER_PROJECTS = new Set([
 	"mobile-webkit",
 ]);
 
-type LocalQaRuntimeInput = {
+export type LocalQaRuntimeInput = {
 	appUrl: URL;
 	runtimeEnvironment?: string;
 	supabaseUrl?: string;
@@ -160,6 +160,20 @@ export const getLocalQaSignInCredentials = (
 	const account = runtime.accounts.find(({ key }) => key === accountKey);
 	if (!account) return null;
 	return { email: account.email, password: runtime.password };
+};
+
+export const getAutomaticLocalQaMfaAccount = (
+	accountKey: string,
+	input: LocalQaRuntimeInput,
+) => {
+	const runtime = resolveRuntime(input);
+	if (!runtime.enabled || runtime.experience !== "qa") return null;
+	const account = runtime.accounts.find(({ key }) => key === accountKey);
+	return account &&
+		["moderator", "admin", "developer"].includes(account.key) &&
+		account.role === account.key
+		? account
+		: null;
 };
 
 export const getLocalQaBrowserRateLimitClientAddress = (

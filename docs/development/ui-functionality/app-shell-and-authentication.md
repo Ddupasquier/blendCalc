@@ -68,6 +68,9 @@ welcome, and guided tutorial. Auth configuration and security details remain in
 - Require moderator, administrator, and developer sessions to reach AAL2 before any
   protected page, server action, JSON endpoint, review count, or database permission is
   available.
+- Quick QA login on isolated TEST port 5174 performs genuine server-side TOTP
+  verification for the maintained privileged personas without a manual prompt.
+  The real sign-in mode, Rehearsal, and production keep their manual MFA flow.
 - Send an elevated user without a verified TOTP factor to authenticator enrollment;
   send an enrolled AAL1 user to the six-digit challenge.
 - Accept the current six-digit authenticator code as plain digits or with the display
