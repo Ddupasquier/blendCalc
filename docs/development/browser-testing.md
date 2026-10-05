@@ -165,6 +165,10 @@ both approved production hostnames against the budgets in
   explicit behavioral assertion instead of a blanket network exception.
 - Keep database mutations serial and deterministic; restore the local baseline when a
   scenario changes durable state.
+- Keep manual and automatic MFA checks for each maintained privileged persona in the
+  same default-mode spec. Factor-reset fixtures invalidate that persona's sessions and
+  must not overlap another worker's sign-in: Profile owns Moderator/Admin, and catalog
+  submission enforcement owns Developer. Other specs retain parallel execution.
 - Test representative positive, negative, and boundary cases rather than one example.
 - Limit screenshot baselines to stable content and mask externally sourced image pixels
   when the image itself is not the contract.

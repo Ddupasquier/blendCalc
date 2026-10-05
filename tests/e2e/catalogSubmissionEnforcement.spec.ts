@@ -11,6 +11,16 @@ import {
 	restoreLocalQaCatalogSubmissionEnforcement,
 } from "./support/localQaDatabase";
 import type { Page } from "@playwright/test";
+import {
+	registerManualQaMfaTest,
+	registerQuickQaMfaTests,
+} from "./support/quickQaMfaTests";
+
+// Manual factor resets and Quick QA share the maintained Developer persona.
+test.describe.configure({ mode: "default" });
+
+registerQuickQaMfaTests(["Developer"]);
+registerManualQaMfaTest();
 
 const suspendedAccountEmail = "qa-user@blendcalc.local";
 const privilegedAccountEmail = "qa-developer@blendcalc.local";
