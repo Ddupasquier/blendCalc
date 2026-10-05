@@ -175,8 +175,13 @@ validates that receipt; `npm run verify:promotion -- --against <candidate-ref>` 
 an exact Git-tree promotion without rerunning the suite. Both paths fail closed on a
 dirty or changed tree. `--force-full` deliberately bypasses local reuse.
 
-GitHub runs affected Vitest and browser coverage on ordinary feature branches. `Ship`
-may dispatch `Verify` with `scope=full` on the exact assembled candidate before staging;
+GitHub runs affected Vitest and browser coverage on ordinary feature branches. It
+automatically expands shared browser-owner changes to full verification, using the
+existing isolated browser jobs instead of the sequential affected job. Narrow domain
+changes retain affected coverage. Planning uses the same ownership map as local checks
+and does not install browsers, prepare databases, or run tests.
+
+`Ship` may dispatch `Verify` with `scope=full` on the exact assembled candidate before staging;
 when the later staging tree is identical and that dispatched run succeeded, staging
 reuses it. Otherwise staging runs the complete Vitest and bounded browser tiers once.
 An unchanged main promotion reuses staging. Database verification runs only
@@ -264,8 +269,12 @@ own local Supabase stack, so Chromium, Firefox, WebKit, and compact projects can
 one another. The jobs may use their isolated worker accounts internally, but sharding
 still requires one independent database environment per shard.
 
-The affected-browser feature job is the exception: selected projects share one
+The narrow affected-browser feature job is the exception: selected projects share one
 disposable database and privileged reviewer fixtures, so it uses one Playwright worker.
+Shared shell, control, style, browser-support and Playwright-configuration changes
+instead select full verification and the existing isolated parallel matrix. This keeps
+all bounded cases without running the whole matrix sequentially or raising worker
+counts inside the shared database.
 Run multi-project checks of shared warning queues or MFA reviewer accounts locally with
 `PLAYWRIGHT_WORKERS=1` too. Keep the isolated full-matrix jobs at two workers; do not
 relax assertions or skip projects to hide shared-state races.
