@@ -1,0 +1,41 @@
+{
+	"advisory": "GHSA-vfj7-8cjw-p6xm",
+	"approvedAt": "2026-10-04T22:29:58Z",
+	"expiresAt": "2026-10-11T22:29:58Z",
+	"reason": "Temporary acceptance of development-tool stack-exhaustion risk while preserving all existing style checks. This does not fix the vulnerability. No renewal is automatic.",
+	"findingsSha256": "7e47cc06d2e9b1488caded30d60cdc7c67d061f57251992271f324dcd8177544",
+	"packages": {
+		"node_modules/braces": {
+			"version": "3.0.3",
+			"recordSha256": "6971eb7cd446f0341d2c9deb7de387efc52fd606fcc042baf0ff3c32b429d5b6"
+		},
+		"node_modules/micromatch": {
+			"version": "4.0.8",
+			"recordSha256": "3b47968d0146976f2dafc4aac0557fb8d5e18ebabc4d70651546da9dbbf14ed9"
+		},
+		"node_modules/fast-glob": {
+			"version": "3.3.3",
+			"recordSha256": "8d4bb9def104aaa8fa33b41088d833174156a5258f87c0bbee3e34788964a9cf"
+		},
+		"node_modules/globby": {
+			"version": "16.2.4",
+			"recordSha256": "4f34144468c4ff2fd32bf7c951e821a53d58d39181d521d0d5e45df2af6212f9"
+		},
+		"node_modules/stylelint": {
+			"version": "17.14.1",
+			"recordSha256": "bb5747917f2983578043bcfe80c008e98522fc48b836c135d27149fa09ccefb4"
+		},
+		"node_modules/stylelint-config-recommended": {
+			"version": "18.0.0",
+			"recordSha256": "a500f284b90c4479bb4296fe96fb971c10255b3d3b92df1f7444fe03249f869e"
+		},
+		"node_modules/stylelint-config-recommended-scss": {
+			"version": "17.0.1",
+			"recordSha256": "1a296a5fc705014e985d985e3d20fa3a297578eacec788ac2a53cf6b33eb8a5e"
+		},
+		"node_modules/stylelint-scss": {
+			"version": "7.2.0",
+			"recordSha256": "1533ff96e040b9ec6d8441a59295c453ed488d46eb6e6d594f3d0ed711257650"
+		}
+	}
+}

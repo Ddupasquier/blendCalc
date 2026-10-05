@@ -175,17 +175,28 @@ validates that receipt; `npm run verify:promotion -- --against <candidate-ref>` 
 an exact Git-tree promotion without rerunning the suite. Both paths fail closed on a
 dirty or changed tree. `--force-full` deliberately bypasses local reuse.
 
-GitHub runs affected Vitest and browser coverage on ordinary feature branches. `Ship`
-may dispatch `Verify` with `scope=full` on the exact assembled candidate before staging;
+GitHub runs affected Vitest and browser coverage on ordinary feature branches. It
+automatically expands shared browser-owner changes to full verification, using the
+existing isolated browser jobs instead of the sequential affected job. Narrow domain
+changes retain affected coverage. Planning uses the same ownership map as local checks
+and does not install browsers, prepare databases, or run tests.
+
+`Ship` may dispatch `Verify` with `scope=full` on the exact assembled candidate before staging;
 when the later staging tree is identical and that dispatched run succeeded, staging
 reuses it. Otherwise staging runs the complete Vitest and bounded browser tiers once.
 An unchanged main promotion reuses staging. Database verification runs only
 when database-owned files changed. Hosted Auth health runs only when Auth-owned files
 changed, plus its daily drift check and manual runs.
 
-The scheduled Dependency Audit checks the lockfile daily at moderate-or-higher severity
-so advisory drift is found before a release candidate. The same audit runs in the fast
-preflight whenever a complete candidate or dependency-changing branch is verified.
+The scheduled Dependency Audit checks the lockfile daily through
+`node scripts/operations/quality/audit_dependencies.mjs`. The same gate runs in release
+and nightly profiles, promotion reuse, and the CI preflight for full/reused candidates
+or dependency/policy-changing branches. It preserves full findings and requires a clean
+production audit. The narrowly pinned temporary development exception and its fixed
+expiry are governed by the [dependency safety policy](dev-rules/dev-rules.md#rule-dependency-supply-chain).
+Network, parse and execution errors never count as a successful audit. Focused refusal
+coverage lives in `tests/scripts/dependencyAuditPolicy.test.mjs`; it uses synthetic
+public advisory evidence rather than contacting live registries.
 
 #### Work-Quota Closeout
 
@@ -258,8 +269,12 @@ own local Supabase stack, so Chromium, Firefox, WebKit, and compact projects can
 one another. The jobs may use their isolated worker accounts internally, but sharding
 still requires one independent database environment per shard.
 
-The affected-browser feature job is the exception: selected projects share one
+The narrow affected-browser feature job is the exception: selected projects share one
 disposable database and privileged reviewer fixtures, so it uses one Playwright worker.
+Shared shell, control, style, browser-support and Playwright-configuration changes
+instead select full verification and the existing isolated parallel matrix. This keeps
+all bounded cases without running the whole matrix sequentially or raising worker
+counts inside the shared database.
 Run multi-project checks of shared warning queues or MFA reviewer accounts locally with
 `PLAYWRIGHT_WORKERS=1` too. Keep the isolated full-matrix jobs at two workers; do not
 relax assertions or skip projects to hide shared-state races.
@@ -370,12 +385,14 @@ from its disposable local application and isolated blendCalcAPI stacks.
 Rehearsal is not a replacement for TEST. TEST proves deterministic fixtures and routine
 browser behavior; Rehearsal proves schema evolution against a sanitized,
 production-shaped snapshot on a separately restored local stack. Generate or select a
-verified baseline, run `npm run rehearsal -- run`, and use
-`npm run rehearsal:app:prove` for the maintained application/CSP/Auth/API proof. Launch
-`npm run dev:rehearsal` for direct review of only the flows affected by candidate
+verified baseline and run `npm run rehearsal -- run`. The package starts the app and
+invokes the ordinary local application and publication proofs itself. Launch
+`npm run rehearsal -- open` for direct review of only the flows affected by candidate
 migrations. A Rehearsal pass requires the database verifier plus focused application
 evidence; it never proves production-side
-effects, Storage bytes, external providers, real email, OAuth, or hosted configuration.
+effects, external providers, real email, genuine Google interaction, or hosted
+configuration. Signed image downloads and three-engine rendering are application
+proofs; copied-account association and genuine Google login are separately reviewed.
 
 Automation can complete a QA task only when it proves every step and expected outcome
 with the required corpus, project, route, and viewport. Physical devices, named

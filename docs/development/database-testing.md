@@ -130,7 +130,7 @@ never row values, and fails closed if the tracked manifest differs from the exac
 migration schema.
 
 Use `node scripts/generators/rehearsal/generate_export_boundary_migration.mjs --check` to prove the generated export migration
-still matches that manifest, and `node scripts/operations/rehearsal/verify_local_migration_history.mjs` to compare
+still matches that manifest, and `node scripts/operations/database/verify_local_migration_history.mjs` to compare
 the installed migration ledger with immutable local migration source by ordered
 statement hash. These checks distinguish a genuinely pending migration from an edited,
 missing, duplicated, renamed, reordered, or database-only migration.

@@ -26,6 +26,7 @@ import {
 	getLocalQaSignInPageData,
 } from "$lib/server/auth/localQaSignIn.server";
 import { env as publicEnvironment } from "$env/dynamic/public";
+import { completeAutomaticLocalQaMfa } from "$lib/server/auth/automaticLocalQaMfa.server";
 import { MARKETING_EMAIL_CONSENT_COPY_VERSION } from "$lib/utils/email/marketingEmailPreferences";
 
 const AUTH_FORM_MAX_BYTES = 32 * 1024;
@@ -154,10 +155,7 @@ export const actions: Actions = {
 		});
 		if (!credentials) {
 			return fail(400, {
-				message:
-					localQaSignIn.experience === "rehearsal"
-						? "Choose the Rehearsal account and try again."
-						: "Choose a QA account and try again.",
+				message: "Choose a QA account and try again.",
 				next,
 				signInExperience: "quickQa" as const,
 			});
@@ -175,6 +173,22 @@ export const actions: Actions = {
 			});
 		}
 
+		try {
+			await completeAutomaticLocalQaMfa({
+				supabase: locals.supabase,
+				accountKey,
+				runtime: { appUrl: url },
+			});
+		} catch {
+			await locals.supabase.auth.signOut({ scope: "local" });
+			return fail(400, {
+				message:
+					"Automatic local verification failed. Please retry Quick QA login.",
+				qaAccount: accountKey,
+				next,
+				signInExperience: "quickQa" as const,
+			});
+		}
 		clearPasswordUpgrade(cookies);
 		await trackServerAppInteraction(
 			APP_INTERACTION_METRICS.LOGIN_SUCCESS,

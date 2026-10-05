@@ -4,6 +4,24 @@ import { describe, expect, it } from "vitest";
 const readSource = (path: string) => readFileSync(path, "utf8");
 
 describe("Playwright browser-testing architecture", () => {
+	it("keeps seeded MFA sign-ins with their factor-reset test owner", () => {
+		const profile = readSource("tests/e2e/profileInteractions.spec.ts");
+		const catalog = readSource(
+			"tests/e2e/catalogSubmissionEnforcement.spec.ts",
+		);
+		for (const source of [profile, catalog]) {
+			expect(source).toContain('test.describe.configure({ mode: "default" })');
+			expect(source).toContain("deleteLocalQaAuthenticatorFactorsForEmail");
+		}
+		expect(profile).toContain(
+			'registerQuickQaMfaTests(["Moderator", "Admin"])',
+		);
+		expect(profile).toContain("registerOrdinaryQuickQaTest()");
+		expect(catalog).toContain('registerQuickQaMfaTests(["Developer"])');
+		expect(catalog).toContain("registerManualQaMfaTest()");
+		expect(existsSync("tests/e2e/quickQaMfaInteractions.spec.ts")).toBe(false);
+	});
+
 	it("keeps browser tests isolated from Vitest", () => {
 		const viteConfig = readSource("vite.config.ts");
 		expect(viteConfig).toMatch(/exclude:\s*\[\s*["']tests\/e2e\/\*\*["']\s*\]/);
@@ -142,6 +160,22 @@ describe("Playwright browser-testing architecture", () => {
 		expect(gitignore).toContain("*.tsbuildinfo");
 	});
 
+	it("retains only scoped nutrition-switch images after successful desktop review runs", () => {
+		const workflow = readSource(".github/workflows/verify.yml");
+		const reviewUpload = workflow
+			.split("name: Upload nutrition-switch review images")[1]
+			?.split("- name: Upload failure evidence")[0];
+		expect(reviewUpload).toContain(
+			"if: success() && matrix.project == 'desktop-chromium'",
+		);
+		expect(reviewUpload).toContain(
+			"path: test-results/playwright/**/nutrition-viewing-switch-*.png",
+		);
+		expect(reviewUpload).toContain("retention-days: 7");
+		expect(reviewUpload).not.toContain("playwright-report/");
+		expect(reviewUpload).not.toContain("authenticated-browser-state");
+	});
+
 	it("prevents inherited terminal color settings from conflicting with Playwright", () => {
 		const playwrightConfig = readSource("playwright.config.ts");
 		expect(playwrightConfig).toContain("delete process.env.NO_COLOR");
@@ -173,7 +207,9 @@ describe("Playwright browser-testing architecture", () => {
 		]) {
 			expect(verificationWorkflow).toContain(`project: ${project}`);
 		}
-		expect(verificationWorkflow).toContain("npm audit --audit-level=moderate");
+		expect(verificationWorkflow).toContain(
+			"node scripts/operations/quality/audit_dependencies.mjs",
+		);
 		expect(verificationWorkflow).toContain(
 			"PUBLIC_SUPABASE_URL: http://127.0.0.1:54321",
 		);
@@ -268,7 +304,7 @@ describe("Playwright browser-testing architecture", () => {
 		expect(hostedAuthWorkflow).not.toContain("secrets.");
 		expect(dependencyAuditWorkflow).toContain('cron: "15 10 * * *"');
 		expect(dependencyAuditWorkflow).toContain(
-			"npm audit --package-lock-only --ignore-scripts --audit-level=moderate",
+			"node scripts/operations/quality/audit_dependencies.mjs",
 		);
 		expect(viteConfig).toContain("maxWorkers: 4");
 	});

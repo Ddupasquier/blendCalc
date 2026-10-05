@@ -413,6 +413,9 @@ change together.
 ## Borders, Focus, And Depth
 
 - Use surfaces and borders to create hierarchy. Do not use box shadows.
+  The standalone documentation site is the approved, scoped exception: restrained
+  shadows may separate its illustration and modal surfaces. App components remain
+  shadow-free; documentation presentation stays under `config/documentation/`.
 - Neutral boundaries use `$app-shell-border-subtle`.
 - Ingredient cards keep a transparent `2px` border so selection can become visible
   without changing layout.
@@ -728,6 +731,10 @@ photo` actions. Only the camera action carries the rear-camera hint; cancelling 
 
 ### Nutrition Details
 
+- The Weight/Servings switch uses the shared segmented control's compact variant:
+  label-sized width, right alignment, nonanimated selection, and at least 44px touch
+  targets. Let the amount heading wrap when enlarged text needs more room; never
+  stretch the switch or override the shared control's internal styling.
 - Nutrition Facts may use the high-contrast data treatment and data font; it is an
   intentional domain-specific exception to the soft card palette.
 - Product name is not truncated in the detailed view.

@@ -203,14 +203,19 @@ pseudonymized; other users' identities and private values remain sanitized. Publ
 catalog, nutrient, category, ingredient, warning, moderation, source, and image metadata
 remain exact.
 
-After count verification, the restored owner persona receives a fixed local quick-login
-identity and a developer-role overlay excluded from the baseline. The 5175 easy-auth
-action reads that generated credential only on the server and leaves privileged TOTP
-enforcement intact. A real Google callback may claim the same restored persona only when
-the signed-in email matches the fixed SHA-256 receipt. The local service transaction
-moves all owner foreign keys and Storage pointers to the Google Auth UUID, removes the
-placeholder Auth identity, and refreshes the local session. A different Google account
-stays a new empty local user and can never claim the owner's data.
+After count verification, the restored owner persona receives a fixed local test
+identity and a developer-role overlay excluded from the baseline. Application proofs
+use ordinary email/password sign-in with that server-owned disposable credential;
+the 5175 application does not expose a quick-login shortcut. Privileged TOTP
+enforcement remains intact. Google authentication uses the ordinary application callback;
+copied-account association is a separately reviewed, confirmed operation owned by the
+installed Rehearsal package, not an application callback or compatibility RPC. Its
+declarative policy must restrict association to the fixed source-email receipt and
+cover owner references, physical Storage transfer and immutable history. Session claims
+must be refreshed after association. A different Google account stays a new empty local
+user and can never claim the owner's data. See
+[Authentication](authentication.md#local-qa-and-rehearsal-sign-in) for the sign-in and
+association boundary.
 
 The database export login and Storage reader are separate. The Storage JWT role has only
 object `SELECT`; RLS exposes the public product-image bucket plus the fixed owner's

@@ -1,0 +1,102 @@
+name: Documentation
+
+on:
+  push:
+    branches: [main, "docs/**"]
+    paths:
+      - ".github/workflows/documentation.yml"
+      - "README.md"
+      - "docs/README.md"
+      - "docs/development/**"
+      - "docs/user/**"
+      - "config/documentation/**"
+      - "scripts/README.md"
+      - "scripts/generators/documentation/**"
+      - "scripts/lib/documentation/**"
+      - "scripts/operations/documentation/**"
+      - "tests/config/documentation*.test.ts"
+      - "tests/e2e/documentation/**"
+      - "src/lib/assets/favicon.svg"
+      - "package*.json"
+      - ".nvmrc"
+  pull_request:
+    paths:
+      - ".github/workflows/documentation.yml"
+      - "README.md"
+      - "docs/README.md"
+      - "docs/development/**"
+      - "docs/user/**"
+      - "config/documentation/**"
+      - "scripts/README.md"
+      - "scripts/generators/documentation/**"
+      - "scripts/lib/documentation/**"
+      - "scripts/operations/documentation/**"
+      - "tests/config/documentation*.test.ts"
+      - "tests/e2e/documentation/**"
+      - "src/lib/assets/favicon.svg"
+      - "package*.json"
+      - ".nvmrc"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: documentation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Check and build documentation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: Install without lifecycle scripts
+        run: npm ci --ignore-scripts
+      - name: Check source and formatting
+        env:
+          FORMAT_BASE_REF: ${{ github.event.pull_request.base.sha || github.event.before || 'origin/main' }}
+        run: |
+          npm run check
+          npm run lint
+          npx stylelint config/documentation/site.css
+          npm run format:check
+      - name: Check documentation sources and rendering
+        run: npm run test:focused -- tests/config/documentationQuality.test.ts tests/config/documentationSite.test.ts
+      - name: Install documentation browsers
+        run: npx playwright install --with-deps chromium firefox webkit
+      - name: Test themes, navigation and browser layouts
+        run: npm run docs -- test
+      - name: Build the project-path site
+        env:
+          REPOSITORY_NAME: ${{ github.event.repository.name }}
+        run: npm run docs -- build --base "/${REPOSITORY_NAME}/"
+      - name: Upload only the generated public site
+        if: github.ref_name == (vars.DOCS_PUBLISH_BRANCH || 'main') && github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist/documentation
+
+  deploy:
+    name: Publish GitHub Pages
+    if: github.ref_name == (vars.DOCS_PUBLISH_BRANCH || 'main') && github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy the checked artifact
+        id: deployment
+        uses: actions/deploy-pages@v5

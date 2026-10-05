@@ -151,8 +151,8 @@ export const verificationProfiles = {
 			stage(
 				"dependencies",
 				"Dependency audit",
-				"npm",
-				["audit", "--audit-level=high"],
+				"node",
+				["scripts/operations/quality/audit_dependencies.mjs"],
 				20_000,
 			),
 			...sourceContractStages,
@@ -176,8 +176,8 @@ export const verificationProfiles = {
 			stage(
 				"dependencies",
 				"Dependency audit",
-				"npm",
-				["audit", "--audit-level=high"],
+				"node",
+				["scripts/operations/quality/audit_dependencies.mjs"],
 				20_000,
 			),
 			...sourceContractStages,
@@ -435,7 +435,7 @@ const stopOwnedDatabaseStack = async () =>
 		});
 	});
 
-const writeFailureLog = async (profileKey, stageId, outputLines) => {
+const writeStageLog = async (profileKey, stageId, outputLines) => {
 	await mkdir(failureLogDirectory, { recursive: true });
 	const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
 	const logPath = `${failureLogDirectory}/${timestamp}-${profileKey}-${stageId}.log`;
@@ -506,6 +506,7 @@ const main = async () => {
 
 	let databaseStageStarted = false;
 	let failed = false;
+	const auditEvidence = [];
 	try {
 		for (let index = 0; index < profile.stages.length; index += 1) {
 			const verificationStage = profile.stages[index];
@@ -521,13 +522,19 @@ const main = async () => {
 				updatedAt: new Date().toISOString(),
 			};
 			await writeHistory(history);
+			const logPath =
+				verificationStage.id === "dependencies" || result.exitCode !== 0
+					? await writeStageLog(
+							profileKey,
+							verificationStage.id,
+							result.outputLines,
+						)
+					: null;
+			if (verificationStage.id === "dependencies") {
+				auditEvidence.push({ logPath, outcome: result.outputLines.at(-1) });
+			}
 			if (result.exitCode !== 0) {
 				if (refreshTimer) clearInterval(refreshTimer);
-				const logPath = await writeFailureLog(
-					profileKey,
-					verificationStage.id,
-					result.outputLines,
-				);
 				render();
 				console.error(
 					`\n${state.label} failed after ${formatDuration(durationMilliseconds)}.`,
@@ -560,6 +567,10 @@ const main = async () => {
 	console.log(
 		`\n${profile.label} passed in ${formatDuration(Date.now() - startedAt)}.`,
 	);
+	for (const evidence of auditEvidence) {
+		console.log(`Full dependency audit evidence: ${evidence.logPath}`);
+		console.log(evidence.outcome);
+	}
 	if (profileKey === "release") {
 		const result = await recordReleaseReceipt(repositoryRoot);
 		console.log(

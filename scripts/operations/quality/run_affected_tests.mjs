@@ -6,6 +6,8 @@
  * Run: `npm run test:affected`, `npm run test:e2e:affected`, or
  * `node scripts/operations/quality/run_affected_tests.mjs browser --prepare`. CI may
  * preinstall the selected engines with the `browser --install-browsers` mode.
+ * Add `--plan-only` to write the ignored selection report without installing browsers,
+ * preparing databases, or running tests.
  */
 
 import { spawnSync } from "node:child_process";
@@ -23,6 +25,7 @@ const mode = process.argv[2] ?? "all";
 const shouldPrepareBrowserEnvironment = process.argv.includes("--prepare");
 const shouldInstallBrowserDependencies =
 	process.argv.includes("--install-browsers");
+const shouldOnlyPlan = process.argv.includes("--plan-only");
 
 const runCommand = (command, args, { capture = false } = {}) => {
 	const result = spawnSync(command, args, {
@@ -251,7 +254,9 @@ console.log(
 	`Affected-test selection: ${changedFiles.length} changed file${changedFiles.length === 1 ? "" : "s"}; ${browserSelection.reason}.`,
 );
 
-if (mode === "all" || mode === "unit") runAffectedUnitTests(changedFiles);
-if (mode === "all" || mode === "browser") {
+if (!shouldOnlyPlan && (mode === "all" || mode === "unit")) {
+	runAffectedUnitTests(changedFiles);
+}
+if (!shouldOnlyPlan && (mode === "all" || mode === "browser")) {
 	runAffectedBrowserTests(browserSelection);
 }

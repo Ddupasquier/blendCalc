@@ -102,11 +102,22 @@ jobs:
             comparison_base=$(git merge-base origin/staging HEAD)
           fi
 
+          if [[ "$mode" == "feature" ]]; then
+            TEST_BASE_REF="$comparison_base" node scripts/operations/quality/run_affected_tests.mjs browser --plan-only
+            shared_browser_ownership=$(node -e 'const { browserSelection } = require("./test-results/affected-test-selection.json"); console.log(browserSelection.projects.length === 0)')
+            if [[ "$shared_browser_ownership" == "true" ]]; then
+              echo "Shared browser ownership requires the isolated full matrix."
+              mode=full
+            fi
+          fi
+
           dependencies=false
-          if [[ "$mode" == "full" ]]; then
+          if [[ "$mode" == "full" || "$mode" == "reuse" ]]; then
             dependencies=true
           elif [[ "$mode" == "feature" ]] && ! git diff --quiet "$comparison_base" HEAD -- \
-            package.json package-lock.json npm-shrinkwrap.json; then
+            package.json package-lock.json npm-shrinkwrap.json config/dependencyAuditException.json \
+            scripts/lib/security/dependency_audit_policy.mjs scripts/lib/security/run_dependency_audit.mjs \
+            scripts/operations/quality/audit_dependencies.mjs .github/workflows/verify.yml; then
             dependencies=true
           fi
 
@@ -116,7 +127,6 @@ jobs:
 
   preflight:
     name: Security And Repository Policy Preflight
-    if: needs.verification-plan.outputs.mode != 'reuse'
     needs: verification-plan
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -132,7 +142,7 @@ jobs:
         run: npm ci --ignore-scripts
       - name: Audit dependencies before expensive browser work
         if: needs.verification-plan.outputs.dependencies == 'true'
-        run: npm audit --audit-level=moderate
+        run: node scripts/operations/quality/audit_dependencies.mjs
       - name: Run release policy contracts
         run: >-
           npm run test:focused --
@@ -140,6 +150,7 @@ jobs:
           tests/scripts/projectTicketLifecycle.test.mjs
           tests/config/developmentRulesStructure.test.ts
           tests/config/playwrightTestingArchitecture.test.ts
+          tests/scripts/dependencyAuditPolicy.test.mjs
 
   source:
     name: Source, Tests, And Build
@@ -252,6 +263,14 @@ jobs:
             args+=(--shard="$PLAYWRIGHT_SHARD")
           fi
           npm run test:e2e -- "${args[@]}"
+      - name: Upload nutrition-switch review images
+        if: success() && matrix.project == 'desktop-chromium'
+        uses: actions/upload-artifact@v4
+        with:
+          name: nutrition-switch-${{ matrix.label }}-${{ github.run_attempt }}
+          path: test-results/playwright/**/nutrition-viewing-switch-*.png
+          if-no-files-found: ignore
+          retention-days: 7
       - name: Upload failure evidence
         if: failure()
         uses: actions/upload-artifact@v4
@@ -317,7 +336,7 @@ jobs:
             exit 1
           fi
           if [[ "$MODE" == "reuse" ]]; then
-            [[ "$PREFLIGHT_RESULT" == "skipped" && "$BROWSER_RESULT" == "skipped" && "$AFFECTED_RESULT" == "skipped" ]]
+            [[ "$PREFLIGHT_RESULT" == "success" && "$BROWSER_RESULT" == "skipped" && "$AFFECTED_RESULT" == "skipped" ]]
           elif [[ "$MODE" == "full" ]]; then
             [[ "$PREFLIGHT_RESULT" == "success" && "$BROWSER_RESULT" == "success" && "$AFFECTED_RESULT" == "skipped" ]]
           elif [[ "$MODE" == "feature" ]]; then

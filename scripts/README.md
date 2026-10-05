@@ -37,6 +37,20 @@ the command line or place generated data in tracked files.
 
 ## Safety Before Execution
 
+`node scripts/operations/quality/audit_dependencies.mjs` is the shared read-only
+dependency gate for CI, release/nightly verification and promotion reuse. It runs
+bounded, scripts-disabled full and production lockfile audits, prints both reports,
+and checks the public upstream advisory before accepting the one approved temporary
+development-tool risk. The reviewed paths, record digests and absolute deadline live
+in `config/dependencyAuditException.json`; no flag or environment value extends them.
+Audit errors, production findings, drift and expiration fail closed. See the
+[dependency safety policy](../docs/development/dev-rules/dev-rules.md#rule-dependency-supply-chain)
+for risk acceptance and patch-removal requirements. The command never modifies
+dependencies, databases or credentials. The verification dashboard retains even a
+passing audit's complete report under ignored `test-results/verification-dashboard/`
+and prints its location and risk warning at closeout. Raw `npm audit` remains an
+unsuppressed report.
+
 | Workflow type                            | Required practice                                                                                     |
 | ---------------------------------------- | ----------------------------------------------------------------------------------------------------- |
 | Read-only audit                          | Confirm the target environment and use `--json` only when a machine-readable report is needed.        |
@@ -68,35 +82,47 @@ The guard never deletes files, caches, containers, volumes, or databases.
 
 ## Directory Map
 
-| Path                       | Responsibility                                                          |
-| -------------------------- | ----------------------------------------------------------------------- |
-| `audits/catalog/`          | Catalog publication, transparency, and barcode nutrition checks         |
-| `audits/food-sources/`     | Provider coverage, quality, request-cost, and contribution checks       |
-| `audits/security/`         | Hosted infrastructure and Auth checks                                   |
-| `backfills/catalog/`       | Idempotent catalog and saved-source enrichment                          |
-| `backfills/images/`        | Image discovery, metadata repair, and automatic placement               |
-| `generators/api/`          | Documentation-only external provider references                         |
-| `generators/rehearsal/`    | Reviewed Rehearsal schema-policy manifests                              |
-| `imports/nutrition/`       | Licensed national nutrition dataset imports                             |
-| `operations/blendCalcAPI/` | blendCalcAPI correction review and reversible publication controls      |
-| `operations/auth/`         | Auth environment verification                                           |
-| `operations/database/`     | Local database management and linked migration delivery                 |
-| `operations/environment/`  | Safe local/test application and verification process launchers          |
-| `operations/quality/`      | Repository linting and formatting verification helpers                  |
-| `operations/recovery/`     | Protected hosted backups and offline verification                       |
-| `operations/rehearsal/`    | Disposable production-shaped migration-rehearsal proofs                 |
-| `operations/releases/`     | Application and API version consistency                                 |
-| `operations/users/`        | Privileged role and account operations                                  |
-| `operations/catalog/`      | Privileged catalog inspection and destructive product operations        |
-| `qa/catalog/`              | Disposable catalog and image-moderation fixtures                        |
-| `qa/database/`             | Deterministic hosted database and API checks                            |
-| `seeds/catalog/`           | Category, product-source, serving, and nutrient-reference discovery     |
-| `seeds/food-safety/`       | Ingredient, allergen, trace, and dietary evidence discovery             |
-| `seeds/nutrition/`         | Manual-entry nutrient-policy observations                               |
-| `lib/<domain>/`            | Reusable script-only code; never run directly                           |
-| `lib/environment/`         | Clean process environments and local Supabase service helpers           |
-| `lib/reference-data/`      | Reviewed source queries, unit standards, and cautious matching catalogs |
-| `lib/rehearsal/`           | BlendCalc export, sanitization, identity, asset, and proof helpers      |
+Documentation workflows: `npm run docs -- build` generates and checks all public pages;
+`npm run docs` serves their loopback preview; `npm run docs -- test` runs the independent
+documentation browser matrix. See [Maintaining this site](../docs/development/documentation-site.md).
+
+The family entry point is `scripts/operations/documentation/run_documentation.mjs`.
+It dispatches `scripts/generators/documentation/build_documentation.mjs` and
+`scripts/operations/documentation/preview_documentation.mjs`, or the independent
+documentation browser runner. Use the npm family command instead of adding aliases.
+
+| Path                        | Responsibility                                                          |
+| --------------------------- | ----------------------------------------------------------------------- |
+| `audits/catalog/`           | Catalog publication, transparency, and barcode nutrition checks         |
+| `audits/food-sources/`      | Provider coverage, quality, request-cost, and contribution checks       |
+| `audits/security/`          | Hosted infrastructure and Auth checks                                   |
+| `backfills/catalog/`        | Idempotent catalog and saved-source enrichment                          |
+| `backfills/images/`         | Image discovery, metadata repair, and automatic placement               |
+| `generators/api/`           | Documentation-only external provider references                         |
+| `generators/documentation/` | Public Markdown-to-site build with link and anchor validation           |
+| `generators/rehearsal/`     | Reviewed Rehearsal schema-policy manifests                              |
+| `imports/nutrition/`        | Licensed national nutrition dataset imports                             |
+| `operations/blendCalcAPI/`  | blendCalcAPI correction review and reversible publication controls      |
+| `operations/auth/`          | Auth environment verification                                           |
+| `operations/database/`      | Local database management and linked migration delivery                 |
+| `operations/environment/`   | Safe local/test application and verification process launchers          |
+| `operations/documentation/` | Loopback-only documentation preview; no app or database startup         |
+| `operations/quality/`       | Repository linting and formatting verification helpers                  |
+| `operations/recovery/`      | Protected hosted backups and offline verification                       |
+| `operations/rehearsal/`     | Temporarily retained source preparation and export-boundary proofs      |
+| `operations/releases/`      | Application and API version consistency                                 |
+| `operations/users/`         | Privileged role and account operations                                  |
+| `operations/catalog/`       | Privileged catalog inspection and destructive product operations        |
+| `qa/catalog/`               | Disposable catalog and image-moderation fixtures                        |
+| `qa/database/`              | Deterministic hosted database and API checks                            |
+| `seeds/catalog/`            | Category, product-source, serving, and nutrient-reference discovery     |
+| `seeds/food-safety/`        | Ingredient, allergen, trace, and dietary evidence discovery             |
+| `seeds/nutrition/`          | Manual-entry nutrient-policy observations                               |
+| `lib/<domain>/`             | Reusable script-only code; never run directly                           |
+| `lib/environment/`          | Clean process environments and local Supabase service helpers           |
+| `lib/documentation/`        | Static documentation shell and Markdown rendering                       |
+| `lib/reference-data/`       | Reviewed source queries, unit standards, and cautious matching catalogs |
+| `lib/rehearsal/`            | Temporarily retained source export, sanitization and asset preparation  |
 
 ## Local Database And QA
 
@@ -112,10 +138,12 @@ Vite with an explicit production-connected environment. It never reads or receiv
 Google client secret; Google is owned by hosted Supabase Auth. Every 5173 mutation and
 configured side effect is real.
 
-`operations/environment/run_application_environment.mjs` owns `dev:test` and
-`dev:rehearsal`. It starts their local database workdirs and launches Vite with an
-allowlisted isolated environment. Rehearsal independently reads
-`.env.rehearsal-auth.local` and returns through port `58321`.
+`operations/environment/run_application_environment.mjs` owns only `dev:test` and
+`dev:test:auth`. It starts the QA databases and launches Vite with an allowlisted
+isolated environment. `npm run rehearsal -- open` independently starts the sandbox
+through the installed package, without this launcher or an application-owned adapter.
+Rehearsal reads `.env.rehearsal-auth.local` only for its local Google provider and
+returns through port `58321`.
 `operations/environment/run_test_command.mjs` provides the same fail-closed boundary
 for compile and unit-test commands without requiring the database stacks to be running.
 The executable owners are the `@rehearsal-db/core` CLI,
@@ -148,7 +176,7 @@ the checked-in migration no longer matches the policy. The migration contains ex
 versioned security-barrier views, an inert owner, an inert reader group, forced-RLS
 policies, and a hashed migration receipt. It does not create a login credential.
 
-`node scripts/operations/rehearsal/verify_local_migration_history.mjs` compares every local migration file with the
+`node scripts/operations/database/verify_local_migration_history.mjs` compares every local migration file with the
 installed local Supabase ledger, including an exact ordered-statement SHA-256. It fails
 on edits, omissions, reordering, duplicate versions, filename mismatches, and database
 versions not represented locally.
@@ -202,7 +230,7 @@ The `@rehearsal-db/core` dependency owns the persistent local runtime. It restor
 atomically verified baseline under ignored `.rehearsal/`, checks the
 exact migration-file prefix, streams records into PostgreSQL without constructing one
 unbounded SQL argument, recreates referenced Auth identities as synthetic local users,
-overlays the approved owner persona with one local developer login in an excluded
+seeds the declared local developer assignment for the approved placeholder in an excluded
 authorization table, restores every checksummed Storage object into local Storage, and recreates
 the excluded catalog-monitor singleton in a disabled state so diagnostic reads retain
 their contract without enabling worker side effects. The exact public catalog and
@@ -229,21 +257,35 @@ Human and `--json` output share one redacted result/error model. The public conf
 safety, compatibility, command, and support contracts live in the standalone
 `rehearsal-db` repository; this repository documents only BlendCalc-owned integration.
 
-`npm run rehearsal:app:prove` is BlendCalc's project-owned application proof. It starts
-the app against the already verified Rehearsal runtime and waits for that newly started
-process's directive-level CSP instead of accepting an older listener on port `5175`.
-It renders restored profile-avatar and private submission-evidence Storage bytes in a
-real headless browser; proves a reset-invalidated session clears once without retaining
-privileged access or retrying the dead token; performs the restored owner-snapshot Auth
-exchange; requires its local database-owned `developer` claim; creates and removes an
-ordinary local account plus its application profile; proves Google OAuth initiation
-uses Google's chooser plus the port `58321` local callback; and checks the isolated
-blendCalcAPI route cannot fail from a missing or hosted target. It stops only the app
-process and leaves the local database stacks available. Completing the external Google
-consent/callback remains a direct browser check because Rehearsal never stores a real
-Google account credential. Runtime verification separately performs a matching
-Google-owner claim inside a rollback and proves the owner profile, list topology, and
-Storage pointers survive the identity swap.
+`npm run rehearsal -- open` starts BlendCalc directly using the package-owned
+application session. Ctrl+C and Ctrl+Z close only the application, preserving database
+and Storage services. There is no consumer runtime adapter, copied-owner password,
+callback claim hook or sandbox launcher.
+
+`scripts/operations/quality/prove_local_application.mjs` is an ordinary application
+test against an already-running isolated app. During `run`, the package supplies local
+service variables, starts the app and invokes the test. Chromium, Firefox and WebKit
+exercise a purpose-created account, database-backed role and refresh claims, owner-only
+profile reads, MFA denial, profile save/reload, three publication products/searches,
+anonymous/malformed/missing API controls, signed avatar/evidence image rendering and
+synthetic expired/tampered-session cleanup, not natural JWT expiration. Only its own
+synthetic account is removed. It does not start,
+stop, reset or claim a Rehearsal runtime.
+
+`scripts/operations/quality/prove_local_publication.mjs` reads the active publication
+generation and three detail/search payloads through the package-supplied local service
+environment. It performs no writes.
+
+Genuine Google interaction and copied-account association use ordinary sign-in followed
+by the public reviewed `identity plan`/`identity claim` workflow, then a fresh sign-in.
+The runtime and identity declarations live under `infrastructure/rehearsal/application/`.
+The publication target has its own config and approved baseline under ignored
+`.rehearsal-publication/.rehearsal/`.
+
+**Temporary source-preparation boundary:** the legacy source reader, sanitizer,
+Storage preparation and generators above remain until the full privacy policy has a
+reviewed declarative replacement. Runtime cleanup is not full source retirement; do
+not delete those scripts or weaken their privacy rules to shorten the inventory.
 
 | Command                                                                                                                                                              | Behavior                                                                                             |
 | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
@@ -254,7 +296,7 @@ Storage pointers survive the identity swap.
 | `npm run db:test -- stop`                                                                                                                                            | Stop local Supabase.                                                                                 |
 | `node scripts/operations/rehearsal/prove_export_authorization_boundary.mjs`                                                                                          | Prove the least-privilege design in an isolated disposable local database.                           |
 | `node scripts/operations/rehearsal/prove_installed_export_boundary.mjs`                                                                                              | Stream, sanitize, verify, and clean a temporary baseline through the installed local boundary.       |
-| `node scripts/operations/rehearsal/verify_local_migration_history.mjs`                                                                                               | Compare installed migration statements with immutable local migration source.                        |
+| `node scripts/operations/database/verify_local_migration_history.mjs`                                                                                                | Compare installed migration statements with immutable local migration source.                        |
 | `node scripts/operations/rehearsal/prove_installed_export_boundary.mjs --retain-local-baseline`                                                                      | Produce and retain a verified baseline from the installed local export boundary.                     |
 | `node scripts/operations/rehearsal/provision_production_source.mjs --dry-run`                                                                                        | Preview the confirmed least-privilege production source provisioning operation.                      |
 | `node scripts/operations/rehearsal/deprovision_production_source.mjs --dry-run`                                                                                      | Preview revocation of the temporary production-source identities and local credential file.          |
@@ -269,7 +311,8 @@ Storage pointers survive the identity swap.
 | `npm run rehearsal -- run`                                                                                                                                           | Reset, apply zero or confirmed candidates, and verify in one fail-closed workflow.                   |
 | `npm run rehearsal -- doctor\|explain\|run --dry-run`                                                                                                                | Validate readiness or inspect the immutable package-shaped plan without mutating state.              |
 | `npm run rehearsal -- inspect baseline\|inspect migrations`                                                                                                          | Inspect safe provenance and exact migration classifications.                                         |
-| `npm run rehearsal:app:prove`                                                                                                                                        | Prove the BlendCalc application, CSP, Auth, and API boundaries against Rehearsal.                    |
+| `node scripts/operations/quality/prove_local_application.mjs`                                                                                                        | Prove the already-running isolated application, CSP, Auth, signed images and publication API.        |
+| `node scripts/operations/quality/prove_local_publication.mjs`                                                                                                        | Read-only active publication-generation and product-payload checks.                                  |
 | `node scripts/generators/rehearsal/generate_sanitization_manifest.mjs --write`                                                                                       | Regenerate the schema-only sanitization policy for deliberate review.                                |
 | `node scripts/generators/rehearsal/generate_sanitization_manifest.mjs --check`                                                                                       | Fail when the reviewed policy no longer exactly covers the local schema.                             |
 | `node scripts/generators/rehearsal/generate_export_boundary_migration.mjs --write`                                                                                   | Regenerate the explicit export-boundary migration for deliberate review.                             |

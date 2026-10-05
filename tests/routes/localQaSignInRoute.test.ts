@@ -2,6 +2,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
 	trackServerAppInteraction: vi.fn(),
+	completeAutomaticLocalQaMfa: vi.fn(),
+}));
+
+vi.mock("$lib/server/auth/automaticLocalQaMfa.server", () => ({
+	completeAutomaticLocalQaMfa: mocks.completeAutomaticLocalQaMfa,
 }));
 
 vi.mock("$env/dynamic/private", () => ({
@@ -52,7 +57,10 @@ const createRequest = (fields: Record<string, string>) => {
 };
 
 describe("local QA sign-in route", () => {
-	beforeEach(() => vi.clearAllMocks());
+	beforeEach(() => {
+		vi.clearAllMocks();
+		mocks.completeAutomaticLocalQaMfa.mockResolvedValue(undefined);
+	});
 
 	it("exposes account choices only on the exact local test runtime", async () => {
 		const result = (await load({
@@ -74,7 +82,6 @@ describe("local QA sign-in route", () => {
 		expect(JSON.stringify(result.localQaSignIn)).not.toContain(
 			"generated-local-password",
 		);
-		expect(result.localQaSignIn).toMatchObject({ experience: "qa" });
 	});
 
 	it("signs in the selected maintained persona without accepting an email or password", async () => {
@@ -100,6 +107,42 @@ describe("local QA sign-in route", () => {
 			password: "generated-local-password",
 		});
 		expect(mocks.trackServerAppInteraction).toHaveBeenCalledOnce();
+		expect(mocks.completeAutomaticLocalQaMfa).toHaveBeenCalledWith(
+			expect.objectContaining({
+				accountKey: "empty",
+				runtime: { appUrl: new URL("http://localhost:5174/auth") },
+			}),
+		);
+	});
+
+	it("fails closed and signs out only the current local session if automatic verification fails", async () => {
+		mocks.completeAutomaticLocalQaMfa.mockRejectedValueOnce(
+			new Error("private provider detail"),
+		);
+		const signOut = vi.fn().mockResolvedValue({ error: null });
+		const result = await actions.quickQaSignIn({
+			locals: {
+				supabase: {
+					auth: {
+						signInWithPassword: vi.fn().mockResolvedValue({ error: null }),
+						signOut,
+					},
+				},
+			},
+			request: createRequest({ qaAccount: "empty" }),
+			url: new URL("http://localhost:5174/auth"),
+			cookies: {},
+		} as never);
+		expect(result).toMatchObject({
+			status: 400,
+			data: {
+				message:
+					"Automatic local verification failed. Please retry Quick QA login.",
+			},
+		});
+		expect(JSON.stringify(result)).not.toContain("private provider detail");
+		expect(signOut).toHaveBeenCalledWith({ scope: "local" });
+		expect(mocks.trackServerAppInteraction).not.toHaveBeenCalled();
 	});
 
 	it("rejects an account key outside the maintained persona list", async () => {

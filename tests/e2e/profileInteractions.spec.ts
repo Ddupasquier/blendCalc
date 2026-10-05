@@ -25,9 +25,16 @@ import {
 	seedLocalQaFoodWarningQueues,
 } from "./support/localQaDatabase";
 import { finishLocalQaAuthenticatorEnrollment } from "./support/localQaAuthenticator";
+import {
+	registerOrdinaryQuickQaTest,
+	registerQuickQaMfaTests,
+} from "./support/quickQaMfaTests";
 
-// Global privileged queues and MFA personas must not overlap within this file.
+// Global queues and both manual/automatic Moderator/Admin MFA share this owner.
 test.describe.configure({ mode: "default" });
+
+registerQuickQaMfaTests(["Moderator", "Admin"]);
+registerOrdinaryQuickQaTest();
 
 const tinyPng = Buffer.from(
 	"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",

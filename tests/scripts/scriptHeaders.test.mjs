@@ -25,13 +25,14 @@ const scriptFiles = (await collectScriptFiles(scriptsRoot)).filter(
 const executableDomainsByOperation = {
 	audits: ["catalog", "food-sources", "rehearsal", "security"],
 	backfills: ["catalog", "images"],
-	generators: ["api", "rehearsal"],
+	generators: ["api", "documentation", "rehearsal"],
 	imports: ["nutrition"],
 	operations: [
 		"auth",
 		"blendCalcAPI",
 		"catalog",
 		"database",
+		"documentation",
 		"environment",
 		"quality",
 		"recovery",
@@ -46,6 +47,7 @@ const sharedLibraryDomains = [
 	"auth",
 	"barcode",
 	"catalog",
+	"documentation",
 	"environment",
 	"images",
 	"nutrition",

@@ -269,26 +269,40 @@ The selector is absent on production-connected 5173 development, previews, stagi
 and production. It creates a normal local Supabase session and does not bypass role
 checks, account blocks, password policies, or privileged MFA requirements.
 
-The isolated Rehearsal app at `http://localhost:5175` exposes the same easy-auth toggle
-for its single restored owner snapshot. Its server reads the generated local credential
-from `.rehearsal/runtime.env`; the browser receives only the account summary. This path
-fails closed unless the runtime is exactly `rehearsal`, the
-application uses loopback port `5175`, the Supabase API uses loopback port `58321`, and
-the generated local identity is present. It creates an ordinary Rehearsal Supabase
-session and still requires local TOTP before privileged tools open.
+Quick QA login automatically completes real TOTP verification for the seeded
+moderator, administrator, and developer on **5174 only**. Setup keys stay in the
+server-only, gitignored `.cache/local-qa-authenticators/` directory with owner-only
+permissions. Existing manual authenticators are never removed. Repeated quick login
+may wait up to 31 seconds for a fresh code rather than bypassing replay protection.
+Verification failures stop the quick login instead of allowing an AAL1 session into
+protected tools. The normal credential flow still uses the manual MFA screens.
+Production-connected 5173 and Rehearsal 5175 retain ordinary MFA enforcement.
 
-The toggle's real-sign-in side is also functional in Rehearsal. Google OAuth uses a
+The isolated Rehearsal app at `http://localhost:5175` uses ordinary Google and
+email/password sign-in directly. It has no generated-account picker or quick-login
+toggle, even if TEST account variables are accidentally inherited. The Quick QA
+selector belongs only to the synthetic TEST environment on `5174`.
+
+Google OAuth is also functional in Rehearsal. It uses a
 dedicated local Web client whose only callback is
 `http://127.0.0.1:58321/auth/v1/callback`; the resulting user, identity, profile, session,
 and later writes exist only in the disposable local database. The OAuth credential is
 read from ignored `.env.rehearsal-auth.local` through an exact allowlist and is not
 passed to the application process. The source export fixes one approved owner account
-and stores only the SHA-256 of its lowercased email. When that same Google identity signs
-in, a local-only transaction transfers the restored owner's exact private application
-rows and private Storage paths from the pseudonymous placeholder to the new local Auth
-UUID. The placeholder is removed and the session is refreshed so its developer claim is
-current. A nonmatching Google account receives a fresh local profile and cannot claim
-the owner snapshot.
+and stores only the SHA-256 of its lowercased email. Signing in creates a normal local
+Auth session; `/auth/callback` only exchanges the code and returns to the safe application
+destination. It does not claim a copied account, call a Rehearsal RPC or perform an
+association-specific token refresh.
+
+Copied-account association belongs to the installed Rehearsal tool, not the application.
+Use a package version that supports identity association, review its `identity plan`,
+then confirm its `identity claim` with the exact plan digest. The declared policy must
+require the verified Google email to match the approved source receipt, transfer the
+complete owner graph and physical Storage files, and preserve immutable historical
+reviewers. Refresh the local session or sign in again after association so role claims
+are current. A nonmatching Google account remains a fresh local profile. See the
+installed package's identity documentation for the command options; older packages
+without this capability are not substitutes for the removed callback hook.
 
 Ordinary development at `http://localhost:5173` uses hosted production Supabase. Google
 therefore signs into the real hosted identity and resolves the same production profile,

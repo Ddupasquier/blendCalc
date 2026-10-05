@@ -1,5 +1,5 @@
 /**
- * Purpose: Validate BlendCalc-specific Rehearsal browser CSP, restored Storage assets,
+ * Purpose: Validate BlendCalc's isolated browser CSP, signed Storage assets,
  * and bounded stale-session recovery behavior. Do not run directly.
  */
 
@@ -48,7 +48,7 @@ export const parseContentSecurityPolicy = (header) => {
 	return directives;
 };
 
-export const assertRehearsalContentSecurityPolicy = (
+export const assertLocalContentSecurityPolicy = (
 	header,
 	{ applicationSupabaseUrl, blendCalcAPIUrl },
 ) => {
@@ -98,7 +98,7 @@ export const assertRehearsalContentSecurityPolicy = (
 	return directives;
 };
 
-export const assertLoadedRehearsalStorageImage = (
+export const assertLoadedLocalStorageImage = (
 	images,
 	{ applicationSupabaseUrl, bucket },
 ) => {

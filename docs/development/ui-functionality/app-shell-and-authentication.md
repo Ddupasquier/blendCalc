@@ -51,23 +51,29 @@ welcome, and guided tutorial. Auth configuration and security details remain in
   failed submission or add redundant prose explaining that automated sign-ins are
   blocked. Submit its one-time token with supported Supabase email Auth calls.
 - Keep authenticated routes unavailable to signed-out visitors.
-- In isolated local test and Rehearsal apps, default to a server-owned easy-auth account
-  picker and provide an explicit toggle back to the unchanged real sign-in flow. Test
-  offers the maintained QA personas; Rehearsal offers only its restored owner snapshot.
-  Never serialize either password or expose either quick path in ordinary
-  development or any hosted environment.
+- Only the isolated TEST app on `5174` defaults to a server-owned easy-auth account
+  picker for the maintained QA personas, with an explicit toggle back to ordinary
+  sign-in. Never serialize the QA password or expose this shortcut in ordinary
+  development, Rehearsal or any hosted environment. Rehearsal on `5175` opens the
+  ordinary Google and email/password controls directly, without a quick-login toggle.
 - Rehearsal's real sign-in flow must be real, not decorative: Google uses its normal
   account chooser and returns through the isolated local Auth callback. The authenticated
   identity and all subsequent writes remain in the disposable Rehearsal database. Do
-  not map any account except the fixed source owner: require the lowercased Google email
-  to match the source-bound SHA-256 receipt, transfer the complete owner graph and
-  Storage paths atomically, and leave every nonmatching account as a fresh local user.
+  not perform copied-account association in the application callback. That operation
+  belongs to the installed Rehearsal package and requires its reviewed identity plan
+  and confirmed claim. Only the fixed source owner may receive the copied data;
+  nonmatching accounts remain fresh local users. See
+  [Authentication](../authentication.md#local-qa-and-rehearsal-sign-in) for the policy
+  and post-association session refresh requirements.
 
 ## Privileged Identity Verification
 
 - Require moderator, administrator, and developer sessions to reach AAL2 before any
   protected page, server action, JSON endpoint, review count, or database permission is
   available.
+- Quick QA login on isolated TEST port 5174 performs genuine server-side TOTP
+  verification for the maintained privileged personas without a manual prompt.
+  The real sign-in mode, Rehearsal, and production keep their manual MFA flow.
 - Send an elevated user without a verified TOTP factor to authenticator enrollment;
   send an enrolled AAL1 user to the six-digit challenge.
 - Accept the current six-digit authenticator code as plain digits or with the display
