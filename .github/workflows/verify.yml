@@ -102,6 +102,15 @@ jobs:
             comparison_base=$(git merge-base origin/staging HEAD)
           fi
 
+          if [[ "$mode" == "feature" ]]; then
+            TEST_BASE_REF="$comparison_base" node scripts/operations/quality/run_affected_tests.mjs browser --plan-only
+            shared_browser_ownership=$(node -e 'const { browserSelection } = require("./test-results/affected-test-selection.json"); console.log(browserSelection.projects.length === 0)')
+            if [[ "$shared_browser_ownership" == "true" ]]; then
+              echo "Shared browser ownership requires the isolated full matrix."
+              mode=full
+            fi
+          fi
+
           dependencies=false
           if [[ "$mode" == "full" || "$mode" == "reuse" ]]; then
             dependencies=true
