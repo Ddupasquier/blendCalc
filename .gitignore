@@ -64,3 +64,6 @@ vite.config.ts.timestamp-*
 
 # Downloaded OCR language models are runtime artifacts, not source files.
 *.traineddata
+
+# Rehearsal local artifacts
+.env.rehearsal-service.local
