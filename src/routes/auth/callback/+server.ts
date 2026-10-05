@@ -8,7 +8,6 @@ import {
 import { getRequestOrigin } from "$lib/utils/auth/authUrls";
 import { trackServerAppInteraction } from "$lib/server/analytics/appInteractionTracking.server";
 import { APP_INTERACTION_METRICS } from "$lib/utils/analytics/appInteractionMetrics";
-import { claimRehearsalOwnerAfterGoogleSignIn } from "$lib/server/auth/rehearsalOwnerClaim.server";
 
 export const GET: RequestHandler = async ({
 	locals,
@@ -35,28 +34,9 @@ export const GET: RequestHandler = async ({
 	}
 
 	if (code) {
-		const { data, error } =
-			await locals.supabase.auth.exchangeCodeForSession(code);
+		const { error } = await locals.supabase.auth.exchangeCodeForSession(code);
 
 		if (!error) {
-			if (data.user) {
-				const claimedOwnerSnapshot = await claimRehearsalOwnerAfterGoogleSignIn(
-					{
-						user: data.user,
-						requestOrigin: actualOrigin,
-					},
-				);
-				if (claimedOwnerSnapshot) {
-					const { error: refreshError } =
-						await locals.supabase.auth.refreshSession();
-					if (refreshError) {
-						throw new Error(
-							"The Rehearsal owner session could not be refreshed after claiming its local snapshot.",
-							{ cause: refreshError },
-						);
-					}
-				}
-			}
 			await trackServerAppInteraction(
 				APP_INTERACTION_METRICS.LOGIN_SUCCESS,
 				request,
