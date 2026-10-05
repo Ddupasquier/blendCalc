@@ -4,6 +4,24 @@ import { describe, expect, it } from "vitest";
 const readSource = (path: string) => readFileSync(path, "utf8");
 
 describe("Playwright browser-testing architecture", () => {
+	it("keeps seeded MFA sign-ins with their factor-reset test owner", () => {
+		const profile = readSource("tests/e2e/profileInteractions.spec.ts");
+		const catalog = readSource(
+			"tests/e2e/catalogSubmissionEnforcement.spec.ts",
+		);
+		for (const source of [profile, catalog]) {
+			expect(source).toContain('test.describe.configure({ mode: "default" })');
+			expect(source).toContain("deleteLocalQaAuthenticatorFactorsForEmail");
+		}
+		expect(profile).toContain(
+			'registerQuickQaMfaTests(["Moderator", "Admin"])',
+		);
+		expect(profile).toContain("registerOrdinaryQuickQaTest()");
+		expect(catalog).toContain('registerQuickQaMfaTests(["Developer"])');
+		expect(catalog).toContain("registerManualQaMfaTest()");
+		expect(existsSync("tests/e2e/quickQaMfaInteractions.spec.ts")).toBe(false);
+	});
+
 	it("keeps browser tests isolated from Vitest", () => {
 		const viteConfig = readSource("vite.config.ts");
 		expect(viteConfig).toMatch(/exclude:\s*\[\s*["']tests\/e2e\/\*\*["']\s*\]/);
