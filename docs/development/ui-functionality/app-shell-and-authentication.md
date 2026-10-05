@@ -59,9 +59,12 @@ welcome, and guided tutorial. Auth configuration and security details remain in
 - Rehearsal's real sign-in flow must be real, not decorative: Google uses its normal
   account chooser and returns through the isolated local Auth callback. The authenticated
   identity and all subsequent writes remain in the disposable Rehearsal database. Do
-  not map any account except the fixed source owner: require the lowercased Google email
-  to match the source-bound SHA-256 receipt, transfer the complete owner graph and
-  Storage paths atomically, and leave every nonmatching account as a fresh local user.
+  not perform copied-account association in the application callback. That operation
+  belongs to the installed Rehearsal package and requires its reviewed identity plan
+  and confirmed claim. Only the fixed source owner may receive the copied data;
+  nonmatching accounts remain fresh local users. See
+  [Authentication](../authentication.md#local-qa-and-rehearsal-sign-in) for the policy
+  and post-association session refresh requirements.
 
 ## Privileged Identity Verification
 

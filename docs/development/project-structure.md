@@ -268,7 +268,12 @@ and safety engine is owned by the `@rehearsal-db/core` dependency. BlendCalc-own
 sanitization, identity mapping, provider isolation, adapters, generators, and application
 proofs remain under their matching `scripts/lib/rehearsal/`,
 `scripts/generators/rehearsal/`, and `scripts/operations/rehearsal/` owners. Do not copy
-generic package source or package documentation back into this repository.
+generic package source or package documentation back into this repository. The ordinary
+`src/routes/auth/callback/` route owns only application authentication; copied-account
+association belongs to the installed package's identity plan/claim workflow. Do not
+restore an application-owned Rehearsal claim helper or compatibility RPC. Retained
+extraction and runtime adapters are separate ownership boundaries, not a reason to
+duplicate package identity execution in the callback.
 
 ## Documentation
 
