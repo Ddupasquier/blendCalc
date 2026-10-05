@@ -385,12 +385,14 @@ from its disposable local application and isolated blendCalcAPI stacks.
 Rehearsal is not a replacement for TEST. TEST proves deterministic fixtures and routine
 browser behavior; Rehearsal proves schema evolution against a sanitized,
 production-shaped snapshot on a separately restored local stack. Generate or select a
-verified baseline, run `npm run rehearsal -- run`, and use
-`npm run rehearsal:app:prove` for the maintained application/CSP/Auth/API proof. Launch
-`npm run dev:rehearsal` for direct review of only the flows affected by candidate
+verified baseline and run `npm run rehearsal -- run`. The package starts the app and
+invokes the ordinary local application and publication proofs itself. Launch
+`npm run rehearsal -- open` for direct review of only the flows affected by candidate
 migrations. A Rehearsal pass requires the database verifier plus focused application
 evidence; it never proves production-side
-effects, Storage bytes, external providers, real email, OAuth, or hosted configuration.
+effects, external providers, real email, genuine Google interaction, or hosted
+configuration. Signed image downloads and three-engine rendering are application
+proofs; copied-account association and genuine Google login are separately reviewed.
 
 Automation can complete a QA task only when it proves every step and expected outcome
 with the required corpus, project, route, and viewport. Physical devices, named

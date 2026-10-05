@@ -1,7 +1,7 @@
 /**
- * Purpose: Start BlendCalc only against validated TEST or Rehearsal application and
+ * Purpose: Start BlendCalc only against validated TEST application and
  * blendCalcAPI services with an allowlisted child environment.
- * Run: `npm run dev:test`, `npm run dev:test:auth`, or `npm run dev:rehearsal`.
+ * Run: `npm run dev:test` or `npm run dev:test:auth`.
  * This command never reads hosted credentials or contacts a hosted database.
  */
 
@@ -23,10 +23,8 @@ const blendCalcAPIWorkdir = "infrastructure/blendCalcAPI";
 const runtimeEnvironment = process.argv[2];
 const useTurnstileTestWidget = process.argv.includes("--auth");
 
-if (!new Set(["test", "rehearsal"]).has(runtimeEnvironment)) {
-	throw new Error(
-		"Isolated application launcher accepts only test or rehearsal.",
-	);
+if (runtimeEnvironment !== "test") {
+	throw new Error("The QA application launcher accepts only test.");
 }
 
 const runPreparation = (command, args) => {
@@ -43,38 +41,12 @@ const runPreparation = (command, args) => {
 const readGeneratedTestEnvironment = () =>
 	parse(readFileSync(`${repositoryRoot}/.env.test.local`));
 
-const readGeneratedRehearsalEnvironment = () => {
-	const generated = parse(
-		readFileSync(`${repositoryRoot}/.rehearsal/runtime.env`),
-	);
-	return {
-		PUBLIC_SUPABASE_URL: generated.PUBLIC_SUPABASE_URL,
-		PUBLIC_SUPABASE_PUBLISHABLE_KEY: generated.PUBLIC_SUPABASE_PUBLISHABLE_KEY,
-		SUPABASE_SERVICE_ROLE_KEY: generated.SUPABASE_SERVICE_ROLE_KEY,
-		BLENDCALC_REHEARSAL_ACCOUNT_EMAIL:
-			generated.BLENDCALC_REHEARSAL_ACCOUNT_EMAIL,
-		BLENDCALC_REHEARSAL_ACCOUNT_PASSWORD:
-			generated.BLENDCALC_REHEARSAL_ACCOUNT_PASSWORD,
-	};
-};
-
 const startApplicationSupabase = () => {
-	if (runtimeEnvironment === "rehearsal") {
-		runPreparation("npm", ["run", "rehearsal", "--", "start"]);
-		const generated = readGeneratedRehearsalEnvironment();
-		return {
-			apiUrl: generated.PUBLIC_SUPABASE_URL,
-			publishableKey: generated.PUBLIC_SUPABASE_PUBLISHABLE_KEY,
-			serviceRoleKey: generated.SUPABASE_SERVICE_ROLE_KEY,
-		};
-	}
-	if (runtimeEnvironment === "test") {
-		runPreparation("node", [
-			"scripts/operations/database/manage_test_database.mjs",
-			"start",
-		]);
-		return readLocalSupabaseEnvironment({ cwd: repositoryRoot });
-	}
+	runPreparation("node", [
+		"scripts/operations/database/manage_test_database.mjs",
+		"start",
+	]);
+	return readLocalSupabaseEnvironment({ cwd: repositoryRoot });
 };
 
 const applicationSupabase = startApplicationSupabase();
@@ -82,11 +54,8 @@ const blendCalcAPISupabase = startLocalSupabase({
 	cwd: repositoryRoot,
 	workdir: blendCalcAPIWorkdir,
 });
-const port = runtimeEnvironment === "test" ? 5174 : 5175;
-const generatedTestEnvironment =
-	runtimeEnvironment === "test" ? readGeneratedTestEnvironment() : {};
-const generatedRehearsalEnvironment =
-	runtimeEnvironment === "rehearsal" ? readGeneratedRehearsalEnvironment() : {};
+const port = 5174;
+const generatedTestEnvironment = readGeneratedTestEnvironment();
 const environment = createSafeLocalApplicationEnvironment({
 	runtimeEnvironment,
 	applicationUrl: `http://localhost:${port}`,
@@ -94,7 +63,6 @@ const environment = createSafeLocalApplicationEnvironment({
 	blendCalcAPISupabase,
 	additionalEnvironment: {
 		...generatedTestEnvironment,
-		...generatedRehearsalEnvironment,
 		BLENDCALC_RUNTIME_ENVIRONMENT: runtimeEnvironment,
 		PUBLIC_SITE_URL: `http://localhost:${port}`,
 		PUBLIC_SUPABASE_URL: applicationSupabase.apiUrl,
@@ -108,7 +76,7 @@ const environment = createSafeLocalApplicationEnvironment({
 });
 
 console.log(
-	`Starting BlendCalc ${runtimeEnvironment.toUpperCase()} on localhost:${port} with local application and API databases. Provider-data and hosted side effects are disabled${runtimeEnvironment === "rehearsal" ? "; configured external identity returns only to local Auth" : ""}.`,
+	`Starting BlendCalc TEST on localhost:${port} with local application and API databases. Provider-data and hosted side effects are disabled.`,
 );
 
 const child = spawn(

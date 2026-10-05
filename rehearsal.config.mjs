@@ -21,11 +21,33 @@ export default defineRehearsalConfig({
 		sanitizationPolicy:
 			"infrastructure/rehearsal/application/sanitization-policy.json",
 	},
+	runtimePolicy: "infrastructure/rehearsal/application/runtime-policy.json",
+	identityPolicy: "infrastructure/rehearsal/application/identity-policy.json",
+	dependentTargets: [
+		{
+			name: "publication-api",
+			configPath: "infrastructure/rehearsal/publication/rehearsal.config.mjs",
+		},
+	],
 	application: {
-		startCommand: "npm run dev:rehearsal",
-		proofCommand: "npm run rehearsal:app:prove",
+		startCommand:
+			"env PUBLIC_SITE_URL=http://localhost:5175 PUBLIC_TURNSTILE_SITE_KEY= TURNSTILE_SECRET_KEY= BLENDCALC_API_READ_MODE=isolated node node_modules/vite/bin/vite.js dev --mode rehearsal --host 127.0.0.1 --port 5175 --strictPort",
+		proofCommand: "node scripts/operations/quality/prove_local_application.mjs",
 		environmentFile: ".rehearsal/runtime.env",
-		runtimeAdapter: "infrastructure/rehearsal/application/runtime_adapter.mjs",
+		environmentVariables: {
+			BLENDCALC_RUNTIME_ENVIRONMENT: "primary:REHEARSAL_RUNTIME_ENVIRONMENT",
+			PUBLIC_SUPABASE_URL: "primary:SUPABASE_URL",
+			PUBLIC_SUPABASE_PUBLISHABLE_KEY: "primary:SUPABASE_PUBLISHABLE_KEY",
+			SUPABASE_SERVICE_ROLE_KEY: "primary:SUPABASE_SERVICE_ROLE_KEY",
+			BLENDCALC_API_SUPABASE_URL: "publication-api:SUPABASE_URL",
+			BLENDCALC_API_SUPABASE_SERVICE_ROLE_KEY:
+				"publication-api:SUPABASE_SERVICE_ROLE_KEY",
+		},
+		readiness: {
+			url: "http://localhost:5175/auth",
+			expectedStatus: 200,
+			timeoutSeconds: 90,
+		},
 	},
 	runtime: {
 		applicationUrl: "http://localhost:5175",
@@ -52,7 +74,6 @@ export default defineRehearsalConfig({
 		commands: [
 			"node scripts/generators/rehearsal/generate_sanitization_manifest.mjs --check",
 			"node scripts/generators/rehearsal/generate_export_boundary_migration.mjs --check",
-			"node scripts/operations/rehearsal/verify_local_migration_history.mjs",
 		],
 	},
 });

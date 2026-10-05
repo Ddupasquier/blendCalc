@@ -83,7 +83,7 @@ the production Auth redirect allowlist must retain that exact local callback.
 
 `npm run db:local -- start` still manages the independent local application database for
 database tooling, but that database is not the default 5173 application target.
-`npm run dev:test` and `npm run dev:rehearsal` remain isolated on ports `5174` and `5175`.
+`npm run dev:test` and `npm run rehearsal -- open` remain isolated on ports `5174` and `5175`.
 Only variables beginning with `PUBLIC_` may be read by browser code.
 
 ## Native Application
@@ -188,115 +188,106 @@ delivery on an approved hosted origin.
 
 ## Rehearsal Environment
 
-Rehearsal is a third local-only runtime, separate from ordinary development and the
-synthetic QA database. `npm run rehearsal -- reset` restores the active checksummed
-sanitized baseline into its own Supabase workdir on ports `58320` through `58329`;
-`npm run dev:rehearsal` serves the app at `http://localhost:5175`. The launcher accepts
-only those loopback application and database endpoints, clears hosted application and
-provider-data credentials, and uses the same fail-closed external-request and local
-email-sink boundaries as TEST. A separately declared Google identity exchange is the
-only external Rehearsal exception; its callback and resulting Auth state remain local.
-Rehearsal writes SvelteKit's generated runtime state beneath
-`.svelte-kit-rehearsal/`, separate from the default build/test output. Each development
-server ignores the inactive runtime's generated directory, so running a test or build
-while port `5175` is open cannot replace or hot-reload the live app's compiled public
-environment or CSP with another runtime's values.
+Rehearsal owns the sandbox lifecycle through the installed package. It does not change
+production-connected development on `5173` or synthetic QA on `5174`.
 
-Local Supabase Auth cookies are namespaced by service port. Ordinary local/TEST sessions
-use the application database's cookie, while Rehearsal uses its own cookie. Resetting or
-switching one disposable Auth service therefore cannot make another runtime attempt to
-refresh that service's stale token. Hosted deployments retain Supabase's standard cookie
-contract.
+```bash
+npm run rehearsal -- doctor
+npm run rehearsal -- run
+npm run rehearsal -- open
+```
 
-The database manager generates `.rehearsal/runtime.env`. Do not hand-edit or commit it.
-It contains only derived local endpoints, the fixed local owner-snapshot credential,
-and nonreversible owner receipts used to exercise authenticated and MFA-protected flows.
-TOTP enrollment is enabled in the isolated Rehearsal Auth service. Email delivery, SMS, Edge Functions, Realtime,
-analytics, provider enrichment, hosted Supabase, and hosted blendCalcAPI remain
-unavailable. New password or Google identities are written only to the disposable local
-Auth database.
+The application opens at **http://localhost:5175**. Ctrl+C or Ctrl+Z closes only the
+application; database and Storage state persist. Use the package's `stop` and `start`
+commands for a database restart, or `reset` to deliberately replace sandbox edits with
+the approved baseline. Review the candidate digest before applying migrations.
 
-Google OAuth requires a dedicated local Web client. Do not reuse a hosted Supabase
-secret or put it in `.rehearsal/runtime.env`:
+### Configuration and saved data
 
-1. In Google Cloud, create an OAuth 2.0 **Web application** client for Rehearsal.
-2. Add `http://127.0.0.1:58321/auth/v1/callback` as an exact authorized redirect URI.
-3. Run
-   `cp config/environments/rehearsal-auth.example.env .env.rehearsal-auth.local`.
-4. Put the Web client ID and secret in the two named variables, then run
-   `chmod 600 .env.rehearsal-auth.local`.
-5. Run `npm run rehearsal -- doctor`; **Local service credentials** must pass.
-6. Run `npm run rehearsal -- reset`, then `npm run dev:rehearsal`.
+The active `rehearsal.config.mjs` lives at the repository root, beside `package.json`.
+The package discovers it automatically and preserves it during reinstallation. Its dependent
+publication database is declared in
+`infrastructure/rehearsal/publication/rehearsal.config.mjs`. Application services use
+ports `58320`–`58329`; publication services use `59320`–`59329`. They do not use QA
+or the ordinary local publication database.
 
-The ignored credential file is read through an exact two-variable allowlist and is
-passed only to the local Supabase CLI. It is never inherited by Vite, app server code,
-the browser, a baseline, or a diagnostic report.
+The retained publication copy includes a schema-collision acceptance fixture. Its
+configuration therefore restores the copy's exact immutable migration prefix, not
+new publication migrations. A fresh reviewed publication baseline is required before
+switching that target to the maintained publication migration directory. This does
+not modify or replace `infrastructure/blendCalcAPI/supabase/migrations/`.
 
-Each restore also recreates the excluded catalog-monitor singleton in a disabled state.
-That keeps operational diagnostics readable without copying invocation history or
-allowing Rehearsal to schedule provider work. Browser sessions are revalidated against
-the current local Auth database, so a reset invalidates the old session cleanly and the
-next protected navigation returns to Rehearsal sign-in.
+- Approved application baseline and generated service variables: ignored `.rehearsal/`.
+- Approved publication baseline and generated service variables: ignored
+  `.rehearsal-publication/.rehearsal/`.
+- Restore prerequisites and disabled scheduler: `application/runtime-policy.json`.
+- Reviewed copied-account references and signup defaults: `application/identity-policy.json`.
+- OAuth client secrets: ignored, owner-only `.env.rehearsal-auth.local`.
 
-The Rehearsal sign-in page opens ordinary Google and email/password controls directly.
-It does not expose a generated owner-snapshot shortcut or a quick-login toggle. Easy
-auth remains exclusive to the synthetic QA accounts on `5174`. Google always opens
-its account chooser, returns through local Auth on port `58321`, and then returns to
-the initiating route on port `5175`. Local role checks, account blocks and privileged
-TOTP requirements remain enforced.
+Paths to the JSON declarations above are relative to `infrastructure/rehearsal/`.
+Rehearsal generates local service variables; do not hand-edit or commit them. They do
+not contain a generated copied-owner password or callback-claim receipt. Vite receives
+only explicitly mapped local service values, not the OAuth secret or hosted credentials.
+Its generated SvelteKit state stays in `.svelte-kit-rehearsal/`. Local Auth cookies
+remain namespaced by service port.
 
-The production refresh fixes one approved source owner account. That owner's non-secret
-private application rows are kept exact under a pseudonymous placeholder; every other
-identity and private value remains sanitized or excluded. When the same owner uses
-Google, the callback compares the signed-in email with the source-bound SHA-256 receipt
-and atomically transfers the complete owner graph and private Storage paths to that
-local Google UUID. A different Google account remains a fresh local account. Neither
-path can read or mutate production after the baseline has been created.
+### Google sign-in and copied-account association
 
-The active baseline under ignored `.rehearsal/` contains sanitized table records,
-exact row and file checksums, bounded checksummed Storage bytes, and an immutable
-migration-source prefix. Public product/catalog data and the approved owner's private
-application state remain production-faithful; unrelated private values do not. The
-artifact never contains production credentials. A random owner-only
-`.rehearsal/sanitization.key` remains local and makes pseudonyms reproducible across
-refreshes without deriving them from a guessable production identifier. It is not part
-of any baseline and must never be copied, logged, or committed. Production refresh
-retains the active verified generation and one verified fallback; older generations are
-removed only after activation succeeds. `npm run rehearsal -- migrate` requires the
-exact candidate digest reported by `npm run rehearsal -- candidates`; use
-`npm run rehearsal -- run` to reset, apply the confirmed candidate set, and verify the
-result.
-Local-source refresh exists to prove the complete machinery without production access.
-`npm run rehearsal:app:prove` starts the application briefly against those verified
-local services, proves the Rehearsal-only CSP, owner-snapshot Auth exchange and
-database-owned developer claim, and isolated API route, then stops the app while leaving
-the database stacks available for manual review.
+Use a dedicated Google Web client with the exact redirect
+`http://127.0.0.1:58321/auth/v1/callback`. The value-free template is
+`config/environments/rehearsal-auth.example.env`; the ignored credential file has mode
+`600`. Do not reuse a hosted Supabase secret. Run `doctor` before starting.
 
-The production refresh credential is separate from the OAuth client and from generated
-runtime credentials. Only after the export migration and least-privilege source
-identities have been separately authorized:
+1. Run `npm run rehearsal -- open`, open `http://localhost:5175/auth`, and use the
+   ordinary Google sign-in button. BlendCalc requests account selection; a new Google
+   session may show a login form rather than a saved-account list.
+2. Dismiss the ordinary tutorial without editing the newly created account.
+3. Close the application with Ctrl+C or Ctrl+Z after the callback completes.
+4. Supply the approved email **server-only** as `REHEARSAL_APPROVED_OWNER_EMAIL` for
+   the identity commands. Never put it in a public variable, command argument, tracked
+   file, baseline, or report.
+5. Run `npm run rehearsal -- identity plan --identity=approved-owner`. Review the
+   proposed references, signup defaults, images and full digest.
+6. Run `npm run rehearsal -- identity claim --identity=approved-owner --confirm-identity=<full-digest>`
+   with the same server-only input. Unexpected account edits must refuse the claim,
+   not be deleted or ignored.
+7. Reopen the app, sign out, and complete a fresh Google sign-in to obtain current
+   role claims. Check the copied profile, images and data.
 
-1. Run `node scripts/operations/rehearsal/provision_production_source.mjs --dry-run` and review the exact linked
-   project, fixed-owner rule, ephemeral source role, and ignored output path.
-2. Repeat with the reported `--confirm-project=<project-ref>`. The operation creates or
-   rotates the ephemeral database reader, mints a short-lived Storage session without
-   weakening hosted CAPTCHA, proves both scopes, and writes owner-only ignored
-   `.env.rehearsal-source.local` atomically; never hand-edit or copy credentials from
-   command output.
-3. Run `node scripts/operations/rehearsal/refresh_production_baseline.mjs` twice to build and independently reproduce the
-   sanitized production-derived baseline.
-4. Run `node scripts/operations/rehearsal/deprovision_production_source.mjs --dry-run`, then its reported
-   `--confirm-project=<project-ref>` form. Confirm that the temporary database role,
-   Storage identity, and local source-token file are absent; the active baseline is
-   retained.
-5. Run `npm run rehearsal -- reset` and `npm run rehearsal -- verify` before starting
-   `npm run dev:rehearsal`.
+The normal callback performs no Rehearsal claim or special refresh. Account association
+belongs exclusively to the package. Its declaration transfers the reviewed ownership
+graph and physical private images while preserving immutable reviewer history.
+Nonmatching Google accounts remain independent local accounts. RLS, account blocks and
+MFA remain enforced; Quick QA login and automatic QA MFA exist only on `5174`.
 
-The refresh accepts neither a source service-role key, a reusable Storage password, nor
-a writable database login.
-Its PostgreSQL scope is fixed to one owner in `rehearsal_export.source_scopes`; its
-Storage JWT can read only public product images and that owner's private avatar and
-submission-evidence prefixes.
+### Application proofs
+
+During `run`, Rehearsal starts the application, waits for HTTP readiness, invokes
+`scripts/operations/quality/prove_local_publication.mjs` and
+`scripts/operations/quality/prove_local_application.mjs`, and owns shutdown.
+
+These are ordinary BlendCalc tests, not launchers or runtime adapters. They read the
+publication model and exercise purpose-created local Auth, role/refresh/RLS/MFA
+boundaries, profile save/reload, three publication products and searches, negative API
+controls, signed avatar/evidence rendering and rejected-session recovery in Chromium,
+Firefox and WebKit. The negative session fixture has an altered expired JWT and an
+invalid refresh token; it does not prove natural token expiration. Synthetic fixtures
+are removed afterward. Genuine Google login
+and copied-owner association remain separate observed checks.
+
+### Source preparation remains temporarily separate
+
+The approved existing policies are checksummed, restore-only declarations. Do not
+rewrite them or run a new extraction merely to complete runtime cleanup. BlendCalc's
+legacy source-preparation scripts remain until all privacy transformations—including
+27 JSON fields—have reviewed, bounded executable declarations and equivalence tests.
+The random owner-only `.rehearsal/sanitization.key`, credentials and approved baselines
+remain untouched.
+
+The retained provisioning, refresh and deprovisioning commands are documented in
+[Repository scripts](../../scripts/README.md#local-database-and-qa). They require
+separate authorization for any hosted access. Their presence does **not** authorize a
+production connection. Rehearsal runtime and identity execution no longer use them.
 
 ## Local Resource Safety
 

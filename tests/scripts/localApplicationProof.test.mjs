@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
-	assertLoadedRehearsalStorageImage,
-	assertRehearsalContentSecurityPolicy,
+	assertLoadedLocalStorageImage,
+	assertLocalContentSecurityPolicy,
 	parseContentSecurityPolicy,
-} from "../../scripts/lib/rehearsal/application_proof.mjs";
+} from "../../scripts/lib/security/local_application_proof.mjs";
 
 const rehearsalCsp = [
 	"default-src 'self'",
@@ -25,7 +25,7 @@ const endpoints = {
 	blendCalcAPIUrl: "http://127.0.0.1:55321",
 };
 
-describe("Rehearsal application proof", () => {
+describe("isolated application security proof", () => {
 	it("parses the policy into individually inspectable directives", () => {
 		const directives = parseContentSecurityPolicy(rehearsalCsp);
 
@@ -40,7 +40,7 @@ describe("Rehearsal application proof", () => {
 
 	it("accepts only the exact Rehearsal origins in their owning directives", () => {
 		expect(() =>
-			assertRehearsalContentSecurityPolicy(rehearsalCsp, endpoints),
+			assertLocalContentSecurityPolicy(rehearsalCsp, endpoints),
 		).not.toThrow();
 	});
 
@@ -51,7 +51,7 @@ describe("Rehearsal application proof", () => {
 		);
 
 		expect(() =>
-			assertRehearsalContentSecurityPolicy(wrongImagePolicy, endpoints),
+			assertLocalContentSecurityPolicy(wrongImagePolicy, endpoints),
 		).toThrow("img-src sources are not exact");
 	});
 
@@ -69,12 +69,12 @@ describe("Rehearsal application proof", () => {
 		);
 
 		expect(() =>
-			assertRehearsalContentSecurityPolicy(unsafePolicy, endpoints),
+			assertLocalContentSecurityPolicy(unsafePolicy, endpoints),
 		).toThrow("img-src sources are not exact");
 	});
 
 	it("requires a completed signed Storage image with real dimensions", () => {
-		const loaded = assertLoadedRehearsalStorageImage(
+		const loaded = assertLoadedLocalStorageImage(
 			[
 				{
 					origin: "https://images.openfoodfacts.org",
@@ -99,7 +99,7 @@ describe("Rehearsal application proof", () => {
 
 	it("rejects a blocked or zero-size local Storage image", () => {
 		expect(() =>
-			assertLoadedRehearsalStorageImage(
+			assertLoadedLocalStorageImage(
 				[
 					{
 						origin: "http://127.0.0.1:58321",

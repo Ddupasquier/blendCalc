@@ -1,0 +1,49 @@
+project_id = "blendcalc-rehearsal-publication"
+
+[api]
+enabled = true
+port = 59321
+schemas = ["public", "graphql_public", "blendcalc_api"]
+extra_search_path = ["public", "extensions", "blendcalc_api"]
+max_rows = 1000
+auto_expose_new_tables = false
+
+[db]
+port = 59322
+shadow_port = 59320
+health_timeout = "2m"
+major_version = 17
+
+[db.migrations]
+enabled = true
+schema_paths = []
+
+[db.seed]
+enabled = false
+sql_paths = []
+
+[realtime]
+enabled = false
+
+[studio]
+enabled = true
+port = 59323
+api_url = "http://127.0.0.1"
+
+[local_smtp]
+enabled = false
+
+[storage]
+enabled = false
+
+[auth]
+enabled = true
+site_url = "http://127.0.0.1:5175"
+additional_redirect_urls = []
+enable_signup = false
+
+[edge_runtime]
+enabled = false
+
+[analytics]
+enabled = false

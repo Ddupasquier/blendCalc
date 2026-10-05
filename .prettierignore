@@ -12,5 +12,7 @@ supabase/.temp/
 notes/
 docs/local-context/
 package-lock.json
+# Preserve the exact policy bytes bound to the approved publication baseline.
+infrastructure/rehearsal/publication/sanitization-policy.json
 src/lib/types/database.types.ts
 supabase/migrations/
