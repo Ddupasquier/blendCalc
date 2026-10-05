@@ -4,8 +4,6 @@ import { Buffer } from "node:buffer";
 
 const LOCAL_TEST_APP_PORT = "5174";
 const LOCAL_TEST_SUPABASE_PORT = "54321";
-const LOCAL_REHEARSAL_APP_PORT = "5175";
-const LOCAL_REHEARSAL_SUPABASE_PORT = "58321";
 const LOCAL_HOSTNAMES = new Set(["127.0.0.1", "localhost", "[::1]", "::1"]);
 const LOCAL_QA_BROWSER_PROJECTS = new Set([
 	"desktop-chromium",
@@ -21,8 +19,6 @@ export type LocalQaRuntimeInput = {
 	supabaseUrl?: string;
 	password?: string;
 	accountsBase64?: string;
-	rehearsalEmail?: string;
-	rehearsalPassword?: string;
 };
 
 export type LocalQaSignInAccount = {
@@ -35,7 +31,6 @@ export type LocalQaSignInAccount = {
 
 export type LocalQaSignInPageData = {
 	accounts: LocalQaSignInAccount[];
-	experience: "qa" | "rehearsal";
 };
 
 const parseUrl = (value: string | undefined) => {
@@ -96,46 +91,18 @@ const resolveRuntime = ({
 	supabaseUrl = publicEnvironment.PUBLIC_SUPABASE_URL,
 	password = privateEnvironment.BLENDCALC_TEST_ACCOUNT_PASSWORD,
 	accountsBase64 = privateEnvironment.BLENDCALC_TEST_ACCOUNTS_BASE64,
-	rehearsalEmail = privateEnvironment.BLENDCALC_REHEARSAL_ACCOUNT_EMAIL,
-	rehearsalPassword = privateEnvironment.BLENDCALC_REHEARSAL_ACCOUNT_PASSWORD,
 }: LocalQaRuntimeInput) => {
 	const accounts = parseAccounts(accountsBase64);
-	const normalizedRehearsalEmail = rehearsalEmail ?? "";
-	const normalizedRehearsalPassword = rehearsalPassword ?? "";
 	const isTestRuntime =
 		runtimeEnvironment === "test" &&
 		isExactLocalEndpoint(appUrl, LOCAL_TEST_APP_PORT) &&
 		isExactLocalEndpoint(parseUrl(supabaseUrl), LOCAL_TEST_SUPABASE_PORT) &&
 		Boolean(password) &&
 		Boolean(accounts);
-	const isRehearsalRuntime =
-		runtimeEnvironment === "rehearsal" &&
-		isExactLocalEndpoint(appUrl, LOCAL_REHEARSAL_APP_PORT) &&
-		isExactLocalEndpoint(
-			parseUrl(supabaseUrl),
-			LOCAL_REHEARSAL_SUPABASE_PORT,
-		) &&
-		isBoundedText(normalizedRehearsalEmail, 180) &&
-		normalizedRehearsalEmail.endsWith("@blendcalc.local") &&
-		isBoundedText(normalizedRehearsalPassword, 240);
-	const rehearsalAccounts: LocalQaSignInAccount[] = isRehearsalRuntime
-		? [
-				{
-					key: "rehearsalDeveloper",
-					displayName: "Owner snapshot",
-					email: normalizedRehearsalEmail,
-					role: "developer",
-					purpose: "Your production-shaped data in the isolated local sandbox",
-				},
-			]
-		: [];
 	return {
-		enabled: isTestRuntime || isRehearsalRuntime,
-		experience: isRehearsalRuntime ? ("rehearsal" as const) : ("qa" as const),
-		accounts: isRehearsalRuntime ? rehearsalAccounts : (accounts ?? []),
-		password: isRehearsalRuntime
-			? normalizedRehearsalPassword
-			: (password ?? ""),
+		enabled: isTestRuntime,
+		accounts: accounts ?? [],
+		password: password ?? "",
 	};
 };
 
@@ -145,7 +112,6 @@ export const getLocalQaSignInPageData = (
 	const runtime = resolveRuntime(input);
 	return runtime.enabled
 		? {
-				experience: runtime.experience,
 				accounts: runtime.accounts.map((account) => ({ ...account })),
 			}
 		: null;
@@ -181,7 +147,7 @@ export const getLocalQaBrowserRateLimitClientAddress = (
 	input: LocalQaRuntimeInput,
 ) => {
 	const runtime = resolveRuntime(input);
-	if (!runtime.enabled || runtime.experience !== "qa") return null;
+	if (!runtime.enabled) return null;
 	const [accountKey, projectName, ...unexpectedParts] =
 		browserPartition?.split("|") ?? [];
 	if (
