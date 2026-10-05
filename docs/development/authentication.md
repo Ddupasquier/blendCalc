@@ -269,6 +269,15 @@ The selector is absent on production-connected 5173 development, previews, stagi
 and production. It creates a normal local Supabase session and does not bypass role
 checks, account blocks, password policies, or privileged MFA requirements.
 
+Quick QA login automatically completes real TOTP verification for the seeded
+moderator, administrator, and developer on **5174 only**. Setup keys stay in the
+server-only, gitignored `.cache/local-qa-authenticators/` directory with owner-only
+permissions. Existing manual authenticators are never removed. Repeated quick login
+may wait up to 31 seconds for a fresh code rather than bypassing replay protection.
+Verification failures stop the quick login instead of allowing an AAL1 session into
+protected tools. The normal credential flow still uses the manual MFA screens.
+Production-connected 5173 and Rehearsal 5175 are unchanged.
+
 The isolated Rehearsal app at `http://localhost:5175` exposes the same easy-auth toggle
 for its single restored owner snapshot. Its server reads the generated local credential
 from `.rehearsal/runtime.env`; the browser receives only the account summary. This path
