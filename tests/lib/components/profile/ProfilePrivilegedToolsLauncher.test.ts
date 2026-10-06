@@ -33,6 +33,31 @@ const createAccess = (
 });
 
 describe("Profile privileged tools launcher", () => {
+	it.each([0, 1, 5, 47, 120])(
+		"preserves the exact actionable count %i without a zero badge",
+		(count) => {
+			render(ProfilePrivilegedToolsLauncher, {
+				props: { access: createAccess(count) },
+			});
+			const description =
+				count === 0
+					? "6 tools available · no actions waiting"
+					: `6 tools available · ${count} ${count === 1 ? "action" : "actions"} waiting`;
+			expect(screen.getByText(description)).toBeVisible();
+			if (count === 0) {
+				expect(
+					screen.queryByLabelText(/privileged actions requiring attention/),
+				).not.toBeInTheDocument();
+			} else {
+				expect(
+					screen.getByLabelText(
+						`${count} privileged actions requiring attention`,
+					),
+				).toHaveTextContent(count > 99 ? "99+" : String(count));
+			}
+		},
+	);
+
 	it("links the aggregate of every genuine actionable queue to the dashboard", () => {
 		render(ProfilePrivilegedToolsLauncher, {
 			props: { access: createAccess(12) },

@@ -35,7 +35,36 @@
 }
 
 .profile-settings-sheet-launcher--privileged {
+	height: max-content;
 	background: $app-shell-accent-soft;
+
+	// Use the Ingredients card's inset ring at this clipped scroll boundary.
+	&:focus-visible {
+		outline: none;
+
+		&::after {
+			position: absolute;
+			inset: $app-focus-outline-offset;
+			box-sizing: border-box;
+			border: $app-focus-outline;
+			border-radius: calc(
+				#{$app-shell-radius-card} - #{$app-focus-outline-offset}
+			);
+			content: "";
+			pointer-events: none;
+		}
+	}
+
+	.profile-settings-sheet-launcher__copy strong,
+	.profile-settings-sheet-launcher__copy span {
+		overflow: visible;
+		overflow-wrap: anywhere;
+		white-space: normal;
+	}
+
+	.profile-settings-sheet-launcher__copy strong {
+		line-height: $app-line-height-heading;
+	}
 }
 
 :global(
