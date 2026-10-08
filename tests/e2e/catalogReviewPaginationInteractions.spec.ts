@@ -5,7 +5,8 @@ import {
 	waitForAppReady,
 } from "./support/browserTest";
 import { finishLocalQaAuthenticatorEnrollment } from "./support/localQaAuthenticator";
-import { deleteLocalQaAuthenticatorFactorsForEmail } from "./support/localQaDatabase";
+import { createLocalQaCatalogReviewer } from "./support/localQaCatalogReviewer";
+import { randomInt } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 
@@ -13,12 +14,16 @@ import { readFileSync } from "node:fs";
 test.describe.configure({ mode: "serial" });
 const root = "/profile/privileged-tools/catalog-review-work";
 const fixtureSql =
+	"begin;\n" +
 	readFileSync(
 		"supabase/tests/database/catalog_review_cursor_pages.test.sql",
 		"utf8",
 	)
-		.split("select ok(not has_function_privilege")[0]
-		.replace(/select plan\(\d+\);/u, "") + "\ncommit;";
+		.split(
+			"-- Trusted synthetic fixture construction, not an application write bypass.",
+		)[1]
+		.split("select ok(not has_function_privilege")[0] +
+	"\ncommit;";
 const localSql = (sql: string) =>
 	execFileSync(
 		"docker",
@@ -33,9 +38,40 @@ const localSql = (sql: string) =>
 			"postgres",
 			"-v",
 			"ON_ERROR_STOP=1",
+			"--tuples-only",
+			"--no-align",
 		],
 		{ input: sql, stdio: ["pipe", "pipe", "pipe"] },
 	);
+
+test("independent catalog reviewers keep ordinary Auth and MFA sessions isolated @compatibility @mobile", async ({
+	page,
+}) => {
+	const firstReviewer = await createLocalQaCatalogReviewer();
+	try {
+		await signInLocalQaAccount({
+			page,
+			email: firstReviewer.email,
+			nextPath: "/profile",
+		});
+		await page.goto(root);
+		await expect(page).toHaveURL(/\/auth\/mfa\/enroll\?/u);
+		await finishLocalQaAuthenticatorEnrollment(page);
+		await waitForAppReady(page);
+		await expect(page).toHaveURL((url) => url.pathname === root);
+		const secondReviewer = await createLocalQaCatalogReviewer();
+		await secondReviewer.cleanup();
+		await page.reload();
+		await waitForAppReady(page);
+		await expect(page).toHaveURL((url) => url.pathname === root);
+		const response = await page.request.get(
+			"/api/moderation/catalog-review-pages?queue=products",
+		);
+		expect(response.status()).toBe(200);
+	} finally {
+		await firstReviewer.cleanup();
+	}
+});
 
 test("catalog inbox and exact-product queues append, retry and reconcile @compatibility @mobile", async ({
 	page,
@@ -54,28 +90,42 @@ test("catalog inbox and exact-product queues append, retry and reconcile @compat
 		"mobile-webkit",
 	].indexOf(testInfo.project.name);
 	expect(projectIndex).toBeGreaterThanOrEqual(0);
-	const scope = String(99978 + projectIndex);
+	// Every attempt owns a new namespace, preserving prior manual QA and retries.
+	let scope = "";
+	for (let attempt = 0; attempt < 5; attempt += 1) {
+		const candidate = String(randomInt(40000, 80000));
+		const existing = Number(
+			localSql(
+				`select count(*) from public.shared_products where id::text like '${candidate}000-%';`,
+			)
+				.toString()
+				.trim(),
+		);
+		if (existing === 0) {
+			scope = candidate;
+			break;
+		}
+	}
+	expect(scope).not.toBe("");
 	const productId = `${scope}000-0000-4000-8000-000000000001`;
 	const scopedSql = fixtureSql
 		.replaceAll("99978", scope)
-		.replaceAll("pagination-admin@", `pagination-admin-${projectIndex}@`)
-		.replaceAll("pagination-user@", `pagination-user-${projectIndex}@`)
-		.replaceAll("QA-pagination-", `QA-pagination-${projectIndex}-`)
-		.replaceAll("9790000000000", String(9790000000000 + projectIndex * 1000))
+		.replaceAll("QA-pagination-", `QA-pagination-${scope}-`)
+		.replaceAll("9790000000000", String(9790000000000 + Number(scope) * 1000))
 		.replaceAll(
 			"09790000000001",
-			String(9790000000001 + projectIndex * 1000).padStart(14, "0"),
+			String(9790000000001 + Number(scope) * 1000).padStart(14, "0"),
 		);
 	// A rollback-safe database corpus owns terminal effects; this fixture is disposable
-	// TEST-only. The documented local baseline is reset after this serial browser run.
-	localSql(scopedSql);
-	await deleteLocalQaAuthenticatorFactorsForEmail(
-		"qa-developer@blendcalc.local",
-	);
+	// TEST-only. Never reset saved QA data or write directly to Auth tables.
+	const reviewer = await createLocalQaCatalogReviewer();
+	let seeded = false;
 	try {
+		localSql(scopedSql);
+		seeded = true;
 		await signInLocalQaAccount({
 			page,
-			email: "qa-developer@blendcalc.local",
+			email: reviewer.email,
 			nextPath: "/profile",
 		});
 		await page.goto(root);
@@ -328,13 +378,15 @@ test("catalog inbox and exact-product queues append, retry and reconcile @compat
 			.click();
 		await expect(provider).toHaveCount(0);
 	} finally {
-		await deleteLocalQaAuthenticatorFactorsForEmail(
-			"qa-developer@blendcalc.local",
-		);
 		// Only purpose-created fixture rows: reviewed state is removed by the
 		// final disposable reset, not by bypassing immutable-history safeguards here.
-		localSql(
-			`update public.shared_product_conflicts set status='resolved', resolved_at=now(), resolution_note='QA fixture retired' where id::text like '${scope}100-%' or id::text like '${scope}200-%'; update public.catalog_provider_change_reviews set status='superseded', reviewed_at=now(), review_note='QA fixture retired' where id::text like '${scope}500-%' or id::text like '${scope}b00-%'; update public.official_food_safety_alert_matches set status='superseded' where id::text like '${scope}700-%';`,
-		);
+		try {
+			if (seeded)
+				localSql(
+					`update public.shared_product_conflicts set status='resolved', resolved_at=now(), resolution_note='QA fixture retired' where id::text like '${scope}100-%' or id::text like '${scope}200-%'; update public.catalog_provider_change_reviews set status='superseded', reviewed_at=now(), review_note='QA fixture retired' where id::text like '${scope}500-%' or id::text like '${scope}b00-%'; update public.official_food_safety_alert_matches set status='superseded' where id::text like '${scope}700-%';`,
+				);
+		} finally {
+			await reviewer.cleanup();
+		}
 	}
 });
