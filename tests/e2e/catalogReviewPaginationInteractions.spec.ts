@@ -133,6 +133,7 @@ const withCatalogReviewFixture = async (
 		await page.goto(root);
 		await expect(page).toHaveURL(/\/auth\/mfa\/enroll\?/u);
 		await finishLocalQaAuthenticatorEnrollment(page);
+		await expect(page).toHaveURL((url) => url.pathname === root);
 		await waitForAppReady(page);
 		await scenario({ scope, productId });
 	} finally {
