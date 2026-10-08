@@ -1,5 +1,5 @@
 import { expect, test, waitForAppReady } from "./support/browserTest";
-import type { Locator } from "@playwright/test";
+import type { Locator, Route } from "@playwright/test";
 import { getAuthenticatedLocalQaDatabaseClient } from "./support/localQaDatabase";
 import {
 	readApprovedManualEntryNutrientCatalog,
@@ -1319,120 +1319,155 @@ test("the category picker remains keyboard-operable and unclipped at 200% zoom",
 		testInfo.project.name !== "desktop-chromium",
 		"The deterministic 200%-zoom reflow check runs once in Chromium.",
 	);
-	let releaseInitialCategoryRequest = () => {};
-	const initialCategoryRequestMayContinue = new Promise<void>((resolve) => {
-		releaseInitialCategoryRequest = resolve;
+	let releaseCategoryRequests = () => {};
+	const categoryRequestsMayContinue = new Promise<void>((resolve) => {
+		releaseCategoryRequests = resolve;
 	});
-	let heldInitialCategoryRequest = false;
-	await page.route("**/api/food-categories?**", async (route) => {
-		if (!heldInitialCategoryRequest) {
-			heldInitialCategoryRequest = true;
-			await initialCategoryRequestMayContinue;
+	const heldProductNames = new Set<string>();
+	const pendingRoutes = new Set<Promise<void>>();
+	const categoryRoutePattern = "**/api/food-categories?**";
+	const holdCategoryLookup = async (route: Route) => {
+		let finishRoute = () => {};
+		const finished = new Promise<void>((resolve) => {
+			finishRoute = resolve;
+		});
+		pendingRoutes.add(finished);
+		try {
+			const parameters = new URL(route.request().url()).searchParams;
+			// Changing the food name cancels the initial lookup. Keep every
+			// replacement lookup pending too, until the assertion releases it.
+			if (!parameters.get("query")) {
+				heldProductNames.add(parameters.get("productName") ?? "");
+				await categoryRequestsMayContinue;
+			}
+			await route.continue();
+		} finally {
+			finishRoute();
+			pendingRoutes.delete(finished);
 		}
-		await route.continue();
-	});
-	await page.setViewportSize({ width: 390, height: 844 });
-	await page.goto("/ingredients/fridge/manual-entry");
-	await waitForAppReady(page);
-	await page.evaluate(() => {
-		document.documentElement.style.zoom = "2";
-	});
+	};
+	await page.route(categoryRoutePattern, holdCategoryLookup);
+	try {
+		await page.setViewportSize({ width: 390, height: 844 });
+		await page.goto("/ingredients/fridge/manual-entry");
+		await waitForAppReady(page);
+		await page.evaluate(() => {
+			document.documentElement.style.zoom = "2";
+		});
 
-	const dialog = page.getByRole("dialog", { name: "Enter Manually" });
-	await dialog.getByLabel("Food name").fill("Chocolate Dough Protein Bar");
-	const brandInput = dialog.getByLabel("Brand");
-	const categoryTrigger = dialog.getByRole("button", { name: "Category" });
-	await expect(categoryTrigger).toHaveCount(1);
-	await expect(categoryTrigger).toHaveAttribute("aria-busy", "true");
-	await expect(categoryTrigger.locator(".loading-spinner")).toHaveCount(1);
-	releaseInitialCategoryRequest();
-	await expect(categoryTrigger).toBeEnabled();
-	await expect(categoryTrigger).toHaveAttribute("aria-expanded", "false");
-	await brandInput.focus();
-	await page.keyboard.press("Tab");
-	await expect(categoryTrigger).toBeFocused();
-	await page.keyboard.press("Enter");
-	await expect(categoryTrigger).toHaveAttribute("aria-expanded", "true");
+		const dialog = page.getByRole("dialog", { name: "Enter Manually" });
+		const foodName = dialog.getByLabel("Food name");
+		await foodName.fill("Chocolate Dough Protein Bar");
+		await expect
+			.poll(() => heldProductNames.has("Chocolate Dough Protein Bar"))
+			.toBe(true);
+		const brandInput = dialog.getByLabel("Brand");
+		const categoryTrigger = dialog.getByRole("button", { name: "Category" });
+		await expect(categoryTrigger).toHaveCount(1);
+		await expect(categoryTrigger).toHaveAttribute("aria-busy", "true");
+		await expect(categoryTrigger.locator(".loading-spinner")).toHaveCount(1);
+		await expect(categoryTrigger).toBeDisabled();
+		// A second replacement must not escape the fixture's pending-request gate.
+		await foodName.fill("Chocolate Dough Protein Bar Vanilla");
+		await expect
+			.poll(() => heldProductNames.has("Chocolate Dough Protein Bar Vanilla"))
+			.toBe(true);
+		await expect(categoryTrigger).toHaveAttribute("aria-busy", "true");
+		await expect(categoryTrigger.locator(".loading-spinner")).toHaveCount(1);
+		await expect(categoryTrigger).toBeDisabled();
+		releaseCategoryRequests();
+		await expect(categoryTrigger).toBeEnabled();
+		await expect(categoryTrigger).toHaveAttribute("aria-expanded", "false");
+		await brandInput.focus();
+		await page.keyboard.press("Tab");
+		await expect(categoryTrigger).toBeFocused();
+		await page.keyboard.press("Enter");
+		await expect(categoryTrigger).toHaveAttribute("aria-expanded", "true");
 
-	const categorySearch = dialog.getByRole("searchbox", {
-		name: "Search categories",
-	});
-	await expect(categorySearch).toBeFocused();
-	await categorySearch.fill("protein bar");
-	await expect(
-		dialog.getByRole("status", { name: "Searching categories" }),
-	).toBeHidden({ timeout: 20_000 });
-	const categoryResult = dialog
-		.getByRole("button", { name: "Protein Bars", exact: true })
-		.first();
-	await expect(categoryResult).toBeVisible();
-	await page.keyboard.press("Tab");
-	await expect(categoryResult).toBeFocused();
-	const categoryResultBounds = await categoryResult.boundingBox();
-	expect(categoryResultBounds).not.toBeNull();
-	expect(categoryResultBounds!.height).toBeGreaterThanOrEqual(88);
-	await page.keyboard.press("Enter");
-	await expect(categoryTrigger).toContainText("Protein Bars");
-	await expect(categoryTrigger).toBeFocused();
+		const categorySearch = dialog.getByRole("searchbox", {
+			name: "Search categories",
+		});
+		await expect(categorySearch).toBeFocused();
+		await categorySearch.fill("protein bar");
+		await expect(
+			dialog.getByRole("status", { name: "Searching categories" }),
+		).toBeHidden({ timeout: 20_000 });
+		const categoryResult = dialog
+			.getByRole("button", { name: "Protein Bars", exact: true })
+			.first();
+		await expect(categoryResult).toBeVisible();
+		await page.keyboard.press("Tab");
+		await expect(categoryResult).toBeFocused();
+		const categoryResultBounds = await categoryResult.boundingBox();
+		expect(categoryResultBounds).not.toBeNull();
+		expect(categoryResultBounds!.height).toBeGreaterThanOrEqual(88);
+		await page.keyboard.press("Enter");
+		await expect(categoryTrigger).toContainText("Protein Bars");
+		await expect(categoryTrigger).toBeFocused();
 
-	await page.keyboard.press("Enter");
-	await page.keyboard.press("Escape");
-	await expect(categoryTrigger).toHaveAttribute("aria-expanded", "false");
-	await expect(categoryTrigger).toBeFocused();
+		await page.keyboard.press("Enter");
+		await page.keyboard.press("Escape");
+		await expect(categoryTrigger).toHaveAttribute("aria-expanded", "false");
+		await expect(categoryTrigger).toBeFocused();
 
-	await page.keyboard.press("Enter");
-	await expect(categorySearch).toBeFocused();
-	const pickerPanel = dialog.locator(".food-category-picker__panel");
-	const pickerControls = [categoryTrigger, categorySearch];
-	for (const control of pickerControls) {
-		const bounds = await control.boundingBox();
-		expect(bounds).not.toBeNull();
-		expect(bounds!.height).toBeGreaterThanOrEqual(88);
-	}
-	const pickerLayout = await pickerPanel.evaluate((panel) => {
-		const panelBounds = panel.getBoundingClientRect();
-		const controls = Array.from(
-			panel.querySelectorAll<HTMLElement>("input, button"),
-		).map((control) => {
-			const bounds = control.getBoundingClientRect();
+		await page.keyboard.press("Enter");
+		await expect(categorySearch).toBeFocused();
+		const pickerPanel = dialog.locator(".food-category-picker__panel");
+		const pickerControls = [categoryTrigger, categorySearch];
+		for (const control of pickerControls) {
+			const bounds = await control.boundingBox();
+			expect(bounds).not.toBeNull();
+			expect(bounds!.height).toBeGreaterThanOrEqual(88);
+		}
+		const pickerLayout = await pickerPanel.evaluate((panel) => {
+			const panelBounds = panel.getBoundingClientRect();
+			const controls = Array.from(
+				panel.querySelectorAll<HTMLElement>("input, button"),
+			).map((control) => {
+				const bounds = control.getBoundingClientRect();
+				return {
+					left: bounds.left,
+					right: bounds.right,
+				};
+			});
+			const textBlocks = Array.from(
+				panel.querySelectorAll<HTMLElement>("h3, small, p, button"),
+			)
+				.filter(
+					(element) =>
+						!element.classList.contains("sr-only") &&
+						element.getClientRects().length > 0 &&
+						element.clientWidth > 1,
+				)
+				.map((element) => ({
+					clientWidth: element.clientWidth,
+					scrollWidth: element.scrollWidth,
+				}));
 			return {
-				left: bounds.left,
-				right: bounds.right,
+				controls,
+				documentClientWidth: document.documentElement.clientWidth,
+				documentScrollWidth: document.documentElement.scrollWidth,
+				panelLeft: panelBounds.left,
+				panelRight: panelBounds.right,
+				textBlocks,
 			};
 		});
-		const textBlocks = Array.from(
-			panel.querySelectorAll<HTMLElement>("h3, small, p, button"),
-		)
-			.filter(
-				(element) =>
-					!element.classList.contains("sr-only") &&
-					element.getClientRects().length > 0 &&
-					element.clientWidth > 1,
-			)
-			.map((element) => ({
-				clientWidth: element.clientWidth,
-				scrollWidth: element.scrollWidth,
-			}));
-		return {
-			controls,
-			documentClientWidth: document.documentElement.clientWidth,
-			documentScrollWidth: document.documentElement.scrollWidth,
-			panelLeft: panelBounds.left,
-			panelRight: panelBounds.right,
-			textBlocks,
-		};
-	});
-	expect(pickerLayout.documentScrollWidth).toBeLessThanOrEqual(
-		pickerLayout.documentClientWidth,
-	);
-	for (const control of pickerLayout.controls) {
-		expect(control.left).toBeGreaterThanOrEqual(pickerLayout.panelLeft - 1);
-		expect(control.right).toBeLessThanOrEqual(pickerLayout.panelRight + 1);
-	}
-	for (const textBlock of pickerLayout.textBlocks) {
-		expect(textBlock.scrollWidth).toBeLessThanOrEqual(
-			textBlock.clientWidth + 1,
+		expect(pickerLayout.documentScrollWidth).toBeLessThanOrEqual(
+			pickerLayout.documentClientWidth,
 		);
+		for (const control of pickerLayout.controls) {
+			expect(control.left).toBeGreaterThanOrEqual(pickerLayout.panelLeft - 1);
+			expect(control.right).toBeLessThanOrEqual(pickerLayout.panelRight + 1);
+		}
+		for (const textBlock of pickerLayout.textBlocks) {
+			expect(textBlock.scrollWidth).toBeLessThanOrEqual(
+				textBlock.clientWidth + 1,
+			);
+		}
+	} finally {
+		releaseCategoryRequests();
+		await Promise.all(pendingRoutes);
+		await page.unroute(categoryRoutePattern, holdCategoryLookup);
 	}
 });
 
