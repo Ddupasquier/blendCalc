@@ -1,0 +1,3666 @@
+{
+	"accessVersion": 1,
+	"targetFingerprint": "44a93eed799a6ff3723c2e1b124aed61e3ba6b6fa93e1b2e63672b4c4cfc0389",
+	"reader": {
+		"mode": "external",
+		"role": "rehearsal_blendcalc_native_primary_reader",
+		"allowedMemberships": ["rehearsal_b14_primary_group"],
+		"connectionEnvironmentVariable": "REHEARSAL_PRIMARY_SOURCE_URL",
+		"credentialFile": ".rehearsal-native/primary/.rehearsal/secrets/source-reader.env",
+		"maximumValidForMinutes": 30
+	},
+	"exportSchema": "rehearsal_b14_primary_export",
+	"migrationLedger": {
+		"schema": "supabase_migrations",
+		"table": "schema_migrations",
+		"versionColumn": "version",
+		"nameColumn": "name",
+		"statementsColumn": "statements"
+	},
+	"relations": [
+		{
+			"source": {
+				"schema": "public",
+				"table": "account_moderation"
+			},
+			"view": "public_account_moderation",
+			"targetSchema": "public",
+			"targetTable": "account_moderation",
+			"columns": [
+				"user_id",
+				"status",
+				"public_reason",
+				"expires_at",
+				"moderated_by",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["user_id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "acf85e321637d261e7aa5bdfc486cc8cd1112a439eb212bd8b3007c7f5558173"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "app_delight_messages"
+			},
+			"view": "public_app_delight_messages",
+			"targetSchema": "public",
+			"targetTable": "app_delight_messages",
+			"columns": [
+				"key",
+				"context_key",
+				"trigger_key",
+				"match_key",
+				"message",
+				"minimum_value",
+				"maximum_value",
+				"priority",
+				"enabled",
+				"created_at",
+				"updated_at",
+				"tone"
+			],
+			"orderBy": ["key"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "e494ed59f757c201e629f3c659d9c8ca2c948b25b49e294769325a7297714779"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "app_issue_codes"
+			},
+			"view": "public_app_issue_codes",
+			"targetSchema": "public",
+			"targetTable": "app_issue_codes",
+			"columns": [
+				"code",
+				"kind",
+				"domain",
+				"description",
+				"enabled",
+				"created_at",
+				"updated_at",
+				"operational_severity",
+				"responsible_group",
+				"resolution_action",
+				"automated_repair_key",
+				"automated_repair_allowed"
+			],
+			"orderBy": ["code"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "832d71ef58de421d83f8269d43af2961181abb4209af8e3856ab5d5249b89224"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "app_role_permissions"
+			},
+			"view": "public_app_role_permissions",
+			"targetSchema": "public",
+			"targetTable": "app_role_permissions",
+			"columns": ["role", "permission"],
+			"orderBy": ["role", "permission"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "6002c7c21f5d921334ae2819c12745c5fd997c3e348729369dd2091d4595461e"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "blendcalc_api_clients"
+			},
+			"view": "public_blendcalc_api_clients",
+			"targetSchema": "public",
+			"targetTable": "blendcalc_api_clients",
+			"columns": [
+				"id",
+				"name",
+				"owner_user_id",
+				"status",
+				"created_by",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "aadd796c969af85900e1acadd53a60e6460a88e5838b7d9b82a61265c2c043f6"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "blendcalc_api_publication_concerns"
+			},
+			"view": "public_blendcalc_api_publication_concerns",
+			"targetSchema": "public",
+			"targetTable": "blendcalc_api_publication_concerns",
+			"columns": [
+				"id",
+				"reporter_type",
+				"contact_name",
+				"contact_email",
+				"reporter_user_id",
+				"concern_type",
+				"subject_type",
+				"shared_product_id",
+				"food_image_asset_id",
+				"dataset_key",
+				"source_key",
+				"subject_reference",
+				"concern_fingerprint",
+				"details",
+				"evidence_urls",
+				"status",
+				"urgency",
+				"resolution_action",
+				"resolution_note",
+				"reviewed_by",
+				"reviewed_at",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "7cb19b61aa4a8a912030b4a481c2a8ef9776335dbf5e6c749ba9788f885a036d"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "blendcalc_api_publication_holds"
+			},
+			"view": "public_blendcalc_api_publication_holds",
+			"targetSchema": "public",
+			"targetTable": "blendcalc_api_publication_holds",
+			"columns": [
+				"id",
+				"subject_type",
+				"shared_product_id",
+				"food_image_asset_id",
+				"dataset_key",
+				"source_key",
+				"reason_code",
+				"public_message",
+				"internal_note",
+				"concern_id",
+				"placed_by",
+				"placed_at",
+				"released_by",
+				"released_at",
+				"release_note",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "285ccc9c21df823b11b4747c62da6b3d3c29935f125ec85b7ea7934449ab4eb7"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "blendcalc_api_publication_profiles"
+			},
+			"view": "public_blendcalc_api_publication_profiles",
+			"targetSchema": "public",
+			"targetTable": "blendcalc_api_publication_profiles",
+			"columns": [
+				"key",
+				"api_major",
+				"policy_version",
+				"resource_scope",
+				"display_name",
+				"description",
+				"nutrition_profile_key",
+				"required_field_paths",
+				"recommended_field_paths",
+				"require_valid_gtin",
+				"require_primary_serving",
+				"require_canonical_nutrient_mapping",
+				"minimum_allergen_evidence",
+				"accepted_nutrient_value_statuses",
+				"blocked_conflict_severities",
+				"max_verification_age_days",
+				"source_key",
+				"source_reference",
+				"reviewed_at",
+				"is_default",
+				"enabled",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["key"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "4d580361351649bbaa1967f0a96838ece5c527e4cd8c0b48c673b5f053ec6b8c"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "blendcalc_api_scope_policies"
+			},
+			"view": "public_blendcalc_api_scope_policies",
+			"targetSchema": "public",
+			"targetTable": "blendcalc_api_scope_policies",
+			"columns": [
+				"operation_key",
+				"required_scope",
+				"description",
+				"enabled",
+				"source_reference",
+				"reviewed_at",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["operation_key"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "6f23f2b9d4e4ca0bb6795aa51d3dac452eecd79c48aac73c6b3d123d96d13af0"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "blendcalc_api_scopes"
+			},
+			"view": "public_blendcalc_api_scopes",
+			"targetSchema": "public",
+			"targetTable": "blendcalc_api_scopes",
+			"columns": [
+				"key",
+				"display_name",
+				"description",
+				"risk_level",
+				"enabled",
+				"source_reference",
+				"reviewed_at",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["key"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "025e86efded8c9362d4fd7eac0f6c2f3761c43839afced7c3025b36092588215"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "catalog_conflict_review_dispositions"
+			},
+			"view": "public_catalog_conflict_review_dispositions",
+			"targetSchema": "public",
+			"targetTable": "catalog_conflict_review_dispositions",
+			"columns": [
+				"id",
+				"conflict_id",
+				"shared_product_id",
+				"evidence_fingerprint",
+				"outcome",
+				"review_note",
+				"reviewed_by",
+				"reviewed_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "72fd3335583142b7f10c8db27672c5362a92d00aa3056dd4ac0d4afe59e6e84b"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "catalog_correction_origins"
+			},
+			"view": "public_catalog_correction_origins",
+			"targetSchema": "public",
+			"targetTable": "catalog_correction_origins",
+			"columns": [
+				"id",
+				"shared_product_id",
+				"base_revision_id",
+				"origin_type",
+				"provider_change_review_id",
+				"shared_product_conflict_id",
+				"food_compatibility_feedback_id",
+				"affected_field_paths",
+				"prefilled_food",
+				"submission_id",
+				"status",
+				"resolved_revision_id",
+				"resolution_note",
+				"created_at",
+				"resolved_at",
+				"updated_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "bf64544f516cd9410e9476735c425942a6439dc161b88f1732885f1ad251f974"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "catalog_health_repair_run_items"
+			},
+			"view": "public_catalog_health_repair_run_items",
+			"targetSchema": "public",
+			"targetTable": "catalog_health_repair_run_items",
+			"columns": [
+				"id",
+				"run_id",
+				"item_key",
+				"result",
+				"reason_code",
+				"before_value",
+				"after_value",
+				"created_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "9b3a639fdc14cb561213b73a4a833171aea7b3efc48570cadde8e4eee8b4e9f0"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "catalog_health_repair_runs"
+			},
+			"view": "public_catalog_health_repair_runs",
+			"targetSchema": "public",
+			"targetTable": "catalog_health_repair_runs",
+			"columns": [
+				"id",
+				"requested_by",
+				"occurrence_key",
+				"issue_code",
+				"repair_key",
+				"mode",
+				"dry_run_id",
+				"status",
+				"candidate_count",
+				"changed_count",
+				"skipped_count",
+				"unresolved_count",
+				"error_count",
+				"summary",
+				"started_at",
+				"completed_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "c1e44ee46d13baaec4f522f90458a6415133d53fc4ba2b0a2dd0fff61b15020d"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "catalog_health_review_dispositions"
+			},
+			"view": "public_catalog_health_review_dispositions",
+			"targetSchema": "public",
+			"targetTable": "catalog_health_review_dispositions",
+			"columns": [
+				"id",
+				"shared_product_id",
+				"issue_fingerprint",
+				"outcome",
+				"review_note",
+				"issue_count",
+				"issue_snapshot",
+				"reviewed_by",
+				"reviewed_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "3894c90774c1923778e1bd563ed39b1f68ae0e7ddebafbed8e6a6260bc947221"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "catalog_intake_requests"
+			},
+			"view": "public_catalog_intake_requests",
+			"targetSchema": "public",
+			"targetTable": "catalog_intake_requests",
+			"columns": [
+				"id",
+				"actor_user_id",
+				"idempotency_key",
+				"request_fingerprint",
+				"status",
+				"response_status",
+				"response_body",
+				"created_at",
+				"completed_at",
+				"updated_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "c97948d20dda0cac2e401642f6b869c77138d91c94afb5aaa0c1bcdebb490aee"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "catalog_product_purge_audit"
+			},
+			"view": "public_catalog_product_purge_audit",
+			"targetSchema": "public",
+			"targetTable": "catalog_product_purge_audit",
+			"columns": [
+				"id",
+				"requested_by",
+				"request_source",
+				"reason",
+				"deletion_summary",
+				"completed_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "4fb9d1aeb9fa6d126ab83908dc008845dc2297e7e32a4e6dafb39d13fd9843c5"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "catalog_provider_change_reviews"
+			},
+			"view": "public_catalog_provider_change_reviews",
+			"targetSchema": "public",
+			"targetTable": "catalog_provider_change_reviews",
+			"columns": [
+				"id",
+				"shared_product_id",
+				"provider_key",
+				"snapshot_id",
+				"status",
+				"change_summary",
+				"material_field_paths",
+				"reviewed_by",
+				"reviewed_at",
+				"review_note",
+				"accepted_revision_id",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "14cfb31fa2bb60d0c277372ff3affc142548f610b5e0c7bb8b6bb773e17b87c2"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "catalog_provider_product_snapshots"
+			},
+			"view": "public_catalog_provider_product_snapshots",
+			"targetSchema": "public",
+			"targetTable": "catalog_provider_product_snapshots",
+			"columns": [
+				"id",
+				"shared_product_id",
+				"provider_key",
+				"source_reference",
+				"observation_id",
+				"content_hash",
+				"provider_revision",
+				"provider_updated_at",
+				"normalized_snapshot",
+				"observed_at",
+				"created_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "a04538f346f241129de8af0d4467ca3a0afe646580053b67a7170dc0dc1b1366"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "compatibility_tags"
+			},
+			"view": "public_compatibility_tags",
+			"targetSchema": "public",
+			"targetTable": "compatibility_tags",
+			"columns": [
+				"id",
+				"slug",
+				"label",
+				"category",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "2202439f9d9b4bb2d6a20331e5982e6fa175720619da3914af1d6d858f915956"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "custom_food_category_mappings"
+			},
+			"view": "public_custom_food_category_mappings",
+			"targetSchema": "public",
+			"targetTable": "custom_food_category_mappings",
+			"columns": [
+				"source_normalized_value",
+				"source_value",
+				"source_values",
+				"source_fields",
+				"sources",
+				"category_option_id",
+				"category_option_label",
+				"confidence",
+				"match_reason",
+				"source_count",
+				"observation_count",
+				"first_seen_at",
+				"last_seen_at",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["source_normalized_value"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "616ec9216481c27590a16b46681905f292c8f52f79e3ef924b1f77e344b68faa"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "custom_food_category_observations"
+			},
+			"view": "public_custom_food_category_observations",
+			"targetSchema": "public",
+			"targetTable": "custom_food_category_observations",
+			"columns": [
+				"id",
+				"category_id",
+				"label",
+				"normalized_value",
+				"source",
+				"query",
+				"source_field",
+				"source_value",
+				"source_reference",
+				"source_payload",
+				"observation_count",
+				"first_seen_at",
+				"last_seen_at",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "8c6ab01aa3f0c6bfa44df779e4733b9a43cfb193eb258f3dcbf95ece418be2ab"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "custom_food_category_options"
+			},
+			"view": "public_custom_food_category_options",
+			"targetSchema": "public",
+			"targetTable": "custom_food_category_options",
+			"columns": [
+				"id",
+				"label",
+				"normalized_value",
+				"sources",
+				"source_count",
+				"observation_count",
+				"verification_status",
+				"enabled",
+				"first_seen_at",
+				"last_seen_at",
+				"created_at",
+				"updated_at",
+				"symbol_key"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "b68e619b526dd9c6cccf4aa6096df6b4d454db71c59b48e2e3bf28695f66088a"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "custom_foods"
+			},
+			"view": "public_custom_foods",
+			"targetSchema": "public",
+			"targetTable": "custom_foods",
+			"columns": [
+				"id",
+				"user_id",
+				"fdc_id",
+				"food",
+				"created_at",
+				"updated_at",
+				"name_key",
+				"barcode",
+				"search_text",
+				"category_option_id",
+				"source_key",
+				"trust_status"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "94bf55dbc3f76461a4699eb2a85dcf2ffb9a39faf3a8c02da92547f8b4e86ab2"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "food_allergen_regulatory_profile_tags"
+			},
+			"view": "public_food_allergen_regulatory_profile_tags",
+			"targetSchema": "public",
+			"targetTable": "food_allergen_regulatory_profile_tags",
+			"columns": [
+				"profile_id",
+				"tag_id",
+				"classification",
+				"source_label",
+				"created_at"
+			],
+			"orderBy": ["profile_id", "tag_id", "classification"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "c0e1b005a1e543ccd3fb86fe6795be76254a8203bc1da6efbcf2cad245c0a146"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "food_allergen_regulatory_profiles"
+			},
+			"view": "public_food_allergen_regulatory_profiles",
+			"targetSchema": "public",
+			"targetTable": "food_allergen_regulatory_profiles",
+			"columns": [
+				"id",
+				"policy_version_id",
+				"profile_key",
+				"region_code",
+				"display_name",
+				"authority",
+				"policy_reference",
+				"source_url",
+				"reviewed_at",
+				"active",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "b526cfc6624bc93a5080529a2343c2d691feee6f8ba7e4f1858018958f37e5b5"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "food_category_resolution_guidance"
+			},
+			"view": "public_food_category_resolution_guidance",
+			"targetSchema": "public",
+			"targetTable": "food_category_resolution_guidance",
+			"columns": [
+				"source_normalized_value",
+				"disposition",
+				"specificity_rank",
+				"selection_reason",
+				"review_reference",
+				"reviewed_at",
+				"enabled",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["source_normalized_value"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "1f6ecfc941dd75ac9bc15da0aeb675b8f10fde1998e782e6faedb04325d0c3f8"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "food_compatibility_feedback"
+			},
+			"view": "public_food_compatibility_feedback",
+			"targetSchema": "public",
+			"targetTable": "food_compatibility_feedback",
+			"columns": [
+				"id",
+				"reported_by",
+				"policy_version_id",
+				"shared_product_id",
+				"source_key",
+				"source_id",
+				"barcode",
+				"food_description",
+				"warning_id",
+				"issue_code",
+				"issue_params",
+				"fact_snapshot",
+				"report_reason",
+				"report_details",
+				"report_fingerprint",
+				"status",
+				"resolution_action",
+				"reviewed_by",
+				"reviewed_at",
+				"review_note",
+				"created_at",
+				"updated_at",
+				"feedback_type",
+				"preference_type",
+				"preference_value",
+				"preference_tag_id",
+				"observed_label_date",
+				"evidence_path",
+				"evidence_sha256",
+				"shared_product_revision_id",
+				"follow_up_status",
+				"decision_method",
+				"decision_metadata"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "3993b027063f20f7dbd0f5663388ecef04e27fdd3b4915553b2f93caa5ca65f8"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "food_compatibility_policy_conflicts"
+			},
+			"view": "public_food_compatibility_policy_conflicts",
+			"targetSchema": "public",
+			"targetTable": "food_compatibility_policy_conflicts",
+			"columns": [
+				"preference_tag_id",
+				"fact_tag_id",
+				"severity",
+				"created_at",
+				"updated_at",
+				"warning_code",
+				"priority",
+				"policy_version_id"
+			],
+			"orderBy": ["preference_tag_id", "fact_tag_id", "policy_version_id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "64389ba64a3f23cd1d311b5f76f679c2085b19d657482b5b8f98830909ed71cc"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "food_compatibility_policy_exemptions"
+			},
+			"view": "public_food_compatibility_policy_exemptions",
+			"targetSchema": "public",
+			"targetTable": "food_compatibility_policy_exemptions",
+			"columns": [
+				"id",
+				"policy_version_id",
+				"jurisdiction_code",
+				"ingredient_term_id",
+				"parent_term_id",
+				"fact_tag_id",
+				"processing_state",
+				"exemption_type",
+				"warning_behavior",
+				"source_reference",
+				"reviewed_at",
+				"created_at",
+				"updated_at",
+				"threshold_value",
+				"threshold_unit",
+				"product_context"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "a55ebd027ce2e3e9326e6a8069ae22b03306f8c62d18f341b38530b4b8d4e24a"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "food_compatibility_policy_ingredient_aliases"
+			},
+			"view": "public_food_compatibility_policy_ingredient_aliases",
+			"targetSchema": "public",
+			"targetTable": "food_compatibility_policy_ingredient_aliases",
+			"columns": [
+				"id",
+				"ingredient_term_id",
+				"alias",
+				"normalized_alias",
+				"language_code",
+				"alias_type",
+				"review_status",
+				"source_key",
+				"source_reference",
+				"reviewed_by",
+				"reviewed_at",
+				"created_at",
+				"updated_at",
+				"policy_version_id"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "dbf83ab1a3d6f006c9d25fb8fc931e286f07a8103580b2587b4a33d437d8afc1"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "food_compatibility_policy_ingredient_relationships"
+			},
+			"view": "public_food_compatibility_policy_ingredient_relationships",
+			"targetSchema": "public",
+			"targetTable": "food_compatibility_policy_ingredient_relationships",
+			"columns": [
+				"id",
+				"child_term_id",
+				"parent_term_id",
+				"relationship_type",
+				"processing_state",
+				"jurisdiction_code",
+				"conflict_inheritance",
+				"review_status",
+				"source_key",
+				"source_reference",
+				"reviewed_by",
+				"reviewed_at",
+				"created_at",
+				"updated_at",
+				"policy_version_id"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "8809fa462ee7d8f6b93e2a0d7eda4684942e4e02c23583053d19c35f6bb8a009"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "food_compatibility_policy_match_rules"
+			},
+			"view": "public_food_compatibility_policy_match_rules",
+			"targetSchema": "public",
+			"targetTable": "food_compatibility_policy_match_rules",
+			"columns": [
+				"id",
+				"tag_id",
+				"source_key",
+				"field_name",
+				"match_pattern",
+				"fact_type",
+				"source_type",
+				"confidence",
+				"priority",
+				"enabled",
+				"created_at",
+				"updated_at",
+				"exclude_pattern",
+				"policy_version_id"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "6343bed87e31e493799d60a3c191e275059f7d0b2cdbe33a678ebef5cd0de33d"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "food_compatibility_policy_preference_term_mappings"
+			},
+			"view": "public_food_compatibility_policy_preference_term_mappings",
+			"targetSchema": "public",
+			"targetTable": "food_compatibility_policy_preference_term_mappings",
+			"columns": [
+				"id",
+				"policy_version_id",
+				"ingredient_term_id",
+				"preference_tag_id",
+				"preference_rule_type",
+				"source_reference",
+				"reviewed_by",
+				"reviewed_at",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "6029a5df34d9c69bcb2cc841f9f55363d067d9db940c883030574025837ab59f"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "food_compatibility_policy_versions"
+			},
+			"view": "public_food_compatibility_policy_versions",
+			"targetSchema": "public",
+			"targetTable": "food_compatibility_policy_versions",
+			"columns": [
+				"id",
+				"version_number",
+				"status",
+				"change_summary",
+				"match_rule_snapshot",
+				"conflict_rule_snapshot",
+				"source_references",
+				"effective_at",
+				"reviewed_at",
+				"created_at",
+				"updated_at",
+				"alias_snapshot",
+				"relationship_snapshot",
+				"exemption_snapshot",
+				"regional_profile_snapshot",
+				"bundle_content_hash",
+				"preference_mapping_snapshot"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "5d3e713794c3de214028a83c6e7d561118d272d92c4cc32410e98e9313032e71"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "food_image_assets"
+			},
+			"view": "public_food_image_assets",
+			"targetSchema": "public",
+			"targetTable": "food_image_assets",
+			"columns": [
+				"id",
+				"barcode",
+				"shared_product_id",
+				"source",
+				"source_reference",
+				"image_role",
+				"image_url",
+				"thumbnail_url",
+				"storage_path",
+				"license_name",
+				"license_url",
+				"attribution_text",
+				"confidence",
+				"status",
+				"fetched_at",
+				"created_at",
+				"updated_at",
+				"crop_x",
+				"crop_y",
+				"crop_zoom",
+				"crop_source",
+				"approved_by",
+				"approved_at",
+				"fit_mode",
+				"placement_version",
+				"placement_method",
+				"placement_suggestion_version",
+				"placement_suggestion_confidence",
+				"placement_suggestion_accepted_at",
+				"rotation_degrees",
+				"canonical_status",
+				"canonical_selection_method",
+				"canonical_selected_at",
+				"canonical_selected_by"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "302e38e6e638965ccb3212e4086de8614bd80c3331a21756416f3f3230325949"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "food_nutrient_measurements"
+			},
+			"view": "public_food_nutrient_measurements",
+			"targetSchema": "public",
+			"targetTable": "food_nutrient_measurements",
+			"columns": [
+				"id",
+				"owner_user_id",
+				"user_food_list_item_id",
+				"custom_food_id",
+				"shared_product_submission_id",
+				"shared_product_id",
+				"shared_product_revision_id",
+				"shared_product_observation_id",
+				"nutrient_id",
+				"amount",
+				"unit_name",
+				"basis_kind",
+				"basis_quantity",
+				"basis_unit_key",
+				"basis_serving_label",
+				"value_origin",
+				"value_status",
+				"value_qualifier",
+				"source",
+				"source_reference",
+				"confidence",
+				"standard_error",
+				"source_nutrient_key",
+				"source_nutrient_code",
+				"mapping_status",
+				"mapping_method",
+				"mapping_review_reference",
+				"derivation_method",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "cb33fef3a37ba28c5eea9802ff95e31b8fda94059cb02e1c5de78f3f9a3d6594"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "food_nutrient_qualitative_evidence"
+			},
+			"view": "public_food_nutrient_qualitative_evidence",
+			"targetSchema": "public",
+			"targetTable": "food_nutrient_qualitative_evidence",
+			"columns": [
+				"id",
+				"owner_user_id",
+				"user_food_list_item_id",
+				"custom_food_id",
+				"shared_product_submission_id",
+				"shared_product_id",
+				"shared_product_revision_id",
+				"shared_product_observation_id",
+				"source_observation_id",
+				"nutrient_id",
+				"qualitative_status",
+				"statement_text",
+				"maximum_amount",
+				"unit_name",
+				"basis_kind",
+				"basis_quantity",
+				"basis_unit_key",
+				"basis_serving_label",
+				"source",
+				"source_reference",
+				"confidence",
+				"source_nutrient_key",
+				"source_nutrient_code",
+				"mapping_status",
+				"mapping_method",
+				"mapping_review_reference",
+				"policy_key",
+				"policy_reference",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "1536b046050fdd7400224ca4cfd76d77d0ed1bc0125f5d3c41be022dadf910e0"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "food_nutrients"
+			},
+			"view": "public_food_nutrients",
+			"targetSchema": "public",
+			"targetTable": "food_nutrients",
+			"columns": [
+				"id",
+				"owner_user_id",
+				"user_food_list_item_id",
+				"custom_food_id",
+				"shared_product_submission_id",
+				"shared_product_id",
+				"shared_product_revision_id",
+				"shared_product_observation_id",
+				"nutrient_id",
+				"amount_per_100g",
+				"unit_name",
+				"value_origin",
+				"source",
+				"source_reference",
+				"source_observation_id",
+				"confidence",
+				"created_at",
+				"updated_at",
+				"value_status",
+				"standard_error",
+				"source_nutrient_key",
+				"source_nutrient_code",
+				"mapping_status",
+				"mapping_method",
+				"mapping_review_reference",
+				"derivation_method",
+				"value_qualifier"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "d8a93d34c8d6a72567b5c65beb3c3863ff0da919690a04551a34b5b51aa7c217"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "food_preference_api_observations"
+			},
+			"view": "public_food_preference_api_observations",
+			"targetSchema": "public",
+			"targetTable": "food_preference_api_observations",
+			"columns": [
+				"id",
+				"source",
+				"query",
+				"matched_name",
+				"brand_owner",
+				"source_reference",
+				"category",
+				"fact_type",
+				"source_field",
+				"source_value",
+				"label",
+				"normalized_value",
+				"source_payload",
+				"observation_count",
+				"first_seen_at",
+				"last_seen_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "d54c664559010a0fa7baefcc065c0cdc17e23a3f9198f5584af854c3dad50ca7"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "food_preference_mapping_requests"
+			},
+			"view": "public_food_preference_mapping_requests",
+			"targetSchema": "public",
+			"targetTable": "food_preference_mapping_requests",
+			"columns": [
+				"id",
+				"preference_rule_type",
+				"normalized_value",
+				"language_code",
+				"status",
+				"occurrence_count",
+				"resolved_mapping_id",
+				"resolved_ingredient_term_id",
+				"resolved_preference_tag_id",
+				"reviewed_by",
+				"reviewed_at",
+				"review_note",
+				"first_seen_at",
+				"last_seen_at",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "b9b29bf674ad5cfcbcc5699e92b10534c76cdb3a22e2c9a4996a94d7a031b66d"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "food_preference_option_catalog"
+			},
+			"view": "public_food_preference_option_catalog",
+			"targetSchema": "public",
+			"targetTable": "food_preference_option_catalog",
+			"columns": [
+				"id",
+				"category",
+				"label",
+				"normalized_value",
+				"source_type",
+				"tag_id",
+				"source_values",
+				"usage_count",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "21178c73ff0f7addc8a70767b68ee64fbe1a0ed9aad353a772b40f8f44a9e0f2"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "food_servings"
+			},
+			"view": "public_food_servings",
+			"targetSchema": "public",
+			"targetTable": "food_servings",
+			"columns": [
+				"id",
+				"owner_user_id",
+				"user_food_list_item_id",
+				"custom_food_id",
+				"shared_product_submission_id",
+				"shared_product_id",
+				"shared_product_revision_id",
+				"shared_product_observation_id",
+				"serving_order",
+				"label",
+				"gram_weight",
+				"amount",
+				"unit_key",
+				"is_primary",
+				"source",
+				"source_reference",
+				"confidence",
+				"created_at",
+				"updated_at",
+				"source_observation_id",
+				"measure_type",
+				"is_household_measure",
+				"source_measure_key",
+				"origin",
+				"gram_weight_method",
+				"calculation_basis",
+				"milliliter_volume",
+				"mass_volume_conversion_policy_id"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "0cbf347a1d2989bc72ec38f38a48e1e5c42e8d129e003e1be4a6b845319d653e"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "food_symbol_category_rules"
+			},
+			"view": "public_food_symbol_category_rules",
+			"targetSchema": "public",
+			"targetTable": "food_symbol_category_rules",
+			"columns": [
+				"id",
+				"symbol_key",
+				"match_pattern",
+				"priority",
+				"enabled",
+				"source_key",
+				"source_reference",
+				"created_at",
+				"updated_at",
+				"match_scopes"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "eebca40c309ef43b64ff3a36fa474713507941639025cf1bc4cb9b995dab8130"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "food_symbol_definitions"
+			},
+			"view": "public_food_symbol_definitions",
+			"targetSchema": "public",
+			"targetTable": "food_symbol_definitions",
+			"columns": [
+				"key",
+				"display_name",
+				"sort_order",
+				"enabled",
+				"created_at",
+				"updated_at",
+				"emoji",
+				"family_key"
+			],
+			"orderBy": ["key"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "f942b8231e8832909aaecd0f65a577c72a2da251277ff255169aaa80e6a5d423"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "food_warning_policy_review_cases"
+			},
+			"view": "public_food_warning_policy_review_cases",
+			"targetSchema": "public",
+			"targetTable": "food_warning_policy_review_cases",
+			"columns": [
+				"id",
+				"feedback_id",
+				"case_type",
+				"responsible_group",
+				"shared_product_id",
+				"source_key",
+				"status",
+				"opened_by",
+				"resolved_by",
+				"resolution_note",
+				"created_at",
+				"resolved_at",
+				"updated_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "a6d27ee677ca3349fe2fef96060a7bf393a36637cdea63e25cc73970a72b7855"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "generic_food_dataset_import_evidence_runs"
+			},
+			"view": "public_generic_food_dataset_import_evidence_runs",
+			"targetSchema": "public",
+			"targetTable": "generic_food_dataset_import_evidence_runs",
+			"columns": [
+				"id",
+				"dataset_key",
+				"mode",
+				"outcome",
+				"preview_run_id",
+				"release_version",
+				"expected_dataset_updated_at",
+				"previous_imported_at",
+				"proposed_imported_at",
+				"previous_source_file_sha256",
+				"proposed_source_file_sha256",
+				"evidence_reference",
+				"review_note",
+				"recorded_by",
+				"created_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "139012894f098400279ce1328741913e993fdcb3914d62aa6b1ec5e0dd05e495"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "generic_food_dataset_reference_rows"
+			},
+			"view": "public_generic_food_dataset_reference_rows",
+			"targetSchema": "public",
+			"targetTable": "generic_food_dataset_reference_rows",
+			"columns": [
+				"dataset_key",
+				"reference_type",
+				"source_key",
+				"payload",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["dataset_key", "reference_type", "source_key"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "dca37e97a439be6dd749996231dcdacb9a56ed2004147748e4d1122b792d33bb"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "generic_food_datasets"
+			},
+			"view": "public_generic_food_datasets",
+			"targetSchema": "public",
+			"targetTable": "generic_food_datasets",
+			"columns": [
+				"key",
+				"source_key",
+				"display_name",
+				"version",
+				"region_code",
+				"source_url",
+				"download_url",
+				"license_name",
+				"license_url",
+				"attribution_text",
+				"license_review_status",
+				"import_enabled",
+				"active",
+				"imported_at",
+				"source_file_sha256",
+				"food_count",
+				"nutrient_value_count",
+				"measure_count",
+				"metadata",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["key"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "eb7c4fa9b01904c3c00dbcdccb66b3ffe2584cf839972e3ff483cc08c8aaa01c"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "generic_food_measures"
+			},
+			"view": "public_generic_food_measures",
+			"targetSchema": "public",
+			"targetTable": "generic_food_measures",
+			"columns": [
+				"dataset_key",
+				"source_food_key",
+				"source_measure_key",
+				"measure_type",
+				"description",
+				"gram_weight",
+				"is_household_measure",
+				"source_updated_at",
+				"metadata",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": [
+				"dataset_key",
+				"source_food_key",
+				"source_measure_key",
+				"measure_type"
+			],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "be8cba9ef73633971f8f5d259f5e7190a6ccd9176f0095cbf5649882f8f9a438"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "generic_food_nutrients"
+			},
+			"view": "public_generic_food_nutrients",
+			"targetSchema": "public",
+			"targetTable": "generic_food_nutrients",
+			"columns": [
+				"dataset_key",
+				"source_food_key",
+				"source_nutrient_key",
+				"nutrient_id",
+				"source_nutrient_name",
+				"unit_name",
+				"amount_per_100g",
+				"standard_error",
+				"observation_count",
+				"nutrient_source_code",
+				"source_updated_at",
+				"mapping_status",
+				"metadata",
+				"created_at",
+				"updated_at",
+				"value_status"
+			],
+			"orderBy": ["dataset_key", "source_food_key", "source_nutrient_key"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "0db223e66f474f0edf72e69fc071778e57a67b23b5fa5ad48b1fbd759f6f949c"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "generic_food_records"
+			},
+			"view": "public_generic_food_records",
+			"targetSchema": "public",
+			"targetTable": "generic_food_records",
+			"columns": [
+				"dataset_key",
+				"source_food_key",
+				"description",
+				"alternate_description",
+				"food_group_key",
+				"food_group_name",
+				"source_food_code",
+				"external_reference",
+				"scientific_name",
+				"preparation",
+				"search_text",
+				"search_vector",
+				"source_updated_at",
+				"metadata",
+				"created_at",
+				"updated_at",
+				"application_food_id",
+				"measurement_basis"
+			],
+			"orderBy": ["dataset_key", "source_food_key"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "5588a3ce1d0ebde0d5058ed310e655141b2c06d9e73e470e948f0df68f44afe5"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "generic_food_source_identifiers"
+			},
+			"view": "public_generic_food_source_identifiers",
+			"targetSchema": "public",
+			"targetTable": "generic_food_source_identifiers",
+			"columns": [
+				"dataset_key",
+				"source_food_key",
+				"source_key",
+				"identifier_type",
+				"identifier_value",
+				"source_field",
+				"verification_method",
+				"metadata",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": [
+				"dataset_key",
+				"source_food_key",
+				"source_key",
+				"identifier_type",
+				"identifier_value"
+			],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "e601658a4bda2786c8b4cbca92144a4de1b306ea8752331b2aa98be4578815b1"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "ingredient_provenance_options"
+			},
+			"view": "public_ingredient_provenance_options",
+			"targetSchema": "public",
+			"targetTable": "ingredient_provenance_options",
+			"columns": [
+				"dimension",
+				"value",
+				"filter_label",
+				"badge_label",
+				"badge_tone",
+				"display_order",
+				"filter_enabled",
+				"badge_enabled",
+				"description",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["dimension", "value"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "3bafaa7373026cdb213b75e5685a500baf71c4345b8afbcdd1bc9f73dfc2414e"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "ingredient_terms"
+			},
+			"view": "public_ingredient_terms",
+			"targetSchema": "public",
+			"targetTable": "ingredient_terms",
+			"columns": [
+				"id",
+				"canonical_key",
+				"display_name",
+				"default_language_code",
+				"review_status",
+				"source_key",
+				"source_reference",
+				"reviewed_by",
+				"reviewed_at",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "48da54d91ca874bae779919347d5313ecac3be737d467528557454deb69498e8"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "marketing_email_preference_events"
+			},
+			"view": "public_marketing_email_preference_events",
+			"targetSchema": "public",
+			"targetTable": "marketing_email_preference_events",
+			"columns": [
+				"id",
+				"user_id",
+				"topic_key",
+				"is_subscribed",
+				"consent_copy_version",
+				"source",
+				"created_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "9bdb2bd04362f60c04c92e63d83e974d7e5fa7d74dfebeaaa3fd9c779bc88142"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "marketing_email_topics"
+			},
+			"view": "public_marketing_email_topics",
+			"targetSchema": "public",
+			"targetTable": "marketing_email_topics",
+			"columns": [
+				"topic_key",
+				"label",
+				"description",
+				"sort_order",
+				"enabled",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["topic_key"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "e569a0cf95a44c26f2ffff2c16594347d469f82b1853f243785b861feb364573"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "mix_goal_template_targets"
+			},
+			"view": "public_mix_goal_template_targets",
+			"targetSchema": "public",
+			"targetTable": "mix_goal_template_targets",
+			"columns": [
+				"template_version_id",
+				"nutrient_id",
+				"goal_type",
+				"target_amount",
+				"upper_amount",
+				"tolerance_ratio",
+				"importance_weight",
+				"sort_order",
+				"rationale",
+				"source_key",
+				"source_reference"
+			],
+			"orderBy": ["template_version_id", "nutrient_id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "6affc1815eb3ebc45664ec5799f4fe0ba3a3c1208af7f558fed06bd34e1ae2ef"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "mix_goal_template_versions"
+			},
+			"view": "public_mix_goal_template_versions",
+			"targetSchema": "public",
+			"targetTable": "mix_goal_template_versions",
+			"columns": [
+				"id",
+				"template_key",
+				"version",
+				"display_name",
+				"description",
+				"goal_basis",
+				"status",
+				"source_key",
+				"source_reference",
+				"reviewed_at",
+				"reviewed_by",
+				"published_at",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "03b5d8af784f62a5079114ec5b35e9c692ef6d6ef45ae41bfb1f34ccd4c98f6f"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "mix_goal_templates"
+			},
+			"view": "public_mix_goal_templates",
+			"targetSchema": "public",
+			"targetTable": "mix_goal_templates",
+			"columns": [
+				"key",
+				"sort_order",
+				"enabled",
+				"created_at",
+				"updated_at",
+				"current_version_id",
+				"is_default"
+			],
+			"orderBy": ["key"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "b7c4fdd63b41bfef90c206b07b9420c323eff7cb18a545e6beeb4a0e5a343a42"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "mix_preferences"
+			},
+			"view": "public_mix_preferences",
+			"targetSchema": "public",
+			"targetTable": "mix_preferences",
+			"columns": [
+				"user_id",
+				"mix_state",
+				"created_at",
+				"updated_at",
+				"section_order",
+				"section_disclosure_state",
+				"goal_basis",
+				"source_goal_template_version_id",
+				"source_user_goal_template_id",
+				"goal_configuration_initialized",
+				"goal_template_customized"
+			],
+			"orderBy": ["user_id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "4ea3d37d8bff2ed1792bc9db7d11297c20c83daffa44398893794cc8fc03b4ae"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "mix_runtime_configuration"
+			},
+			"view": "public_mix_runtime_configuration",
+			"targetSchema": "public",
+			"targetTable": "mix_runtime_configuration",
+			"columns": [
+				"key",
+				"value",
+				"version",
+				"enabled",
+				"source_key",
+				"source_reference",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["key"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "b336945d4916de3d2dab59c8d41b9dce38ff1f3c5891854c8a1bd3c3df53ea0f"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "moderation_actions"
+			},
+			"view": "public_moderation_actions",
+			"targetSchema": "public",
+			"targetTable": "moderation_actions",
+			"columns": [
+				"id",
+				"target_user_id",
+				"actor_user_id",
+				"action",
+				"reason_code",
+				"internal_note",
+				"created_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "8fe76eef08758c1351677044ec31df71bf54f2b78141fb1b97927aa97fc0d8be"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "nutrient_definitions"
+			},
+			"view": "public_nutrient_definitions",
+			"targetSchema": "public",
+			"targetTable": "nutrient_definitions",
+			"columns": [
+				"nutrient_id",
+				"nutrient_name",
+				"nutrient_number",
+				"default_unit_name",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["nutrient_id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "d7b82ca2aa6623d7033f88ff629a8158ecbc1e5ffb7161561287d8cc5fa17094"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "nutrient_display_profile_fields"
+			},
+			"view": "public_nutrient_display_profile_fields",
+			"targetSchema": "public",
+			"targetTable": "nutrient_display_profile_fields",
+			"columns": [
+				"profile_key",
+				"nutrient_id",
+				"display_label",
+				"display_unit",
+				"sort_order",
+				"highlight",
+				"default_goal"
+			],
+			"orderBy": ["profile_key", "nutrient_id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "febd0c8175233d3be1c299561b137cb0eb0d2949a0a8d1758b9f14b9c55399c8"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "nutrient_display_profiles"
+			},
+			"view": "public_nutrient_display_profiles",
+			"targetSchema": "public",
+			"targetTable": "nutrient_display_profiles",
+			"columns": [
+				"key",
+				"display_name",
+				"purpose",
+				"version",
+				"enabled",
+				"source_key",
+				"source_reference",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["key"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "5f19e3b0aae931bd50c27d6dc66bfde0af8194064cc7ebf0ebcfbe2d5cf36aea"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "nutrient_equivalences"
+			},
+			"view": "public_nutrient_equivalences",
+			"targetSchema": "public",
+			"targetTable": "nutrient_equivalences",
+			"columns": [
+				"id",
+				"canonical_nutrient_id",
+				"source_nutrient_id",
+				"source_nutrient_number",
+				"relation",
+				"source_key",
+				"source_reference",
+				"enabled",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "a8446f27957b7a9ea5058d9c90a39db23ce315d44249fe55427123e4b1921ad1"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "nutrient_manual_entry_fields"
+			},
+			"view": "public_nutrient_manual_entry_fields",
+			"targetSchema": "public",
+			"targetTable": "nutrient_manual_entry_fields",
+			"columns": [
+				"dedupe_key",
+				"nutrient_id",
+				"group_id",
+				"nutrient_type",
+				"display_label",
+				"sort_order",
+				"enabled",
+				"source_count",
+				"observation_count",
+				"verification_status",
+				"sources",
+				"last_observed_at",
+				"created_at",
+				"updated_at",
+				"required_for_manual_entry",
+				"classification_status",
+				"classification_source_key",
+				"classification_reference",
+				"classification_version",
+				"classification_notes",
+				"replacement_nutrient_id",
+				"reviewed_at"
+			],
+			"orderBy": ["dedupe_key"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "89473a82aa836172ce0cb787ff814349a509ad7a668eee2b21e69e7375bcc59c"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "nutrient_manual_entry_groups"
+			},
+			"view": "public_nutrient_manual_entry_groups",
+			"targetSchema": "public",
+			"targetTable": "nutrient_manual_entry_groups",
+			"columns": [
+				"id",
+				"entry_step",
+				"title",
+				"sort_order",
+				"enabled",
+				"source_count",
+				"observation_count",
+				"verification_status",
+				"sources",
+				"last_observed_at",
+				"created_at",
+				"updated_at",
+				"group_role"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "f1ef8c60201fa04b6d76a2586117ff9fc6667cc3bc5613030e61c4220726c2a2"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "nutrient_manual_entry_observations"
+			},
+			"view": "public_nutrient_manual_entry_observations",
+			"targetSchema": "public",
+			"targetTable": "nutrient_manual_entry_observations",
+			"columns": [
+				"id",
+				"source",
+				"query",
+				"source_reference",
+				"source_food_name",
+				"source_data_type",
+				"nutrient_id",
+				"nutrient_name",
+				"nutrient_number",
+				"unit_name",
+				"entry_step",
+				"group_id",
+				"group_title",
+				"group_sort_order",
+				"nutrient_type",
+				"dedupe_key",
+				"display_label",
+				"field_sort_order",
+				"classification_method",
+				"source_payload",
+				"observed_at",
+				"created_at",
+				"updated_at",
+				"canonical_nutrient_id"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "11c0d621e081e50608cbd45935cdc0e4dab2130a4949428c3ce62864297e47e1"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "nutrient_manual_entry_required_nutrients"
+			},
+			"view": "public_nutrient_manual_entry_required_nutrients",
+			"targetSchema": "public",
+			"targetTable": "nutrient_manual_entry_required_nutrients",
+			"columns": [
+				"nutrient_id",
+				"requirement_key",
+				"group_id",
+				"field_sort_order",
+				"reason",
+				"source",
+				"source_count",
+				"observation_count",
+				"sources",
+				"provenance",
+				"enabled",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["nutrient_id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "fad051e901df6009a69d767b20a9009d1b7f6040da3d2a72512152068819acc3"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "nutrient_mapping_deterministic_backfill_results"
+			},
+			"view": "public_nutrient_mapping_deterministic_backfill_results",
+			"targetSchema": "public",
+			"targetTable": "nutrient_mapping_deterministic_backfill_results",
+			"columns": [
+				"id",
+				"run_id",
+				"mapping_id",
+				"source_key",
+				"source_nutrient_key",
+				"source_unit_name",
+				"result",
+				"reason",
+				"decision_id",
+				"evaluated_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "538510de6ab278156bbec4903ee6cebad96d7136f504a19949bd60577546d1a7"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "nutrient_mapping_deterministic_backfill_runs"
+			},
+			"view": "public_nutrient_mapping_deterministic_backfill_runs",
+			"targetSchema": "public",
+			"targetTable": "nutrient_mapping_deterministic_backfill_runs",
+			"columns": [
+				"id",
+				"operation_reference",
+				"rule_count",
+				"pending_count",
+				"approved_count",
+				"skipped_count",
+				"started_at",
+				"completed_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "2bbb68ce888ef1432acbc563eec8f59638bfc53a98b8dce97b4a2e3f36f04612"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "nutrient_mapping_deterministic_rules"
+			},
+			"view": "public_nutrient_mapping_deterministic_rules",
+			"targetSchema": "public",
+			"targetTable": "nutrient_mapping_deterministic_rules",
+			"columns": [
+				"id",
+				"source_key",
+				"source_nutrient_key",
+				"source_unit_name",
+				"source_nutrient_name",
+				"nutrient_id",
+				"rule_version",
+				"review_reference",
+				"evidence_reference",
+				"review_note",
+				"effective_at",
+				"enabled",
+				"provenance",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "37a4b8b15365fa08ca24bca1a56f7c8728334b0f1094adaf93cc79af44b8b8ea"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "nutrient_mapping_review_decisions"
+			},
+			"view": "public_nutrient_mapping_review_decisions",
+			"targetSchema": "public",
+			"targetTable": "nutrient_mapping_review_decisions",
+			"columns": [
+				"id",
+				"mapping_id",
+				"source_key",
+				"source_nutrient_key",
+				"source_unit_name",
+				"outcome",
+				"previous_nutrient_id",
+				"selected_nutrient_id",
+				"previous_mapping_method",
+				"review_note",
+				"evidence_reference",
+				"reviewed_by",
+				"reviewed_at",
+				"decision_origin",
+				"deterministic_rule_id"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "7c495a0260f5883bbb69817cb94a7a8aeae39bf2d6f83489b63c45dc32b8a71b"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "nutrient_relationship_rules"
+			},
+			"view": "public_nutrient_relationship_rules",
+			"targetSchema": "public",
+			"targetTable": "nutrient_relationship_rules",
+			"columns": [
+				"id",
+				"parent_nutrient_id",
+				"child_nutrient_id",
+				"relationship",
+				"severity",
+				"requires_parent",
+				"tolerance",
+				"enabled",
+				"sort_order",
+				"source",
+				"source_count",
+				"observation_count",
+				"sources",
+				"provenance",
+				"created_at",
+				"updated_at",
+				"issue_code"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "8e8991658defef15c8d1ce51f3a1a914292b0a98c6c26635fe6300872036d8a5"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "nutrient_source_mapping_observations"
+			},
+			"view": "public_nutrient_source_mapping_observations",
+			"targetSchema": "public",
+			"targetTable": "nutrient_source_mapping_observations",
+			"columns": [
+				"source_key",
+				"source_nutrient_key",
+				"source_unit_name",
+				"source_nutrient_name",
+				"observation_count",
+				"first_observed_at",
+				"last_observed_at",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["source_key", "source_nutrient_key", "source_unit_name"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "790be361aa71a3bb8c698c93a5c1b28b1584d7eaeb1efc6065c380ec1402973b"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "nutrient_source_mappings"
+			},
+			"view": "public_nutrient_source_mappings",
+			"targetSchema": "public",
+			"targetTable": "nutrient_source_mappings",
+			"columns": [
+				"source_key",
+				"source_nutrient_key",
+				"source_unit_name",
+				"source_nutrient_name",
+				"nutrient_id",
+				"priority",
+				"mapping_method",
+				"confidence",
+				"enabled",
+				"observation_count",
+				"first_observed_at",
+				"last_observed_at",
+				"provenance",
+				"created_at",
+				"updated_at",
+				"review_status",
+				"review_reference",
+				"reviewed_at",
+				"id"
+			],
+			"orderBy": ["source_key", "source_nutrient_key", "source_unit_name"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "518239bd7998cd58eb9a1a551d21d238b14400e1e6da2ca8385c0ae885428ec4"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "nutrient_unit_conversions"
+			},
+			"view": "public_nutrient_unit_conversions",
+			"targetSchema": "public",
+			"targetTable": "nutrient_unit_conversions",
+			"columns": [
+				"source_key",
+				"nutrient_id",
+				"from_unit_name",
+				"to_unit_name",
+				"multiplier",
+				"conversion_method",
+				"confidence",
+				"observation_count",
+				"provenance",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": [
+				"source_key",
+				"nutrient_id",
+				"from_unit_name",
+				"to_unit_name"
+			],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "75ed5493c72934c64ed16aec44b5124dbc931fa63c089ab1d70da1ab81be8f20"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "nutrition_completeness_profile_nutrients"
+			},
+			"view": "public_nutrition_completeness_profile_nutrients",
+			"targetSchema": "public",
+			"targetTable": "nutrition_completeness_profile_nutrients",
+			"columns": [
+				"profile_key",
+				"nutrient_id",
+				"requirement_level",
+				"display_order",
+				"reason",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["profile_key", "nutrient_id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "99eeda9936da5dd836910827683534275049685032dc81db22718e055f81eafe"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "nutrition_completeness_profiles"
+			},
+			"view": "public_nutrition_completeness_profiles",
+			"targetSchema": "public",
+			"targetTable": "nutrition_completeness_profiles",
+			"columns": [
+				"key",
+				"display_name",
+				"food_scope",
+				"region_code",
+				"complete_label",
+				"resolved_label",
+				"partial_label",
+				"limited_label",
+				"description",
+				"source_key",
+				"source_reference",
+				"is_default",
+				"enabled",
+				"created_at",
+				"updated_at",
+				"assessment_policy_key",
+				"exact_source_score",
+				"mapped_source_score",
+				"derived_source_score",
+				"missing_source_score",
+				"required_nutrient_weight",
+				"recommended_nutrient_weight",
+				"partial_minimum_ratio"
+			],
+			"orderBy": ["key"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "741524547492bbe3325610818052fbcd7cdce4d3f97b78d7d5dd40dc923a59aa"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "official_food_safety_alert_identifiers"
+			},
+			"view": "public_official_food_safety_alert_identifiers",
+			"targetSchema": "public",
+			"targetTable": "official_food_safety_alert_identifiers",
+			"columns": [
+				"alert_id",
+				"identifier_type",
+				"normalized_value",
+				"source_text",
+				"created_at"
+			],
+			"orderBy": ["alert_id", "identifier_type", "normalized_value"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "d4e3498aac0a4ef606ab89e5354c1f6cb23ca75607c3d619618cb1154d697dc7"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "official_food_safety_alert_matches"
+			},
+			"view": "public_official_food_safety_alert_matches",
+			"targetSchema": "public",
+			"targetTable": "official_food_safety_alert_matches",
+			"columns": [
+				"id",
+				"alert_id",
+				"shared_product_id",
+				"match_type",
+				"status",
+				"requires_package_check",
+				"match_evidence",
+				"detected_at",
+				"reviewed_by",
+				"reviewed_at",
+				"review_note",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "b1b1460904607b6d1fa6541b26aee2237467ea1b64b597f9da7e2f39cfe1a851"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "official_food_safety_alert_revisions"
+			},
+			"view": "public_official_food_safety_alert_revisions",
+			"targetSchema": "public",
+			"targetTable": "official_food_safety_alert_revisions",
+			"columns": [
+				"id",
+				"alert_id",
+				"content_hash",
+				"raw_payload",
+				"normalized_payload",
+				"observed_at",
+				"created_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "f1fcd4a2d9bddc2567a6b6949511538a61f9ed472484a578a3df01707c13f674"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "official_food_safety_alerts"
+			},
+			"view": "public_official_food_safety_alerts",
+			"targetSchema": "public",
+			"targetTable": "official_food_safety_alerts",
+			"columns": [
+				"id",
+				"provider_key",
+				"external_alert_id",
+				"recall_number",
+				"event_id",
+				"alert_type",
+				"classification",
+				"status",
+				"product_description",
+				"reason",
+				"recalling_organization",
+				"distribution_pattern",
+				"package_description",
+				"code_information",
+				"source_url",
+				"report_date",
+				"recall_initiated_at",
+				"terminated_at",
+				"source_updated_at",
+				"current_content_hash",
+				"is_active",
+				"first_seen_at",
+				"last_seen_at",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "f2e2504619ea8c46fdc5dd6c27e2715727a94626f1c0d3f23f6f55c5469b1652"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "privileged_queue_admission_decisions"
+			},
+			"view": "public_privileged_queue_admission_decisions",
+			"targetSchema": "public",
+			"targetTable": "privileged_queue_admission_decisions",
+			"columns": [
+				"id",
+				"queue_name",
+				"subject_type",
+				"subject_key",
+				"evidence_fingerprint",
+				"outcome",
+				"reason_code",
+				"evidence_snapshot",
+				"created_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "1882abf523689cacebf2378d7aef12a935b35ab53c44672c1a9679c88d14ae81"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "product_compatibility_facts"
+			},
+			"view": "public_product_compatibility_facts",
+			"targetSchema": "public",
+			"targetTable": "product_compatibility_facts",
+			"columns": [
+				"id",
+				"shared_product_id",
+				"shared_product_observation_id",
+				"shared_product_submission_id",
+				"tag_id",
+				"fact_type",
+				"source_type",
+				"source_text",
+				"confidence",
+				"created_at",
+				"updated_at",
+				"policy_version_id",
+				"ingredient_component_id",
+				"match_rule_id",
+				"precautionary_statement_id"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "8f185170abf7a922be1c51a457d67087141a15f5ef2dc4c085c29fe6ce374990"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "product_data_sources"
+			},
+			"view": "public_product_data_sources",
+			"targetSchema": "public",
+			"targetTable": "product_data_sources",
+			"columns": [
+				"key",
+				"display_name",
+				"source_type",
+				"homepage_url",
+				"api_base_url",
+				"terms_url",
+				"attribution_text",
+				"enabled",
+				"observation_count",
+				"first_observed_at",
+				"last_observed_at",
+				"provenance",
+				"created_at",
+				"updated_at",
+				"canonical_storage_allowed",
+				"canonical_license_name",
+				"canonical_policy_reviewed_at",
+				"canonical_policy_notes",
+				"api_redistribution_allowed"
+			],
+			"orderBy": ["key"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "f19ac720c89adf364ca55d4980aa9cfe1d7638bc4157036bdab46a7744bd897d"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "product_ingredient_components"
+			},
+			"view": "public_product_ingredient_components",
+			"targetSchema": "public",
+			"targetTable": "product_ingredient_components",
+			"columns": [
+				"id",
+				"statement_id",
+				"parent_component_id",
+				"ingredient_term_id",
+				"source_path",
+				"source_order",
+				"depth",
+				"source_component_id",
+				"source_text",
+				"normalized_text",
+				"language_code",
+				"percent_exact",
+				"percent_estimate",
+				"percent_min",
+				"percent_max",
+				"processing_state",
+				"vegan_status",
+				"vegetarian_status",
+				"source_payload",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "bdf5fab12f90abb244558f8456a468d1cc39fd1b2890f8705c2bc0c8b5eedcc5"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "product_ingredient_statements"
+			},
+			"view": "public_product_ingredient_statements",
+			"targetSchema": "public",
+			"targetTable": "product_ingredient_statements",
+			"columns": [
+				"id",
+				"shared_product_id",
+				"shared_product_observation_id",
+				"shared_product_submission_id",
+				"source_observation_id",
+				"source_field",
+				"extraction_method",
+				"language_code",
+				"source_key",
+				"raw_statement",
+				"source_value",
+				"content_hash",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "0d6913a62ef73a2f50e175ebe569de64e10dafb15cc11c1c301d4f4ef6280b4e"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "product_precautionary_statements"
+			},
+			"view": "public_product_precautionary_statements",
+			"targetSchema": "public",
+			"targetTable": "product_precautionary_statements",
+			"columns": [
+				"id",
+				"shared_product_id",
+				"shared_product_observation_id",
+				"shared_product_submission_id",
+				"source_observation_id",
+				"shared_product_revision_id",
+				"statement_type",
+				"statement_text",
+				"normalized_allergens",
+				"language_code",
+				"source_field",
+				"source_key",
+				"source_reference",
+				"label_observed_at",
+				"source_payload",
+				"content_hash",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "2a04d6299891c59cd752080185e6e11326d78bb0845392fda01b01963f3b08ef"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "product_regulatory_disclosure_profiles"
+			},
+			"view": "public_product_regulatory_disclosure_profiles",
+			"targetSchema": "public",
+			"targetTable": "product_regulatory_disclosure_profiles",
+			"columns": [
+				"key",
+				"display_name",
+				"user_description",
+				"disclosure_kind",
+				"nutrition_evaluation_mode",
+				"nutrition_profile_key",
+				"region_code",
+				"authority_name",
+				"requires_alcohol_by_volume",
+				"requires_moderator_review",
+				"user_selectable",
+				"source_key",
+				"source_reference",
+				"reviewed_at",
+				"sort_order",
+				"is_default",
+				"enabled",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["key"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "bce0ea31f7543d7e1e9e7f7441d46d69fa5ea43863c25565384d2046b3b0b1c9"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "product_resolution_difference_thresholds"
+			},
+			"view": "public_product_resolution_difference_thresholds",
+			"targetSchema": "public",
+			"targetTable": "product_resolution_difference_thresholds",
+			"columns": [
+				"policy_key",
+				"comparison_context",
+				"severity",
+				"minimum_difference_ratio",
+				"minimum_absolute_difference",
+				"evaluation_order",
+				"created_at"
+			],
+			"orderBy": ["policy_key", "comparison_context", "severity"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "4b1795d95b189834835a67633ccf12384cc30156c4ad86d910444a79ea987149"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "product_resolution_ignored_terms"
+			},
+			"view": "public_product_resolution_ignored_terms",
+			"targetSchema": "public",
+			"targetTable": "product_resolution_ignored_terms",
+			"columns": ["policy_key", "term_context", "term", "created_at"],
+			"orderBy": ["policy_key", "term_context", "term"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "302da5add5f9808f5a814c08ea8123422c20ec74de2145a8a5d0c2f0e18afb2e"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "product_resolution_policy_versions"
+			},
+			"view": "public_product_resolution_policy_versions",
+			"targetSchema": "public",
+			"targetTable": "product_resolution_policy_versions",
+			"columns": [
+				"key",
+				"version",
+				"display_name",
+				"minimum_related_name_token_overlap",
+				"numeric_difference_ratio_floor",
+				"serving_weight_tolerance_grams",
+				"category_suggestion_minimum_score",
+				"source_reference",
+				"reviewed_at",
+				"is_default",
+				"enabled",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["key"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "f206dfd279fc7fac70b59db2b73e1497fdec8dd431065704869002c24f7b0851"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "product_resolution_rank_values"
+			},
+			"view": "public_product_resolution_rank_values",
+			"targetSchema": "public",
+			"targetTable": "product_resolution_rank_values",
+			"columns": [
+				"policy_key",
+				"ranking_context",
+				"value_key",
+				"rank_value",
+				"created_at"
+			],
+			"orderBy": ["policy_key", "ranking_context", "value_key"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "06f1f7035449bffd064aa313baeae23a3745f705b70b204f3bafd0e68e6d7e59"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "product_resolution_scoring_weights"
+			},
+			"view": "public_product_resolution_scoring_weights",
+			"targetSchema": "public",
+			"targetTable": "product_resolution_scoring_weights",
+			"columns": [
+				"policy_key",
+				"scoring_context",
+				"metric_key",
+				"weight",
+				"created_at"
+			],
+			"orderBy": ["policy_key", "scoring_context", "metric_key"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "fdd68e4115bea95c32a3f0282a2d90a9d53b925432a1000159366e47c0805e3e"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "product_source_evaluations"
+			},
+			"view": "public_product_source_evaluations",
+			"targetSchema": "public",
+			"targetTable": "product_source_evaluations",
+			"columns": [
+				"id",
+				"source_key",
+				"evaluation_kind",
+				"decision",
+				"sample_size",
+				"matched_count",
+				"usable_count",
+				"summary",
+				"evidence_url",
+				"details",
+				"evaluated_at",
+				"created_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "aab289c34c7b1412cf315bba2bcb0f27c71134de63174b485426b4cd0e51175e"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "product_source_field_coverage"
+			},
+			"view": "public_product_source_field_coverage",
+			"targetSchema": "public",
+			"targetTable": "product_source_field_coverage",
+			"columns": [
+				"barcode",
+				"provider_key",
+				"field_path",
+				"coverage_status",
+				"policy_key",
+				"source_reference",
+				"provider_revision",
+				"checked_at",
+				"expires_at",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["barcode", "provider_key", "field_path"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "4054c95609ab9dfe2a7782585e81105706df12a7abb077eaacca5c23dc4566fb"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "product_source_field_coverage_policies"
+			},
+			"view": "public_product_source_field_coverage_policies",
+			"targetSchema": "public",
+			"targetTable": "product_source_field_coverage_policies",
+			"columns": [
+				"policy_key",
+				"provider_key",
+				"reported_coverage_ttl_seconds",
+				"not_reported_coverage_ttl_seconds",
+				"not_found_coverage_ttl_seconds",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["policy_key", "provider_key"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "1c8a5c4528246c61a3643874b6a7d2dbd144ac4ff460ea8cee3586cf5098aa6b"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "product_source_request_budgets"
+			},
+			"view": "public_product_source_request_budgets",
+			"targetSchema": "public",
+			"targetTable": "product_source_request_budgets",
+			"columns": [
+				"provider_key",
+				"request_kind",
+				"window_seconds",
+				"max_requests",
+				"warning_threshold_percent",
+				"enabled",
+				"notes",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["provider_key", "request_kind"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "92fadc43b297485a18b607c4c3b815d51da5461c40cfb251fb65d7658c51dc76"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "product_submission_blocks"
+			},
+			"view": "public_product_submission_blocks",
+			"targetSchema": "public",
+			"targetTable": "product_submission_blocks",
+			"columns": [
+				"id",
+				"user_id",
+				"reason",
+				"rejection_count",
+				"window_started_at",
+				"window_ended_at",
+				"blocked_until",
+				"source_submission_id",
+				"created_by",
+				"created_at",
+				"notes"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "7db363a47b0f89e9d97a3bc8e8f59da8b6f9d2b0c0caa9132edb29748cb21501"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "profile_image_policy_acceptances"
+			},
+			"view": "public_profile_image_policy_acceptances",
+			"targetSchema": "public",
+			"targetTable": "profile_image_policy_acceptances",
+			"columns": [
+				"id",
+				"user_id",
+				"avatar_path",
+				"file_sha256",
+				"policy_version",
+				"policy_items",
+				"accepted_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "95b64ec3f9d4cbc328a26da56f1d415627a0779e3ee8247d981432e39b5c1bd6"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "profile_image_reports"
+			},
+			"view": "public_profile_image_reports",
+			"targetSchema": "public",
+			"targetTable": "profile_image_reports",
+			"columns": [
+				"id",
+				"reported_profile_user_id",
+				"avatar_path",
+				"reported_by",
+				"reason_code",
+				"details",
+				"status",
+				"reviewed_by",
+				"reviewed_at",
+				"review_note",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "a77526e6c45e412c6946807e0d1134c8aa03d0df40cdbb8fd42b720e8ba6a29e"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "profiles"
+			},
+			"view": "public_profiles",
+			"targetSchema": "public",
+			"targetTable": "profiles",
+			"columns": [
+				"user_id",
+				"display_name",
+				"bio",
+				"avatar_path",
+				"avatar_alt_text",
+				"avatar_moderation_status",
+				"avatar_policy_acknowledged_at",
+				"created_at",
+				"updated_at",
+				"appearance_theme",
+				"cheeky_messages_enabled"
+			],
+			"orderBy": ["user_id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "606efd1014c69661993b306b367f539ebda9c366e83b38df710106f1d5f03fa8"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "saved_drinks"
+			},
+			"view": "public_saved_drinks",
+			"targetSchema": "public",
+			"targetTable": "saved_drinks",
+			"columns": ["id", "user_id", "name", "drink", "created_at", "updated_at"],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "b0de3568d6e57b2d1f2f910de6eea12382c618e706803980a2323b69519d97d1"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "serving_measure_aliases"
+			},
+			"view": "public_serving_measure_aliases",
+			"targetSchema": "public",
+			"targetTable": "serving_measure_aliases",
+			"columns": [
+				"unit_key",
+				"alias",
+				"normalized_alias",
+				"source_key",
+				"observation_count",
+				"first_observed_at",
+				"last_observed_at",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["unit_key", "normalized_alias"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "e7b4819c98743ecfa2fc361a688f518e0bb5de11ac8ac5019c9090028c20eb57"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "serving_measure_units"
+			},
+			"view": "public_serving_measure_units",
+			"targetSchema": "public",
+			"targetTable": "serving_measure_units",
+			"columns": [
+				"key",
+				"display_label",
+				"short_label",
+				"dimension",
+				"base_unit_key",
+				"conversion_to_base",
+				"standards_code",
+				"display_order",
+				"is_default",
+				"enabled",
+				"source_key",
+				"source_reference",
+				"observed_at",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["key"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "01ddb49c1f8ad2b5da6f3a9918572ccad98463747155cf1c3246531bc8c065c3"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "shared_product_conflicts"
+			},
+			"view": "public_shared_product_conflicts",
+			"targetSchema": "public",
+			"targetTable": "shared_product_conflicts",
+			"columns": [
+				"id",
+				"shared_product_id",
+				"barcode",
+				"field_path",
+				"observed_values",
+				"severity",
+				"status",
+				"resolution_note",
+				"resolved_by",
+				"resolved_at",
+				"created_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "103c72fe4de29ff0511d8ab4e1edbcb3571c0d436b9bcf48c16cde787f5e5c00"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "shared_product_field_provenance"
+			},
+			"view": "public_shared_product_field_provenance",
+			"targetSchema": "public",
+			"targetTable": "shared_product_field_provenance",
+			"columns": [
+				"id",
+				"shared_product_id",
+				"observation_id",
+				"field_path",
+				"source_value",
+				"normalized_value",
+				"selected",
+				"confidence",
+				"verification_method",
+				"created_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "e1b308d73e9c82c0d528c34461bf39b741f30bc591558118e183aa8162997f63"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "shared_product_mass_volume_conversion_policies"
+			},
+			"view": "public_shared_product_mass_volume_conversion_policies",
+			"targetSchema": "public",
+			"targetTable": "shared_product_mass_volume_conversion_policies",
+			"columns": [
+				"id",
+				"shared_product_id",
+				"source_observation_id",
+				"grams_per_milliliter",
+				"calculation_basis",
+				"evidence_reference",
+				"reviewed_by",
+				"reviewed_at",
+				"enabled",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "78818ae430a19e5b3700723a35cfd0748b063485e68d9d3aeb730b8ecd7dde45"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "shared_product_observations"
+			},
+			"view": "public_shared_product_observations",
+			"targetSchema": "public",
+			"targetTable": "shared_product_observations",
+			"columns": [
+				"id",
+				"barcode",
+				"source",
+				"source_reference",
+				"source_license",
+				"submission_id",
+				"submitted_by",
+				"raw_payload",
+				"normalized_food",
+				"content_hash",
+				"observed_at",
+				"expires_at",
+				"created_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "02bed6f40d606d817eae7f7b6de1fcb7b43a9fa7b680032e9573599c5c035dc8"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "shared_product_revision_changes"
+			},
+			"view": "public_shared_product_revision_changes",
+			"targetSchema": "public",
+			"targetTable": "shared_product_revision_changes",
+			"columns": [
+				"id",
+				"revision_id",
+				"field_path",
+				"field_label",
+				"change_type",
+				"previous_value",
+				"new_value",
+				"severity",
+				"created_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "eb9b6d57a861695e118df1fd7c47a099b18f7a10b545c0c9ec652c1f07f15152"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "shared_product_revisions"
+			},
+			"view": "public_shared_product_revisions",
+			"targetSchema": "public",
+			"targetTable": "shared_product_revisions",
+			"columns": [
+				"id",
+				"shared_product_id",
+				"revision_number",
+				"food",
+				"source",
+				"source_reference",
+				"created_by",
+				"created_at",
+				"category_option_id",
+				"submission_id",
+				"supersedes_revision_id",
+				"change_summary",
+				"label_observed_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "84b1b8d87fb3fa6372419a9f544012ca86d6f0c9e4d075634578c67500ed970d"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "shared_product_submission_field_evidence"
+			},
+			"view": "public_shared_product_submission_field_evidence",
+			"targetSchema": "public",
+			"targetTable": "shared_product_submission_field_evidence",
+			"columns": [
+				"id",
+				"submission_id",
+				"source_observation_id",
+				"field_path",
+				"proposed_value",
+				"unit",
+				"basis",
+				"observed_at",
+				"confidence",
+				"evidence_references",
+				"created_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "3046c6be78ebd155776648643c43eab9c854914857c602a51336304ad56f91d5"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "shared_product_submissions"
+			},
+			"view": "public_shared_product_submissions",
+			"targetSchema": "public",
+			"targetTable": "shared_product_submissions",
+			"columns": [
+				"id",
+				"submitted_by",
+				"barcode",
+				"product_name",
+				"brand_owner",
+				"food",
+				"consent_to_share",
+				"status",
+				"verification_status",
+				"matched_source",
+				"matched_reference",
+				"validation_report",
+				"reviewed_by",
+				"reviewed_at",
+				"review_note",
+				"created_at",
+				"updated_at",
+				"evidence_paths",
+				"evidence_complete",
+				"category_option_id",
+				"submission_kind",
+				"target_shared_product_id",
+				"base_revision_id",
+				"change_summary",
+				"label_observed_at",
+				"submission_intent",
+				"queue_resolution"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "66265268c362b05971908fcec5fdb78ce2055ce8f1c365f22393d76f88b7a102"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "shared_products"
+			},
+			"view": "public_shared_products",
+			"targetSchema": "public",
+			"targetTable": "shared_products",
+			"columns": [
+				"id",
+				"barcode",
+				"product_name",
+				"brand_owner",
+				"search_text",
+				"food",
+				"source",
+				"source_reference",
+				"confidence",
+				"status",
+				"approved_submission_id",
+				"approved_by",
+				"created_at",
+				"updated_at",
+				"last_verified_at",
+				"canonical_provenance",
+				"compatibility_summary",
+				"category_option_id"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "57189af3e4e0d6115f614929949ede0c44dce6d1e390acd0aa6c13211b31b965"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "user_catalog_submission_enforcement"
+			},
+			"view": "public_user_catalog_submission_enforcement",
+			"targetSchema": "public",
+			"targetTable": "user_catalog_submission_enforcement",
+			"columns": [
+				"user_id",
+				"moderator_rejection_count",
+				"sharing_suspended_until",
+				"latest_rejected_submission_id",
+				"latest_rejected_by",
+				"latest_rejected_at",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["user_id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "2d7407912c08767b90d8f45f0ce5ae5d7ec5b147094cabf7dd88fc0c00db1a77"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "user_compatibility_rules"
+			},
+			"view": "public_user_compatibility_rules",
+			"targetSchema": "public",
+			"targetTable": "user_compatibility_rules",
+			"columns": [
+				"id",
+				"user_id",
+				"tag_id",
+				"rule_type",
+				"severity",
+				"raw_value",
+				"normalized_value",
+				"active",
+				"created_at",
+				"updated_at",
+				"resolution_status",
+				"resolution_method",
+				"resolution_policy_version_id",
+				"resolution_language_code",
+				"ingredient_term_id",
+				"ingredient_alias_id",
+				"preference_term_mapping_id"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "bec78476fc678ab1e403fdcda3d209c02ab1e90c097f0053fb6812aa74312515"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "user_food_list_items"
+			},
+			"view": "public_user_food_list_items",
+			"targetSchema": "public",
+			"targetTable": "user_food_list_items",
+			"columns": [
+				"id",
+				"user_id",
+				"list_type",
+				"fdc_id",
+				"food",
+				"created_at",
+				"updated_at",
+				"food_identity_key",
+				"shared_product_id",
+				"shared_product_submission_id",
+				"source_key",
+				"trust_status"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "24164eacf12482f2abf9bbc2b9526d5bf953265736c4828f5c7d8168347e4e11"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "user_food_preferences"
+			},
+			"view": "public_user_food_preferences",
+			"targetSchema": "public",
+			"targetTable": "user_food_preferences",
+			"columns": [
+				"user_id",
+				"unit_system",
+				"allergens",
+				"dietary_restrictions",
+				"prioritized_nutrient_ids",
+				"default_smoothie_serving_grams",
+				"sensitive_acknowledged_at",
+				"created_at",
+				"updated_at",
+				"regulatory_region_code",
+				"regulatory_region_source"
+			],
+			"orderBy": ["user_id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "6bfd6c0de85d2f4d23e6771834e01a14d6387da7b74af47882313ad5eb86c5cb"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "user_marketing_email_preferences"
+			},
+			"view": "public_user_marketing_email_preferences",
+			"targetSchema": "public",
+			"targetTable": "user_marketing_email_preferences",
+			"columns": [
+				"user_id",
+				"topic_key",
+				"is_subscribed",
+				"consent_copy_version",
+				"source",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["user_id", "topic_key"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "8db3cbda84210cc43cb3894e36d7da13d7285cfc383e1b6c00999b9e06d06214"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "user_mix_goal_template_targets"
+			},
+			"view": "public_user_mix_goal_template_targets",
+			"targetSchema": "public",
+			"targetTable": "user_mix_goal_template_targets",
+			"columns": [
+				"template_id",
+				"nutrient_id",
+				"goal_type",
+				"target_amount",
+				"upper_amount",
+				"tolerance_ratio",
+				"importance_weight",
+				"sort_order"
+			],
+			"orderBy": ["template_id", "nutrient_id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "f46efe1ea712a8143ccb74470dc2f78e98f19fc66804da0e4df98c42fe42ca4b"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "user_mix_goal_templates"
+			},
+			"view": "public_user_mix_goal_templates",
+			"targetSchema": "public",
+			"targetTable": "user_mix_goal_templates",
+			"columns": [
+				"id",
+				"user_id",
+				"display_name",
+				"description",
+				"goal_basis",
+				"source_template_version_id",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "f3a602051e7696405182f404641c9688979897d7e448e8f1222711b9633a918f"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "user_mix_nutrient_goals"
+			},
+			"view": "public_user_mix_nutrient_goals",
+			"targetSchema": "public",
+			"targetTable": "user_mix_nutrient_goals",
+			"columns": [
+				"user_id",
+				"nutrient_id",
+				"goal_type",
+				"target_amount",
+				"upper_amount",
+				"tolerance_ratio",
+				"importance_weight",
+				"sort_order",
+				"source_template_version_id",
+				"source_user_template_id",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["user_id", "nutrient_id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "f13aa8c6660798fc85fa93cecafccced6872588998723d25f3d7b42e31dcc285"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "user_tutorial_preferences"
+			},
+			"view": "public_user_tutorial_preferences",
+			"targetSchema": "public",
+			"targetTable": "user_tutorial_preferences",
+			"columns": [
+				"user_id",
+				"tutorial_version",
+				"do_not_show_again",
+				"remind_after",
+				"last_seen_at",
+				"completed_at",
+				"created_at",
+				"updated_at"
+			],
+			"orderBy": ["user_id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "55715650778f5d14bcef4d5aa5494492022d9e35e97ed6566b0c1953e573a9a5"
+		}
+	],
+	"assetReader": {
+		"endpointFingerprint": "ed792b695d4c8f7c6a9a3f428b40075c0b0afb8eb987d918166fdf151f3c0a4f",
+		"baseUrlEnvironmentVariable": "REHEARSAL_SOURCE_STORAGE_URL",
+		"tokenEnvironmentVariable": "REHEARSAL_SOURCE_STORAGE_TOKEN",
+		"maximumObjects": 100,
+		"maximumObjectBytes": 52428800,
+		"maximumTotalBytes": 104857600
+	},
+	"assets": [
+		{
+			"bucket": "profile-avatars",
+			"prefixEnvironmentVariable": "REHEARSAL_APPROVED_OWNER_ID",
+			"rights": "approved-owner",
+			"pathMapping": "owner-storage"
+		},
+		{
+			"bucket": "product-submission-evidence",
+			"prefixEnvironmentVariable": "REHEARSAL_APPROVED_OWNER_ID",
+			"rights": "approved-owner",
+			"pathMapping": "owner-storage"
+		}
+	]
+}

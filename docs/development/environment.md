@@ -25,16 +25,16 @@ Secrets never belong in tracked files.
 
 ## Environment Files
 
-| Tracked contract                                         | Ignored values                                                 | Consumer                                          |
-| -------------------------------------------------------- | -------------------------------------------------------------- | ------------------------------------------------- |
-| `config/environments/production-development.example.env` | `.env`                                                         | Production-connected app on port `5173`           |
-| `config/environments/blendcalc-api-hosted.example.env`   | `.env.blendCalcAPI.hosted.local`                               | Guarded hosted blendCalcAPI migration operations  |
-| `config/environments/privileged-operations.example.env`  | `.env.moderation.local`                                        | Privileged scripts and linked Supabase operations |
-| None; the database manager generates the contract        | `.env.test.local`                                              | Disposable local database and Playwright          |
-| `config/environments/rehearsal-auth.example.env`         | `.rehearsal/runtime.env`, `.env.rehearsal-auth.local`          | Local Rehearsal runtime and Google identity       |
-| `config/environments/rehearsal-source.example.env`       | `.env.rehearsal-source.local`                                  | Temporary production-source readers               |
-| `config/environments/vercel.example.env`                 | `.env.vercel.production.local` and `.env.vercel.preview.local` | Vercel Production and Preview deployments         |
-| `supabase/functions/.env.example`                        | `supabase/functions/.env.local`                                | Supabase Edge Functions                           |
+| Tracked contract                                         | Ignored values                                                                  | Consumer                                          |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------- |
+| `config/environments/production-development.example.env` | `.env`                                                                          | Production-connected app on port `5173`           |
+| `config/environments/blendcalc-api-hosted.example.env`   | `.env.blendCalcAPI.hosted.local`                                                | Guarded hosted blendCalcAPI migration operations  |
+| `config/environments/privileged-operations.example.env`  | `.env.moderation.local`                                                         | Privileged scripts and linked Supabase operations |
+| None; the database manager generates the contract        | `.env.test.local`                                                               | Disposable local database and Playwright          |
+| `config/environments/rehearsal-auth.example.env`         | `.rehearsal-native/primary/.rehearsal/runtime.env`, `.env.rehearsal-auth.local` | Local Rehearsal runtime and Google identity       |
+| `config/environments/rehearsal-source.example.env`       | `.env.rehearsal-source.local`                                                   | Separately approved source readers                |
+| `config/environments/vercel.example.env`                 | `.env.vercel.production.local` and `.env.vercel.preview.local`                  | Vercel Production and Preview deployments         |
+| `supabase/functions/.env.example`                        | `supabase/functions/.env.local`                                                 | Supabase Edge Functions                           |
 
 The ignored mirrors are local inventory and development inputs. Vercel and Supabase
 remain authoritative for deployed values. Never copy a secret into a public variable,
@@ -217,9 +217,13 @@ new publication migrations. A fresh reviewed publication baseline is required be
 switching that target to the maintained publication migration directory. This does
 not modify or replace `infrastructure/blendCalcAPI/supabase/migrations/`.
 
-- Approved application baseline and generated service variables: ignored `.rehearsal/`.
-- Approved publication baseline and generated service variables: ignored
-  `.rehearsal-publication/.rehearsal/`.
+- Native application baseline and generated service variables: ignored
+  `.rehearsal-native/primary/.rehearsal/`.
+- Native publication baseline and generated service variables: ignored
+  `.rehearsal-native/publication/.rehearsal/`.
+- Earlier `.rehearsal/` and `.rehearsal-publication/` baselines remain protected.
+- Native privacy and source policy files: `application/privacy-policy.v2.json`,
+  `application/source-access-policy.json` and their publication counterparts.
 - Restore prerequisites and disabled scheduler: `application/runtime-policy.json`.
 - Reviewed copied-account references and signup defaults: `application/identity-policy.json`.
 - OAuth client secrets: ignored, owner-only `.env.rehearsal-auth.local`.
@@ -275,19 +279,40 @@ invalid refresh token; it does not prove natural token expiration. Synthetic fix
 are removed afterward. Genuine Google login
 and copied-owner association remain separate observed checks.
 
-### Source preparation remains temporarily separate
+### Package-owned source preparation
 
-The approved existing policies are checksummed, restore-only declarations. Do not
-rewrite them or run a new extraction merely to complete runtime cleanup. BlendCalc's
-legacy source-preparation scripts remain until all privacy transformations—including
-27 JSON fields—have reviewed, bounded executable declarations and equivalence tests.
-The random owner-only `.rehearsal/sanitization.key`, credentials and approved baselines
-remain untouched.
+The package executes the reviewed v2 privacy declarations, including all 27 structured
+fields. BlendCalc has no source-copy, sanitizer, Storage inventory or preparation runner.
+The retained version-1 policy files belong to earlier checksummed baselines and must not
+be rewritten for new copies. Generic package verification belongs to Rehearsal Test Lab.
 
-The retained provisioning, refresh and deprovisioning commands are documented in
-[Repository scripts](../../scripts/README.md#local-database-and-qa). They require
-separate authorization for any hosted access. Their presence does **not** authorize a
-production connection. Rehearsal runtime and identity execution no longer use them.
+The active source policies are bound to approved loopback copies, exact external reader
+groups/views and their reviewed columns. They do not grant hosted access. The source
+provider supplies expiring read-only credentials and the bounded Storage-reader token;
+no application service-role credential is accepted as the source reader.
+
+`config/environments/rehearsal-source.example.env` lists only server-side inputs. Supply
+them through an owner-only environment manager; merely creating the ignored source
+dotenv file does not load it into the CLI. Never put a raw owner ID, email, key or token
+in a tracked declaration or command argument. Owner bindings and targets are hashed.
+
+Run `source plan`, `source apply --confirm-source-access=<full-digest>`, `baseline refresh`,
+then preview and confirm `source retire`. Repeat with
+`--config=infrastructure/rehearsal/publication/rehearsal.config.mjs` for publication.
+State-changing commands run sequentially. The default command selects only the primary
+source; dependent source preparation is not implicit.
+
+Each target stores its credential/receipt and Base64 privacy key privately inside its
+configured artifact root. `privacy key --write` is first-time creation only; it refuses
+to replace an existing key. The approved legacy binary key remains untouched and its
+native encoded copies preserve the same cryptographic bytes. Key changes require review
+of account, relationship and asset mappings, not a compatibility loader.
+
+`baseline refresh` activates a verified generation without resetting runtime edits or
+pruning earlier generations. Reset and cleanup are separate deliberate operations.
+External `source retire` removes local access state, not provider-owned roles or views;
+the provider owns credential revocation and expiry. See the
+[package documentation](https://ddupasquier.github.io/rehearsal-db/) for its public commands.
 
 ## Local Resource Safety
 

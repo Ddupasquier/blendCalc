@@ -168,61 +168,54 @@ Transactional email in a safe local runtime returns a deterministic local sink r
 without contacting Resend. This keeps moderation and operational flows testable while
 making real delivery impossible.
 
-Rehearsal production extraction uses a database capability boundary rather than a
-service-role client or a read-only transaction alone. The additive local design
-separates a dedicated disposable login, a no-login reader group, and an unreachable
-no-login view owner. The login may inherit only `SELECT` on explicit versioned
-security-barrier views in the non-Data-API `rehearsal_export` schema; it receives no
-source-schema usage, direct table access, writable function path, schema creation,
-temporary-object creation, or owner-role assumption capability. A serializable
-read-only transaction provides a single consistent snapshot while source ACLs remain
-the hard mutation boundary.
+Production-shaped source preparation is a separately authorized package operation,
+not an application feature. BlendCalc declares the exact source target, provider-owned
+reader groups/views, allowed columns, owner receipt, privacy recipes and approved asset
+prefixes. The current policies bind only to approved loopback copies. A runtime launch
+never grants permission to read a hosted source.
 
-The export stream carries a preflight receipt, every reviewed table in deterministic
-primary-key order, an ordered hashed migration ledger, and a completion receipt. Every
-record is encoded as one bounded stream envelope before local sanitization. Baseline
-activation is atomic and checksummed; a failed generation never replaces the prior
-active baseline. Supabase may restore public `pg_net` function execution during service
-bootstrap, so credential provisioning must use an elevated revocation and the export
-preflight must independently prove that the login has zero executable network paths.
-The migration and all proofs currently remain local to the DEV-081 branch; no production
-export schema or credential exists until separate review and authorization.
+Rehearsal validates the complete source capability boundary: readable columns must
+match the reviewed surface, memberships must match the allowlist, and writes, role
+escalation, unsafe executable functions and unreviewed assets must be unavailable.
+The provider supplies expiring credentials; a read-only transaction alone is not an
+authorization boundary. Existing source roles/views and application RLS are not altered
+by external-reader mode.
 
-An activated baseline also stores the exact migration-file prefix that shaped its
-source. The Rehearsal manager refuses any edited, reordered, removed, or database-only
-history before restore, then classifies only later files as candidates. It restores the
-sanitized stream into a dedicated local Supabase workdir, verifies exact counts and
-references inside the restore transaction, and applies candidates only when their
-ordered SHA-256 receipt is explicitly confirmed. A failure discards that runtime.
+The package streams rows from one consistent database snapshot, executes bounded
+privacy v2 declarations and records checksummed schema/migration evidence. Activation
+is atomic. Physical Storage uses bounded recursive traversal and exact byte/hash/MIME
+verification; database references and object paths share the declared identity mapping.
+There is no BlendCalc-owned exporter, transformation runner, Storage preparator or
+source compatibility adapter. Generic package regression coverage lives in Rehearsal
+Test Lab; BlendCalc owns its policy semantics and application outcomes.
 
-Auth records are reconstructed as synthetic local placeholders only for retained public
-foreign keys. The export credential fixes one approved source owner UUID and stores only
-the SHA-256 of that account's lowercased email. That owner's non-secret private
-application rows remain exact while their UUID and owner-scoped Storage paths are
-pseudonymized; other users' identities and private values remain sanitized. Public
-catalog, nutrient, category, ingredient, warning, moderation, source, and image metadata
-remain exact.
+Restore verifies exact baseline table counts and references, reconstructs synthetic
+Auth placeholders and checks immutable migration lineage. Candidate migrations require
+the exact reviewed digest. Later verification permits deliberate sandbox edits while
+continuing to check integrity and isolation. Runtime prerequisites, disabled scheduler
+rows and local role overlays are declarations, not executable adapters.
 
-After count verification, the restored owner persona receives a fixed local test
-identity and a developer-role overlay excluded from the baseline. Application proofs
-use ordinary email/password sign-in with that server-owned disposable credential;
-the 5175 application does not expose a quick-login shortcut. Privileged TOTP
-enforcement remains intact. Google authentication uses the ordinary application callback;
-copied-account association is a separately reviewed, confirmed operation owned by the
-installed Rehearsal package, not an application callback or compatibility RPC. Its
-declarative policy must restrict association to the fixed source-email receipt and
-cover owner references, physical Storage transfer and immutable history. Session claims
-must be refreshed after association. A different Google account stays a new empty local
-user and can never claim the owner's data. See
-[Authentication](authentication.md#local-qa-and-rehearsal-sign-in) for the sign-in and
-association boundary.
+The approved owner retains permitted private application values while identity and
+Storage paths are pseudonymized. Other owners follow explicit sanitization rules; public
+source rights and attribution stay governed by the licensing ledger. Neither a copy nor
+a privacy declaration grants new redistribution rights.
 
-The database export login and Storage reader are separate. The Storage JWT role has only
-object `SELECT`; RLS exposes the public product-image bucket plus the fixed owner's
-prefixes in the private avatar and submission-evidence buckets. Every downloaded byte is
-bounded, checksummed in the immutable baseline, and restored to the local 58321 Storage
-service. Source credentials, hosted writes, background jobs, provider enrichment, and
-all non-identity hosted side effects remain outside Rehearsal by design.
+The 5175 app uses ordinary Google or password authentication, without Quick QA login.
+Application proofs create only their own synthetic test credentials. They do not set a
+password on the copied owner or perform a Google login for that person. TOTP and account
+blocks remain enforced. Copied-account association is a separately reviewed package
+identity plan/claim, never a callback hook or compatibility RPC; its declaration covers
+ownership, physical images, signup defaults and immutable history. Refresh or sign in
+again afterward for current role claims. A different Google account remains independent
+and cannot claim the approved copy. See
+[Authentication](authentication.md#local-qa-and-rehearsal-sign-in).
+
+Source database and Storage credentials are separate and server-only. Native source
+retirement in external mode removes local access state; the provider owns revocation
+and expiry. Baselines, privacy keys and runtime edits are not silently deleted. Runtime
+processes receive only declared local services and the separate allowlisted Google
+configuration, never source-reader credentials, hosted application credentials or
+provider-enrichment authority.
 
 External food APIs are enrichment inputs, not live UI databases. Server code checks
 blendCalc data first, requests only missing permitted fields, records field-level source

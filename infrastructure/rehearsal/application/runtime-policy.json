@@ -45,7 +45,7 @@
 			},
 			"keyColumns": ["user_id"],
 			"values": {
-				"user_id": "b04b74f7-5b2c-4cb2-a12c-618f24da25dd",
+				"user_id": "c166e0d6-7a25-408a-9545-973daa22f965",
 				"role": "developer",
 				"granted_by": null
 			},
