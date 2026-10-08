@@ -3,7 +3,7 @@
 	"identities": [
 		{
 			"name": "approved-owner",
-			"placeholderUserId": "b04b74f7-5b2c-4cb2-a12c-618f24da25dd",
+			"placeholderUserId": "c166e0d6-7a25-408a-9545-973daa22f965",
 			"references": [
 				{
 					"schema": "public",
@@ -424,12 +424,12 @@
 			"assets": [
 				{
 					"bucket": "profile-avatars",
-					"prefix": "b04b74f7-5b2c-4cb2-a12c-618f24da25dd/",
+					"prefix": "c166e0d6-7a25-408a-9545-973daa22f965/",
 					"rewritePath": true
 				},
 				{
 					"bucket": "product-submission-evidence",
-					"prefix": "b04b74f7-5b2c-4cb2-a12c-618f24da25dd/",
+					"prefix": "c166e0d6-7a25-408a-9545-973daa22f965/",
 					"rewritePath": true
 				}
 			],

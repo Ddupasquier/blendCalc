@@ -851,6 +851,163 @@ test("logout ends the session without deleting durable account data", async ({
 	});
 });
 
+test("Profile tools launcher keeps copy and controls balanced @compatibility @mobile", async ({
+	context,
+	page,
+}, testInfo) => {
+	await context.clearCookies({ name: /auth-token/ });
+	await page.goto("/auth?next=%2Fprofile");
+	await waitForAppReady(page);
+	await page.getByRole("combobox", { name: "QA account" }).click();
+	await page.getByRole("option", { name: /QA Admin ·/ }).click();
+	await page.getByRole("button", { name: "Continue as QA Admin" }).click();
+	await expect(page).toHaveURL(/\/profile$/, { timeout: 45_000 });
+	await waitForAppReady(page);
+	const launcher = page.getByRole("link", { name: /Admin tools/ });
+	await expect(launcher).toHaveAttribute("href", "/profile/privileged-tools");
+	const summary = await launcher
+		.locator(".profile-settings-sheet-launcher__copy span")
+		.innerText();
+	const badge = launcher.locator(".action-required-count-badge");
+	const countLabel = (await badge.count())
+		? await badge.getAttribute("aria-label")
+		: null;
+
+	for (const theme of ["light", "dark"]) {
+		// Presentation-only device fixture; no account preference is saved.
+		await page.evaluate((value) => {
+			document.documentElement.dataset.theme = value;
+		}, theme);
+		for (const [width, height] of [
+			[320, 568],
+			[360, 740],
+			[390, 844],
+			[420, 844],
+			[430, 844],
+			[740, 360],
+			[768, 1024],
+			[1280, 900],
+		]) {
+			await page.setViewportSize({ width, height });
+			await launcher.scrollIntoViewIfNeeded();
+			const geometry = await launcher.evaluate((element) => {
+				const row = element.getBoundingClientRect();
+				const parts = Array.from(element.children).map((child) => {
+					const rect = child.getBoundingClientRect();
+					return {
+						left: rect.left,
+						right: rect.right,
+						top: rect.top,
+						bottom: rect.bottom,
+						center: rect.top + rect.height / 2,
+					};
+				});
+				const copy = element.querySelector(
+					".profile-settings-sheet-launcher__copy",
+				)!;
+				return {
+					row: {
+						left: row.left,
+						right: row.right,
+						top: row.top,
+						bottom: row.bottom,
+						height: row.height,
+					},
+					parts,
+					copyFits: copy.scrollWidth <= copy.clientWidth + 1,
+					whiteSpace: getComputedStyle(copy.children[1]).whiteSpace,
+					pageFits: document.documentElement.scrollWidth <= window.innerWidth,
+				};
+			});
+			expect(geometry.row.height).toBeGreaterThanOrEqual(44);
+			expect(geometry.copyFits).toBe(true);
+			expect(geometry.pageFits).toBe(true);
+			expect(geometry.whiteSpace).toBe("normal");
+			for (const [index, part] of geometry.parts.entries()) {
+				expect(part.left).toBeGreaterThanOrEqual(geometry.row.left);
+				expect(part.right).toBeLessThanOrEqual(geometry.row.right);
+				expect(part.top).toBeGreaterThanOrEqual(geometry.row.top);
+				expect(part.bottom).toBeLessThanOrEqual(geometry.row.bottom);
+				expect(Math.abs(part.center - geometry.parts[0].center)).toBeLessThan(
+					1,
+				);
+				if (index > 0) {
+					expect(part.left - geometry.parts[index - 1].right).toBeGreaterThan(
+						0,
+					);
+				}
+			}
+			await expect(launcher).toContainText(summary);
+			if (countLabel)
+				await expect(badge).toHaveAttribute("aria-label", countLabel);
+			if ([390, 1280].includes(width)) {
+				await testInfo.attach(`tools-row-${theme}-${width}`, {
+					body: await launcher.screenshot(),
+					contentType: "image/png",
+				});
+			}
+		}
+	}
+	await page.setViewportSize({ width: 390, height: 844 });
+	await page.emulateMedia({ reducedMotion: "reduce" });
+	await page.evaluate(() => {
+		document.documentElement.style.fontSize = "200%";
+	});
+	await launcher.scrollIntoViewIfNeeded();
+	await expect(launcher).toContainText(summary);
+	expect(
+		await launcher.evaluate(
+			(element) => element.scrollWidth <= element.clientWidth,
+		),
+	).toBe(true);
+	await page.keyboard.press("Tab");
+	await launcher.focus();
+	await expect(launcher).toBeFocused();
+	const zoomedLayout = await launcher.evaluate((element) => {
+		const row = element.getBoundingClientRect();
+		const copy = element
+			.querySelector(".profile-settings-sheet-launcher__copy")!
+			.getBoundingClientRect();
+		const ring = getComputedStyle(element, "::after");
+		return {
+			copyFits: copy.top >= row.top && copy.bottom <= row.bottom,
+			focusVisible: element.matches(":focus-visible"),
+			ringStyle: ring.borderTopStyle,
+			ringWidth: Number.parseFloat(ring.borderTopWidth),
+			ringInsets: [ring.top, ring.right, ring.bottom, ring.left].map(
+				Number.parseFloat,
+			),
+			ringPosition: ring.position,
+			pointerEvents: ring.pointerEvents,
+		};
+	});
+	expect(zoomedLayout.copyFits).toBe(true);
+	expect(zoomedLayout.focusVisible).toBe(true);
+	expect(zoomedLayout.ringStyle).toBe("solid");
+	expect(zoomedLayout.ringWidth).toBeGreaterThan(0);
+	expect(zoomedLayout.ringPosition).toBe("absolute");
+	expect(zoomedLayout.pointerEvents).toBe("none");
+	for (const inset of zoomedLayout.ringInsets)
+		expect(inset).toBeGreaterThanOrEqual(0);
+	await launcher.press("Enter");
+	await expect(page).toHaveURL(/\/profile\/privileged-tools$/);
+	await expect(
+		page.getByRole("heading", { name: "Admin tools", exact: true }),
+	).toBeVisible();
+	if (countLabel) {
+		const landingCounts = await page
+			.locator(".profile-privileged-tool-link .action-required-count-badge")
+			.evaluateAll((badges) =>
+				badges.map((element) =>
+					Number(element.getAttribute("aria-label")?.split(" ")[0]),
+				),
+			);
+		expect(landingCounts.reduce((sum, count) => sum + count, 0)).toBe(
+			Number(countLabel.split(" ")[0]),
+		);
+	}
+});
+
 test("privileged tools stay hidden from regular accounts and use a landing dashboard for elevated accounts", async ({
 	page,
 }, testInfo) => {
@@ -1046,7 +1203,9 @@ test("privileged tools stay hidden from regular accounts and use a landing dashb
 			".action-required-count-badge",
 		);
 		await expect(aggregateBadge).toBeVisible();
-		const aggregateCount = Number(await aggregateBadge.textContent());
+		const aggregateCount = Number(
+			(await aggregateBadge.getAttribute("aria-label"))?.split(" ")[0],
+		);
 		expect(aggregateCount).toBeGreaterThan(0);
 
 		await verifiedLauncher.click();
@@ -1057,7 +1216,9 @@ test("privileged tools stay hidden from regular accounts and use a landing dashb
 		const actionCounts = await privilegedToolsDashboard
 			.locator(".profile-privileged-tool-link .action-required-count-badge")
 			.evaluateAll((badges) =>
-				badges.map((badge) => Number(badge.textContent ?? "0")),
+				badges.map((badge) =>
+					Number(badge.getAttribute("aria-label")?.split(" ")[0]),
+				),
 			);
 		expect(actionCounts.reduce((sum, count) => sum + count, 0)).toBe(
 			aggregateCount,

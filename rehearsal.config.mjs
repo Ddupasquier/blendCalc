@@ -9,7 +9,7 @@ export default defineRehearsalConfig({
 		migrationDirectory: "supabase/migrations",
 		rehearsalConfig:
 			"infrastructure/rehearsal/application/supabase/config.toml",
-		runtimeWorkdir: ".rehearsal/runtime",
+		runtimeWorkdir: ".rehearsal-native/primary/.rehearsal/runtime",
 		serviceEnvironmentFile: ".env.rehearsal-auth.local",
 		serviceEnvironmentVariables: [
 			"SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID",
@@ -17,9 +17,19 @@ export default defineRehearsalConfig({
 		],
 	},
 	baseline: {
-		artifactDirectory: ".rehearsal",
+		artifactDirectory: ".rehearsal-native/primary/.rehearsal",
 		sanitizationPolicy:
-			"infrastructure/rehearsal/application/sanitization-policy.json",
+			"infrastructure/rehearsal/application/privacy-policy.v2.json",
+	},
+	// The reviewed source is a purpose-created loopback copy, never the hosted app.
+	preparation: {
+		sourcePolicy:
+			"infrastructure/rehearsal/application/source-access-policy.json",
+		privacyKey: ".rehearsal-native/primary/.rehearsal/secrets/privacy.key",
+		batchRows: 500,
+		maximumRows: 2000000,
+		maximumBytes: 2147483648,
+		diskHeadroomBytes: 67108864,
 	},
 	runtimePolicy: "infrastructure/rehearsal/application/runtime-policy.json",
 	identityPolicy: "infrastructure/rehearsal/application/identity-policy.json",
@@ -33,7 +43,7 @@ export default defineRehearsalConfig({
 		startCommand:
 			"env PUBLIC_SITE_URL=http://localhost:5175 PUBLIC_TURNSTILE_SITE_KEY= TURNSTILE_SECRET_KEY= BLENDCALC_API_READ_MODE=isolated node node_modules/vite/bin/vite.js dev --mode rehearsal --host 127.0.0.1 --port 5175 --strictPort",
 		proofCommand: "node scripts/operations/quality/prove_local_application.mjs",
-		environmentFile: ".rehearsal/runtime.env",
+		environmentFile: ".rehearsal-native/primary/.rehearsal/runtime.env",
 		environmentVariables: {
 			BLENDCALC_RUNTIME_ENVIRONMENT: "primary:REHEARSAL_RUNTIME_ENVIRONMENT",
 			PUBLIC_SUPABASE_URL: "primary:SUPABASE_URL",
@@ -51,7 +61,7 @@ export default defineRehearsalConfig({
 	},
 	runtime: {
 		applicationUrl: "http://localhost:5175",
-		projectId: "blendcalc-rehearsal",
+		projectId: "blendcalc-rehearsal-native",
 		apiPort: 58321,
 		databasePort: 58322,
 		studioPort: 58323,
@@ -69,11 +79,5 @@ export default defineRehearsalConfig({
 		],
 		hostedAccess: "disabled",
 		outboundNetwork: "deny",
-	},
-	verification: {
-		commands: [
-			"node scripts/generators/rehearsal/generate_sanitization_manifest.mjs --check",
-			"node scripts/generators/rehearsal/generate_export_boundary_migration.mjs --check",
-		],
 	},
 });

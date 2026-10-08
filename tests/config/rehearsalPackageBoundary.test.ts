@@ -11,12 +11,7 @@ const packageMetadata = JSON.parse(
 	readFileSync("package.json", "utf8"),
 ) as PackageMetadata;
 
-const projectOwnedRehearsalRoots = [
-	"scripts/lib/rehearsal",
-	"scripts/generators/rehearsal",
-	"scripts/operations/rehearsal",
-	"infrastructure/rehearsal/application",
-];
+const projectOwnedRehearsalRoots = ["infrastructure/rehearsal"];
 
 const collectSourceFiles = (directory: string): string[] =>
 	readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
@@ -59,6 +54,21 @@ const packageImportInventory = execFileSync(
 	});
 
 describe("Rehearsal package consumer boundary", () => {
+	it("does not retain a second source-copy, sanitizer or Storage preparation engine", () => {
+		for (const path of [
+			"scripts/lib/rehearsal",
+			"scripts/generators/rehearsal",
+			"scripts/operations/rehearsal",
+		]) {
+			expect(existsSync(path), path).toBe(false);
+		}
+		const qaManager = readFileSync(
+			"scripts/operations/database/manage_test_database.mjs",
+			"utf8",
+		);
+		expect(qaManager).not.toMatch(/lib\/rehearsal|operations\/rehearsal/u);
+	});
+
 	it("keeps package-owned engine modules out of BlendCalc", () => {
 		const packageOwnedPaths = [
 			"scripts/lib/rehearsal/baseline_artifact.mjs",
@@ -159,6 +169,10 @@ describe("Rehearsal package consumer boundary", () => {
 		).toBe("publication-api:SUPABASE_URL");
 		expect(config.application.readiness.url).toBe("http://localhost:5175/auth");
 		expect(config.dependentTargets).toHaveLength(1);
+		expect(config.preparation.sourcePolicy).toBe(
+			"infrastructure/rehearsal/application/source-access-policy.json",
+		);
+		expect(config).not.toHaveProperty("verification.commands");
 		const identity = JSON.parse(readFileSync(config.identityPolicy, "utf8"))
 			.identities[0];
 		expect(identity.matcher.emailEnvironmentVariable).toBe(

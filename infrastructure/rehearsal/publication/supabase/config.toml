@@ -1,4 +1,4 @@
-project_id = "blendcalc-rehearsal-publication"
+project_id = "blendcalc-rehearsal-native-publication"
 
 [api]
 enabled = true

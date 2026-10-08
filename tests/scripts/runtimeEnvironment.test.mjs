@@ -179,7 +179,7 @@ describe("script runtime environments", () => {
 			"infrastructure/rehearsal/application/supabase/config.toml",
 			"utf8",
 		);
-		expect(config).toContain('project_id = "blendcalc-rehearsal"');
+		expect(config).toContain('project_id = "blendcalc-rehearsal-native"');
 		expect(config).toContain("port = 58321");
 		expect(config).toContain("port = 58322");
 		expect(config).toContain('site_url = "http://localhost:5175"');
