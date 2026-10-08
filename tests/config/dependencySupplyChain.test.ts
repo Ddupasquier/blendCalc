@@ -69,4 +69,18 @@ describe("dependency supply-chain configuration", () => {
 			"node_modules/@rehearsal/db",
 		);
 	});
+
+	it("keeps patched image and parser packages above their security floors", () => {
+		for (const [name, minimum] of [
+			["sharp", [0, 35, 5]],
+			["source-map-js", [1, 2, 2]],
+			["postcss-selector-parser", [7, 1, 6]],
+		] as const) {
+			const version = packageLock.packages[`node_modules/${name}`]?.version;
+			expect(version, name).toMatch(/^\d+\.\d+\.\d+$/);
+			const actual = version!.split(".").map(Number);
+			const order = actual.findIndex((part, index) => part !== minimum[index]);
+			expect(order === -1 || actual[order] > minimum[order], name).toBe(true);
+		}
+	});
 });
