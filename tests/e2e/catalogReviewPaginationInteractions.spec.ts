@@ -9,6 +9,7 @@ import { createLocalQaCatalogReviewer } from "./support/localQaCatalogReviewer";
 import { randomInt } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
+import type { Page, TestInfo } from "@playwright/test";
 
 // This corpus owns global catalog queues and one disposable MFA persona. Run serially.
 test.describe.configure({ mode: "serial" });
@@ -73,10 +74,11 @@ test("independent catalog reviewers keep ordinary Auth and MFA sessions isolated
 	}
 });
 
-test("catalog inbox and exact-product queues append, retry and reconcile @compatibility @mobile", async ({
-	page,
-	unexpectedBrowserErrors,
-}, testInfo) => {
+const withCatalogReviewFixture = async (
+	page: Page,
+	testInfo: TestInfo,
+	scenario: (fixture: { scope: string; productId: string }) => Promise<void>,
+) => {
 	const base = new URL(
 		String(testInfo.project.use.baseURL ?? "http://localhost:5174"),
 	);
@@ -132,6 +134,26 @@ test("catalog inbox and exact-product queues append, retry and reconcile @compat
 		await expect(page).toHaveURL(/\/auth\/mfa\/enroll\?/u);
 		await finishLocalQaAuthenticatorEnrollment(page);
 		await waitForAppReady(page);
+		await scenario({ scope, productId });
+	} finally {
+		// Only purpose-created fixture rows: reviewed state is removed by the
+		// final disposable reset, not by bypassing immutable-history safeguards here.
+		try {
+			if (seeded)
+				localSql(
+					`update public.shared_product_conflicts set status='resolved', resolved_at=now(), resolution_note='QA fixture retired' where id::text like '${scope}100-%' or id::text like '${scope}200-%'; update public.catalog_provider_change_reviews set status='superseded', reviewed_at=now(), review_note='QA fixture retired' where id::text like '${scope}500-%' or id::text like '${scope}b00-%'; update public.official_food_safety_alert_matches set status='superseded' where id::text like '${scope}700-%';`,
+				);
+		} finally {
+			await reviewer.cleanup();
+		}
+	}
+};
+
+test("catalog inbox appends, retries and preserves focus during routed navigation @compatibility @mobile", async ({
+	page,
+	unexpectedBrowserErrors,
+}, testInfo) => {
+	await withCatalogReviewFixture(page, testInfo, async ({ productId }) => {
 		const inbox = page.locator(".catalog-review-inbox");
 		const links = inbox.locator(".catalog-review-inbox__product");
 		await expect(links).toHaveCount(20);
@@ -207,186 +229,210 @@ test("catalog inbox and exact-product queues append, retry and reconcile @compat
 		expect(await page.evaluate(() => performance.timeOrigin)).toBe(
 			documentEpoch,
 		);
-		const recallFooter = product.getByLabel("Recall matches pagination", {
-			exact: true,
-		});
-		await expect(recallFooter).toContainText("20 of 61 recall matches loaded");
-		await product
-			.getByRole("button", { name: "Load more recall matches" })
-			.click();
-		await expect(recallFooter).toContainText("40 of 61 recall matches loaded");
-		await product
-			.getByRole("button", { name: "Load more recall matches" })
-			.click();
-		await expect(recallFooter).toContainText("60 of 61 recall matches loaded");
-		const conflictFooter = product.getByLabel("Conflicts pagination", {
-			exact: true,
-		});
-		await expect(conflictFooter).toContainText("20 of 61 conflicts loaded");
-		await expect(
-			product.getByRole("button", { name: "Finish product review" }),
-		).toBeDisabled();
-		await product.getByRole("button", { name: "Load more conflicts" }).click();
-		await expect(conflictFooter).toContainText("40 of 61 conflicts loaded");
-		await product.getByRole("button", { name: "Load more conflicts" }).click();
-		await expect(conflictFooter).toContainText("60 of 61 conflicts loaded");
-		await product.getByRole("button", { name: "Load more conflicts" }).click();
-		await expect(conflictFooter).toContainText("61 of 61 conflicts loaded");
-		await expect(
-			product.getByRole("button", { name: "Load more conflicts" }),
-		).toHaveCount(0);
-		const recalls = product.locator("form:has(input[name=matchId])");
-		expect(await recalls.count()).toBe(60);
-		const firstConflict = product
-			.locator(".catalog-conflict-workbench__finding")
-			.filter({ has: page.getByText("Decision 1 of 61", { exact: true }) });
-		await firstConflict.getByRole("combobox").click();
-		await page
-			.getByRole("option", {
-				name: "Cannot determine from current evidence",
+	});
+});
+
+test("exact-product catalog queues preserve drafts, responsive controls and atomic completion @compatibility @mobile", async ({
+	page,
+}, testInfo) => {
+	await withCatalogReviewFixture(
+		page,
+		testInfo,
+		async ({ scope, productId }) => {
+			await page.goto(`${root}/products/${productId}`);
+			await waitForAppReady(page);
+			const product = page.getByRole("dialog", { name: "Product readiness" });
+			await expect(product).toBeVisible();
+			const recallFooter = product.getByLabel("Recall matches pagination", {
 				exact: true,
-			})
-			.click();
-		const decisionNote =
-			"QA control: the exact ingredient evidence is insufficient for a correction.";
-		await firstConflict.getByRole("textbox").fill(decisionNote);
-		const first = product.locator(
-			`form:has(input[value="${scope}700-0000-4000-8000-000000000001"])`,
-		);
-		await first.getByRole("combobox").click();
-		await page
-			.getByRole("option", { name: "No — this is a different product" })
-			.click();
-		await first
-			.getByRole("textbox")
-			.fill("QA control: the exact package code does not match this notice.");
-		await first.getByRole("button", { name: "Dismiss recall match" }).click();
-		await expect(first).toHaveCount(0);
-		await expect(recallFooter).toContainText("60 of 60 recall matches loaded");
-		await expect(firstConflict.getByRole("textbox")).toHaveValue(decisionNote);
-		const providerFooter = product.getByLabel("Provider changes pagination", {
-			exact: true,
-		});
-		await product
-			.locator("summary")
-			.filter({ hasText: "Provider changes" })
-			.click();
-		await expect(providerFooter).toBeVisible();
-		await expect(providerFooter).toContainText(
-			"20 of 61 provider changes loaded",
-		);
-		for (const count of [40, 60, 61]) {
+			});
+			await expect(recallFooter).toContainText(
+				"20 of 61 recall matches loaded",
+			);
 			await product
-				.getByRole("button", { name: "Load more provider changes" })
+				.getByRole("button", { name: "Load more recall matches" })
 				.click();
+			await expect(recallFooter).toContainText(
+				"40 of 61 recall matches loaded",
+			);
+			await product
+				.getByRole("button", { name: "Load more recall matches" })
+				.click();
+			await expect(recallFooter).toContainText(
+				"60 of 61 recall matches loaded",
+			);
+			const conflictFooter = product.getByLabel("Conflicts pagination", {
+				exact: true,
+			});
+			await expect(conflictFooter).toContainText("20 of 61 conflicts loaded");
+			await expect(
+				product.getByRole("button", { name: "Finish product review" }),
+			).toBeDisabled();
+			await product
+				.getByRole("button", { name: "Load more conflicts" })
+				.click();
+			await expect(conflictFooter).toContainText("40 of 61 conflicts loaded");
+			await product
+				.getByRole("button", { name: "Load more conflicts" })
+				.click();
+			await expect(conflictFooter).toContainText("60 of 61 conflicts loaded");
+			await product
+				.getByRole("button", { name: "Load more conflicts" })
+				.click();
+			await expect(conflictFooter).toContainText("61 of 61 conflicts loaded");
+			await expect(
+				product.getByRole("button", { name: "Load more conflicts" }),
+			).toHaveCount(0);
+			const recalls = product.locator("form:has(input[name=matchId])");
+			expect(await recalls.count()).toBe(60);
+			const firstConflict = product
+				.locator(".catalog-conflict-workbench__finding")
+				.filter({ has: page.getByText("Decision 1 of 61", { exact: true }) });
+			await firstConflict.getByRole("combobox").click();
+			await page
+				.getByRole("option", {
+					name: "Cannot determine from current evidence",
+					exact: true,
+				})
+				.click();
+			const decisionNote =
+				"QA control: the exact ingredient evidence is insufficient for a correction.";
+			await firstConflict.getByRole("textbox").fill(decisionNote);
+			const first = product.locator(
+				`form:has(input[value="${scope}700-0000-4000-8000-000000000001"])`,
+			);
+			await first.getByRole("combobox").click();
+			await page
+				.getByRole("option", { name: "No — this is a different product" })
+				.click();
+			await first
+				.getByRole("textbox")
+				.fill("QA control: the exact package code does not match this notice.");
+			await first.getByRole("button", { name: "Dismiss recall match" }).click();
+			await expect(first).toHaveCount(0);
+			await expect(recallFooter).toContainText(
+				"60 of 60 recall matches loaded",
+			);
+			await expect(firstConflict.getByRole("textbox")).toHaveValue(
+				decisionNote,
+			);
+			const providerFooter = product.getByLabel("Provider changes pagination", {
+				exact: true,
+			});
+			await product
+				.locator("summary")
+				.filter({ hasText: "Provider changes" })
+				.click();
+			await expect(providerFooter).toBeVisible();
 			await expect(providerFooter).toContainText(
-				`${count} of 61 provider changes loaded`,
+				"20 of 61 provider changes loaded",
 			);
-		}
-		await expect(
-			product.getByRole("button", { name: "Load more provider changes" }),
-		).toHaveCount(0);
-		for (const width of [1024, 390]) {
-			await page.setViewportSize({ width, height: 844 });
-			const decisionHeading = product
-				.locator(
-					'form:has(input[name="reviewId"]) header.catalog-review-work__decision-heading',
-				)
-				.first();
-			const headingRows = await decisionHeading.evaluate((element) => ({
-				titleBottom: element.querySelector("strong")!.getBoundingClientRect()
-					.bottom,
-				copyTop: element.querySelector("span")!.getBoundingClientRect().top,
-			}));
-			expect(headingRows.copyTop).toBeGreaterThanOrEqual(
-				headingRows.titleBottom,
-			);
-			await decisionHeading.screenshot({
-				path: testInfo.outputPath(`provider-decision-heading-${width}.png`),
-			});
-			const overflow = await page.evaluate(
-				() =>
-					document.documentElement.scrollWidth >
-					document.documentElement.clientWidth + 1,
-			);
-			expect(overflow).toBe(false);
-			await product.screenshot({
-				path: testInfo.outputPath(`catalog-queues-${width}.png`),
-			});
-			for (const colorScheme of ["light", "dark"] as const) {
-				await page.emulateMedia({ colorScheme, reducedMotion: "reduce" });
-				await recallFooter.screenshot({
-					path: testInfo.outputPath(
-						`recall-footer-${width}-${colorScheme}.png`,
-					),
-				});
-			}
-		}
-		await page.evaluate(() => {
-			document.documentElement.style.fontSize = "200%";
-		});
-		await conflictFooter.screenshot({
-			path: testInfo.outputPath("conflict-footer-390-text200.png"),
-		});
-		const footerBounds = await conflictFooter.boundingBox();
-		expect(footerBounds).not.toBeNull();
-		expect(footerBounds!.x + footerBounds!.width).toBeLessThanOrEqual(391);
-		await page.evaluate(() => {
-			document.documentElement.style.fontSize = "";
-		});
-		await page.goto(`${root}/products/${scope}000-0000-4000-8000-000000000061`);
-		await waitForAppReady(page);
-		await expect(
-			page.getByLabel("Provider changes pagination", { exact: true }),
-		).toContainText("1 of 1 provider changes loaded");
-		const workbench = page.locator(".catalog-conflict-workbench");
-		await workbench.getByRole("combobox").click();
-		await page
-			.getByRole("option", {
-				name: "Cannot determine from current evidence",
-				exact: true,
-			})
-			.click();
-		await workbench
-			.getByRole("textbox")
-			.fill(
-				"QA control: no exact label supports changing this ingredient field.",
-			);
-		await workbench
-			.getByRole("button", { name: "Finish product review", exact: true })
-			.click();
-		await expect(page).not.toHaveURL(
-			new RegExp(`${scope}000-0000-4000-8000-000000000061$`, "u"),
-		);
-		await page.goto(`${root}/products/${scope}000-0000-4000-8000-000000000061`);
-		await waitForAppReady(page);
-		await expect(page.locator(".catalog-conflict-workbench")).toHaveCount(0);
-		const provider = page.locator('form:has(input[name="reviewId"])');
-		await expect(
-			provider.getByRole("button", {
-				name: "Keep current record",
-				exact: true,
-			}),
-		).toBeDisabled();
-		await provider
-			.getByRole("textbox")
-			.fill(
-				"QA control: this observation lacks the exact package evidence needed for a correction.",
-			);
-		await provider
-			.getByRole("button", { name: "Keep current record", exact: true })
-			.click();
-		await expect(provider).toHaveCount(0);
-	} finally {
-		// Only purpose-created fixture rows: reviewed state is removed by the
-		// final disposable reset, not by bypassing immutable-history safeguards here.
-		try {
-			if (seeded)
-				localSql(
-					`update public.shared_product_conflicts set status='resolved', resolved_at=now(), resolution_note='QA fixture retired' where id::text like '${scope}100-%' or id::text like '${scope}200-%'; update public.catalog_provider_change_reviews set status='superseded', reviewed_at=now(), review_note='QA fixture retired' where id::text like '${scope}500-%' or id::text like '${scope}b00-%'; update public.official_food_safety_alert_matches set status='superseded' where id::text like '${scope}700-%';`,
+			for (const count of [40, 60, 61]) {
+				await product
+					.getByRole("button", { name: "Load more provider changes" })
+					.click();
+				await expect(providerFooter).toContainText(
+					`${count} of 61 provider changes loaded`,
 				);
-		} finally {
-			await reviewer.cleanup();
-		}
-	}
+			}
+			await expect(
+				product.getByRole("button", { name: "Load more provider changes" }),
+			).toHaveCount(0);
+			for (const width of [1024, 390]) {
+				await page.setViewportSize({ width, height: 844 });
+				const decisionHeading = product
+					.locator(
+						'form:has(input[name="reviewId"]) header.catalog-review-work__decision-heading',
+					)
+					.first();
+				const headingRows = await decisionHeading.evaluate((element) => ({
+					titleBottom: element.querySelector("strong")!.getBoundingClientRect()
+						.bottom,
+					copyTop: element.querySelector("span")!.getBoundingClientRect().top,
+				}));
+				expect(headingRows.copyTop).toBeGreaterThanOrEqual(
+					headingRows.titleBottom,
+				);
+				await decisionHeading.screenshot({
+					path: testInfo.outputPath(`provider-decision-heading-${width}.png`),
+				});
+				const overflow = await page.evaluate(
+					() =>
+						document.documentElement.scrollWidth >
+						document.documentElement.clientWidth + 1,
+				);
+				expect(overflow).toBe(false);
+				await product.screenshot({
+					path: testInfo.outputPath(`catalog-queues-${width}.png`),
+				});
+				for (const colorScheme of ["light", "dark"] as const) {
+					await page.emulateMedia({ colorScheme, reducedMotion: "reduce" });
+					await recallFooter.screenshot({
+						path: testInfo.outputPath(
+							`recall-footer-${width}-${colorScheme}.png`,
+						),
+					});
+				}
+			}
+			await page.evaluate(() => {
+				document.documentElement.style.fontSize = "200%";
+			});
+			await conflictFooter.screenshot({
+				path: testInfo.outputPath("conflict-footer-390-text200.png"),
+			});
+			const footerBounds = await conflictFooter.boundingBox();
+			expect(footerBounds).not.toBeNull();
+			expect(footerBounds!.x + footerBounds!.width).toBeLessThanOrEqual(391);
+			await page.evaluate(() => {
+				document.documentElement.style.fontSize = "";
+			});
+			await page.goto(
+				`${root}/products/${scope}000-0000-4000-8000-000000000061`,
+			);
+			await waitForAppReady(page);
+			await expect(
+				page.getByLabel("Provider changes pagination", { exact: true }),
+			).toContainText("1 of 1 provider changes loaded");
+			const workbench = page.locator(".catalog-conflict-workbench");
+			await workbench.getByRole("combobox").click();
+			await page
+				.getByRole("option", {
+					name: "Cannot determine from current evidence",
+					exact: true,
+				})
+				.click();
+			await workbench
+				.getByRole("textbox")
+				.fill(
+					"QA control: no exact label supports changing this ingredient field.",
+				);
+			await workbench
+				.getByRole("button", { name: "Finish product review", exact: true })
+				.click();
+			await expect(page).not.toHaveURL(
+				new RegExp(`${scope}000-0000-4000-8000-000000000061$`, "u"),
+			);
+			await page.goto(
+				`${root}/products/${scope}000-0000-4000-8000-000000000061`,
+			);
+			await waitForAppReady(page);
+			await expect(page.locator(".catalog-conflict-workbench")).toHaveCount(0);
+			const provider = page.locator('form:has(input[name="reviewId"])');
+			await expect(
+				provider.getByRole("button", {
+					name: "Keep current record",
+					exact: true,
+				}),
+			).toBeDisabled();
+			await provider
+				.getByRole("textbox")
+				.fill(
+					"QA control: this observation lacks the exact package evidence needed for a correction.",
+				);
+			await provider
+				.getByRole("button", { name: "Keep current record", exact: true })
+				.click();
+			await expect(provider).toHaveCount(0);
+		},
+	);
 });
