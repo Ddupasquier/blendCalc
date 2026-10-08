@@ -277,17 +277,18 @@ and safety engine is owned by the `@rehearsal-db/core` dependency. Runtime prere
 local-only rows, account association and dependent database settings are declarations
 under `infrastructure/rehearsal/`, not executable adapters. Ordinary application proofs
 belong to `scripts/operations/quality/`, and local migration-history verification belongs
-to `scripts/operations/database/`. BlendCalc's legacy source extraction, sanitization and
-asset-preparation scripts remain temporarily under `scripts/lib/rehearsal/`,
-`scripts/generators/rehearsal/` and `scripts/operations/rehearsal/` until the complete
-privacy policy has a reviewed and verified declarative replacement. Do not copy
-generic package source or package documentation back into this repository. The ordinary
-`src/routes/auth/callback/` route owns only application authentication; copied-account
-association belongs to the installed package's identity plan/claim workflow. Do not
-restore an application-owned Rehearsal claim helper or compatibility RPC. Retained
-source-preparation scripts are not a reason to duplicate package runtime or identity
-execution in the callback. Production-connected development and synthetic QA retain
-their ordinary launchers; Rehearsal starts the sandbox directly through its public CLI.
+to `scripts/operations/database/`. Source-access planning, extraction, privacy recipe
+execution and Storage preparation also belong to the package. BlendCalc keeps only
+reviewed source/privacy declarations; no second engine or compatibility wrapper lives
+in `scripts/`. Earlier version-1 policies remain because existing baseline generations
+are bound to their exact bytes. Do not copy generic package source or documentation
+back into this repository.
+
+The ordinary `src/routes/auth/callback/` route owns only application authentication.
+Copied-account association belongs to the package identity plan/claim workflow; there
+is no callback claim hook or compatibility RPC. Production-connected development and
+synthetic QA retain their normal launchers and behavior. Rehearsal starts the sandbox
+directly through its public CLI.
 
 ## Documentation
 
