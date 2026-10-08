@@ -1,5 +1,7 @@
-import type { CatalogReviewWorkSummary } from "$lib/utils/moderation/catalogReviewWork";
+import type { CatalogReviewPage } from "$lib/utils/moderation/catalogReviewPagination";
 
 export type CatalogReviewProductInboxProps = {
-	reviewWork: CatalogReviewWorkSummary;
+	page: CatalogReviewPage<"products">;
+	scrollContainer: HTMLElement | null;
+	onPageChange?: (page: CatalogReviewPage<"products">) => void;
 };

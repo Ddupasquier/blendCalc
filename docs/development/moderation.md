@@ -415,6 +415,25 @@ open material conflicts, provider changes, and possible official recall matches.
 `get_catalog_review_work_summary` requires current `moderation.catalog.review`
 permission and AAL2, and it returns only those bounded review queues.
 
+The application uses `get_catalog_review_page` for progressive review reads. The
+landing inbox has one row per product/UPC, with exact outstanding recall, conflict,
+and provider counts rather than counts inferred from loaded decisions. Product reads
+are scoped at the database boundary, so a later product never disappears because it
+was absent from a global first page. Every collection uses at most 20 rows, timestamp
+and UUID cursors, and explicit shared Load more/Return to top controls.
+
+Counts, rows, and a membership/evidence revision share a database snapshot. If that
+revision changes, the browser reconciles its already-loaded depth before appending;
+resolved cards leave the list, and equal-count replacements cannot silently skip work.
+Refresh failures retain visible cards with a Retry action and disable stale decisions.
+Each queue has its own revision, so completing a recall does not clear unchanged
+conflict choices. The correction handoff reuses loaded provider pages rather than
+loading a second, unbounded provider list.
+The conflict workbench still finishes all current fields atomically, never a partial
+page. A review supports at most 200 fields and a 2 MiB request; larger products remain
+inspectable but cannot be finished through partial submissions. The older summary RPC
+remains available during the additive schema rollout.
+
 Privileged queue reads run one conservative admission pass before returning work. The
 pass validates current state, removes provider rows superseded by a newer snapshot,
 closes provider changes already reflected by the canonical catalog, resolves only

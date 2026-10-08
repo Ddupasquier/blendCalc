@@ -17,6 +17,10 @@
 		reviewWork,
 		hideConflicts = false,
 		hideHeading = false,
+		visibleQueue = "all",
+		refreshing = false,
+		safetyControls,
+		providerControls,
 	}: CatalogReviewWorkDashboardProps = $props();
 	let pendingReviewId = $state<string | null>(null);
 	let safetyDecisionByMatchId = $state<
@@ -93,7 +97,7 @@
 		},
 	];
 	const enhanceReview: SubmitFunction = ({ formData, cancel }) => {
-		if (pendingReviewId) {
+		if (pendingReviewId || refreshing) {
 			cancel();
 			return;
 		}
@@ -121,152 +125,154 @@
 		</header>
 	{/if}
 
-	<CollapsibleSection
-		title="Possible recall matches"
-		badge={reviewWork.counts.safetyMatches === 0
-			? "Clear"
-			: `${reviewWork.counts.safetyMatches} to review`}
-		surface="panel"
-		tone={reviewWork.counts.safetyMatches > 0 ? "danger" : "neutral"}
-		open={reviewWork.counts.safetyMatches > 0}
-	>
-		<div class="catalog-review-work__stack">
-			<p class="catalog-review-work__queue-guidance">
-				Compare the exact product and package codes with the official notice.
-				Confirm a match only when the evidence identifies the same affected
-				product.
-			</p>
-			{#each reviewWork.safetyMatches as match (match.id)}
-				{@const safetyDecision = safetyDecisionByMatchId[match.id] ?? ""}
-				{@const matchEvidenceRows = recallEvidenceRows(
-					match.matchEvidence,
-					match.requiresPackageCheck,
-				)}
-				<article class="catalog-review-work__record">
-					<header>
-						<div>
-							<strong>{match.productName}</strong>
-							<span
-								>{match.brandOwner ?? "Brand unavailable"} · {match.barcode}</span
-							>
-						</div>
-						<TextBadge
-							label={match.classification ?? "Official notice"}
-							tone="info"
-						/>
-					</header>
-					<p>
-						<strong>Official notice:</strong>
-						{match.alertProductDescription}
-					</p>
-					{#if match.reason}<p>{match.reason}</p>{/if}
-					{#if match.packageDescription}<p>
-							<strong>Package:</strong>
-							{match.packageDescription}
-						</p>{/if}
-					{#if match.codeInformation}<p>
-							<strong>Codes:</strong>
-							{match.codeInformation}
-						</p>{/if}
-					<section
-						class="catalog-review-work__evidence"
-						aria-label="Why this product was flagged"
-					>
-						<strong>Why this was flagged</strong>
-						<dl>
-							{#each matchEvidenceRows as evidence}
-								<div>
-									<dt>{evidence.label}</dt>
-									<dd>{evidence.value}</dd>
-								</div>
-							{/each}
-						</dl>
-					</section>
-					<a href={match.sourceUrl} target="_blank" rel="noreferrer">
-						Read the official {match.sourceName} notice
-					</a>
-					<form
-						method="POST"
-						action="?/reviewSafetyMatch"
-						use:enhance={enhanceReview}
-					>
-						<input type="hidden" name="matchId" value={match.id} />
-						<header class="catalog-review-work__decision-heading">
-							<strong>Finish this safety review in two steps</strong>
-							<span>
-								Confirm only when the product identity and affected package
-								codes match the official notice.
-							</span>
-						</header>
-						<SelectField
-							id={`safety-match-outcome-${match.id}`}
-							name="outcome"
-							label="1. Is this exact product covered by the notice?"
-							value={safetyDecision}
-							onValueChange={(value) => setSafetyDecision(match.id, value)}
-							options={[
-								{
-									value: "",
-									label: "Choose a decision",
-									disabled: true,
-									hidden: true,
-									placeholder: true,
-								},
-								{
-									value: "confirmed",
-									label: "Yes — this is the affected product",
-								},
-								{
-									value: "dismissed",
-									label: "No — this is a different product",
-								},
-							]}
-							helper={safetyDecision === "confirmed"
-								? "Yes marks this product as covered by the official notice and creates in-app safety alerts for users who saved it."
-								: safetyDecision === "dismissed"
-									? "No closes this match without showing the official notice for this product."
-									: "Yes activates the matched notice and user alerts. No closes the match without attaching the notice to this product."}
-							required
-						/>
-						<TextField
-							id={`safety-match-review-note-${match.id}`}
-							name="reviewNote"
-							label="2. What evidence proves this decision?"
-							placeholder="Example: Notice names the same 12 oz package and UPC; lot code matches."
-							helper="Record the matching or conflicting identity and package-code evidence."
-							maxlength={2000}
-							multiline
-							rows={3}
-							oninput={(event) =>
-								(safetyNoteByMatchId = {
-									...safetyNoteByMatchId,
-									[match.id]: event.currentTarget.value,
-								})}
-							required
-						/>
-						<ActionButton
-							type="submit"
-							variant={safetyDecision === "confirmed" ? "danger" : "primary"}
-							size="small"
-							busy={pendingReviewId === match.id}
-							disabled={pendingReviewId !== null ||
-								!safetyDecision ||
-								!safetyNoteByMatchId[match.id]?.trim()}
-							>{safetyDecision === "confirmed"
-								? "Confirm recall match and alert users"
-								: safetyDecision === "dismissed"
-									? "Dismiss recall match"
-									: "Save safety decision"}</ActionButton
-						>
-					</form>
-				</article>
-			{:else}
-				<p class="catalog-review-work__empty">
-					No possible recall matches need review.
+	{#if visibleQueue !== "providerChanges"}<CollapsibleSection
+			title="Possible recall matches"
+			badge={reviewWork.counts.safetyMatches === 0
+				? "Clear"
+				: `${reviewWork.counts.safetyMatches} to review`}
+			surface="panel"
+			tone={reviewWork.counts.safetyMatches > 0 ? "danger" : "neutral"}
+			open={reviewWork.counts.safetyMatches > 0}
+		>
+			<div class="catalog-review-work__stack">
+				<p class="catalog-review-work__queue-guidance">
+					Compare the exact product and package codes with the official notice.
+					Confirm a match only when the evidence identifies the same affected
+					product.
 				</p>
-			{/each}
-		</div>
-	</CollapsibleSection>
+				{#each reviewWork.safetyMatches as match (match.id)}
+					{@const safetyDecision = safetyDecisionByMatchId[match.id] ?? ""}
+					{@const matchEvidenceRows = recallEvidenceRows(
+						match.matchEvidence,
+						match.requiresPackageCheck,
+					)}
+					<article class="catalog-review-work__record">
+						<header>
+							<div>
+								<strong>{match.productName}</strong>
+								<span
+									>{match.brandOwner ?? "Brand unavailable"} · {match.barcode}</span
+								>
+							</div>
+							<TextBadge
+								label={match.classification ?? "Official notice"}
+								tone="info"
+							/>
+						</header>
+						<p>
+							<strong>Official notice:</strong>
+							{match.alertProductDescription}
+						</p>
+						{#if match.reason}<p>{match.reason}</p>{/if}
+						{#if match.packageDescription}<p>
+								<strong>Package:</strong>
+								{match.packageDescription}
+							</p>{/if}
+						{#if match.codeInformation}<p>
+								<strong>Codes:</strong>
+								{match.codeInformation}
+							</p>{/if}
+						<section
+							class="catalog-review-work__evidence"
+							aria-label="Why this product was flagged"
+						>
+							<strong>Why this was flagged</strong>
+							<dl>
+								{#each matchEvidenceRows as evidence}
+									<div>
+										<dt>{evidence.label}</dt>
+										<dd>{evidence.value}</dd>
+									</div>
+								{/each}
+							</dl>
+						</section>
+						<a href={match.sourceUrl} target="_blank" rel="noreferrer">
+							Read the official {match.sourceName} notice
+						</a>
+						<form
+							method="POST"
+							action="?/reviewSafetyMatch"
+							use:enhance={enhanceReview}
+						>
+							<input type="hidden" name="matchId" value={match.id} />
+							<header class="catalog-review-work__decision-heading">
+								<strong>Finish this safety review in two steps</strong>
+								<span>
+									Confirm only when the product identity and affected package
+									codes match the official notice.
+								</span>
+							</header>
+							<SelectField
+								id={`safety-match-outcome-${match.id}`}
+								name="outcome"
+								label="1. Is this exact product covered by the notice?"
+								value={safetyDecision}
+								onValueChange={(value) => setSafetyDecision(match.id, value)}
+								options={[
+									{
+										value: "",
+										label: "Choose a decision",
+										disabled: true,
+										hidden: true,
+										placeholder: true,
+									},
+									{
+										value: "confirmed",
+										label: "Yes — this is the affected product",
+									},
+									{
+										value: "dismissed",
+										label: "No — this is a different product",
+									},
+								]}
+								helper={safetyDecision === "confirmed"
+									? "Yes marks this product as covered by the official notice and creates in-app safety alerts for users who saved it."
+									: safetyDecision === "dismissed"
+										? "No closes this match without showing the official notice for this product."
+										: "Yes activates the matched notice and user alerts. No closes the match without attaching the notice to this product."}
+								required
+							/>
+							<TextField
+								id={`safety-match-review-note-${match.id}`}
+								name="reviewNote"
+								label="2. What evidence proves this decision?"
+								placeholder="Example: Notice names the same 12 oz package and UPC; lot code matches."
+								helper="Record the matching or conflicting identity and package-code evidence."
+								maxlength={2000}
+								multiline
+								rows={3}
+								oninput={(event) =>
+									(safetyNoteByMatchId = {
+										...safetyNoteByMatchId,
+										[match.id]: event.currentTarget.value,
+									})}
+								required
+							/>
+							<ActionButton
+								type="submit"
+								variant={safetyDecision === "confirmed" ? "danger" : "primary"}
+								size="small"
+								busy={pendingReviewId === match.id}
+								disabled={refreshing ||
+									pendingReviewId !== null ||
+									!safetyDecision ||
+									!safetyNoteByMatchId[match.id]?.trim()}
+								>{safetyDecision === "confirmed"
+									? "Confirm recall match and alert users"
+									: safetyDecision === "dismissed"
+										? "Dismiss recall match"
+										: "Save safety decision"}</ActionButton
+							>
+						</form>
+					</article>
+				{:else}
+					<p class="catalog-review-work__empty">
+						No possible recall matches need review.
+					</p>
+				{/each}
+			</div>
+			{@render safetyControls?.()}
+		</CollapsibleSection>{/if}
 
 	{#if !hideConflicts}<CollapsibleSection
 			title="Product conflicts"
@@ -324,128 +330,134 @@
 			</div>
 		</CollapsibleSection>{/if}
 
-	<CollapsibleSection
-		title="Provider changes"
-		badge={reviewWork.counts.providerChanges === 0
-			? "Clear"
-			: `${reviewWork.counts.providerChanges} to review`}
-		surface="panel"
-		tone={reviewWork.counts.providerChanges > 0 ? "warning" : "neutral"}
-		open={reviewWork.counts.safetyMatches === 0 &&
-			reviewWork.counts.conflicts === 0 &&
-			reviewWork.counts.providerChanges > 0}
-	>
-		<div class="catalog-review-work__stack">
-			<p class="catalog-review-work__queue-guidance">
-				Compare the provider observation with the current approved evidence.
-				Keep the current record only when its evidence remains stronger;
-				otherwise start a correction.
-			</p>
-			{#each reviewWork.providerChanges as change (change.id)}
-				<article class="catalog-review-work__record">
-					<header>
-						<div>
-							<strong>{change.productName}</strong>
-							<span
-								>{change.barcode} · observed {formatDate(
-									change.observedAt,
-								)}</span
-							>
-						</div>
-						<TextBadge label={change.sourceName} tone="info" />
-					</header>
-					<div class="catalog-review-work__changes">
-						{#each change.changeSummary.changes as detail (detail.field)}
-							<section>
-								<header>
-									<strong>{getCatalogFieldLabel(detail.field)}</strong>
-									<TextBadge
-										label={getCatalogHealthStatusLabel(detail.severity)}
-										tone="warning"
-									/>
-								</header>
-								<dl>
-									<div>
-										<dt>Earlier provider value</dt>
-										<dd>{formatCatalogEvidenceValue(detail.previousValue)}</dd>
-									</div>
-									<div>
-										<dt>New provider observation</dt>
-										<dd>{formatCatalogEvidenceValue(detail.observedValue)}</dd>
-									</div>
-								</dl>
-							</section>
-						{/each}
-					</div>
-					<a
-						href={`/profile/privileged-tools/catalog-review-work/products/${encodeURIComponent(change.sharedProductId)}`}
-						>{change.correctionStatus === "linked"
-							? "Review linked correction submission"
-							: "Review product evidence and start correction"}</a
-					>
-					{#if change.correctionStatus === "linked"}
-						<div class="catalog-review-work__decision-heading">
-							<strong>A correction is already waiting for review</strong>
-							<span>
-								Approve it to create a new revision and resolve this
-								observation. Reject it to keep the current product unchanged and
-								return this observation for a better correction.
-							</span>
-						</div>
-					{:else}
-						<form
-							method="POST"
-							action="?/dismissProviderChange"
-							use:enhance={enhanceReview}
-						>
-							<input type="hidden" name="reviewId" value={change.id} />
-							<header class="catalog-review-work__decision-heading">
-								<strong
-									>Close this observation only if no correction is needed</strong
-								>
-								<span>
-									Keep current rejects this observation, leaves every product
-									value unchanged, and closes API conflicts created by this
-									exact provider snapshot. Readiness is recalculated; unrelated
-									blockers remain. If the provider evidence is stronger, leave
-									it open and start a correction. Only approval creates a new
-									revision.
-								</span>
-							</header>
-							<TextField
-								id={`provider-change-review-note-${change.id}`}
-								name="reviewNote"
-								label="Why should the current record stay?"
-								placeholder="Describe the evidence supporting the current product."
-								maxlength={2000}
-								multiline
-								rows={3}
-								oninput={(event) =>
-									(providerNoteByReviewId = {
-										...providerNoteByReviewId,
-										[change.id]: event.currentTarget.value,
-									})}
-								required
-							/>
-							<ActionButton
-								type="submit"
-								variant="success"
-								size="small"
-								busy={pendingReviewId === change.id}
-								disabled={pendingReviewId !== null ||
-									!providerNoteByReviewId[change.id]?.trim()}
-								>Keep current record</ActionButton
-							>
-						</form>
-					{/if}
-				</article>
-			{:else}
-				<p class="catalog-review-work__empty">
-					No provider changes need review.
+	{#if visibleQueue !== "safetyMatches"}<CollapsibleSection
+			title="Provider changes"
+			badge={reviewWork.counts.providerChanges === 0
+				? "Clear"
+				: `${reviewWork.counts.providerChanges} to review`}
+			surface="panel"
+			tone={reviewWork.counts.providerChanges > 0 ? "warning" : "neutral"}
+			open={reviewWork.counts.safetyMatches === 0 &&
+				reviewWork.counts.conflicts === 0 &&
+				reviewWork.counts.providerChanges > 0}
+		>
+			<div class="catalog-review-work__stack">
+				<p class="catalog-review-work__queue-guidance">
+					Compare the provider observation with the current approved evidence.
+					Keep the current record only when its evidence remains stronger;
+					otherwise start a correction.
 				</p>
-			{/each}
-		</div>
-	</CollapsibleSection>
+				{#each reviewWork.providerChanges as change (change.id)}
+					<article class="catalog-review-work__record">
+						<header>
+							<div>
+								<strong>{change.productName}</strong>
+								<span
+									>{change.barcode} · observed {formatDate(
+										change.observedAt,
+									)}</span
+								>
+							</div>
+							<TextBadge label={change.sourceName} tone="info" />
+						</header>
+						<div class="catalog-review-work__changes">
+							{#each change.changeSummary.changes as detail (detail.field)}
+								<section>
+									<header>
+										<strong>{getCatalogFieldLabel(detail.field)}</strong>
+										<TextBadge
+											label={getCatalogHealthStatusLabel(detail.severity)}
+											tone="warning"
+										/>
+									</header>
+									<dl>
+										<div>
+											<dt>Earlier provider value</dt>
+											<dd>
+												{formatCatalogEvidenceValue(detail.previousValue)}
+											</dd>
+										</div>
+										<div>
+											<dt>New provider observation</dt>
+											<dd>
+												{formatCatalogEvidenceValue(detail.observedValue)}
+											</dd>
+										</div>
+									</dl>
+								</section>
+							{/each}
+						</div>
+						<a
+							href={`/profile/privileged-tools/catalog-review-work/products/${encodeURIComponent(change.sharedProductId)}`}
+							>{change.correctionStatus === "linked"
+								? "Review linked correction submission"
+								: "Review product evidence and start correction"}</a
+						>
+						{#if change.correctionStatus === "linked"}
+							<div class="catalog-review-work__decision-heading">
+								<strong>A correction is already waiting for review</strong>
+								<span>
+									Approve it to create a new revision and resolve this
+									observation. Reject it to keep the current product unchanged
+									and return this observation for a better correction.
+								</span>
+							</div>
+						{:else}
+							<form
+								method="POST"
+								action="?/dismissProviderChange"
+								use:enhance={enhanceReview}
+							>
+								<input type="hidden" name="reviewId" value={change.id} />
+								<header class="catalog-review-work__decision-heading">
+									<strong
+										>Close this observation only if no correction is needed</strong
+									>
+									<span>
+										Keep current rejects this observation, leaves every product
+										value unchanged, and closes API conflicts created by this
+										exact provider snapshot. Readiness is recalculated;
+										unrelated blockers remain. If the provider evidence is
+										stronger, leave it open and start a correction. Only
+										approval creates a new revision.
+									</span>
+								</header>
+								<TextField
+									id={`provider-change-review-note-${change.id}`}
+									name="reviewNote"
+									label="Why should the current record stay?"
+									placeholder="Describe the evidence supporting the current product."
+									maxlength={2000}
+									multiline
+									rows={3}
+									oninput={(event) =>
+										(providerNoteByReviewId = {
+											...providerNoteByReviewId,
+											[change.id]: event.currentTarget.value,
+										})}
+									required
+								/>
+								<ActionButton
+									type="submit"
+									variant="success"
+									size="small"
+									busy={pendingReviewId === change.id}
+									disabled={refreshing ||
+										pendingReviewId !== null ||
+										!providerNoteByReviewId[change.id]?.trim()}
+									>Keep current record</ActionButton
+								>
+							</form>
+						{/if}
+					</article>
+				{:else}
+					<p class="catalog-review-work__empty">
+						No provider changes need review.
+					</p>
+				{/each}
+			</div>
+			{@render providerControls?.()}
+		</CollapsibleSection>{/if}
 </div>
 
 <style lang="scss">
