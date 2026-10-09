@@ -72,7 +72,10 @@ jobs:
             else
               mode=full
               comparison_base="$BEFORE_SHA"
-              for candidate in HEAD $(git show -s --format=%P HEAD); do
+              verified_candidates=$(gh api \
+                "repos/${GITHUB_REPOSITORY}/actions/workflows/verify.yml/runs?event=workflow_dispatch&status=success&per_page=50" \
+                --jq '[.workflow_runs[] | select(.event == "workflow_dispatch" and .display_title == "Verify (full)" and .conclusion == "success") | .head_sha] | unique | .[]')
+              for candidate in HEAD $(git show -s --format=%P HEAD) $verified_candidates; do
                 if ! node scripts/operations/quality/verify_release_promotion.mjs --against "$candidate" >/dev/null 2>&1; then
                   continue
                 fi
