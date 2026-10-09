@@ -4,9 +4,11 @@ run-name: Verify (${{ github.event_name == 'workflow_dispatch' && inputs.scope |
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
   push:
     branches:
       - "**"
+      - "!release/**"
   workflow_dispatch:
     inputs:
       scope:
@@ -29,6 +31,7 @@ concurrency:
 jobs:
   verification-plan:
     name: Choose Verification Scope
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
@@ -50,6 +53,7 @@ jobs:
           BEFORE_SHA: ${{ github.event.before }}
           EVENT_NAME: ${{ github.event_name }}
           GH_TOKEN: ${{ github.token }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
           REF_NAME: ${{ github.ref_name }}
           REQUESTED_SCOPE: ${{ inputs.scope }}
@@ -57,8 +61,34 @@ jobs:
           mode=feature
           comparison_base="$PR_BASE_SHA"
 
+          reuse_verified_candidate() {
+            verified_candidates=$(gh api \
+              "repos/${GITHUB_REPOSITORY}/actions/workflows/verify.yml/runs?event=workflow_dispatch&status=success&per_page=50" \
+              --jq '[.workflow_runs[] | select(.event == "workflow_dispatch" and .display_title == "Verify (full)" and .conclusion == "success") | .head_sha] | unique | .[]')
+            for candidate in HEAD $(git show -s --format=%P HEAD) $verified_candidates; do
+              if ! node scripts/operations/quality/verify_release_promotion.mjs --against "$candidate" >/dev/null 2>&1; then
+                continue
+              fi
+              verified_runs=$(gh api \
+                "repos/${GITHUB_REPOSITORY}/actions/workflows/verify.yml/runs?head_sha=${candidate}&status=success&per_page=20" \
+                --jq '[.workflow_runs[] | select(.event == "workflow_dispatch" and .display_title == "Verify (full)")] | length')
+              if [[ "$verified_runs" -gt 0 ]]; then
+                echo "Reusing the successful full verification for identical candidate ${candidate}."
+                mode=reuse
+                comparison_base="$candidate"
+                return
+              fi
+            done
+          }
+
           if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
             mode="${REQUESTED_SCOPE:-full}"
+          elif [[ "$EVENT_NAME" == "pull_request" && "${HEAD_REF:-}" == release/* ]]; then
+            reuse_verified_candidate
+            if [[ "$mode" != "reuse" ]]; then
+              echo "Release review requires a successful full dispatch for this exact clean tree."
+              exit 1
+            fi
           elif [[ "$EVENT_NAME" == "push" && "$REF_NAME" == "main" ]]; then
             git fetch origin staging:refs/remotes/origin/staging
             node scripts/operations/quality/verify_release_promotion.mjs --against origin/staging
@@ -72,20 +102,7 @@ jobs:
             else
               mode=full
               comparison_base="$BEFORE_SHA"
-              for candidate in HEAD $(git show -s --format=%P HEAD); do
-                if ! node scripts/operations/quality/verify_release_promotion.mjs --against "$candidate" >/dev/null 2>&1; then
-                  continue
-                fi
-                verified_runs=$(gh api \
-                  "repos/${GITHUB_REPOSITORY}/actions/workflows/verify.yml/runs?head_sha=${candidate}&status=success&per_page=20" \
-                  --jq '[.workflow_runs[] | select(.event == "workflow_dispatch" and .display_title == "Verify (full)")] | length')
-                if [[ "$verified_runs" -gt 0 ]]; then
-                  echo "Reusing the successful full verification for identical candidate ${candidate}."
-                  mode=reuse
-                  comparison_base="$candidate"
-                  break
-                fi
-              done
+              reuse_verified_candidate
               if [[ "$mode" != "reuse" ]]; then
                 echo "No identical fully verified candidate; running the full staging checks."
               fi

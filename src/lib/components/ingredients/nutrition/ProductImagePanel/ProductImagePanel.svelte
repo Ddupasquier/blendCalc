@@ -6,7 +6,7 @@
 	import ImagePlacementEditor from "$lib/components/common/images/ImagePlacementEditor/ImagePlacementEditor.svelte";
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import ProductImageFrame from "$lib/components/common/images/ProductImageFrame/ProductImageFrame.svelte";
-	import { getStoredImagePlacement } from "$lib/utils/food/images/imagePlacement";
+	import { getCardImagePlacement } from "$lib/utils/food/images/imagePlacement";
 	import type { ImagePlacementValue } from "$lib/utils/food/images/types";
 	import {
 		getFoodImageAltText,
@@ -44,23 +44,27 @@
 	let imageFailed = $state(false);
 	let lastImageUrl = $state("");
 	let lastImageKey = $state("");
-	let draftPlacement = $state<ImagePlacementValue>(getStoredImagePlacement());
+	let draftPlacement = $state<ImagePlacementValue>(getCardImagePlacement());
 	let savingPlacement = $state(false);
 	let saveRequestInFlight = false;
 	let placementMessage = $state("");
 	let placementError = $state("");
 
 	const savedPlacement = $derived<ImagePlacementValue>(
-		getStoredImagePlacement({
-			cropX: food?.image?.cropX ?? 50,
-			cropY: food?.image?.cropY ?? 50,
-			cropZoom: food?.image?.cropZoom ?? 1,
+		getCardImagePlacement({
+			cropX: food?.image?.cropX,
+			cropY: food?.image?.cropY,
+			cropZoom: food?.image?.cropZoom,
 			rotationDegrees: food?.image?.rotationDegrees,
 			fitMode: food?.image?.fitMode,
 			placementVersion: food?.image?.placementVersion,
 			placementMethod: food?.image?.placementMethod,
 			suggestionVersion: food?.image?.suggestionVersion,
 			suggestionConfidence: food?.image?.suggestionConfidence,
+			suggestionAcceptedAt: food?.image?.suggestionAcceptedAt,
+			cropSource: food?.image?.cropSource,
+			approvedBy: food?.image?.approvedBy,
+			approvedAt: food?.image?.approvedAt,
 		}),
 	);
 	const imageKey = $derived(

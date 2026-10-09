@@ -30,7 +30,7 @@ import type {
 import type { ValidationAttemptState } from "$lib/components/ingredients/manual-entry/utils/validationItems";
 import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
 import type { BarcodeShareValidationResult } from "$lib/utils/products/catalog";
-import { createFullImagePlacement } from "$lib/utils/food/images/imagePlacement";
+import { createDefaultCardImagePlacement } from "$lib/utils/food/images/imagePlacement";
 import type { ImagePlacementValue } from "$lib/utils/food/images/types";
 import type { CatalogSubmissionIntent } from "$lib/utils/products/catalog";
 import { getPrimaryFoodServing } from "$lib/utils/food/servings/foodServings";
@@ -137,7 +137,7 @@ export const getManualEntryFormResetState = (): ManualEntryFormResetState => ({
 	shareSelectionSource: "none",
 	keptUnmatchedPrivate: false,
 	frontPhoto: null,
-	imagePlacement: createFullImagePlacement(),
+	imagePlacement: createDefaultCardImagePlacement(),
 	nutritionPhoto: null,
 	barcodePhoto: null,
 	reportedNutrientIds: [],
