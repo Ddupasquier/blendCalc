@@ -143,6 +143,59 @@ afterEach(() => {
 });
 
 describe("real workflow browser routing", () => {
+	it("keeps release candidates draft until their eligible PR reuse check", () => {
+		expect(workflow.on.push.branches).toContain("!release/**");
+		expect(workflow.on.pull_request.types).toContain("ready_for_review");
+		expect(workflow.jobs["verification-plan"].if).toContain(
+			"!github.event.pull_request.draft",
+		);
+	});
+
+	it("makes release PR checks reuse a full dispatch without another matrix", () => {
+		const fixture = createSquashedFixture();
+		const result = spawnSync("bash", ["-e", "-c", planningShell], {
+			cwd: fixture.root,
+			env: {
+				...fixture.env,
+				EVENT_NAME: "pull_request",
+				HEAD_REF: "release/fixture-candidate",
+			},
+			encoding: "utf8",
+		});
+		expect(result.status, result.stderr).toBe(0);
+		expect(readOutput(fixture)).toMatchObject({
+			mode: "reuse",
+			dependencies: "true",
+			"comparison-base": fixture.verified,
+		});
+	});
+
+	it.each(["missing", "changed", "dirty"])(
+		"refuses release review when its full proof is %s",
+		(control) => {
+			const fixture = createSquashedFixture();
+			if (control === "missing") fixture.env.FIXTURE_FULL_PASSED = "false";
+			if (control === "changed" || control === "dirty") {
+				writeFileSync(join(fixture.root, "candidate.txt"), "changed content\n");
+				if (control === "changed") {
+					git(fixture.root, "add", "candidate.txt");
+					git(fixture.root, "commit", "--quiet", "-m", "unverified later tree");
+				}
+			}
+			const result = spawnSync("bash", ["-e", "-c", planningShell], {
+				cwd: fixture.root,
+				env: {
+					...fixture.env,
+					EVENT_NAME: "pull_request",
+					HEAD_REF: "release/fixture-candidate",
+				},
+				encoding: "utf8",
+			});
+			expect(result.status).not.toBe(0);
+			expect(result.stdout).toContain("Release review requires");
+		},
+	);
+
 	it("reuses a successful full candidate after squash without parent identity", () => {
 		const fixture = createSquashedFixture();
 		expect(git(fixture.root, "rev-parse", "HEAD")).not.toBe(fixture.verified);

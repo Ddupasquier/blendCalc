@@ -181,6 +181,14 @@ existing isolated browser jobs instead of the sequential affected job. Narrow do
 changes retain affected coverage. Planning uses the same ownership map as local checks
 and does not install browsers, prepare databases, or run tests.
 
+Release integration branches (`release/**`) use one explicit `Verify` dispatch with
+`scope=full`, rather than duplicate push and PR matrices. Keep their PRs draft until
+that exact clean tree passes. Marking the PR ready then runs eligible PR checks that
+verify and reuse the successful full proof; a missing, changed or dirty proof refuses
+review. Staging discovers recent successful full candidates by tree identity, including
+after a protected squash merge changes the commit ID. Fresh dependency audits remain
+mandatory during reuse.
+
 `Ship` may dispatch `Verify` with `scope=full` on the exact assembled candidate before staging;
 when the later staging tree is identical and that dispatched run succeeded, staging
 reuses it. Otherwise staging runs the complete Vitest and bounded browser tiers once.
