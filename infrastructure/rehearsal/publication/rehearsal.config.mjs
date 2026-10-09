@@ -12,23 +12,32 @@ export default defineRehearsalConfig({
 		migrationDirectory: ".rehearsal-publication/.rehearsal/current/migrations",
 		rehearsalConfig:
 			"infrastructure/rehearsal/publication/supabase/config.toml",
-		runtimeWorkdir: ".rehearsal-publication/.rehearsal/runtime",
+		runtimeWorkdir: ".rehearsal-native/publication/.rehearsal/runtime",
 	},
 	baseline: {
-		artifactDirectory: ".rehearsal-publication/.rehearsal",
+		artifactDirectory: ".rehearsal-native/publication/.rehearsal",
 		sanitizationPolicy:
-			"infrastructure/rehearsal/publication/sanitization-policy.json",
+			"infrastructure/rehearsal/publication/privacy-policy.v2.json",
+	},
+	preparation: {
+		sourcePolicy:
+			"infrastructure/rehearsal/publication/source-access-policy.json",
+		privacyKey: ".rehearsal-native/publication/.rehearsal/secrets/privacy.key",
+		batchRows: 500,
+		maximumRows: 100000,
+		maximumBytes: 2147483648,
+		diskHeadroomBytes: 67108864,
 	},
 	application: {
 		// This dependent target is a database, not another application server.
 		startCommand: "node --version",
 		proofCommand: "node scripts/operations/quality/prove_local_publication.mjs",
-		environmentFile: ".rehearsal-publication/.rehearsal/runtime.env",
+		environmentFile: ".rehearsal-native/publication/.rehearsal/runtime.env",
 	},
 	runtime: {
 		target: "supabase",
 		applicationUrl: "http://localhost:5175",
-		projectId: "blendcalc-rehearsal-publication",
+		projectId: "blendcalc-rehearsal-native-publication",
 		apiPort: 59321,
 		databasePort: 59322,
 		studioPort: 59323,

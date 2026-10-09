@@ -33,6 +33,7 @@ Thumbs.db
 .env.*
 /.rehearsal/
 /.rehearsal-publication/
+/.rehearsal-native/
 
 # Isolated Supabase workdir state
 infrastructure/blendCalcAPI/supabase/.branches/

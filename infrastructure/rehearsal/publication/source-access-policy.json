@@ -1,0 +1,294 @@
+{
+	"accessVersion": 1,
+	"targetFingerprint": "d43b86de4c1c858b7e00bfa307f443d01bd9d9bb51e76120a24f631bb0047d05",
+	"reader": {
+		"mode": "external",
+		"role": "rehearsal_blendcalc_native_publication_reader",
+		"allowedMemberships": ["rehearsal_b14_publication_group"],
+		"connectionEnvironmentVariable": "REHEARSAL_PUBLICATION_SOURCE_URL",
+		"credentialFile": ".rehearsal-native/publication/.rehearsal/secrets/source-reader.env",
+		"maximumValidForMinutes": 30
+	},
+	"exportSchema": "rehearsal_b14_publication_export",
+	"migrationLedger": {
+		"schema": "supabase_migrations",
+		"table": "schema_migrations",
+		"versionColumn": "version",
+		"nameColumn": "name",
+		"statementsColumn": "statements"
+	},
+	"relations": [
+		{
+			"source": {
+				"schema": "blendcalc_api",
+				"table": "api_request_observations"
+			},
+			"view": "blendcalc_api_api_request_observations",
+			"targetSchema": "blendcalc_api",
+			"targetTable": "api_request_observations",
+			"columns": [
+				"id",
+				"observed_at",
+				"operation",
+				"read_mode",
+				"response_status",
+				"total_duration_ms",
+				"database_duration_ms",
+				"result_count",
+				"cache_validation",
+				"cache_not_modified",
+				"database_failed"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "ad830b99d787637aa7d65c8b7b1eb20ff71a478ce002c9c09e75cd157d37edc8"
+		},
+		{
+			"source": {
+				"schema": "blendcalc_api",
+				"table": "api_shadow_parity_observations"
+			},
+			"view": "blendcalc_api_api_shadow_parity_observations",
+			"targetSchema": "blendcalc_api",
+			"targetTable": "api_shadow_parity_observations",
+			"columns": [
+				"id",
+				"observed_at",
+				"operation",
+				"matches",
+				"source_hash",
+				"target_hash",
+				"source_duration_ms",
+				"target_duration_ms",
+				"failure_code"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "ab8144f9f9f20368e80dbe6f625f3cd07daef9a812f23109c75752b7ac955563"
+		},
+		{
+			"source": {
+				"schema": "blendcalc_api",
+				"table": "publication_categories"
+			},
+			"view": "blendcalc_api_publication_categories",
+			"targetSchema": "blendcalc_api",
+			"targetTable": "publication_categories",
+			"columns": [
+				"generation_id",
+				"category_key",
+				"display_name",
+				"sort_order",
+				"category_payload",
+				"content_sha256"
+			],
+			"orderBy": ["generation_id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "eb70e81619a9adc028316772ad296d505725b069187caf39637caae1ff498d23"
+		},
+		{
+			"source": {
+				"schema": "blendcalc_api",
+				"table": "publication_generation_events"
+			},
+			"view": "blendcalc_api_publication_generation_events",
+			"targetSchema": "blendcalc_api",
+			"targetTable": "publication_generation_events",
+			"columns": [
+				"id",
+				"generation_id",
+				"event_type",
+				"replaced_generation_id",
+				"event_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "aec770e015619749e6b031ab6aa238a14fe829e3bc78c85a52307ae5665d35f9"
+		},
+		{
+			"source": {
+				"schema": "blendcalc_api",
+				"table": "publication_generations"
+			},
+			"view": "blendcalc_api_publication_generations",
+			"targetSchema": "blendcalc_api",
+			"targetTable": "publication_generations",
+			"columns": [
+				"id",
+				"source_project_ref",
+				"source_catalog_hash",
+				"status",
+				"expected_product_count",
+				"expected_revision_count",
+				"expected_category_count",
+				"expected_attribution_count",
+				"source_snapshot_at",
+				"created_at",
+				"ready_at",
+				"activated_at",
+				"retired_at",
+				"failed_at",
+				"failure_code",
+				"target_catalog_hash"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "37323949d26d3a73ceae907fd965f8b9ffad221a76861f96c734d2cf80168879"
+		},
+		{
+			"source": {
+				"schema": "blendcalc_api",
+				"table": "publication_product_revisions"
+			},
+			"view": "blendcalc_api_publication_product_revisions",
+			"targetSchema": "blendcalc_api",
+			"targetTable": "publication_product_revisions",
+			"columns": [
+				"generation_id",
+				"gtin14",
+				"source_revision_id",
+				"revision_number",
+				"published_at",
+				"revision_payload",
+				"content_sha256"
+			],
+			"orderBy": ["generation_id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "3e26fff8befb9e5e462852d0d330d67e837ed6b540bbc9576494edff516d5a66"
+		},
+		{
+			"source": {
+				"schema": "blendcalc_api",
+				"table": "publication_products"
+			},
+			"view": "blendcalc_api_publication_products",
+			"targetSchema": "blendcalc_api",
+			"targetTable": "publication_products",
+			"columns": [
+				"generation_id",
+				"source_product_id",
+				"source_revision_id",
+				"gtin14",
+				"product_name",
+				"brand_owner",
+				"category_key",
+				"search_text",
+				"detail_payload",
+				"search_payload",
+				"content_sha256",
+				"source_updated_at",
+				"category_search_text"
+			],
+			"orderBy": ["generation_id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "c58dccafedf3392045afe9aaf4e9e4d3ef1cbba0ca3dfa7ee38f5fa4a8989aa2"
+		},
+		{
+			"source": {
+				"schema": "blendcalc_api",
+				"table": "publication_source_attributions"
+			},
+			"view": "blendcalc_api_publication_source_attributions",
+			"targetSchema": "blendcalc_api",
+			"targetTable": "publication_source_attributions",
+			"columns": [
+				"generation_id",
+				"source_key",
+				"attribution_payload",
+				"content_sha256"
+			],
+			"orderBy": ["generation_id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "4f372fae041f1535a347e505214beb40f36aa706458e1a23741c2ad288ff4ea1"
+		},
+		{
+			"source": {
+				"schema": "blendcalc_api",
+				"table": "publication_sync_runs"
+			},
+			"view": "blendcalc_api_publication_sync_runs",
+			"targetSchema": "blendcalc_api",
+			"targetTable": "publication_sync_runs",
+			"columns": [
+				"id",
+				"operation",
+				"status",
+				"read_mode",
+				"outcome",
+				"generation_id",
+				"source_catalog_hash",
+				"target_catalog_hash",
+				"source_product_count",
+				"target_product_count",
+				"added_product_count",
+				"removed_product_count",
+				"duration_ms",
+				"failure_code",
+				"started_at",
+				"completed_at"
+			],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "b9c53d2bdfec884f745b323665f0997a373ae1ebe6502259bc1fc348da8ebd15"
+		},
+		{
+			"source": {
+				"schema": "blendcalc_api",
+				"table": "safe_request_logs"
+			},
+			"view": "blendcalc_api_safe_request_logs",
+			"targetSchema": "blendcalc_api",
+			"targetTable": "safe_request_logs",
+			"columns": [
+				"request_id",
+				"observed_at",
+				"expires_at",
+				"endpoint",
+				"method",
+				"response_status",
+				"duration_ms",
+				"actor_type",
+				"actor_hash",
+				"rate_limit_result"
+			],
+			"orderBy": ["request_id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "1200e18ace326bf1d3803bec222d6a8725e3319d95aeea7152e36c233f473c7b"
+		},
+		{
+			"source": {
+				"schema": "public",
+				"table": "publication_products"
+			},
+			"view": "public_publication_products",
+			"targetSchema": "public",
+			"targetTable": "publication_products",
+			"columns": ["id", "marker"],
+			"orderBy": ["id"],
+			"rowScope": {
+				"kind": "approved-public"
+			},
+			"viewDefinitionSha256": "3bb1a6efab9af7f728994c3ab17538ce3871ca8859c1ff09eadbe84fa635b5c1"
+		}
+	]
+}

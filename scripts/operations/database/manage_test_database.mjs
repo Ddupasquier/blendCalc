@@ -21,7 +21,8 @@ import { createClient } from "@supabase/supabase-js";
 import WebSocket from "ws";
 import { createCleanProcessEnvironment } from "../../lib/environment/runtime_environment.mjs";
 import { assertLocalResourceSafety } from "../../lib/quality/resource_safety.mjs";
-import { runRehearsalExportAuthorizationProof } from "../../lib/rehearsal/export_authorization_boundary.mjs";
+import { localSupabaseCommandArguments } from "../../lib/environment/local_supabase_workdir.mjs";
+import { assertLocalConfigurationChangeSafe } from "../../lib/environment/local_supabase.mjs";
 import {
 	getLocalQaCatalogBarcodes,
 	localQaPrivateFoods,
@@ -59,6 +60,12 @@ const keepRuntimeRunning = process.argv.includes("--keep-running");
 const testAccounts = localQaPersonas;
 
 const runCommand = (command, args, { capture = false, input } = {}) => {
+	if (command === "supabase")
+		args = localSupabaseCommandArguments(args, {
+			cwd: repositoryRoot,
+			assertConfigurationChangeSafe: (projectId) =>
+				assertLocalConfigurationChangeSafe(projectId, repositoryRoot),
+		});
 	const shouldPipe = capture || input !== undefined;
 	const result = spawnSync(command, args, {
 		cwd: repositoryRoot,
@@ -1097,17 +1104,8 @@ const main = async () => {
 			try {
 				await resetLocalStack();
 				await runDatabaseTests();
-				{
-					const proof = runRehearsalExportAuthorizationProof();
-					console.log(
-						`Rehearsal export authorization proof passed ${proof.checks} checks and removed its disposable database and roles.`,
-					);
-				}
 				runCommand("node", [
 					"scripts/operations/database/verify_local_migration_history.mjs",
-				]);
-				runCommand("node", [
-					"scripts/operations/rehearsal/prove_installed_export_boundary.mjs",
 				]);
 				printAccounts();
 			} finally {

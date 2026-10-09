@@ -70,12 +70,18 @@ as a whole-product authority.
 Builds, complete Vitest projects, browser suites, feature/release/nightly verification,
 and full database verification run through
 `operations/quality/run_with_resource_limits.mjs`. On a local machine, the runner
-refuses to start when the macOS startup disk has less than 50 GiB free, swap use exceeds
-8 GiB, or an existing development process exceeds 5 GiB resident memory. It also gives
+refuses to start when the macOS startup disk has less than 50 GiB free, current memory
+pressure is warning or critical, swap use exceeds one physical-RAM-sized budget capped
+at 16 GiB, or an existing development process exceeds 5 GiB resident memory. A 16 GiB
+Mac therefore permits 16 GiB used swap while pressure is normal; smaller Macs retain
+their smaller budget. Missing macOS RAM/pressure measurements fail closed. It also gives
 child Node processes a 4 GiB old-space limit. CI skips machine-capacity checks but keeps
 the worker and heap limits.
 
 Use `npm run resources:check` for a read-only report. Resolve pressure before continuing.
+The report distinguishes retained swap from current pressure and displays the effective
+budget. The pressure sysctl uses exported notification flags, not the internal kernel
+enum described in some XNU documentation.
 `BLENDCALC_ALLOW_RESOURCE_PRESSURE=1` is an explicit one-command emergency override;
 it is not a persistent setting and does not make an unsafe machine state acceptable.
 The guard never deletes files, caches, containers, volumes, or databases.
@@ -100,7 +106,6 @@ documentation browser runner. Use the npm family command instead of adding alias
 | `backfills/images/`         | Image discovery, metadata repair, and automatic placement               |
 | `generators/api/`           | Documentation-only external provider references                         |
 | `generators/documentation/` | Public Markdown-to-site build with link and anchor validation           |
-| `generators/rehearsal/`     | Reviewed Rehearsal schema-policy manifests                              |
 | `imports/nutrition/`        | Licensed national nutrition dataset imports                             |
 | `operations/blendCalcAPI/`  | blendCalcAPI correction review and reversible publication controls      |
 | `operations/auth/`          | Auth environment verification                                           |
@@ -109,7 +114,6 @@ documentation browser runner. Use the npm family command instead of adding alias
 | `operations/documentation/` | Loopback-only documentation preview; no app or database startup         |
 | `operations/quality/`       | Repository linting and formatting verification helpers                  |
 | `operations/recovery/`      | Protected hosted backups and offline verification                       |
-| `operations/rehearsal/`     | Temporarily retained source preparation and export-boundary proofs      |
 | `operations/releases/`      | Application and API version consistency                                 |
 | `operations/users/`         | Privileged role and account operations                                  |
 | `operations/catalog/`       | Privileged catalog inspection and destructive product operations        |
@@ -122,7 +126,6 @@ documentation browser runner. Use the npm family command instead of adding alias
 | `lib/environment/`          | Clean process environments and local Supabase service helpers           |
 | `lib/documentation/`        | Static documentation shell and Markdown rendering                       |
 | `lib/reference-data/`       | Reviewed source queries, unit standards, and cautious matching catalogs |
-| `lib/rehearsal/`            | Temporarily retained source export, sanitization and asset preparation  |
 
 ## Local Database And QA
 
@@ -130,6 +133,15 @@ documentation browser runner. Use the npm family command instead of adding alias
 start or reset only localhost Supabase, writes an ignored test environment, applies
 `supabase/seed.sql`, and repairs the maintained personas in
 `lib/qa/local_qa_personas.mjs`.
+
+`lib/environment/local_supabase_workdir.mjs` stages reviewed public CLI inputs under
+the primary checkout's ignored `.cache/local-supabase/<project-id>/`. Both primary and
+API local commands use that independent state, preserving project IDs and volumes
+without reading hosted links/version caches. Templates are generated copies in this
+stable location; config/template changes refuse while the owned stack runs. Edit their
+canonical source instead. Status and stop do not restage changed source inputs.
+Configured public function source is included because the CLI validates entrypoints
+even when Edge Runtime is excluded; function environment files are never copied.
 
 `scripts/operations/environment/run_production_development.mjs` owns `dev:local` and port
 `5173`. It reads only the reviewed production-development allowlist from the ignored,
@@ -152,91 +164,33 @@ The executable owners are the `@rehearsal-db/core` CLI,
 `scripts/operations/database/manage_local_database.mjs`, and
 `scripts/operations/database/manage_blendcalc_api_local_database.mjs`.
 
-`node scripts/operations/rehearsal/prove_export_authorization_boundary.mjs` creates a uniquely named disposable
-database and three temporary least-privilege roles inside the local application
-PostgreSQL container. It proves that the login can read one explicit, versioned,
-security-barrier export view while direct source reads, mutations, source/network
-function calls, owner-role assumption, schema creation, and temporary objects fail. The
-command verifies that no side effect occurred and removes the exact disposable database
-and roles before returning. It never reads environment files, hosted credentials, or
-production data and does not install the proposed export-boundary migration.
+Rehearsal owns source planning, reader verification, privacy transformations, baseline
+activation and physical Storage preparation. BlendCalc retains only reviewed declarations
+under `infrastructure/rehearsal/` and ordinary application acceptance tests. Generic
+package regression verification belongs to [Rehearsal Test Lab](https://github.com/Ddupasquier/rehearsal-test-lab).
 
-`node scripts/generators/rehearsal/generate_sanitization_manifest.mjs --write` inventories only the running local
-application database schema and writes the reviewed table-and-column policy to
-`infrastructure/rehearsal/application/sanitization-policy.json`. The manifest records
-an explicit action for every current column; generation never reads table rows. Review
-the entire diff before accepting a generated change. Routine verification uses
-`node scripts/generators/rehearsal/generate_sanitization_manifest.mjs --check`, which fails when a table or column was added,
-removed, renamed, or retyped without a corresponding reviewed manifest update.
+The active configuration is `rehearsal.config.mjs` beside `package.json`. Source access
+is separate from ordinary runtime commands: review `source plan`, apply its exact
+confirmation digest, run `baseline refresh`, then review and confirm `source retire`.
+Repeat each step with `--config=infrastructure/rehearsal/publication/rehearsal.config.mjs`
+for the publication target. Run state-changing commands sequentially.
 
-`node scripts/generators/rehearsal/generate_export_boundary_migration.mjs --write`
-generates the additive `rehearsal_export` migration from that reviewed manifest. Use
-`node scripts/generators/rehearsal/generate_export_boundary_migration.mjs --check` during routine verification; it fails when
-the checked-in migration no longer matches the policy. The migration contains explicit
-versioned security-barrier views, an inert owner, an inert reader group, forced-RLS
-policies, and a hashed migration receipt. It does not create a login credential.
+The current source policies accept only the approved loopback copies and their exact
+provider-managed reader groups/views. Supply the named server-only variables through
+an owner-only environment manager; the CLI does not automatically load a source dotenv
+file. Source operations require separately approved credentials and never inherit
+authority from a runtime launch. See [source setup](../docs/development/environment.md#package-owned-source-preparation).
 
-`node scripts/operations/database/verify_local_migration_history.mjs` compares every local migration file with the
-installed local Supabase ledger, including an exact ordered-statement SHA-256. It fails
-on edits, omissions, reordering, duplicate versions, filename mismatches, and database
-versions not represented locally.
+Native baselines, credentials and keys live under ignored
+`.rehearsal-native/{primary,publication}/.rehearsal/`. Existing `.rehearsal/` and
+`.rehearsal-publication/` copies remain protected historical baselines; their version-1
+policy files remain for restoration, not new extraction. Never replace or rotate a key
+merely to complete setup. `baseline refresh` leaves runtime edits and older generations
+alone; deliberate reset or cleanup is a separate reviewed operation.
 
-`node scripts/operations/rehearsal/prove_installed_export_boundary.mjs` creates one disposable local login,
-connects through the installed export surface, streams every included table in a single
-serializable read-only transaction, sanitizes all records, atomically activates and
-verifies a temporary checksummed baseline, and removes both the login and artifact. It
-also creates a disposable Auth identity with the real `rehearsal_storage_reader` JWT,
-downloads a bounded local object through Storage RLS, and cleans up that identity and
-object. The command performs an elevated local `pg_net` grant cleanup that Supabase may
-undo at container restart, then proves the local database login has no executable
-network path. Hosted Supabase owns those grants and can restore them. Production
-provisioning therefore rotates a random database credential that expires within 30
-minutes, and the fixed export accepts it only inside one serializable read-only
-transaction after verifying that every `net` function uses invoker rights.
-
-`node scripts/operations/rehearsal/refresh_production_baseline.mjs` is the hosted-source consumer and remains unusable until
-the reviewed boundary is deployed and its two read-only identities are provisioned. It
-reads exactly five values from owner-only `.env.rehearsal-source.local`: a dedicated
-`rehearsal_*` PostgreSQL URL, the Storage URL and publishable key, and a short-lived
-Storage-reader access/refresh token pair. It accepts no service-role key or reusable
-Storage password. The database preflight returns the fixed owner UUID and email hash;
-the separate Storage JWT must contain the `rehearsal_storage_reader` role and the same
-owner scope before any byte is accepted. Sanitized identifiers remain stable across
-refreshes through one random 32-byte key in ignored
-`.rehearsal/sanitization.key`. The key is created once with owner-only permissions,
-never leaves the machine, and is never written into a baseline or log.
-After a replacement verifies and becomes active, refresh retains that generation and
-one verified fallback, then removes older immutable generations through path-checked
-cleanup.
-
-`node scripts/operations/rehearsal/provision_production_source.mjs --dry-run` validates the linked project and
-requires exactly one Google-linked admin or developer as the approved source owner. The
-confirmed command creates or rotates one ephemeral `rehearsal_*` database login, binds
-its export scope to that owner, creates or rotates one dedicated Auth/Storage reader,
-proves both credentials, and atomically
-writes only the five allowed values to ignored `.env.rehearsal-source.local` with mode 600. It uses `.env.moderation.local` only inside the provisioning process; no privileged
-value enters the generated source environment, command line, logs, or baseline. Hosted
-CAPTCHA remains enabled because provisioning mints the Storage session through a
-non-delivery Admin magic link rather than password authentication.
-
-`node scripts/operations/rehearsal/deprovision_production_source.mjs --dry-run` previews removal of only that
-temporary database login and owner scope, the dedicated read-only Storage identity,
-and the ignored source credential file. The confirmed command is idempotent and refuses
-an Auth identity whose purpose metadata is not exact. It preserves the shared export
-boundary, active baseline, and local Rehearsal runtime so a completed refresh stays
-usable after every hosted credential has been revoked.
-
-The `@rehearsal-db/core` dependency owns the persistent local runtime. It restores only an
-atomically verified baseline under ignored `.rehearsal/`, checks the
-exact migration-file prefix, streams records into PostgreSQL without constructing one
-unbounded SQL argument, recreates referenced Auth identities as synthetic local users,
-seeds the declared local developer assignment for the approved placeholder in an excluded
-authorization table, restores every checksummed Storage object into local Storage, and recreates
-the excluded catalog-monitor singleton in a disabled state so diagnostic reads retain
-their contract without enabling worker side effects. The exact public catalog and
-approved owner's non-secret private state are preserved; other identities and private
-values remain sanitized. A failed restore or candidate migration discards the runtime instead of
-leaving a database that could be mistaken for a verified Rehearsal.
+`node scripts/operations/database/verify_local_migration_history.mjs` remains an ordinary
+local database check. QA verification retains pgTAP and migration-history checks; it
+does not run a second Rehearsal extraction or sanitizer.
 
 `npm run rehearsal -- migrate` accepts candidate migrations only after their ordered
 filename and content hashes produce the exact receipt printed by
@@ -279,13 +233,8 @@ environment. It performs no writes.
 Genuine Google interaction and copied-account association use ordinary sign-in followed
 by the public reviewed `identity plan`/`identity claim` workflow, then a fresh sign-in.
 The runtime and identity declarations live under `infrastructure/rehearsal/application/`.
-The publication target has its own config and approved baseline under ignored
-`.rehearsal-publication/.rehearsal/`.
-
-**Temporary source-preparation boundary:** the legacy source reader, sanitizer,
-Storage preparation and generators above remain until the full privacy policy has a
-reviewed declarative replacement. Runtime cleanup is not full source retirement; do
-not delete those scripts or weaken their privacy rules to shorten the inventory.
+The publication target has its own config and native baseline under ignored
+`.rehearsal-native/publication/.rehearsal/`.
 
 | Command                                                                                                                                                              | Behavior                                                                                             |
 | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
@@ -294,12 +243,11 @@ not delete those scripts or weaken their privacy rules to shorten the inventory.
 | `npm run db:test -- verify`                                                                                                                                          | Recreate and test the local database, then stop the stack and manager-started Colima.                |
 | `npm run db:test -- status`                                                                                                                                          | Report local service status.                                                                         |
 | `npm run db:test -- stop`                                                                                                                                            | Stop local Supabase.                                                                                 |
-| `node scripts/operations/rehearsal/prove_export_authorization_boundary.mjs`                                                                                          | Prove the least-privilege design in an isolated disposable local database.                           |
-| `node scripts/operations/rehearsal/prove_installed_export_boundary.mjs`                                                                                              | Stream, sanitize, verify, and clean a temporary baseline through the installed local boundary.       |
 | `node scripts/operations/database/verify_local_migration_history.mjs`                                                                                                | Compare installed migration statements with immutable local migration source.                        |
-| `node scripts/operations/rehearsal/prove_installed_export_boundary.mjs --retain-local-baseline`                                                                      | Produce and retain a verified baseline from the installed local export boundary.                     |
-| `node scripts/operations/rehearsal/provision_production_source.mjs --dry-run`                                                                                        | Preview the confirmed least-privilege production source provisioning operation.                      |
-| `node scripts/operations/rehearsal/deprovision_production_source.mjs --dry-run`                                                                                      | Preview revocation of the temporary production-source identities and local credential file.          |
+| `npm run rehearsal -- source plan`                                                                                                                                   | Preview the reviewed primary source access; performs no copy.                                        |
+| `npm run rehearsal -- source apply --confirm-source-access=<sha256>`                                                                                                 | Validate the exact reviewed reader and save its temporary credential.                                |
+| `npm run rehearsal -- baseline refresh`                                                                                                                              | Sanitize and activate a baseline without resetting the runtime or pruning older copies.              |
+| `npm run rehearsal -- source retire`                                                                                                                                 | Preview retirement; apply only with its exact `--confirm-source-retirement=<sha256>`.                |
 | `npm run rehearsal -- start`                                                                                                                                         | Start the persistent runtime, restoring it when no verified runtime exists.                          |
 | `npm run rehearsal -- reset`                                                                                                                                         | Discard and recreate the runtime from the active immutable baseline.                                 |
 | `npm run rehearsal -- status`                                                                                                                                        | Report runtime health, endpoints, baseline identity, and candidate state.                            |
@@ -313,10 +261,6 @@ not delete those scripts or weaken their privacy rules to shorten the inventory.
 | `npm run rehearsal -- inspect baseline\|inspect migrations`                                                                                                          | Inspect safe provenance and exact migration classifications.                                         |
 | `node scripts/operations/quality/prove_local_application.mjs`                                                                                                        | Prove the already-running isolated application, CSP, Auth, signed images and publication API.        |
 | `node scripts/operations/quality/prove_local_publication.mjs`                                                                                                        | Read-only active publication-generation and product-payload checks.                                  |
-| `node scripts/generators/rehearsal/generate_sanitization_manifest.mjs --write`                                                                                       | Regenerate the schema-only sanitization policy for deliberate review.                                |
-| `node scripts/generators/rehearsal/generate_sanitization_manifest.mjs --check`                                                                                       | Fail when the reviewed policy no longer exactly covers the local schema.                             |
-| `node scripts/generators/rehearsal/generate_export_boundary_migration.mjs --write`                                                                                   | Regenerate the explicit export-boundary migration for deliberate review.                             |
-| `node scripts/generators/rehearsal/generate_export_boundary_migration.mjs --check`                                                                                   | Fail when the export migration differs from its reviewed generator inputs.                           |
 | `node scripts/qa/database/run_deterministic_qa.mjs`                                                                                                                  | Run read-only hosted invariants without creating users or Fridge records.                            |
 | `node scripts/operations/environment/run_test_command.mjs -- node scripts/qa/catalog/seed_catalog_submission.mjs seed <email> <reviewable\|incomplete\|both>`        | Add local product-review fixtures.                                                                   |
 | `node scripts/operations/environment/run_test_command.mjs -- node scripts/qa/catalog/seed_catalog_submission.mjs cleanup <email>`                                    | Remove product-review fixtures created for that email.                                               |
