@@ -16,6 +16,47 @@ export const expectPaintedMediaContainment = async (card: Locator) => {
 			behavior: "auto",
 		}),
 	);
+	const visibleArea = await card.evaluate((element) => {
+		let top = 0;
+		let bottom = window.innerHeight;
+		const scrollers: HTMLElement[] = [];
+		for (
+			let parent = element.parentElement;
+			parent;
+			parent = parent.parentElement
+		) {
+			const overflow = getComputedStyle(parent).overflowY;
+			if (/^(auto|scroll|hidden|clip)$/.test(overflow)) {
+				const rect = parent.getBoundingClientRect();
+				top = Math.max(top, rect.top);
+				bottom = Math.min(bottom, rect.bottom);
+			}
+			if (
+				/^(auto|scroll)$/.test(overflow) &&
+				parent.scrollHeight > parent.clientHeight
+			)
+				scrollers.push(parent);
+		}
+		const navigation = document.querySelector(
+			'nav[aria-label="Main navigation"]',
+		);
+		if (navigation) {
+			const rect = navigation.getBoundingClientRect();
+			if (rect.top > window.innerHeight / 2)
+				bottom = Math.min(bottom, rect.top);
+		}
+		// CSS zoom changes scroll units; keep both corners clear of clipping and
+		// fixed navigation instead of comparing pixels hidden behind other UI.
+		for (const scroller of scrollers) {
+			const rect = element.getBoundingClientRect();
+			if (rect.top >= top + 4 && rect.bottom <= bottom - 4) break;
+			const scale =
+				scroller.getBoundingClientRect().width / scroller.offsetWidth;
+			scroller.scrollTop +=
+				(rect.top + rect.height / 2 - (top + bottom) / 2) / scale;
+		}
+		return { top, bottom };
+	});
 	let previousBounds = "";
 	await expect
 		.poll(async () => {
@@ -44,6 +85,8 @@ export const expectPaintedMediaContainment = async (card: Locator) => {
 		painted = await capture();
 	}
 	expect(await card.boundingBox()).toEqual(bounds);
+	expect(bounds!.y).toBeGreaterThanOrEqual(visibleArea.top);
+	expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(visibleArea.bottom);
 	const geometry = await card.evaluate((element) => {
 		const styles = getComputedStyle(element);
 		const media = element.querySelector(".ingredient-card-media-lane");
