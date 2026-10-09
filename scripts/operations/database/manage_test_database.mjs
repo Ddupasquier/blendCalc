@@ -21,6 +21,8 @@ import { createClient } from "@supabase/supabase-js";
 import WebSocket from "ws";
 import { createCleanProcessEnvironment } from "../../lib/environment/runtime_environment.mjs";
 import { assertLocalResourceSafety } from "../../lib/quality/resource_safety.mjs";
+import { localSupabaseCommandArguments } from "../../lib/environment/local_supabase_workdir.mjs";
+import { assertLocalConfigurationChangeSafe } from "../../lib/environment/local_supabase.mjs";
 import {
 	getLocalQaCatalogBarcodes,
 	localQaPrivateFoods,
@@ -58,6 +60,12 @@ const keepRuntimeRunning = process.argv.includes("--keep-running");
 const testAccounts = localQaPersonas;
 
 const runCommand = (command, args, { capture = false, input } = {}) => {
+	if (command === "supabase")
+		args = localSupabaseCommandArguments(args, {
+			cwd: repositoryRoot,
+			assertConfigurationChangeSafe: (projectId) =>
+				assertLocalConfigurationChangeSafe(projectId, repositoryRoot),
+		});
 	const shouldPipe = capture || input !== undefined;
 	const result = spawnSync(command, args, {
 		cwd: repositoryRoot,

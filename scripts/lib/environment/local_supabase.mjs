@@ -5,6 +5,35 @@
 
 import { spawnSync } from "node:child_process";
 import { createCleanProcessEnvironment } from "@rehearsal-db/core/process-environment";
+import { localSupabaseCommandArguments } from "./local_supabase_workdir.mjs";
+
+export const assertLocalConfigurationChangeSafe = (
+	projectId,
+	cwd,
+	execute = spawnSync,
+) => {
+	const result = execute(
+		"docker",
+		[
+			"ps",
+			"--filter",
+			`label=com.supabase.cli.project=${projectId}`,
+			"--format",
+			"{{.ID}}",
+		],
+		{
+			cwd,
+			encoding: "utf8",
+			env: createCleanProcessEnvironment(),
+			stdio: ["ignore", "pipe", "pipe"],
+		},
+	);
+	if (result.error || result.status !== 0 || result.stdout.trim()) {
+		throw new Error(
+			"Stop the owned local stack before changing its config or email templates; no running state was changed.",
+		);
+	}
+};
 
 export const parseSupabaseStatusEnvironment = (output) => {
 	const values = {};
@@ -29,6 +58,12 @@ export const runLocalCommand = (
 		maxBuffer = 16 * 1024 * 1024,
 	} = {},
 ) => {
+	if (command === "supabase")
+		args = localSupabaseCommandArguments(args, {
+			cwd,
+			assertConfigurationChangeSafe: (projectId) =>
+				assertLocalConfigurationChangeSafe(projectId, cwd),
+		});
 	const shouldPipe = capture || input !== undefined;
 	const result = spawnSync(command, args, {
 		cwd,

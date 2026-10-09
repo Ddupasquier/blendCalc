@@ -224,6 +224,11 @@ not duplicate the same assertion across runners.
 
 ## Scripts
 
+`scripts/lib/environment/local_supabase_workdir.mjs` owns staging public Supabase inputs
+for local commands. Generated config, migrations, seeds, tests, templates and CLI state
+live in `.cache/local-supabase/<project-id>/` under the primary checkout; they are derived
+local artifacts, never a second source authority or a feature-checkout mount dependency.
+
 - Executable maintenance commands use a two-part ownership path under `scripts/`: the
   first folder names the operation (`audits`, `backfills`, `generators`, `imports`,
   `operations`, `qa`, or `seeds`) and the child folder names its domain (`catalog`,
