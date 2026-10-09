@@ -7,8 +7,8 @@
 	import ProductImageFrame from "$lib/components/common/images/ProductImageFrame/ProductImageFrame.svelte";
 	import type { ProductImageEvidenceInputProps } from "./types";
 	import {
-		createFullImagePlacement,
-		getStoredImagePlacement,
+		createDefaultCardImagePlacement,
+		getCardImagePlacement,
 	} from "$lib/utils/food/images/imagePlacement";
 	import { pickFoodFullImageUrl } from "$lib/utils/food/images/foodImages";
 	import { prepareSelectedImagePreview } from "$lib/utils/food/images/selectedImagePreview.client";
@@ -56,7 +56,7 @@
 			previewPreparationFailed = false;
 			if (!selectedPhoto) return;
 
-			onPlacementChange(createFullImagePlacement());
+			onPlacementChange(createDefaultCardImagePlacement());
 			const controller = new AbortController();
 			activePreviewController = controller;
 			void prepareSelectedImagePreview(selectedPhoto, controller.signal)
@@ -96,7 +96,7 @@
 	);
 	const useExistingProductImage = () => {
 		onFrontPhotoChange(null);
-		onPlacementChange(getStoredImagePlacement(trustedImage));
+		onPlacementChange(getCardImagePlacement(trustedImage));
 		replacingTrustedImage = false;
 	};
 </script>
