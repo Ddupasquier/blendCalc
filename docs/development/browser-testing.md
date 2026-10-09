@@ -165,6 +165,13 @@ both approved production hostnames against the budgets in
   explicit behavioral assertion instead of a blanket network exception.
 - Keep database mutations serial and deterministic; restore the local baseline when a
   scenario changes durable state.
+- Do not assume a shared QA queue is empty or delete existing records to make an
+  empty-state rendering test pass. Keep real authorization and aggregate-count checks
+  against ordinary data. For a deliberately controlled display state, fetch the genuine
+  authorized loopback response first, validate its role and available summary, replace
+  only the declared count and its consistent aggregate, and remove the fixture after
+  the assertion. `privilegedQueueRendering.ts` owns this narrow dashboard fixture; it
+  does not replace database, RLS, MFA or real queue-pagination evidence.
 - Keep manual and automatic MFA checks for each maintained privileged persona in the
   same default-mode spec. Factor-reset fixtures invalidate that persona's sessions and
   must not overlap another worker's sign-in: Profile owns Moderator/Admin, and catalog
