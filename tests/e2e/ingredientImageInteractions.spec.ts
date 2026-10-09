@@ -292,6 +292,17 @@ for (const placement of ["unplaced", "manual", "automatic"] as const) {
 		try {
 			await page.goto("/ingredients/fridge");
 			await waitForAppReady(page);
+			// Initial foods are server-rendered and do not use the API fixture.
+			// A real sort change requests authorized list data for every visible card.
+			await page
+				.getByRole("button", { name: "Filter and sort saved ingredients" })
+				.click();
+			const filters = page.getByRole("dialog", { name: "Filter and sort" });
+			await filters
+				.getByRole("button", { name: "Oldest first", exact: true })
+				.click();
+			await filters.getByRole("button", { name: "Apply", exact: true }).click();
+			await expect(filters).toBeHidden();
 			for (const [index, product] of representativeImageProducts.entries()) {
 				const card = await findSavedIngredientCard(page, product.name);
 				const viewport = card.locator(".image-placement-viewport");
