@@ -165,6 +165,25 @@ const withCatalogReviewFixture = async (
 	}
 };
 
+const openCatalogReviewProduct = async (page: Page, productId: string) => {
+	const inbox = page.getByRole("region", { name: "Products needing review" });
+	const path = `${root}/products/${productId}`;
+	const link = inbox.getByRole("link").and(page.locator(`[href="${path}"]`));
+	// Reach the fixture through the real bounded inbox, preserving other QA work.
+	// A forced document navigation would cancel unrelated in-flight hover preloads.
+	for (let attempt = 0; attempt < 20 && (await link.count()) === 0; attempt++) {
+		const loaded = await inbox.getByRole("link").count();
+		await inbox
+			.getByRole("button", { name: "Load more products", exact: true })
+			.click();
+		await expect
+			.poll(() => inbox.getByRole("link").count())
+			.toBeGreaterThan(loaded);
+	}
+	await link.click();
+	await expect(page).toHaveURL((url) => url.pathname === path);
+};
+
 test("catalog inbox appends, retries and preserves focus during routed navigation @compatibility @mobile", async ({
 	page,
 	unexpectedBrowserErrors,
@@ -255,7 +274,7 @@ test("exact-product catalog queues preserve drafts and reconcile terminal recall
 		page,
 		testInfo,
 		async ({ scope, productId }) => {
-			await page.goto(`${root}/products/${productId}`);
+			await openCatalogReviewProduct(page, productId);
 			await waitForAppReady(page);
 			const product = page.getByRole("dialog", { name: "Product readiness" });
 			await expect(product).toBeVisible();
@@ -362,7 +381,7 @@ test("loaded catalog queues retain readable responsive controls and enlarged tex
 	page,
 }, testInfo) => {
 	await withCatalogReviewFixture(page, testInfo, async ({ productId }) => {
-		await page.goto(`${root}/products/${productId}`);
+		await openCatalogReviewProduct(page, productId);
 		await waitForAppReady(page);
 		const product = page.getByRole("dialog", { name: "Product readiness" });
 		const recallFooter = product.getByLabel("Recall matches pagination", {
@@ -460,7 +479,8 @@ test("catalog conflict review and provider decisions complete atomically @compat
 	page,
 }, testInfo) => {
 	await withCatalogReviewFixture(page, testInfo, async ({ scope }) => {
-		await page.goto(`${root}/products/${scope}000-0000-4000-8000-000000000061`);
+		const productId = `${scope}000-0000-4000-8000-000000000061`;
+		await openCatalogReviewProduct(page, productId);
 		await waitForAppReady(page);
 		await expect(
 			page.getByLabel("Provider changes pagination", { exact: true }),
@@ -484,7 +504,7 @@ test("catalog conflict review and provider decisions complete atomically @compat
 		await expect(page).not.toHaveURL(
 			new RegExp(`${scope}000-0000-4000-8000-000000000061$`, "u"),
 		);
-		await page.goto(`${root}/products/${scope}000-0000-4000-8000-000000000061`);
+		await openCatalogReviewProduct(page, productId);
 		await waitForAppReady(page);
 		await expect(page.locator(".catalog-conflict-workbench")).toHaveCount(0);
 		const provider = page.locator('form:has(input[name="reviewId"])');
