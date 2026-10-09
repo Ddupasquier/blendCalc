@@ -242,7 +242,23 @@ review decisions, not data health metrics. Its inbox groups the bounded decision
 canonical product so each product and unique catalog UPC appears exactly once. Each
 product row shows the total outstanding decisions and a written breakdown of recall,
 conflict, and provider-change work; the path-backed product view contains every
-individual decision and action for that product. Inside the product view, open the first
+individual decision and action for that product.
+
+The product inbox progressively appends bounded server pages through Load more. Its
+heading and each product's written breakdown show exact full-queue counts, not just
+loaded rows. Inside a product, recall, conflict and provider work have independent
+Load more and Return to top controls. Existing rows and scroll position remain while
+loading; retries retain the same visible work. Concurrent membership/evidence changes
+reconcile the loaded depth before exposing additional rows. A conflict review cannot
+finish until every current field has been loaded and decided; paging does not split
+its single atomic finish into partial decisions. The atomic limit is 200 fields;
+larger products show an explicit explanation and a disabled Finish action rather
+than submitting only part of the review.
+The sticky Finish action stays within its review form, with paging controls below
+the form so they remain reachable. Provider correction findings follow the loaded
+provider pages, and unrelated recall decisions preserve unchanged conflict drafts.
+
+Inside the product view, open the first
 non-clear queue, label every queue badge as `to review` or `Clear`, and explain the
 evidence decision at the start of each queue.
 Recall decisions start unselected and cannot be saved without an evidence note.

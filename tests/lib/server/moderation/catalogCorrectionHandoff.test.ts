@@ -12,7 +12,7 @@ import { readCatalogCorrectionHandoff } from "$lib/server/moderation/catalogCorr
 
 const createQuery = (result: { data: unknown; error: unknown }) => {
 	const query: Record<string, unknown> = {};
-	for (const method of ["select", "eq", "in", "order", "limit"]) {
+	for (const method of ["select", "eq", "in", "or", "order", "limit"]) {
 		query[method] = vi.fn(() => query);
 	}
 	query.maybeSingle = vi.fn(async () => result);
@@ -25,6 +25,30 @@ const createQuery = (result: { data: unknown; error: unknown }) => {
 
 describe("catalog correction handoff", () => {
 	beforeEach(() => vi.clearAllMocks());
+	it("enriches only selected conflicts and reuses paged provider evidence", async () => {
+		const queries = new Map<string, ReturnType<typeof createQuery>>();
+		const from = vi.fn((table: string) => {
+			const query = createQuery({
+				data:
+					table === "shared_products" || table === "shared_product_submissions"
+						? null
+						: [],
+				error: null,
+			});
+			queries.set(table, query);
+			return query;
+		});
+		mocks.getSupabaseAdminClient.mockReturnValue({ from });
+		const id = "99978100-0000-4000-8000-000000000001";
+		await readCatalogCorrectionHandoff("product-id", [], [id]);
+		expect(
+			queries.get("catalog_actionable_product_conflicts")?.in,
+		).toHaveBeenCalledWith("id", [id]);
+		expect(from).not.toHaveBeenCalledWith("catalog_provider_change_reviews");
+		expect(queries.get("catalog_correction_origins")?.or).toHaveBeenCalledWith(
+			`shared_product_conflict_id.in.(${id}),food_compatibility_feedback_id.not.is.null`,
+		);
+	});
 
 	it("identifies the nutrient, basis, stored value, and every competing source", async () => {
 		const results = new Map<string, Array<{ data: unknown; error: null }>>([

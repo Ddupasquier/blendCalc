@@ -1,16 +1,23 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
 	import ManualEntrySheet from "$lib/components/ingredients/sheets/ManualEntrySheet/ManualEntrySheet.svelte";
-	import CatalogConflictDecisionWorkbench from "$lib/components/moderation/CatalogConflictDecisionWorkbench/CatalogConflictDecisionWorkbench.svelte";
-	import CatalogCorrectionHandoff from "$lib/components/moderation/CatalogCorrectionHandoff/CatalogCorrectionHandoff.svelte";
+	import CatalogReviewProductQueues from "$lib/components/moderation/CatalogReviewProductQueues/CatalogReviewProductQueues.svelte";
 	import CatalogReviewProductRail from "$lib/components/moderation/CatalogReviewProductRail/CatalogReviewProductRail.svelte";
-	import CatalogReviewWorkDashboard from "$lib/components/moderation/CatalogReviewWorkDashboard/CatalogReviewWorkDashboard.svelte";
+	import { untrack } from "svelte";
 	import PrivilegedToolWorkspaceView from "$lib/components/moderation/PrivilegedToolWorkspaceView/PrivilegedToolWorkspaceView.svelte";
 	import ProfilePage from "../../../../+page.svelte";
 	import type { ProductEvidenceRole } from "$lib/utils/products/productEvidenceRequirements";
 	import type { CatalogReviewProductPageProps } from "./types";
 
 	let { data, form }: CatalogReviewProductPageProps = $props();
+	let scrollContainer = $state<HTMLElement | null>(null);
+	let reviewCounts = $state(
+		untrack(() => ({
+			conflicts: data.reviewPages.conflicts.total,
+			providerChanges: data.reviewPages.providerChanges.total,
+			safetyMatches: data.reviewPages.safetyMatches.total,
+		})),
+	);
 	let correctionOpen = $state(false);
 	let correctionEvidenceRoles = $state<ProductEvidenceRole[] | undefined>();
 	const closeAction = () => {
@@ -19,16 +26,9 @@
 		});
 	};
 	const directDecisionCount = $derived(
-		data.reviewWork.counts.safetyMatches +
-			data.reviewWork.counts.providerChanges,
+		reviewCounts.safetyMatches + reviewCounts.providerChanges,
 	);
-	const conflictCount = $derived(
-		data.correctionHandoff.findings.filter(
-			(finding) =>
-				finding.type === "catalog_conflict" &&
-				finding.status === "needs_correction",
-		).length,
-	);
+	const conflictCount = $derived(reviewCounts.conflicts);
 	const diagnosticCount = $derived(
 		data.passport.issues.filter(
 			(issue) => issue.workCategory === "catalog_diagnostic",
@@ -57,6 +57,7 @@
 
 <ProfilePage />
 <PrivilegedToolWorkspaceView
+	bind:scrollContainer
 	id="profile-catalog-review-product-view"
 	title="Product readiness"
 	subtitle="Review this product's current evidence, conflicts, and correction needs."
@@ -98,35 +99,19 @@
 	feedbackTone={form?.catalogReviewError ? "danger" : "success"}
 	onClose={closeAction}
 >
-	{#if directDecisionCount > 0}
-		<CatalogReviewWorkDashboard
-			reviewWork={data.reviewWork}
-			hideConflicts
-			hideHeading
-		/>
-	{/if}
-	{#if conflictCount > 0 && decisionWorkbenchAvailable}
-		<CatalogConflictDecisionWorkbench
+	{#key data.passport.product.id}
+		<CatalogReviewProductQueues
 			productId={data.passport.product.id}
+			pages={data.reviewPages}
 			handoff={data.correctionHandoff}
-		/>
-	{:else if data.correctionHandoff.findings.length > 0}
-		<CatalogCorrectionHandoff
-			handoff={{
-				...data.correctionHandoff,
-				applicationFoodId: data.correctionFood
-					? data.correctionHandoff.applicationFoodId
-					: null,
-				findings: decisionWorkbenchAvailable
-					? data.correctionHandoff.findings.filter(
-							(finding) => finding.type !== "catalog_conflict",
-						)
-					: data.correctionHandoff.findings,
-			}}
-			returnPath={`/profile/privileged-tools/catalog-review-work/products/${data.passport.product.id}`}
+			correctionAvailable={Boolean(data.correctionFood)}
 			onOpenCorrection={openCorrection}
+			{scrollContainer}
+			onCountsChange={(counts) => {
+				reviewCounts = counts;
+			}}
 		/>
-	{/if}
+	{/key}
 </PrivilegedToolWorkspaceView>
 
 <ManualEntrySheet

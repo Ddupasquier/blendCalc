@@ -148,7 +148,14 @@
 		aria-label={labelledby ? undefined : label}
 		aria-labelledby={labelledby}
 		tabindex="-1"
-		onclick={(event) => event.stopPropagation()}
+		onclick={(event) => {
+			// Links must reach the page router; keep other sheet clicks contained.
+			if (
+				!(event.target instanceof Element) ||
+				!event.target.closest("a[href]")
+			)
+				event.stopPropagation();
+		}}
 		onkeydown={handleDialogKeydown}
 		onpointerdown={backdropDismissal.handleSheetPointerDown}
 	>

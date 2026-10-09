@@ -1,6 +1,6 @@
-@use "../../../../styles/variables" as *;
+@use "../../../../../styles/variables" as *;
 
-.food-warning-queue-controls {
+.progressive-list-footer {
 	display: grid;
 	gap: $app-gap-sm;
 	min-width: 0;
@@ -8,7 +8,7 @@
 	padding: $app-gap-xs;
 }
 
-.food-warning-queue-controls > p {
+.progressive-list-footer > p {
 	margin: 0;
 	color: $app-shell-text-muted;
 	font-size: $app-font-size-sm;

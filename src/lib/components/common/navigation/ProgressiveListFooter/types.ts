@@ -1,4 +1,4 @@
-export type FoodWarningQueueControlsProps = {
+export type ProgressiveListFooterProps = {
 	label: string;
 	loadedCount: number;
 	total: number;

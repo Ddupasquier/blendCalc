@@ -49,6 +49,8 @@ draft or device state described in [Data Architecture](data-architecture.md).
   before they overlap controls.
 - Dialogs, sheets, scanners, popovers, and tutorials keep required actions inside the
   safe viewport and preserve focus correctly.
+- Ordinary links inside a sheet reach the page router without a forced full reload;
+  other contained controls must not activate the page underneath.
 - Important actions and warnings remain easy to find without overcrowding the resting
   view.
 - Health-related preferences are optional, private, and never presented as a safety

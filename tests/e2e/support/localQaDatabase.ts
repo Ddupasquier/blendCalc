@@ -33,7 +33,7 @@ const readLocalQaDatabaseEnvironment = async () => {
 	return { publishableKey, serviceRoleKey, supabaseUrl };
 };
 
-const createLocalQaServiceRoleDatabaseClient = async () => {
+export const createLocalQaServiceRoleDatabaseClient = async () => {
 	const { serviceRoleKey, supabaseUrl } =
 		await readLocalQaDatabaseEnvironment();
 	return createClient<Database>(supabaseUrl, serviceRoleKey, {
