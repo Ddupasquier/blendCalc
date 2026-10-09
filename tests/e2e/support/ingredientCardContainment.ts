@@ -2,6 +2,32 @@ import type { Locator } from "@playwright/test";
 import sharp from "sharp";
 import { expect, test } from "./browserTest";
 
+const readVisibleCardArea = (element: Element) => {
+	let top = 0;
+	let bottom = window.innerHeight;
+	for (
+		let parent = element.parentElement;
+		parent;
+		parent = parent.parentElement
+	) {
+		if (
+			/^(auto|scroll|hidden|clip)$/.test(getComputedStyle(parent).overflowY)
+		) {
+			const rect = parent.getBoundingClientRect();
+			top = Math.max(top, rect.top);
+			bottom = Math.min(bottom, rect.bottom);
+		}
+	}
+	const navigation = document.querySelector(
+		'nav[aria-label="Main navigation"]',
+	);
+	if (navigation) {
+		const rect = navigation.getBoundingClientRect();
+		if (rect.top > window.innerHeight / 2) bottom = Math.min(bottom, rect.top);
+	}
+	return { top, bottom };
+};
+
 // Crop/zoom can extend an image beneath its clipping layer; inspect painted
 // cutouts rather than requiring the un-clipped image bounds to fit the card.
 export const expectPaintedMediaContainment = async (card: Locator) => {
@@ -16,9 +42,8 @@ export const expectPaintedMediaContainment = async (card: Locator) => {
 			behavior: "auto",
 		}),
 	);
-	const visibleArea = await card.evaluate((element) => {
-		let top = 0;
-		let bottom = window.innerHeight;
+	const initialArea = await card.evaluate(readVisibleCardArea);
+	await card.evaluate((element, { top, bottom }) => {
 		const scrollers: HTMLElement[] = [];
 		for (
 			let parent = element.parentElement;
@@ -26,24 +51,11 @@ export const expectPaintedMediaContainment = async (card: Locator) => {
 			parent = parent.parentElement
 		) {
 			const overflow = getComputedStyle(parent).overflowY;
-			if (/^(auto|scroll|hidden|clip)$/.test(overflow)) {
-				const rect = parent.getBoundingClientRect();
-				top = Math.max(top, rect.top);
-				bottom = Math.min(bottom, rect.bottom);
-			}
 			if (
 				/^(auto|scroll)$/.test(overflow) &&
 				parent.scrollHeight > parent.clientHeight
 			)
 				scrollers.push(parent);
-		}
-		const navigation = document.querySelector(
-			'nav[aria-label="Main navigation"]',
-		);
-		if (navigation) {
-			const rect = navigation.getBoundingClientRect();
-			if (rect.top > window.innerHeight / 2)
-				bottom = Math.min(bottom, rect.top);
 		}
 		// CSS zoom changes scroll units; keep both corners clear of clipping and
 		// fixed navigation instead of comparing pixels hidden behind other UI.
@@ -55,8 +67,7 @@ export const expectPaintedMediaContainment = async (card: Locator) => {
 			scroller.scrollTop +=
 				(rect.top + rect.height / 2 - (top + bottom) / 2) / scale;
 		}
-		return { top, bottom };
-	});
+	}, initialArea);
 	let previousBounds = "";
 	await expect
 		.poll(async () => {
@@ -85,6 +96,8 @@ export const expectPaintedMediaContainment = async (card: Locator) => {
 		painted = await capture();
 	}
 	expect(await card.boundingBox()).toEqual(bounds);
+	// Clipping ancestors can move with scrolling; read their captured positions.
+	const visibleArea = await card.evaluate(readVisibleCardArea);
 	expect(bounds!.y).toBeGreaterThanOrEqual(visibleArea.top);
 	expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(visibleArea.bottom);
 	const geometry = await card.evaluate((element) => {
