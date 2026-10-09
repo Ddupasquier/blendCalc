@@ -1,5 +1,6 @@
 import { fail, type RequestEvent } from "@sveltejs/kit";
-import { readCatalogReviewWork } from "$lib/server/moderation/catalogReviewWork.server";
+import { readCatalogReviewPage } from "$lib/server/moderation/catalogReviewPages.server";
+import { runPrivilegedQueueAdmission } from "$lib/server/moderation/privilegedQueueAdmission.server";
 import { requireModeratorPermission } from "$lib/server/moderation/moderationAccess.server";
 import { readLimitedFormData } from "$lib/server/security/requestBody.server";
 
@@ -22,9 +23,10 @@ export const loadCatalogReviewWorkWorkspace = async (
 		returnPath,
 	);
 
+	await runPrivilegedQueueAdmission(locals.supabase, ["catalog_review"]);
 	return {
 		viewerRole: role,
-		reviewWork: await readCatalogReviewWork(locals.supabase),
+		productsPage: await readCatalogReviewPage(locals.supabase, "products"),
 	};
 };
 

@@ -5,6 +5,7 @@
 .catalog-conflict-workbench__finding,
 .catalog-conflict-workbench__decision {
 	display: grid;
+	grid-template-columns: minmax(0, 1fr);
 	min-width: 0;
 	gap: $app-gap-md;
 }
@@ -30,6 +31,7 @@
 .catalog-conflict-workbench__heading > div,
 .catalog-conflict-workbench__finding > header {
 	display: grid;
+	min-width: 0;
 	gap: $app-gap-inline-compact;
 }
 
@@ -150,7 +152,8 @@
 .catalog-conflict-workbench__finish {
 	position: sticky;
 	bottom: 0;
-	z-index: 2;
+	// Stay above ordinary cards, but below the shared SelectField option menu.
+	z-index: 1;
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
@@ -163,6 +166,8 @@
 
 .catalog-conflict-workbench__finish > div {
 	display: grid;
+	min-width: 0;
+	overflow-wrap: anywhere;
 	gap: $app-gap-inline-compact;
 }
 
@@ -174,6 +179,6 @@
 	}
 
 	.catalog-conflict-workbench__comparison {
-		grid-template-columns: 1fr;
+		grid-template-columns: minmax(0, 1fr);
 	}
 }

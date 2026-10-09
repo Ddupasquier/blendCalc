@@ -180,18 +180,25 @@ const readServingWeightGrams = (food: Json): number | null => {
 export const readCatalogCorrectionHandoff = async (
 	sharedProductId: string,
 	readinessIssues: CatalogProductReadinessIssue[] = [],
+	conflictIds?: string[],
 ): Promise<CatalogCorrectionHandoff> => {
 	const admin = getSupabaseAdminClient();
-	const actionableConflictResult = await admin
+	let actionableConflictQuery = admin
 		.from("catalog_actionable_product_conflicts")
 		.select("id, field_path, observed_values")
 		.eq("shared_product_id", sharedProductId)
 		.eq("status", "open")
-		.order("created_at", { ascending: true });
+		.order("created_at", { ascending: true })
+		.order("id", { ascending: true });
+	if (conflictIds)
+		actionableConflictQuery = actionableConflictQuery.in("id", conflictIds);
+	const actionableConflictResult = await actionableConflictQuery;
 	const decisionWorkbenchAvailable = !(
 		actionableConflictResult.error &&
 		isActionableConflictViewUnavailable(actionableConflictResult.error)
 	);
+	if (conflictIds !== undefined && !decisionWorkbenchAvailable)
+		throw actionableConflictResult.error;
 	const conflictResult = decisionWorkbenchAvailable
 		? actionableConflictResult
 		: await admin
@@ -200,6 +207,25 @@ export const readCatalogCorrectionHandoff = async (
 				.eq("shared_product_id", sharedProductId)
 				.eq("status", "open")
 				.order("created_at", { ascending: true });
+	let originQuery = admin
+		.from("catalog_correction_origins")
+		.select(
+			"id, origin_type, provider_change_review_id, shared_product_conflict_id, food_compatibility_feedback_id, affected_field_paths, status, submission_id",
+		)
+		.eq("shared_product_id", sharedProductId)
+		.in("status", ["waiting_for_correction", "linked", "resolved"]);
+	if (conflictIds !== undefined) {
+		// Provider handoffs come from the already-paged provider evidence. Keep
+		// this enrichment scoped to selected conflicts and independent warning work.
+		originQuery = originQuery.or(
+			[
+				...(conflictIds.length > 0
+					? [`shared_product_conflict_id.in.(${conflictIds.join(",")})`]
+					: []),
+				"food_compatibility_feedback_id.not.is.null",
+			].join(","),
+		);
+	}
 	const [productResult, providerResult, originResult, pendingSubmissionResult] =
 		await Promise.all([
 			admin
@@ -209,19 +235,15 @@ export const readCatalogCorrectionHandoff = async (
 				)
 				.eq("id", sharedProductId)
 				.maybeSingle(),
-			admin
-				.from("catalog_provider_change_reviews")
-				.select("id, material_field_paths")
-				.eq("shared_product_id", sharedProductId)
-				.eq("status", "pending")
-				.order("created_at", { ascending: true }),
-			admin
-				.from("catalog_correction_origins")
-				.select(
-					"id, origin_type, provider_change_review_id, shared_product_conflict_id, food_compatibility_feedback_id, affected_field_paths, status, submission_id",
-				)
-				.eq("shared_product_id", sharedProductId)
-				.in("status", ["waiting_for_correction", "linked", "resolved"]),
+			conflictIds !== undefined
+				? Promise.resolve({ data: [], error: null })
+				: admin
+						.from("catalog_provider_change_reviews")
+						.select("id, material_field_paths")
+						.eq("shared_product_id", sharedProductId)
+						.eq("status", "pending")
+						.order("created_at", { ascending: true }),
+			originQuery,
 			admin
 				.from("shared_product_submissions")
 				.select("id")

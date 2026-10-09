@@ -2,12 +2,13 @@
 	import { untrack, tick } from "svelte";
 	import FoodWarningFollowUpList from "$lib/components/moderation/FoodWarningFollowUpList/FoodWarningFollowUpList.svelte";
 	import FoodWarningReportReviewList from "$lib/components/moderation/FoodWarningReportReviewList/FoodWarningReportReviewList.svelte";
-	import FoodWarningQueueControls from "$lib/components/moderation/FoodWarningQueueControls/FoodWarningQueueControls.svelte";
+	import FoodWarningQueueControls from "$lib/components/common/navigation/ProgressiveListFooter/ProgressiveListFooter.svelte";
 	import {
 		createFoodWarningQueueController,
 		fetchFoodWarningQueuePage,
 	} from "./foodWarningQueueController.svelte";
 	import type { FoodWarningQueuesProps } from "./types";
+	import type { FoodWarningQueueRows } from "$lib/utils/moderation/foodWarningQueuePagination";
 
 	let {
 		pages,
@@ -15,16 +16,22 @@
 		scrollContainer,
 		onTotalsChange = () => {},
 	}: FoodWarningQueuesProps = $props();
-	const reports = createFoodWarningQueueController(
+	const reports = createFoodWarningQueueController<
+		FoodWarningQueueRows["reports"]
+	>(
 		untrack(() => pages.reports),
 		(cursor, signal) => fetchFoodWarningQueuePage("reports", cursor, signal),
 	);
-	const productCorrections = createFoodWarningQueueController(
+	const productCorrections = createFoodWarningQueueController<
+		FoodWarningQueueRows["productCorrections"]
+	>(
 		untrack(() => pages.productCorrections),
 		(cursor, signal) =>
 			fetchFoodWarningQueuePage("productCorrections", cursor, signal),
 	);
-	const policyReviews = createFoodWarningQueueController(
+	const policyReviews = createFoodWarningQueueController<
+		FoodWarningQueueRows["policyReviews"]
+	>(
 		untrack(() => pages.policyReviews),
 		(cursor, signal) =>
 			fetchFoodWarningQueuePage("policyReviews", cursor, signal),
