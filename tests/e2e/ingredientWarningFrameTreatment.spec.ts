@@ -143,6 +143,7 @@ const readCardMediaPresentation = (card: Locator) =>
 		return {
 			cardHeight: cardBounds?.height ?? 0,
 			mediaHeight: mediaBounds.height,
+			mediaWidthPixels: mediaBounds.width,
 			mediaWidthRatio:
 				cardBounds && cardBounds.width > 0
 					? mediaBounds.width / cardBounds.width
@@ -160,6 +161,15 @@ const readCardMediaPresentation = (card: Locator) =>
 				: 0,
 			imageWidthPixels: imageBounds?.width ?? 0,
 			imageHeightPixels: imageBounds?.height ?? 0,
+			imageNaturalWidth: image?.naturalWidth ?? 0,
+			imageNaturalHeight: image?.naturalHeight ?? 0,
+			imageRotationDegrees: image
+				? Number.parseFloat(
+						getComputedStyle(image).getPropertyValue(
+							"--image-placement-viewport-rotation",
+						),
+					) || 0
+				: 0,
 			maskFadeEndPixels,
 			maskFadeEndRatio:
 				mediaBounds.width > 0 ? maskFadeEndPixels / mediaBounds.width : 0,
@@ -352,14 +362,38 @@ test("search and Mix cards use the same warning frame @compatibility", async ({
 		savedCardMedia.imageLeftEdgePixels,
 		1,
 	);
-	expect(mixCardMedia.imageWidthPixels).toBeCloseTo(
-		savedCardMedia.imageWidthPixels,
+	// The unplaced fixture now fills each actual lane. Different card widths
+	// require different pixel extents, not different crop rules or stretching.
+	expect(mixCardMedia.imageRotationDegrees).toBe(
+		savedCardMedia.imageRotationDegrees,
+	);
+	expect(
+		mixCardMedia.imageWidthPixels / mixCardMedia.imageHeightPixels,
+	).toBeCloseTo(
+		savedCardMedia.imageWidthPixels / savedCardMedia.imageHeightPixels,
 		2,
 	);
-	expect(mixCardMedia.imageHeightPixels).toBeCloseTo(
-		savedCardMedia.imageHeightPixels,
-		2,
-	);
+	for (const media of [savedCardMedia, mixCardMedia]) {
+		expect(media.imageNaturalWidth).toBeGreaterThan(0);
+		expect(media.imageNaturalHeight).toBeGreaterThan(0);
+		const rotated = Math.abs(media.imageRotationDegrees) % 180 === 90;
+		const sourceAspect = rotated
+			? media.imageNaturalHeight / media.imageNaturalWidth
+			: media.imageNaturalWidth / media.imageNaturalHeight;
+		expect(media.imageWidthPixels / media.imageHeightPixels).toBeCloseTo(
+			sourceAspect,
+			2,
+		);
+		if (media.mediaWidthPixels / media.mediaHeight >= sourceAspect) {
+			expect(media.imageWidthPixels).toBeCloseTo(media.mediaWidthPixels, 2);
+			expect(media.imageHeightPixels).toBeGreaterThanOrEqual(media.mediaHeight);
+		} else {
+			expect(media.imageHeightPixels).toBeCloseTo(media.mediaHeight, 2);
+			expect(media.imageWidthPixels).toBeGreaterThanOrEqual(
+				media.mediaWidthPixels,
+			);
+		}
+	}
 	expect(mixCardMedia.maskFadeEndRatio).toBeCloseTo(
 		savedCardMedia.maskFadeEndRatio,
 		2,

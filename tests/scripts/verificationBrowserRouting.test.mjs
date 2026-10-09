@@ -74,6 +74,68 @@ const readOutput = (fixture) =>
 			.map((line) => line.split("=")),
 	);
 
+const createSquashedFixture = () => {
+	const fixture = createFixture([]);
+	const promotionPath =
+		"scripts/operations/quality/verify_release_promotion.mjs";
+	writeFileSync(
+		join(fixture.root, promotionPath),
+		`import { verifyMatchingGitTrees } from ${JSON.stringify(
+			resolve("scripts/lib/quality/release_verification_receipt.mjs"),
+		)};\nverifyMatchingGitTrees(process.cwd(), process.argv[3]);\n`,
+	);
+	writeFileSync(
+		join(fixture.root, "command-guards/gh"),
+		`#!/bin/sh
+case "$2" in
+  *event=workflow_dispatch*)
+    if [ "$FIXTURE_DISCOVERY_ERROR" = true ]; then exit 7; fi
+    if [ "$FIXTURE_ADVERTISE" = true ]; then printf '%s\\n' "$FIXTURE_VERIFIED_SHA"; fi
+    ;;
+  *head_sha=*)
+    case "$2" in
+      *"head_sha=$FIXTURE_VERIFIED_SHA&"*)
+        if [ "$FIXTURE_FULL_PASSED" = true ]; then echo 1; else echo 0; fi
+        ;;
+      *) echo 0 ;;
+    esac
+    ;;
+  *) exit 8 ;;
+esac
+`,
+		{ mode: 0o755 },
+	);
+	writeFileSync(
+		join(fixture.root, ".gitignore"),
+		"plan-output\ntest-results/\n",
+	);
+	git(fixture.root, "add", ".");
+	git(fixture.root, "commit", "--quiet", "-m", "fixture planning support");
+	git(fixture.root, "branch", "--force", "staging", "HEAD");
+	const baseline = git(fixture.root, "rev-parse", "HEAD");
+	writeFileSync(join(fixture.root, "candidate.txt"), "verified content\n");
+	git(fixture.root, "add", "candidate.txt");
+	git(fixture.root, "commit", "--quiet", "-m", "verified feature");
+	const verified = git(fixture.root, "rev-parse", "HEAD");
+	git(fixture.root, "switch", "--quiet", "staging");
+	git(fixture.root, "merge", "--squash", "fixture-change");
+	git(fixture.root, "commit", "--quiet", "-m", "squashed promotion");
+	return {
+		...fixture,
+		verified,
+		env: {
+			...fixture.env,
+			EVENT_NAME: "push",
+			REF_NAME: "staging",
+			BEFORE_SHA: baseline,
+			GITHUB_REPOSITORY: "fixture/owned-repository",
+			FIXTURE_VERIFIED_SHA: verified,
+			FIXTURE_ADVERTISE: "true",
+			FIXTURE_FULL_PASSED: "true",
+		},
+	};
+};
+
 afterEach(() => {
 	for (const root of temporaryRepositories.splice(0)) {
 		rmSync(root, { recursive: true, force: true });
@@ -81,6 +143,118 @@ afterEach(() => {
 });
 
 describe("real workflow browser routing", () => {
+	it("keeps release candidates draft until their eligible PR reuse check", () => {
+		expect(workflow.on.push.branches).toContain("!release/**");
+		expect(workflow.on.pull_request.types).toContain("ready_for_review");
+		expect(workflow.jobs["verification-plan"].if).toContain(
+			"!github.event.pull_request.draft",
+		);
+	});
+
+	it("makes release PR checks reuse a full dispatch without another matrix", () => {
+		const fixture = createSquashedFixture();
+		const result = spawnSync("bash", ["-e", "-c", planningShell], {
+			cwd: fixture.root,
+			env: {
+				...fixture.env,
+				EVENT_NAME: "pull_request",
+				HEAD_REF: "release/fixture-candidate",
+			},
+			encoding: "utf8",
+		});
+		expect(result.status, result.stderr).toBe(0);
+		expect(readOutput(fixture)).toMatchObject({
+			mode: "reuse",
+			dependencies: "true",
+			"comparison-base": fixture.verified,
+		});
+	});
+
+	it.each(["missing", "changed", "dirty"])(
+		"refuses release review when its full proof is %s",
+		(control) => {
+			const fixture = createSquashedFixture();
+			if (control === "missing") fixture.env.FIXTURE_FULL_PASSED = "false";
+			if (control === "changed" || control === "dirty") {
+				writeFileSync(join(fixture.root, "candidate.txt"), "changed content\n");
+				if (control === "changed") {
+					git(fixture.root, "add", "candidate.txt");
+					git(fixture.root, "commit", "--quiet", "-m", "unverified later tree");
+				}
+			}
+			const result = spawnSync("bash", ["-e", "-c", planningShell], {
+				cwd: fixture.root,
+				env: {
+					...fixture.env,
+					EVENT_NAME: "pull_request",
+					HEAD_REF: "release/fixture-candidate",
+				},
+				encoding: "utf8",
+			});
+			expect(result.status).not.toBe(0);
+			expect(result.stdout).toContain("Release review requires");
+		},
+	);
+
+	it("reuses a successful full candidate after squash without parent identity", () => {
+		const fixture = createSquashedFixture();
+		expect(git(fixture.root, "rev-parse", "HEAD")).not.toBe(fixture.verified);
+		expect(
+			git(fixture.root, "show", "-s", "--format=%P", "HEAD"),
+		).not.toContain(fixture.verified);
+		const result = spawnSync("bash", ["-e", "-c", planningShell], {
+			cwd: fixture.root,
+			env: fixture.env,
+			encoding: "utf8",
+		});
+		expect(result.status, result.stderr).toBe(0);
+		expect(readOutput(fixture)).toMatchObject({
+			mode: "reuse",
+			dependencies: "true",
+			"comparison-base": fixture.verified,
+		});
+	});
+
+	it.each(["changed", "dirty", "untracked", "missing", "unproven", "unknown"])(
+		"does not reuse a %s squash candidate",
+		(control) => {
+			const fixture = createSquashedFixture();
+			if (control === "changed" || control === "dirty") {
+				writeFileSync(join(fixture.root, "candidate.txt"), "changed content\n");
+				if (control === "changed") {
+					git(fixture.root, "add", "candidate.txt");
+					git(fixture.root, "commit", "--quiet", "-m", "later content");
+				}
+			}
+			if (control === "untracked")
+				writeFileSync(join(fixture.root, "unreviewed.txt"), "new content\n");
+			if (control === "missing") fixture.env.FIXTURE_ADVERTISE = "false";
+			if (control === "unproven") fixture.env.FIXTURE_FULL_PASSED = "false";
+			if (control === "unknown")
+				fixture.env.FIXTURE_VERIFIED_SHA = "0".repeat(40);
+			const result = spawnSync("bash", ["-e", "-c", planningShell], {
+				cwd: fixture.root,
+				env: fixture.env,
+				encoding: "utf8",
+			});
+			expect(result.status, result.stderr).toBe(0);
+			expect(readOutput(fixture).mode).toBe("full");
+		},
+	);
+
+	it("fails closed when successful-candidate discovery is unavailable", () => {
+		const fixture = createSquashedFixture();
+		const result = spawnSync("bash", ["-e", "-c", planningShell], {
+			cwd: fixture.root,
+			env: { ...fixture.env, FIXTURE_DISCOVERY_ERROR: "true" },
+			encoding: "utf8",
+		});
+		expect(result.status).toBe(7);
+		expect(result.stdout).not.toContain(
+			"Reusing the successful full verification",
+		);
+	});
+
 	it.each([
 		[
 			"src/lib/components/common/SegmentedControl/SegmentedControl.scss",

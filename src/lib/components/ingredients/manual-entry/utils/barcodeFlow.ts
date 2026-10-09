@@ -31,7 +31,7 @@ import type {
 	FoodSafetyAlert,
 } from "$lib/utils/food/types";
 import { toFiniteNonnegativeNumber } from "$lib/utils/numbers/finiteNumbers";
-import { getStoredImagePlacement } from "$lib/utils/food/images/imagePlacement";
+import { getCardImagePlacement } from "$lib/utils/food/images/imagePlacement";
 import type { ImagePlacementValue } from "$lib/utils/food/images/types";
 import type { ManualEntryNutrientDefinition } from "$lib/utils/food/nutrients/nutrientDefinitions";
 
@@ -300,7 +300,7 @@ export const getBarcodeDraftState = (
 			),
 		],
 		image: draft.image,
-		imagePlacement: getStoredImagePlacement(draft.image),
+		imagePlacement: getCardImagePlacement(draft.image),
 		fieldProvenance: draft.fieldProvenance
 			? { ...draft.fieldProvenance }
 			: undefined,

@@ -113,7 +113,10 @@
 	const selectFitMode = (fitMode: Exclude<ImageFitMode, "custom">) => {
 		beginManualEdit();
 		if (fitMode === "contain") {
-			onChange?.(createFullImagePlacement(value.rotationDegrees));
+			onChange?.({
+				...createFullImagePlacement(value.rotationDegrees),
+				placementMethod: "manual",
+			});
 			return;
 		}
 		onChange?.(
@@ -132,7 +135,7 @@
 	};
 	const restoreDefault = () => {
 		beginManualEdit();
-		onChange?.(createFullImagePlacement());
+		onChange?.({ ...createFullImagePlacement(), placementMethod: "manual" });
 	};
 	const rotateClockwise = () => {
 		beginManualEdit();

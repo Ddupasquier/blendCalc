@@ -163,6 +163,8 @@ barcode` and source-empty groups `Not provided`. Keep source omissions blank and
   start OCR until the user selects `Place automatically`; when requested, frame the
   image only when OCR confidently matches its product or brand text, while keeping the
   exact card preview, manual controls, retry, and restore available before submission;
+  otherwise use the existing Fill card fallback for an unplaced draft without
+  overwriting any manual, moderator-approved or accepted automatic placement;
   use the photo's stored orientation and a bounded analysis copy, with the visible
   Rotate control handling sideways package art without an expensive automatic
   orientation pass;
