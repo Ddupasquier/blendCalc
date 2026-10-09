@@ -153,7 +153,7 @@
 		"ws": "^8.21.1"
 	},
 	"allowScripts": {
-		"@rehearsal-db/core@0.1.0-rc.1": true,
+		"@rehearsal-db/core@0.1.0-rc.2": true,
 		"@parcel/watcher@2.5.6": true,
 		"bufferutil@4.1.0": true,
 		"esbuild@0.28.1": true,
