@@ -25,12 +25,24 @@ export const expectPaintedMediaContainment = async (card: Locator) => {
 			return stable;
 		})
 		.toBe(true);
-	const bounds = await card.boundingBox();
+	let bounds = await card.boundingBox();
 	expect(bounds).not.toBeNull();
 	const viewportWidth = await card.page().evaluate(() => window.innerWidth);
 	// Native clipped captures drift under root CSS zoom and compact toolbar reflow.
 	// Read the full visible capture, then sample measured card coordinates directly.
-	const painted = await card.page().screenshot({ animations: "disabled" });
+	// CSS pixels avoid coordinate drift from fractional mobile device scaling.
+	const capture = () =>
+		card.page().screenshot({ animations: "disabled", scale: "css" });
+	let painted = await capture();
+	// Disabling animations can finish a pending reflow. Accept only a capture
+	// whose exact coordinates remain unchanged; never retry escaped-pixel failures.
+	for (let attempt = 0; attempt < 2; attempt++) {
+		const after = await card.boundingBox();
+		if (JSON.stringify(after) === JSON.stringify(bounds)) break;
+		bounds = after;
+		expect(bounds).not.toBeNull();
+		painted = await capture();
+	}
 	expect(await card.boundingBox()).toEqual(bounds);
 	const geometry = await card.evaluate((element) => {
 		const styles = getComputedStyle(element);
@@ -56,6 +68,7 @@ export const expectPaintedMediaContainment = async (card: Locator) => {
 		.ensureAlpha()
 		.raw()
 		.toBuffer({ resolveWithObject: true });
+	expect(info.width).toBe(viewportWidth);
 	const viewportScale = info.width / viewportWidth;
 	const scale = (bounds!.width / geometry.layoutWidth) * viewportScale;
 	const left = Math.round(bounds!.x * viewportScale);
