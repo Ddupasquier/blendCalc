@@ -26,6 +26,10 @@ import {
 } from "./support/localQaDatabase";
 import { finishLocalQaAuthenticatorEnrollment } from "./support/localQaAuthenticator";
 import {
+	expectPrivilegedDashboardCountConsistency,
+	withEmptyCatalogReviewRendering,
+} from "./support/privilegedQueueRendering";
+import {
 	registerOrdinaryQuickQaTest,
 	registerQuickQaMfaTests,
 } from "./support/quickQaMfaTests";
@@ -1002,9 +1006,7 @@ test("Profile tools launcher keeps copy and controls balanced @compatibility @mo
 					Number(element.getAttribute("aria-label")?.split(" ")[0]),
 				),
 			);
-		expect(landingCounts.reduce((sum, count) => sum + count, 0)).toBe(
-			Number(countLabel.split(" ")[0]),
-		);
+		await expectPrivilegedDashboardCountConsistency(page, landingCounts);
 	}
 });
 
@@ -1220,22 +1222,11 @@ test("privileged tools stay hidden from regular accounts and use a landing dashb
 					Number(badge.getAttribute("aria-label")?.split(" ")[0]),
 				),
 			);
-		expect(actionCounts.reduce((sum, count) => sum + count, 0)).toBe(
-			aggregateCount,
-		);
-		const emptyCatalogReviewAction = privilegedToolsDashboard.getByRole(
-			"link",
-			{
-				name: /Catalog review work/,
-			},
-		);
-		await expect(emptyCatalogReviewAction).toBeEnabled();
-		await expect(emptyCatalogReviewAction).toContainText(
-			"Nothing is waiting for review",
-		);
-		await expect(
-			emptyCatalogReviewAction.locator(".action-required-count-badge"),
-		).toHaveCount(0);
+		await expectPrivilegedDashboardCountConsistency(page, actionCounts);
+		const catalogReviewAction = privilegedToolsDashboard.getByRole("link", {
+			name: /Catalog review work/,
+		});
+		await expect(catalogReviewAction).toBeEnabled();
 		await expect(
 			privilegedToolsDashboard
 				.getByRole("link", { name: /Account access/ })
@@ -1246,7 +1237,7 @@ test("privileged tools stay hidden from regular accounts and use a landing dashb
 			{
 				path: "/profile/privileged-tools/catalog-review-work",
 				title: "Catalog review work",
-				content: /catalog decisions? need review/,
+				content: "Done when",
 			},
 			{
 				path: "/profile/privileged-tools/food-warning-reports",
@@ -1274,6 +1265,25 @@ test("privileged tools stay hidden from regular accounts and use a landing dashb
 				protectedToolSheet.getByText(protectedTool.content).first(),
 			).toBeVisible();
 		}
+
+		// Keep actual role/MFA, route and aggregate checks above real. The empty
+		// rendering contract needs an explicit state, not a globally empty QA DB.
+		await withEmptyCatalogReviewRendering(page, async () => {
+			await page.goto("/profile");
+			await waitForAppReady(page);
+			await page.getByRole("link", { name: /Moderator tools/ }).click();
+			await waitForAppReady(page);
+			const emptyCatalogReviewAction = page
+				.locator(".profile-privileged-tools-dashboard")
+				.getByRole("link", { name: /Catalog review work/ });
+			await expect(emptyCatalogReviewAction).toBeEnabled();
+			await expect(emptyCatalogReviewAction).toContainText(
+				"Nothing is waiting for review",
+			);
+			await expect(
+				emptyCatalogReviewAction.locator(".action-required-count-badge"),
+			).toHaveCount(0);
+		});
 
 		await page.goto("/moderation");
 		await expect(page).toHaveURL(
