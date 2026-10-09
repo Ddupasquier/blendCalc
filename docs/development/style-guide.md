@@ -641,6 +641,12 @@ The shared placement editor offers full-image and fill-card presets, clockwise
 of the saved placement and the preview must use the same rotated geometry as the
 rendered card.
 
+Images without a stored placement, and explicitly untouched source-default images,
+use the existing aspect-aware Fill card geometry. Do not stretch them or save a
+viewport-specific crop. Manual, moderator-approved, accepted automatic and unknown
+legacy placements remain unchanged. Full image and Restore default are deliberate
+contained choices; their saved results are not mistaken for an unplaced source default.
+
 Current local geometry:
 
 - Media lane width: `28cqw`.

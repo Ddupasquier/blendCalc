@@ -217,6 +217,147 @@ const setRangeValue = async (slider: Locator, value: number) => {
 	}, value);
 };
 
+for (const placement of ["unplaced", "manual", "automatic"] as const) {
+	test(`otherwise unplaced images fill cards while ${placement} geometry stays intentional @compatibility @mobile`, async ({
+		page,
+	}, testInfo) => {
+		const pattern = "**/api/user-food-lists/fridge?**";
+		const imagePattern = "**/qa/card-fallback-*.svg";
+		const dimensions = [
+			{ width: 40, height: 200 },
+			{ width: 600, height: 100 },
+		];
+		let matchedFoods = 0;
+		await page.route(imagePattern, (route) => {
+			const index = representativeImageProducts.findIndex((product) =>
+				route.request().url().endsWith(`card-fallback-${product.foodId}.svg`),
+			);
+			expect(index).toBeGreaterThanOrEqual(0);
+			const { width, height } = dimensions[index];
+			return route.fulfill({
+				status: 200,
+				contentType: "image/svg+xml",
+				body: `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><rect width="100%" height="100%" fill="#d9b46f"/></svg>`,
+			});
+		});
+		await page.route(pattern, async (route) => {
+			const response = await route.fetch({ maxRedirects: 0 });
+			expect(response.status()).toBe(200);
+			const data = await response.json();
+			data.foods = data.foods.map(
+				(food: { fdcId: number; image?: Record<string, unknown> }) => {
+					if (
+						!representativeImageProducts.some(
+							(product) => product.foodId === food.fdcId,
+						)
+					)
+						return food;
+					matchedFoods += 1;
+					const imageUrl = new URL(
+						`/qa/card-fallback-${food.fdcId}.svg`,
+						route.request().url(),
+					).href;
+					return {
+						...food,
+						image: {
+							...food.image,
+							imageUrl,
+							thumbnailUrl: imageUrl,
+							cropX: 50,
+							cropY: 50,
+							cropZoom: placement === "automatic" ? 1.7 : 1,
+							rotationDegrees: 0,
+							placementVersion: 2,
+							fitMode: placement === "automatic" ? "custom" : "contain",
+							placementMethod:
+								placement === "unplaced"
+									? "default"
+									: placement === "manual"
+										? "manual"
+										: "automatic-ocr",
+							cropSource: placement === "manual" ? "user" : "source",
+							approvedAt: undefined,
+							approvedBy: undefined,
+							suggestionAcceptedAt:
+								placement === "automatic" ? "2026-01-01T00:00:00Z" : undefined,
+							suggestionVersion:
+								placement === "automatic" ? "qa-approved-placement" : undefined,
+							suggestionConfidence: placement === "automatic" ? 99 : undefined,
+						},
+					};
+				},
+			);
+			await route.fulfill({ response, json: data });
+		});
+		try {
+			await page.goto("/ingredients/fridge");
+			await waitForAppReady(page);
+			for (const [index, product] of representativeImageProducts.entries()) {
+				const card = await findSavedIngredientCard(page, product.name);
+				const viewport = card.locator(".image-placement-viewport");
+				await viewport.scrollIntoViewIfNeeded();
+				await expect
+					.poll(() =>
+						viewport
+							.locator("img")
+							.evaluate((image: HTMLImageElement) => image.naturalWidth),
+					)
+					.toBe(dimensions[index].width);
+				for (const width of [1024, 390]) {
+					await page.setViewportSize({ width, height: 844 });
+					for (const theme of ["light", "dark"]) {
+						await page.locator("html").evaluate((element, value) => {
+							element.dataset.theme = value;
+						}, theme);
+						await page.emulateMedia({ reducedMotion: "reduce" });
+						await expect
+							.poll(async () =>
+								viewport.evaluate((element, mode) => {
+									const frame = element.getBoundingClientRect();
+									const image = element.querySelector("img")!;
+									const bounds = image.getBoundingClientRect();
+									if (mode === "unplaced")
+										return (
+											bounds.left <= frame.left + 1 &&
+											bounds.right >= frame.right - 1 &&
+											bounds.top <= frame.top + 1 &&
+											bounds.bottom >= frame.bottom - 1
+										);
+									const scale =
+										Math.min(
+											frame.width / image.naturalWidth,
+											frame.height / image.naturalHeight,
+										) * (mode === "automatic" ? 1.7 : 1);
+									return (
+										Math.abs(bounds.width - image.naturalWidth * scale) <= 1 &&
+										Math.abs(bounds.height - image.naturalHeight * scale) <= 1
+									);
+								}, placement),
+							)
+							.toBe(true);
+						await expect
+							.poll(() =>
+								page.evaluate(
+									() =>
+										document.documentElement.scrollWidth <=
+										document.documentElement.clientWidth + 1,
+								),
+							)
+							.toBe(true);
+					}
+				}
+				await card.screenshot({
+					path: testInfo.outputPath(`card-${product.foodId}-${placement}.png`),
+				});
+			}
+			expect(matchedFoods).toBeGreaterThanOrEqual(2);
+		} finally {
+			await page.unroute(pattern);
+			await page.unroute(imagePattern);
+		}
+	});
+}
+
 test("normal users see source images without privileged placement controls", async ({
 	page,
 }, testInfo) => {
