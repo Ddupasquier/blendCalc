@@ -29,6 +29,15 @@ The local Auth service also runs the production-shaped blocked-signup and Custom
 Token hooks, so regular, moderator, and administrator QA sessions receive the same
 database-owned `app_role` claims that hosted sessions receive.
 
+Local lifecycle commands stage public config, migrations, seeds, tests, function source and email
+templates beneath the primary checkout's ignored `.cache/local-supabase/<project-id>/`.
+Canonical source remains `supabase/` or the API project's Supabase directory. Hosted
+links, version caches and environment files are never copied. Project IDs, ports and
+persistent Docker volumes stay unchanged. Template mounts use this stable location,
+not disposable feature checkouts. Stop the owned stack before changing config or
+template source; live preparation refuses those changes. Migration/test inputs can
+refresh without resetting QA records. Do not edit generated copies directly.
+
 Run the app against the local database with:
 
 ```bash

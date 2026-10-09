@@ -11,7 +11,7 @@ export const gibibyte = 1024 ** 3;
 
 export const resourceSafetyThresholds = Object.freeze({
 	minimumStartupDiskFreeBytes: 50 * gibibyte,
-	maximumSwapUsedBytes: 8 * gibibyte,
+	maximumSwapUsedBytes: 16 * gibibyte,
 	maximumProcessResidentBytes: 5 * gibibyte,
 });
 
@@ -43,6 +43,37 @@ export const parseMacOsSwapUsedBytes = (output) => {
 	return match ? parseSizedBytes(`${match[1]}${match[2]}`) : null;
 };
 
+export const parsePhysicalMemoryBytes = (output) => {
+	const value = String(output).trim();
+	if (!/^\d+$/.test(value)) return null;
+	const bytes = Number(value);
+	return Number.isSafeInteger(bytes) && bytes > 0 ? bytes : null;
+};
+
+// This sysctl exports dispatch notification flags, not XNU's internal 0–4 enum.
+// https://github.com/apple-oss-distributions/xnu/blob/main/bsd/kern/kern_memorystatus_notify.c
+const macOsPressureNames = Object.freeze({
+	1: "normal",
+	2: "warning",
+	4: "critical",
+});
+
+export const parseMacOsMemoryPressure = (output) => {
+	const value = String(output).trim();
+	return Object.hasOwn(macOsPressureNames, value)
+		? macOsPressureNames[value]
+		: null;
+};
+
+export const getMaximumSwapUsedBytes = (
+	snapshot,
+	thresholds = resourceSafetyThresholds,
+) =>
+	Number.isSafeInteger(snapshot.physicalMemoryBytes) &&
+	snapshot.physicalMemoryBytes > 0
+		? Math.min(thresholds.maximumSwapUsedBytes, snapshot.physicalMemoryBytes)
+		: thresholds.maximumSwapUsedBytes;
+
 export const parseRelevantProcesses = (output, excludedPids = []) => {
 	const excluded = new Set(excludedPids.map(Number));
 	return output
@@ -66,8 +97,28 @@ export const evaluateResourceSafety = (
 	thresholds = resourceSafetyThresholds,
 ) => {
 	const issues = [];
+	if (snapshot.platform === "darwin") {
+		if (
+			!Number.isSafeInteger(snapshot.physicalMemoryBytes) ||
+			snapshot.physicalMemoryBytes <= 0 ||
+			!Number.isFinite(snapshot.swapUsedBytes) ||
+			snapshot.swapUsedBytes < 0 ||
+			!Object.values(macOsPressureNames).includes(snapshot.memoryPressure)
+		) {
+			issues.push({ kind: "memory-measurement" });
+		} else if (snapshot.memoryPressure !== "normal") {
+			issues.push({
+				kind: "memory-pressure",
+				pressure: snapshot.memoryPressure,
+			});
+		}
+	}
 	if (
-		snapshot.startupDiskFreeBytes !== null &&
+		!Number.isFinite(snapshot.startupDiskFreeBytes) ||
+		snapshot.startupDiskFreeBytes < 0
+	) {
+		issues.push({ kind: "disk-measurement" });
+	} else if (
 		snapshot.startupDiskFreeBytes < thresholds.minimumStartupDiskFreeBytes
 	) {
 		issues.push({
@@ -78,12 +129,12 @@ export const evaluateResourceSafety = (
 	}
 	if (
 		snapshot.swapUsedBytes !== null &&
-		snapshot.swapUsedBytes > thresholds.maximumSwapUsedBytes
+		snapshot.swapUsedBytes > getMaximumSwapUsedBytes(snapshot, thresholds)
 	) {
 		issues.push({
 			kind: "swap",
 			actualBytes: snapshot.swapUsedBytes,
-			limitBytes: thresholds.maximumSwapUsedBytes,
+			limitBytes: getMaximumSwapUsedBytes(snapshot, thresholds),
 		});
 	}
 	for (const process of snapshot.processes) {
@@ -105,22 +156,48 @@ export const inspectLocalResources = ({
 	execute = execFileSync,
 	excludedPids = [process.pid],
 } = {}) => {
+	const readMacOsMeasurement = (name, parse) => {
+		try {
+			return parse(
+				execute("sysctl", ["-n", name], {
+					encoding: "utf8",
+					stdio: ["ignore", "pipe", "ignore"],
+				}),
+			);
+		} catch {
+			return null;
+		}
+	};
 	const startupDiskFreeBytes = parseAvailableDiskBytes(
 		execute("df", ["-Pk", "/"], { encoding: "utf8" }),
 	);
 	const swapUsedBytes =
 		platform === "darwin"
-			? parseMacOsSwapUsedBytes(
-					execute("sysctl", ["-n", "vm.swapusage"], {
-						encoding: "utf8",
-					}),
+			? readMacOsMeasurement("vm.swapusage", parseMacOsSwapUsedBytes)
+			: null;
+	const physicalMemoryBytes =
+		platform === "darwin"
+			? readMacOsMeasurement("hw.memsize", parsePhysicalMemoryBytes)
+			: null;
+	const memoryPressure =
+		platform === "darwin"
+			? readMacOsMeasurement(
+					"kern.memorystatus_vm_pressure_level",
+					parseMacOsMemoryPressure,
 				)
 			: null;
 	const processes = parseRelevantProcesses(
 		execute("ps", ["-axo", "rss=,pid=,comm="], { encoding: "utf8" }),
 		excludedPids,
 	);
-	return { startupDiskFreeBytes, swapUsedBytes, processes };
+	return {
+		platform,
+		startupDiskFreeBytes,
+		swapUsedBytes,
+		physicalMemoryBytes,
+		memoryPressure,
+		processes,
+	};
 };
 
 export const formatGibibytes = (bytes) =>
@@ -128,6 +205,12 @@ export const formatGibibytes = (bytes) =>
 
 export const formatResourceIssue = (issue) => {
 	switch (issue.kind) {
+		case "disk-measurement":
+			return "Startup disk free space could not be measured. Resolve the measurement failure before starting heavy work.";
+		case "memory-measurement":
+			return "macOS physical RAM, swap or current memory pressure could not be measured. Resolve the measurement failure before starting heavy work.";
+		case "memory-pressure":
+			return `macOS reports ${issue.pressure} current memory pressure. Wait for normal pressure before starting heavy work.`;
 		case "startup-disk":
 			return `Startup disk has ${formatGibibytes(issue.actualBytes)} free; at least ${formatGibibytes(issue.limitBytes)} is required.`;
 		case "swap":
@@ -143,7 +226,7 @@ export const assertLocalResourceSafety = ({
 	environment = process.env,
 	snapshot = null,
 } = {}) => {
-	if (environment.CI) {
+	if ([true, "true", "1"].includes(environment.CI)) {
 		return { skipped: true, overridden: false, snapshot: null, issues: [] };
 	}
 	const currentSnapshot = snapshot ?? inspectLocalResources();

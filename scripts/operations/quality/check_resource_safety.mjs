@@ -10,6 +10,7 @@ import {
 	assertLocalResourceSafety,
 	formatGibibytes,
 	formatResourceIssue,
+	getMaximumSwapUsedBytes,
 } from "../../lib/quality/resource_safety.mjs";
 
 export const main = () => {
@@ -19,10 +20,18 @@ export const main = () => {
 		return;
 	}
 	const summary = [
-		`startup disk ${formatGibibytes(result.snapshot.startupDiskFreeBytes)} free`,
+		...(result.snapshot.physicalMemoryBytes === null
+			? []
+			: [`RAM ${formatGibibytes(result.snapshot.physicalMemoryBytes)}`]),
+		...(result.snapshot.memoryPressure === null
+			? []
+			: [`current memory pressure ${result.snapshot.memoryPressure}`]),
+		result.snapshot.startupDiskFreeBytes === null
+			? "startup disk unavailable"
+			: `startup disk ${formatGibibytes(result.snapshot.startupDiskFreeBytes)} free`,
 		result.snapshot.swapUsedBytes === null
 			? "swap unavailable"
-			: `swap ${formatGibibytes(result.snapshot.swapUsedBytes)} used`,
+			: `swap ${formatGibibytes(result.snapshot.swapUsedBytes)} used (limit ${formatGibibytes(getMaximumSwapUsedBytes(result.snapshot))})`,
 		`${result.snapshot.processes.length} large development process(es) inspected`,
 	].join(", ");
 	console.log(`Resource safety: ${summary}.`);
