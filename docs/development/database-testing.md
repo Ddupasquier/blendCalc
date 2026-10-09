@@ -29,7 +29,7 @@ The local Auth service also runs the production-shaped blocked-signup and Custom
 Token hooks, so regular, moderator, and administrator QA sessions receive the same
 database-owned `app_role` claims that hosted sessions receive.
 
-Local lifecycle commands stage public config, migrations, seeds, tests and email
+Local lifecycle commands stage public config, migrations, seeds, tests, function source and email
 templates beneath the primary checkout's ignored `.cache/local-supabase/<project-id>/`.
 Canonical source remains `supabase/` or the API project's Supabase directory. Hosted
 links, version caches and environment files are never copied. Project IDs, ports and

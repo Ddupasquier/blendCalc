@@ -21,7 +21,7 @@ import { createCleanProcessEnvironment } from "./runtime_environment.mjs";
 const markerName = ".blendcalc-local-inputs.json";
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const safeInputName = (name) =>
-	/^(?:config\.toml|seed\.sql|(?:migrations|tests|templates)\/[A-Za-z0-9_./-]+\.(?:sql|html))$/.test(
+	/^(?:config\.toml|seed\.sql|(?:migrations|tests|templates)\/[A-Za-z0-9_./-]+\.(?:sql|html)|functions\/[A-Za-z0-9_./-]+\.(?:ts|js|json|lock))$/.test(
 		name,
 	) && !name.split(/[\\/]/).includes("..");
 
@@ -84,6 +84,7 @@ const readPublicInputs = (source) => {
 		if (lstatSync(directory).isSymbolicLink())
 			throw new Error("Refusing symlinked public inputs.");
 		for (const entry of readdirSync(directory, { withFileTypes: true })) {
+			if (entry.name === ".env" || entry.name.startsWith(".env.")) continue;
 			const path = join(directory, entry.name);
 			if (entry.isSymbolicLink())
 				throw new Error("Refusing symlinked public inputs.");
@@ -98,6 +99,11 @@ const readPublicInputs = (source) => {
 		["templates", ".html"],
 	]) {
 		walk(join(source, name), extension);
+	}
+	// CLI validates configured entrypoints even when Edge Runtime is excluded.
+	// Stage only public source/dependency files, never function environment values.
+	for (const extension of [".ts", ".js", ".json", ".lock"]) {
+		walk(join(source, "functions"), extension);
 	}
 	return files;
 };

@@ -140,6 +140,8 @@ API local commands use that independent state, preserving project IDs and volume
 without reading hosted links/version caches. Templates are generated copies in this
 stable location; config/template changes refuse while the owned stack runs. Edit their
 canonical source instead. Status and stop do not restage changed source inputs.
+Configured public function source is included because the CLI validates entrypoints
+even when Edge Runtime is excluded; function environment files are never copied.
 
 `scripts/operations/environment/run_production_development.mjs` owns `dev:local` and port
 `5173`. It reads only the reviewed production-development allowlist from the ignored,

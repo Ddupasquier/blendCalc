@@ -120,6 +120,32 @@ describe("owned local Supabase workdirs", () => {
 			readFileSync(join(runtime, "supabase/.temp/storage-version"), "utf8"),
 		).toBe("LOCAL_VERSION");
 	});
+	it("includes public configured function sources but never their environment files", () => {
+		const { source, options } = fixture();
+		mkdirSync(join(source, "functions/catalog-monitor"), { recursive: true });
+		writeFileSync(
+			join(source, "functions/catalog-monitor/index.ts"),
+			"export const ready = true;\n",
+		);
+		writeFileSync(join(source, "functions/deno.json"), '{"imports":{}}');
+		writeFileSync(
+			join(source, "functions/.env.local"),
+			"FUNCTION_SECRET_CANARY",
+		);
+		const runtime = prepareLocalSupabaseWorkdir(options);
+		expect(
+			readFileSync(
+				join(runtime, "supabase/functions/catalog-monitor/index.ts"),
+				"utf8",
+			),
+		).toBe("export const ready = true;\n");
+		expect(
+			readFileSync(join(runtime, "supabase/functions/deno.json"), "utf8"),
+		).toBe('{"imports":{}}');
+		expect(existsSync(join(runtime, "supabase/functions/.env.local"))).toBe(
+			false,
+		);
+	});
 
 	it("keeps a publication target and nested workdir independent", () => {
 		const { root, options } = fixture();
