@@ -301,8 +301,20 @@ for (const placement of ["unplaced", "manual", "automatic"] as const) {
 			await filters
 				.getByRole("button", { name: "Oldest first", exact: true })
 				.click();
+			const sortedResponse = page.waitForResponse((response) => {
+				const url = new URL(response.url());
+				return (
+					url.pathname === "/api/user-food-lists/fridge" &&
+					url.searchParams.get("sort") === "oldest" &&
+					response.status() === 200
+				);
+			});
 			await filters.getByRole("button", { name: "Apply", exact: true }).click();
+			await sortedResponse;
 			await expect(filters).toBeHidden();
+			await expect(
+				page.getByRole("list", { name: "Fridge ingredients" }),
+			).toHaveAttribute("aria-busy", "false");
 			for (const [index, product] of representativeImageProducts.entries()) {
 				const card = await findSavedIngredientCard(page, product.name);
 				const viewport = card.locator(".image-placement-viewport");
