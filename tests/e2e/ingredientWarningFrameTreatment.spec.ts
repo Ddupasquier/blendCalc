@@ -1,4 +1,5 @@
 import type { Locator, Page } from "@playwright/test";
+import { expectPaintedMediaContainment } from "./support/ingredientCardContainment";
 import {
 	expect,
 	signInLocalQaAccount,
@@ -166,6 +167,62 @@ const readCardMediaPresentation = (card: Locator) =>
 		};
 	});
 
+test("pictured and fallback cards keep rounded corners across widths and zoom @compatibility @mobile", async ({
+	page,
+}, testInfo) => {
+	await serveDeterministicOpenFoodFactsImages(page);
+	await page.emulateMedia({ reducedMotion: "reduce" });
+	// One authenticated session covers the viewport corpus without repeated sign-ins.
+	await signInLocalQaAccount({
+		page,
+		email: preferenceQaEmail,
+		nextPath: "/ingredients/fridge",
+	});
+	for (const viewport of [
+		{ width: 320, zoom: 1 },
+		{ width: 390, zoom: 1 },
+		{ width: 430, zoom: 1 },
+		{ width: 1280, zoom: 1 },
+		{ width: 390, zoom: 2 },
+	]) {
+		await page.setViewportSize({ width: viewport.width, height: 900 });
+		await page.evaluate((zoom) => {
+			document.documentElement.style.zoom = String(zoom);
+		}, viewport.zoom);
+		const fridge = getIngredientList(page, "Fridge");
+		const pictured = await findPicturedWarningCard(page, fridge);
+		await expect(pictured.locator("img")).toBeVisible();
+		await expect
+			.poll(() =>
+				pictured
+					.locator("img")
+					.evaluate(
+						(image) =>
+							(image as HTMLImageElement).complete &&
+							(image as HTMLImageElement).naturalWidth > 0,
+					),
+			)
+			.toBe(true);
+		const fallback = fridge
+			.locator(".saved-ingredient-card")
+			.filter({ has: page.locator(".ingredient-card-media-lane--fallback") })
+			.first();
+		for (const theme of ["light", "dark"]) {
+			await page.locator("html").evaluate((element, theme) => {
+				(element as HTMLElement).dataset.theme = theme;
+			}, theme);
+			const picturedScreenshot = await expectPaintedMediaContainment(pictured);
+			await expectPaintedMediaContainment(fallback);
+			if (viewport.width === 390 && viewport.zoom === 1) {
+				await testInfo.attach(`pictured-card-${theme}`, {
+					body: picturedScreenshot,
+					contentType: "image/png",
+				});
+			}
+		}
+	}
+});
+
 test("Fridge and Shopping warning frames stay rounded, semantic, and interactive @compatibility @mobile", async ({
 	page,
 }, testInfo) => {
@@ -189,6 +246,8 @@ test("Fridge and Shopping warning frames stay rounded, semantic, and interactive
 		"warning",
 	);
 	const recallFrame = await expectRoundedGradientFrame(recallCard, "danger");
+	await expectPaintedMediaContainment(preferenceWarningCard);
+	await expectPaintedMediaContainment(recallCard);
 	await expect(
 		fridge
 			.locator(".saved-ingredient-card--warning")
@@ -235,6 +294,11 @@ test("Fridge and Shopping warning frames stay rounded, semantic, and interactive
 			.first(),
 		"warning",
 	);
+	await expectPaintedMediaContainment(
+		getIngredientList(page, "Shopping List")
+			.locator(".saved-ingredient-card--warning")
+			.first(),
+	);
 
 	await page.context().clearCookies();
 	await page.context().addCookies(standardAccountBrowserState.cookies);
@@ -246,6 +310,7 @@ test("Fridge and Shopping warning frames stay rounded, semantic, and interactive
 	const standardFridge = getIngredientList(page, "Fridge");
 	const standardCard = standardFridge.locator(".saved-ingredient-card").first();
 	await expect(standardCard).toBeVisible();
+	await expectPaintedMediaContainment(standardCard);
 	await expect(
 		standardFridge.locator(".saved-ingredient-card--warning"),
 	).toHaveCount(0);
@@ -309,6 +374,7 @@ test("search and Mix cards use the same warning frame @compatibility", async ({
 		.filter({ hasText: "Ground Beef" })
 		.first();
 	await expectRoundedGradientFrame(searchCard, "warning");
+	await expectPaintedMediaContainment(searchCard);
 
 	await page.goto("/mix");
 	await waitForAppReady(page);
@@ -322,6 +388,7 @@ test("search and Mix cards use the same warning frame @compatibility", async ({
 		.filter({ hasText: "Ground Beef" })
 		.first();
 	await expectRoundedGradientFrame(optionCard, "warning");
+	await expectPaintedMediaContainment(optionCard);
 
 	await chooserSearch.fill(picturedFoodName);
 	const recalledOptionCard = chooser
@@ -334,6 +401,7 @@ test("search and Mix cards use the same warning frame @compatibility", async ({
 		recalledOptionCard,
 		picturedWarningTone as "danger" | "warning",
 	);
+	await expectPaintedMediaContainment(recalledOptionCard);
 	const mixCardMedia = await readCardMediaPresentation(recalledOptionCard);
 	await expect(
 		recalledOptionCard.locator(".ingredient-card-media-lane"),
