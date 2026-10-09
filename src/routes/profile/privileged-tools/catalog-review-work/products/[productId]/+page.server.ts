@@ -2,19 +2,20 @@ import { fail, redirect } from "@sveltejs/kit";
 import type { Actions, PageServerLoad } from "./$types";
 import { loadCatalogProductReadinessPassportWorkspace } from "$lib/server/moderation/catalogProductReadinessPassportWorkspace.server";
 import { readCatalogCorrectionHandoff } from "$lib/server/moderation/catalogCorrectionHandoff.server";
-import { readCatalogReviewWork } from "$lib/server/moderation/catalogReviewWork.server";
+import {
+	readCatalogReviewPage,
+	readCatalogReviewProductPages,
+} from "$lib/server/moderation/catalogReviewPages.server";
 import { catalogReviewWorkWorkspaceActions } from "$lib/server/moderation/catalogReviewWorkWorkspace.server";
 import { requireModeratorPermission } from "$lib/server/moderation/moderationAccess.server";
 import { getApprovedCatalogRecordByApplicationFoodId } from "$lib/server/products/catalogRead.server";
 import { readLimitedFormData } from "$lib/server/security/requestBody.server";
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
-import {
-	filterCatalogReviewWorkForProduct,
-	groupCatalogReviewWorkByProduct,
-} from "$lib/utils/moderation/catalogReviewWork";
+import { CATALOG_CONFLICT_REVIEW_LIMIT } from "$lib/utils/moderation/catalogReviewPagination";
 
 const CATALOG_PRODUCT_ROUTE = "/profile/privileged-tools/catalog-review-work";
 const CATALOG_PRODUCT_FORM_MAX_BYTES = 32 * 1024;
+const CATALOG_CONFLICT_FORM_MAX_BYTES = 2 * 1024 * 1024;
 
 export const load: PageServerLoad = async (event) => {
 	const workspace = await loadCatalogProductReadinessPassportWorkspace(
@@ -22,10 +23,14 @@ export const load: PageServerLoad = async (event) => {
 		"moderation.catalog.review",
 		"/profile/privileged-tools/catalog-review-work",
 	);
-	const reviewWork = await readCatalogReviewWork(event.locals.supabase);
+	const reviewPages = await readCatalogReviewProductPages(
+		event.locals.supabase,
+		event.params.productId,
+	);
 	const correctionHandoff = await readCatalogCorrectionHandoff(
 		event.params.productId,
 		workspace.passport.issues,
+		reviewPages.conflicts.items.map((item) => item.id),
 	);
 	const correctionRecord = correctionHandoff.applicationFoodId
 		? await getApprovedCatalogRecordByApplicationFoodId(
@@ -35,10 +40,7 @@ export const load: PageServerLoad = async (event) => {
 		: null;
 	return {
 		...workspace,
-		reviewWork: filterCatalogReviewWorkForProduct(
-			reviewWork,
-			event.params.productId,
-		),
+		reviewPages,
 		correctionHandoff,
 		correctionFood: correctionRecord?.food ?? null,
 	};
@@ -53,7 +55,7 @@ export const actions: Actions = {
 		);
 		const formData = await readLimitedFormData(
 			request,
-			CATALOG_PRODUCT_FORM_MAX_BYTES,
+			CATALOG_CONFLICT_FORM_MAX_BYTES,
 		);
 		let decisions: unknown;
 		try {
@@ -67,7 +69,7 @@ export const actions: Actions = {
 		if (
 			!Array.isArray(decisions) ||
 			decisions.length < 1 ||
-			decisions.length > 50
+			decisions.length > CATALOG_CONFLICT_REVIEW_LIMIT
 		) {
 			return fail(400, {
 				catalogReviewError:
@@ -86,12 +88,15 @@ export const actions: Actions = {
 				catalogReviewError:
 					error.code === "40001"
 						? "The evidence changed while you were reviewing it. Refresh and decide the current conflicts."
-						: error.message,
+						: "That product review could not be completed. Refresh and try again.",
 			});
 		}
 
-		const refreshedWork = await readCatalogReviewWork(locals.supabase);
-		const nextProduct = groupCatalogReviewWorkByProduct(refreshedWork).find(
+		const refreshedWork = await readCatalogReviewPage(
+			locals.supabase,
+			"products",
+		);
+		const nextProduct = refreshedWork.items.find(
 			(product) => product.productId !== params.productId,
 		);
 		redirect(

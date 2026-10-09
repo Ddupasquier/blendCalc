@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
 	requireModeratorPermission: vi.fn(),
-	readCatalogReviewWork: vi.fn(),
+	readCatalogReviewPage: vi.fn(),
 	readCatalogProductReadinessPassport: vi.fn(),
 	readPrivilegedToolReviewSummary: vi.fn(),
 	runPrivilegedQueueAdmission: vi.fn(),
@@ -12,8 +12,8 @@ vi.mock("$lib/server/moderation/moderationAccess.server", () => ({
 	requireModeratorPermission: mocks.requireModeratorPermission,
 }));
 
-vi.mock("$lib/server/moderation/catalogReviewWork.server", () => ({
-	readCatalogReviewWork: mocks.readCatalogReviewWork,
+vi.mock("$lib/server/moderation/catalogReviewPages.server", () => ({
+	readCatalogReviewPage: mocks.readCatalogReviewPage,
 }));
 
 vi.mock("$lib/server/moderation/privilegedToolReviewSummary.server", () => ({
@@ -102,18 +102,21 @@ describe("catalog privileged workspaces", () => {
 			role: "moderator",
 			permissions: ["moderation.catalog.review"],
 		});
-		mocks.readCatalogReviewWork.mockResolvedValue(reviewWork);
+		mocks.readCatalogReviewPage.mockResolvedValue(reviewWork);
 		const supabase = {};
 
 		await expect(
 			loadCatalogReviewWorkWorkspace({ locals: { supabase } } as never),
-		).resolves.toEqual({ viewerRole: "moderator", reviewWork });
+		).resolves.toEqual({ viewerRole: "moderator", productsPage: reviewWork });
 		expect(mocks.requireModeratorPermission).toHaveBeenCalledWith(
 			expect.anything(),
 			"moderation.catalog.review",
 			"/profile/privileged-tools/catalog-review-work",
 		);
-		expect(mocks.readCatalogReviewWork).toHaveBeenCalledWith(supabase);
+		expect(mocks.readCatalogReviewPage).toHaveBeenCalledWith(
+			supabase,
+			"products",
+		);
 	});
 
 	it("does not read either domain when its access guard fails", async () => {
@@ -125,7 +128,7 @@ describe("catalog privileged workspaces", () => {
 		await expect(
 			loadCatalogReviewWorkWorkspace({ locals: { supabase: {} } } as never),
 		).rejects.toMatchObject({ status: 403 });
-		expect(mocks.readCatalogReviewWork).not.toHaveBeenCalled();
+		expect(mocks.readCatalogReviewPage).not.toHaveBeenCalled();
 	});
 
 	it("uses the caller's exact permission and return route for product passports", async () => {
@@ -157,5 +160,6 @@ describe("catalog privileged workspaces", () => {
 		expect(mocks.runPrivilegedQueueAdmission).toHaveBeenCalledWith(supabase, [
 			"catalog_review",
 		]);
+		expect(mocks.runPrivilegedQueueAdmission).toHaveBeenCalledTimes(1);
 	});
 });
