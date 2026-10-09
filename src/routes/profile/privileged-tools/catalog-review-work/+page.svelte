@@ -2,26 +2,27 @@
 	import { goto } from "$app/navigation";
 	import CatalogReviewProductInbox from "$lib/components/moderation/CatalogReviewProductInbox/CatalogReviewProductInbox.svelte";
 	import PrivilegedToolWorkspaceView from "$lib/components/moderation/PrivilegedToolWorkspaceView/PrivilegedToolWorkspaceView.svelte";
-	import { groupCatalogReviewWorkByProduct } from "$lib/utils/moderation/catalogReviewWork";
+	import { untrack } from "svelte";
 	import ProfilePage from "../../+page.svelte";
 	import type { CatalogReviewWorkPageProps } from "./types";
 
 	let { data, form }: CatalogReviewWorkPageProps = $props();
+	let scrollContainer = $state<HTMLElement | null>(null);
+	let currentPage = $state(untrack(() => data.productsPage));
 	const closeAction = () => {
 		void goto("/profile/privileged-tools", { replaceState: true });
 	};
 	const actionCount = $derived(
-		data.reviewWork.counts.safetyMatches +
-			data.reviewWork.counts.conflicts +
-			data.reviewWork.counts.providerChanges,
+		currentPage.counts.safetyMatches +
+			currentPage.counts.conflicts +
+			currentPage.counts.providerChanges,
 	);
-	const productCount = $derived(
-		groupCatalogReviewWorkByProduct(data.reviewWork).length,
-	);
+	const productCount = $derived(currentPage.total);
 </script>
 
 <ProfilePage />
 <PrivilegedToolWorkspaceView
+	bind:scrollContainer
 	id="profile-catalog-review-work-view"
 	title="Catalog review work"
 	subtitle="Resolve evidence-backed product changes, conflicts, and possible recall matches."
@@ -45,5 +46,11 @@
 	feedbackTone={form?.catalogReviewError ? "danger" : "success"}
 	onClose={closeAction}
 >
-	<CatalogReviewProductInbox reviewWork={data.reviewWork} />
+	<CatalogReviewProductInbox
+		page={data.productsPage}
+		{scrollContainer}
+		onPageChange={(page) => {
+			currentPage = page;
+		}}
+	/>
 </PrivilegedToolWorkspaceView>

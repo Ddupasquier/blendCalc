@@ -1,11 +1,49 @@
 <script lang="ts">
 	import { resolve } from "$app/paths";
 	import TextBadge from "$lib/components/common/badges/TextBadge/TextBadge.svelte";
-	import { groupCatalogReviewWorkByProduct } from "$lib/utils/moderation/catalogReviewWork";
+	import { untrack, tick } from "svelte";
+	import { createProgressiveListController } from "$lib/utils/navigation/progressiveListController.svelte";
+	import {
+		fetchCatalogReviewPage,
+		type CatalogReviewPage,
+		type CatalogReviewPageRows,
+	} from "$lib/utils/moderation/catalogReviewPagination";
+	import ProgressiveListFooter from "$lib/components/common/navigation/ProgressiveListFooter/ProgressiveListFooter.svelte";
 	import type { CatalogReviewProductInboxProps } from "./types";
 
-	let { reviewWork }: CatalogReviewProductInboxProps = $props();
-	const products = $derived(groupCatalogReviewWorkByProduct(reviewWork));
+	let {
+		page,
+		scrollContainer,
+		onPageChange = () => {},
+	}: CatalogReviewProductInboxProps = $props();
+	const controller = createProgressiveListController<
+		CatalogReviewPageRows["products"],
+		CatalogReviewPage<"products">
+	>(
+		untrack(() => page),
+		(cursor, signal) =>
+			fetchCatalogReviewPage("products", null, cursor, signal),
+	);
+	const products = $derived(controller.state.items);
+	let previousPage = untrack(() => page);
+	const preserveScroll = async (action: () => Promise<void>) => {
+		const root = scrollContainer,
+			position = root?.scrollTop;
+		await action();
+		await tick();
+		if (root && position !== undefined) root.scrollTop = position;
+	};
+	$effect(() => {
+		const current = page;
+		if (current !== previousPage) {
+			previousPage = current;
+			void untrack(() => preserveScroll(() => controller.refresh(current)));
+		}
+	});
+	$effect(() => {
+		onPageChange(controller.state.page);
+	});
+	$effect(() => () => controller.destroy());
 	const formatBreakdown = (counts: (typeof products)[number]["counts"]) =>
 		[
 			counts.safetyMatches > 0
@@ -59,6 +97,20 @@
 			</p>
 		{/each}
 	</div>
+	<ProgressiveListFooter
+		label="Products"
+		loadedCount={products.length}
+		total={controller.state.total}
+		hasMore={controller.state.nextCursor !== null}
+		loading={controller.state.loading || controller.state.refreshing}
+		error={controller.state.error}
+		{scrollContainer}
+		onLoadMore={() => preserveScroll(controller.loadMore)}
+		onRetry={() =>
+			preserveScroll(
+				controller.needsRefresh ? controller.refresh : controller.loadMore,
+			)}
+	/>
 </section>
 
 <style lang="scss">

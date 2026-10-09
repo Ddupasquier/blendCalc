@@ -1,8 +1,9 @@
 <script lang="ts">
+	import { tick } from "svelte";
 	import PaginatedListControls from "$lib/components/common/navigation/PaginatedListControls/PaginatedListControls.svelte";
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
-	import type { FoodWarningQueueControlsProps } from "./types";
+	import type { ProgressiveListFooterProps } from "./types";
 	let {
 		label,
 		loadedCount,
@@ -13,11 +14,31 @@
 		scrollContainer,
 		onLoadMore,
 		onRetry,
-	}: FoodWarningQueueControlsProps = $props();
+	}: ProgressiveListFooterProps = $props();
+	let footer = $state<HTMLDivElement | null>(null);
+	const keepKeyboardFocus = async (action: () => void | Promise<void>) => {
+		const active = document.activeElement;
+		const focused =
+			active instanceof HTMLElement && footer?.contains(active) ? active : null;
+		await action();
+		await tick();
+		if (
+			!focused ||
+			(document.activeElement !== document.body &&
+				document.activeElement !== focused)
+		)
+			return;
+		const target =
+			focused.isConnected && !focused.matches(":disabled")
+				? focused
+				: footer?.querySelector<HTMLButtonElement>("button:not(:disabled)");
+		target?.focus({ preventScroll: true });
+	};
 </script>
 
 <div
-	class="food-warning-queue-controls"
+	bind:this={footer}
+	class="progressive-list-footer"
 	aria-label={`${label} pagination`}
 	aria-busy={loading}
 >
@@ -30,7 +51,7 @@
 		<RoundedActionButton
 			variant="outline"
 			disabled={loading}
-			onclick={() => void onRetry()}
+			onclick={() => void keepKeyboardFocus(onRetry)}
 			>Retry {label.toLocaleLowerCase()}</RoundedActionButton
 		>
 	{/if}
@@ -42,10 +63,10 @@
 		loadMoreLabel={`Load more ${label.toLocaleLowerCase()}`}
 		contentVersion={`${loadedCount}:${total}`}
 		containerElement="div"
-		{onLoadMore}
+		onLoadMore={() => keepKeyboardFocus(onLoadMore)}
 	/>
 </div>
 
 <style lang="scss">
-	@use "./FoodWarningQueueControls.scss";
+	@use "./ProgressiveListFooter.scss";
 </style>

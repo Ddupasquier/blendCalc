@@ -176,6 +176,9 @@ both approved production hostnames against the budgets in
   same default-mode spec. Factor-reset fixtures invalidate that persona's sessions and
   must not overlap another worker's sign-in: Profile owns Moderator/Admin, and catalog
   submission enforcement owns Developer. Other specs retain parallel execution.
+- Catalog pagination creates an ordinary Auth reviewer per attempt and owns only that
+  reviewer's MFA factors. Retire its role and sign-in access after the scenario without
+  resetting shared personas or erasing immutable review history.
 - Test representative positive, negative, and boundary cases rather than one example.
 - Limit screenshot baselines to stable content and mask externally sourced image pixels
   when the image itself is not the contract.

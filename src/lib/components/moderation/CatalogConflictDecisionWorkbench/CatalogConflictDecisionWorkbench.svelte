@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { untrack } from "svelte";
+	import { CATALOG_CONFLICT_REVIEW_LIMIT } from "$lib/utils/moderation/catalogReviewPagination";
 	import ActionButton from "$lib/components/common/buttons/ActionButton/ActionButton.svelte";
 	import NumberInput from "$lib/components/common/forms/NumberInput/NumberInput.svelte";
 	import SelectField from "$lib/components/common/forms/SelectField/SelectField.svelte";
@@ -9,7 +11,14 @@
 		CatalogConflictDecisionWorkbenchProps,
 	} from "./types";
 
-	let { productId, handoff }: CatalogConflictDecisionWorkbenchProps = $props();
+	let {
+		productId,
+		handoff,
+		totalCount,
+		refreshing = false,
+		evidenceRevision = "",
+		paginationControls,
+	}: CatalogConflictDecisionWorkbenchProps = $props();
 	const findings = $derived(
 		handoff.findings.filter(
 			(finding) =>
@@ -39,6 +48,24 @@
 	let decisions = $state<Record<string, CatalogConflictDecision>>(
 		createInitialDecisions(),
 	);
+	const count = $derived(totalCount ?? findings.length);
+	const currentDecisions = $derived({
+		...createInitialDecisions(),
+		...decisions,
+	});
+	let previousRevision = untrack(() => evidenceRevision);
+	let evidenceChanged = $state(false);
+	$effect(() => {
+		const revision = evidenceRevision;
+		const defaults = createInitialDecisions();
+		untrack(() => {
+			if (revision !== previousRevision) {
+				previousRevision = revision;
+				decisions = defaults;
+				evidenceChanged = true;
+			} else decisions = { ...defaults, ...decisions };
+		});
+	});
 
 	const decisionOptions = [
 		{
@@ -72,7 +99,7 @@
 		);
 	const noteIsValid = (note: string) => note.trim().length >= 20;
 	const decisionIsComplete = (finding: (typeof findings)[number]) => {
-		const decision = decisions[finding.id];
+		const decision = currentDecisions[finding.id];
 		if (!decision || !noteIsValid(decision.note)) return false;
 		if (decision.outcome === "keep_current")
 			return finding.currentValue !== null;
@@ -96,7 +123,13 @@
 	const serializedDecisions = $derived(
 		JSON.stringify(
 			findings.map((finding) => {
-				const decision = decisions[finding.id];
+				const decision = currentDecisions[finding.id] ?? {
+					outcome: "",
+					note: "",
+					observationIndex: "",
+					replacementValue: "",
+					evidenceReference: "",
+				};
 				return {
 					conflictId: finding.id,
 					outcome: decision.outcome,
@@ -162,7 +195,7 @@
 		})[outcome] ?? "Choose an outcome to see exactly what it will do.";
 </script>
 
-{#if findings.length > 0}
+{#if count > 0}
 	<form
 		class="catalog-conflict-workbench"
 		method="POST"
@@ -174,23 +207,32 @@
 			<div>
 				<span>Catalog conflict review</span>
 				<h2>
-					Decide the {findings.length} actual {findings.length === 1
-						? "conflict"
-						: "conflicts"}
+					Decide the {count} actual {count === 1 ? "conflict" : "conflicts"}
 				</h2>
 				<p>
 					Each row is one field-level decision. Nothing changes until you finish
 					the entire review.
 				</p>
 			</div>
-			<strong>{completedCount} of {findings.length} decided</strong>
+			<strong>{completedCount} of {count} decided</strong>
 		</header>
+		{#if evidenceChanged}<p role="status">
+				The evidence changed. Review the current fields before finishing;
+				earlier choices were cleared.
+			</p>{/if}
+		{#if count > CATALOG_CONFLICT_REVIEW_LIMIT}
+			<p role="alert">
+				This product exceeds the {CATALOG_CONFLICT_REVIEW_LIMIT}-field review
+				limit. Its conflicts remain available to inspect, but cannot be
+				submitted as partial reviews.
+			</p>
+		{/if}
 
 		<ol aria-label="Catalog conflicts">
 			{#each findings as finding, findingIndex (finding.id)}
 				<li class="catalog-conflict-workbench__finding">
 					<header>
-						<span>Decision {findingIndex + 1} of {findings.length}</span>
+						<span>Decision {findingIndex + 1} of {count}</span>
 						<h3>{finding.fieldLabel}</h3>
 						<p>
 							All nutrient values are normalized per 100 g so they can be
@@ -287,16 +329,16 @@
 									(option.value === "use_observation" &&
 										eligibleProviderEvidence(finding).length === 0),
 							}))}
-							value={decisions[finding.id].outcome}
+							value={currentDecisions[finding.id].outcome}
 							onValueChange={(value) =>
 								updateDecision(finding.id, { outcome: value })}
 							required
 						/>
 						<p class="catalog-conflict-workbench__outcome-copy">
-							{outcomeCopy(decisions[finding.id].outcome)}
+							{outcomeCopy(currentDecisions[finding.id].outcome)}
 						</p>
 
-						{#if decisions[finding.id].outcome === "use_observation"}
+						{#if currentDecisions[finding.id].outcome === "use_observation"}
 							<SelectField
 								id={`conflict-observation-${finding.id}`}
 								label="Which provider value should replace the stored value?"
@@ -304,12 +346,12 @@
 									value: String(evidence.index),
 									label: `${evidence.value} — ${evidence.source}`,
 								}))}
-								value={decisions[finding.id].observationIndex}
+								value={currentDecisions[finding.id].observationIndex}
 								onValueChange={(value) =>
 									updateDecision(finding.id, { observationIndex: value })}
 								required
 							/>
-						{:else if decisions[finding.id].outcome === "use_other"}
+						{:else if currentDecisions[finding.id].outcome === "use_other"}
 							<label
 								class="catalog-conflict-workbench__number-label"
 								for={`conflict-value-${finding.id}`}
@@ -323,7 +365,7 @@
 									class="catalog-conflict-workbench__number-input"
 									placeholder="Enter the evidenced value"
 									min={0}
-									value={decisions[finding.id].replacementValue}
+									value={currentDecisions[finding.id].replacementValue}
 									onValueChange={(value) =>
 										updateDecision(finding.id, { replacementValue: value })}
 								/>
@@ -332,7 +374,7 @@
 								id={`conflict-reference-${finding.id}`}
 								label="Exact evidence reference"
 								placeholder="Label photo, standard, record ID, or documentation URL"
-								value={decisions[finding.id].evidenceReference}
+								value={currentDecisions[finding.id].evidenceReference}
 								oninput={(event) =>
 									updateDecision(finding.id, {
 										evidenceReference: event.currentTarget.value,
@@ -342,16 +384,17 @@
 							/>
 						{/if}
 
-						{#if decisions[finding.id].outcome}
+						{#if currentDecisions[finding.id].outcome}
 							<TextField
 								id={`conflict-note-${finding.id}`}
-								label={decisions[finding.id].outcome === "keep_current"
+								label={currentDecisions[finding.id].outcome === "keep_current"
 									? "Why is the stored value better supported?"
-									: decisions[finding.id].outcome === "insufficient_evidence"
+									: currentDecisions[finding.id].outcome ===
+										  "insufficient_evidence"
 										? "What evidence is missing or inconclusive?"
 										: "Why does this evidence support the replacement?"}
 								placeholder="Name the specific source and explain this field-level decision."
-								value={decisions[finding.id].note}
+								value={currentDecisions[finding.id].note}
 								oninput={(event) =>
 									updateDecision(finding.id, {
 										note: event.currentTarget.value,
@@ -367,11 +410,9 @@
 				</li>
 			{/each}
 		</ol>
-
 		<footer class="catalog-conflict-workbench__finish">
 			<div>
-				<strong>{completedCount} of {findings.length} decisions complete</strong
-				>
+				<strong>{completedCount} of {count} decisions complete</strong>
 				<span
 					>Finishing records every outcome together, recalculates readiness, and
 					opens the next product.</span
@@ -380,12 +421,16 @@
 			<ActionButton
 				type="submit"
 				variant="success"
-				disabled={completedCount !== findings.length}
+				disabled={refreshing ||
+					count > CATALOG_CONFLICT_REVIEW_LIMIT ||
+					findings.length !== count ||
+					completedCount !== count}
 			>
 				Finish product review
 			</ActionButton>
 		</footer>
 	</form>
+	{@render paginationControls?.()}
 {/if}
 
 <style lang="scss">
