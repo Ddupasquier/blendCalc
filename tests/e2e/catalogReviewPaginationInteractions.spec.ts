@@ -47,7 +47,14 @@ const localSql = (sql: string) =>
 
 test("independent catalog reviewers keep ordinary Auth and MFA sessions isolated @compatibility @mobile", async ({
 	page,
-}) => {
+}, testInfo) => {
+	const failedRequests: Array<{ path: string; reason: string }> = [];
+	page.on("requestfailed", (request) => {
+		failedRequests.push({
+			path: new URL(request.url()).pathname,
+			reason: request.failure()?.errorText ?? "unknown",
+		});
+	});
 	const firstReviewer = await createLocalQaCatalogReviewer();
 	try {
 		await signInLocalQaAccount({
@@ -57,9 +64,13 @@ test("independent catalog reviewers keep ordinary Auth and MFA sessions isolated
 		});
 		await page.goto(root);
 		await expect(page).toHaveURL(/\/auth\/mfa\/enroll\?/u);
-		await finishLocalQaAuthenticatorEnrollment(page);
-		await waitForAppReady(page);
+		// This isolation case owns session continuity; use genuine keyboard
+		// submission so its pointer cannot start an unrelated product hover preload.
+		await finishLocalQaAuthenticatorEnrollment(page, true);
 		await expect(page).toHaveURL((url) => url.pathname === root);
+		// The old enrollment page is already hydrated; wait for the actual
+		// verified landing before invoking application-ready interactions.
+		await waitForAppReady(page);
 		const secondReviewer = await createLocalQaCatalogReviewer();
 		await secondReviewer.cleanup();
 		await page.reload();
@@ -71,6 +82,10 @@ test("independent catalog reviewers keep ordinary Auth and MFA sessions isolated
 		expect(response.status()).toBe(200);
 	} finally {
 		await firstReviewer.cleanup();
+		await testInfo.attach("safe-transport-failures", {
+			body: JSON.stringify(failedRequests),
+			contentType: "application/json",
+		});
 	}
 });
 
@@ -233,7 +248,7 @@ test("catalog inbox appends, retries and preserves focus during routed navigatio
 	});
 });
 
-test("exact-product catalog queues preserve drafts, responsive controls and atomic completion @compatibility @mobile", async ({
+test("exact-product catalog queues preserve drafts and reconcile terminal recalls @compatibility @mobile", async ({
 	page,
 }, testInfo) => {
 	await withCatalogReviewFixture(
@@ -339,101 +354,154 @@ test("exact-product catalog queues preserve drafts, responsive controls and atom
 			await expect(
 				product.getByRole("button", { name: "Load more provider changes" }),
 			).toHaveCount(0);
-			for (const width of [1024, 390]) {
-				await page.setViewportSize({ width, height: 844 });
-				const decisionHeading = product
-					.locator(
-						'form:has(input[name="reviewId"]) header.catalog-review-work__decision-heading',
-					)
-					.first();
-				const headingRows = await decisionHeading.evaluate((element) => ({
-					titleBottom: element.querySelector("strong")!.getBoundingClientRect()
-						.bottom,
-					copyTop: element.querySelector("span")!.getBoundingClientRect().top,
-				}));
-				expect(headingRows.copyTop).toBeGreaterThanOrEqual(
-					headingRows.titleBottom,
-				);
-				await decisionHeading.screenshot({
-					path: testInfo.outputPath(`provider-decision-heading-${width}.png`),
-				});
-				const overflow = await page.evaluate(
-					() =>
-						document.documentElement.scrollWidth >
-						document.documentElement.clientWidth + 1,
-				);
-				expect(overflow).toBe(false);
-				await product.screenshot({
-					path: testInfo.outputPath(`catalog-queues-${width}.png`),
-				});
-				for (const colorScheme of ["light", "dark"] as const) {
-					await page.emulateMedia({ colorScheme, reducedMotion: "reduce" });
-					await recallFooter.screenshot({
-						path: testInfo.outputPath(
-							`recall-footer-${width}-${colorScheme}.png`,
-						),
-					});
-				}
-			}
-			await page.evaluate(() => {
-				document.documentElement.style.fontSize = "200%";
-			});
-			await conflictFooter.screenshot({
-				path: testInfo.outputPath("conflict-footer-390-text200.png"),
-			});
-			const footerBounds = await conflictFooter.boundingBox();
-			expect(footerBounds).not.toBeNull();
-			expect(footerBounds!.x + footerBounds!.width).toBeLessThanOrEqual(391);
-			await page.evaluate(() => {
-				document.documentElement.style.fontSize = "";
-			});
-			await page.goto(
-				`${root}/products/${scope}000-0000-4000-8000-000000000061`,
-			);
-			await waitForAppReady(page);
-			await expect(
-				page.getByLabel("Provider changes pagination", { exact: true }),
-			).toContainText("1 of 1 provider changes loaded");
-			const workbench = page.locator(".catalog-conflict-workbench");
-			await workbench.getByRole("combobox").click();
-			await page
-				.getByRole("option", {
-					name: "Cannot determine from current evidence",
-					exact: true,
-				})
-				.click();
-			await workbench
-				.getByRole("textbox")
-				.fill(
-					"QA control: no exact label supports changing this ingredient field.",
-				);
-			await workbench
-				.getByRole("button", { name: "Finish product review", exact: true })
-				.click();
-			await expect(page).not.toHaveURL(
-				new RegExp(`${scope}000-0000-4000-8000-000000000061$`, "u"),
-			);
-			await page.goto(
-				`${root}/products/${scope}000-0000-4000-8000-000000000061`,
-			);
-			await waitForAppReady(page);
-			await expect(page.locator(".catalog-conflict-workbench")).toHaveCount(0);
-			const provider = page.locator('form:has(input[name="reviewId"])');
-			await expect(
-				provider.getByRole("button", {
-					name: "Keep current record",
-					exact: true,
-				}),
-			).toBeDisabled();
-			await provider
-				.getByRole("textbox")
-				.fill(
-					"QA control: this observation lacks the exact package evidence needed for a correction.",
-				);
-			await provider
-				.getByRole("button", { name: "Keep current record", exact: true })
-				.click();
-			await expect(provider).toHaveCount(0);
 		},
 	);
+});
+
+test("loaded catalog queues retain readable responsive controls and enlarged text @compatibility @mobile", async ({
+	page,
+}, testInfo) => {
+	await withCatalogReviewFixture(page, testInfo, async ({ productId }) => {
+		await page.goto(`${root}/products/${productId}`);
+		await waitForAppReady(page);
+		const product = page.getByRole("dialog", { name: "Product readiness" });
+		const recallFooter = product.getByLabel("Recall matches pagination", {
+			exact: true,
+		});
+		const conflictFooter = product.getByLabel("Conflicts pagination", {
+			exact: true,
+		});
+		await product
+			.locator("summary")
+			.filter({ hasText: "Provider changes" })
+			.click();
+		// Exercise the dense, loaded layout, not only its first server page.
+		for (const queue of [
+			{
+				name: "recall matches",
+				label: "Recall matches pagination",
+				counts: [40, 60],
+			},
+			{
+				name: "conflicts",
+				label: "Conflicts pagination",
+				counts: [40, 60, 61],
+			},
+			{
+				name: "provider changes",
+				label: "Provider changes pagination",
+				counts: [40, 60, 61],
+			},
+		]) {
+			const button = product.getByRole("button", {
+				name: `Load more ${queue.name}`,
+				exact: true,
+			});
+			const footer = product.getByLabel(queue.label, { exact: true });
+			for (const count of queue.counts) {
+				await button.click();
+				await expect(footer).toContainText(
+					`${count} of 61 ${queue.name} loaded`,
+				);
+			}
+		}
+		for (const width of [1024, 390]) {
+			await page.setViewportSize({ width, height: 844 });
+			const decisionHeading = product
+				.locator(
+					'form:has(input[name="reviewId"]) header.catalog-review-work__decision-heading',
+				)
+				.first();
+			const headingRows = await decisionHeading.evaluate((element) => ({
+				titleBottom: element.querySelector("strong")!.getBoundingClientRect()
+					.bottom,
+				copyTop: element.querySelector("span")!.getBoundingClientRect().top,
+			}));
+			expect(headingRows.copyTop).toBeGreaterThanOrEqual(
+				headingRows.titleBottom,
+			);
+			await decisionHeading.screenshot({
+				path: testInfo.outputPath(`provider-decision-heading-${width}.png`),
+			});
+			const overflow = await page.evaluate(
+				() =>
+					document.documentElement.scrollWidth >
+					document.documentElement.clientWidth + 1,
+			);
+			expect(overflow).toBe(false);
+			await product.screenshot({
+				path: testInfo.outputPath(`catalog-queues-${width}.png`),
+			});
+			for (const colorScheme of ["light", "dark"] as const) {
+				await page.emulateMedia({ colorScheme, reducedMotion: "reduce" });
+				await recallFooter.screenshot({
+					path: testInfo.outputPath(
+						`recall-footer-${width}-${colorScheme}.png`,
+					),
+				});
+			}
+		}
+		await page.evaluate(() => {
+			document.documentElement.style.fontSize = "200%";
+		});
+		await conflictFooter.screenshot({
+			path: testInfo.outputPath("conflict-footer-390-text200.png"),
+		});
+		const footerBounds = await conflictFooter.boundingBox();
+		expect(footerBounds).not.toBeNull();
+		expect(footerBounds!.x + footerBounds!.width).toBeLessThanOrEqual(391);
+		await page.evaluate(() => {
+			document.documentElement.style.fontSize = "";
+		});
+	});
+});
+
+test("catalog conflict review and provider decisions complete atomically @compatibility @mobile", async ({
+	page,
+}, testInfo) => {
+	await withCatalogReviewFixture(page, testInfo, async ({ scope }) => {
+		await page.goto(`${root}/products/${scope}000-0000-4000-8000-000000000061`);
+		await waitForAppReady(page);
+		await expect(
+			page.getByLabel("Provider changes pagination", { exact: true }),
+		).toContainText("1 of 1 provider changes loaded");
+		const workbench = page.locator(".catalog-conflict-workbench");
+		await workbench.getByRole("combobox").click();
+		await page
+			.getByRole("option", {
+				name: "Cannot determine from current evidence",
+				exact: true,
+			})
+			.click();
+		await workbench
+			.getByRole("textbox")
+			.fill(
+				"QA control: no exact label supports changing this ingredient field.",
+			);
+		await workbench
+			.getByRole("button", { name: "Finish product review", exact: true })
+			.click();
+		await expect(page).not.toHaveURL(
+			new RegExp(`${scope}000-0000-4000-8000-000000000061$`, "u"),
+		);
+		await page.goto(`${root}/products/${scope}000-0000-4000-8000-000000000061`);
+		await waitForAppReady(page);
+		await expect(page.locator(".catalog-conflict-workbench")).toHaveCount(0);
+		const provider = page.locator('form:has(input[name="reviewId"])');
+		await expect(
+			provider.getByRole("button", {
+				name: "Keep current record",
+				exact: true,
+			}),
+		).toBeDisabled();
+		await provider
+			.getByRole("textbox")
+			.fill(
+				"QA control: this observation lacks the exact package evidence needed for a correction.",
+			);
+		await provider
+			.getByRole("button", { name: "Keep current record", exact: true })
+			.click();
+		await expect(provider).toHaveCount(0);
+	});
 });
