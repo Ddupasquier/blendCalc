@@ -150,8 +150,9 @@ npm run blendCalcAPI:db -- status
 
 Guarded hosted migrations use `.env.blendCalcAPI.hosted.local`, copied from
 `config/environments/blendcalc-api-hosted.example.env`. The root Supabase link remains attached to the
-blendCalc application project. Every blendCalcAPI database command uses
-`infrastructure/blendCalcAPI` as its explicit workdir, and a hosted write verifies
+blendCalc application project. Hosted blendCalcAPI commands use
+`infrastructure/blendCalcAPI` as their explicit workdir; local commands stage its public
+inputs in an independent local-state root. A hosted write verifies
 `BLENDCALC_API_SUPABASE_PROJECT_ID`. The database password may instead use the dedicated
 `blendCalcAPI-supabase-db-password` macOS Keychain item. Do not reuse the application
 database password or Keychain name.
@@ -163,7 +164,12 @@ and seeded account credentials to `.env.test.local`. The launcher supplies the s
 runtime label, site URL, isolated API mode, and empty Turnstile setting directly. Do not
 hand-maintain or commit the generated file.
 The test application launcher adds local blendCalcAPI credentials directly from its
-separate workdir.
+separate local workdir. Local CLI state lives under the primary checkout's ignored
+`.cache/local-supabase/<project-id>/`, including when commands run from an auxiliary
+checkout. Public inputs are staged from that command's source checkout; production-linked
+`.temp` files and environment secrets never move into the local root. Config/template
+changes require the owned stack to be stopped first. Generated inputs are checked
+against their receipt and must not be edited directly.
 
 Playwright uses port `5174`, the disposable local application Supabase stack, and the
 isolated local blendCalcAPI stack. Its orchestrator discards the parent shell

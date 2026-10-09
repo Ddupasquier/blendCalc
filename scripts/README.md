@@ -134,6 +134,13 @@ start or reset only localhost Supabase, writes an ignored test environment, appl
 `supabase/seed.sql`, and repairs the maintained personas in
 `lib/qa/local_qa_personas.mjs`.
 
+`lib/environment/local_supabase_workdir.mjs` stages reviewed public CLI inputs under
+the primary checkout's ignored `.cache/local-supabase/<project-id>/`. Both primary and
+API local commands use that independent state, preserving project IDs and volumes
+without reading hosted links/version caches. Templates are generated copies in this
+stable location; config/template changes refuse while the owned stack runs. Edit their
+canonical source instead. Status and stop do not restage changed source inputs.
+
 `scripts/operations/environment/run_production_development.mjs` owns `dev:local` and port
 `5173`. It reads only the reviewed production-development allowlist from the ignored,
 owner-only `.env`, verifies the established hosted application/API projects, and starts

@@ -170,6 +170,11 @@ and personas live in [Database Testing](docs/development/database-testing.md).
 
 ### Database And QA
 
+Local Supabase commands keep their generated inputs and CLI state in the primary
+checkout's ignored `.cache/local-supabase/<project-id>/`, separate from hosted links.
+Project IDs, ports and persistent volumes stay unchanged; edit config and templates
+in their canonical source, not the generated directory.
+
 | Command                                                                                                                                        | Purpose                                                                                                             |
 | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
 | `npm run db:test -- start`                                                                                                                     | Start local Supabase and repair missing QA baseline data.                                                           |
