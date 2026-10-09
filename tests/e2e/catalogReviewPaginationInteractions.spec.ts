@@ -166,6 +166,14 @@ const withCatalogReviewFixture = async (
 };
 
 const openCatalogReviewProduct = async (page: Page, productId: string) => {
+	// Finishing a product advances to the next one, not directly to the inbox.
+	if (new URL(page.url()).pathname !== root) {
+		await page
+			.getByRole("dialog", { name: "Product readiness", exact: true })
+			.getByRole("button", { name: "Back to privileged tools", exact: true })
+			.click();
+		await expect(page).toHaveURL((url) => url.pathname === root);
+	}
 	const inbox = page.getByRole("region", { name: "Products needing review" });
 	const path = `${root}/products/${productId}`;
 	const link = inbox.getByRole("link").and(page.locator(`[href="${path}"]`));
