@@ -70,12 +70,18 @@ as a whole-product authority.
 Builds, complete Vitest projects, browser suites, feature/release/nightly verification,
 and full database verification run through
 `operations/quality/run_with_resource_limits.mjs`. On a local machine, the runner
-refuses to start when the macOS startup disk has less than 50 GiB free, swap use exceeds
-8 GiB, or an existing development process exceeds 5 GiB resident memory. It also gives
+refuses to start when the macOS startup disk has less than 50 GiB free, current memory
+pressure is warning or critical, swap use exceeds one physical-RAM-sized budget capped
+at 16 GiB, or an existing development process exceeds 5 GiB resident memory. A 16 GiB
+Mac therefore permits 16 GiB used swap while pressure is normal; smaller Macs retain
+their smaller budget. Missing macOS RAM/pressure measurements fail closed. It also gives
 child Node processes a 4 GiB old-space limit. CI skips machine-capacity checks but keeps
 the worker and heap limits.
 
 Use `npm run resources:check` for a read-only report. Resolve pressure before continuing.
+The report distinguishes retained swap from current pressure and displays the effective
+budget. The pressure sysctl uses exported notification flags, not the internal kernel
+enum described in some XNU documentation.
 `BLENDCALC_ALLOW_RESOURCE_PRESSURE=1` is an explicit one-command emergency override;
 it is not a persistent setting and does not make an unsafe machine state acceptable.
 The guard never deletes files, caches, containers, volumes, or databases.
