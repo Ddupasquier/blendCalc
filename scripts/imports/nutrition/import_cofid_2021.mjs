@@ -9,6 +9,11 @@
 import { createReadStream } from "node:fs";
 import readExcelFile from "read-excel-file/node";
 import {
+	parseCofidSourceValue as parseSourceValue,
+	preflightCofidSource,
+	verifyCofidPersistedCounts,
+} from "../../lib/nutrition/cofid_source_preflight.mjs";
+import {
 	createBatchWriter,
 	createNutritionImportClient,
 	createTemporaryDownloadDirectory,
@@ -37,8 +42,6 @@ const NUTRIENT_SHEETS = new Set([
 	"1.14 Organic Acids",
 ]);
 
-const supabase = createNutritionImportClient();
-
 const textOrNull = (value) => {
 	const normalized = String(value ?? "").trim();
 	return normalized || null;
@@ -53,37 +56,6 @@ const decodeSourceText = (value) =>
 		.replaceAll("&#39;", "'")
 		.trim();
 
-const parseSourceValue = (value) => {
-	if (typeof value === "number" && Number.isFinite(value) && value >= 0) {
-		return { amount: value, status: "measured", qualifier: null };
-	}
-	const normalized = String(value ?? "").trim();
-	if (!normalized) return null;
-	const numeric = Number(normalized);
-	if (Number.isFinite(numeric) && numeric >= 0) {
-		return { amount: numeric, status: "measured", qualifier: null };
-	}
-	const parenthesizedEstimate = normalized.match(/^\((\d+(?:\.\d+)?)\)$/u);
-	if (parenthesizedEstimate) {
-		return {
-			amount: Number(parenthesizedEstimate[1]),
-			status: "measured",
-			qualifier: "source-estimate",
-		};
-	}
-	if (/^tr$/iu.test(normalized)) {
-		return { amount: null, status: "trace", qualifier: "trace" };
-	}
-	if (/^n$/iu.test(normalized)) {
-		return {
-			amount: null,
-			status: "present-unquantified",
-			qualifier: "present-without-reliable-amount",
-		};
-	}
-	return null;
-};
-
 const downloadDirectory = await createTemporaryDownloadDirectory(
 	"blendcalc-cofid-2021-",
 );
@@ -97,14 +69,18 @@ const sheets = await readExcelFile(createReadStream(filePath));
 const factorsSheet = sheets.find(({ sheet }) => sheet === "1.2 Factors");
 if (!factorsSheet) throw new Error("CoFID Factors sheet is missing.");
 
-const foodRows = factorsSheet.data.slice(3).filter((row) =>
-	textOrNull(row[0]) && textOrNull(row[1])
-);
+const foodRows = factorsSheet.data
+	.slice(3)
+	.filter((row) => row.some((value) => textOrNull(value)));
 const foodKeys = new Set(foodRows.map((row) => String(row[0])));
 const nutrientSheets = sheets.filter(({ sheet }) => NUTRIENT_SHEETS.has(sheet));
 if (nutrientSheets.length !== NUTRIENT_SHEETS.size) {
 	throw new Error("One or more required CoFID nutrient sheets are missing.");
 }
+
+// Validate the complete source before creating a database client or replacing rows.
+const sourceCounts = preflightCofidSource({ foodRows, nutrientSheets });
+const supabase = createNutritionImportClient();
 
 const { data: dataset, error: datasetError } = await supabase
 	.from("generic_food_datasets")
@@ -130,7 +106,9 @@ const nutrientMappings = new Map(
 		Number(row.nutrient_id),
 	]),
 );
-const per100mlPrefixes = Array.isArray(dataset.metadata?.per100mlFoodGroupPrefixes)
+const per100mlPrefixes = Array.isArray(
+	dataset.metadata?.per100mlFoodGroupPrefixes,
+)
 	? dataset.metadata.per100mlFoodGroupPrefixes.map(String)
 	: [];
 
@@ -155,11 +133,11 @@ for (const row of foodRows) {
 	const description = decodeSourceText(row[1]);
 	const sourceDescription = decodeSourceText(row[2]);
 	const foodGroupKey = textOrNull(row[3]);
-	const measurementBasis = foodGroupKey && per100mlPrefixes.some((prefix) =>
-		foodGroupKey.startsWith(prefix)
-	)
-		? "per_100ml"
-		: "per_100g";
+	const measurementBasis =
+		foodGroupKey &&
+		per100mlPrefixes.some((prefix) => foodGroupKey.startsWith(prefix))
+			? "per_100ml"
+			: "per_100g";
 	if (measurementBasis === "per_100ml") per100mlFoodCount += 1;
 	await recordWriter.add({
 		dataset_key: DATASET_KEY,
@@ -207,13 +185,16 @@ for (const { sheet, data } of nutrientSheets) {
 	for (let columnIndex = 7; columnIndex < headers.length; columnIndex += 1) {
 		const sourceNutrientKey = textOrNull(tags[columnIndex]);
 		if (!sourceNutrientKey) continue;
-		const unitMatch = String(headers[columnIndex] ?? "").match(/\(([^()]*)\)\s*$/u);
+		const unitMatch = String(headers[columnIndex] ?? "").match(
+			/\(([^()]*)\)\s*$/u,
+		);
 		const unitName = normalizeDatasetUnit(unitMatch?.[1]);
 		const descriptor = {
 			sheet,
 			columnIndex,
 			sourceNutrientKey,
-			sourceNutrientName: textOrNull(names[columnIndex]) ?? String(headers[columnIndex]),
+			sourceNutrientName:
+				textOrNull(names[columnIndex]) ?? String(headers[columnIndex]),
 			sourceHeader: String(headers[columnIndex]),
 			unitName,
 		};
@@ -254,10 +235,14 @@ for (const { sheet, data } of nutrientSheets) {
 				if (textOrNull(row[columnIndex])) invalidValueCount += 1;
 				continue;
 			}
-			const unitMatch = String(headers[columnIndex] ?? "").match(/\(([^()]*)\)\s*$/u);
+			const unitMatch = String(headers[columnIndex] ?? "").match(
+				/\(([^()]*)\)\s*$/u,
+			);
 			const unitName = normalizeDatasetUnit(unitMatch?.[1]);
-			const nutrientId = nutrientMappings.get(`${sourceNutrientKey}|${unitName}`) ?? null;
-			if (!nutrientId) observedUnmappedTags.add(`${sourceNutrientKey}|${unitName}`);
+			const nutrientId =
+				nutrientMappings.get(`${sourceNutrientKey}|${unitName}`) ?? null;
+			if (!nutrientId)
+				observedUnmappedTags.add(`${sourceNutrientKey}|${unitName}`);
 			if (parsedValue.status === "trace") traceValueCount += 1;
 			if (parsedValue.status === "present-unquantified") {
 				unquantifiedValueCount += 1;
@@ -267,7 +252,8 @@ for (const { sheet, data } of nutrientSheets) {
 				source_food_key: sourceFoodKey,
 				source_nutrient_key: sourceNutrientKey,
 				nutrient_id: nutrientId,
-				source_nutrient_name: textOrNull(names[columnIndex]) ?? String(headers[columnIndex]),
+				source_nutrient_name:
+					textOrNull(names[columnIndex]) ?? String(headers[columnIndex]),
 				unit_name: unitName,
 				amount_per_100g: parsedValue.amount,
 				value_status: parsedValue.status,
@@ -289,12 +275,25 @@ for (const { sheet, data } of nutrientSheets) {
 }
 await nutrientWriter.finish();
 
+if (nutrientValueCount !== sourceCounts.distinctNutrientCount) {
+	throw new Error(
+		"CoFID prepared nutrient counts disagree with source preflight; activation refused.",
+	);
+}
+const persistedCounts = dryRun
+	? null
+	: await verifyCofidPersistedCounts(supabase, DATASET_KEY, sourceCounts);
+
 const summary = {
 	dataset: DATASET_KEY,
-	foods: foodRows.length,
+	inputFoods: sourceCounts.inputFoodCount,
+	foods: sourceCounts.distinctFoodCount,
+	persistedFoods: persistedCounts?.foods ?? null,
 	per100mlFoodsHeldFromWeightSearch: per100mlFoodCount,
 	nutrientDefinitions: nutrientDescriptors.size,
 	nutrientValues: nutrientValueCount,
+	inputNutrientValues: sourceCounts.inputNutrientCount,
+	persistedNutrientValues: persistedCounts?.nutrients ?? null,
 	traceValues: traceValueCount,
 	presentUnquantifiedValues: unquantifiedValueCount,
 	unmappedObservedTags: observedUnmappedTags.size,
@@ -311,8 +310,8 @@ if (!dryRun) {
 			active: true,
 			imported_at: importedAt,
 			source_file_sha256: checksum,
-			food_count: foodRows.length,
-			nutrient_value_count: nutrientValueCount,
+			food_count: persistedCounts.foods,
+			nutrient_value_count: persistedCounts.nutrients,
 			measure_count: 0,
 			metadata: {
 				...dataset.metadata,
@@ -328,7 +327,10 @@ if (!dryRun) {
 
 	const { error: sourceUpdateError } = await supabase
 		.from("product_data_sources")
-		.update({ observation_count: foodRows.length, last_observed_at: importedAt })
+		.update({
+			observation_count: persistedCounts.foods,
+			last_observed_at: importedAt,
+		})
 		.eq("key", SOURCE_KEY);
 	if (sourceUpdateError) throw sourceUpdateError;
 }
