@@ -395,6 +395,14 @@ version of that maintained evidence.
 
 ## Imports And Reference Seeds
 
+CoFID validates the complete source identity set before creating a database client or
+deactivating/deleting an existing dataset. Duplicate food codes, inconsistent worksheet
+food identities and repeated nutrient keys refuse; no arrival-order winner or synthetic
+source code is chosen. After live writes, exact dataset-scoped food/nutrient counts must
+match preflight before activation. Dry runs report input/distinct counts, not persisted
+counts; after source validation they still read the configured approval/mapping registry.
+Later write failures are not an atomic rollback of the existing replacement workflow.
+
 | Command                                                                                           | Write scope                                                                                                                      |
 | ------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
 | `npm run import:nutrition:cnf -- --dry-run`                                                       | Download and validate Canadian Nutrient File 2026 without replacing dataset rows                                                 |

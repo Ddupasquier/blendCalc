@@ -358,6 +358,10 @@ Dataset reference: [UK Composition of Foods Integrated Dataset 2021](https://www
   policy evidence and limitations.
 - Source food/nutrient identifiers and source basis are retained. Records whose basis is
   per 100 ml remain identified as such instead of being silently converted to per 100 g.
+- Import preflight refuses duplicate food codes or conflicting worksheet identities
+  before replacement. Legal permission does not resolve source identity ambiguity;
+  corrected source evidence must be reviewed rather than inventing a code or selecting
+  a nutrient profile by arrival order. Persisted counts are reconciled before activation.
 - Generic-food search returns release-specific source attribution.
 - Missing import time or file-hash evidence is completed only through the AAL2 dataset
   evidence workflow. Its validated preview and immutable apply history supplement the
