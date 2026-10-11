@@ -90,50 +90,112 @@ export const expectPaintedMediaContainment = async (card: Locator) => {
 							requestAnimationFrame(() => resolve()),
 						),
 				);
-			const area = await capturedCard!.evaluate(readVisibleCardArea);
-			await capturedCard!.evaluate(
-				(element, { top, bottom, corner }) => {
-					for (
-						let parent = element.parentElement;
-						parent;
-						parent = parent.parentElement
-					) {
-						if (
-							!/^(auto|scroll)$/.test(getComputedStyle(parent).overflowY) ||
-							parent.scrollHeight <= parent.clientHeight
-						)
-							continue;
-						const rect = element.getBoundingClientRect();
-						const cardScale = rect.width / (element as HTMLElement).offsetWidth;
-						const radius = Math.min(
-							Number.parseFloat(
-								getComputedStyle(element)[
-									corner === "top"
-										? "borderTopLeftRadius"
-										: "borderBottomLeftRadius"
-								],
-							) * cardScale,
-							rect.height / 2,
-						);
-						const segmentTop =
-							corner === "top" ? rect.top : rect.bottom - radius;
-						const segmentBottom =
-							corner === "top" ? rect.top + radius : rect.bottom;
-						if (segmentTop >= top + 4 && segmentBottom <= bottom - 4) break;
-						const delta =
-							corner === "top"
-								? rect.top - (top + 4)
-								: rect.bottom - (bottom - 4);
-						const scale =
-							parent.getBoundingClientRect().width / parent.offsetWidth;
-						parent.scrollTo({
-							top: parent.scrollTop + delta / scale,
-							behavior: "instant",
-						});
-					}
-				},
-				{ ...area, corner },
-			);
+			// Compact headers can reflow after scrolling. Re-measure the actual
+			// clipping region after each bounded adjustment, without recentering.
+			const positioning: unknown[] = [];
+			for (let pass = 0; pass < 3; pass++) {
+				const area = await capturedCard!.evaluate(readVisibleCardArea);
+				const adjustments = await capturedCard!.evaluate(
+					(element, { top, bottom, corner }) => {
+						const changes = [];
+						for (
+							let parent = element.parentElement;
+							parent;
+							parent = parent.parentElement
+						) {
+							// Hidden overflow is still programmatically scrollable. Zoom
+							// can make its visual clipping tighter than clientHeight.
+							if (
+								!/^(auto|scroll|hidden)$/.test(
+									getComputedStyle(parent).overflowY,
+								)
+							)
+								continue;
+							const rect = element.getBoundingClientRect();
+							const cardScale =
+								rect.width / (element as HTMLElement).offsetWidth;
+							const radius = Math.min(
+								Number.parseFloat(
+									getComputedStyle(element)[
+										corner === "top"
+											? "borderTopLeftRadius"
+											: "borderBottomLeftRadius"
+									],
+								) * cardScale,
+								rect.height / 2,
+							);
+							const segmentTop =
+								corner === "top" ? rect.top : rect.bottom - radius;
+							const segmentBottom =
+								corner === "top" ? rect.top + radius : rect.bottom;
+							if (segmentTop >= top + 4 && segmentBottom <= bottom - 4) break;
+							const delta =
+								corner === "top"
+									? rect.top - (top + 4)
+									: rect.bottom - (bottom - 4);
+							const measuredScale =
+								parent.getBoundingClientRect().width / parent.offsetWidth;
+							const scale =
+								Number.isFinite(measuredScale) && measuredScale > 0
+									? measuredScale
+									: 1;
+							const beforeScroll = parent.scrollTop;
+							parent.scrollTo({
+								top: parent.scrollTop + delta / scale,
+								behavior: "instant",
+							});
+							changes.push({
+								parent: parent.tagName,
+								className: parent.className,
+								beforeScroll,
+								afterScroll: parent.scrollTop,
+								scrollHeight: parent.scrollHeight,
+								clientHeight: parent.clientHeight,
+								scale,
+								beforeTop: rect.top,
+								afterTop: element.getBoundingClientRect().top,
+							});
+						}
+						return changes;
+					},
+					{ ...area, corner },
+				);
+				await card
+					.page()
+					.evaluate(
+						() =>
+							new Promise<void>((resolve) =>
+								requestAnimationFrame(() =>
+									requestAnimationFrame(() => resolve()),
+								),
+							),
+					);
+				const positioned = await capturedCard!.boundingBox();
+				const positionedArea =
+					await capturedCard!.evaluate(readVisibleCardArea);
+				positioning.push({ pass, positioned, positionedArea, adjustments });
+				if (positioned) {
+					const positionedRadius = Math.min(
+						((corner === "top" ? geometry.topRadius : geometry.bottomRadius) *
+							positioned.width) /
+							geometry.layoutWidth,
+						positioned.height / 2,
+					);
+					const start =
+						corner === "top"
+							? positioned.y
+							: positioned.y + positioned.height - positionedRadius;
+					const end =
+						corner === "top"
+							? positioned.y + positionedRadius
+							: positioned.y + positioned.height;
+					if (
+						start >= positionedArea.top + 4 &&
+						end <= positionedArea.bottom - 4
+					)
+						break;
+				}
+			}
 			let previousBounds = "";
 			await expect
 				.poll(async () => {
@@ -175,6 +237,20 @@ export const expectPaintedMediaContainment = async (card: Locator) => {
 				corner === "top"
 					? Math.round(bounds!.y * viewportScale)
 					: Math.round((bounds!.y + bounds!.height) * viewportScale) - 1;
+			const segmentStart =
+				corner === "top"
+					? bounds!.y
+					: bounds!.y + bounds!.height - radius / viewportScale;
+			const segmentEnd =
+				corner === "top"
+					? bounds!.y + radius / viewportScale
+					: bounds!.y + bounds!.height;
+			if (segmentStart < visibleArea.top || segmentEnd > visibleArea.bottom) {
+				await test.info().attach(`card-position-${corner}`, {
+					body: JSON.stringify({ positioning, bounds, visibleArea, geometry }),
+					contentType: "application/json",
+				});
+			}
 			expect(left).toBeGreaterThanOrEqual(0);
 			expect(right).toBeLessThan(info.width);
 			if (corner === "top") {
