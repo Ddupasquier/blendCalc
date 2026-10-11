@@ -183,6 +183,8 @@ const checkPicturedAndFallbackCorners = async (
 ) => {
 	const fridge = getIngredientList(page, "Fridge");
 	const pictured = await findPicturedWarningCard(page, fridge);
+	// Lazy media can remain hidden until its card enters the scroll viewport.
+	await pictured.scrollIntoViewIfNeeded();
 	await expect(pictured.locator("img")).toBeVisible();
 	await expect
 		.poll(() =>
