@@ -16,6 +16,7 @@ fields retain their stable versioned names.
 | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | Understand API access and stability | [blendCalcAPI v1 Status](#blendcalcapi-v1-status), [Versioning](#versioning), and [Privacy And Rights](#privacy-and-rights) |
 | Inspect available reads             | [Read Endpoints](#read-endpoints)                                                                                           |
+| Read sample responses               | [Response Examples](#response-examples)                                                                                    |
 | Review response budgets             | [Response Targets](#response-targets)                                                                                       |
 | Understand publication rules        | [What Can Be Published](#what-can-be-published) and [Corrections And Rapid Removal](#corrections-and-rapid-removal)         |
 | Understand future intake ownership  | [Shared Intake And Moderation](#shared-intake-and-moderation)                                                               |
@@ -258,6 +259,110 @@ missing rather than inheriting a qualitative state from its product category. Re
 package-label evidence may complete the app's internal food record without becoming API
 output; it clears publication completeness only when its source policy independently
 permits redistribution.
+
+### Response Examples
+
+[Read the response examples](response-examples.json) for complete JSON bodies.
+Every product, identifier, date, source, licence and value in that file is fictional.
+The examples use no private records or copied provider payloads and do not assert that
+their barcodes exist in the live catalog. Example source-policy and verification fields
+illustrate the response format; they do not grant publication or redistribution rights.
+
+The file is a collection of documentation fixtures. Each entry identifies its `id`,
+example `request`, OpenAPI `path`, HTTP `status`, optional `headers`, and response `body`.
+Only `body` is the API JSON response; the collection wrapper is not returned by the API.
+All requests still require the existing signed-in app session. These samples do not
+enable public API keys or anonymous catalog access.
+
+| Example ID | What the caller sees | How to interpret it |
+| --- | --- | --- |
+| `published-core-optional-unknown` | HTTP 200 with Example Tomato Soup, its eight core nutrients, serving, revision and field attribution | Publication-ready core data can coexist with unknown optional data. |
+| `incomplete-required-evidence` | HTTP 404 `product_not_found` | The fictional candidate lacks a required nutrient or evidence-backed serving, so it is withheld. |
+| `absent-product` | The same HTTP 404 `product_not_found` | The barcode has no approved match. |
+| `unresolved-material-conflict` | The same HTTP 404 `product_not_found` | Conflicting 240 g and 300 g serving observations are unresolved; neither is exposed as canonical. |
+| `categories-first-page`, `categories-last-page` | Two HTTP 200 category pages | Follow the returned `nextOffset`, preserving the original query and limit. |
+| `empty-search` | HTTP 200 with `data: []` and total 0 | A valid search with no matches is not an API failure. |
+| `authentication_required`, `invalid_barcode`, `rate_limited`, `service_unavailable` | A safe error envelope with HTTP 401, 400, 429 or 503 | Use the status and stable error code, not text matching or raw exception details. |
+
+#### Complete Core Data And Unknown Optional Data
+
+The soup example provides energy, total fat, saturated fat, carbohydrate, fiber, total
+sugars, protein and sodium on an exact 100 g basis. Its package serving is 1 cup = 240 g:
+multiply an exact `amountPer100g` by 2.4 to calculate that serving. For example, 45 kcal
+per 100 g gives 108 kcal per cup. The package quantity is 480 g and describes the package,
+not another serving conversion.
+
+Saturated fat is explicitly reported as zero: `amountPer100g` is `0`, `valueStatus` is
+`reported`, and `quality.sourceValueStatus` is `reported-zero`. Vitamin D is absent from
+the nutrient array and remains unknown. Do not turn its omission into a zero. Optional
+`null` fields, such as `alcoholByVolume`, likewise do not mean a reported zero. An empty
+`images` array means no eligible image is included, not that a placeholder should be
+invented.
+
+For bounded or unquantified label values, use `quality.reportedLimit` and the qualitative
+`valueStatus` described in [Nutrient Basis And Provenance](#nutrient-basis-and-provenance).
+A `<1 g` statement is not an exact amount of 1 g and must not enter exact nutrition math.
+
+The API's `compatibilityEvaluation` is `not_checked` with `profileApplied: false`.
+An authenticated API read does not apply that account's food preferences. Empty warnings
+or safety alerts do not certify that a product is safe for a particular person.
+
+#### Missing, Incomplete And Conflicted Products
+
+All three exact-product cases intentionally return the same response:
+
+```json
+{
+  "apiVersion": "1.0",
+  "error": {
+    "code": "product_not_found",
+    "message": "No approved blendCalc product matches this barcode."
+  }
+}
+```
+
+Callers cannot distinguish an absent product from a withheld candidate or inspect its
+private conflict evidence through this endpoint. Search omits withheld records as well.
+An unresolved source conflict is not returned as a `200` response with a guessed or
+averaged nutrient or serving value. It is also distinct from a user's dietary conflict,
+which the API does not evaluate for that person.
+
+#### Follow Pagination
+
+The first category request is `/api/v1/categories?limit=2&offset=0`. It returns two rows
+and the following metadata:
+
+```json
+{
+  "limit": 2,
+  "offset": 0,
+  "total": 3,
+  "hasMore": true,
+  "nextOffset": 2
+}
+```
+
+Request `/api/v1/categories?limit=2&offset=2` for the last row. That page has
+`hasMore: false` and `nextOffset: null`; stop there. This JSON block is the
+`meta.pagination` object, not a standalone response. The fixture file includes both
+complete envelopes and their distinct category IDs. Search and revision reads use the
+same metadata, with the limits in [Pagination](#pagination). Keep the search query or
+product barcode unchanged between pages. Separate reads are not a frozen transaction:
+catalog updates between requests can change totals and page contents.
+
+#### Handle Errors
+
+The error fixtures use the runtime's default safe messages. With a valid session,
+invalid GTIN input receives `400 invalid_barcode`; an unauthenticated request receives
+`401 authentication_required`.
+Sign in through the existing app flow instead of adding a public bearer key.
+
+For `429 rate_limited`, honor the response's actual `Retry-After` header. The fixture's
+30-second delay is illustrative, not a fixed quota or promise. For a transient
+`503 service_unavailable`, use bounded retries with backoff rather than a tight loop.
+Do not retry unchanged invalid input. Errors carry no product `data` and are returned
+with `Cache-Control: private, no-store`. Successful reads may return a bodyless `304`
+when the client's `If-None-Match` matches their ETag; reuse the cached successful body.
 
 ## Response Targets
 

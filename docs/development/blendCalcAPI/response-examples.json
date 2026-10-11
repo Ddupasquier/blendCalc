@@ -1,0 +1,579 @@
+[
+	{
+		"id": "published-core-optional-unknown",
+		"request": "GET /api/v1/products/90000000000010",
+		"path": "/api/v1/products/{barcode}",
+		"status": 200,
+		"body": {
+			"apiVersion": "1.0",
+			"data": {
+				"id": "00000000-0000-4000-8000-000000000001",
+				"barcode": "90000000000010",
+				"name": "Example Tomato Soup",
+				"brand": "Example Pantry",
+				"category": {
+					"id": "00000000-0000-4000-8000-000000000002",
+					"name": "Soups",
+					"slug": "soups",
+					"updatedAt": "2026-10-01T12:00:00.000Z"
+				},
+				"ingredients": {
+					"text": "Tomatoes, water, sunflower oil, salt",
+					"items": ["Tomatoes", "Water", "Sunflower oil", "Salt"],
+					"structured": [],
+					"analysis": null,
+					"additives": [],
+					"allergens": [],
+					"traces": [],
+					"precautionaryStatements": [],
+					"dietaryTags": [],
+					"labels": []
+				},
+				"packageQuantity": {
+					"label": "480 g",
+					"amount": 480,
+					"unit": "g"
+				},
+				"alcoholByVolume": null,
+				"regulatoryDisclosure": null,
+				"sourceRecord": {
+					"language": "en",
+					"languages": ["en"],
+					"marketCountries": ["US"],
+					"revision": 1,
+					"schemaVersion": null,
+					"createdAt": "2026-10-01T12:00:00.000Z",
+					"publishedAt": "2026-10-01T12:00:00.000Z",
+					"availableAt": "2026-10-01T12:00:00.000Z",
+					"modifiedAt": "2026-10-01T12:00:00.000Z",
+					"updatedAt": "2026-10-01T12:00:00.000Z",
+					"discontinuedAt": null,
+					"completeness": null,
+					"qualityTags": [],
+					"qualityErrorTags": [],
+					"qualityWarningTags": [],
+					"obsolete": false,
+					"obsoleteSince": null,
+					"tagSources": {}
+				},
+				"nutrients": [
+					{
+						"id": 1003,
+						"name": "Protein",
+						"number": "203",
+						"unit": "G",
+						"amountPer100g": 1,
+						"valueStatus": "reported",
+						"source": {
+							"source": "documentation-example",
+							"reference": "example-tomato-soup-label",
+							"confidence": "source-verified"
+						},
+						"quality": {
+							"sourceValueStatus": "reported",
+							"standardError": null,
+							"sourceNutrientKey": "1003",
+							"sourceNutrientCode": "203",
+							"mappingStatus": "canonical",
+							"mappingMethod": "exact-source-key",
+							"derivationMethod": null,
+							"valueQualifier": null,
+							"reportedLimit": null
+						}
+					},
+					{
+						"id": 1004,
+						"name": "Total lipid (fat)",
+						"number": "204",
+						"unit": "G",
+						"amountPer100g": 1,
+						"valueStatus": "reported",
+						"source": {
+							"source": "documentation-example",
+							"reference": "example-tomato-soup-label",
+							"confidence": "source-verified"
+						},
+						"quality": {
+							"sourceValueStatus": "reported",
+							"standardError": null,
+							"sourceNutrientKey": "1004",
+							"sourceNutrientCode": "204",
+							"mappingStatus": "canonical",
+							"mappingMethod": "exact-source-key",
+							"derivationMethod": null,
+							"valueQualifier": null,
+							"reportedLimit": null
+						}
+					},
+					{
+						"id": 1005,
+						"name": "Carbohydrate, by difference",
+						"number": "205",
+						"unit": "G",
+						"amountPer100g": 8,
+						"valueStatus": "reported",
+						"source": {
+							"source": "documentation-example",
+							"reference": "example-tomato-soup-label",
+							"confidence": "source-verified"
+						},
+						"quality": {
+							"sourceValueStatus": "reported",
+							"standardError": null,
+							"sourceNutrientKey": "1005",
+							"sourceNutrientCode": "205",
+							"mappingStatus": "canonical",
+							"mappingMethod": "exact-source-key",
+							"derivationMethod": null,
+							"valueQualifier": null,
+							"reportedLimit": null
+						}
+					},
+					{
+						"id": 1008,
+						"name": "Energy",
+						"number": "208",
+						"unit": "KCAL",
+						"amountPer100g": 45,
+						"valueStatus": "reported",
+						"source": {
+							"source": "documentation-example",
+							"reference": "example-tomato-soup-label",
+							"confidence": "source-verified"
+						},
+						"quality": {
+							"sourceValueStatus": "reported",
+							"standardError": null,
+							"sourceNutrientKey": "1008",
+							"sourceNutrientCode": "208",
+							"mappingStatus": "canonical",
+							"mappingMethod": "exact-source-key",
+							"derivationMethod": null,
+							"valueQualifier": null,
+							"reportedLimit": null
+						}
+					},
+					{
+						"id": 1079,
+						"name": "Fiber, total dietary",
+						"number": "291",
+						"unit": "G",
+						"amountPer100g": 1,
+						"valueStatus": "reported",
+						"source": {
+							"source": "documentation-example",
+							"reference": "example-tomato-soup-label",
+							"confidence": "source-verified"
+						},
+						"quality": {
+							"sourceValueStatus": "reported",
+							"standardError": null,
+							"sourceNutrientKey": "1079",
+							"sourceNutrientCode": "291",
+							"mappingStatus": "canonical",
+							"mappingMethod": "exact-source-key",
+							"derivationMethod": null,
+							"valueQualifier": null,
+							"reportedLimit": null
+						}
+					},
+					{
+						"id": 1093,
+						"name": "Sodium, Na",
+						"number": "307",
+						"unit": "MG",
+						"amountPer100g": 180,
+						"valueStatus": "reported",
+						"source": {
+							"source": "documentation-example",
+							"reference": "example-tomato-soup-label",
+							"confidence": "source-verified"
+						},
+						"quality": {
+							"sourceValueStatus": "reported",
+							"standardError": null,
+							"sourceNutrientKey": "1093",
+							"sourceNutrientCode": "307",
+							"mappingStatus": "canonical",
+							"mappingMethod": "exact-source-key",
+							"derivationMethod": null,
+							"valueQualifier": null,
+							"reportedLimit": null
+						}
+					},
+					{
+						"id": 1258,
+						"name": "Fatty acids, total saturated",
+						"number": "606",
+						"unit": "G",
+						"amountPer100g": 0,
+						"valueStatus": "reported",
+						"source": {
+							"source": "documentation-example",
+							"reference": "example-tomato-soup-label",
+							"confidence": "source-verified"
+						},
+						"quality": {
+							"sourceValueStatus": "reported-zero",
+							"standardError": null,
+							"sourceNutrientKey": "1258",
+							"sourceNutrientCode": "606",
+							"mappingStatus": "canonical",
+							"mappingMethod": "exact-source-key",
+							"derivationMethod": null,
+							"valueQualifier": null,
+							"reportedLimit": null
+						}
+					},
+					{
+						"id": 2000,
+						"name": "Total Sugars",
+						"number": "269",
+						"unit": "G",
+						"amountPer100g": 4,
+						"valueStatus": "reported",
+						"source": {
+							"source": "documentation-example",
+							"reference": "example-tomato-soup-label",
+							"confidence": "source-verified"
+						},
+						"quality": {
+							"sourceValueStatus": "reported",
+							"standardError": null,
+							"sourceNutrientKey": "2000",
+							"sourceNutrientCode": "269",
+							"mappingStatus": "canonical",
+							"mappingMethod": "exact-source-key",
+							"derivationMethod": null,
+							"valueQualifier": null,
+							"reportedLimit": null
+						}
+					}
+				],
+				"servings": [
+					{
+						"label": "1 cup",
+						"grams": 240,
+						"quantity": 1,
+						"unit": "cup",
+						"gramsPerUnit": 240,
+						"isPrimary": true,
+						"measureType": "Package serving",
+						"isHouseholdMeasure": true,
+						"sourceMeasureKey": "example-serving",
+						"origin": "package-label",
+						"gramWeightMethod": "source-reported",
+						"calculationBasis": "Example package states 1 cup = 240 g",
+						"source": {
+							"source": "documentation-example",
+							"reference": "example-tomato-soup-label",
+							"confidence": "source-verified"
+						}
+					}
+				],
+				"images": [],
+				"safetyAlerts": [],
+				"warnings": [],
+				"compatibilityEvaluation": {
+					"version": 1,
+					"status": "not_checked",
+					"policyVersion": null,
+					"profileApplied": false,
+					"conflictCount": 0,
+					"coverage": {
+						"basis": "packaged-label",
+						"identity": "not_required",
+						"ingredients": "available",
+						"allergens": "available",
+						"traces": "available",
+						"policy": "missing"
+					}
+				},
+				"sourceAttributions": [
+					{
+						"source": "documentation-example",
+						"displayName": "Example documentation source",
+						"sourceUrl": "https://data.example/catalog",
+						"licenseName": "Example documentation licence",
+						"licenseUrl": "https://data.example/licence",
+						"attribution": "Fictional documentation data; no provider records used.",
+						"redistributionPolicyReviewedAt": "2026-10-01T12:00:00.000Z",
+						"dataset": null
+					}
+				],
+				"catalog": {
+					"authority": "blendcalc-shared-catalog",
+					"status": "active",
+					"verification": "moderator-reviewed",
+					"redistributionPolicy": "approved",
+					"sourceCount": 1
+				},
+				"fieldSources": {
+					"name": {
+						"source": "documentation-example",
+						"reference": "example-tomato-soup-label",
+						"confidence": "source-verified",
+						"observationId": "00000000-0000-4000-8000-000000000004",
+						"observedAt": "2026-10-01T12:00:00.000Z",
+						"verificationMethod": "package-label",
+						"reviewState": "accepted"
+					},
+					"brand": {
+						"source": "documentation-example",
+						"reference": "example-tomato-soup-label",
+						"confidence": "source-verified",
+						"observationId": "00000000-0000-4000-8000-000000000004",
+						"observedAt": "2026-10-01T12:00:00.000Z",
+						"verificationMethod": "package-label",
+						"reviewState": "accepted"
+					},
+					"category": {
+						"source": "documentation-example",
+						"reference": "example-tomato-soup-label",
+						"confidence": "source-verified",
+						"observationId": "00000000-0000-4000-8000-000000000004",
+						"observedAt": "2026-10-01T12:00:00.000Z",
+						"verificationMethod": "package-label",
+						"reviewState": "accepted"
+					},
+					"ingredients": {
+						"source": "documentation-example",
+						"reference": "example-tomato-soup-label",
+						"confidence": "source-verified",
+						"observationId": "00000000-0000-4000-8000-000000000004",
+						"observedAt": "2026-10-01T12:00:00.000Z",
+						"verificationMethod": "package-label",
+						"reviewState": "accepted"
+					},
+					"structuredIngredients": null,
+					"ingredientAnalysis": null,
+					"additives": null,
+					"allergens": {
+						"source": "documentation-example",
+						"reference": "example-tomato-soup-label",
+						"confidence": "source-verified",
+						"observationId": "00000000-0000-4000-8000-000000000004",
+						"observedAt": "2026-10-01T12:00:00.000Z",
+						"verificationMethod": "package-label",
+						"reviewState": "accepted"
+					},
+					"traces": {
+						"source": "documentation-example",
+						"reference": "example-tomato-soup-label",
+						"confidence": "source-verified",
+						"observationId": "00000000-0000-4000-8000-000000000004",
+						"observedAt": "2026-10-01T12:00:00.000Z",
+						"verificationMethod": "package-label",
+						"reviewState": "accepted"
+					},
+					"precautionaryStatements": null,
+					"dietaryTags": null,
+					"labels": null,
+					"package": {
+						"source": "documentation-example",
+						"reference": "example-tomato-soup-label",
+						"confidence": "source-verified",
+						"observationId": "00000000-0000-4000-8000-000000000004",
+						"observedAt": "2026-10-01T12:00:00.000Z",
+						"verificationMethod": "package-label",
+						"reviewState": "accepted"
+					},
+					"alcoholByVolume": null,
+					"regulatoryDisclosure": null,
+					"sourceMetadata": {
+						"source": "documentation-example",
+						"reference": "example-tomato-soup-label",
+						"confidence": "source-verified",
+						"observationId": "00000000-0000-4000-8000-000000000004",
+						"observedAt": "2026-10-01T12:00:00.000Z",
+						"verificationMethod": "package-label",
+						"reviewState": "accepted"
+					}
+				},
+				"revision": {
+					"id": "00000000-0000-4000-8000-000000000003",
+					"number": 1,
+					"currentSince": "2026-10-01T12:00:00.000Z",
+					"currentSinceBasis": "blendcalc-observed",
+					"labelObservedAt": "2026-10-01T12:00:00.000Z",
+					"updatedAt": "2026-10-01T12:00:00.000Z",
+					"lastVerifiedAt": "2026-10-01T12:00:00.000Z"
+				},
+				"links": {
+					"self": "/api/v1/products/90000000000010"
+				}
+			}
+		}
+	},
+	{
+		"id": "incomplete-required-evidence",
+		"request": "GET /api/v1/products/90000000000027",
+		"path": "/api/v1/products/{barcode}",
+		"status": 404,
+		"body": {
+			"apiVersion": "1.0",
+			"error": {
+				"code": "product_not_found",
+				"message": "No approved blendCalc product matches this barcode."
+			}
+		}
+	},
+	{
+		"id": "absent-product",
+		"request": "GET /api/v1/products/90000000000034",
+		"path": "/api/v1/products/{barcode}",
+		"status": 404,
+		"body": {
+			"apiVersion": "1.0",
+			"error": {
+				"code": "product_not_found",
+				"message": "No approved blendCalc product matches this barcode."
+			}
+		}
+	},
+	{
+		"id": "unresolved-material-conflict",
+		"request": "GET /api/v1/products/90000000000058",
+		"path": "/api/v1/products/{barcode}",
+		"status": 404,
+		"body": {
+			"apiVersion": "1.0",
+			"error": {
+				"code": "product_not_found",
+				"message": "No approved blendCalc product matches this barcode."
+			}
+		}
+	},
+	{
+		"id": "categories-first-page",
+		"request": "GET /api/v1/categories?limit=2&offset=0",
+		"path": "/api/v1/categories",
+		"status": 200,
+		"body": {
+			"apiVersion": "1.0",
+			"data": [
+				{
+					"id": "00000000-0000-4000-8000-000000000002",
+					"name": "Soups",
+					"slug": "soups",
+					"updatedAt": "2026-10-01T12:00:00.000Z"
+				},
+				{
+					"id": "00000000-0000-4000-8000-000000000005",
+					"name": "Vegetables",
+					"slug": "vegetables",
+					"updatedAt": "2026-10-01T12:00:00.000Z"
+				}
+			],
+			"meta": {
+				"pagination": {
+					"limit": 2,
+					"offset": 0,
+					"total": 3,
+					"hasMore": true,
+					"nextOffset": 2
+				}
+			}
+		}
+	},
+	{
+		"id": "categories-last-page",
+		"request": "GET /api/v1/categories?limit=2&offset=2",
+		"path": "/api/v1/categories",
+		"status": 200,
+		"body": {
+			"apiVersion": "1.0",
+			"data": [
+				{
+					"id": "00000000-0000-4000-8000-000000000006",
+					"name": "Whole grains",
+					"slug": "whole-grains",
+					"updatedAt": "2026-10-01T12:00:00.000Z"
+				}
+			],
+			"meta": {
+				"pagination": {
+					"limit": 2,
+					"offset": 2,
+					"total": 3,
+					"hasMore": false,
+					"nextOffset": null
+				}
+			}
+		}
+	},
+	{
+		"id": "empty-search",
+		"request": "GET /api/v1/foods/search?q=example-unmatched",
+		"path": "/api/v1/foods/search",
+		"status": 200,
+		"body": {
+			"apiVersion": "1.0",
+			"data": [],
+			"meta": {
+				"pagination": {
+					"limit": 15,
+					"offset": 0,
+					"total": 0,
+					"hasMore": false,
+					"nextOffset": null
+				}
+			}
+		}
+	},
+	{
+		"id": "authentication_required",
+		"request": "GET /api/v1/products/90000000000010",
+		"path": "/api/v1/products/{barcode}",
+		"status": 401,
+		"body": {
+			"apiVersion": "1.0",
+			"error": {
+				"code": "authentication_required",
+				"message": "Sign in to use the internal API."
+			}
+		}
+	},
+	{
+		"id": "invalid_barcode",
+		"request": "GET /api/v1/products/not-a-gtin",
+		"path": "/api/v1/products/{barcode}",
+		"status": 400,
+		"body": {
+			"apiVersion": "1.0",
+			"error": {
+				"code": "invalid_barcode",
+				"message": "barcode must be a valid GTIN."
+			}
+		}
+	},
+	{
+		"id": "rate_limited",
+		"request": "GET /api/v1/products/90000000000010",
+		"path": "/api/v1/products/{barcode}",
+		"status": 429,
+		"headers": {
+			"Retry-After": "30"
+		},
+		"body": {
+			"apiVersion": "1.0",
+			"error": {
+				"code": "rate_limited",
+				"message": "Too many API requests were made. Wait a moment and try again."
+			}
+		}
+	},
+	{
+		"id": "service_unavailable",
+		"request": "GET /api/v1/products/90000000000010",
+		"path": "/api/v1/products/{barcode}",
+		"status": 503,
+		"body": {
+			"apiVersion": "1.0",
+			"error": {
+				"code": "service_unavailable",
+				"message": "blendCalcAPI is temporarily unavailable."
+			}
+		}
+	}
+]
