@@ -1,7 +1,7 @@
 {
 	"advisory": "GHSA-vfj7-8cjw-p6xm",
-	"approvedAt": "2026-10-04T22:29:58Z",
-	"expiresAt": "2026-10-11T22:29:58Z",
+	"approvedAt": "2026-10-11T22:31:45Z",
+	"expiresAt": "2026-10-18T22:31:45Z",
 	"reason": "Temporary acceptance of development-tool stack-exhaustion risk while preserving all existing style checks. This does not fix the vulnerability. No renewal is automatic.",
 	"findingsSha256": "7e47cc06d2e9b1488caded30d60cdc7c67d061f57251992271f324dcd8177544",
 	"packages": {
