@@ -2,7 +2,18 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { BLENDCALC_API_V1_ERROR_DEFINITIONS } from "$lib/blendCalcAPI/v1/blendCalcAPIErrors";
 import { BLENDCALC_API_V1_ACCESS_POLICY } from "$lib/blendCalcAPI/v1/blendCalcAPIAccessPolicy";
-import { BLENDCALC_API_V1_PAGINATION_LIMITS } from "$lib/blendCalcAPI/v1/blendCalcAPIRequest";
+import {
+	BLENDCALC_API_V1_PAGINATION_LIMITS,
+	readBlendCalcAPIV1BarcodePathParameter,
+	readBlendCalcAPIV1CategoryRequest,
+	readBlendCalcAPIV1SearchRequest,
+} from "$lib/blendCalcAPI/v1/blendCalcAPIRequest";
+import type {
+	BlendCalcAPIV1Category,
+	BlendCalcAPIV1Product,
+	BlendCalcAPIV1Success,
+} from "$lib/blendCalcAPI/v1/blendCalcAPITypes";
+import { expectBlendCalcAPIV1ResponseToMatchOpenAPI } from "../lib/blendCalcAPI/v1/openAPIResponseValidation";
 
 const specification = JSON.parse(
 	readFileSync("static/api/v1/openapi.json", "utf8"),
@@ -263,6 +274,124 @@ describe("blendCalcAPI v1 OpenAPI contract", () => {
 					"503",
 				]),
 			);
+		}
+	});
+});
+
+const documentationExamples = JSON.parse(
+	readFileSync("docs/development/blendCalcAPI/response-examples.json", "utf8"),
+) as Array<{
+	id: string;
+	request: string;
+	path: string;
+	status: number;
+	headers?: Record<string, string>;
+	body: unknown;
+}>;
+
+const readDocumentationExample = (id: string) => {
+	const example = documentationExamples.find((item) => item.id === id);
+	if (!example) throw new Error(`Missing API documentation example: ${id}`);
+	return example;
+};
+
+describe("blendCalcAPI documentation response examples", () => {
+	it("accepts the example requests except the deliberately invalid GTIN", () => {
+		for (const example of documentationExamples) {
+			const [method, target] = example.request.split(" ");
+			expect(method).toBe("GET");
+			const url = new URL(target, "http://localhost");
+			if (example.path === "/api/v1/products/{barcode}") {
+				const barcode = url.pathname.slice("/api/v1/products/".length);
+				if (example.id === "invalid_barcode") {
+					expect(() => readBlendCalcAPIV1BarcodePathParameter(barcode)).toThrow(
+						BLENDCALC_API_V1_ERROR_DEFINITIONS.invalid_barcode.message,
+					);
+				} else {
+					expect(readBlendCalcAPIV1BarcodePathParameter(barcode)).toBe(barcode);
+				}
+			} else if (example.path === "/api/v1/categories") {
+				expect(() => readBlendCalcAPIV1CategoryRequest(url)).not.toThrow();
+			} else {
+				expect(example.path).toBe("/api/v1/foods/search");
+				expect(() => readBlendCalcAPIV1SearchRequest(url)).not.toThrow();
+			}
+		}
+	});
+
+	it.each(documentationExamples)(
+		"validates $id against its HTTP contract",
+		async (example) => {
+			await expectBlendCalcAPIV1ResponseToMatchOpenAPI({
+				path: example.path,
+				response: new Response(JSON.stringify(example.body), {
+					status: example.status,
+					headers: example.headers,
+				}),
+			});
+		},
+	);
+
+	it("keeps reported zero, unknown optional nutrition and personal compatibility distinct", () => {
+		const { data } = readDocumentationExample("published-core-optional-unknown")
+			.body as BlendCalcAPIV1Success<BlendCalcAPIV1Product>;
+		expect(
+			data.nutrients.find((nutrient) => nutrient.number === "606"),
+		).toMatchObject({
+			amountPer100g: 0,
+			valueStatus: "reported",
+			quality: { sourceValueStatus: "reported-zero" },
+		});
+		expect(data.nutrients.some((nutrient) => nutrient.id === 1114)).toBe(false);
+		expect(data.compatibilityEvaluation).toMatchObject({
+			status: "not_checked",
+			profileApplied: false,
+		});
+	});
+
+	it("exposes the same safe response for absent and withheld products", () => {
+		const absent = readDocumentationExample("absent-product");
+		for (const id of [
+			"incomplete-required-evidence",
+			"unresolved-material-conflict",
+		]) {
+			const withheld = readDocumentationExample(id);
+			expect(withheld.status).toBe(absent.status);
+			expect(withheld.body).toEqual(absent.body);
+		}
+	});
+
+	it("uses the next offset to finish a stable, nonoverlapping example result set", () => {
+		const first = readDocumentationExample("categories-first-page")
+			.body as BlendCalcAPIV1Success<BlendCalcAPIV1Category[]>;
+		const last = readDocumentationExample("categories-last-page")
+			.body as BlendCalcAPIV1Success<BlendCalcAPIV1Category[]>;
+		expect(first.meta!.pagination.nextOffset).toBe(
+			last.meta!.pagination.offset,
+		);
+		expect(last.meta!.pagination).toMatchObject({
+			hasMore: false,
+			nextOffset: null,
+		});
+		const ids = [...first.data, ...last.data].map((category) => category.id);
+		expect(new Set(ids).size).toBe(first.meta!.pagination.total);
+		expect(ids).toHaveLength(last.meta!.pagination.total);
+	});
+
+	it("keeps every illustrated error aligned with the runtime definition", () => {
+		for (const example of documentationExamples.filter(
+			(item) => item.status >= 400,
+		)) {
+			const { error } = example.body as {
+				error: {
+					code: keyof typeof BLENDCALC_API_V1_ERROR_DEFINITIONS;
+					message: string;
+				};
+			};
+			expect(BLENDCALC_API_V1_ERROR_DEFINITIONS[error.code]).toEqual({
+				status: example.status,
+				message: error.message,
+			});
 		}
 	});
 });
