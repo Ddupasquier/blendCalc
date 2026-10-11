@@ -249,9 +249,10 @@ Use `node scripts/operations/quality/audit_dependencies.mjs` for the blocking au
 It shows the full lockfile findings and separately requires a clean production tree.
 The only approved temporary risk acceptance is recorded in
 `config/dependencyAuditException.json`: advisory `GHSA-vfj7-8cjw-p6xm`, exactly eight
-reviewed development-only paths and locked records, from October 4 through October 11,
-2026 at 22:29:58 UTC. This accepts developer/build denial-of-service risk; it does not
-repair the vulnerability. All existing style checks remain mandatory.
+reviewed development-only paths and locked records, from October 11 through October 18,
+2026 at 22:31:45 UTC, explicitly renewed by the owner. This accepts developer/build
+denial-of-service risk; it does not repair the vulnerability. All existing style checks
+remain mandatory.
 
 The exception fails closed on expiration, production findings, any other advisory or
 affected path, dependency or advisory-condition drift, and execution/network/parse
