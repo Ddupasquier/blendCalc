@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import sharp from "sharp";
-import { createWorker, PSM } from "tesseract.js";
+import { PSM } from "tesseract.js";
 import type { Database, Json } from "../../types/database.types.js";
 import { parseNutritionLabelText } from "../../utils/food/ocr/nutritionLabelOcr.js";
 import {
@@ -11,6 +11,7 @@ import {
 } from "../../utils/food/ocr/nutritionLabelOcrJobs.js";
 import { readNutritionLabelOcrMappings } from "../../utils/food/ocr/nutritionLabelOcrMappings.js";
 import { createServerTesseractWorkerOptions } from "./serverTesseractCache.server.js";
+import { createOwnedTesseractWorker } from "./createOwnedTesseractWorker.server.js";
 
 export const NUTRITION_LABEL_OCR_TEMPORARY_BUCKET =
 	"nutrition-label-ocr-temporary";
@@ -20,7 +21,9 @@ const NUTRITION_LABEL_OCR_WORKER_IDLE_MILLISECONDS = 20_000;
 const NUTRITION_LABEL_OCR_MAX_RESULT_BYTES = 128 * 1024;
 
 type NutritionLabelOcrAdminClient = SupabaseClient<Database>;
-type NutritionLabelOcrWorker = Awaited<ReturnType<typeof createWorker>>;
+type NutritionLabelOcrWorker = Awaited<
+	ReturnType<typeof createOwnedTesseractWorker>
+>;
 
 let workerPromise: Promise<NutritionLabelOcrWorker> | null = null;
 let workerSequence: Promise<void> = Promise.resolve();
@@ -61,10 +64,9 @@ const terminateSharedWorker = async () => {
 
 const getSharedWorker = () => {
 	if (!workerPromise) {
-		workerPromise = createWorker("eng", 1, {
-			...createServerTesseractWorkerOptions(),
-			logger: () => undefined,
-		}).then(async (worker) => {
+		workerPromise = createOwnedTesseractWorker(
+			createServerTesseractWorkerOptions(),
+		).then(async (worker) => {
 			await worker.setParameters({
 				debug_file: "/dev/null",
 				preserve_interword_spaces: "1",
