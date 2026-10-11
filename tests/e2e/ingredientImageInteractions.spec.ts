@@ -6,6 +6,7 @@ import {
 	waitForAppReady,
 } from "./support/browserTest";
 import { serveDeterministicOpenFoodFactsImages } from "./support/deterministicProviderImages";
+import { expectPaintedMediaContainment } from "./support/ingredientCardContainment";
 
 test.describe.configure({ mode: "serial" });
 
@@ -702,6 +703,7 @@ test("saved placement crops the card image but not the nutrition detail image", 
 		await expect(
 			savedCard.locator(".ingredient-card-media-lane img"),
 		).toBeVisible();
+		await expectPaintedMediaContainment(savedCard);
 		expect(
 			await savedCard
 				.locator(".ingredient-card-media-lane")
@@ -775,6 +777,7 @@ test("placement controls update the exact card preview within safe movement boun
 			),
 		)
 		.toBeGreaterThan(0);
+	await expectPaintedMediaContainment(preview);
 
 	const restoreButton = placementEditor.getByRole("button", {
 		name: "Restore default",
@@ -870,4 +873,5 @@ test("placement controls update the exact card preview within safe movement boun
 			previewImage.evaluate((image) => image.getBoundingClientRect().top),
 		)
 		.not.toBeCloseTo(zoomedTop, 0);
+	await expectPaintedMediaContainment(preview);
 });

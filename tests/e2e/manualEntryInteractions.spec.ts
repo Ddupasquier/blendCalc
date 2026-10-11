@@ -282,8 +282,13 @@ const findSavedIngredientCard = async (
 			.poll(
 				async () =>
 					(await card.isVisible().catch(() => false)) ||
-					!(await loadMoreButton.isVisible().catch(() => false)) ||
-					(await loadMoreButton.getAttribute("aria-busy")) !== "true",
+					(await loadMoreButton.evaluateAll(
+						(buttons) =>
+							buttons.length === 0 ||
+							buttons.some(
+								(button) => button.getAttribute("aria-busy") !== "true",
+							),
+					)),
 			)
 			.toBe(true);
 	}

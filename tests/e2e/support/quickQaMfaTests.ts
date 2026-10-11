@@ -4,9 +4,35 @@ import {
 	waitForAppReady,
 	signInLocalQaAccount,
 } from "./browserTest";
+import type { Page } from "@playwright/test";
+import { unflatten } from "devalue";
 
 const toolsPath = "/profile/privileged-tools";
+const landingPath = "/ingredients/fridge";
 const queuePath = "/api/moderation/food-warning-queues?queue=reports";
+
+// Read the same verified root-layout identity/assignment that the app shell uses.
+// This is real authenticated server data, not a JWT decode or a rendering mock.
+const readVerifiedLayoutIdentity = async (page: Page) => {
+	const response = await page.request.get(`${landingPath}/__data.json`);
+	expect(response.status()).toBe(200);
+	const payload = (await response.json()) as {
+		type: string;
+		nodes: Array<{ type: string; data?: unknown[] } | null>;
+	};
+	expect(payload.type).toBe("data");
+	for (const node of payload.nodes) {
+		if (node?.type !== "data" || !node.data) continue;
+		const decoded = unflatten(node.data) as {
+			authUser?: { id: string; displayName: string; role: string | null };
+		};
+		if (decoded.authUser) {
+			const { id, displayName, role } = decoded.authUser;
+			return { id, displayName, role };
+		}
+	}
+	throw new Error("Verified root-layout identity is missing.");
+};
 
 // Register each maintained persona alongside the tests that reset its MFA factors.
 // The owning spec's default mode prevents a second worker invalidating its session.
@@ -20,7 +46,9 @@ export const registerQuickQaMfaTests = (
 			async ({ context, page }) => {
 				// Keep the fixture's TEST-only quota partition while removing its session.
 				await context.clearCookies({ name: /auth-token/ });
-				await page.goto(`/auth?next=${encodeURIComponent(toolsPath)}`);
+				// Auth can legitimately wait 31s for replay-safe TOTP. Keep its
+				// role/session proof independent of the tools diagnostics workload.
+				await page.goto(`/auth?next=${encodeURIComponent(landingPath)}`);
 				await waitForAppReady(page);
 				await page.getByRole("combobox", { name: "QA account" }).click();
 				await page
@@ -29,17 +57,27 @@ export const registerQuickQaMfaTests = (
 				await page
 					.getByRole("button", { name: `Continue as QA ${persona}` })
 					.click();
-				await expect(page).toHaveURL((url) => url.pathname === toolsPath, {
+				await expect(page).toHaveURL((url) => url.pathname === landingPath, {
 					timeout: 45_000,
 				});
-				await expect(
-					page.getByRole("heading", { name: `${persona} tools`, exact: true }),
-				).toBeVisible();
+				const identity = await readVerifiedLayoutIdentity(page);
+				expect(identity.displayName).toBe(`QA ${persona}`);
+				expect(identity.role).toBe(persona.toLowerCase());
+				const identityLink = page.getByRole("link", {
+					name: `Open profile for QA ${persona}`,
+					exact: true,
+				});
+				await expect(identityLink).toBeVisible();
 				await expect(page.getByLabel("Six-digit code")).toHaveCount(0);
 				const response = await page.request.get(queuePath);
 				expect(response.status()).toBe(200);
 				await page.reload();
-				await expect(page).toHaveURL((url) => url.pathname === toolsPath);
+				await expect(page).toHaveURL((url) => url.pathname === landingPath);
+				await expect(identityLink).toBeVisible();
+				expect(await readVerifiedLayoutIdentity(page)).toEqual(identity);
+				await expect(page.getByLabel("Six-digit code")).toHaveCount(0);
+				const reloadedAccess = await page.request.get(queuePath);
+				expect(reloadedAccess.status()).toBe(200);
 			},
 		);
 	}
