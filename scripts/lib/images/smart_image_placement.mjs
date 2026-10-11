@@ -8,7 +8,8 @@
 import { mkdirSync } from "node:fs";
 import { resolve } from "node:path";
 import sharp from "sharp";
-import { createWorker, PSM } from "tesseract.js";
+import { PSM } from "tesseract.js";
+import { createOwnedTesseractWorker } from "../../../src/lib/server/ocr/createOwnedTesseractWorker.server.ts";
 
 export const SMART_IMAGE_PLACEMENT_VERSION = "tesseract-product-label-v3";
 export const AUTOMATIC_IMAGE_PLACEMENT_MINIMUM_CONFIDENCE = 68;
@@ -18,9 +19,23 @@ const MAX_SUGGESTED_ZOOM = 4.5;
 const REPRESENTATIVE_CARD_MEDIA_LANE_WIDTH = 96;
 const REPRESENTATIVE_CARD_HEIGHT = 68;
 const TESSERACT_CACHE_PATH = resolve("scripts/output/tesseract");
-const STOP_WORDS = new Set(["a", "an", "and", "for", "from", "in", "of", "on", "the", "to", "with"]);
-const NUTRITION_TEXT = /\b(?:nutrition facts?|amount per serving|daily value|calories?|sodium|carbohydrate|protein|servings?)\b/i;
-const DISCLAIMER_TEXT = /\b(?:ingredients?|distributed by|manufactured by|best before|keep refrigerated|net wt|product of)\b/i;
+const STOP_WORDS = new Set([
+	"a",
+	"an",
+	"and",
+	"for",
+	"from",
+	"in",
+	"of",
+	"on",
+	"the",
+	"to",
+	"with",
+]);
+const NUTRITION_TEXT =
+	/\b(?:nutrition facts?|amount per serving|daily value|calories?|sodium|carbohydrate|protein|servings?)\b/i;
+const DISCLAIMER_TEXT =
+	/\b(?:ingredients?|distributed by|manufactured by|best before|keep refrigerated|net wt|product of)\b/i;
 const QUARTER_TURN_RECOGNITION_ATTEMPTS = [0, 90, 270, 180];
 
 const clamp = (value, minimum, maximum) =>
@@ -40,12 +55,13 @@ const normalizeText = (value) =>
 		.replace(/\s+/g, " ")
 		.trim();
 
-const tokenize = (value) =>
-	[...new Set(
+const tokenize = (value) => [
+	...new Set(
 		normalizeText(value)
 			.split(" ")
 			.filter((token) => token.length > 1 && !STOP_WORDS.has(token)),
-	)];
+	),
+];
 
 const getBoundsWidth = (bounds) => Math.max(1, bounds.x1 - bounds.x0);
 const getBoundsHeight = (bounds) => Math.max(1, bounds.y1 - bounds.y0);
@@ -58,7 +74,10 @@ const mergeBounds = (regions) => ({
 });
 
 const combineRegions = (regions) => ({
-	text: regions.map((region) => region.text.trim()).filter(Boolean).join(" "),
+	text: regions
+		.map((region) => region.text.trim())
+		.filter(Boolean)
+		.join(" "),
 	confidence:
 		regions.reduce((total, region) => total + region.confidence, 0) /
 		regions.length,
@@ -68,8 +87,10 @@ const combineRegions = (regions) => ({
 const buildCandidates = (regions) => {
 	const ordered = regions
 		.filter((region) => region.text.trim())
-		.sort((left, right) =>
-			left.bounds.y0 - right.bounds.y0 || left.bounds.x0 - right.bounds.x0);
+		.sort(
+			(left, right) =>
+				left.bounds.y0 - right.bounds.y0 || left.bounds.x0 - right.bounds.x0,
+		);
 	const candidates = [...ordered];
 
 	for (let index = 0; index < ordered.length; index += 1) {
@@ -86,10 +107,9 @@ const buildCandidates = (regions) => {
 			const verticalGap =
 				last.bounds.y0 -
 				first.bounds.y1 -
-				group.slice(1, -1).reduce(
-					(total, region) => total + getBoundsHeight(region.bounds),
-					0,
-				);
+				group
+					.slice(1, -1)
+					.reduce((total, region) => total + getBoundsHeight(region.bounds), 0);
 			if (verticalGap <= averageHeight * count * 1.5) {
 				candidates.push(combineRegions(group));
 			}
@@ -100,7 +120,10 @@ const buildCandidates = (regions) => {
 };
 
 const getTokenEditDistance = (left, right) => {
-	const previous = Array.from({ length: right.length + 1 }, (_, index) => index);
+	const previous = Array.from(
+		{ length: right.length + 1 },
+		(_, index) => index,
+	);
 	for (let leftIndex = 1; leftIndex <= left.length; leftIndex += 1) {
 		const current = [leftIndex];
 		for (let rightIndex = 1; rightIndex <= right.length; rightIndex += 1) {
@@ -119,17 +142,20 @@ const getTokenEditDistance = (left, right) => {
 const tokensLikelyMatch = (candidate, expected) => {
 	if (candidate === expected) return true;
 	if (candidate.length < 4 || expected.length < 4) return false;
-	const maximumDistance = Math.max(candidate.length, expected.length) <= 6 ? 1 : 2;
+	const maximumDistance =
+		Math.max(candidate.length, expected.length) <= 6 ? 1 : 2;
 	return getTokenEditDistance(candidate, expected) <= maximumDistance;
 };
 
 const getTokenOverlap = (candidate, expected) => {
 	if (expected.length === 0) return 0;
-	return expected.filter((expectedToken) =>
-		candidate.some((candidateToken) =>
-			tokensLikelyMatch(candidateToken, expectedToken)
-		)
-	).length / expected.length;
+	return (
+		expected.filter((expectedToken) =>
+			candidate.some((candidateToken) =>
+				tokensLikelyMatch(candidateToken, expectedToken),
+			),
+		).length / expected.length
+	);
 };
 
 const scoreCandidate = ({ region, document, productName, brandName }) => {
@@ -142,8 +168,12 @@ const scoreCandidate = ({ region, document, productName, brandName }) => {
 	const productPhrase = normalizeText(productName);
 	const brandPhrase = normalizeText(brandName);
 	const phraseScore =
-		(productPhrase.length > 2 && normalizedCandidate.includes(productPhrase) ? 24 : 0) +
-		(brandPhrase.length > 2 && normalizedCandidate.includes(brandPhrase) ? 14 : 0);
+		(productPhrase.length > 2 && normalizedCandidate.includes(productPhrase)
+			? 24
+			: 0) +
+		(brandPhrase.length > 2 && normalizedCandidate.includes(brandPhrase)
+			? 14
+			: 0);
 	const textMatchScore = productOverlap * 60 + brandOverlap * 25 + phraseScore;
 	const boundsWidth = getBoundsWidth(region.bounds);
 	const boundsHeight = getBoundsHeight(region.bounds);
@@ -154,12 +184,15 @@ const scoreCandidate = ({ region, document, productName, brandName }) => {
 		(centerY - document.height / 2) / (document.height / 2),
 	);
 	const centralityScore = Math.max(0, 1 - distanceFromCenter) * 12;
-	const textHeightScore = Math.min(1, boundsHeight / (document.height * 0.08)) * 12;
-	const areaScore = Math.min(
-		1,
-		Math.sqrt((boundsWidth * boundsHeight) / (document.width * document.height)) /
-			0.25,
-	) * 8;
+	const textHeightScore =
+		Math.min(1, boundsHeight / (document.height * 0.08)) * 12;
+	const areaScore =
+		Math.min(
+			1,
+			Math.sqrt(
+				(boundsWidth * boundsHeight) / (document.width * document.height),
+			) / 0.25,
+		) * 8;
 	const confidenceScore = clamp(region.confidence, 0, 100) * 0.12;
 	const score =
 		textMatchScore +
@@ -169,7 +202,9 @@ const scoreCandidate = ({ region, document, productName, brandName }) => {
 		confidenceScore -
 		(NUTRITION_TEXT.test(region.text) ? 80 : 0) -
 		(DISCLAIMER_TEXT.test(region.text) ? 24 : 0) -
-		((region.text.match(/\d/g)?.length ?? 0) > region.text.length * 0.25 ? 18 : 0) -
+		((region.text.match(/\d/g)?.length ?? 0) > region.text.length * 0.25
+			? 18
+			: 0) -
 		(boundsHeight < document.height * 0.012 ? 22 : 0);
 
 	return { region, score, productOverlap, brandOverlap };
@@ -225,7 +260,13 @@ const getCropXFromOffset = (geometry, offsetX) => {
 	return round(50 + (shift / geometry.maxOffsetX) * 50);
 };
 
-const createPlacement = ({ document, region, confidence, originalWidth, originalHeight }) => {
+const createPlacement = ({
+	document,
+	region,
+	confidence,
+	originalWidth,
+	originalHeight,
+}) => {
 	const rotationDegrees = document.rotationDegrees;
 	const baseGeometry = getImagePlacementGeometry({
 		naturalWidth: originalWidth,
@@ -236,19 +277,26 @@ const createPlacement = ({ document, region, confidence, originalWidth, original
 		zoom: 1,
 	});
 	const scale = baseGeometry.baseWidth / document.width;
-	const paddedWidth = Math.min(document.width, getBoundsWidth(region.bounds) * 1.45);
-	const paddedHeight = Math.min(document.height, getBoundsHeight(region.bounds) * 2.2);
+	const paddedWidth = Math.min(
+		document.width,
+		getBoundsWidth(region.bounds) * 1.45,
+	);
+	const paddedHeight = Math.min(
+		document.height,
+		getBoundsHeight(region.bounds) * 2.2,
+	);
 	const widthZoom =
 		(REPRESENTATIVE_CARD_MEDIA_LANE_WIDTH * 0.78) /
 		Math.max(1, paddedWidth * scale);
 	const heightZoom =
-		(REPRESENTATIVE_CARD_HEIGHT * 0.72) /
-		Math.max(1, paddedHeight * scale);
-	const cropZoom = round(clamp(
-		Math.min(widthZoom, heightZoom),
-		Math.min(Math.max(1, baseGeometry.coverZoom * 1.15), MAX_SUGGESTED_ZOOM),
-		MAX_SUGGESTED_ZOOM,
-	));
+		(REPRESENTATIVE_CARD_HEIGHT * 0.72) / Math.max(1, paddedHeight * scale);
+	const cropZoom = round(
+		clamp(
+			Math.min(widthZoom, heightZoom),
+			Math.min(Math.max(1, baseGeometry.coverZoom * 1.15), MAX_SUGGESTED_ZOOM),
+			MAX_SUGGESTED_ZOOM,
+		),
+	);
 	const geometry = getImagePlacementGeometry({
 		naturalWidth: originalWidth,
 		naturalHeight: originalHeight,
@@ -259,8 +307,10 @@ const createPlacement = ({ document, region, confidence, originalWidth, original
 	});
 	const targetCenterX = (region.bounds.x0 + region.bounds.x1) / 2;
 	const targetCenterY = (region.bounds.y0 + region.bounds.y1) / 2;
-	const desiredOffsetX = -(targetCenterX - document.width / 2) * scale * cropZoom;
-	const desiredOffsetY = -(targetCenterY - document.height / 2) * scale * cropZoom;
+	const desiredOffsetX =
+		-(targetCenterX - document.width / 2) * scale * cropZoom;
+	const desiredOffsetY =
+		-(targetCenterY - document.height / 2) * scale * cropZoom;
 
 	return {
 		crop_x: getCropXFromOffset(geometry, desiredOffsetX),
@@ -320,7 +370,7 @@ const recognizeQuarterTurns = async ({
 
 export const createSmartImagePlacementWorker = async () => {
 	mkdirSync(TESSERACT_CACHE_PATH, { recursive: true });
-	const worker = await createWorker("eng", undefined, {
+	const worker = await createOwnedTesseractWorker({
 		cachePath: TESSERACT_CACHE_PATH,
 	});
 	await worker.setParameters({
@@ -336,13 +386,17 @@ export const suggestStoredImagePlacement = async ({
 	productName,
 	brandName = "",
 }) => {
-	const prepared = sharp(imageBuffer, { autoOrient: true }).resize({
-		width: MAX_OCR_IMAGE_DIMENSION,
-		height: MAX_OCR_IMAGE_DIMENSION,
-		fit: "inside",
-		withoutEnlargement: false,
-	}).sharpen();
-	const { data, info } = await prepared.png().toBuffer({ resolveWithObject: true });
+	const prepared = sharp(imageBuffer, { autoOrient: true })
+		.resize({
+			width: MAX_OCR_IMAGE_DIMENSION,
+			height: MAX_OCR_IMAGE_DIMENSION,
+			fit: "inside",
+			withoutEnlargement: false,
+		})
+		.sharpen();
+	const { data, info } = await prepared
+		.png()
+		.toBuffer({ resolveWithObject: true });
 	let best = null;
 
 	for (const pageSegmentationMode of [PSM.SPARSE_TEXT, PSM.SINGLE_BLOCK]) {
@@ -360,7 +414,9 @@ export const suggestStoredImagePlacement = async ({
 		});
 		for (const document of documents) {
 			const ranked = buildCandidates(document.regions)
-				.map((region) => scoreCandidate({ region, document, productName, brandName }))
+				.map((region) =>
+					scoreCandidate({ region, document, productName, brandName }),
+				)
 				.sort((left, right) => right.score - left.score);
 			const winner = ranked[0];
 			if (!winner) continue;
@@ -369,7 +425,8 @@ export const suggestStoredImagePlacement = async ({
 			if (
 				(hasKnownTextMatch && winner.score < 25) ||
 				(!hasKnownTextMatch && winner.score < 42)
-			) continue;
+			)
+				continue;
 			const confidence = clamp(
 				(hasKnownTextMatch ? 48 : 30) +
 					winner.productOverlap * 30 +
@@ -386,7 +443,8 @@ export const suggestStoredImagePlacement = async ({
 			best &&
 			best.confidence >= AUTOMATIC_IMAGE_PLACEMENT_MINIMUM_CONFIDENCE &&
 			best.winner.productOverlap > 0
-		) break;
+		)
+			break;
 	}
 
 	if (
