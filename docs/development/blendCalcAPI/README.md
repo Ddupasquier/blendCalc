@@ -16,7 +16,7 @@ fields retain their stable versioned names.
 | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | Understand API access and stability | [blendCalcAPI v1 Status](#blendcalcapi-v1-status), [Versioning](#versioning), and [Privacy And Rights](#privacy-and-rights) |
 | Inspect available reads             | [Read Endpoints](#read-endpoints)                                                                                           |
-| Read sample responses               | [Response Examples](#response-examples)                                                                                    |
+| Read sample responses               | [Response Examples](#response-examples)                                                                                     |
 | Review response budgets             | [Response Targets](#response-targets)                                                                                       |
 | Understand publication rules        | [What Can Be Published](#what-can-be-published) and [Corrections And Rapid Removal](#corrections-and-rapid-removal)         |
 | Understand future intake ownership  | [Shared Intake And Moderation](#shared-intake-and-moderation)                                                               |
@@ -274,15 +274,15 @@ Only `body` is the API JSON response; the collection wrapper is not returned by 
 All requests still require the existing signed-in app session. These samples do not
 enable public API keys or anonymous catalog access.
 
-| Example ID | What the caller sees | How to interpret it |
-| --- | --- | --- |
-| `published-core-optional-unknown` | HTTP 200 with Example Tomato Soup, its eight core nutrients, serving, revision and field attribution | Publication-ready core data can coexist with unknown optional data. |
-| `incomplete-required-evidence` | HTTP 404 `product_not_found` | The fictional candidate lacks a required nutrient or evidence-backed serving, so it is withheld. |
-| `absent-product` | The same HTTP 404 `product_not_found` | The barcode has no approved match. |
-| `unresolved-material-conflict` | The same HTTP 404 `product_not_found` | Conflicting 240 g and 300 g serving observations are unresolved; neither is exposed as canonical. |
-| `categories-first-page`, `categories-last-page` | Two HTTP 200 category pages | Follow the returned `nextOffset`, preserving the original query and limit. |
-| `empty-search` | HTTP 200 with `data: []` and total 0 | A valid search with no matches is not an API failure. |
-| `authentication_required`, `invalid_barcode`, `rate_limited`, `service_unavailable` | A safe error envelope with HTTP 401, 400, 429 or 503 | Use the status and stable error code, not text matching or raw exception details. |
+| Example ID                                                                          | What the caller sees                                                                                 | How to interpret it                                                                               |
+| ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `published-core-optional-unknown`                                                   | HTTP 200 with Example Tomato Soup, its eight core nutrients, serving, revision and field attribution | Publication-ready core data can coexist with unknown optional data.                               |
+| `incomplete-required-evidence`                                                      | HTTP 404 `product_not_found`                                                                         | The fictional candidate lacks a required nutrient or evidence-backed serving, so it is withheld.  |
+| `absent-product`                                                                    | The same HTTP 404 `product_not_found`                                                                | The barcode has no approved match.                                                                |
+| `unresolved-material-conflict`                                                      | The same HTTP 404 `product_not_found`                                                                | Conflicting 240 g and 300 g serving observations are unresolved; neither is exposed as canonical. |
+| `categories-first-page`, `categories-last-page`                                     | Two HTTP 200 category pages                                                                          | Follow the returned `nextOffset`, preserving the original query and limit.                        |
+| `empty-search`                                                                      | HTTP 200 with `data: []` and total 0                                                                 | A valid search with no matches is not an API failure.                                             |
+| `authentication_required`, `invalid_barcode`, `rate_limited`, `service_unavailable` | A safe error envelope with HTTP 401, 400, 429 or 503                                                 | Use the status and stable error code, not text matching or raw exception details.                 |
 
 #### Complete Core Data And Unknown Optional Data
 
