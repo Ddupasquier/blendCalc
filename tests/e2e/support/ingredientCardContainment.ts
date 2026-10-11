@@ -33,161 +33,201 @@ const readVisibleCardArea = (element: Element) => {
 export const expectPaintedMediaContainment = async (card: Locator) => {
 	const lane = card.locator(".ingredient-card-media-lane");
 	await expect(lane).toBeVisible();
-	// Center within all scrolling ancestors; the native "if needed" helper can
-	// leave the first card behind sticky chrome when the document is zoomed.
-	await card.evaluate((element) =>
-		element.scrollIntoView({
-			block: "center",
-			inline: "nearest",
-			behavior: "auto",
-		}),
-	);
-	const initialArea = await card.evaluate(readVisibleCardArea);
-	await card.evaluate((element, { top, bottom }) => {
-		const scrollers: HTMLElement[] = [];
-		for (
-			let parent = element.parentElement;
-			parent;
-			parent = parent.parentElement
-		) {
-			const overflow = getComputedStyle(parent).overflowY;
-			if (
-				/^(auto|scroll)$/.test(overflow) &&
-				parent.scrollHeight > parent.clientHeight
-			)
-				scrollers.push(parent);
-		}
-		// CSS zoom changes scroll units; keep both corners clear of clipping and
-		// fixed navigation instead of comparing pixels hidden behind other UI.
-		for (const scroller of scrollers) {
-			const rect = element.getBoundingClientRect();
-			if (rect.top >= top + 4 && rect.bottom <= bottom - 4) break;
-			const scale =
-				scroller.getBoundingClientRect().width / scroller.offsetWidth;
-			scroller.scrollTop +=
-				(rect.top + rect.height / 2 - (top + bottom) / 2) / scale;
-		}
-	}, initialArea);
-	let previousBounds = "";
-	await expect
-		.poll(async () => {
-			const current = JSON.stringify(await card.boundingBox());
-			const stable = current === previousBounds;
-			previousBounds = current;
-			return stable;
-		})
-		.toBe(true);
-	let bounds = await card.boundingBox();
-	expect(bounds).not.toBeNull();
-	const viewportWidth = await card.page().evaluate(() => window.innerWidth);
-	// Native clipped captures drift under root CSS zoom and compact toolbar reflow.
-	// Read the full visible capture, then sample measured card coordinates directly.
-	// CSS pixels avoid coordinate drift from fractional mobile device scaling.
-	const capture = () =>
-		card.page().screenshot({ animations: "disabled", scale: "css" });
-	let painted = await capture();
-	// Disabling animations can finish a pending reflow. Accept only a capture
-	// whose exact coordinates remain unchanged; never retry escaped-pixel failures.
-	for (let attempt = 0; attempt < 2; attempt++) {
-		const after = await card.boundingBox();
-		if (JSON.stringify(after) === JSON.stringify(bounds)) break;
-		bounds = after;
-		expect(bounds).not.toBeNull();
-		painted = await capture();
-	}
-	expect(await card.boundingBox()).toEqual(bounds);
-	// Clipping ancestors can move with scrolling; read their captured positions.
-	const visibleArea = await card.evaluate(readVisibleCardArea);
-	expect(bounds!.y).toBeGreaterThanOrEqual(visibleArea.top);
-	expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(visibleArea.bottom);
-	const geometry = await card.evaluate((element) => {
-		const styles = getComputedStyle(element);
-		const media = element.querySelector(".ingredient-card-media-lane");
-		const frame = element.querySelector(".card-warning-frame");
-		return {
-			layoutWidth: (element as HTMLElement).offsetWidth,
-			topRadius: Number.parseFloat(styles.borderTopLeftRadius),
-			bottomRadius: Number.parseFloat(styles.borderBottomLeftRadius),
-			overflowX: styles.overflowX,
-			overflowY: styles.overflowY,
-			mediaLayer: media ? Number(getComputedStyle(media).zIndex) : null,
-			frameLayer: frame ? Number(getComputedStyle(frame).zIndex) : null,
-		};
-	});
-	expect(geometry.topRadius).toBeGreaterThan(0);
-	expect(geometry.bottomRadius).toBeGreaterThan(0);
-	expect(geometry.overflowX).toBe("hidden");
-	expect(geometry.overflowY).toBe("hidden");
-	if (geometry.frameLayer !== null)
-		expect(geometry.frameLayer).toBeGreaterThan(geometry.mediaLayer!);
-	const { data, info } = await sharp(painted)
-		.ensureAlpha()
-		.raw()
-		.toBuffer({ resolveWithObject: true });
-	expect(info.width).toBe(viewportWidth);
-	const viewportScale = info.width / viewportWidth;
-	const scale = (bounds!.width / geometry.layoutWidth) * viewportScale;
-	const left = Math.round(bounds!.x * viewportScale);
-	const right = Math.round((bounds!.x + bounds!.width) * viewportScale) - 1;
-	const top = Math.round(bounds!.y * viewportScale);
-	const bottom = Math.round((bounds!.y + bounds!.height) * viewportScale) - 1;
-	expect(left).toBeGreaterThanOrEqual(0);
-	expect(right).toBeLessThan(info.width);
-	expect(top).toBeGreaterThanOrEqual(0);
-	expect(bottom).toBeLessThan(info.height);
-	let checkedPixels = 0;
-	let escapedPixels = 0;
-	for (const corner of ["top", "bottom"] as const) {
-		const radius = Math.min(
-			(corner === "top" ? geometry.topRadius : geometry.bottomRadius) * scale,
-			(bounds!.height * viewportScale) / 2,
-		);
-		for (let row = 0; row < Math.ceil(radius); row++) {
-			const y = corner === "top" ? top + row : bottom - row;
-			for (let x = 0; x < Math.ceil(radius); x++) {
-				// Exclude only the rasterized antialias fringe and subpixel capture rounding.
-				if (
-					Math.hypot(x + 0.5 - radius, row + 0.5 - radius) <=
-					radius + 2 * scale
-				)
-					continue;
-				checkedPixels++;
-				const offset = (y * info.width + left + x) * 4;
-				// Compare symmetric cutouts on the same row. A fixed bottom-corner
-				// reference can lie on the sticky navigation's separator at 200% zoom.
-				const reference = (y * info.width + right - x) * 4;
-				if (
-					[0, 1, 2, 3].some(
-						(channel) =>
-							Math.abs(data[offset + channel] - data[reference + channel]) > 3,
+	// Lazy image failures can change which card matches a fallback locator.
+	// Pin the actual rendered card for the entire two-corner measurement.
+	const capturedCard = await card.elementHandle();
+	expect(capturedCard).not.toBeNull();
+	try {
+		// Finish panel expansion before scrolling and measuring its painted card.
+		await card.page().screenshot({ animations: "disabled", scale: "css" });
+		const viewportWidth = await card.page().evaluate(() => window.innerWidth);
+		const geometry = await capturedCard!.evaluate((element) => {
+			const styles = getComputedStyle(element);
+			const media = element.querySelector(".ingredient-card-media-lane");
+			const frame = element.querySelector(".card-warning-frame");
+			return {
+				layoutWidth: (element as HTMLElement).offsetWidth,
+				topRadius: Number.parseFloat(styles.borderTopLeftRadius),
+				bottomRadius: Number.parseFloat(styles.borderBottomLeftRadius),
+				overflowX: styles.overflowX,
+				overflowY: styles.overflowY,
+				mediaLayer: media ? Number(getComputedStyle(media).zIndex) : null,
+				frameLayer: frame ? Number(getComputedStyle(frame).zIndex) : null,
+			};
+		});
+		expect(geometry.topRadius).toBeGreaterThan(0);
+		expect(geometry.bottomRadius).toBeGreaterThan(0);
+		expect(geometry.overflowX).toBe("hidden");
+		expect(geometry.overflowY).toBe("hidden");
+		if (geometry.frameLayer !== null)
+			expect(geometry.frameLayer).toBeGreaterThan(geometry.mediaLayer!);
+
+		let checkedPixels = 0;
+		let escapedPixels = 0;
+		let painted: Buffer | undefined;
+		// At 200% zoom the sticky toolbar can leave less space than a whole card.
+		// Scroll each complete rounded corner into view and inspect both; never sample
+		// pixels hidden by an ancestor or navigation, or relax the zero-escape contract.
+		for (const corner of ["top", "bottom"] as const) {
+			await capturedCard!.evaluate((element) =>
+				element.scrollIntoView({
+					block: "center",
+					inline: "nearest",
+					behavior: "instant",
+				}),
+			);
+			const area = await capturedCard!.evaluate(readVisibleCardArea);
+			await capturedCard!.evaluate(
+				(element, { top, bottom, corner }) => {
+					for (
+						let parent = element.parentElement;
+						parent;
+						parent = parent.parentElement
+					) {
+						if (
+							!/^(auto|scroll)$/.test(getComputedStyle(parent).overflowY) ||
+							parent.scrollHeight <= parent.clientHeight
+						)
+							continue;
+						const rect = element.getBoundingClientRect();
+						const cardScale = rect.width / (element as HTMLElement).offsetWidth;
+						const radius = Math.min(
+							Number.parseFloat(
+								getComputedStyle(element)[
+									corner === "top"
+										? "borderTopLeftRadius"
+										: "borderBottomLeftRadius"
+								],
+							) * cardScale,
+							rect.height / 2,
+						);
+						const segmentTop =
+							corner === "top" ? rect.top : rect.bottom - radius;
+						const segmentBottom =
+							corner === "top" ? rect.top + radius : rect.bottom;
+						if (segmentTop >= top + 4 && segmentBottom <= bottom - 4) break;
+						const delta =
+							corner === "top"
+								? rect.top - (top + 4)
+								: rect.bottom - (bottom - 4);
+						const scale =
+							parent.getBoundingClientRect().width / parent.offsetWidth;
+						parent.scrollTo({
+							top: parent.scrollTop + delta / scale,
+							behavior: "instant",
+						});
+					}
+				},
+				{ ...area, corner },
+			);
+			let previousBounds = "";
+			await expect
+				.poll(async () => {
+					const current = JSON.stringify(await capturedCard!.boundingBox());
+					const stable = current === previousBounds;
+					previousBounds = current;
+					return stable;
+				})
+				.toBe(true);
+			let bounds = await capturedCard!.boundingBox();
+			expect(bounds).not.toBeNull();
+			const capture = () =>
+				card.page().screenshot({ animations: "disabled", scale: "css" });
+			painted = await capture();
+			// Accept only exact stable capture coordinates; never retry escaped pixels.
+			for (let attempt = 0; attempt < 2; attempt++) {
+				const after = await capturedCard!.boundingBox();
+				if (JSON.stringify(after) === JSON.stringify(bounds)) break;
+				bounds = after;
+				expect(bounds).not.toBeNull();
+				painted = await capture();
+			}
+			expect(await capturedCard!.boundingBox()).toEqual(bounds);
+			const visibleArea = await capturedCard!.evaluate(readVisibleCardArea);
+			const { data, info } = await sharp(painted)
+				.ensureAlpha()
+				.raw()
+				.toBuffer({ resolveWithObject: true });
+			expect(info.width).toBe(viewportWidth);
+			const viewportScale = info.width / viewportWidth;
+			const scale = (bounds!.width / geometry.layoutWidth) * viewportScale;
+			const radius = Math.min(
+				(corner === "top" ? geometry.topRadius : geometry.bottomRadius) * scale,
+				(bounds!.height * viewportScale) / 2,
+			);
+			const left = Math.round(bounds!.x * viewportScale);
+			const right = Math.round((bounds!.x + bounds!.width) * viewportScale) - 1;
+			const edge =
+				corner === "top"
+					? Math.round(bounds!.y * viewportScale)
+					: Math.round((bounds!.y + bounds!.height) * viewportScale) - 1;
+			expect(left).toBeGreaterThanOrEqual(0);
+			expect(right).toBeLessThan(info.width);
+			if (corner === "top") {
+				expect(bounds!.y).toBeGreaterThanOrEqual(visibleArea.top);
+				expect(bounds!.y * viewportScale + radius).toBeLessThanOrEqual(
+					visibleArea.bottom * viewportScale,
+				);
+			} else {
+				expect(
+					(bounds!.y + bounds!.height) * viewportScale - radius,
+				).toBeGreaterThanOrEqual(visibleArea.top * viewportScale);
+				expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(
+					visibleArea.bottom,
+				);
+			}
+			let cornerEscapedPixels = 0;
+			for (let row = 0; row < Math.ceil(radius); row++) {
+				const y = corner === "top" ? edge + row : edge - row;
+				for (let x = 0; x < Math.ceil(radius); x++) {
+					// Exclude only rasterized antialias fringe and subpixel capture rounding.
+					if (
+						Math.hypot(x + 0.5 - radius, row + 0.5 - radius) <=
+						radius + 2 * scale
 					)
-				)
-					escapedPixels++;
+						continue;
+					checkedPixels++;
+					const offset = (y * info.width + left + x) * 4;
+					const reference = (y * info.width + right - x) * 4;
+					if (
+						[0, 1, 2, 3].some(
+							(channel) =>
+								Math.abs(data[offset + channel] - data[reference + channel]) >
+								3,
+						)
+					)
+						cornerEscapedPixels++;
+				}
+			}
+			escapedPixels += cornerEscapedPixels;
+			if (cornerEscapedPixels) {
+				await test.info().attach(`containment-failure-${corner}`, {
+					body: painted,
+					contentType: "image/png",
+				});
+				await test.info().attach(`paint-capture-geometry-${corner}`, {
+					body: JSON.stringify({
+						corner,
+						bounds,
+						visibleArea,
+						geometry,
+						info,
+						viewportWidth,
+						scale,
+						checkedPixels,
+						escapedPixels,
+					}),
+					contentType: "application/json",
+				});
 			}
 		}
+		expect(checkedPixels).toBeGreaterThan(0);
+		expect(
+			escapedPixels,
+			"No media may paint outside either rounded left corner",
+		).toBe(0);
+		return painted!;
+	} finally {
+		await capturedCard?.dispose();
 	}
-	expect(checkedPixels).toBeGreaterThan(0);
-	if (escapedPixels) {
-		await test.info().attach("containment-failure", {
-			body: painted,
-			contentType: "image/png",
-		});
-		await test.info().attach("paint-capture-geometry", {
-			body: JSON.stringify({
-				bounds,
-				geometry,
-				info,
-				viewportWidth,
-				scale,
-				checkedPixels,
-				escapedPixels,
-			}),
-			contentType: "application/json",
-		});
-	}
-	expect(
-		escapedPixels,
-		"No media may paint outside either rounded left corner",
-	).toBe(0);
-	return painted;
 };

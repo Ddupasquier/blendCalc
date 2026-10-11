@@ -86,7 +86,7 @@ describe("ImagePlacementEditor", () => {
 			rotationDegrees: 0,
 			fitMode: "contain",
 			placementVersion: 2,
-			placementMethod: "default",
+			placementMethod: "manual",
 		});
 
 		onChange.mockClear();
@@ -100,7 +100,7 @@ describe("ImagePlacementEditor", () => {
 			rotationDegrees: 0,
 			fitMode: "contain",
 			placementVersion: 2,
-			placementMethod: "default",
+			placementMethod: "manual",
 		});
 	});
 

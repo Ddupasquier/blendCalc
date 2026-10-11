@@ -5,7 +5,7 @@
 		pickFoodImageUrl,
 	} from "$lib/utils/food/images/foodImages";
 	import ImagePlacementViewport from "$lib/components/common/images/ImagePlacementViewport/ImagePlacementViewport.svelte";
-	import { getStoredImagePlacement } from "$lib/utils/food/images/imagePlacement";
+	import { getCardImagePlacement } from "$lib/utils/food/images/imagePlacement";
 	import {
 		getFoodSymbolDefinition,
 		resolveFoodSymbolKey,
@@ -19,9 +19,7 @@
 
 	const symbolKey = $derived(resolveFoodSymbolKey(food));
 	const symbolDefinition = $derived(getFoodSymbolDefinition(symbolKey));
-	const imageUrl = $derived(
-		fallbackOnly ? null : pickFoodImageUrl(food.image),
-	);
+	const imageUrl = $derived(fallbackOnly ? null : pickFoodImageUrl(food.image));
 	const imageAlt = $derived(
 		getFoodImageAltText({
 			foodName: food.description,
@@ -29,13 +27,20 @@
 		}),
 	);
 	const imagePlacement = $derived(
-		getStoredImagePlacement({
+		getCardImagePlacement({
 			cropX: food.image?.cropX,
 			cropY: food.image?.cropY,
 			cropZoom: food.image?.cropZoom,
 			rotationDegrees: food.image?.rotationDegrees,
 			fitMode: food.image?.fitMode,
 			placementVersion: food.image?.placementVersion,
+			placementMethod: food.image?.placementMethod,
+			suggestionVersion: food.image?.suggestionVersion,
+			suggestionConfidence: food.image?.suggestionConfidence,
+			suggestionAcceptedAt: food.image?.suggestionAcceptedAt,
+			cropSource: food.image?.cropSource,
+			approvedBy: food.image?.approvedBy,
+			approvedAt: food.image?.approvedAt,
 		}),
 	);
 	let imageFailed = $state(false);
@@ -52,7 +57,7 @@
 {#if imageUrl && !imageFailed}
 	<span class={`food-symbol__image ${className}`.trim()}>
 		<ImagePlacementViewport
-			imageUrl={imageUrl}
+			{imageUrl}
 			alt={imageAlt}
 			value={imagePlacement}
 			onError={() => (imageFailed = true)}

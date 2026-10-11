@@ -6,6 +6,7 @@ import type {
 	ImageRotationDegrees,
 	ImagePlacementValue,
 } from "$lib/utils/food/images/types";
+import type { FoodImageAsset } from "$lib/utils/food/types";
 
 export const LEGACY_IMAGE_PLACEMENT_VERSION = 1;
 export const CURRENT_IMAGE_PLACEMENT_VERSION = 2;
@@ -47,14 +48,12 @@ export const normalizeImageRotationDegrees = (
 	const numericValue = Number(value);
 	if (!Number.isFinite(numericValue)) return fallback;
 	const normalizedValue =
-		((Math.round(numericValue / IMAGE_ROTATION_INCREMENT) *
+		(((Math.round(numericValue / IMAGE_ROTATION_INCREMENT) *
 			IMAGE_ROTATION_INCREMENT) %
-			360 +
+			360) +
 			360) %
 		360;
-	return isImageRotationDegrees(normalizedValue)
-		? normalizedValue
-		: fallback;
+	return isImageRotationDegrees(normalizedValue) ? normalizedValue : fallback;
 };
 
 const clamp = (value: number, min: number, max: number, fallback: number) => {
@@ -67,25 +66,27 @@ const round = (value: number, precision = 4) => {
 	return Math.round(value * factor) / factor;
 };
 
-export const FULL_IMAGE_PLACEMENT: Readonly<ImagePlacementValue> = Object.freeze({
-	cropX: 50,
-	cropY: 50,
-	cropZoom: IMAGE_PLACEMENT_MIN_ZOOM,
-	rotationDegrees: 0,
-	fitMode: "contain",
-	placementVersion: CURRENT_IMAGE_PLACEMENT_VERSION,
-	placementMethod: "default",
-});
+export const FULL_IMAGE_PLACEMENT: Readonly<ImagePlacementValue> =
+	Object.freeze({
+		cropX: 50,
+		cropY: 50,
+		cropZoom: IMAGE_PLACEMENT_MIN_ZOOM,
+		rotationDegrees: 0,
+		fitMode: "contain",
+		placementVersion: CURRENT_IMAGE_PLACEMENT_VERSION,
+		placementMethod: "default",
+	});
 
-export const LEGACY_IMAGE_PLACEMENT: Readonly<ImagePlacementValue> = Object.freeze({
-	cropX: 50,
-	cropY: 50,
-	cropZoom: IMAGE_PLACEMENT_MIN_ZOOM,
-	rotationDegrees: 0,
-	fitMode: "cover",
-	placementVersion: LEGACY_IMAGE_PLACEMENT_VERSION,
-	placementMethod: "manual",
-});
+export const LEGACY_IMAGE_PLACEMENT: Readonly<ImagePlacementValue> =
+	Object.freeze({
+		cropX: 50,
+		cropY: 50,
+		cropZoom: IMAGE_PLACEMENT_MIN_ZOOM,
+		rotationDegrees: 0,
+		fitMode: "cover",
+		placementVersion: LEGACY_IMAGE_PLACEMENT_VERSION,
+		placementMethod: "manual",
+	});
 
 export const createFullImagePlacement = (
 	rotationDegrees: ImageRotationDegrees = 0,
@@ -110,15 +111,15 @@ export const normalizeImagePlacement = (
 		: fallbackFitMode;
 	const placementMethod = isImagePlacementMethod(value.placementMethod)
 		? value.placementMethod
-		: fallback.placementMethod ?? "manual";
+		: (fallback.placementMethod ?? "manual");
 	const suggestionVersion =
 		typeof value.suggestionVersion === "string" &&
-			value.suggestionVersion.trim()
+		value.suggestionVersion.trim()
 			? value.suggestionVersion.trim()
 			: undefined;
 	const suggestionConfidence = Number.isFinite(
-			Number(value.suggestionConfidence),
-		)
+		Number(value.suggestionConfidence),
+	)
 		? clamp(Number(value.suggestionConfidence), 0, 100, 0)
 		: undefined;
 
@@ -138,11 +139,13 @@ export const normalizeImagePlacement = (
 		fitMode,
 		placementVersion,
 		placementMethod,
-		...((placementMethod === "automatic-ocr" || placementMethod.startsWith("smart-ocr")) && suggestionVersion
+		...((placementMethod === "automatic-ocr" ||
+			placementMethod.startsWith("smart-ocr")) &&
+		suggestionVersion
 			? {
-				suggestionVersion,
-				suggestionConfidence,
-			}
+					suggestionVersion,
+					suggestionConfidence,
+				}
 			: {}),
 	};
 };
@@ -150,6 +153,51 @@ export const normalizeImagePlacement = (
 export const getStoredImagePlacement = (
 	value?: Partial<ImagePlacementValue> | null,
 ) => normalizeImagePlacement(value ?? {}, LEGACY_IMAGE_PLACEMENT);
+
+export const createDefaultCardImagePlacement = (): ImagePlacementValue => ({
+	...FULL_IMAGE_PLACEMENT,
+	fitMode: "cover",
+});
+
+type CardImagePlacementInput = Partial<ImagePlacementValue> &
+	Pick<
+		FoodImageAsset,
+		"cropSource" | "approvedBy" | "approvedAt" | "suggestionAcceptedAt"
+	>;
+
+/** Resolve a display fallback without changing any stored placement or source bytes. */
+export const getCardImagePlacement = (
+	value?: CardImagePlacementInput | null,
+): ImagePlacementValue => {
+	const stored = getStoredImagePlacement(value);
+	const authoritative = Boolean(
+		value?.cropSource === "user" ||
+		value?.cropSource === "moderator" ||
+		value?.approvedBy ||
+		value?.approvedAt ||
+		value?.suggestionAcceptedAt ||
+		(value?.placementMethod && value.placementMethod !== "default"),
+	);
+	const hasStoredGeometry = [
+		value?.cropX,
+		value?.cropY,
+		value?.cropZoom,
+		value?.rotationDegrees,
+		value?.fitMode,
+		value?.placementVersion,
+	].some((field) => field !== undefined && field !== null);
+	const untouchedDefault =
+		value?.placementMethod === "default" &&
+		stored.placementVersion === CURRENT_IMAGE_PLACEMENT_VERSION &&
+		stored.fitMode === "contain" &&
+		stored.cropX === 50 &&
+		stored.cropY === 50 &&
+		stored.cropZoom === 1 &&
+		stored.rotationDegrees === 0;
+	return !authoritative && (!hasStoredGeometry || untouchedDefault)
+		? createDefaultCardImagePlacement()
+		: stored;
+};
 
 export const constrainCardImagePlacement = (
 	value: Partial<ImagePlacementValue>,
@@ -166,26 +214,27 @@ export const constrainCardImagePlacement = (
 	};
 };
 
-export const EMPTY_IMAGE_PLACEMENT_GEOMETRY: Readonly<ImagePlacementGeometry> = Object.freeze({
-	ready: false,
-	naturalWidth: 0,
-	naturalHeight: 0,
-	frameWidth: 0,
-	frameHeight: 0,
-	baseWidth: 0,
-	baseHeight: 0,
-	rotationDegrees: 0,
-	effectiveZoom: 1,
-	coverZoom: 1,
-	maxOffsetX: 0,
-	maxOffsetY: 0,
-	offsetX: 0,
-	offsetY: 0,
-	canMoveX: false,
-	canMoveY: false,
-	horizontalMovement: "symmetric",
-	horizontalOriginOffsetX: 0,
-});
+export const EMPTY_IMAGE_PLACEMENT_GEOMETRY: Readonly<ImagePlacementGeometry> =
+	Object.freeze({
+		ready: false,
+		naturalWidth: 0,
+		naturalHeight: 0,
+		frameWidth: 0,
+		frameHeight: 0,
+		baseWidth: 0,
+		baseHeight: 0,
+		rotationDegrees: 0,
+		effectiveZoom: 1,
+		coverZoom: 1,
+		maxOffsetX: 0,
+		maxOffsetY: 0,
+		offsetX: 0,
+		offsetY: 0,
+		canMoveX: false,
+		canMoveY: false,
+		horizontalMovement: "symmetric",
+		horizontalOriginOffsetX: 0,
+	});
 
 export const getImagePlacementGeometry = ({
 	naturalWidth,
@@ -197,14 +246,9 @@ export const getImagePlacementGeometry = ({
 }: ImagePlacementGeometryInput): ImagePlacementGeometry => {
 	const placement = normalizeImagePlacement(value);
 	const swapsDimensions =
-		placement.rotationDegrees === 90 ||
-		placement.rotationDegrees === 270;
-	const rotatedNaturalWidth = swapsDimensions
-		? naturalHeight
-		: naturalWidth;
-	const rotatedNaturalHeight = swapsDimensions
-		? naturalWidth
-		: naturalHeight;
+		placement.rotationDegrees === 90 || placement.rotationDegrees === 270;
+	const rotatedNaturalWidth = swapsDimensions ? naturalHeight : naturalWidth;
+	const rotatedNaturalHeight = swapsDimensions ? naturalWidth : naturalHeight;
 	if (
 		![naturalWidth, naturalHeight, frameWidth, frameHeight].every(
 			(dimension) => Number.isFinite(dimension) && dimension > 0,
@@ -218,8 +262,7 @@ export const getImagePlacementGeometry = ({
 			frameHeight,
 			horizontalMovement,
 			rotationDegrees: placement.rotationDegrees,
-			effectiveZoom:
-				placement.fitMode === "contain" ? 1 : placement.cropZoom,
+			effectiveZoom: placement.fitMode === "contain" ? 1 : placement.cropZoom,
 		};
 	}
 
@@ -229,12 +272,21 @@ export const getImagePlacementGeometry = ({
 	);
 	const baseWidth = rotatedNaturalWidth * containScale;
 	const baseHeight = rotatedNaturalHeight * containScale;
-	const coverZoom = clamp(
-		Math.max(frameWidth / baseWidth, frameHeight / baseHeight),
-		IMAGE_PLACEMENT_MIN_ZOOM,
-		IMAGE_PLACEMENT_MAX_ZOOM,
-		IMAGE_PLACEMENT_MIN_ZOOM,
+	const measuredCoverZoom = Math.max(
+		frameWidth / baseWidth,
+		frameHeight / baseHeight,
 	);
+	const coverZoom =
+		placement.placementMethod === "default" && placement.fitMode === "cover"
+			? // A display-only default must actually cover even a narrow source. Round up
+				// at the existing precision; retain all saved/manual/automatic zoom bounds.
+				Math.ceil(measuredCoverZoom * 10_000) / 10_000
+			: clamp(
+					measuredCoverZoom,
+					IMAGE_PLACEMENT_MIN_ZOOM,
+					IMAGE_PLACEMENT_MAX_ZOOM,
+					IMAGE_PLACEMENT_MIN_ZOOM,
+				);
 	const effectiveZoom =
 		placement.fitMode === "contain"
 			? IMAGE_PLACEMENT_MIN_ZOOM
@@ -244,27 +296,28 @@ export const getImagePlacementGeometry = ({
 	const scaledWidth = baseWidth * effectiveZoom;
 	const symmetricMaxOffsetX = Math.max(0, (scaledWidth - frameWidth) / 2);
 	const horizontalOriginOffsetX =
-		horizontalMovement === "left-only"
-			? (scaledWidth - frameWidth) / 2
-			: 0;
+		horizontalMovement === "left-only" ? (scaledWidth - frameWidth) / 2 : 0;
 	const maxOffsetX =
 		horizontalMovement === "left-only"
 			? Math.max(
-				Math.max(0, scaledWidth - frameWidth),
-				Math.min(scaledWidth, frameWidth) / 2,
-			)
+					Math.max(0, scaledWidth - frameWidth),
+					Math.min(scaledWidth, frameWidth) / 2,
+				)
 			: symmetricMaxOffsetX;
-	const maxOffsetY = Math.max(0, (baseHeight * effectiveZoom - frameHeight) / 2);
+	const maxOffsetY = Math.max(
+		0,
+		(baseHeight * effectiveZoom - frameHeight) / 2,
+	);
 	const canMoveX = maxOffsetX > 0.5;
 	const canMoveY = maxOffsetY > 0.5;
 	const horizontalCropX =
 		horizontalMovement === "left-only"
 			? clamp(
-				placement.cropX,
-				CARD_IMAGE_PLACEMENT_MIN_X,
-				CARD_IMAGE_PLACEMENT_MAX_X,
-				CARD_IMAGE_PLACEMENT_MIN_X,
-			)
+					placement.cropX,
+					CARD_IMAGE_PLACEMENT_MIN_X,
+					CARD_IMAGE_PLACEMENT_MAX_X,
+					CARD_IMAGE_PLACEMENT_MIN_X,
+				)
 			: placement.cropX;
 
 	return {
@@ -283,18 +336,15 @@ export const getImagePlacementGeometry = ({
 		offsetX:
 			horizontalMovement === "left-only"
 				? round(
-					horizontalOriginOffsetX -
-						((horizontalCropX - CARD_IMAGE_PLACEMENT_MIN_X) /
-							(CARD_IMAGE_PLACEMENT_MAX_X -
-								CARD_IMAGE_PLACEMENT_MIN_X)) *
-							maxOffsetX,
-				)
+						horizontalOriginOffsetX -
+							((horizontalCropX - CARD_IMAGE_PLACEMENT_MIN_X) /
+								(CARD_IMAGE_PLACEMENT_MAX_X - CARD_IMAGE_PLACEMENT_MIN_X)) *
+								maxOffsetX,
+					)
 				: canMoveX
 					? round(((50 - placement.cropX) / 50) * maxOffsetX)
 					: 0,
-		offsetY: canMoveY
-			? round(((50 - placement.cropY) / 50) * maxOffsetY)
-			: 0,
+		offsetY: canMoveY ? round(((50 - placement.cropY) / 50) * maxOffsetY) : 0,
 		canMoveX,
 		canMoveY,
 		horizontalMovement,
@@ -320,14 +370,7 @@ export const getImagePlacementCropXFromOffset = (
 					(CARD_IMAGE_PLACEMENT_MAX_X - CARD_IMAGE_PLACEMENT_MIN_X),
 		);
 	}
-	return round(
-		clamp(
-			50 - (offsetX / geometry.maxOffsetX) * 50,
-			0,
-			100,
-			50,
-		),
-	);
+	return round(clamp(50 - (offsetX / geometry.maxOffsetX) * 50, 0, 100, 50));
 };
 
 export const createFillImagePlacement = (
@@ -367,14 +410,12 @@ export const createCustomImagePlacement = (
 		),
 		fitMode: "custom",
 		placementVersion: CURRENT_IMAGE_PLACEMENT_VERSION,
-		placementMethod: followsSmartSuggestion
-			? "smart-ocr-adjusted"
-			: "manual",
+		placementMethod: followsSmartSuggestion ? "smart-ocr-adjusted" : "manual",
 		...(!followsSmartSuggestion
 			? {
-				suggestionVersion: undefined,
-				suggestionConfidence: undefined,
-			}
+					suggestionVersion: undefined,
+					suggestionConfidence: undefined,
+				}
 			: {}),
 	};
 };
@@ -431,20 +472,12 @@ export const moveImagePlacement = ({
 		cropX:
 			geometry.horizontalMovement === "left-only"
 				? moveLeftOnlyHorizontalAxis(
-					placement.cropX,
-					deltaX,
-					geometry.maxOffsetX,
-				)
-				: moveSymmetricAxis(
-					placement.cropX,
-					deltaX,
-					geometry.maxOffsetX,
-				),
-		cropY: moveSymmetricAxis(
-			placement.cropY,
-			deltaY,
-			geometry.maxOffsetY,
-		),
+						placement.cropX,
+						deltaX,
+						geometry.maxOffsetX,
+					)
+				: moveSymmetricAxis(placement.cropX, deltaX, geometry.maxOffsetX),
+		cropY: moveSymmetricAxis(placement.cropY, deltaY, geometry.maxOffsetY),
 	};
 };
 

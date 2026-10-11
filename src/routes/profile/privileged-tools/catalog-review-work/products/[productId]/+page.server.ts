@@ -88,7 +88,7 @@ export const actions: Actions = {
 				catalogReviewError:
 					error.code === "40001"
 						? "The evidence changed while you were reviewing it. Refresh and decide the current conflicts."
-						: error.message,
+						: "That product review could not be completed. Refresh and try again.",
 			});
 		}
 

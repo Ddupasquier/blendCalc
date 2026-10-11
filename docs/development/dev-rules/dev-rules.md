@@ -1865,7 +1865,13 @@ hardcode, or infer attribution in a component.
 
 Image zoom and placement must be
 non-destructive and versioned. Keep the original image unchanged; placement only
-controls card rendering. Every new image starts from version 2 `Full image`: contain the
+controls card rendering. Otherwise-unplaced card images and untouched source-default
+placements use version 2 `Fill card`, with the minimum aspect-aware fill and no
+stretching. This is a rendering/draft fallback, not permission to rewrite stored crops.
+Its measured minimum fill may exceed the manual zoom slider's bound for an extremely
+narrow source; that does not relax any stored manual or accepted automatic zoom limit.
+Saved manual, moderator-approved, accepted automatic and unknown legacy placements
+remain authoritative. `Full image` remains an explicit contained preset: show the
 complete orientation-corrected image, center it, and treat `1×` as the full-image size.
 Offer the shared `Full image` and `Fill card` presets plus a plainly labeled
 clockwise `Rotate 90°` control and a plainly labeled `Restore default` action that
@@ -1905,7 +1911,7 @@ package fronts with a reviewed single-block pass, tolerates only small OCR token
 scores text against the known product and brand names, and penalizes
 nutrition/disclaimer text.
 Apply the draft only when the result clears the reviewed confidence threshold; otherwise
-leave `Full image` unchanged. Never automatically replace an existing manual,
+leave the otherwise-unplaced `Fill card` fallback unchanged. Never automatically replace an existing manual,
 moderator-approved, or previously accepted smart placement. Keep manual drag, zoom,
 sliders, presets, restore, and an explicit retry available after automatic placement.
 Persist the accepted placement method, algorithm version, and bounded confidence, but do

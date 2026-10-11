@@ -106,6 +106,55 @@ describe("catalog review product route", () => {
 		expect(rpc).not.toHaveBeenCalled();
 	});
 
+	it.each([
+		{
+			code: "XX000",
+			status: 400,
+			message:
+				"That product review could not be completed. Refresh and try again.",
+		},
+		{
+			code: "42501",
+			status: 400,
+			message:
+				"That product review could not be completed. Refresh and try again.",
+		},
+		{
+			code: "40001",
+			status: 409,
+			message:
+				"The evidence changed while you were reviewing it. Refresh and decide the current conflicts.",
+		},
+	])(
+		"returns safe feedback for $code without exposing database details",
+		async ({ code, status, message }) => {
+			const rpc = vi.fn().mockResolvedValue({
+				error: { code, message: "SECRET_DATABASE_DETAIL_CANARY" },
+			});
+			const result = await actions.finishConflictReview({
+				locals: { supabase: { rpc } },
+				params: { productId: "product-id" },
+				request: createRequest({
+					decisions: JSON.stringify([
+						{
+							conflictId: "conflict-id",
+							outcome: "insufficient_evidence",
+							note: "Reviewed.",
+						},
+					]),
+				}),
+			} as never);
+			expect(result).toMatchObject({
+				status,
+				data: { catalogReviewError: message },
+			});
+			expect(JSON.stringify(result)).not.toContain(
+				"SECRET_DATABASE_DETAIL_CANARY",
+			);
+			expect(mocks.requireModeratorPermission).toHaveBeenCalled();
+		},
+	);
+
 	it("accepts a bounded 200-field review through one RPC, including long notes", async () => {
 		const decisions = Array.from({ length: 200 }, (_, index) => ({
 			conflictId: `conflict-${index}`,

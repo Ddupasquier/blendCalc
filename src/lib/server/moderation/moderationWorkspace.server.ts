@@ -23,7 +23,7 @@ import type { FoodItem } from "$lib/utils/food/types";
 import { mapWithConcurrency } from "$lib/server/concurrency/mapWithConcurrency";
 import {
 	constrainCardImagePlacement,
-	getStoredImagePlacement,
+	getCardImagePlacement,
 	isImageFitMode,
 	isImagePlacementMethod,
 	isImageRotationDegrees,
@@ -450,10 +450,10 @@ export const loadModerationWorkspaceData = async (
 				},
 			].filter((item) => Boolean(item.url)),
 			frontEvidenceUrl: submission.evidenceUrls.front ?? null,
-			imageCrop: getStoredImagePlacement({
-				cropX: validationReport.imageCrop?.cropX ?? 50,
-				cropY: validationReport.imageCrop?.cropY ?? 50,
-				cropZoom: validationReport.imageCrop?.cropZoom ?? 1,
+			imageCrop: getCardImagePlacement({
+				cropX: validationReport.imageCrop?.cropX,
+				cropY: validationReport.imageCrop?.cropY,
+				cropZoom: validationReport.imageCrop?.cropZoom,
 				rotationDegrees: validationReport.imageCrop?.rotationDegrees,
 				fitMode: validationReport.imageCrop?.fitMode,
 				placementVersion: validationReport.imageCrop?.placementVersion,
