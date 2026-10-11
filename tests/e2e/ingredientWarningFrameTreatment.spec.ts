@@ -177,7 +177,41 @@ const readCardMediaPresentation = (card: Locator) =>
 		};
 	});
 
-test("pictured and fallback cards keep rounded corners across widths and zoom @compatibility @mobile", async ({
+const checkPicturedAndFallbackCorners = async (
+	page: Page,
+	captureScale: "css" | "device" = "css",
+) => {
+	const fridge = getIngredientList(page, "Fridge");
+	const pictured = await findPicturedWarningCard(page, fridge);
+	await expect(pictured.locator("img")).toBeVisible();
+	await expect
+		.poll(() =>
+			pictured
+				.locator("img")
+				.evaluate(
+					(image) =>
+						(image as HTMLImageElement).complete &&
+						(image as HTMLImageElement).naturalWidth > 0,
+				),
+		)
+		.toBe(true);
+	const fallback = fridge
+		.locator(".saved-ingredient-card")
+		.filter({ has: page.locator(".ingredient-card-media-lane--fallback") })
+		.first();
+	const captures = [];
+	for (const theme of ["light", "dark"]) {
+		await page.locator("html").evaluate((element, theme) => {
+			(element as HTMLElement).dataset.theme = theme;
+		}, theme);
+		const body = await expectPaintedMediaContainment(pictured, captureScale);
+		await expectPaintedMediaContainment(fallback, captureScale);
+		captures.push({ theme, body });
+	}
+	return captures;
+};
+
+test("pictured and fallback cards keep rounded corners across widths @compatibility @mobile", async ({
 	page,
 }, testInfo) => {
 	await serveDeterministicOpenFoodFactsImages(page);
@@ -188,49 +222,44 @@ test("pictured and fallback cards keep rounded corners across widths and zoom @c
 		email: preferenceQaEmail,
 		nextPath: "/ingredients/fridge",
 	});
-	for (const viewport of [
-		{ width: 320, zoom: 1 },
-		{ width: 390, zoom: 1 },
-		{ width: 430, zoom: 1 },
-		{ width: 1280, zoom: 1 },
-		{ width: 390, zoom: 2 },
-	]) {
-		await page.setViewportSize({ width: viewport.width, height: 900 });
-		await page.evaluate((zoom) => {
-			document.documentElement.style.zoom = String(zoom);
-		}, viewport.zoom);
-		const fridge = getIngredientList(page, "Fridge");
-		const pictured = await findPicturedWarningCard(page, fridge);
-		await expect(pictured.locator("img")).toBeVisible();
-		await expect
-			.poll(() =>
-				pictured
-					.locator("img")
-					.evaluate(
-						(image) =>
-							(image as HTMLImageElement).complete &&
-							(image as HTMLImageElement).naturalWidth > 0,
-					),
-			)
-			.toBe(true);
-		const fallback = fridge
-			.locator(".saved-ingredient-card")
-			.filter({ has: page.locator(".ingredient-card-media-lane--fallback") })
-			.first();
-		for (const theme of ["light", "dark"]) {
-			await page.locator("html").evaluate((element, theme) => {
-				(element as HTMLElement).dataset.theme = theme;
-			}, theme);
-			const picturedScreenshot = await expectPaintedMediaContainment(pictured);
-			await expectPaintedMediaContainment(fallback);
-			if (viewport.width === 390 && viewport.zoom === 1) {
+	for (const width of [320, 390, 430, 1280]) {
+		await page.setViewportSize({ width, height: 900 });
+		for (const { theme, body } of await checkPicturedAndFallbackCorners(page)) {
+			if (width === 390) {
 				await testInfo.attach(`pictured-card-${theme}`, {
-					body: picturedScreenshot,
+					body,
 					contentType: "image/png",
 				});
 			}
 		}
 	}
+});
+
+test.describe("200% layout and paint emulation", () => {
+	// A 390x900 display at 200% has a 195x450 CSS layout viewport and 2x paint.
+	// Root CSS zoom leaves vh-based panes too tall and can make a card unreachable.
+	// Use the ordinary tracked page fixture, preserving all browser-error guards.
+	test.use({ viewport: { width: 195, height: 450 }, deviceScaleFactor: 2 });
+	test("pictured and fallback cards keep rounded corners at 200% @compatibility @mobile", async ({
+		page,
+	}, testInfo) => {
+		await serveDeterministicOpenFoodFactsImages(page);
+		await page.emulateMedia({ reducedMotion: "reduce" });
+		await signInLocalQaAccount({
+			page,
+			email: preferenceQaEmail,
+			nextPath: "/ingredients/fridge",
+		});
+		for (const { theme, body } of await checkPicturedAndFallbackCorners(
+			page,
+			"device",
+		)) {
+			await testInfo.attach(`pictured-card-200-${theme}`, {
+				body,
+				contentType: "image/png",
+			});
+		}
+	});
 });
 
 test("Fridge and Shopping warning frames stay rounded, semantic, and interactive @compatibility @mobile", async ({
