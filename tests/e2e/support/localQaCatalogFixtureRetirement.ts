@@ -78,6 +78,18 @@ begin
   where id between '${lower}'::uuid and '${upper}'::uuid and status = 'active';
 end;
 $$;
+${
+	lastProduct === 61
+		? `-- Refresh planning statistics after this namespace's bulk lifecycle changes.
+-- Subsequent real dashboard requests must not plan against the active fixture corpus.
+analyze public.shared_products;
+analyze public.shared_product_revisions;
+analyze public.shared_product_conflicts;
+analyze public.catalog_health_review_dispositions;
+analyze public.catalog_provider_change_reviews;
+analyze public.official_food_safety_alert_matches;`
+		: ""
+}
 commit;`);
 	const remaining = execute(
 		`select (select count(*) from public.shared_products where id between '${lower}'::uuid and '${upper}'::uuid and status = 'active') + (select count(*) from public.catalog_health_actionable_issue_occurrences where shared_product_id between '${lower}'::uuid and '${upper}'::uuid and source_scope = 'blendcalc_api_publication' and status = 'open');`,
