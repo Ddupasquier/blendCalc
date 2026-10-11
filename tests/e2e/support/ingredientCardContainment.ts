@@ -18,6 +18,11 @@ const readVisibleCardArea = (element: Element) => {
 			bottom = Math.min(bottom, rect.bottom);
 		}
 	}
+	const header = document.querySelector("header.app-header");
+	if (header && /^(fixed|sticky)$/.test(getComputedStyle(header).position)) {
+		const rect = header.getBoundingClientRect();
+		if (rect.top < window.innerHeight / 2) top = Math.max(top, rect.bottom);
+	}
 	const navigation = document.querySelector(
 		'nav[aria-label="Main navigation"]',
 	);
@@ -76,6 +81,15 @@ export const expectPaintedMediaContainment = async (card: Locator) => {
 					behavior: "instant",
 				}),
 			);
+			// WebKit applies zoomed scrollIntoView geometry on the next render frame.
+			await card
+				.page()
+				.evaluate(
+					() =>
+						new Promise<void>((resolve) =>
+							requestAnimationFrame(() => resolve()),
+						),
+				);
 			const area = await capturedCard!.evaluate(readVisibleCardArea);
 			await capturedCard!.evaluate(
 				(element, { top, bottom, corner }) => {

@@ -52,6 +52,8 @@ const localSql = (sql: string) =>
 		"docker",
 		[
 			"exec",
+			"-e",
+			"PGOPTIONS=-c statement_timeout=40000 -c idle_in_transaction_session_timeout=40000",
 			"-i",
 			`supabase_db_${localProjectId}`,
 			"psql",
