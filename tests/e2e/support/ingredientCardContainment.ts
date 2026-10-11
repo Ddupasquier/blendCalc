@@ -35,7 +35,10 @@ const readVisibleCardArea = (element: Element) => {
 
 // Crop/zoom can extend an image beneath its clipping layer; inspect painted
 // cutouts rather than requiring the un-clipped image bounds to fit the card.
-export const expectPaintedMediaContainment = async (card: Locator) => {
+export const expectPaintedMediaContainment = async (
+	card: Locator,
+	captureScale: "css" | "device" = "css",
+) => {
 	const lane = card.locator(".ingredient-card-media-lane");
 	await expect(lane).toBeVisible();
 	// Lazy image failures can change which card matches a fallback locator.
@@ -44,8 +47,14 @@ export const expectPaintedMediaContainment = async (card: Locator) => {
 	expect(capturedCard).not.toBeNull();
 	try {
 		// Finish panel expansion before scrolling and measuring its painted card.
-		await card.page().screenshot({ animations: "disabled", scale: "css" });
+		await card
+			.page()
+			.screenshot({ animations: "disabled", scale: captureScale });
 		const viewportWidth = await card.page().evaluate(() => window.innerWidth);
+		const capturePixelRatio =
+			captureScale === "device"
+				? await card.page().evaluate(() => window.devicePixelRatio)
+				: 1;
 		const geometry = await capturedCard!.evaluate((element) => {
 			const styles = getComputedStyle(element);
 			const media = element.querySelector(".ingredient-card-media-lane");
@@ -208,7 +217,7 @@ export const expectPaintedMediaContainment = async (card: Locator) => {
 			let bounds = await capturedCard!.boundingBox();
 			expect(bounds).not.toBeNull();
 			const capture = () =>
-				card.page().screenshot({ animations: "disabled", scale: "css" });
+				card.page().screenshot({ animations: "disabled", scale: captureScale });
 			painted = await capture();
 			// Accept only exact stable capture coordinates; never retry escaped pixels.
 			for (let attempt = 0; attempt < 2; attempt++) {
@@ -224,7 +233,7 @@ export const expectPaintedMediaContainment = async (card: Locator) => {
 				.ensureAlpha()
 				.raw()
 				.toBuffer({ resolveWithObject: true });
-			expect(info.width).toBe(viewportWidth);
+			expect(info.width).toBe(Math.round(viewportWidth * capturePixelRatio));
 			const viewportScale = info.width / viewportWidth;
 			const scale = (bounds!.width / geometry.layoutWidth) * viewportScale;
 			const radius = Math.min(
