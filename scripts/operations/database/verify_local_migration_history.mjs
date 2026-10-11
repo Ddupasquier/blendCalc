@@ -1,10 +1,11 @@
 /**
- * Purpose: Verify that BlendCalc's freshly replayed local application database has an
+ * Purpose: Verify that BlendCalc's configured, freshly replayed local application database has an
  * exact package-generated migration receipt and no blendCalcAPI version collision.
  * Run: `node scripts/operations/database/verify_local_migration_history.mjs` after a local database reset.
  */
 
 import { spawnSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { createCleanProcessEnvironment } from "../../lib/environment/runtime_environment.mjs";
 import {
@@ -24,7 +25,16 @@ const apiMigrations = new URL(
 	"../../../infrastructure/blendCalcAPI/supabase/migrations/",
 	import.meta.url,
 );
-const container = "supabase_db_blendcalc";
+const projectId = readFileSync(
+	new URL("../../../supabase/config.toml", import.meta.url),
+	"utf8",
+).match(/^project_id\s*=\s*"([a-zA-Z0-9_-]+)"$/m)?.[1];
+if (!projectId) {
+	throw new Error(
+		"The configured local migration project ID is unavailable or invalid.",
+	);
+}
+const container = `supabase_db_${projectId}`;
 
 const result = spawnSync(
 	"docker",
