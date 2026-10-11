@@ -42,7 +42,7 @@ try {
   await assert.rejects(createOwnedTesseractWorker({
     langPath: ${JSON.stringify(directory)}, cachePath: ${JSON.stringify(directory)},
     cacheMethod: "none", gzip: false,
-  }), /ocr-worker-failed/);
+  }), { message: /^ocr-worker-(?:host-)?failed$/ });
   const response = await fetch("http://127.0.0.1:" + server.address().port);
   assert.equal(await response.text(), "alive");
 } finally { await new Promise(resolve => server.close(resolve)); }
@@ -74,7 +74,7 @@ parentPort.on("message", ({ workerId, jobId, action }) => {
 const options = { workerPath: ${JSON.stringify(workerPath)} };
 await assert.rejects(createOwnedTesseractWorker({
   langPath: ${JSON.stringify(directory)}, cacheMethod: "none", gzip: false,
-}), /ocr-worker-failed/);
+}), { message: /^ocr-worker-(?:host-)?failed$/ });
 const worker = await createOwnedTesseractWorker(options);
 await worker.setParameters({ tessedit_pageseg_mode: "11" });
 assert.equal((await worker.recognize(new Uint8Array([1]))).data.text, "fixture");
@@ -122,6 +122,29 @@ console.log("safe-failure");
 		expect(result.stderr).not.toContain("private-recognized-text");
 	});
 
+	it("contains an engine thread error, keeps HTTP alive, and sanitizes host failures", () => {
+		const workerPath = createControlledEngine(
+			'if (action === "recognize") throw new Error("private-engine-error");',
+		);
+		const result = run(`
+import { createServer } from "node:http";
+const server = createServer((_, response) => response.end("alive"));
+await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
+try {
+  const worker = await createOwnedTesseractWorker({ workerPath: ${JSON.stringify(workerPath)} });
+  await assert.rejects(worker.recognize(new Uint8Array([1])), { message: "ocr-worker-host-failed" });
+  await worker.terminate();
+  const response = await fetch("http://127.0.0.1:" + server.address().port);
+  assert.equal(await response.text(), "alive");
+} finally { await new Promise(resolve => server.close(resolve)); }
+console.log("host-failure-contained");
+`);
+		expect(result.error).toBeUndefined();
+		expect(result.status, result.stderr).toBe(0);
+		expect(result.stdout.trim()).toBe("host-failure-contained");
+		expect(result.stderr).not.toContain("private-engine-error");
+	});
+
 	it("bounds pending work and cancellation releases stalled recognition", () => {
 		const workerPath = createControlledEngine(
 			'if (action === "recognize") return;',
@@ -143,7 +166,7 @@ console.log("cancelled");
 	it("cleans up competing failures in the same purpose-owned language cache", () => {
 		const result = run(`
 const options = { langPath: ${JSON.stringify(directory)}, cachePath: ${JSON.stringify(directory)}, cacheMethod: "none", gzip: false };
-await Promise.all([0, 1].map(() => assert.rejects(createOwnedTesseractWorker(options), /ocr-worker-failed/)));
+await Promise.all([0, 1].map(() => assert.rejects(createOwnedTesseractWorker(options), { message: /^ocr-worker-(?:host-)?failed$/ })));
 console.log("concurrent-failures-contained");
 `);
 		expect(result.error).toBeUndefined();
