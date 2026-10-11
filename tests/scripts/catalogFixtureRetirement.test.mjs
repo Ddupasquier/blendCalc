@@ -46,7 +46,7 @@ describe("purpose-owned catalog fixture retirement", () => {
 				.mockReturnValueOnce(Buffer.from(""))
 				.mockReturnValueOnce(Buffer.from(remaining));
 			expect(() => retireLocalQaCatalogFixtureHealth("50000", execute)).toThrow(
-				"left actionable publication work",
+				"retirement left",
 			);
 		});
 	}
