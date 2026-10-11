@@ -70,17 +70,23 @@ begin
         'Purpose-created synthetic pagination fixture retired; evidence remains insufficient and public API publication remains withheld.');
     end if;
   end loop;
+  -- These trusted fixture rows have finished their browser scenarios. Retire
+  -- their lifecycle as well as their review work; keep every row and audit.
+  -- Otherwise active-only publication views still reevaluate their deliberately
+  -- incomplete evidence on every subsequent privileged dashboard request.
+  update public.shared_products set status = 'retired'
+  where id between '${lower}'::uuid and '${upper}'::uuid and status = 'active';
 end;
 $$;
 commit;`);
 	const remaining = execute(
-		`select count(*) from public.catalog_health_actionable_issue_occurrences where shared_product_id between '${lower}'::uuid and '${upper}'::uuid and source_scope = 'blendcalc_api_publication' and status = 'open';`,
+		`select (select count(*) from public.shared_products where id between '${lower}'::uuid and '${upper}'::uuid and status = 'active') + (select count(*) from public.catalog_health_actionable_issue_occurrences where shared_product_id between '${lower}'::uuid and '${upper}'::uuid and source_scope = 'blendcalc_api_publication' and status = 'open');`,
 	)
 		.toString()
 		.trim();
 	if (!/^\d+$/u.test(remaining) || Number(remaining) !== 0) {
 		throw new Error(
-			"Catalog fixture retirement left actionable publication work.",
+			"Catalog fixture retirement left active products or actionable publication work.",
 		);
 	}
 };
