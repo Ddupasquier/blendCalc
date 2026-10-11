@@ -49,19 +49,24 @@ const moderatorEmail = "qa-moderator@blendcalc.local";
 const adminEmail = "qa-admin@blendcalc.local";
 const dataOperationsPath = "/profile/privileged-tools/data-operations";
 
-const signInLocalQaAdministratorWithAal2 = async (page: Page) => {
+const signInLocalQaAdministratorWithAal2 = async (
+	page: Page,
+	returnPath = dataOperationsPath,
+) => {
 	await deleteLocalQaAuthenticatorFactorsForEmail(adminEmail);
 	await signInLocalQaAccount({
 		page,
 		email: adminEmail,
 		nextPath: "/profile",
 	});
-	await page.goto(dataOperationsPath);
+	await page.goto(returnPath);
 	await expect(page).toHaveURL(
-		/\/auth\/mfa\/enroll\?next=%2Fprofile%2Fprivileged-tools%2Fdata-operations$/,
+		(url) =>
+			url.pathname === "/auth/mfa/enroll" &&
+			url.searchParams.get("next") === returnPath,
 	);
 	await finishLocalQaAuthenticatorEnrollment(page);
-	await expect(page).toHaveURL((url) => url.pathname === dataOperationsPath);
+	await expect(page).toHaveURL((url) => url.pathname === returnPath);
 };
 
 const runImageModerationFixture = async (command: "seed" | "cleanup") =>
@@ -1319,8 +1324,10 @@ test.describe("administrator data operations", () => {
 					)
 				).status(),
 			).toBe(403);
-			await signInLocalQaAdministratorWithAal2(page);
-			await page.goto("/profile/privileged-tools/food-warning-reports");
+			await signInLocalQaAdministratorWithAal2(
+				page,
+				"/profile/privileged-tools/food-warning-reports",
+			);
 			await waitForAppReady(page);
 			const reports = page.locator("article.moderator-review-card");
 			const reportFooter = page.getByLabel("Reports pagination", {

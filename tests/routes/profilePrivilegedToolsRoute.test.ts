@@ -3,6 +3,7 @@ import { catalogDataOperationsHealthFixture } from "../fixtures/catalogDataOpera
 import { catalogMonitorModerationFixture } from "../fixtures/catalogMonitorModeration";
 
 const mocks = vi.hoisted(() => ({
+	parent: vi.fn(),
 	requireModeratorPermission: vi.fn(),
 	readPrivilegedToolReviewSummary: vi.fn(),
 	getUnavailablePrivilegedToolReviewSummary: vi.fn(),
@@ -28,6 +29,9 @@ vi.mock("$lib/server/moderation/catalogDataOperations.server", () => ({
 
 import { load } from "../../src/routes/profile/privileged-tools/+page.server";
 
+const loadRoute = (event: Record<string, unknown>) =>
+	load({ parent: mocks.parent, ...event } as never);
+
 describe("Profile privileged tools route", () => {
 	const reviewSummary = {
 		pendingProductSubmissions: 2,
@@ -45,6 +49,7 @@ describe("Profile privileged tools route", () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks();
+		mocks.parent.mockResolvedValue({});
 		mocks.readPrivilegedToolReviewSummary.mockResolvedValue(reviewSummary);
 		mocks.getUnavailablePrivilegedToolReviewSummary.mockReturnValue({
 			...reviewSummary,
@@ -60,7 +65,7 @@ describe("Profile privileged tools route", () => {
 		});
 		const locals = { supabase: {} };
 
-		await expect(load({ locals } as never)).resolves.toEqual({
+		await expect(loadRoute({ locals })).resolves.toEqual({
 			access: {
 				role: "moderator",
 				permissions: ["moderation.access"],
@@ -82,6 +87,7 @@ describe("Profile privileged tools route", () => {
 
 	it("adds catalog and API diagnostics for data operators", async () => {
 		mocks.requireModeratorPermission.mockResolvedValue({
+			user: { id: "admin-id" },
 			role: "admin",
 			permissions: ["moderation.access", "data_operations.catalog_health.read"],
 		});
@@ -93,9 +99,7 @@ describe("Profile privileged tools route", () => {
 		);
 		const supabase = {};
 
-		await expect(
-			load({ locals: { supabase } } as never),
-		).resolves.toMatchObject({
+		await expect(loadRoute({ locals: { supabase } })).resolves.toMatchObject({
 			diagnostics: {
 				dashboard: catalogDataOperationsHealthFixture,
 				catalogMonitor: catalogMonitorModerationFixture,
@@ -112,6 +116,7 @@ describe("Profile privileged tools route", () => {
 
 	it("keeps the workspaces usable when diagnostics fail", async () => {
 		mocks.requireModeratorPermission.mockResolvedValue({
+			user: { id: "admin-id" },
 			role: "admin",
 			permissions: ["moderation.access", "data_operations.catalog_health.read"],
 		});
@@ -120,7 +125,7 @@ describe("Profile privileged tools route", () => {
 		);
 
 		await expect(
-			load({ locals: { supabase: {} } } as never),
+			loadRoute({ locals: { supabase: {} } }),
 		).resolves.toMatchObject({
 			diagnostics: null,
 			diagnosticsUnavailable: true,
@@ -130,8 +135,98 @@ describe("Profile privileged tools route", () => {
 	it("keeps ordinary accounts out of the privileged landing route", async () => {
 		mocks.requireModeratorPermission.mockRejectedValue({ status: 403 });
 
-		await expect(load({ locals: {} } as never)).rejects.toMatchObject({
+		await expect(loadRoute({ locals: {} })).rejects.toMatchObject({
 			status: 403,
 		});
+		expect(mocks.parent).not.toHaveBeenCalled();
+		expect(mocks.readPrivilegedToolReviewSummary).not.toHaveBeenCalled();
+	});
+
+	const inheritedSnapshot = () => ({
+		authUser: { id: "moderator-id" },
+		privilegedToolAccess: {
+			role: "moderator",
+			permissions: ["moderation.access"],
+			reviewSummary,
+		},
+	});
+	const permitModerator = () =>
+		mocks.requireModeratorPermission.mockResolvedValue({
+			user: { id: "moderator-id" },
+			role: "moderator",
+			permissions: ["moderation.access"],
+		});
+
+	it("reuses the matching request snapshot without repeating summary/admission work", async () => {
+		permitModerator();
+		mocks.parent.mockResolvedValue(inheritedSnapshot());
+		const result = await loadRoute({ locals: { supabase: {} } });
+		expect(result).toMatchObject({ access: { reviewSummary } });
+		expect(mocks.requireModeratorPermission).toHaveBeenCalledOnce();
+		expect(mocks.parent).toHaveBeenCalledOnce();
+		expect(mocks.readPrivilegedToolReviewSummary).not.toHaveBeenCalled();
+	});
+
+	for (const mismatch of [
+		"identity",
+		"role",
+		"permissions",
+		"assurance",
+	] as const) {
+		it(`reads an authorized fresh summary when the parent ${mismatch} differs`, async () => {
+			permitModerator();
+			const inherited = inheritedSnapshot();
+			if (mismatch === "identity") inherited.authUser.id = "other-user";
+			if (mismatch === "role") inherited.privilegedToolAccess.role = "admin";
+			if (mismatch === "permissions")
+				inherited.privilegedToolAccess.permissions = [];
+			if (mismatch === "assurance")
+				inherited.privilegedToolAccess.reviewSummary = {
+					...reviewSummary,
+					identityVerificationRequired: true,
+				};
+			mocks.parent.mockResolvedValue(inherited);
+			await expect(
+				loadRoute({ locals: { supabase: {} } }),
+			).resolves.toMatchObject({
+				access: { reviewSummary },
+			});
+			expect(mocks.readPrivilegedToolReviewSummary).toHaveBeenCalledOnce();
+		});
+	}
+
+	it("preserves the unavailable parent state without reporting zero work or retrying", async () => {
+		permitModerator();
+		const unavailable = {
+			...reviewSummary,
+			unavailable: true,
+			totalActionableItems: null,
+		};
+		mocks.parent.mockResolvedValue({
+			...inheritedSnapshot(),
+			privilegedToolAccess: {
+				...inheritedSnapshot().privilegedToolAccess,
+				reviewSummary: unavailable,
+			},
+		});
+		await expect(
+			loadRoute({ locals: { supabase: {} } }),
+		).resolves.toMatchObject({
+			access: { reviewSummary: unavailable },
+		});
+		expect(mocks.readPrivilegedToolReviewSummary).not.toHaveBeenCalled();
+	});
+
+	it("enforces MFA before considering a matching privileged parent snapshot", async () => {
+		mocks.parent.mockResolvedValue(inheritedSnapshot());
+		mocks.requireModeratorPermission.mockRejectedValue({
+			status: 303,
+			location: "/auth/mfa/challenge",
+		});
+		await expect(loadRoute({ locals: {} })).rejects.toMatchObject({
+			status: 303,
+		});
+		expect(mocks.parent).not.toHaveBeenCalled();
+		expect(mocks.readPrivilegedToolReviewSummary).not.toHaveBeenCalled();
 	});
 });

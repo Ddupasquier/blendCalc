@@ -444,6 +444,13 @@ displaying both. Every automatic resolution or routing appends an immutable
 category, package, policy, and other differences remain visible unless exact stored
 evidence proves the outcome.
 
+Profile layout owns the review-summary snapshot for its request. The tools landing
+still independently requires the current role, permission and MFA, then reuses that
+snapshot only for the same verified user and matching role/permission set. Missing,
+mismatched or identity-verification-pending parent data uses the existing authorized
+reader. An unavailable parent summary remains unavailable; it is never a zero-work
+claim or an authorization cache.
+
 The same pass rechecks legacy pending product submissions against the active catalog
 with the current product-resolution policy. A semantic exact match closes as an
 accepted no-op (`queue_resolution = already_available`). A legacy new-product row for
