@@ -6,6 +6,7 @@ import {
 } from "./browserTest";
 
 const toolsPath = "/profile/privileged-tools";
+const profilePath = "/profile";
 const queuePath = "/api/moderation/food-warning-queues?queue=reports";
 
 // Register each maintained persona alongside the tests that reset its MFA factors.
@@ -20,7 +21,9 @@ export const registerQuickQaMfaTests = (
 			async ({ context, page }) => {
 				// Keep the fixture's TEST-only quota partition while removing its session.
 				await context.clearCookies({ name: /auth-token/ });
-				await page.goto(`/auth?next=${encodeURIComponent(toolsPath)}`);
+				// Auth can legitimately wait31s for replay-safe TOTP. Keep its
+				// role/session proof independent of the tools diagnostics workload.
+				await page.goto(`/auth?next=${encodeURIComponent(profilePath)}`);
 				await waitForAppReady(page);
 				await page.getByRole("combobox", { name: "QA account" }).click();
 				await page
@@ -29,17 +32,24 @@ export const registerQuickQaMfaTests = (
 				await page
 					.getByRole("button", { name: `Continue as QA ${persona}` })
 					.click();
-				await expect(page).toHaveURL((url) => url.pathname === toolsPath, {
+				await expect(page).toHaveURL((url) => url.pathname === profilePath, {
 					timeout: 45_000,
 				});
-				await expect(
-					page.getByRole("heading", { name: `${persona} tools`, exact: true }),
-				).toBeVisible();
+				const roleLink = page.getByRole("link", {
+					name: new RegExp(`${persona} tools`),
+				});
+				await expect(roleLink).toBeVisible();
+				await expect(roleLink).toHaveAttribute("href", toolsPath);
 				await expect(page.getByLabel("Six-digit code")).toHaveCount(0);
 				const response = await page.request.get(queuePath);
 				expect(response.status()).toBe(200);
 				await page.reload();
-				await expect(page).toHaveURL((url) => url.pathname === toolsPath);
+				await expect(page).toHaveURL((url) => url.pathname === profilePath);
+				await expect(roleLink).toBeVisible();
+				await expect(roleLink).toHaveAttribute("href", toolsPath);
+				await expect(page.getByLabel("Six-digit code")).toHaveCount(0);
+				const reloadedAccess = await page.request.get(queuePath);
+				expect(reloadedAccess.status()).toBe(200);
 			},
 		);
 	}
