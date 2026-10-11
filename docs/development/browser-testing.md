@@ -36,6 +36,13 @@ Playwright does not replace physical-device camera and permission checks, VoiceO
 TalkBack, named installed-browser sign-off, or subjective visual approval. Those remain
 in the manual QA queue until directly observed in the required environment.
 
+The ingredient corner corpus emulates 200% layout and painting in an ordinary tracked
+page fixture: a 195×450 CSS viewport and 2× pixel density represent a 390×900 display.
+Device-pixel captures preserve the physical corner samples and the same zero-escape
+assertion. Root CSS zoom is unsuitable for this corpus because viewport-height panes
+can remain too tall to scroll the selected card above fixed navigation. This emulation
+does not prove native browser zoom, pinch zoom, or a physical device.
+
 The automated accessibility gate currently owns structural WCAG A/AA rules. Existing
 shared-token color-contrast debt remains explicit in QA and is not hidden by presenting
 the structural scan as complete accessibility certification.

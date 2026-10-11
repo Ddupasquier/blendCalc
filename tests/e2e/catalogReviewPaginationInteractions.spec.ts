@@ -6,6 +6,7 @@ import {
 } from "./support/browserTest";
 import { finishLocalQaAuthenticatorEnrollment } from "./support/localQaAuthenticator";
 import { createLocalQaCatalogReviewer } from "./support/localQaCatalogReviewer";
+import { retireLocalQaCatalogFixtureHealth } from "./support/localQaCatalogFixtureRetirement";
 import { randomInt } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
@@ -14,6 +15,22 @@ import type { Page, TestInfo } from "@playwright/test";
 // This corpus owns global catalog queues and one disposable MFA persona. Run serially.
 test.describe.configure({ mode: "serial" });
 const root = "/profile/privileged-tools/catalog-review-work";
+// Each scenario owns a namespace; each audited teardown task handles at most16 products.
+const pendingFixtureHealthRetirements: string[] = [];
+for (let fixtureIndex = 0; fixtureIndex < 4; fixtureIndex += 1) {
+	for (let first = 1; first <= 61; first += 16) {
+		test.afterAll(() => {
+			const scope = pendingFixtureHealthRetirements[fixtureIndex];
+			if (scope)
+				retireLocalQaCatalogFixtureHealth(
+					scope,
+					localSql,
+					first,
+					Math.min(first + 15, 61),
+				);
+		});
+	}
+}
 const fixtureSql =
 	"begin;\n" +
 	readFileSync(
@@ -25,13 +42,20 @@ const fixtureSql =
 		)[1]
 		.split("select ok(not has_function_privilege")[0] +
 	"\ncommit;";
+const localProjectId = readFileSync("supabase/config.toml", "utf8").match(
+	/^project_id\s*=\s*"([a-zA-Z0-9_-]+)"$/m,
+)?.[1];
+if (!localProjectId) throw new Error("Local test project ID is unavailable.");
+
 const localSql = (sql: string) =>
 	execFileSync(
 		"docker",
 		[
 			"exec",
+			"-e",
+			"PGOPTIONS=-c statement_timeout=40000 -c idle_in_transaction_session_timeout=40000",
 			"-i",
-			"supabase_db_blendcalc",
+			`supabase_db_${localProjectId}`,
 			"psql",
 			"-U",
 			"postgres",
@@ -42,7 +66,7 @@ const localSql = (sql: string) =>
 			"--tuples-only",
 			"--no-align",
 		],
-		{ input: sql, stdio: ["pipe", "pipe", "pipe"] },
+		{ input: sql, stdio: ["pipe", "pipe", "pipe"], timeout: 45_000 },
 	);
 
 test("independent catalog reviewers keep ordinary Auth and MFA sessions isolated @compatibility @mobile", async ({
@@ -71,6 +95,9 @@ test("independent catalog reviewers keep ordinary Auth and MFA sessions isolated
 		// The old enrollment page is already hydrated; wait for the actual
 		// verified landing before invoking application-ready interactions.
 		await waitForAppReady(page);
+		await expect(
+			page.getByRole("region", { name: "Products needing review" }),
+		).toBeVisible();
 		const secondReviewer = await createLocalQaCatalogReviewer();
 		await secondReviewer.cleanup();
 		await page.reload();
@@ -140,6 +167,10 @@ const withCatalogReviewFixture = async (
 	try {
 		localSql(scopedSql);
 		seeded = true;
+		if (pendingFixtureHealthRetirements.length >= 4) {
+			throw new Error("Catalog fixture retirement capacity exceeded.");
+		}
+		pendingFixtureHealthRetirements.push(scope);
 		await signInLocalQaAccount({
 			page,
 			email: reviewer.email,
@@ -154,6 +185,7 @@ const withCatalogReviewFixture = async (
 	} finally {
 		// Only purpose-created fixture rows: reviewed state is removed by the
 		// final disposable reset, not by bypassing immutable-history safeguards here.
+		// Publication work is finished as withheld through the audited review RPC.
 		try {
 			if (seeded)
 				localSql(
