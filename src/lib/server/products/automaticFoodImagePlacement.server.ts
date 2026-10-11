@@ -1,5 +1,9 @@
 import sharp from "sharp";
-import { createWorker, PSM, type Worker } from "tesseract.js";
+import { PSM } from "tesseract.js";
+import {
+	createOwnedTesseractWorker,
+	type OwnedTesseractWorker,
+} from "$lib/server/ocr/createOwnedTesseractWorker.server";
 import { createServerTesseractWorkerOptions } from "$lib/server/ocr/serverTesseractCache.server";
 import {
 	createFullImagePlacement,
@@ -28,7 +32,7 @@ const recognizeQuarterTurns = async ({
 	pageSegmentationMode,
 	rotationDegreesToCheck = QUARTER_TURN_RECOGNITION_ATTEMPTS,
 }: {
-	worker: Worker;
+	worker: OwnedTesseractWorker;
 	imageBuffer: Buffer;
 	pageSegmentationMode: PSM;
 	rotationDegreesToCheck?: ImageRotationDegrees[];
@@ -105,9 +109,7 @@ export const suggestAutomaticFoodImagePlacement = async ({
 		horizontalMovement: "left-only",
 		value: createFullImagePlacement(),
 	});
-	const worker = await createWorker(
-		"eng",
-		undefined,
+	const worker = await createOwnedTesseractWorker(
 		createServerTesseractWorkerOptions(),
 	);
 

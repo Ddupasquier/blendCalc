@@ -671,6 +671,13 @@ live outside the public schema so database helpers do not silently expand the Da
 
 ## Module Boundaries
 
+- `src/lib/server/ocr/createOwnedTesseractWorker.server.ts`: owns the server and
+  image-backfill OCR engine lifetime. Tesseract runs inside a terminable host thread
+  so language/startup failures cannot throw into the application or leave an
+  inaccessible engine behind. Startup and each serial operation have a 30-second
+  deadline; termination releases pending work and nested threads. Nutrition jobs
+  retain their serial queue and 20-second warm reuse window. Engine chatter stays
+  private; callers retain their existing safe failure and manual-entry fallback.
 - `src/routes/**/+page.server.ts`: route authentication handoff and thin load wiring.
 - `src/lib/server/moderation`: shared moderator role enforcement and bounded privileged
   read repositories. Catalog health uses the caller's authenticated client so the RPC

@@ -9,8 +9,10 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("tesseract.js", () => ({
-	createWorker: mocks.createWorker,
 	PSM: { SPARSE_TEXT: "11" },
+}));
+vi.mock("$lib/server/ocr/createOwnedTesseractWorker.server", () => ({
+	createOwnedTesseractWorker: mocks.createWorker,
 }));
 
 vi.mock("sharp", () => ({ default: mocks.sharp }));
@@ -179,5 +181,20 @@ describe("nutrition label OCR background processor", () => {
 		);
 		expect(terminate).toHaveBeenCalledTimes(1);
 		expect(remove).toHaveBeenCalledWith([`owner/${jobId}.webp`]);
+	});
+
+	it("records startup failure without poisoning a subsequent job", async () => {
+		mocks.createWorker.mockRejectedValueOnce(new Error("ocr-worker-failed"));
+		const { processNutritionLabelOcrJob } =
+			await import("$lib/server/ocr/nutritionLabelOcrJobs.server");
+		await expect(processNutritionLabelOcrJob(jobId)).resolves.toEqual({
+			status: "failed",
+		});
+		await expect(processNutritionLabelOcrJob(jobId)).resolves.toEqual({
+			status: "completed",
+		});
+		expect(mocks.createWorker).toHaveBeenCalledTimes(2);
+		expect(recognize).toHaveBeenCalledTimes(1);
+		expect(remove).toHaveBeenCalledTimes(2);
 	});
 });
