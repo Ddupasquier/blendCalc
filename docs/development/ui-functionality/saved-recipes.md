@@ -44,6 +44,19 @@ units, routes missing Fridge items to Shopping List when possible, and then navi
 Mix. Loading or deleting shows focused pending and error states. Delete uses the shared
 two-step confirmation.
 
+## Sharing And Copying
+
+Share uses the device share sheet when supported and otherwise copies readable text.
+Both paths include the recipe name, saved ingredient amounts, selected nutrition and
+`Created with blendCalc`. Sharing or cancelling does not modify the recipe.
+
+A nutrition total is complete only when every ingredient has a usable numeric amount
+on its saved serving basis. Missing data or an unavailable exact serving conversion
+produces a labeled known subtotal and an incomplete-total explanation. If no ingredient
+has calculable data, the selected nutrient is unknown rather than zero. A reported zero
+remains zero; incompatible units never form one total. This export rule does not change
+Mix calculation fallback or stored food data.
+
 ## Empty And Loading States
 
 Use the quiet open-page presentation and shared circular icon framing established by
