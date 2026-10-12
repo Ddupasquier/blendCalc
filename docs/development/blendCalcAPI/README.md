@@ -593,6 +593,9 @@ Preview status is stored separately from semantic version metadata.
 [Versioning](../versioning.md) owns release rules and consistency commands. Do not infer
 an API release from the application package version.
 
+The [API changelog](changelog.md) records compatible additions, corrections, announced
+deprecations and breaking changes separately from app releases.
+
 ## Related Provider Documentation
 
 The [External API Structure References](../api-structures/README.md) own sampled USDA
