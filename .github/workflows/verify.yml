@@ -265,7 +265,7 @@ jobs:
             shard: ""
     env:
       PLAYWRIGHT_ENFORCE_DURATION_BUDGETS: true
-      PLAYWRIGHT_WORKERS: ${{ matrix.project == 'desktop-webkit' && github.event_name == 'workflow_dispatch' && inputs.desktop_webkit_workers == '1' && '1' || '2' }}
+      PLAYWRIGHT_WORKERS: 2
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
@@ -282,7 +282,12 @@ jobs:
         env:
           PLAYWRIGHT_PROJECT: ${{ matrix.project }}
           PLAYWRIGHT_SHARD: ${{ matrix.shard }}
+          EVENT_NAME: ${{ github.event_name }}
+          REQUESTED_DESKTOP_WEBKIT_WORKERS: ${{ inputs.desktop_webkit_workers }}
         run: |
+          if [[ "$EVENT_NAME" == "workflow_dispatch" && "$PLAYWRIGHT_PROJECT" == "desktop-webkit" && "$REQUESTED_DESKTOP_WEBKIT_WORKERS" == "1" ]]; then
+            export PLAYWRIGHT_WORKERS=1
+          fi
           args=(--project="$PLAYWRIGHT_PROJECT")
           if [[ -n "$PLAYWRIGHT_SHARD" ]]; then
             args+=(--shard="$PLAYWRIGHT_SHARD")
