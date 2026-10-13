@@ -191,6 +191,12 @@ const registeredSections = [
 				"The food-data API, its status and supported endpoints.",
 			],
 			[
+				"docs/development/blendCalcAPI/changelog.md",
+				"development/blendCalcAPI/changelog/",
+				"API changelog",
+				"API contract changes, compatibility and consumer migration guidance.",
+			],
+			[
 				"docs/development/blendCalcAPI/database-isolation.md",
 				"development/blendCalcAPI/database-isolation/",
 				"API database isolation",

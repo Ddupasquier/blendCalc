@@ -365,6 +365,56 @@ describe("real workflow browser routing", () => {
 		expect(result.stderr).toContain("missing-fixture-ref");
 	});
 
+	it.each([
+		["workflow_dispatch", "desktop-webkit", "1", "1"],
+		["workflow_dispatch", "desktop-webkit", "2", "2"],
+		["workflow_dispatch", "desktop-webkit", "", "2"],
+		["push", "desktop-webkit", "1", "2"],
+		["pull_request", "desktop-webkit", "1", "2"],
+		["workflow_dispatch", "mobile-webkit", "1", "2"],
+		["workflow_dispatch", "desktop-chromium", "1", "2"],
+	])(
+		"limits the serial override to an explicit desktop WebKit dispatch (%s, %s, %s)",
+		(eventName, project, requestedWorkers, expectedWorkers) => {
+			const fixture = createFixture([]);
+			const workerOutput = join(fixture.root, "worker-output");
+			writeFileSync(
+				join(fixture.root, "command-guards/npm"),
+				'#!/bin/sh\nprintf "%s\\n" "$PLAYWRIGHT_WORKERS" "$@" > "$WORKER_OUTPUT"\n',
+				{ mode: 0o755 },
+			);
+			const browserStep = workflow.jobs.browser.steps.find(
+				(step) => step.name === "Run browser project",
+			);
+			const result = spawnSync("bash", ["-e", "-c", browserStep.run], {
+				cwd: fixture.root,
+				env: {
+					...fixture.env,
+					EVENT_NAME: eventName,
+					PLAYWRIGHT_PROJECT: project,
+					PLAYWRIGHT_SHARD: "",
+					REQUESTED_DESKTOP_WEBKIT_WORKERS: requestedWorkers,
+					PLAYWRIGHT_WORKERS: String(
+						workflow.jobs.browser.env.PLAYWRIGHT_WORKERS,
+					),
+					WORKER_OUTPUT: workerOutput,
+				},
+				encoding: "utf8",
+			});
+			expect(result.status, result.stderr).toBe(0);
+			expect(readFileSync(workerOutput, "utf8").trim().split("\n")).toEqual([
+				expectedWorkers,
+				"run",
+				"test:e2e",
+				"--",
+				`--project=${project}`,
+			]);
+			expect(
+				workflow.on.workflow_dispatch.inputs.desktop_webkit_workers.default,
+			).toBe("2");
+		},
+	);
+
 	it("retains the six isolated jobs, existing worker counts and deadlines", () => {
 		const matrix = workflow.jobs.browser.strategy.matrix.include;
 		expect(matrix.map(({ label }) => label)).toEqual([

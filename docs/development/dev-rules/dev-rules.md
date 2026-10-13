@@ -1563,8 +1563,11 @@ ingestion, normalized storage, moderation, provenance, and API responses. A repo
 zero is real data. A trace value remains trace unless the source supplies a numeric
 amount. Missing and unmapped values remain unknown source facts and must never be stored
 as reported zero or copied from a vaguely similar food. At the app consumption boundary,
-ingredient nutrition labels, Mix calculations, charts, warnings, and exports treat an
-absent nutrient amount as zero without showing a partial-label disclosure. This is an
+ingredient nutrition labels, Mix calculations, charts, and warnings treat an
+absent nutrient amount as zero without showing a partial-label disclosure. Shared and
+copied saved-recipe text instead labels a known subtotal as incomplete when any
+ingredient lacks a calculable nutrient amount; an entirely unknown total stays unknown.
+A genuinely reported zero remains numeric zero. This is an
 explicit product calculation/display fallback only; it must not mutate canonical data,
 field status, attribution, confidence, or future API output. Before assigning internal
 completeness or moderation status, check enabled source mappings, aliases, units,
