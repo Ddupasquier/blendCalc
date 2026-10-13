@@ -62,8 +62,10 @@ worker validates and reuses its browser state beneath ignored `test-results/`, s
 in only when that state is missing or no longer authentic. This prevents worker restarts
 and immediate matrix reruns from wasting Auth capacity. Two workers run by default: the
 bounded matrix completed in 3.7 minutes with two workers and 4.2 minutes with three on
-the current development machine. CI also uses two workers per isolated job. Override
-the local accounts only when a deliberate hosted test run requires it:
+the current development machine. CI defaults to two workers per isolated job. With
+explicit release approval, a Verify dispatch may select `desktop_webkit_workers=1` for
+that invocation's desktop WebKit job; all other jobs and assertions remain unchanged.
+Override the local accounts only when a deliberate hosted test run requires it:
 
 ```bash
 PLAYWRIGHT_QA_EMAILS="first@example.test,second@example.test" \

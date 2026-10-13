@@ -101,6 +101,15 @@ API changes remain deliberate:
    document, and a documented migration period.
 3. Run `npm run version:check` after changing any API version source.
 
+The [API changelog](blendCalcAPI/changelog.md) owns consumer-facing API change history.
+Update its Unreleased section alongside every contract change, grouping additions,
+corrections, deprecations and breaking changes separately. At the API release boundary,
+move only the shipped changes into a dated entry with the path, response and OpenAPI
+versions, exact released contract link, consumer action and applicable migration guide.
+Keep unreleased work out of released entries. Documentation-only corrections do not
+require an API version bump. Announced removal dates and compatibility commitments
+must be approved before publication; the changelog does not establish them by itself.
+
 Current product reads and product revision-history reads remain separate endpoints.
 Adding the bounded `/api/v1/products/{barcode}/revisions` resource is a compatible API
 v1 addition; it does not expand the current-product response with historical snapshots

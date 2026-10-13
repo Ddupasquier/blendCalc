@@ -19,6 +19,14 @@ on:
         options:
           - full
           - feature
+      desktop_webkit_workers:
+        description: Desktop WebKit workers (one requires explicit release approval)
+        required: true
+        default: "2"
+        type: choice
+        options:
+          - "2"
+          - "1"
 
 permissions:
   actions: read
@@ -274,7 +282,12 @@ jobs:
         env:
           PLAYWRIGHT_PROJECT: ${{ matrix.project }}
           PLAYWRIGHT_SHARD: ${{ matrix.shard }}
+          EVENT_NAME: ${{ github.event_name }}
+          REQUESTED_DESKTOP_WEBKIT_WORKERS: ${{ inputs.desktop_webkit_workers }}
         run: |
+          if [[ "$EVENT_NAME" == "workflow_dispatch" && "$PLAYWRIGHT_PROJECT" == "desktop-webkit" && "$REQUESTED_DESKTOP_WEBKIT_WORKERS" == "1" ]]; then
+            export PLAYWRIGHT_WORKERS=1
+          fi
           args=(--project="$PLAYWRIGHT_PROJECT")
           if [[ -n "$PLAYWRIGHT_SHARD" ]]; then
             args+=(--shard="$PLAYWRIGHT_SHARD")

@@ -284,8 +284,11 @@ instead select full verification and the existing isolated parallel matrix. This
 all bounded cases without running the whole matrix sequentially or raising worker
 counts inside the shared database.
 Run multi-project checks of shared warning queues or MFA reviewer accounts locally with
-`PLAYWRIGHT_WORKERS=1` too. Keep the isolated full-matrix jobs at two workers; do not
-relax assertions or skip projects to hide shared-state races.
+`PLAYWRIGHT_WORKERS=1` too. Isolated full-matrix jobs default to two workers. An
+explicitly approved release verification may select `desktop_webkit_workers=1` when
+dispatching Verify; this affects only desktop WebKit for that invocation. Push and pull
+request runs retain two workers. Keep every test, assertion, timeout and project; this
+resource adjustment does not establish the cause of an intermittent failure.
 
 ## Quiet Output
 
