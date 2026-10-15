@@ -4,6 +4,16 @@ This contract covers the application shell, account entry, shared navigation, da
 welcome, and guided tutorial. Auth configuration and security details remain in
 [Authentication](../authentication.md).
 
+## Quick Navigation
+
+| Need                | Section                                                                              |
+| ------------------- | ------------------------------------------------------------------------------------ |
+| Public entry        | [Landing page](#signed-out-landing-page)                                             |
+| Account access      | [Sign-in](#sign-in) and [privileged verification](#privileged-identity-verification) |
+| App navigation      | [Authenticated shell](#authenticated-shell)                                          |
+| Publisher ownership | [AdSense verification](#adsense-site-verification)                                   |
+| Onboarding          | [Daily welcome](#daily-welcome) and [guided tutorial](#guided-tutorial)              |
+
 ## Signed-Out Landing Page
 
 - Present one focused marketing and sign-in surface; hide authenticated navigation.
