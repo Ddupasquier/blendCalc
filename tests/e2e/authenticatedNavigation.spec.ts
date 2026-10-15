@@ -2,7 +2,7 @@ import { expect, test, waitForAppReady } from "./support/browserTest";
 
 test(
 	"primary tabs use client navigation without remounting the document",
-	{ tag: "@compatibility" },
+	{ tag: ["@smoke", "@compatibility"] },
 	async ({ page }) => {
 		await page.goto("/ingredients/fridge");
 		await waitForAppReady(page);

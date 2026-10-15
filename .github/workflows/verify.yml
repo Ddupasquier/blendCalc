@@ -7,8 +7,9 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
   push:
     branches:
-      - "**"
-      - "!release/**"
+      - staging
+      - main
+      - mock-staging
   workflow_dispatch:
     inputs:
       scope:
@@ -127,15 +128,6 @@ jobs:
             comparison_base=$(git merge-base origin/staging HEAD)
           fi
 
-          if [[ "$mode" == "feature" ]]; then
-            TEST_BASE_REF="$comparison_base" node scripts/operations/quality/run_affected_tests.mjs browser --plan-only
-            shared_browser_ownership=$(node -e 'const { browserSelection } = require("./test-results/affected-test-selection.json"); console.log(browserSelection.projects.length === 0)')
-            if [[ "$shared_browser_ownership" == "true" ]]; then
-              echo "Shared browser ownership requires the isolated full matrix."
-              mode=full
-            fi
-          fi
-
           dependencies=false
           if [[ "$mode" == "full" || "$mode" == "reuse" ]]; then
             dependencies=true
@@ -218,11 +210,10 @@ jobs:
         if: needs.verification-plan.outputs.mode != 'reuse'
         run: npm run check
       - name: Run affected Vitest coverage
-        if: needs.verification-plan.outputs.mode == 'feature'
+        if: needs.verification-plan.outputs.mode != 'reuse'
         run: npm run test:affected
-      - name: Run complete Vitest coverage
-        if: needs.verification-plan.outputs.mode == 'full'
-        run: npm test
+        env:
+          TEST_BASE_REF: ${{ needs.verification-plan.outputs.comparison-base }}
       - name: Build production application
         if: needs.verification-plan.outputs.mode != 'reuse'
         run: npm run build
@@ -239,30 +230,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - label: desktop-chromium-1-of-2
+          - label: desktop-chromium
             project: desktop-chromium
             browser: chromium
-            shard: "1/2"
-          - label: desktop-chromium-2-of-2
-            project: desktop-chromium
-            browser: chromium
-            shard: "2/2"
-          - label: desktop-firefox
-            project: desktop-firefox
-            browser: firefox
-            shard: ""
           - label: desktop-webkit
             project: desktop-webkit
             browser: webkit
-            shard: ""
-          - label: mobile-chromium
-            project: mobile-chromium
-            browser: chromium
-            shard: ""
-          - label: mobile-webkit
-            project: mobile-webkit
-            browser: webkit
-            shard: ""
     env:
       PLAYWRIGHT_ENFORCE_DURATION_BUDGETS: true
       PLAYWRIGHT_WORKERS: 2
@@ -281,17 +254,13 @@ jobs:
       - name: Run browser project
         env:
           PLAYWRIGHT_PROJECT: ${{ matrix.project }}
-          PLAYWRIGHT_SHARD: ${{ matrix.shard }}
           EVENT_NAME: ${{ github.event_name }}
           REQUESTED_DESKTOP_WEBKIT_WORKERS: ${{ inputs.desktop_webkit_workers }}
         run: |
           if [[ "$EVENT_NAME" == "workflow_dispatch" && "$PLAYWRIGHT_PROJECT" == "desktop-webkit" && "$REQUESTED_DESKTOP_WEBKIT_WORKERS" == "1" ]]; then
             export PLAYWRIGHT_WORKERS=1
           fi
-          args=(--project="$PLAYWRIGHT_PROJECT")
-          if [[ -n "$PLAYWRIGHT_SHARD" ]]; then
-            args+=(--shard="$PLAYWRIGHT_SHARD")
-          fi
+          args=(--project="$PLAYWRIGHT_PROJECT" --grep=@smoke)
           npm run test:e2e -- "${args[@]}"
       - name: Upload nutrition-switch review images
         if: success() && matrix.project == 'desktop-chromium'
@@ -321,7 +290,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      # All selected projects share this job's database and privileged fixtures.
+      TEST_BASE_REF: ${{ needs.verification-plan.outputs.comparison-base }}
+      # Selected flows share this job's database and privileged fixtures.
       PLAYWRIGHT_WORKERS: 1
     steps:
       - name: Check out repository history

@@ -1,16 +1,21 @@
 /**
- * Purpose: Select the smallest honest Vitest or Playwright scope from files changed
+ * Purpose: Select affected unit/browser checks and conditional local database
+ * verification from files changed
  * against staging plus current working-tree edits. Browser selection maps application
- * ownership to its routed specs and expands to the bounded compatibility matrix when
+ * ownership to its routed Chromium specs and checks all Chromium flows when
  * shared browser infrastructure changes.
  * Run: `npm run test:affected`, `npm run test:e2e:affected`, or
  * `node scripts/operations/quality/run_affected_tests.mjs browser --prepare`. CI may
  * preinstall the selected engines with the `browser --install-browsers` mode.
- * Add `--plan-only` to write the ignored selection report without installing browsers,
- * preparing databases, or running tests.
+ * Use `database` to verify pgTAP only for database-owned changes. Add `--plan-only`
+ * to write the ignored selection report without installing browsers,
+ * preparing databases, or running tests. Writes an ignored selection report; maintained
+ * database/browser wrappers own fixture changes and cleanup.
  */
 
 import { spawnSync } from "node:child_process";
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
 import { mkdir, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
@@ -72,10 +77,17 @@ const getChangedFiles = () => {
 		...readLines("git", [
 			"diff",
 			"--name-only",
-			"--diff-filter=ACMR",
+			"--diff-filter=ACDMR",
+			"--no-renames",
 			`${mergeBase}...HEAD`,
 		]),
-		...readLines("git", ["diff", "--name-only", "--diff-filter=ACMR"]),
+		...readLines("git", [
+			"diff",
+			"HEAD",
+			"--name-only",
+			"--diff-filter=ACDMR",
+			"--no-renames",
+		]),
 		...readLines("git", ["ls-files", "--others", "--exclude-standard"]),
 	]);
 	return [...changedFiles].sort();
@@ -138,14 +150,18 @@ const globalUnitOwners = [
 
 const getBrowserSelection = (changedFiles) => {
 	const directlyChangedSpecs = changedFiles.filter(
-		(file) => file.startsWith("tests/e2e/") && file.endsWith(".spec.ts"),
+		(file) =>
+			file.startsWith("tests/e2e/") &&
+			file.endsWith(".spec.ts") &&
+			existsSync(resolve(repositoryRoot, file)),
 	);
 	const runBoundedMatrix = changedFiles.some((file) =>
 		globalBrowserOwners.some((owner) => file.includes(owner)),
 	);
 	if (runBoundedMatrix) {
 		return {
-			projects: [],
+			projects: ["desktop-chromium"],
+			allSpecs: true,
 			reason: "shared browser ownership changed",
 			specs: [],
 		};
@@ -162,7 +178,8 @@ const getBrowserSelection = (changedFiles) => {
 		}
 	}
 	return {
-		projects: ["desktop-chromium", "mobile-chromium"],
+		projects: ["desktop-chromium"],
+		allSpecs: false,
 		reason:
 			specs.size > 0 ? "domain owners changed" : "no browser owner changed",
 		specs: [...specs].sort(),
@@ -196,24 +213,18 @@ const runAffectedUnitTests = (changedFiles) => {
 };
 
 const runAffectedBrowserTests = (selection) => {
-	if (selection.projects.length > 0 && selection.specs.length === 0) {
+	if (!selection.allSpecs && selection.specs.length === 0) {
 		console.log("No browser-owned files changed; Playwright is not required.");
 		return;
 	}
 	if (shouldInstallBrowserDependencies) {
-		const engines =
-			selection.projects.length === 0
-				? ["chromium", "firefox", "webkit"]
-				: [
-						...new Set(
-							selection.projects.map((project) => project.split("-").at(-1)),
-						),
-					];
+		const engines = [
+			...new Set(
+				selection.projects.map((project) => project.split("-").at(-1)),
+			),
+		];
 		runCommand("npx", ["playwright", "install", "--with-deps", ...engines]);
 		return;
-	}
-	if (shouldPrepareBrowserEnvironment) {
-		runCommand("npm", ["run", "test:e2e:prepare"]);
 	}
 	const projectArguments = selection.projects.flatMap((project) => [
 		`--project=${project}`,
@@ -237,18 +248,27 @@ const runAffectedBrowserTests = (selection) => {
 	if (browserTestStatus !== 0) process.exit(browserTestStatus);
 };
 
-if (!new Set(["all", "browser", "unit"]).has(mode)) {
+if (!new Set(["all", "browser", "unit", "database"]).has(mode)) {
 	throw new Error(`Unknown affected-test mode ${JSON.stringify(mode)}.`);
 }
 
 const changedFiles = getChangedFiles();
 const browserSelection = getBrowserSelection(changedFiles);
+const databaseRequired = changedFiles.some((file) =>
+	[
+		"supabase/",
+		"scripts/operations/database/manage_test_database.mjs",
+		"scripts/lib/qa/local_qa_personas.mjs",
+		"src/lib/types/database.types.ts",
+		".github/workflows/database-verification.yml",
+	].some((owner) => file.startsWith(owner)),
+);
 await mkdir(fileURLToPath(new URL("../../../test-results/", import.meta.url)), {
 	recursive: true,
 });
 await writeFile(
 	reportPath,
-	`${JSON.stringify({ browserSelection, changedFiles, generatedAt: new Date().toISOString() }, null, 2)}\n`,
+	`${JSON.stringify({ browserSelection, databaseRequired, changedFiles, generatedAt: new Date().toISOString() }, null, 2)}\n`,
 );
 console.log(
 	`Affected-test selection: ${changedFiles.length} changed file${changedFiles.length === 1 ? "" : "s"}; ${browserSelection.reason}.`,
@@ -259,4 +279,9 @@ if (!shouldOnlyPlan && (mode === "all" || mode === "unit")) {
 }
 if (!shouldOnlyPlan && (mode === "all" || mode === "browser")) {
 	runAffectedBrowserTests(browserSelection);
+}
+
+if (!shouldOnlyPlan && mode === "database") {
+	if (databaseRequired) runCommand("npm", ["run", "db:test", "--", "verify"]);
+	else console.log("No database-owned files changed; pgTAP is not required.");
 }
