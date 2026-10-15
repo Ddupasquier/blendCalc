@@ -2,7 +2,7 @@ import { expect, test, waitForAppReady } from "./support/browserTest";
 
 test(
 	"email authentication switches modes without stale credential fields",
-	{ tag: "@compatibility" },
+	{ tag: ["@smoke", "@compatibility"] },
 	async ({ context, page }) => {
 		await context.clearCookies();
 		await page.goto("/auth");

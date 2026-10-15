@@ -1293,7 +1293,9 @@ Notes:
   diagnostic fingerprint from operator queues. Raw occurrences, product data, revision
   history, and API publication remain unchanged. Changed product, revision, observation,
   submission, occurrence timestamp, or issue-set evidence automatically becomes
-  actionable again.
+  actionable again. Fingerprints are evaluated only for their matching disposition
+  outcome through a product-scoped lateral aggregate, so unrelated review categories
+  do not cause repeated readiness evaluation.
 - `catalog_health_repair_runs` is the immutable audit header for one AAL2 dry run or
   apply request against an open occurrence. It records the requesting user, issue,
   approved handler, linked dry run, status, bounded outcome counts, summary, and timing.
@@ -2256,6 +2258,9 @@ Notes:
   counts, classifies every issue as a publication blocker or nonblocking catalog
   diagnostic, and maps open normalized issues to ownership and supported action metadata.
   It excludes raw provider payloads, private evidence paths, and contributor identity.
+  Actionable occurrence matching is restricted to that same product before evaluating
+  computed occurrence keys and review fingerprints; unrelated catalog growth must not
+  turn a single-product passport into a global diagnostic scan.
 - `private.build_catalog_product_readiness_passport(p_shared_product_id)` owns the
   bounded shared-catalog and blendCalcAPI readiness assembly. Direct execution is
   revoked; the canonical authenticated wrapper independently preserves the AAL2

@@ -113,8 +113,8 @@ npx playwright test tests/e2e/affectedInteractions.spec.ts --project=desktop-chr
 
 `npm run test:affected` selects related Vitest files from the current diff.
 `npm run test:e2e:affected` prepares the browser environment and selects routed specs
-from the same ownership map. Use the `:run` variant during an existing browser-test
-session so Supabase and the production build are not prepared again.
+from the same ownership map, using desktop Chromium. Run the selector directly during
+an existing browser-test session so Supabase and the production build are not prepared again.
 
 Rerun only browser failures with:
 
@@ -125,13 +125,13 @@ npx playwright test --last-failed
 Use the visible terminal dashboard when a complete progress view is more useful than
 compact output:
 
-| Profile         | Command                    | Target       | Ownership                                                                                             |
-| --------------- | -------------------------- | ------------ | ----------------------------------------------------------------------------------------------------- |
-| Quick Check     | `npm run verify:quick`     | Under 4 min  | Formatting, lint, Svelte/TypeScript, and Vitest selected from changed ownership                       |
-| Feature Check   | `npm run verify:feature`   | Under 6 min  | Source gates plus Vitest and browser specs selected from changed ownership                            |
-| Release Check   | `npm run verify:release`   | Under 15 min | Dependency audit, source gates, disposable database, build, and the bounded blocking browser tiers    |
-| Promotion Check | `npm run verify:promotion` | Under 1 min  | Proves a clean promoted tree matches its tested candidate, using a local receipt when no ref is given |
-| Nightly Check   | `npm run verify:nightly`   | Nonblocking  | Release confidence plus every scenario in every maintained browser and device-emulation project       |
+| Profile          | Command                    | Target       | Ownership                                                                                                       |
+| ---------------- | -------------------------- | ------------ | --------------------------------------------------------------------------------------------------------------- |
+| Quick Check      | `npm run verify:quick`     | Under 4 min  | Formatting, lint, Svelte/TypeScript, and Vitest selected from changed ownership                                 |
+| Feature Check    | `npm run verify:feature`   | Under 6 min  | Source gates plus Vitest and browser specs selected from changed ownership                                      |
+| Release Check    | `npm run verify:release`   | Under 15 min | Dependency audit, source gates, affected tests, changed-database verification, build, and Chromium/WebKit smoke |
+| Promotion Check  | `npm run verify:promotion` | Under 1 min  | Proves a clean promoted tree matches its tested candidate, using a local receipt when no ref is given           |
+| Exhaustive Check | `npm run verify:nightly`   | Nonblocking  | Full unit/database coverage plus every scenario in all five browser projects; weekly or manual                  |
 
 VS Code exposes the same checks through **Terminal → Run Task**. Each task opens
 one dedicated terminal and shows stage progress, elapsed time, an estimate based on
@@ -152,7 +152,7 @@ npm run test:e2e:affected
 The selector maps Mix, Ingredients, Profile, Saved, and Auth ownership to their routed
 browser specs. Shared unit-test configuration expands Quick Check to every Vitest
 project. Shared shell, style, browser support, or Playwright configuration changes
-expand browser verification to the bounded blocking matrix. Do not rerun browser tests
+expand affected browser verification to all desktop Chromium specs. Do not rerun browser tests
 after documentation, comments, or unrelated source-only edits.
 
 ### Release Confidence
@@ -160,10 +160,10 @@ after documentation, comments, or unrelated source-only edits.
 Run `npm run verify:feature` on child branches. After approved children are merged into
 their parent feature branch, run the combined affected checks and complete the feature's
 visual or manual review there. Promote the approved parent directly to `staging` as the
-normal release candidate and let GitHub run the complete source and bounded browser
-confidence once. The source job starts with a parallel security/repository-policy
-preflight; expensive browser jobs begin only after that short preflight succeeds, and
-desktop Chromium is split into two shards. Reserve `mock-staging` for an unusual, dangerous, or
+normal release candidate and let GitHub run source/build, affected unit tests and
+Chromium/WebKit smoke once. The source job starts with a parallel security/repository-policy
+preflight; expensive browser jobs begin only after that short preflight succeeds,
+with one isolated job per smoke engine. Reserve `mock-staging` for an unusual, dangerous, or
 conflict-prone integration that needs a disposable checkpoint before `staging`; a
 multi-ticket feature does not require it merely because it has multiple children.
 
@@ -175,11 +175,11 @@ validates that receipt; `npm run verify:promotion -- --against <candidate-ref>` 
 an exact Git-tree promotion without rerunning the suite. Both paths fail closed on a
 dirty or changed tree. `--force-full` deliberately bypasses local reuse.
 
-GitHub runs affected Vitest and browser coverage on ordinary feature branches. It
-automatically expands shared browser-owner changes to full verification, using the
-existing isolated browser jobs instead of the sequential affected job. Narrow domain
-changes retain affected coverage. Planning uses the same ownership map as local checks
-and does not install browsers, prepare databases, or run tests.
+GitHub runs affected Vitest and Chromium browser coverage on feature pull requests.
+Verify runs on PR changes and protected integration-branch pushes, avoiding duplicate
+feature push and PR runs. Shared browser ownership expands the affected Chromium
+selection without triggering the release matrix. Narrow domain changes retain their
+routed specs. Planning never installs browsers, prepares databases or runs tests.
 
 Release integration branches (`release/**`) use one explicit `Verify` dispatch with
 `scope=full`, rather than duplicate push and PR matrices. Keep their PRs draft until
@@ -191,7 +191,7 @@ mandatory during reuse.
 
 `Ship` may dispatch `Verify` with `scope=full` on the exact assembled candidate before staging;
 when the later staging tree is identical and that dispatched run succeeded, staging
-reuses it. Otherwise staging runs the complete Vitest and bounded browser tiers once.
+reuses it. Otherwise staging runs affected Vitest and the release smoke suite once.
 An unchanged main promotion reuses staging. Database verification runs only
 when database-owned files changed. Hosted Auth health runs only when Auth-owned files
 changed, plus its daily drift check and manual runs.
@@ -214,7 +214,7 @@ branch, with focused child branches for independently reviewable work. Run Featu
 on each child. After the user approves a child, merge it into the parent branch and
 rerun only checks affected by the combined change. Complete visual and manual feature
 review on the assembled parent, then promote its exact tree directly to `staging` for
-one complete hosted candidate run. Use `mock-staging` first only for a genuinely
+one hosted release smoke run. Use `mock-staging` first only for a genuinely
 dangerous, unusual, or conflict-prone integration that should remain disposable until
 proven. If that run fails, reopen or repair the child that owns the failure and create
 a new candidate result.
@@ -232,7 +232,9 @@ During browser-facing feature work, run:
 npm run verify:feature
 ```
 
-The exact candidate's hosted full run supplies the broader release proof. Run
+The exact candidate's hosted `scope=full` run supplies release proof: source/build,
+affected unit coverage and browser smoke. The name `full` identifies the release
+workflow mode, not exhaustive coverage. Run
 `npm run db:test -- verify` when migrations, policies, functions, grants, Auth hooks,
 Storage behavior, or database-owned reference data changed. Run the maintained
 dependency audit after dependency or lockfile changes. Documentation-only work needs
@@ -272,22 +274,20 @@ specs across those isolated workers. Splitting a spec is still appropriate when 
 feature ownership becomes unclear, but splitting files solely to manufacture parallelism
 is unnecessary and creates churn without reducing execution time.
 
-Remote browser verification uses one job per Playwright project. Every job creates its
-own local Supabase stack, so Chromium, Firefox, WebKit, and compact projects cannot race
-one another. The jobs may use their isolated worker accounts internally, but sharding
-still requires one independent database environment per shard.
+Release browser verification uses one job per smoke engine. Every job creates its
+own local Supabase stack. Release smoke and weekly exhaustive engine jobs cannot race
+one another; workers within a job retain their isolated accounts.
 
 The narrow affected-browser feature job is the exception: selected projects share one
 disposable database and privileged reviewer fixtures, so it uses one Playwright worker.
 Shared shell, control, style, browser-support and Playwright-configuration changes
-instead select full verification and the existing isolated parallel matrix. This keeps
-all bounded cases without running the whole matrix sequentially or raising worker
-counts inside the shared database.
+select all desktop Chromium specs in the affected job. Extra engine or phone checks
+are deliberate diagnostics when the change depends on that environment.
 Catalog pagination fixtures retire through the audited helper in four-product
 transactions, retaining the 40-second SQL limit and every cleanup assertion. Larger
 batches can exceed that limit when the preserved TEST corpus has accumulated records.
 Run multi-project checks of shared warning queues or MFA reviewer accounts locally with
-`PLAYWRIGHT_WORKERS=1` too. Isolated full-matrix jobs default to two workers. An
+`PLAYWRIGHT_WORKERS=1` too. Isolated release smoke jobs default to two workers. An
 explicitly approved release verification may select `desktop_webkit_workers=1` when
 dispatching Verify; this affects only desktop WebKit for that invocation. Push and pull
 request runs retain two workers. Keep every test, assertion, timeout and project; this
@@ -329,20 +329,21 @@ only when a failure needs investigation.
 
 The checked-in workflows use Node.js 24 and a clean dependency install:
 
-- `.github/workflows/verify.yml` chooses feature, full-candidate, or exact-promotion
-  scope before expensive setup. Feature branches run affected unit and browser work.
-  On a full candidate, source checks and browser jobs run concurrently, and desktop
-  Chromium is split across two isolated shards. Desktop Chromium owns every routed interaction, mobile Chromium owns
-  compact/touch contracts, and Firefox/WebKit own tagged compatibility smoke coverage. Its
-  browser jobs use the maintained browser-verification wrapper so each isolated runner
-  starts, configures, and cleans up both the application database and the separate
-  blendCalcAPI database before testing public API routes. Its
-  source job supplies compile-only local public Supabase placeholders so Svelte can
-  generate `$env/static/public` types without production credentials or database
-  access;
-- `.github/workflows/nightly-browser-matrix.yml` runs every Playwright scenario in all
-  five projects on a schedule and on manual request. It reports exhaustive regressions
-  without making that redundant matrix part of every blocking push;
+- `.github/workflows/verify.yml` chooses feature, release-candidate (`full`), or
+  exact-promotion scope before expensive setup. Feature PRs run affected unit and
+  desktop Chromium coverage. Release candidates run affected unit tests plus five
+  tagged smoke scenarios in desktop Chromium and WebKit: authentication controls,
+  authenticated navigation, ingredient search/list persistence, Mix save persistence,
+  and Saved details. The two persistence lifecycles retain their Chromium-only guards;
+  WebKit covers the three shared flows. Each engine job has its own local application
+  and blendCalcAPI database. Source checks and browser jobs run concurrently after
+  their required planning/preflight; compile-only loopback placeholders supply public
+  Supabase types without production credentials.
+- `.github/workflows/nightly-browser-matrix.yml` retains its filename for existing
+  links but runs every scenario in all five projects **weekly, Monday at 10:00 UTC**,
+  or on manual request before a substantial release. It is nonblocking for ordinary
+  delivery. `npm run verify:nightly` remains the manual exhaustive profile, including
+  full unit and database coverage.
 - `.github/workflows/database-verification.yml` rebuilds the local Supabase stack and
   runs pgTAP whenever migrations or database-test ownership files change. Its stable
   `Database Verification` conclusion still reports success when those files are
@@ -360,26 +361,40 @@ The checked-in workflows use Node.js 24 and a clean dependency install:
   signal when the route, metrics, or delivery provider is unavailable.
 
 The stable required conclusions are `Source, Tests, And Build`, `Browser Matrix`,
-`Database Verification`, and `Hosted Auth Health`. Every pushed branch reports the
-maintained gates, while expensive domain checks run only when their ownership changed.
+`Database Verification`, and `Hosted Auth Health`. Feature PRs and protected integration pushes report the maintained gates, while
+expensive domain checks run only when their ownership changed.
 Repository protection
 must require all four on `staging` and `main`; pull requests target `staging` for normal
 work and `main` only for an explicitly approved release.
 
 ## Browser Matrix
 
-The blocking Playwright suite uses explicit tiers:
+Release browser verification uses `--grep=@smoke` with `desktop-chromium` and
+`desktop-webkit`. Smoke tags extend existing tests; assertions, timeouts, fixture
+restoration and authorization remain intact. Add smoke coverage only for a missing
+critical journey, not every feature or edge case.
 
-- desktop Chromium runs every routed interaction;
-- mobile Chromium adds tests tagged `@mobile` and `@compatibility`;
-- desktop Firefox, desktop WebKit, and mobile WebKit run tests tagged
-  `@compatibility`;
-- `PLAYWRIGHT_EXHAUSTIVE_MATRIX=true` removes those filters for the nightly and
-  pre-release exhaustive matrix.
+`npm run test:e2e` remains an optional broader diagnostic: all routed desktop Chromium
+interactions, mobile-tagged Chromium checks and compatibility-tagged Firefox/WebKit
+checks. `PLAYWRIGHT_EXHAUSTIVE_MATRIX=true` includes every scenario in all five
+projects. Neither broader command is a routine handoff requirement. Use extra engines,
+phone layouts and exhaustive coverage when the changed behavior warrants them.
 
-This keeps deep business flows in one primary engine while preserving targeted engine,
-touch, responsive, route, focus, and hydration confidence. Give every project-specific
-skip a clear reason.
+### Failure And Flaky-Test Handling
+
+A reproducible failure in changed behavior, release smoke, authorization, data integrity
+or migration checks blocks that candidate. Preserve the first failure and inspect it;
+allow at most one focused diagnostic retry (CI's existing single automatic retry counts
+as that retry). Do not rerun a green broad suite to investigate one failure.
+
+An intermittent test with no reproducible product defect may be quarantined from
+blocking selection only with a Project record identifying the exact case/environment,
+failure artifacts, preserved coverage, owner and a concrete repair/recheck condition.
+Retain it in weekly/manual diagnostics. Quarantine is an explicit test-selection change,
+not `continue-on-error`, removal of assertions, or a blanket exception for security/data
+checks. A failed unrelated exhaustive diagnostic is tracked separately and need not
+hold an otherwise green scoped release. Report retries and remaining gaps honestly;
+a passing retry does not establish the cause of a failure.
 
 See [Browser Testing](browser-testing.md) for Playwright setup, authenticated state,
 artifacts, snapshots, and authoring rules.
