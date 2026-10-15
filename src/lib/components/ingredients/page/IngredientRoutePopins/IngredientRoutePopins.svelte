@@ -21,6 +21,7 @@
 		listMembership,
 		imagePlacementItem,
 		listQuery,
+		listFavoritesOnly = false,
 		listSort,
 		listSafetyFilter,
 		removingItem,
@@ -125,6 +126,7 @@
 	sortValue={listSort}
 	sortOptions={[...sortOptions]}
 	safetyFilter={listSafetyFilter}
+	favoritesOnly={listFavoritesOnly}
 	loading={listLoading}
 	onApply={onApplyFilters}
 	onClose={onCloseIngredientSheet}

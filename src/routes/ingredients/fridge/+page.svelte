@@ -1,4 +1,9 @@
 <script lang="ts">
+	import {
+		FAVORITES_CHANGED_EVENT,
+		type FavoriteChange,
+	} from "$lib/utils/favorites/types";
+	import FavoriteFoodsList from "$lib/components/ingredients/list/FavoriteFoodsList/FavoriteFoodsList.svelte";
 	import { page } from "$app/state";
 	import { tick } from "svelte";
 	import ViewBody from "$lib/components/common/view/ViewBody/ViewBody.svelte";
@@ -129,6 +134,7 @@
 	let barcodeScannerReturnFocusTarget: HTMLElement | null = null;
 	let barcodeLookupBusy = $state(false);
 	let listQuery = $state("");
+	let listFavoritesOnly = $state(false);
 	const sourceFilter = "all";
 	const trustFilter = "any";
 	let listSafetyFilter = $state<FoodSafetyFilter>(
@@ -1178,19 +1184,22 @@
 		query,
 		sortValue,
 		safetyFilter,
+		favoritesOnly = false,
 	}: IngredientFilterApplyPayload) => {
 		const nextSort = sortValue as FoodListSort;
 		const unchanged =
 			listQuery === query &&
 			listSort === nextSort &&
-			listSafetyFilter === safetyFilter;
+			listSafetyFilter === safetyFilter &&
+			listFavoritesOnly === favoritesOnly;
 
 		listQuery = query;
 		listSort = nextSort;
 		listSafetyFilter = safetyFilter;
+		listFavoritesOnly = favoritesOnly;
 		void closeIngredientSheet();
 
-		if (unchanged) return;
+		if (unchanged || favoritesOnly) return;
 		void loadLists({ resetViewport: true });
 	};
 
@@ -1303,6 +1312,18 @@
 	});
 
 	onMount(() => {
+		const favoriteChanged = (event: Event) => {
+			const change = (event as CustomEvent<FavoriteChange>).detail;
+			if (change.kind !== "food") return;
+			const update = (food: FoodItem) =>
+				String(food.fdcId) === change.targetId
+					? { ...food, favoriteState: { favorite: change.favorite } }
+					: food;
+			onHand = onHand.map(update);
+			shoppingList = shoppingList.map(update);
+			if (selectedFood) selectedFood = update(selectedFood);
+		};
+		window.addEventListener(FAVORITES_CHANGED_EVENT, favoriteChanged);
 		window.addEventListener(
 			INGREDIENT_LISTS_CHANGED_EVENT,
 			handleIngredientListsChanged,
@@ -1317,6 +1338,7 @@
 				? window.setTimeout(scheduleDeferredData, 5_000)
 				: null;
 		return () => {
+			window.removeEventListener(FAVORITES_CHANGED_EVENT, favoriteChanged);
 			window.removeEventListener(
 				INGREDIENT_LISTS_CHANGED_EVENT,
 				handleIngredientListsChanged,
@@ -1341,6 +1363,7 @@
 		<IngredientsSearchPanel
 			{barcodeLookupBusy}
 			filtersActive={activeSheet === "filters" ||
+				listFavoritesOnly ||
 				listSafetyFilter !== FOOD_SAFETY_FILTER_VALUES.all}
 			onOpenSearch={openSearchView}
 			onScan={startBarcodeScan}
@@ -1350,45 +1373,54 @@
 	</ViewTop>
 
 	<ViewBody>
-		<SavedIngredientListLayout
-			{activeList}
-			fridgeCount={onHandTotalCount}
-			shoppingListCount={shoppingListTotalCount}
-			listLoading={showListLoadingIndicator}
-			{listActionError}
-			listLoadingError={listLoadingError || provenanceOptionsError}
-		>
-			<SavedIngredientList
-				{activeList}
-				foods={activeVisibleList}
-				activeRawCount={activeRawList.length}
-				{listLoading}
-				{loadingMoreList}
-				canRevealMore={canRevealMoreActiveItems}
-				selectedFoodId={selectedFood?.fdcId ?? null}
-				selectedIds={selectedActiveItemIds}
-				{selectionMode}
-				{removingItem}
-				{movingItem}
-				moving={movingItem !== null}
-				revealPaused={ingredientOverlayOpen}
-				resetKey={listViewResetKey}
-				scanning={barcodeLookupBusy}
-				{allowPlayfulMessages}
-				onSelectAll={selectAllActiveItems}
-				onEnterSelection={enterSelectionMode}
-				onCancelSelection={cancelSelectionMode}
-				onMoveSelection={moveSelectedItems}
-				onMoveItem={(food) => moveFoodBetweenLists(activeList, food)}
-				onToggle={(foodId) => toggleBulkSelection(activeList, foodId)}
-				onPreview={(food) => handleSelect(food, activeList)}
-				onActions={(food) => openActionSheet(activeList, food)}
-				onRemove={(foodId) => removeFromList(activeList, foodId)}
-				onRevealMore={revealMoreActiveItems}
-				onScan={startBarcodeScan}
-				onScrollDirectionChange={handleListScrollDirectionChange}
+		{#if listFavoritesOnly}
+			<FavoriteFoodsList
+				query={listQuery}
+				sort={listSort}
+				safety={listSafetyFilter}
+				onPreview={(food) => handleSelect(food)}
 			/>
-		</SavedIngredientListLayout>
+		{:else}
+			<SavedIngredientListLayout
+				{activeList}
+				fridgeCount={onHandTotalCount}
+				shoppingListCount={shoppingListTotalCount}
+				listLoading={showListLoadingIndicator}
+				{listActionError}
+				listLoadingError={listLoadingError || provenanceOptionsError}
+			>
+				<SavedIngredientList
+					{activeList}
+					foods={activeVisibleList}
+					activeRawCount={activeRawList.length}
+					{listLoading}
+					{loadingMoreList}
+					canRevealMore={canRevealMoreActiveItems}
+					selectedFoodId={selectedFood?.fdcId ?? null}
+					selectedIds={selectedActiveItemIds}
+					{selectionMode}
+					{removingItem}
+					{movingItem}
+					moving={movingItem !== null}
+					revealPaused={ingredientOverlayOpen}
+					resetKey={listViewResetKey}
+					scanning={barcodeLookupBusy}
+					{allowPlayfulMessages}
+					onSelectAll={selectAllActiveItems}
+					onEnterSelection={enterSelectionMode}
+					onCancelSelection={cancelSelectionMode}
+					onMoveSelection={moveSelectedItems}
+					onMoveItem={(food) => moveFoodBetweenLists(activeList, food)}
+					onToggle={(foodId) => toggleBulkSelection(activeList, foodId)}
+					onPreview={(food) => handleSelect(food, activeList)}
+					onActions={(food) => openActionSheet(activeList, food)}
+					onRemove={(foodId) => removeFromList(activeList, foodId)}
+					onRevealMore={revealMoreActiveItems}
+					onScan={startBarcodeScan}
+					onScrollDirectionChange={handleListScrollDirectionChange}
+				/>
+			</SavedIngredientListLayout>
+		{/if}
 	</ViewBody>
 </ViewFrame>
 
@@ -1400,6 +1432,7 @@
 	listMembership={selectedFoodListMembership}
 	{imagePlacementItem}
 	{listQuery}
+	{listFavoritesOnly}
 	{listSort}
 	{listSafetyFilter}
 	{removingItem}

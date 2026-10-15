@@ -470,6 +470,7 @@ export type FoodPrecautionaryStatement = {
 
 /** A normalized food item assembled from catalog, provider, or user evidence. */
 export interface FoodItem {
+	favoriteState?: import("$lib/utils/favorites/types").FavoriteState;
 	fdcId: number;
 	description: string;
 	/** Source/catalog name retained for non-private foods when a user assigns a personal list name. */

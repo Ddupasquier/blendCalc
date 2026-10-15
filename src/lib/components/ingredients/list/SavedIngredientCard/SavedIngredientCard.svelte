@@ -1,4 +1,5 @@
 <script lang="ts">
+	import FavoriteButton from "$lib/components/common/actions/FavoriteButton/FavoriteButton.svelte";
 	import DotsHorizontal from "$lib/assets/icons/DotsHorizontal/DotsHorizontal.svelte";
 	import X from "$lib/assets/icons/X/X.svelte";
 	import TwoStepConfirmation from "$lib/components/common/actions/TwoStepConfirmation/TwoStepConfirmation.svelte";
@@ -110,6 +111,12 @@
 		>
 			{#snippet children({ armed, activate, label, messageId })}
 				<span class="saved-ingredient-card__actions">
+					<FavoriteButton
+						kind="food"
+						targetId={String(food.fdcId)}
+						name={food.description}
+						initialState={food.favoriteState}
+					/>
 					<CircleIconButton
 						class="ingredient-card-action-button"
 						label={`Open actions for ${food.description}`}

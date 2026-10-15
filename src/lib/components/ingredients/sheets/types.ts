@@ -15,4 +15,5 @@ export type IngredientFilterApplyPayload = {
 	query: string;
 	sortValue: string;
 	safetyFilter: FoodSafetyFilter;
+	favoritesOnly?: boolean;
 };

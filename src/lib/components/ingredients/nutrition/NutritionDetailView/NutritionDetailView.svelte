@@ -1,4 +1,5 @@
 <script lang="ts">
+	import FavoriteButton from "$lib/components/common/actions/FavoriteButton/FavoriteButton.svelte";
 	import { untrack } from "svelte";
 	import Link from "$lib/assets/icons/Link/Link.svelte";
 	import Minus from "$lib/assets/icons/Minus/Minus.svelte";
@@ -206,6 +207,12 @@
 				onclick={onClose}
 			/>
 			<h1 id="nutrition-detail-view-title">{foodName}</h1>
+			<FavoriteButton
+				kind="food"
+				targetId={String(food.fdcId)}
+				name={foodName}
+				initialState={food.favoriteState}
+			/>
 			<span
 				class="nutrition-detail-view__source"
 				role="img"

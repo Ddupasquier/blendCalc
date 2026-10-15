@@ -1,0 +1,15 @@
+@use "../../../../../styles/variables" as *;
+.favorite-button {
+	display: inline-flex;
+	position: relative;
+	align-items: center;
+	flex-direction: column;
+	gap: $app-gap-xs;
+}
+.favorite-button__error {
+	color: $app-status-error-text;
+	font-size: $app-font-size-xs;
+	width: 4.5rem;
+	max-width: 4.5rem;
+	overflow-wrap: anywhere;
+}
