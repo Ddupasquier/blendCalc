@@ -336,6 +336,36 @@ Notes:
 - `drink` stores the recipe composition as JSON; the legacy column name is isolated to
   the database adapter and does not define application terminology.
 
+### Private account favorites
+
+Four account-owned relationships preserve target integrity:
+
+| Table                           | Target and lifecycle                                                                                                                            |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `user_shared_product_favorites` | `shared_products.id`; only active products are readable; target/account deletion cascades                                                       |
+| `user_generic_food_favorites`   | Composite `(dataset_key, source_food_key)` reference to `generic_food_records`; disabled datasets are omitted; target/account deletion cascades |
+| `user_custom_food_favorites`    | Composite `(custom_food_id, user_id)` reference to `custom_foods`; ownership cannot differ; deletion cascades                                   |
+| `user_saved_recipe_favorites`   | Composite `(recipe_id, user_id)` reference to `saved_drinks`; ownership cannot differ; deletion cascades                                        |
+
+Each relationship has a unique account/target primary key and creation timestamp.
+Target indexes support cascade cleanup; private foods and recipes have matching unique
+owner keys. The active-product application-ID expression index supports stable food
+resolution. Favorites deliberately reference neither list rows nor loose polymorphic IDs.
+List movement/removal does not alter favorites; deleting the underlying private food or
+recipe removes its relationship.
+
+Authenticated roles receive owner-only SELECT through RLS, with no direct writes.
+`set_user_favorite` derives `auth.uid()`, resolves a supported stable food identity or
+owned recipe, and applies an idempotent desired state. Unknown/inaccessible targets both
+return `unavailable`. Its internal resolver is not executable by browser roles.
+`read_user_food_favorite_states` accepts at most 100 application food IDs;
+`read_user_favorite_food_page` owns query, deterministic ordering, total counts and
+bounded pagination (1–100). Retired products and inactive/non-importable datasets do not
+contribute to reads or counts. New target types require their own constrained relationship.
+Favorite metadata is account presentation data, not food/recipe snapshot content or public
+API output. Unstored provider results have no favorite control until they resolve to a
+supported stable catalog/private identity.
+
 ### `ingredient_provenance_options`
 
 Stores app-ready origin and verification metadata. Provider rows remain available for
@@ -1263,7 +1293,9 @@ Notes:
   diagnostic fingerprint from operator queues. Raw occurrences, product data, revision
   history, and API publication remain unchanged. Changed product, revision, observation,
   submission, occurrence timestamp, or issue-set evidence automatically becomes
-  actionable again.
+  actionable again. Fingerprints are evaluated only for their matching disposition
+  outcome through a product-scoped lateral aggregate, so unrelated review categories
+  do not cause repeated readiness evaluation.
 - `catalog_health_repair_runs` is the immutable audit header for one AAL2 dry run or
   apply request against an open occurrence. It records the requesting user, issue,
   approved handler, linked dry run, status, bounded outcome counts, summary, and timing.
@@ -2226,6 +2258,9 @@ Notes:
   counts, classifies every issue as a publication blocker or nonblocking catalog
   diagnostic, and maps open normalized issues to ownership and supported action metadata.
   It excludes raw provider payloads, private evidence paths, and contributor identity.
+  Actionable occurrence matching is restricted to that same product before evaluating
+  computed occurrence keys and review fingerprints; unrelated catalog growth must not
+  turn a single-product passport into a global diagnostic scan.
 - `private.build_catalog_product_readiness_passport(p_shared_product_id)` owns the
   bounded shared-catalog and blendCalcAPI readiness assembly. Direct execution is
   revoked; the canonical authenticated wrapper independently preserves the AAL2
