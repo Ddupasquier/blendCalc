@@ -305,17 +305,22 @@ optional browser APIs instead of assuming they exist. Camera, clipboard, sharing
 storage, and other device-backed features must fail with useful guidance and preserve a
 non-device fallback when practical. Do not use browser-name checks when capability
 checks can answer the real question. Follow the staged browser workflow in
-[Testing Strategy](../testing.md) while developing a browser-facing change and run the
-complete `npm run test:e2e` project matrix before final browser-facing handoff or
-release. Move deterministic rendered behavior into Playwright instead
+[Testing Strategy](../testing.md) while developing a browser-facing change: use
+affected Chromium
+flows during development and the short Chromium/WebKit smoke suite at release.
+Reserve exhaustive coverage for weekly/manual runs or a substantial release whose
+changes justify it; reuse passing exact-candidate evidence for unchanged promotions.
+Move deterministic rendered behavior into Playwright instead
 of preserving source-text assertions, duplicate jsdom interaction tests, or assigning
 reproducible browser checks to the user. Audit existing component tests whenever a
 Playwright flow expands; remove every interaction assertion the routed browser scenario
 fully supersedes, while retaining isolated calculation, callback, failure-injection,
-and data-policy coverage that the real route cannot create deterministically. Before
-handoff, also test the current and previous two
-stable desktop releases plus real or emulated iOS Safari and Android Chrome at portrait
-and landscape sizes. Do not reload or refetch page data merely because the browser
+and data-policy coverage that the real route cannot create deterministically. Treat
+the current and previous two stable desktop releases, iOS Safari, Android Chrome,
+portrait/landscape, and assistive technology as supported environments to check when
+the changed behavior depends on them. They are not mandatory full matrices for every
+handoff; record environments not directly verified without claiming certification.
+Do not reload or refetch page data merely because the browser
 window regains focus; focus changes are not evidence that application data changed and
 must not interrupt forms, selections, overlays, or other in-progress work. Synchronize
 known mutations through explicit domain events and update local state in place.

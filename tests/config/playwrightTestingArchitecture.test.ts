@@ -198,6 +198,9 @@ describe("Playwright browser-testing architecture", () => {
 		const viteConfig = readSource("vite.config.ts");
 
 		expect(verificationWorkflow).toContain("matrix:");
+		for (const project of ["desktop-chromium", "desktop-webkit"]) {
+			expect(verificationWorkflow).toContain(`project: ${project}`);
+		}
 		for (const project of [
 			"desktop-chromium",
 			"desktop-firefox",
@@ -205,7 +208,7 @@ describe("Playwright browser-testing architecture", () => {
 			"mobile-chromium",
 			"mobile-webkit",
 		]) {
-			expect(verificationWorkflow).toContain(`project: ${project}`);
+			expect(nightlyWorkflow).toContain(`project: ${project}`);
 		}
 		expect(verificationWorkflow).toContain(
 			"node scripts/operations/quality/audit_dependencies.mjs",
@@ -217,7 +220,7 @@ describe("Playwright browser-testing architecture", () => {
 			"PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_compile_only",
 		);
 		expect(verificationWorkflow).toContain("npm run check");
-		expect(verificationWorkflow).toContain("npm test");
+		expect(verificationWorkflow).not.toContain("run: npm test");
 		expect(verificationWorkflow).toContain("npm run test:affected");
 		expect(verificationWorkflow).toContain("npm run build");
 		expect(verificationWorkflow).toContain("name: Choose Verification Scope");
@@ -239,8 +242,8 @@ describe("Playwright browser-testing architecture", () => {
 			?.split("  browser-gate:")[0];
 		expect(affectedBrowserJob).toContain("PLAYWRIGHT_WORKERS: 1");
 		expect(verificationWorkflow).not.toContain("needs: source");
-		expect(verificationWorkflow).toContain('shard: "1/2"');
-		expect(verificationWorkflow).toContain('shard: "2/2"');
+		expect(verificationWorkflow).toContain("--grep=@smoke");
+		expect(verificationWorkflow).not.toContain('shard: "2/2"');
 		expect(verificationWorkflow).toContain('npm run test:e2e -- "${args[@]}"');
 		expect(nightlyWorkflow).toContain(
 			"npm run test:e2e -- --project=${{ matrix.project }}",
@@ -270,7 +273,7 @@ describe("Playwright browser-testing architecture", () => {
 			"PLAYWRIGHT_ENFORCE_DURATION_BUDGETS: true",
 		);
 		expect(nightlyWorkflow).toContain("PLAYWRIGHT_EXHAUSTIVE_MATRIX: true");
-		expect(nightlyWorkflow).toContain('cron: "0 10 * * *"');
+		expect(nightlyWorkflow).toContain('cron: "0 10 * * 1"');
 		for (const workflow of [
 			verificationWorkflow,
 			nightlyWorkflow,
