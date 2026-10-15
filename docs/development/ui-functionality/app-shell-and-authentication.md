@@ -100,6 +100,13 @@ welcome, and guided tutorial. Auth configuration and security details remain in
 - Keep the active navigation state obvious and the header readable at compact widths.
 - Keep app release and API version metadata out of normal navigation and product views.
 
+## AdSense Site Verification
+
+`src/app.html` declares the public AdSense publisher identifier through the
+`google-adsense-account` meta tag for site-ownership verification. This metadata does
+not load advertising scripts, request ads or establish site approval. Provider loading
+requires a separate privacy, consent and account-eligibility integration.
+
 ## Daily Welcome
 
 - Show the welcome once per account per day.
