@@ -166,6 +166,12 @@ real `404` and generated route types remain useful.
 Do not create generic dumping folders such as `defaults`, `helpers`, `misc`, or
 `shared`. Name the domain and responsibility instead.
 
+The private favorites domain keeps canonical hydration and account reads in
+`src/lib/server/user-data/favorites.server.ts`, client event/types in
+`src/lib/utils/favorites/`, the shared action in `common/actions/FavoriteButton`,
+and Ingredients discovery in `ingredients/list/FavoriteFoodsList`. Its entity-specific
+relationships and authoritative writes remain migration-owned.
+
 ## Naming
 
 Application-owned names must explain their domain responsibility without requiring the

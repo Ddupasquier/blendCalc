@@ -108,6 +108,25 @@ enter the background handoff or job result. One Tesseract worker is used at a ti
 within each function runtime, reused briefly for a nearby scan, and terminated after a
 short idle period to release memory.
 
+### Private favorites
+
+`src/lib/server/user-data/favorites.server.ts` owns account food-favorite state and
+canonical hydration. `/api/favorites` verifies the session, bounds requests and delegates
+writes to `set_user_favorite`; the browser never supplies ownership. Entity-specific
+foreign keys retain catalog, generic-food, private-food and saved-recipe identities.
+There is no durable browser mirror or separate favorite snapshot of food data.
+
+Initial ingredient pages and saved recipes carry account favorite state from the server.
+Subsequent detail requests and favorites discovery cross authenticated app routes.
+The Ingredients Favorites filter reads all favorite foods, including those absent from
+both lists. Current safety evidence is hydrated before safety-filtered totals/pagination.
+`/api/saved-recipes` owns filtered favorites counts and deterministic recipe ordering.
+Known mutations use one favorites event to synchronize mounted controls and the active
+favorites collection; window focus never causes a reload. The shared star control gives
+optimistic feedback, excludes duplicate pending requests and restores its previous state
+on failed persistence. Unsupported/inaccessible targets are omitted, without exposing
+another account's records.
+
 ## Browser State
 
 Browser storage is limited to data that can be discarded safely:

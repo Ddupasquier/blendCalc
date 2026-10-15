@@ -1,0 +1,42 @@
+@use "../../../../../styles/variables" as *;
+@use "../../card/IngredientCardMediaLane/IngredientCardLayout" as card;
+.favorite-foods-list {
+	display: grid;
+	gap: $app-gap-md;
+	min-height: 0;
+	overflow: auto;
+	padding: $app-gap-sm;
+}
+.favorite-foods-list h2,
+.favorite-foods-list p {
+	margin: 0;
+}
+.favorite-foods-list > p {
+	color: $app-shell-text-muted;
+}
+.favorite-foods-list ul {
+	display: grid;
+	gap: $app-gap-md;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.favorite-foods-list__card {
+	@include card.frame;
+	grid-template-columns: minmax(0, 1fr) auto;
+	background: $app-shell-surface-panel;
+}
+.favorite-foods-list__copy {
+	@include card.copy;
+	@include card.presentation-layer;
+	@include card.media-content-inset;
+}
+.favorite-foods-list__preview {
+	@include card.primary-action-target;
+}
+.favorite-foods-list__preview:focus-visible {
+	@include card.primary-action-focus;
+}
+.favorite-foods-list__action {
+	@include card.action-layer;
+}

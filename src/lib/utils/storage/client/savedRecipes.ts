@@ -37,6 +37,7 @@ export type SavedRecipeNutrientOption = {
 };
 
 export type SavedRecipe = {
+	isFavorite?: boolean;
 	id: string;
 	name: string;
 	createdAt: number;

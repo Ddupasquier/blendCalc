@@ -10,6 +10,16 @@ import {
 
 export type CloudSavedRecipeWriteResult = "saved" | "duplicate" | "error";
 
+const hasFavoriteRecipeTarget = (relationship: unknown, recipeId: string) => {
+	const rows = Array.isArray(relationship) ? relationship : [relationship];
+	return rows.some(
+		(row) =>
+			row !== null &&
+			typeof row === "object" &&
+			(row as { recipe_id?: unknown }).recipe_id === recipeId,
+	);
+};
+
 export const readCloudSavedRecipes = async (context?: CloudDataContext) => {
 	const cloud = await resolveCloudDataContext(context);
 	if (!cloud) return null;
@@ -18,7 +28,7 @@ export const readCloudSavedRecipes = async (context?: CloudDataContext) => {
 	const rows = await readAllCursorPages(async (cursorId) => {
 		let query = supabase
 			.from("saved_drinks")
-			.select("id, drink, created_at")
+			.select("id, drink, created_at, user_saved_recipe_favorites(recipe_id)")
 			.eq("user_id", userId)
 			.order("id", { ascending: true })
 			.limit(CLOUD_CURSOR_PAGE_SIZE);
@@ -31,6 +41,10 @@ export const readCloudSavedRecipes = async (context?: CloudDataContext) => {
 		.map((row) => ({
 			...(row.drink as unknown as SavedRecipe),
 			id: row.id,
+			isFavorite: hasFavoriteRecipeTarget(
+				row.user_saved_recipe_favorites,
+				row.id,
+			),
 			createdAt:
 				(row.drink as unknown as SavedRecipe).createdAt ??
 				new Date(row.created_at).getTime(),
@@ -48,7 +62,7 @@ export const readCloudSavedRecipeById = async (
 
 	const { data, error } = await supabase
 		.from("saved_drinks")
-		.select("id, drink, created_at")
+		.select("id, drink, created_at, user_saved_recipe_favorites(recipe_id)")
 		.eq("user_id", userId)
 		.eq("id", recipeId)
 		.maybeSingle();
@@ -58,6 +72,10 @@ export const readCloudSavedRecipeById = async (
 	return {
 		...(data.drink as unknown as SavedRecipe),
 		id: data.id,
+		isFavorite: hasFavoriteRecipeTarget(
+			data.user_saved_recipe_favorites,
+			data.id,
+		),
 		createdAt:
 			(data.drink as unknown as SavedRecipe).createdAt ??
 			new Date(data.created_at).getTime(),
@@ -73,7 +91,11 @@ export const saveCloudSavedRecipeWithResult = async (
 
 	const { data, error } = await supabase.rpc("save_saved_drink", {
 		p_created_at: new Date(recipe.createdAt).toISOString(),
-		p_drink: toJson(recipe),
+		p_drink: toJson(
+			Object.fromEntries(
+				Object.entries(recipe).filter(([key]) => key !== "isFavorite"),
+			),
+		),
 		p_id: recipe.id,
 		p_name: recipe.name,
 	});

@@ -83,13 +83,14 @@
 
 .saved-recipe-card__actions {
 	display: grid;
-	grid-template-columns: minmax(0, 1fr) auto auto;
+	grid-template-columns: minmax(0, 1fr) auto auto auto;
 	align-items: start;
 	gap: $app-gap-sm;
 	min-width: 0;
 }
 
-@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
 	:global(.collapsible-section.saved-recipe-card__collapse > summary) {
 		min-height: $app-shell-control-height-narrow;
 		padding: 0 $app-gap-sm;

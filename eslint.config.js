@@ -6,6 +6,7 @@ import typescript from "typescript-eslint";
 
 export default defineConfig(
 	globalIgnores([
+		".cache/**",
 		".svelte-kit/**",
 		".svelte-kit-rehearsal/**",
 		".vercel/**",

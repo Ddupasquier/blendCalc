@@ -39,141 +39,6 @@ export type Database = {
 	};
 	public: {
 		Tables: {
-			user_shared_product_favorites: {
-				Row: {
-					created_at: string;
-					product_id: string;
-					user_id: string;
-				};
-				Insert: {
-					created_at?: string;
-					product_id: string;
-					user_id: string;
-				};
-				Update: {
-					created_at?: string;
-					product_id?: string;
-					user_id?: string;
-				};
-				Relationships: [
-					{
-						foreignKeyName: "user_shared_product_favorites_product_id_fkey";
-						columns: ["product_id"];
-						isOneToOne: false;
-						referencedRelation: "blendcalc_api_catalog_product_readiness";
-						referencedColumns: ["shared_product_id"];
-					},
-					{
-						foreignKeyName: "user_shared_product_favorites_product_id_fkey";
-						columns: ["product_id"];
-						isOneToOne: false;
-						referencedRelation: "blendcalc_api_v1_product_readiness";
-						referencedColumns: ["shared_product_id"];
-					},
-					{
-						foreignKeyName: "user_shared_product_favorites_product_id_fkey";
-						columns: ["product_id"];
-						isOneToOne: false;
-						referencedRelation: "blendcalc_api_v1_published_products";
-						referencedColumns: ["shared_product_id"];
-					},
-					{
-						foreignKeyName: "user_shared_product_favorites_product_id_fkey";
-						columns: ["product_id"];
-						isOneToOne: false;
-						referencedRelation: "catalog_product_readiness";
-						referencedColumns: ["shared_product_id"];
-					},
-					{
-						foreignKeyName: "user_shared_product_favorites_product_id_fkey";
-						columns: ["product_id"];
-						isOneToOne: false;
-						referencedRelation: "shared_products";
-						referencedColumns: ["id"];
-					},
-				];
-			};
-			user_saved_recipe_favorites: {
-				Row: {
-					created_at: string;
-					recipe_id: string;
-					user_id: string;
-				};
-				Insert: {
-					created_at?: string;
-					recipe_id: string;
-					user_id: string;
-				};
-				Update: {
-					created_at?: string;
-					recipe_id?: string;
-					user_id?: string;
-				};
-				Relationships: [
-					{
-						foreignKeyName: "user_saved_recipe_favorites_recipe_id_user_id_fkey";
-						columns: ["recipe_id", "user_id"];
-						isOneToOne: false;
-						referencedRelation: "saved_drinks";
-						referencedColumns: ["id", "user_id"];
-					},
-				];
-			};
-			user_generic_food_favorites: {
-				Row: {
-					created_at: string;
-					dataset_key: string;
-					source_food_key: string;
-					user_id: string;
-				};
-				Insert: {
-					created_at?: string;
-					dataset_key: string;
-					source_food_key: string;
-					user_id: string;
-				};
-				Update: {
-					created_at?: string;
-					dataset_key?: string;
-					source_food_key?: string;
-					user_id?: string;
-				};
-				Relationships: [
-					{
-						foreignKeyName: "user_generic_food_favorites_dataset_key_source_food_key_fkey";
-						columns: ["dataset_key", "source_food_key"];
-						isOneToOne: false;
-						referencedRelation: "generic_food_records";
-						referencedColumns: ["dataset_key", "source_food_key"];
-					},
-				];
-			};
-			user_custom_food_favorites: {
-				Row: {
-					created_at: string;
-					custom_food_id: string;
-					user_id: string;
-				};
-				Insert: {
-					created_at?: string;
-					custom_food_id: string;
-					user_id: string;
-				};
-				Update: {
-					created_at?: string;
-					custom_food_id?: string;
-					user_id?: string;
-				};
-				Relationships: [
-					{
-						foreignKeyName: "user_custom_food_favorites_custom_food_id_user_id_fkey";
-						columns: ["custom_food_id", "user_id"];
-						isOneToOne: false;
-						referencedRelation: "custom_foods";
-						referencedColumns: ["id", "user_id"];
-					},
-				];
-			};
 			account_moderation: {
 				Row: {
 					created_at: string;
@@ -9408,6 +9273,32 @@ export type Database = {
 					},
 				];
 			};
+			user_custom_food_favorites: {
+				Row: {
+					created_at: string;
+					custom_food_id: string;
+					user_id: string;
+				};
+				Insert: {
+					created_at?: string;
+					custom_food_id: string;
+					user_id: string;
+				};
+				Update: {
+					created_at?: string;
+					custom_food_id?: string;
+					user_id?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "user_custom_food_favorites_custom_food_id_user_id_fkey";
+						columns: ["custom_food_id", "user_id"];
+						isOneToOne: false;
+						referencedRelation: "custom_foods";
+						referencedColumns: ["id", "user_id"];
+					},
+				];
+			};
 			user_food_list_items: {
 				Row: {
 					created_at: string;
@@ -9537,6 +9428,35 @@ export type Database = {
 					user_id?: string;
 				};
 				Relationships: [];
+			};
+			user_generic_food_favorites: {
+				Row: {
+					created_at: string;
+					dataset_key: string;
+					source_food_key: string;
+					user_id: string;
+				};
+				Insert: {
+					created_at?: string;
+					dataset_key: string;
+					source_food_key: string;
+					user_id: string;
+				};
+				Update: {
+					created_at?: string;
+					dataset_key?: string;
+					source_food_key?: string;
+					user_id?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "user_generic_food_favorites_dataset_key_source_food_key_fkey";
+						columns: ["dataset_key", "source_food_key"];
+						isOneToOne: false;
+						referencedRelation: "generic_food_records";
+						referencedColumns: ["dataset_key", "source_food_key"];
+					},
+				];
 			};
 			user_marketing_email_preferences: {
 				Row: {
@@ -9728,6 +9648,86 @@ export type Database = {
 						columns: ["source_user_template_id"];
 						isOneToOne: false;
 						referencedRelation: "user_mix_goal_templates";
+						referencedColumns: ["id"];
+					},
+				];
+			};
+			user_saved_recipe_favorites: {
+				Row: {
+					created_at: string;
+					recipe_id: string;
+					user_id: string;
+				};
+				Insert: {
+					created_at?: string;
+					recipe_id: string;
+					user_id: string;
+				};
+				Update: {
+					created_at?: string;
+					recipe_id?: string;
+					user_id?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "user_saved_recipe_favorites_recipe_id_user_id_fkey";
+						columns: ["recipe_id", "user_id"];
+						isOneToOne: false;
+						referencedRelation: "saved_drinks";
+						referencedColumns: ["id", "user_id"];
+					},
+				];
+			};
+			user_shared_product_favorites: {
+				Row: {
+					created_at: string;
+					product_id: string;
+					user_id: string;
+				};
+				Insert: {
+					created_at?: string;
+					product_id: string;
+					user_id: string;
+				};
+				Update: {
+					created_at?: string;
+					product_id?: string;
+					user_id?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "user_shared_product_favorites_product_id_fkey";
+						columns: ["product_id"];
+						isOneToOne: false;
+						referencedRelation: "blendcalc_api_catalog_product_readiness";
+						referencedColumns: ["shared_product_id"];
+					},
+					{
+						foreignKeyName: "user_shared_product_favorites_product_id_fkey";
+						columns: ["product_id"];
+						isOneToOne: false;
+						referencedRelation: "blendcalc_api_v1_product_readiness";
+						referencedColumns: ["shared_product_id"];
+					},
+					{
+						foreignKeyName: "user_shared_product_favorites_product_id_fkey";
+						columns: ["product_id"];
+						isOneToOne: false;
+						referencedRelation: "blendcalc_api_v1_published_products";
+						referencedColumns: ["shared_product_id"];
+					},
+					{
+						foreignKeyName: "user_shared_product_favorites_product_id_fkey";
+						columns: ["product_id"];
+						isOneToOne: false;
+						referencedRelation: "catalog_product_readiness";
+						referencedColumns: ["shared_product_id"];
+					},
+					{
+						foreignKeyName: "user_shared_product_favorites_product_id_fkey";
+						columns: ["product_id"];
+						isOneToOne: false;
+						referencedRelation: "shared_products";
 						referencedColumns: ["id"];
 					},
 				];
@@ -10492,27 +10492,6 @@ export type Database = {
 			};
 		};
 		Functions: {
-			set_user_favorite: {
-				Args: { p_favorite: boolean; p_kind: string; p_target_id: string };
-				Returns: string;
-			};
-			resolve_user_favorite_food: {
-				Args: { p_food_id: number };
-				Returns: Json;
-			};
-			read_user_food_favorite_states: {
-				Args: { p_food_ids: number[] };
-				Returns: Json;
-			};
-			read_user_favorite_food_page: {
-				Args: {
-					p_limit?: number;
-					p_offset?: number;
-					p_query?: string;
-					p_sort?: string;
-				};
-				Returns: Json;
-			};
 			activate_food_compatibility_policy_version: {
 				Args: { p_policy_version_id: string };
 				Returns: number;
@@ -11040,6 +11019,19 @@ export type Database = {
 				};
 				Returns: Json;
 			};
+			read_user_favorite_food_page: {
+				Args: {
+					p_limit?: number;
+					p_offset?: number;
+					p_query?: string;
+					p_sort?: string;
+				};
+				Returns: Json;
+			};
+			read_user_food_favorite_states: {
+				Args: { p_food_ids: number[] };
+				Returns: Json;
+			};
 			rebuild_custom_food_category_options: { Args: never; Returns: undefined };
 			rebuild_food_preference_option_catalog: {
 				Args: never;
@@ -11236,6 +11228,10 @@ export type Database = {
 					p_outcome: string;
 					p_resolution_note: string;
 				};
+				Returns: Json;
+			};
+			resolve_user_favorite_food: {
+				Args: { p_food_id: number };
 				Returns: Json;
 			};
 			review_catalog_provider_change: {
@@ -11446,6 +11442,10 @@ export type Database = {
 					p_target_user_id: string;
 				};
 				Returns: boolean;
+			};
+			set_user_favorite: {
+				Args: { p_favorite: boolean; p_kind: string; p_target_id: string };
+				Returns: string;
 			};
 			shared_product_has_exact_primary_serving: {
 				Args: { p_shared_product_id: string };

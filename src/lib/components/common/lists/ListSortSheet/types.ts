@@ -11,6 +11,12 @@ export type ListSortSheetProps = {
 	title?: string;
 	titleId: string;
 	loading?: boolean;
-	onApply: (value: string, filterValue?: string) => void;
+	favoritesOnly?: boolean;
+	showFavorites?: boolean;
+	onApply: (
+		value: string,
+		filterValue?: string,
+		favoritesOnly?: boolean,
+	) => void;
 	onClose: () => void;
 };

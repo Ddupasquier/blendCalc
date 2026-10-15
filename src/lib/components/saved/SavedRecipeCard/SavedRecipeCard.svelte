@@ -1,4 +1,5 @@
 <script lang="ts">
+	import FavoriteButton from "$lib/components/common/actions/FavoriteButton/FavoriteButton.svelte";
 	import Trash from "$lib/assets/icons/Trash/Trash.svelte";
 	import TwoStepConfirmation from "$lib/components/common/actions/TwoStepConfirmation/TwoStepConfirmation.svelte";
 	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton/CircleIconButton.svelte";
@@ -25,6 +26,8 @@
 		onDelete,
 	}: SavedRecipeCardProps = $props();
 
+	let expanded = $state(false);
+
 	const titleId = $derived(`saved-recipe-${recipe.id}-title`);
 	const calories = $derived(getSavedRecipeCalories(recipe));
 	const goalProgress = $derived(getSavedRecipeGoalProgress(recipe));
@@ -44,6 +47,8 @@
 <article class="saved-recipe-card" aria-labelledby={titleId}>
 	<CollapsibleSection
 		title={recipe.name}
+		open={expanded}
+		onOpenChange={(open) => (expanded = open)}
 		{titleId}
 		surface="panel"
 		class="saved-recipe-card__collapse"
@@ -93,6 +98,13 @@
 				>
 					Load
 				</RoundedActionButton>
+				<FavoriteButton
+					kind="recipe"
+					targetId={recipe.id}
+					name={recipe.name}
+					initialState={{ favorite: recipe.isFavorite ?? false }}
+					{disabled}
+				/>
 				<SavedRecipeExportAction {recipe} compact {disabled} />
 				<TwoStepConfirmation
 					actionLabel={`Delete ${recipe.name}`}

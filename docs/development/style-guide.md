@@ -589,6 +589,12 @@ Overlay rules:
 - Open manual entry and filters through the path-backed sheet flow. An overlay must not
   resize or rerender the list beneath it.
 
+The shared `FavoriteButton` uses the existing small soft `CircleIconButton`, a
+current-color outlined/filled star, accessible Favorite/Remove favorite labels and
+`aria-pressed`. It stays in the foreground card action layer and is independent of
+preview or selection. Pending writes disable repeats; failure copy uses semantic error
+text. Ingredients and Saved reuse it without a new accent, button shape or motion.
+
 ### Ingredient Cards
 
 Saved and search cards share the `IngredientCardLayout` mixins and media components.

@@ -14,6 +14,7 @@
 		sortOptions,
 		safetyFilter,
 		loading = false,
+		favoritesOnly = false,
 		onApply,
 		onClose,
 	}: IngredientFilterSheetProps = $props();
@@ -39,9 +40,12 @@
 	filterOptions={FOOD_SAFETY_FILTER_OPTIONS}
 	title="Filter and sort"
 	{loading}
-	onApply={(nextSortValue, nextSafetyFilter) =>
+	{favoritesOnly}
+	showFavorites
+	onApply={(nextSortValue, nextSafetyFilter, nextFavoritesOnly) =>
 		onApply({
 			query,
+			favoritesOnly: nextFavoritesOnly,
 			sortValue: nextSortValue,
 			safetyFilter: resolveSafetyFilter(nextSafetyFilter),
 		})}

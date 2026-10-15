@@ -1,3 +1,4 @@
+import { annotateFoodFavorites } from "./favorites.server";
 import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
 import type {
@@ -99,7 +100,10 @@ export const readCloudIngredientListPage = async (
 	if (error) throw error;
 	if (!data) throw new Error("Ingredient list could not be loaded.");
 
-	const foods = await hydrateCloudFoodListRows(supabase, data);
+	const foods = await annotateFoodFavorites(
+		await hydrateCloudFoodListRows(supabase, data),
+		cloud,
+	);
 	return {
 		foods,
 		totalCount: count ?? foods.length,

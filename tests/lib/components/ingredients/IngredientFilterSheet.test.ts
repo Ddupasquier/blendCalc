@@ -34,6 +34,7 @@ describe("IngredientFilterSheet", () => {
 
 		expect(onApply).toHaveBeenCalledWith({
 			query: "salad",
+			favoritesOnly: false,
 			sortValue: "recent",
 			safetyFilter: "active-recalls",
 		});
