@@ -61,7 +61,7 @@ Three populated `qa-browser-*` personas isolate local browser workers. Each proj
 worker validates and reuses its browser state beneath ignored `test-results/`, signing
 in only when that state is missing or no longer authentic. This prevents worker restarts
 and immediate matrix reruns from wasting Auth capacity. Two workers run by default: the
-bounded matrix completed in 3.7 minutes with two workers and 4.2 minutes with three on
+broader diagnostic matrix completed in 3.7 minutes with two workers and 4.2 minutes with three on
 the current development machine. CI defaults to two workers per isolated job. With
 explicit release approval, a Verify dispatch may select `desktop_webkit_workers=1` for
 that invocation's desktop WebKit job; all other jobs and assertions remain unchanged.
@@ -103,12 +103,14 @@ npm run test:e2e:ui
 npm run test:e2e:update
 ```
 
-- `test:e2e` runs the bounded blocking tiers: every interaction in desktop Chromium,
+- `test:e2e` runs the optional broader diagnostic tiers: every interaction in desktop Chromium,
   mobile-tagged coverage in mobile Chromium, and compatibility-tagged smoke coverage in
   Firefox, WebKit, and mobile WebKit.
-- `test:e2e:affected` selects specs from changed application ownership and prepares the
-  environment. Run the browser selector directly after manual preparation when reusing
+- `test:e2e:affected` selects desktop Chromium specs from changed application ownership
+  and prepares the environment. Run the browser selector directly after manual preparation when reusing
   an existing session.
+- `npm run test:e2e -- --project=desktop-chromium --project=desktop-webkit --grep=@smoke`
+  runs the short release smoke suite.
 - `npm run test:e2e -- --grep @compatibility` runs only the tagged cross-engine
   compatibility contract.
 - `PLAYWRIGHT_EXHAUSTIVE_MATRIX=true npm run test:e2e` runs every scenario in all five
@@ -196,7 +198,9 @@ both approved production hostnames against the budgets in
 - Update snapshots only after reviewing the rendered diff.
 - Use compact output for unattended successful runs. Open the retained HTML report,
   trace, screenshot, or video only when a failure needs investigation.
-- Tag engine-sensitive route, focus, hydration, and shared-control smoke tests with
+- Tag only the critical release journeys listed in [Testing Strategy](testing.md#browser-matrix)
+  with `@smoke` alongside `@compatibility`. Keep their existing assertions and cleanup.
+- Tag engine-sensitive route, focus, hydration, and shared-control diagnostic tests with
   `@compatibility`. Tag compact/touch-only contracts with `@mobile`. Do not tag ordinary
   desktop Chromium ownership merely to multiply it across projects.
 

@@ -29,7 +29,7 @@ test(
 	},
 );
 
-test("saved recipes default closed and expose their complete details on demand", async ({
+test("saved recipes default closed and expose their complete details on demand @smoke @compatibility", async ({
 	page,
 }) => {
 	await page.goto("/saved");

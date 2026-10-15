@@ -292,13 +292,13 @@ maintained Vitest and Playwright ownership groups used by Quick and Feature chec
 implementation-delivery, and operational/manual Project work before release batching;
 it rejects mixed delivery classes and ticket-specific shared evidence.
 
-| Command                    | Scope                                                                                                 |
-| -------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `npm run verify:quick`     | Formatting, lint, Svelte/TypeScript, and Vitest selected from changed ownership                       |
-| `npm run verify:feature`   | Source gates plus Vitest and browser specs selected from changed ownership                            |
-| `npm run verify:release`   | Dependency audit, source gates, disposable database, build, and bounded blocking browser tiers        |
-| `npm run verify:promotion` | Validate a fresh content-addressed Release Check receipt for the exact clean promoted tree            |
-| `npm run verify:nightly`   | Release confidence plus every scenario in all five browser/device projects; scheduled and nonblocking |
+| Command                    | Scope                                                                                                     |
+| -------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `npm run verify:quick`     | Formatting, lint, Svelte/TypeScript, and Vitest selected from changed ownership                           |
+| `npm run verify:feature`   | Source gates plus Vitest and browser specs selected from changed ownership                                |
+| `npm run verify:release`   | Dependency audit, source gates, affected tests, changed-database checks, build, and Chromium/WebKit smoke |
+| `npm run verify:promotion` | Validate a fresh content-addressed Release Check receipt for the exact clean promoted tree                |
+| `npm run verify:nightly`   | Full unit/database coverage and all five browser projects; weekly/manual and nonblocking                  |
 
 Use the VS Code tasks with the same names for a dedicated visible terminal. Continue to
 run the narrowest direct test while editing; the dashboard is for confidence passes,

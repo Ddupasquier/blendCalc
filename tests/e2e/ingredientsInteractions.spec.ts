@@ -1207,7 +1207,7 @@ test("ingredient search uses keyboard selection without turning the add action i
 	await expect(page).toHaveURL(/\/nutrition\//);
 });
 
-test("ingredient search places results in the list named by the current route", async ({
+test("ingredient search places results in the list named by the current route @smoke @compatibility", async ({
 	page,
 }, testInfo) => {
 	test.skip(

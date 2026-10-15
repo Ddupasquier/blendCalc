@@ -53,14 +53,15 @@ describe("visible verification dashboard", () => {
 		expect(featureStageIds).not.toContain("build");
 		expect(releaseStageIds).toEqual(
 			expect.arrayContaining([
-				"vitest-node",
-				"vitest-dom",
+				"vitest-affected",
 				"dependencies",
 				"build",
 				"database",
 				"playwright-matrix",
 			]),
 		);
+		expect(releaseStageIds).not.toContain("vitest-node");
+		expect(releaseStageIds).not.toContain("vitest-dom");
 		expect(nightlyStageIds).toEqual(
 			expect.arrayContaining([
 				"vitest-node",
@@ -115,7 +116,7 @@ describe("visible verification dashboard", () => {
 		expect(dashboardSource).not.toContain('"--keep-running"');
 		expect(dashboardSource).not.toContain('["playwright", "test"]');
 		expect(dashboardSource).toContain('["run", "db:test", "--", "verify"]');
-		expect(dashboardSource).toContain('["run", "test:e2e"]');
+		expect(dashboardSource).toContain('"--grep=@smoke"');
 	});
 
 	it("keeps forced-color terminal output free of conflicting NO_COLOR warnings", () => {
