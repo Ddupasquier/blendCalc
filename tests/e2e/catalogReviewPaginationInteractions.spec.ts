@@ -15,10 +15,12 @@ import type { Page, TestInfo } from "@playwright/test";
 // This corpus owns global catalog queues and one disposable MFA persona. Run serially.
 test.describe.configure({ mode: "serial" });
 const root = "/profile/privileged-tools/catalog-review-work";
-// Each scenario owns a namespace; each audited teardown task handles at most16 products.
+// Keep each audited retirement transaction below the existing 40-second SQL limit.
+// Sixteen targets exceeded that limit on the preserved TEST corpus.
+const retirementBatchSize = 4;
 const pendingFixtureHealthRetirements: string[] = [];
 for (let fixtureIndex = 0; fixtureIndex < 4; fixtureIndex += 1) {
-	for (let first = 1; first <= 61; first += 16) {
+	for (let first = 1; first <= 61; first += retirementBatchSize) {
 		test.afterAll(() => {
 			const scope = pendingFixtureHealthRetirements[fixtureIndex];
 			if (scope)
@@ -26,7 +28,7 @@ for (let fixtureIndex = 0; fixtureIndex < 4; fixtureIndex += 1) {
 					scope,
 					localSql,
 					first,
-					Math.min(first + 15, 61),
+					Math.min(first + retirementBatchSize - 1, 61),
 				);
 		});
 	}

@@ -26,6 +26,7 @@ export type IngredientRoutePopinsProps = {
 	listMembership: IngredientListMembership;
 	imagePlacementItem: IngredientActionItem | null;
 	listQuery: string;
+	listFavoritesOnly?: boolean;
 	listSort: FoodListSort;
 	listSafetyFilter: FoodSafetyFilter;
 	removingItem: string | null;

@@ -12,6 +12,7 @@ export type IngredientFilterSheetProps = {
 	sortOptions: readonly IngredientSortOption[];
 	safetyFilter: FoodSafetyFilter;
 	loading?: boolean;
+	favoritesOnly?: boolean;
 	onApply: (filters: IngredientFilterApplyPayload) => void;
 	onClose: () => void;
 };

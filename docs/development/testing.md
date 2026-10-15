@@ -36,7 +36,7 @@ different boundaries:
 ## Lint And Formatting Ownership
 
 `npm run lint` is the blocking TypeScript, JavaScript, Svelte, and SCSS correctness
-check. `npx eslint . --cache --cache-location .cache/eslint` also prints explicitly nonblocking migration warnings for
+check. Generated `.cache/` artifacts are excluded from source linting. `npx eslint . --cache --cache-location .cache/eslint` also prints explicitly nonblocking migration warnings for
 older unkeyed Svelte collections, route resolution, and legacy reactive collections.
 
 Prettier is adopted without a repository-wide churn-only rewrite. New supported files
@@ -283,6 +283,9 @@ Shared shell, control, style, browser-support and Playwright-configuration chang
 instead select full verification and the existing isolated parallel matrix. This keeps
 all bounded cases without running the whole matrix sequentially or raising worker
 counts inside the shared database.
+Catalog pagination fixtures retire through the audited helper in four-product
+transactions, retaining the 40-second SQL limit and every cleanup assertion. Larger
+batches can exceed that limit when the preserved TEST corpus has accumulated records.
 Run multi-project checks of shared warning queues or MFA reviewer accounts locally with
 `PLAYWRIGHT_WORKERS=1` too. Isolated full-matrix jobs default to two workers. An
 explicitly approved release verification may select `desktop_webkit_workers=1` when

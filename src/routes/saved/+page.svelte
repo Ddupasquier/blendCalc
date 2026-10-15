@@ -1,8 +1,13 @@
 <script lang="ts">
+	import {
+		FAVORITES_CHANGED_EVENT,
+		type FavoriteChange,
+	} from "$lib/utils/favorites/types";
 	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
 	import { flip } from "svelte/animate";
 	import { onMount } from "svelte";
+	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
 	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import ListControls from "$lib/components/common/lists/ListControls/ListControls.svelte";
@@ -48,6 +53,12 @@
 		(initialSavedData?.recipes ?? []).map(normalizeSavedRecipe),
 	);
 	let query = $state("");
+	let favoritesOnly = $state(false);
+	let favoriteRecipes = $state<SavedRecipe[]>([]);
+	let favoriteTotalCount = $state(0);
+	let favoriteRequest = 0;
+	let favoriteAbort: AbortController | null = null;
+	let favoriteViewActive = false;
 	let sort = $state("newest");
 	let safetyFilter = $state<FoodSafetyFilter>(FOOD_SAFETY_FILTER_VALUES.all);
 	let visibleCount = $state<number>(LIST_PAGE_SIZES.savedRecipes);
@@ -68,6 +79,7 @@
 	];
 
 	const filteredRecipes = $derived.by(() => {
+		if (favoritesOnly) return favoriteRecipes;
 		const matchingRecipes = filterItemsByQuery(recipes, query, (recipe) =>
 			[recipe.name, ...recipe.foods.map((food) => food.description)].join(" "),
 		).filter((recipe) =>
@@ -86,7 +98,9 @@
 	});
 	const visibleRecipes = $derived(filteredRecipes.slice(0, visibleCount));
 	const hasMoreRecipes = $derived(
-		visibleRecipes.length < filteredRecipes.length,
+		favoritesOnly
+			? visibleRecipes.length < favoriteTotalCount
+			: visibleRecipes.length < filteredRecipes.length,
 	);
 	const activeSavedRecipesRouteUrl = $derived(
 		getActiveShallowRouteUrl(page.url, page.state.savedRecipesRouteHref),
@@ -97,6 +111,53 @@
 	const documentTitle = $derived(
 		getAppDocumentTitle(activeSavedRecipesRouteUrl),
 	);
+
+	const loadFavoriteRecipes = async (more = false) => {
+		const current = ++favoriteRequest;
+		favoriteAbort?.abort();
+		const controller = new AbortController();
+		favoriteAbort = controller;
+		const timeout = setTimeout(() => controller.abort(), 30000);
+		loadingRecipes = true;
+		loadError = "";
+		try {
+			const response = await fetch(
+				`/api/saved-recipes?${new URLSearchParams({ q: query, sort, safety: safetyFilter, favorites: "true", limit: String(LIST_PAGE_SIZES.savedRecipes), offset: String(more ? favoriteRecipes.length : 0) })}`,
+				{ signal: controller.signal },
+			);
+			if (!response.ok) throw new Error("Unavailable favorites");
+			const result = await response.json();
+			if (current === favoriteRequest && favoritesOnly) {
+				favoriteRecipes = more
+					? [...favoriteRecipes, ...result.recipes.map(normalizeSavedRecipe)]
+					: result.recipes.map(normalizeSavedRecipe);
+				favoriteTotalCount = result.totalCount;
+				visibleCount = favoriteRecipes.length;
+			}
+		} catch {
+			if (current === favoriteRequest && favoritesOnly)
+				loadError = "Your favorite recipes could not load. Try again.";
+		} finally {
+			clearTimeout(timeout);
+			if (current === favoriteRequest) loadingRecipes = false;
+		}
+	};
+	$effect(() => {
+		if (favoritesOnly) {
+			favoriteViewActive = true;
+			query;
+			sort;
+			safetyFilter;
+			void loadFavoriteRecipes();
+		} else if (favoriteViewActive) {
+			favoriteViewActive = false;
+			favoriteRequest++;
+			favoriteAbort?.abort();
+			loadingRecipes = false;
+			loadError = "";
+			visibleCount = LIST_PAGE_SIZES.savedRecipes;
+		}
+	});
 
 	const loadSavedRecipes = async () => {
 		loadingRecipes = true;
@@ -147,6 +208,7 @@
 				return;
 			}
 			recipes = recipes.filter((savedRecipe) => savedRecipe.id !== recipe.id);
+			if (favoritesOnly) await loadFavoriteRecipes();
 		} catch {
 			deleteError = "We couldn't delete that mix. Please try again.";
 		} finally {
@@ -188,7 +250,12 @@
 		});
 	};
 
-	const applySort = (value: string, nextSafetyFilter?: string) => {
+	const applySort = (
+		value: string,
+		nextSafetyFilter?: string,
+		nextFavoritesOnly = false,
+	) => {
+		favoritesOnly = nextFavoritesOnly;
 		updateSort(value);
 		const requestedSafetyFilter = nextSafetyFilter ?? "";
 		safetyFilter = isFoodSafetyFilter(requestedSafetyFilter)
@@ -198,6 +265,10 @@
 	};
 
 	const revealMoreRecipes = () => {
+		if (favoritesOnly) {
+			void loadFavoriteRecipes(true);
+			return;
+		}
 		visibleCount += LIST_PAGE_SIZES.savedRecipes;
 	};
 
@@ -205,9 +276,29 @@
 		getMotionSafeDuration(MOTION_DURATION_MS.reflow);
 
 	onMount(() => {
-		window.addEventListener(SAVED_RECIPES_CHANGED_EVENT, loadSavedRecipes);
+		const recipesChanged = async () => {
+			favoriteRequest++;
+			favoriteAbort?.abort();
+			await loadSavedRecipes();
+			if (favoritesOnly) await loadFavoriteRecipes();
+		};
+		const changed = (event: Event) => {
+			const change = (event as CustomEvent<FavoriteChange>).detail;
+			if (change.kind !== "recipe") return;
+			recipes = recipes.map((recipe) =>
+				recipe.id === change.targetId
+					? { ...recipe, isFavorite: change.favorite }
+					: recipe,
+			);
+			if (favoritesOnly) void loadFavoriteRecipes();
+		};
+		window.addEventListener(FAVORITES_CHANGED_EVENT, changed);
+		window.addEventListener(SAVED_RECIPES_CHANGED_EVENT, recipesChanged);
 		return () => {
-			window.removeEventListener(SAVED_RECIPES_CHANGED_EVENT, loadSavedRecipes);
+			favoriteRequest++;
+			favoriteAbort?.abort();
+			window.removeEventListener(FAVORITES_CHANGED_EVENT, changed);
+			window.removeEventListener(SAVED_RECIPES_CHANGED_EVENT, recipesChanged);
 		};
 	});
 
@@ -220,6 +311,8 @@
 
 <ListSortSheet
 	open={sortSheetOpen}
+	{favoritesOnly}
+	showFavorites
 	value={sort}
 	options={sortOptions}
 	filterValue={safetyFilter}
@@ -257,12 +350,15 @@
 				placeholder="Search saved recipes…"
 				label="Search saved recipes by name or ingredient"
 				totalCount={recipes.length}
-				visibleCount={filteredRecipes.length}
+				visibleCount={favoritesOnly
+					? favoriteTotalCount
+					: filteredRecipes.length}
 				itemLabel="recipes"
 				filterLabel="Filter and sort saved recipes"
 				filterValue={safetyFilter}
 				filterOptions={FOOD_SAFETY_FILTER_OPTIONS}
 				filtersActive={sortSheetOpen ||
+					favoritesOnly ||
 					safetyFilter !== FOOD_SAFETY_FILTER_VALUES.all}
 				filterControlsId="saved-sort-sheet-title"
 				onFilterOpen={openSortSheet}
@@ -282,11 +378,20 @@
 				{/if}
 				{#if loadError}
 					<StatusMessage tone="danger" message={loadError} />
+					{#if favoritesOnly}<RoundedActionButton
+							onclick={() => void loadFavoriteRecipes()}
+							>Retry favorites</RoundedActionButton
+						>{/if}
 				{/if}
 
-				{#if loadingRecipes && recipes.length === 0}
+				{#if loadingRecipes && (favoritesOnly ? favoriteRecipes.length === 0 : recipes.length === 0)}
 					<section class="saved-page__loading" aria-busy="true">
-						<LoadingSpinner label="Loading saved recipes" showLabel />
+						<LoadingSpinner
+							label={favoritesOnly
+								? "Loading favorite recipes"
+								: "Loading saved recipes"}
+							showLabel
+						/>
 					</section>
 				{:else if recipes.length > 0}
 					{#if visibleRecipes.length > 0}
@@ -309,14 +414,23 @@
 						</ul>
 						<PaginatedListControls
 							{scrollContainer}
+							loadingMore={loadingRecipes}
+							loadMoreDisabled={loadingRecipes}
 							hasMoreItems={hasMoreRecipes}
 							loadMoreLabel="Load more recipes"
-							contentVersion={`${query}:${sort}:${safetyFilter}:${visibleRecipes.length}`}
+							contentVersion={`${query}:${sort}:${safetyFilter}:${favoritesOnly}:${visibleRecipes.length}`}
 							containerElement="div"
 							onLoadMore={revealMoreRecipes}
 						/>
-					{:else}
-						<SavedRecipesEmptyState filtered onAction={() => updateQuery("")} />
+					{:else if !loadError}
+						<SavedRecipesEmptyState
+							filtered
+							onAction={() => {
+								favoritesOnly = false;
+								safetyFilter = "all";
+								updateQuery("");
+							}}
+						/>
 					{/if}
 				{:else}
 					<SavedRecipesEmptyState onAction={() => void goto("/mix")} />

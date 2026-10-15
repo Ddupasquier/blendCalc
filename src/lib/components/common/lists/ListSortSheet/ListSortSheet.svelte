@@ -15,33 +15,67 @@
 		title = "Sort",
 		titleId,
 		loading = false,
+		favoritesOnly = false,
+		showFavorites = false,
 		onApply,
 		onClose,
 	}: ListSortSheetProps = $props();
 
 	let draftValue = $state("");
 	let draftFilterValue = $state("");
+	let draftFavoritesOnly = $state(false);
 	const hasFilterOptions = $derived(filterOptions.length > 0);
 
 	$effect(() => {
 		if (!open) return;
 		draftValue = value;
 		draftFilterValue = filterValue ?? "";
+		draftFavoritesOnly = favoritesOnly;
 	});
 
 	const applyControls = () => {
 		if (hasFilterOptions) {
-			onApply(draftValue, draftFilterValue);
+			if (showFavorites)
+				onApply(draftValue, draftFilterValue, draftFavoritesOnly);
+			else onApply(draftValue, draftFilterValue);
 			return;
 		}
 		onApply(draftValue);
 	};
 </script>
 
-<BottomSheet {open} {title} {titleId} {label} onClose={onClose}>
+<BottomSheet {open} {title} {titleId} {label} {onClose}>
 	<div class="list-sort-sheet">
+		{#if showFavorites}
+			<section
+				class="list-sort-sheet__section"
+				aria-labelledby={`${titleId}-favorites`}
+			>
+				<h3 id={`${titleId}-favorites`}>Favorites</h3>
+				<div
+					class="list-sort-sheet__options"
+					role="group"
+					aria-labelledby={`${titleId}-favorites`}
+				>
+					<PillButton
+						pressed={!draftFavoritesOnly}
+						variant={!draftFavoritesOnly ? "primary" : "neutral"}
+						onclick={() => (draftFavoritesOnly = false)}>All items</PillButton
+					>
+					<PillButton
+						pressed={draftFavoritesOnly}
+						variant={draftFavoritesOnly ? "primary" : "neutral"}
+						onclick={() => (draftFavoritesOnly = true)}
+						>Favorites only</PillButton
+					>
+				</div>
+			</section>
+		{/if}
 		{#if hasFilterOptions}
-			<section class="list-sort-sheet__section" aria-labelledby={`${titleId}-filters`}>
+			<section
+				class="list-sort-sheet__section"
+				aria-labelledby={`${titleId}-filters`}
+			>
 				<h3 id={`${titleId}-filters`}>{filterTitle}</h3>
 				<div
 					class="list-sort-sheet__options"
@@ -50,7 +84,9 @@
 				>
 					{#each filterOptions as option (option.value)}
 						<PillButton
-							variant={draftFilterValue === option.value ? "primary" : "neutral"}
+							variant={draftFilterValue === option.value
+								? "primary"
+								: "neutral"}
 							pressed={draftFilterValue === option.value}
 							onclick={() => (draftFilterValue = option.value)}
 						>

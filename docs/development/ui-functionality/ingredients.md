@@ -491,6 +491,21 @@ Both lists share the same card and list behavior:
   sees it; the emphasis stops after that first display or interaction, does not appear
   for filtered-empty or populated lists, and is absent when reduced motion is requested.
 
+## Favorites
+
+Saved food card actions and Food check details use the same compact star: outlined when
+off, filled when on, with a pressed state and a named Favorite/Remove favorite action.
+The control is independent of preview, selection, list movement, sharing and publication.
+It appears only for supported stable shared-catalog, generic-dataset or private-food
+identities. Pending updates prevent repeats; failures restore state with retry guidance.
+
+The existing filter sheet offers All items/Favorites only separately from safety filters.
+Favorites only opens the account's bounded Favorite foods collection, including foods
+removed from both lists. Query/sort/safety matching and counts remain server-owned;
+Load more preserves ordering. Preview opens the established food details and list actions.
+Empty, loading and failed reads are explicit; failed reads offer Retry favorites.
+Deleting an underlying private food cleans up its favorite, while list removal retains it.
+
 ## Responsive And Accessibility Checks
 
 - No nutrient column, image, name, badge, or action may leave the card or page bounds.

@@ -37,7 +37,7 @@ The expanded body shows:
 - a disclosure for the remaining ingredients instead of an inner scrolling list;
 - every supported goal percentage, omitting nutrients with no reported or derived
   evidence rather than displaying zero;
-- one dominant Load action plus compact Share and confirmed Delete actions.
+- one dominant Load action plus compact Favorite, Share and confirmed Delete actions.
 
 Loading a recipe restores its selected nutrients, goals, foods, serving amounts, and
 units, routes missing Fridge items to Shopping List when possible, and then navigates to
@@ -62,3 +62,13 @@ Mix calculation fallback or stored food data.
 Use the quiet open-page presentation and shared circular icon framing established by
 Ingredients. Do not wrap simple loading, no-results, or empty-library copy in an extra
 bordered card. A filtered empty state clears the search; an empty library routes to Mix.
+
+## Favorites
+
+The expanded card uses the shared outlined/filled star and accessible pressed state.
+Favoriting is private and does not load, share or modify the recipe. The existing filter
+sheet offers Favorites only independently of warning/recall filters. The server owns
+favorite matching, deterministic sorting, counts and pagination. Unfavoriting removes a
+recipe from that selected view; empty/error states allow clearing filters or retrying.
+Deleting the recipe cascades its favorite. Refresh restores account state; failed writes
+restore the prior visible state and retain retry guidance.

@@ -106,10 +106,28 @@ for (const transport of ["clipboard", "share"] as const) {
 					const card = page
 						.locator(".saved-recipe-card")
 						.filter({ has: page.getByText(recipe.name, { exact: true }) });
-					await card.locator("summary").first().click();
-					await card
-						.getByRole("button", { name: "Share recipe", exact: true })
-						.click();
+					const summary = card.locator("summary").first();
+					if (testInfo.project.use.hasTouch) await summary.tap();
+					else await summary.click();
+					await expect(card.locator("details").first()).toHaveAttribute(
+						"open",
+						"",
+					);
+					// Export assertions start after disclosure motion; touch projects
+					// exercise the same input a phone user actually uses.
+					await card.evaluate(async (element) => {
+						await Promise.all(
+							element
+								.getAnimations({ subtree: true })
+								.map((animation) => animation.finished.catch(() => undefined)),
+						);
+					});
+					const share = card.getByRole("button", {
+						name: "Share recipe",
+						exact: true,
+					});
+					if (testInfo.project.use.hasTouch) await share.tap();
+					else await share.click();
 					await expect(
 						card.getByText(
 							transport === "clipboard"
