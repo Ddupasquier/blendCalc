@@ -148,7 +148,7 @@ intentionally omitted.
 | `npm run test:affected`                                                    | Run Vitest files related to the current branch and working-tree changes.                    |
 | `npm run test:focused -- <path>`                                           | Run one focused Vitest file or directory in its configured runtime.                         |
 | `npm run test:watch -- <path>`                                             | Run focused Vitest checks in watch mode.                                                    |
-| `npm run test:e2e`                                                         | Run the bounded authenticated Playwright release tiers.                                     |
+| `npm run test:e2e`                                                         | Run the optional broader authenticated Playwright diagnostic tiers.                         |
 | `npm run test:e2e:affected`                                                | Prepare and run browser specs selected from changed feature ownership.                      |
 | `npm run test:e2e -- --project=desktop-chromium --project=mobile-chromium` | Run desktop Chromium plus compact/touch Chromium coverage.                                  |
 | `npm run test:e2e -- --grep @compatibility`                                | Run tagged compatibility smoke coverage across maintained projects.                         |
@@ -160,9 +160,9 @@ intentionally omitted.
 | `npm run test:e2e:install`                                                 | Install Chromium, Firefox, and WebKit for Playwright.                                       |
 | `npm run verify:quick`                                                     | Show source checks and affected Vitest in the live dashboard.                               |
 | `npm run verify:feature`                                                   | Run source gates plus affected Vitest and browser coverage.                                 |
-| `npm run verify:release`                                                   | Run the bounded blocking release profile in the dashboard.                                  |
+| `npm run verify:release`                                                   | Run source/build, affected tests and Chromium/WebKit release smoke.                         |
 | `npm run verify:promotion`                                                 | Reuse a fresh Release Check for an identical clean promoted tree.                           |
-| `npm run verify:nightly`                                                   | Run exhaustive nonblocking browser confidence in the dashboard.                             |
+| `npm run verify:nightly`                                                   | Run the weekly/manual exhaustive verification profile.                                      |
 
 Use the [Testing Strategy](docs/development/testing.md) to choose a test layer. Browser
 setup lives in [Browser Testing](docs/development/browser-testing.md); database fixtures

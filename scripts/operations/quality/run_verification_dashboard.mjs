@@ -102,10 +102,17 @@ const affectedBrowserStage = stage(
 );
 const browserMatrixStage = stage(
 	"playwright-matrix",
-	"Blocking browser tiers",
+	"Chromium and WebKit smoke",
 	"npm",
-	["run", "test:e2e"],
-	480_000,
+	[
+		"run",
+		"test:e2e",
+		"--",
+		"--project=desktop-chromium",
+		"--project=desktop-webkit",
+		"--grep=@smoke",
+	],
+	180_000,
 	{
 		environment: {
 			PLAYWRIGHT_ENFORCE_DURATION_BUDGETS: "true",
@@ -146,7 +153,7 @@ export const verificationProfiles = {
 	release: {
 		label: "Release Check",
 		description:
-			"Dependency, source, database, build, and blocking browser-tier confidence.",
+			"Dependency/source gates, affected tests, changed-database verification, build, and browser smoke.",
 		stages: [
 			stage(
 				"dependencies",
@@ -156,20 +163,20 @@ export const verificationProfiles = {
 				20_000,
 			),
 			...sourceContractStages,
-			...fullUnitStages,
+			affectedUnitStage,
 			buildStage,
 			stage(
 				"database",
-				"Disposable database",
-				"npm",
-				["run", "db:test", "--", "verify"],
+				"Database verification when changed",
+				"node",
+				["scripts/operations/quality/run_affected_tests.mjs", "database"],
 				240_000,
 			),
 			browserMatrixStage,
 		],
 	},
 	nightly: {
-		label: "Nightly Check",
+		label: "Exhaustive Check (weekly/manual)",
 		description:
 			"Release confidence plus every test in all five browser/device projects.",
 		stages: [

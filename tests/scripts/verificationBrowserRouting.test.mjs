@@ -39,6 +39,7 @@ const createFixture = (changedPaths) => {
 			mode: 0o755,
 		});
 	}
+	writeFileSync(join(root, ".gitignore"), "plan-output\ntest-results/\n");
 	git(root, "init", "--quiet", "--initial-branch=staging");
 	git(root, "config", "user.name", "Browser Routing Fixture");
 	git(root, "config", "user.email", "routing@blendcalc.local");
@@ -144,7 +145,11 @@ afterEach(() => {
 
 describe("real workflow browser routing", () => {
 	it("keeps release candidates draft until their eligible PR reuse check", () => {
-		expect(workflow.on.push.branches).toContain("!release/**");
+		expect(workflow.on.push.branches).toEqual([
+			"staging",
+			"main",
+			"mock-staging",
+		]);
 		expect(workflow.on.pull_request.types).toContain("ready_for_review");
 		expect(workflow.jobs["verification-plan"].if).toContain(
 			"!github.event.pull_request.draft",
@@ -258,12 +263,12 @@ describe("real workflow browser routing", () => {
 	it.each([
 		[
 			"src/lib/components/common/SegmentedControl/SegmentedControl.scss",
-			"full",
+			"feature",
 		],
-		["src/routes/+layout.svelte", "full"],
-		["src/styles/_variables.scss", "full"],
-		["tests/e2e/support/browserTest.ts", "full"],
-		["playwright.config.ts", "full"],
+		["src/routes/+layout.svelte", "feature"],
+		["src/styles/_variables.scss", "feature"],
+		["tests/e2e/support/browserTest.ts", "feature"],
+		["playwright.config.ts", "feature"],
 		["src/routes/profile/+page.svelte", "feature"],
 		["src/routes/ingredients/+page.svelte", "feature"],
 		["tests/e2e/nutritionServingSelector.spec.ts", "feature"],
@@ -280,6 +285,10 @@ describe("real workflow browser routing", () => {
 			mode,
 			dependencies: mode === "full" ? "true" : "false",
 		});
+		execFileSync(process.execPath, [selectorPath, "browser", "--plan-only"], {
+			cwd: fixture.root,
+			env: { ...fixture.env, TEST_BASE_REF: "staging" },
+		});
 		const report = JSON.parse(
 			readFileSync(
 				join(fixture.root, "test-results/affected-test-selection.json"),
@@ -287,9 +296,7 @@ describe("real workflow browser routing", () => {
 			),
 		);
 		expect(report.changedFiles).toEqual([path]);
-		expect(report.browserSelection.projects).toEqual(
-			mode === "full" ? [] : ["desktop-chromium", "mobile-chromium"],
-		);
+		expect(report.browserSelection.projects).toEqual(["desktop-chromium"]);
 	});
 
 	it("keeps an explicitly requested full run full without affected planning", () => {
@@ -335,6 +342,103 @@ describe("real workflow browser routing", () => {
 		},
 	);
 
+	it("prepares affected Chromium flows exactly once through their owned wrapper", () => {
+		const fixture = createFixture(["src/routes/profile/+page.svelte"]);
+		const wrapper = "scripts/operations/quality/run_browser_verification.mjs";
+		writeFileSync(
+			join(fixture.root, wrapper),
+			'import {writeFileSync} from "node:fs";writeFileSync(process.env.BROWSER_COMMAND,JSON.stringify(process.argv.slice(2)));',
+		);
+		const output = join(fixture.root, "browser-command");
+		const result = spawnSync(
+			process.execPath,
+			[selectorPath, "browser", "--prepare"],
+			{
+				cwd: fixture.root,
+				env: {
+					...fixture.env,
+					TEST_BASE_REF: "staging",
+					BROWSER_COMMAND: output,
+				},
+				encoding: "utf8",
+			},
+		);
+		expect(result.status, result.stderr).toBe(0);
+		expect(JSON.parse(readFileSync(output, "utf8"))).toEqual([
+			"tests/e2e/profileInteractions.spec.ts",
+			"--project=desktop-chromium",
+		]);
+	});
+
+	it.each([
+		["supabase/migrations/20261015000000_example.sql", true],
+		["supabase/tests/database/example.test.sql", true],
+		["scripts/lib/qa/local_qa_personas.mjs", true],
+		["src/lib/types/database.types.ts", true],
+		["src/routes/saved/+page.svelte", false],
+		["docs/development/testing.md", false],
+	])("verifies the database only for owned changes (%s)", (path, required) => {
+		const fixture = createFixture([path]);
+		const output = join(fixture.root, "database-command");
+		writeFileSync(
+			join(fixture.root, "command-guards/npm"),
+			'#!/bin/sh\nprintf "%s\\n" "$@" > "$DATABASE_COMMAND"\n',
+			{ mode: 0o755 },
+		);
+		const result = spawnSync(process.execPath, [selectorPath, "database"], {
+			cwd: fixture.root,
+			env: {
+				...fixture.env,
+				TEST_BASE_REF: "staging",
+				DATABASE_COMMAND: output,
+			},
+			encoding: "utf8",
+		});
+		expect(result.status, result.stderr).toBe(0);
+		const report = JSON.parse(
+			readFileSync(
+				join(fixture.root, "test-results/affected-test-selection.json"),
+				"utf8",
+			),
+		);
+		expect(report.databaseRequired).toBe(required);
+		if (required)
+			expect(readFileSync(output, "utf8").trim().split("\n")).toEqual([
+				"run",
+				"db:test",
+				"--",
+				"verify",
+			]);
+		else expect(result.stdout).toContain("pgTAP is not required");
+	});
+
+	it("keeps deleted and staged owners in the selected scope", () => {
+		const path = "supabase/tests/database/removed.test.sql";
+		const fixture = createFixture([path]);
+		const removedSpec = "tests/e2e/removed.spec.ts";
+		mkdirSync(dirname(join(fixture.root, removedSpec)), { recursive: true });
+		writeFileSync(join(fixture.root, removedSpec), "removed test\n");
+		git(fixture.root, "add", removedSpec);
+		git(fixture.root, "add", path);
+		git(fixture.root, "commit", "--quiet", "-m", "database baseline");
+		git(fixture.root, "branch", "--force", "staging", "HEAD");
+		git(fixture.root, "rm", path, removedSpec);
+		execFileSync(process.execPath, [selectorPath, "database", "--plan-only"], {
+			cwd: fixture.root,
+			env: { ...fixture.env, TEST_BASE_REF: "staging" },
+		});
+		const report = JSON.parse(
+			readFileSync(
+				join(fixture.root, "test-results/affected-test-selection.json"),
+				"utf8",
+			),
+		);
+		expect(report.databaseRequired).toBe(true);
+		expect(report.changedFiles).toContain(path);
+		expect(report.changedFiles).toContain(removedSpec);
+		expect(report.browserSelection.specs).not.toContain(removedSpec);
+	});
+
 	it("detects committed and working-tree shared owners together", () => {
 		const fixture = createFixture(["docs/README.md"]);
 		git(fixture.root, "add", "docs/README.md");
@@ -347,7 +451,7 @@ describe("real workflow browser routing", () => {
 			encoding: "utf8",
 		});
 		expect(result.status, result.stderr).toBe(0);
-		expect(readOutput(fixture).mode).toBe("full");
+		expect(readOutput(fixture).mode).toBe("feature");
 	});
 
 	it("fails planning before selection when its Git comparison is invalid", () => {
@@ -408,6 +512,7 @@ describe("real workflow browser routing", () => {
 				"test:e2e",
 				"--",
 				`--project=${project}`,
+				"--grep=@smoke",
 			]);
 			expect(
 				workflow.on.workflow_dispatch.inputs.desktop_webkit_workers.default,
@@ -415,15 +520,11 @@ describe("real workflow browser routing", () => {
 		},
 	);
 
-	it("retains the six isolated jobs, existing worker counts and deadlines", () => {
+	it("runs only two isolated release smoke jobs with the existing worker limits", () => {
 		const matrix = workflow.jobs.browser.strategy.matrix.include;
 		expect(matrix.map(({ label }) => label)).toEqual([
-			"desktop-chromium-1-of-2",
-			"desktop-chromium-2-of-2",
-			"desktop-firefox",
+			"desktop-chromium",
 			"desktop-webkit",
-			"mobile-chromium",
-			"mobile-webkit",
 		]);
 		expect(workflow.jobs.browser.env.PLAYWRIGHT_WORKERS).toBe(2);
 		expect(workflow.jobs["browser-affected"].env.PLAYWRIGHT_WORKERS).toBe(1);

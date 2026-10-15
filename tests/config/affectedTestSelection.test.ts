@@ -16,12 +16,12 @@ describe("affected-test selection", () => {
 		expect(selectorSource).toContain('"vitest",');
 		expect(selectorSource).toContain('"related",');
 		expect(selectorSource).toContain('"desktop-chromium"');
-		expect(selectorSource).toContain('"mobile-chromium"');
+		expect(selectorSource).not.toContain('"mobile-chromium"');
 		expect(selectorSource).toContain("globalBrowserOwners");
 		expect(selectorSource).toContain("globalUnitOwners");
 		expect(selectorSource).toContain('runCommand("npm", ["run", "test"])');
 		expect(selectorSource).toContain("browserDomainMappings");
-		expect(selectorSource).toContain('"chromium", "firefox", "webkit"');
+		expect(selectorSource).toContain("selection.projects.map");
 		expect(selectorSource).toContain("runCommandWithInheritedOutput");
 		expect(selectorSource).toContain(
 			'"scripts/operations/quality/run_browser_verification.mjs"',

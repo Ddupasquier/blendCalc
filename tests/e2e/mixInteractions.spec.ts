@@ -2016,7 +2016,7 @@ test("the Mix save dialog accepts text and cancels without saving", async ({
 	await expect(dialog).toBeHidden();
 });
 
-test("Mix recipes save once, reject duplicate names, and preserve overwrite and save-as-new snapshots", async ({
+test("Mix recipes save once, reject duplicate names, and preserve overwrite and save-as-new snapshots @smoke @compatibility", async ({
 	page,
 }, testInfo) => {
 	test.skip(
