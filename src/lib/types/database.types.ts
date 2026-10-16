@@ -9652,6 +9652,31 @@ export type Database = {
 					},
 				];
 			};
+			user_ad_free_access: {
+				Row: {
+					created_at: string;
+					expires_at: string;
+					revoked_at: string | null;
+					updated_at: string;
+					user_id: string;
+				};
+				ComputedFields: never;
+				Insert: {
+					created_at?: string;
+					expires_at: string;
+					revoked_at?: string | null;
+					updated_at?: string;
+					user_id: string;
+				};
+				Update: {
+					created_at?: string;
+					expires_at?: string;
+					revoked_at?: string | null;
+					updated_at?: string;
+					user_id?: string;
+				};
+				Relationships: [];
+			};
 			user_saved_recipe_favorites: {
 				Row: {
 					created_at: string;
@@ -10492,6 +10517,10 @@ export type Database = {
 			};
 		};
 		Functions: {
+			read_current_user_advertising_access: {
+				Args: Record<PropertyKey, never>;
+				Returns: string;
+			};
 			activate_food_compatibility_policy_version: {
 				Args: { p_policy_version_id: string };
 				Returns: number;
