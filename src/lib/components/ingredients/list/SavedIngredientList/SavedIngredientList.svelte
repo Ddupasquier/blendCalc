@@ -53,6 +53,7 @@
 		onRevealMore,
 		onScan = () => {},
 		onScrollDirectionChange = () => {},
+		footer,
 	}: SavedIngredientListProps = $props();
 
 	let listElement = $state<HTMLUListElement | null>(null);
@@ -343,6 +344,7 @@
 					contentVersion={`${activeList}:${foods.length}:${resetKey}`}
 					onLoadMore={requestMoreItems}
 				/>
+				{@render footer?.()}
 			</ul>
 		{:else if listLoading}
 			<div

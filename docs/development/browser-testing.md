@@ -82,7 +82,13 @@ The local Auth emulator permits a larger sign-in burst so repeated full matrices
 trip a five-minute test-only rate limit; hosted Auth keeps its independently configured
 and audited production limits. Requests from each Playwright project and worker on the
 exact isolated local test runtime also use a separate app-level quota partition tied to
-its validated maintained QA persona. Every endpoint retains its configured bounded
+its validated maintained QA persona. Each scenario attempt adds a fresh bounded
+32-character hexadecimal token, so unrelated cases and retries cannot consume one
+another's budget or the worker-bootstrap budget. Every request within one scenario
+retains the same partition, including explicit account switches. No rate-limit rows are
+cleared by this fixture. The exact TEST runtime guard rejects malformed tokens and
+ignores all partition hints outside the supported local environment.
+Every endpoint retains its configured bounded
 quota, fixture sign-in still performs real password authentication, and localhost
 development, previews, and production keep the unpartitioned client and account limits.
 The complete remote matrix runs each browser project in a separate job with its own

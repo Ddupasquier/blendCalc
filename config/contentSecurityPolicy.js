@@ -93,13 +93,36 @@ export const readViteMode = (
 	return modeIndex >= 0 ? (args[modeIndex + 1] ?? "") : "";
 };
 
+/** @param {string} mode @param {Record<string, string | undefined>} environment */
+const advertisingEnabled = (mode, environment) =>
+	mode === "production" &&
+	environment.BLENDCALC_ADVERTISING_MODE === "google" &&
+	environment.BLENDCALC_ADVERTISING_APPROVED === "true";
+const GOOGLE_AD_CONNECT_SOURCES = [
+	"https://pagead2.googlesyndication.com",
+	"https://googleads.g.doubleclick.net",
+	"https://fundingchoicesmessages.google.com",
+	"https://www.google.com",
+];
+const GOOGLE_AD_FRAME_SOURCES = [
+	"https://googleads.g.doubleclick.net",
+	"https://tpc.googlesyndication.com",
+	"https://fundingchoicesmessages.google.com",
+	"https://www.google.com",
+];
+
 export const createConnectSources = (
 	mode = readViteMode(),
 	environment = {},
 ) =>
 	SAFE_LOCAL_MODES.has(mode)
 		? createLocalSupabaseSources(mode, environment)
-		: HOSTED_CONNECT_SOURCES;
+		: [
+				...HOSTED_CONNECT_SOURCES,
+				...(advertisingEnabled(mode, environment)
+					? GOOGLE_AD_CONNECT_SOURCES
+					: []),
+			];
 
 export const createImageSources = (mode = readViteMode(), environment = {}) =>
 	SAFE_LOCAL_MODES.has(mode)
@@ -112,12 +135,31 @@ export const createImageSources = (mode = readViteMode(), environment = {}) =>
 			]
 		: ["self", "data:", "blob:", "https:"];
 
-export const createFrameSources = (mode = readViteMode()) =>
+export const createFrameSources = (
+	mode = readViteMode(),
+	environment = process.env,
+) =>
 	SAFE_LOCAL_MODES.has(mode)
 		? ["self"]
-		: ["self", "https://challenges.cloudflare.com"];
+		: [
+				"self",
+				"https://challenges.cloudflare.com",
+				...(advertisingEnabled(mode, environment)
+					? GOOGLE_AD_FRAME_SOURCES
+					: []),
+			];
 
-export const createScriptSources = (mode = readViteMode()) => [
+export const createScriptSources = (
+	mode = readViteMode(),
+	environment = process.env,
+) => [
+	...(advertisingEnabled(mode, environment)
+		? [
+				"strict-dynamic",
+				"https://pagead2.googlesyndication.com",
+				"https://fundingchoicesmessages.google.com",
+			]
+		: []),
 	"self",
 	"wasm-unsafe-eval",
 	...(SAFE_LOCAL_MODES.has(mode)
