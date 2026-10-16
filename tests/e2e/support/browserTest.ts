@@ -6,7 +6,6 @@ import {
 	type Locator,
 	type Page,
 } from "@playwright/test";
-import { randomUUID } from "node:crypto";
 import { mkdir, readFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import {
@@ -178,16 +177,12 @@ export const test = playwrightTest.extend<
 	},
 	localQaBrowserRateLimitPartition: [
 		async ({ context }, use, testInfo) => {
-			// Scenarios (including retries) get independent budgets; requests within
-			// one scenario retain the same bounded endpoint quotas.
-			const scenarioId = randomUUID().replaceAll("-", "");
 			await context.addCookies([
 				{
 					name: "blendcalc-local-qa-browser-partition",
 					value: getLocalQaBrowserRateLimitPartition(
 						testInfo.project.name,
 						testInfo.parallelIndex,
-						scenarioId,
 					),
 					url: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:5174",
 				},

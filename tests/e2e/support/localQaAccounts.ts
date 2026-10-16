@@ -20,9 +20,7 @@ export const localQaAccountCount = workerEmails.length;
 export const getLocalQaBrowserRateLimitPartition = (
 	projectName: string,
 	parallelWorkerIndex: number,
-	scenarioId?: string,
-) =>
-	`browserWorker${parallelWorkerIndex + 1}|${projectName}${scenarioId ? `|${scenarioId}` : ""}`;
+) => `browserWorker${parallelWorkerIndex + 1}|${projectName}`;
 
 export const getLocalQaAccountForWorker = (parallelWorkerIndex: number) => {
 	const email = workerEmails[parallelWorkerIndex];

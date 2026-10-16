@@ -70,7 +70,6 @@ export const main = async (args = process.argv.slice(2)) => {
 		additionalEnvironment: generatedEnvironment,
 		passthroughKeys: [
 			"BLENDCALC_ALLOW_RESOURCE_PRESSURE",
-			"BLENDCALC_ADVERTISING_MODE",
 			"FORMAT_BASE_REF",
 			"NODE_OPTIONS",
 			"TEST_BASE_REF",

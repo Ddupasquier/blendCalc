@@ -12,35 +12,6 @@ import {
 } from "../../config/contentSecurityPolicy.js";
 
 describe("content security policy", () => {
-	it("keeps advertising off unless an explicit production activation is approved", () => {
-		const approved = {
-			BLENDCALC_ADVERTISING_MODE: "google",
-			BLENDCALC_ADVERTISING_APPROVED: "true",
-		};
-		for (const mode of ["test", "local", "rehearsal", "staging"]) {
-			expect(createScriptSources(mode, approved)).not.toContain(
-				"strict-dynamic",
-			);
-			expect(createFrameSources(mode, approved)).not.toContain(
-				"https://googleads.g.doubleclick.net",
-			);
-		}
-		expect(createScriptSources("production", approved)).toContain(
-			"strict-dynamic",
-		);
-		expect(createScriptSources("production", approved)).not.toContain(
-			"unsafe-inline",
-		);
-		expect(createScriptSources("production", approved)).not.toContain(
-			"unsafe-eval",
-		);
-		expect(createConnectSources("production", approved)).toContain(
-			"https://fundingchoicesmessages.google.com",
-		);
-		expect(createScriptSources("production", {})).not.toContain(
-			"strict-dynamic",
-		);
-	});
 	it("allows requests to the FoodData Central API", () => {
 		expect(createConnectSources("production")).toContain(
 			"https://api.nal.usda.gov",

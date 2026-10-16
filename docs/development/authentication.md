@@ -207,16 +207,6 @@ who loses every enrolled authenticator is stopped at `/auth/mfa/recovery`; an
 administrator must verify the person's identity and remove the inaccessible factor
 through trusted Supabase operations before the user enrolls again.
 
-## Public Privacy Access
-
-`/privacy` is an exact public route. Root-layout loading uses guest presentation
-and the existing theme preference, avoiding profile/reference reads and tutorial UI.
-For an authenticated reader it retains the server-verified account ID solely for client
-draft-storage scoping, so reading privacy does not switch existing drafts into guest
-storage. Anonymous output contains no account ID. A password-upgrade requirement does not redirect
-this informational route; protected routes and server actions retain their existing
-checks. The public route neither signs a user out nor grants access to any account data.
-
 ## Database Security
 
 Every user-data table has RLS enabled and policies scoped to `(select auth.uid())`.

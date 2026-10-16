@@ -1,6 +1,5 @@
 <script lang="ts">
 	import FloatingFruitBackground from "$lib/components/app/FloatingFruitBackground/FloatingFruitBackground.svelte";
-	import PrivacyPolicyLink from "$lib/components/common/navigation/PrivacyPolicyLink/PrivacyPolicyLink.svelte";
 	import type { GuestAccessPageShellProps } from "./types";
 
 	let { width = "standard", children }: GuestAccessPageShellProps = $props();
@@ -15,7 +14,6 @@
 		bind:this={cardElement}
 	>
 		{@render children()}
-		<PrivacyPolicyLink />
 	</div>
 </section>
 
