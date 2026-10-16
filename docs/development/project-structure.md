@@ -313,6 +313,14 @@ is no callback claim hook or compatibility RPC. Production-connected development
 synthetic QA retain their normal launchers and behavior. Rehearsal starts the sandbox
 directly through its public CLI.
 
+## Consumer policy presentation
+
+`components/privacy/LegalNoticeShell/` owns the shared long-form reading layout for
+`PrivacyNotice` and `TermsNotice`. The existing guest shell owns the outer card and
+background. `components/common/navigation/PublicPolicyLinks/` owns the paired privacy
+and terms links used by guest surfaces and Profile session settings. Exact public
+route admission is owned by the root server layout, not by either content component.
+
 ## Documentation
 
 The tracked documentation entry point is [`docs/README.md`](../README.md).
