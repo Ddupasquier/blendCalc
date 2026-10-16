@@ -1,6 +1,13 @@
 @use "../../../../../styles/variables" as *;
 
-.privacy-policy-link {
+.public-policy-links {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: $app-gap-md;
+}
+
+.public-policy-links__link {
 	display: inline-flex;
 	align-items: center;
 	justify-self: start;

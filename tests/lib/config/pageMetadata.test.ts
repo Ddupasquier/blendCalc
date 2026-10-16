@@ -8,6 +8,15 @@ import {
 const url = (path: string) => new URL(path, "https://blendcalc.test");
 
 describe("page metadata", () => {
+	it("names public consumer policy documents", () => {
+		expect(getAppDocumentTitle(url("/privacy"))).toBe(
+			"Privacy & Advertising · blendCalc",
+		);
+		expect(getAppDocumentTitle(url("/terms"))).toBe(
+			"Terms of Service · blendCalc",
+		);
+	});
+
 	it("puts the useful view name before the app name", () => {
 		expect(getAppDocumentTitle(url("/"))).toBe(
 			"Food Awareness, Nutrition & Recalls · blendCalc",

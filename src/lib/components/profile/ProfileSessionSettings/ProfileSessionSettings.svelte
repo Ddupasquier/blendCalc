@@ -1,7 +1,7 @@
 <script lang="ts">
 	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
 	import ProfileSettingsSection from "$lib/components/profile/ProfileSettingsSection/ProfileSettingsSection.svelte";
-	import PrivacyPolicyLink from "$lib/components/common/navigation/PrivacyPolicyLink/PrivacyPolicyLink.svelte";
+	import PublicPolicyLinks from "$lib/components/common/navigation/PublicPolicyLinks/PublicPolicyLinks.svelte";
 
 	let isLoggingOut = $state(false);
 </script>
@@ -20,7 +20,7 @@
 			Log out
 		</RoundedActionButton>
 	</form>
-	<PrivacyPolicyLink />
+	<PublicPolicyLinks />
 </ProfileSettingsSection>
 
 <style lang="scss">

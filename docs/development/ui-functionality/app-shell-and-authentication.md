@@ -141,12 +141,17 @@ activation settings.
 
 ## Privacy And Advertising Choices
 
-- `/privacy` is readable without signing in and uses the guest shell, shared tokens and
+- `/privacy` and `/terms` are readable without signing in and uses the guest shell, shared tokens and
   descriptive page metadata. Its root-layout response omits profile and reference data while preserving the
   verified account ID for existing draft-storage scoping;
   a required password upgrade does not prevent reading this information. Protected app
   routes retain their existing admission checks.
-- Landing/sign-in guest surfaces and Profile session settings link to the same page.
+- Landing/sign-in guest surfaces and Profile session settings link to both pages through
+  `PublicPolicyLinks`. `LegalNoticeShell` owns their shared readable content layout.
+- The consumer terms identify ModernCraft LLC, Oregon, and describe current service,
+  accounts, information limits, submissions, acceptable use, support and the absence of
+  a paid offer. Operator signoff is the consumer publication gate; it does not assert
+  independent legal review. API review remains separate.
 - The notice describes current account, food, upload, service-provider, storage and
   analytics behavior. Google ads remain disabled; future-use disclosures do not assert
   that an ad network or certified consent platform has been activated.
