@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { getLocalQaBrowserRateLimitPartition } from "../../../e2e/support/localQaAccounts";
 import {
 	getAutomaticLocalQaMfaAccount,
 	getLocalQaBrowserRateLimitClientAddress,
@@ -192,4 +193,55 @@ describe("local QA sign-in boundary", () => {
 			),
 		).toBeNull();
 	});
+
+	it("isolates scenario budgets from each other and worker bootstrap", () => {
+		const partition = (scenarioId?: string) =>
+			getLocalQaBrowserRateLimitPartition("desktop-chromium", 0, scenarioId);
+		const address = (value: string) =>
+			getLocalQaBrowserRateLimitClientAddress(value, localRuntime);
+		const first = partition("a".repeat(32));
+		const second = partition("b".repeat(32));
+		expect(address(first)).toBe(
+			`local-qa-browser:desktop-chromium:browserWorker1:${"a".repeat(32)}`,
+		);
+		expect(
+			new Set([address(first), address(second), address(partition())]).size,
+		).toBe(3);
+	});
+
+	it.each([
+		"",
+		"a".repeat(31),
+		"a".repeat(33),
+		"A".repeat(32),
+		"a".repeat(32) + "|extra",
+	])("rejects malformed or unbounded scenario tokens: %s", (scenarioId) => {
+		expect(
+			getLocalQaBrowserRateLimitClientAddress(
+				`browserWorker1|desktop-chromium|${scenarioId}`,
+				localRuntime,
+			),
+		).toBeNull();
+	});
+
+	it.each([
+		{ appUrl: new URL("http://localhost:5173/auth") },
+		{ appUrl: new URL("http://localhost:5186/auth") },
+		{ appUrl: new URL("https://staging.example.com/auth") },
+		{ runtimeEnvironment: "production" },
+		{ supabaseUrl: "http://127.0.0.1:60321" },
+		{ password: "" },
+		{ accountsBase64: "" },
+		rehearsalRuntime,
+	])(
+		"keeps scenario partitioning outside other runtime boundaries",
+		(override) => {
+			expect(
+				getLocalQaBrowserRateLimitClientAddress(
+					`browserWorker1|desktop-chromium|${"a".repeat(32)}`,
+					{ ...localRuntime, ...override },
+				),
+			).toBeNull();
+		},
+	);
 });
