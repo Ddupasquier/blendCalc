@@ -148,16 +148,19 @@ export const getLocalQaBrowserRateLimitClientAddress = (
 ) => {
 	const runtime = resolveRuntime(input);
 	if (!runtime.enabled) return null;
-	const [accountKey, projectName, ...unexpectedParts] =
+	const [accountKey, projectName, scenarioId, ...unexpectedParts] =
 		browserPartition?.split("|") ?? [];
 	if (
 		unexpectedParts.length > 0 ||
 		!accountKey ||
 		!projectName ||
-		!LOCAL_QA_BROWSER_PROJECTS.has(projectName)
+		!LOCAL_QA_BROWSER_PROJECTS.has(projectName) ||
+		(scenarioId !== undefined && !/^[a-f0-9]{32}$/.test(scenarioId))
 	) {
 		return null;
 	}
 	const account = runtime.accounts.find(({ key }) => key === accountKey);
-	return account ? `local-qa-browser:${projectName}:${account.key}` : null;
+	return account
+		? `local-qa-browser:${projectName}:${account.key}${scenarioId ? `:${scenarioId}` : ""}`
+		: null;
 };

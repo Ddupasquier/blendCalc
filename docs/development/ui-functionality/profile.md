@@ -163,6 +163,12 @@ those impacts briefly inside the matching disclosure without repeating saved val
 Matching comes from reviewed server policy and source evidence, not naive client text
 matching.
 
+## Privacy Access
+
+The session settings include the shared `Privacy & advertising` link to public `/privacy`.
+This is a separate full page, available without signing out, rather than a Profile sheet.
+The app-shell contract owns its privacy and advertising-refusal behavior.
+
 ## Tutorial And Session
 
 - Provide an action to replay the guided tutorial without changing the stored

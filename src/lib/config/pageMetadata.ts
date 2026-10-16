@@ -19,6 +19,8 @@ export const getAppDocumentTitle = (
 		return formatDocumentTitle("Food Awareness, Nutrition & Recalls");
 	}
 	if (pathname === "/auth") return formatDocumentTitle("Sign In");
+	if (pathname === "/privacy")
+		return formatDocumentTitle("Privacy & Advertising");
 	if (pathname === "/auth/update-password") {
 		return formatDocumentTitle("Update Password");
 	}

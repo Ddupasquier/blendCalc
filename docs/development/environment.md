@@ -466,3 +466,28 @@ Before handoff, verify:
 - removed aliases no longer appear in source or deployed configuration;
 - no tracked file contains a secret value; and
 - local mirrors and deployed settings contain the names required by their consumers.
+
+## Advertising Configuration
+
+Advertising remains off in production unless `BLENDCALC_RUNTIME_ENVIRONMENT=production`,
+`BLENDCALC_ADVERTISING_MODE=google` and `BLENDCALC_ADVERTISING_APPROVED=true` are deliberately
+configured for both build and runtime. These are private deployment controls, not
+browser preferences or permission to activate delivery. A fresh reviewed build is
+required because CSP is compiled from the same settings. Defaults in the Vercel example
+keep delivery disabled. Public publisher/unit identifiers live in the provider owner;
+they are not credentials.
+
+Before activation, apply and verify the additive access migration, publish the approved
+privacy notice, complete certified consent/vendor settings, obtain AdSense site
+approval, verify commercial hosting, and test the actual provider/CSP behavior. Google
+supports nonce-based strict CSP; the app keeps its stricter origin restrictions and
+never adds script `unsafe-inline` or general `unsafe-eval`. Unexpected provider domains
+remain blocked pending review. Local simulation is not live-provider proof.
+
+TEST defaults to network-free `preview` mode so ordinary routed tests cover placements,
+server eligibility and browser refusal. `BLENDCALC_ADVERTISING_MODE=disabled` can disable
+those previews for an explicit baseline diagnostic. The hermetic test wrapper passes
+only the mode setting; no Google delivery is possible in TEST. Local production-connected
+app development, staging and Rehearsal cannot enable Google delivery, regardless of
+ambient activation flags. Neither configuration nor a checkout URL grants ad-free
+membership.
