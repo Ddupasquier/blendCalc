@@ -1,5 +1,4 @@
 <script lang="ts">
-	import AppAdvertising from "$lib/components/advertising/AppAdvertising/AppAdvertising.svelte";
 	import {
 		FAVORITES_CHANGED_EVENT,
 		type FavoriteChange,
@@ -436,16 +435,6 @@
 				{:else}
 					<SavedRecipesEmptyState onAction={() => void goto("/mix")} />
 				{/if}
-				<AppAdvertising
-					pathname={activeSavedRecipesRouteUrl.pathname}
-					hasContent={visibleRecipes.length > 0}
-					busy={sortSheetOpen ||
-						loadingRecipes ||
-						!!loadingRecipeId ||
-						!!deletingRecipeId ||
-						!!loadError ||
-						!!deleteError}
-				/>
 			</div>
 		</div>
 	</ViewBody>

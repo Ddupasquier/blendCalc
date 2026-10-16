@@ -1,11 +1,9 @@
-import type { Snippet } from "svelte";
 import type { FoodItem } from "$lib/utils/food/types";
 import type { ScrollDirection } from "$lib/utils/navigation/scrollDirection";
 import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
 
 export type SavedIngredientListProps = {
 	activeList: IngredientListKey;
-	footer?: Snippet;
 	foods: FoodItem[];
 	activeRawCount?: number;
 	listLoading?: boolean;

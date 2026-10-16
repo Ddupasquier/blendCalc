@@ -1,5 +1,4 @@
 <script lang="ts">
-	import AppAdvertising from "$lib/components/advertising/AppAdvertising/AppAdvertising.svelte";
 	import { page } from "$app/state";
 	import ConfirmationDialog from "$lib/components/common/dialogs/ConfirmationDialog/ConfirmationDialog.svelte";
 	import TextInputDialog from "$lib/components/common/dialogs/TextInputDialog/TextInputDialog.svelte";
@@ -937,15 +936,6 @@
 					</div>
 				</section>
 			{/if}
-			<AppAdvertising
-				pathname={activeMixRouteHref}
-				hasContent={selectedFoods.length > 0}
-				busy={mixRouteState.overlay !== null ||
-					resetActionBusy ||
-					savedRecipeController.state.busy ||
-					!mixStateReady ||
-					!!cloudLoadError}
-			/>
 		</div>
 	</ViewBody>
 </ViewFrame>
