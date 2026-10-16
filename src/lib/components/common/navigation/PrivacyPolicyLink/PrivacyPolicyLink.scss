@@ -1,0 +1,17 @@
+@use "../../../../../styles/variables" as *;
+
+.privacy-policy-link {
+	display: inline-flex;
+	align-items: center;
+	justify-self: start;
+	min-height: $app-shell-control-height;
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+	text-decoration: underline;
+	text-underline-offset: $app-gap-inline-compact;
+
+	&:focus-visible {
+		outline: $app-focus-outline;
+		outline-offset: $app-focus-outline-offset;
+	}
+}
