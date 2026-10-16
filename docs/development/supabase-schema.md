@@ -52,6 +52,7 @@ policies, or core data ownership changes.
 | Table                               | Primary Key | Owner Scope              | Purpose                                                                                                                                                | Key Relationships                                                      |
 | ----------------------------------- | ----------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
 | `profiles`                          | `user_id`   | One row per auth user    | Display/profile data, appearance and delight preferences, avatar metadata, and avatar policy state                                                     | `user_id → auth.users.id`                                              |
+| `user_ad_free_access`               | `user_id`   | One row per auth user    | Trusted, finite ad-free access; expired/revoked grants do not apply                                                                                    | `user_id → auth.users.id`, cascading deletion                          |
 | `marketing_email_topics`            | `topic_key` | Shared reference catalog | Active optional promotional-email categories and user-facing explanations                                                                              | Referenced by current choices and history                              |
 | `user_marketing_email_preferences`  | Composite   | One row per user/topic   | Latest explicit promotional-email choice, consent-copy version, and source; missing rows mean not subscribed                                           | User and marketing topic                                               |
 | `marketing_email_preference_events` | `id`        | Append-only user history | Evidence of effective promotional preference changes without copying Auth email addresses                                                              | User and marketing topic                                               |
@@ -95,6 +96,22 @@ Notes:
   can become current only when `save_current_user_profile_image` finds matching policy
   evidence for the same authenticated owner, exact private Storage path, and policy
   version.
+
+### Advertising access
+
+`user_ad_free_access` contains `user_id`, finite `expires_at`, nullable `revoked_at`,
+`created_at` and trigger-maintained `updated_at`. Its user primary key also indexes the
+only account lookup. Auth deletion cascades; no email, payment token or food data is
+copied. An absent, expired or revoked row means ad-supported, not paid access.
+
+Authenticated callers can select only their own row through RLS and cannot insert,
+update or delete grants. Anonymous callers have no table/RPC privileges. Trusted
+service work owns writes. `read_current_user_advertising_access()` is an authenticated,
+security-invoker read deriving the owner from `auth.uid()`; it returns only `ad-free` or
+`supported`. The application treats RPC errors or unknown results as unknown and serves
+no ads. The table is the access projection, not a checkout, subscription ledger or
+consent store; payment reconciliation must update this owner rather than introduce a
+second membership flag. No grant is created by the migration itself.
 
 ### Marketing email preferences
 

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AppAdvertising from "$lib/components/advertising/AppAdvertising/AppAdvertising.svelte";
 	import {
 		FAVORITES_CHANGED_EVENT,
 		type FavoriteChange,
@@ -1418,7 +1419,24 @@
 					onRevealMore={revealMoreActiveItems}
 					onScan={startBarcodeScan}
 					onScrollDirectionChange={handleListScrollDirectionChange}
-				/>
+				>
+					{#snippet footer()}
+						<AppAdvertising
+							pathname={activeIngredientRouteUrl.pathname}
+							hasContent={activeVisibleList.length > 0 && !listFavoritesOnly}
+							busy={ingredientOverlayOpen ||
+								selectionMode ||
+								listLoading ||
+								!!loadingMoreList ||
+								!!removingItem ||
+								!!movingItem ||
+								barcodeLookupBusy ||
+								!!listLoadingError ||
+								!!listActionError}
+							listItem
+						/>
+					{/snippet}
+				</SavedIngredientList>
 			</SavedIngredientListLayout>
 		{/if}
 	</ViewBody>

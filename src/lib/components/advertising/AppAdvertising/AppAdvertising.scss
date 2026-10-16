@@ -1,0 +1,13 @@
+@use "../../../../styles/variables" as *;
+.app-advertising {
+	margin-block: $app-gap-lg;
+	min-width: 0;
+	&__creative {
+		display: block;
+		min-height: 5.5rem;
+	}
+	&__preview {
+		padding-block: $app-gap-md;
+		color: $app-shell-text-muted;
+	}
+}

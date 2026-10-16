@@ -172,6 +172,18 @@ The private favorites domain keeps canonical hydration and account reads in
 and Ingredients discovery in `ingredients/list/FavoriteFoodsList`. Its entity-specific
 relationships and authoritative writes remain migration-owned.
 
+The advertising domain keeps policy, disposable account-scoped session state, browser
+refusal and Google consent/delivery adapters under `src/lib/utils/advertising/`.
+`components/advertising/AppAdvertising` owns application placement; `AdPlacement` owns
+its shared visual frame. Ingredients supplies a footer snippet to its existing list
+scroll owner; Mix and Saved mount the same component within their own scroll surfaces.
+`server/advertising/advertising.server.ts` and `/api/advertising/access` own trusted
+eligibility/configuration; the schema owns the service-managed access projection.
+The deterministic preview remains test material under `tests/fixtures/advertising/`.
+`src/routes/privacy` composes `components/privacy/PrivacyNotice`; the notice owns public
+privacy copy, while `AdvertisingPrivacyChoices` owns browser/provider choices. The
+repeated guest/Profile link is `common/navigation/PrivacyPolicyLink`.
+
 ## Naming
 
 Application-owned names must explain their domain responsibility without requiring the
@@ -340,3 +352,6 @@ Before creating a file, ask:
 4. Would the proposed folder name still explain the file six months from now?
 
 If ownership is unclear, the boundary needs to be clarified before adding the file.
+
+The root advertising seller declaration is owned by `static/ads.txt`; keep its public
+publisher account aligned with `src/app.html` and the advertising configuration.
