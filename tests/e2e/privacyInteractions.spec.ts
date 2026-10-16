@@ -208,6 +208,12 @@ test(
 		await page.evaluate(() => {
 			document.documentElement.style.fontSize = "200%";
 		});
+		await expect(page.locator("article header p")).toHaveCSS(
+			"color",
+			await page
+				.locator("article")
+				.evaluate((article) => getComputedStyle(article).color),
+		);
 		expect(
 			await page.evaluate(
 				() => document.documentElement.scrollWidth <= window.innerWidth,
@@ -241,7 +247,6 @@ test(
 		).toBeEnabled();
 		await page.screenshot({
 			path: testInfo.outputPath("public-policy-dark-enlarged.png"),
-			fullPage: true,
 		});
 		expect(providerRequests).toEqual([]);
 		await page.goto("/saved");
