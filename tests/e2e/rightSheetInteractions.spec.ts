@@ -1,4 +1,9 @@
-import { expect, test, waitForAppReady } from "./support/browserTest";
+import {
+	expect,
+	test,
+	waitForAppReady,
+	expectCompactHeaderHidesAndRevealsWithScroll,
+} from "./support/browserTest";
 import type { Page } from "@playwright/test";
 
 const waitForRightSheetToSettle = async (page: Page) => {
@@ -121,10 +126,19 @@ test("ingredient search fills the app content area and closes with Escape", asyn
 
 		const savedList = page.locator(".saved-ingredient-list__cards");
 		await expect(savedList).toBeVisible();
-		await savedList.evaluate((element) => {
-			element.scrollTop = Math.max(1, element.scrollHeight / 2);
-			element.dispatchEvent(new Event("scroll"));
-		});
+		if (viewport.width === 390) {
+			// The compact header intentionally retracts on downward scroll. Reveal it
+			// through the approved upward-scroll flow before using its search action.
+			await expectCompactHeaderHidesAndRevealsWithScroll(
+				page.locator(".view-top"),
+				savedList,
+			);
+		} else {
+			await savedList.evaluate((element) => {
+				element.scrollTop = Math.max(1, element.scrollHeight / 2);
+				element.dispatchEvent(new Event("scroll"));
+			});
+		}
 		await expect
 			.poll(() => savedList.evaluate((element) => element.scrollTop))
 			.toBeGreaterThan(0);

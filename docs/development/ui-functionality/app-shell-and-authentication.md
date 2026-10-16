@@ -4,6 +4,18 @@ This contract covers the application shell, account entry, shared navigation, da
 welcome, and guided tutorial. Auth configuration and security details remain in
 [Authentication](../authentication.md).
 
+## Quick Navigation
+
+| Need                | Section                                                                              |
+| ------------------- | ------------------------------------------------------------------------------------ |
+| Public entry        | [Landing page](#signed-out-landing-page)                                             |
+| Account access      | [Sign-in](#sign-in) and [privileged verification](#privileged-identity-verification) |
+| App navigation      | [Authenticated shell](#authenticated-shell)                                          |
+| Privacy controls    | [Privacy and advertising choices](#privacy-and-advertising-choices)                  |
+| Ad presentation     | [Advertising foundation](#advertising-design-foundation)                             |
+| Publisher ownership | [AdSense verification](#adsense-site-verification)                                   |
+| Onboarding          | [Daily welcome](#daily-welcome) and [guided tutorial](#guided-tutorial)              |
+
 ## Signed-Out Landing Page
 
 - Present one focused marketing and sign-in surface; hide authenticated navigation.
@@ -99,6 +111,68 @@ welcome, and guided tutorial. Auth configuration and security details remain in
   generated username.
 - Keep the active navigation state obvious and the header readable at compact widths.
 - Keep app release and API version metadata out of normal navigation and product views.
+
+## Advertising Design Foundation
+
+`AppAdvertising` owns one clearly labeled, in-flow placement through `AdPlacement`.
+It lives inside the existing Ingredients list, Mix page or Saved collection scroll
+surface. It never covers navigation, blocks access, captures focus, plays media or
+requires a countdown. The larger usage-based placement is immediately dismissible.
+Profile/settings, authentication, privileged routes, empty results, tutorials, editors,
+scanners, nutrition/warning overlays, pending writes and error states have no placement.
+The caller supplies the actual shallow route and content/interaction state.
+
+The first larger placement requires ten completed list/recipe actions and a five-minute
+grace period; later attempts require thirty minutes and ten more actions. These are
+conservative attempt caps, not impression counts. No clock timer refreshes creatives.
+A real Google placement is requested once for its mounted visit; an unsafe transition
+removes it without automatic re-request. Unknown/ad-free eligibility, browser refusal,
+missing certified consent or a hidden document suppress delivery. The server checks
+current account access before the SDK and before requesting a creative.
+
+TEST uses explicitly labeled previews without contacting advertisers; staging, local
+production-connected development and Rehearsal keep Google delivery disabled. Google
+uses a responsive manual display unit; Auto ads and custom vignette triggers are not
+part of this implementation. Site approval, privacy review, separate production
+activation and live CSP/provider proof remain independent of local engineering checks.
+The [data architecture](../data-architecture.md#advertising-boundary) owns consent,
+provider and access boundaries; [environment configuration](../environment.md) owns
+activation settings.
+
+## Privacy And Advertising Choices
+
+- `/privacy` is readable without signing in and uses the guest shell, shared tokens and
+  descriptive page metadata. Its root-layout response omits profile and reference data while preserving the
+  verified account ID for existing draft-storage scoping;
+  a required password upgrade does not prevent reading this information. Protected app
+  routes retain their existing admission checks.
+- Landing/sign-in guest surfaces and Profile session settings link to the same page.
+- The notice describes current account, food, upload, service-provider, storage and
+  analytics behavior. Google ads remain disabled; future-use disclosures do not assert
+  that an ad network or certified consent platform has been activated.
+- The browser-wide advertising opt-out remains separate from accounts,
+  and honors a supported Global Privacy Control signal. Unavailable or malformed
+  preference storage fails closed. No stored preference leaves initial consent to the
+  certified CMP; consent itself still starts ungranted. Changes in another tab update the displayed choice.
+- Turning the block off only permits a future consent request. It cannot grant consent,
+  bypass an authoritative ad-free membership or authorize a provider request. Any
+  network owner must resolve this current block as well as provider consent and paid
+  eligibility before every new ad request and stop requests when refusal changes.
+- Google's certified Privacy & messaging CMP is the intended consent owner; this local
+  refusal control is not a replacement. Production activation, provider approval and policy review remain separate from local implementation.
+- When the certified provider is already available, privacy offers consent review and
+  Do not sell or share entrypoints. Opening either pauses ads. Changes require a fresh
+  app document before ads can resume; browser refusal always remains independent.
+
+## AdSense Site Verification
+
+`static/ads.txt` declares Google as the direct authorized seller for the same public
+publisher account. It is a plain-text discovery file and does not enable ad delivery.
+
+`src/app.html` declares the public AdSense publisher identifier through the
+`google-adsense-account` meta tag for site-ownership verification. This metadata does
+not load advertising scripts, request ads or establish site approval. Provider loading
+requires a separate privacy, consent and account-eligibility integration.
 
 ## Daily Welcome
 

@@ -1,8 +1,12 @@
 <script lang="ts">
+	import {
+		ADVERTISING_SESSION_CONTEXT,
+		createAdvertisingSession,
+	} from "$lib/utils/advertising/advertisingSession.svelte";
 	import { browser, dev } from "$app/environment";
 	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
-	import { onMount } from "svelte";
+	import { onMount, setContext } from "svelte";
 	import "../app.scss";
 	import AppHeader from "$lib/components/app/AppHeader/AppHeader.svelte";
 	import DailyWelcome from "$lib/components/app/DailyWelcome/DailyWelcome.svelte";
@@ -142,6 +146,18 @@
 	});
 
 	let { children, data }: AppLayoutProps = $props();
+	const advertisingSession = createAdvertisingSession();
+	setContext(ADVERTISING_SESSION_CONTEXT, advertisingSession);
+	onMount(() => advertisingSession.mount());
+	$effect(() => {
+		advertisingSession.update(
+			data.advertising?.configuration ?? { mode: "disabled" },
+			data.authUser?.id ?? data.storageUserId ?? "",
+			data.advertising?.eligibility ?? "unknown",
+			tutorialVisible,
+		);
+		if (browser) advertisingSession.restoreUsage();
+	});
 
 	let tutorialOpen = $state(page.url.pathname === "/profile/tutorial");
 	let tutorialUserId = $state<string | null>(null);
@@ -232,7 +248,7 @@
 	});
 
 	$effect.pre(() => {
-		setActiveStorageUserId(data.authUser?.id ?? null);
+		setActiveStorageUserId(data.authUser?.id ?? data.storageUserId ?? null);
 		if (data.authUser) {
 			clearObsoleteAppStorage();
 		}

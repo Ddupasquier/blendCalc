@@ -1,3 +1,7 @@
+import {
+	readAdvertisingConfiguration,
+	readAdvertisingEligibility,
+} from "$lib/server/advertising/advertising.server";
 import { redirect } from "@sveltejs/kit";
 import { dev } from "$app/environment";
 import type { LayoutServerLoad } from "./$types";
@@ -25,7 +29,7 @@ import {
 } from "$lib/utils/theme/themePreference";
 import { measureServerTiming } from "$lib/server/observability/serverTiming.server";
 
-const PUBLIC_PATHS = new Set(["/", "/auth"]);
+const PUBLIC_PATHS = new Set(["/", "/auth", "/privacy"]);
 
 const isPublicPath = (pathname: string) => {
 	return PUBLIC_PATHS.has(pathname) || pathname.startsWith("/auth/callback");
@@ -38,6 +42,7 @@ export const load: LayoutServerLoad = async ({
 	route,
 }) => {
 	const user = await locals.getVerifiedUser();
+	const advertisingConfiguration = readAdvertisingConfiguration();
 	const cookieThemePreference = normalizeThemePreference(
 		cookies.get(THEME_PREFERENCE_COOKIE),
 	);
@@ -50,16 +55,25 @@ export const load: LayoutServerLoad = async ({
 	}
 
 	const passwordUpgradeNext = user ? getPasswordUpgradeNext(cookies) : null;
-	if (passwordUpgradeNext && url.pathname !== "/auth/update-password") {
+	if (
+		passwordUpgradeNext &&
+		url.pathname !== "/auth/update-password" &&
+		url.pathname !== "/privacy"
+	) {
 		throw redirect(
 			303,
 			`/auth/update-password?reason=policy&next=${encodeURIComponent(passwordUpgradeNext)}`,
 		);
 	}
 
-	if (!user) {
+	if (!user || url.pathname === "/privacy") {
 		return {
+			advertising: {
+				configuration: advertisingConfiguration,
+				eligibility: "unknown" as const,
+			},
 			authUser: null,
+			storageUserId: user?.id ?? null,
 			themePreference: cookieThemePreference,
 		};
 	}
@@ -99,6 +113,13 @@ export const load: LayoutServerLoad = async ({
 	configureServingMeasureCatalog(servingMeasureCatalog);
 	configureNutritionCompletenessCatalog(nutritionCompletenessCatalog);
 	configureAppReferenceCatalog(appReferenceCatalog);
+	const advertisingEligibility =
+		advertisingConfiguration.mode !== "disabled" && role === null
+			? await readAdvertisingEligibility({
+					supabase: locals.supabase,
+					userId: user.id,
+				})
+			: "unknown";
 	const playfulMessagesEnabled = profile?.cheeky_messages_enabled ?? true;
 	const userAppReferenceCatalog = playfulMessagesEnabled
 		? appReferenceCatalog
@@ -117,6 +138,10 @@ export const load: LayoutServerLoad = async ({
 		);
 	}
 	return {
+		advertising: {
+			configuration: advertisingConfiguration,
+			eligibility: advertisingEligibility,
+		},
 		themePreference,
 		authUser: {
 			id: user.id,
