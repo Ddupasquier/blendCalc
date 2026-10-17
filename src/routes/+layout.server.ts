@@ -29,7 +29,8 @@ import {
 } from "$lib/utils/theme/themePreference";
 import { measureServerTiming } from "$lib/server/observability/serverTiming.server";
 
-const PUBLIC_PATHS = new Set(["/", "/auth", "/privacy"]);
+const PUBLIC_INFORMATION_PATHS = new Set(["/privacy", "/terms"]);
+const PUBLIC_PATHS = new Set(["/", "/auth", ...PUBLIC_INFORMATION_PATHS]);
 
 const isPublicPath = (pathname: string) => {
 	return PUBLIC_PATHS.has(pathname) || pathname.startsWith("/auth/callback");
@@ -58,7 +59,7 @@ export const load: LayoutServerLoad = async ({
 	if (
 		passwordUpgradeNext &&
 		url.pathname !== "/auth/update-password" &&
-		url.pathname !== "/privacy"
+		!PUBLIC_INFORMATION_PATHS.has(url.pathname)
 	) {
 		throw redirect(
 			303,
@@ -66,7 +67,7 @@ export const load: LayoutServerLoad = async ({
 		);
 	}
 
-	if (!user || url.pathname === "/privacy") {
+	if (!user || PUBLIC_INFORMATION_PATHS.has(url.pathname)) {
 		return {
 			advertising: {
 				configuration: advertisingConfiguration,

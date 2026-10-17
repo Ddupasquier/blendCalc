@@ -157,3 +157,99 @@ test(
 		).toBeVisible();
 	},
 );
+
+test(
+	"consumer terms are public, linked and readable across policy pages",
+	{ tag: ["@smoke", "@compatibility"] },
+	async ({ page }, testInfo) => {
+		const providerRequests: string[] = [];
+		page.on("request", (request) => {
+			if (/googlesyndication|doubleclick|fundingchoices/.test(request.url()))
+				providerRequests.push(request.url());
+		});
+		await page.goto("/");
+		const termsLink = page.getByRole("link", {
+			name: "Terms of service",
+			exact: true,
+		});
+		await termsLink.focus();
+		await page.keyboard.press("Enter");
+		await expect(page).toHaveURL(/\/terms$/);
+		await expect(page).toHaveTitle("Terms of Service · blendCalc");
+		await expect(
+			page.getByRole("heading", { name: "Terms of service", exact: true }),
+		).toBeVisible();
+		await expect(page.locator("article")).toContainText(
+			"ModernCraft LLC, Oregon",
+		);
+		await expect(page.locator("article")).not.toContainText("[REVIEW");
+		await expect(
+			page.getByRole("navigation", { name: "Terms sections" }),
+		).toBeVisible();
+		await page.screenshot({ path: testInfo.outputPath("terms-light.png") });
+		await page
+			.getByRole("link", { name: "Food information and safety", exact: true })
+			.click();
+		await expect(page).toHaveURL(/\/terms#food-information$/);
+		await expect(
+			page.getByRole("heading", {
+				name: "Food information and safety",
+				exact: true,
+			}),
+		).toBeInViewport();
+		await page.reload();
+		await expect(
+			page.getByRole("heading", {
+				name: "Food information and safety",
+				exact: true,
+			}),
+		).toBeVisible();
+		await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
+		await page.evaluate(() => {
+			document.documentElement.style.fontSize = "200%";
+		});
+		await expect(page.locator("article header p")).toHaveCSS(
+			"color",
+			await page
+				.locator("article")
+				.evaluate((article) => getComputedStyle(article).color),
+		);
+		expect(
+			await page.evaluate(
+				() => document.documentElement.scrollWidth <= window.innerWidth,
+			),
+		).toBe(true);
+		for (const width of [320, 390, 768, 1280]) {
+			await page.setViewportSize({ width, height: 844 });
+			expect(
+				await page.evaluate(
+					() => document.documentElement.scrollWidth <= window.innerWidth,
+				),
+			).toBe(true);
+		}
+		await page.setViewportSize({ width: 390, height: 844 });
+		await page.evaluate(() => window.scrollTo(0, 0));
+		await page.screenshot({
+			path: testInfo.outputPath("terms-compact-dark-enlarged.png"),
+		});
+		await page
+			.getByRole("link", { name: "Privacy & advertising", exact: true })
+			.click();
+		await expect(page).toHaveURL(/\/privacy$/);
+		await expect(page.locator("article")).toContainText(
+			"ModernCraft LLC, Oregon",
+		);
+		await expect(page.locator("article")).toContainText(
+			"blendCalc and other websites",
+		);
+		await expect(
+			page.getByRole("switch", { name: "Block advertising on this browser" }),
+		).toBeEnabled();
+		await page.screenshot({
+			path: testInfo.outputPath("public-policy-dark-enlarged.png"),
+		});
+		expect(providerRequests).toEqual([]);
+		await page.goto("/saved");
+		await expect(page).toHaveURL(/\/\?next=%2Fsaved$/);
+	},
+);

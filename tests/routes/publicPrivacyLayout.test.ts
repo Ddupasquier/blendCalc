@@ -19,9 +19,9 @@ const event = (pathname: string, user: unknown = null) => ({
 	cookies: { get: vi.fn(), set: vi.fn() },
 });
 
-describe("public privacy page admission", () => {
+describe("public policy page admission", () => {
 	beforeEach(() => vi.clearAllMocks());
-	it.each(["/", "/auth", "/privacy"])(
+	it.each(["/", "/auth", "/privacy", "/terms"])(
 		"admits signed-out readers at %s without account data",
 		async (pathname) => {
 			const result = await load(event(pathname) as never);
@@ -29,27 +29,33 @@ describe("public privacy page admission", () => {
 			expect(getUserProfile).not.toHaveBeenCalled();
 		},
 	);
-	it.each(["/ingredients/fridge", "/privacy/private", "/privacy-extra"])(
-		"keeps %s protected",
+	it.each([
+		"/ingredients/fridge",
+		"/privacy/private",
+		"/privacy-extra",
+		"/terms/private",
+		"/terms-extra",
+	])("keeps %s protected", async (pathname) => {
+		await expect(load(event(pathname) as never)).rejects.toMatchObject({
+			status: 303,
+			location: `/?next=${encodeURIComponent(pathname)}`,
+		});
+	});
+	it.each(["/privacy", "/terms"])(
+		"permits %s during a required password upgrade",
 		async (pathname) => {
-			await expect(load(event(pathname) as never)).rejects.toMatchObject({
+			vi.mocked(getPasswordUpgradeNext).mockReturnValue("/ingredients/fridge");
+			const user = { id: "user-1" };
+			expect(await load(event(pathname, user) as never)).toMatchObject({
+				authUser: null,
+				storageUserId: "user-1",
+			});
+			expect(getUserProfile).not.toHaveBeenCalled();
+			await expect(load(event("/saved", user) as never)).rejects.toMatchObject({
 				status: 303,
-				location: `/?next=${encodeURIComponent(pathname)}`,
+				location:
+					"/auth/update-password?reason=policy&next=%2Fingredients%2Ffridge",
 			});
 		},
 	);
-	it("permits privacy reading during a required password upgrade", async () => {
-		vi.mocked(getPasswordUpgradeNext).mockReturnValue("/ingredients/fridge");
-		const user = { id: "user-1" };
-		expect(await load(event("/privacy", user) as never)).toMatchObject({
-			authUser: null,
-			storageUserId: "user-1",
-		});
-		expect(getUserProfile).not.toHaveBeenCalled();
-		await expect(load(event("/saved", user) as never)).rejects.toMatchObject({
-			status: 303,
-			location:
-				"/auth/update-password?reason=policy&next=%2Fingredients%2Ffridge",
-		});
-	});
 });

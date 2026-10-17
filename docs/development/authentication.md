@@ -207,15 +207,29 @@ who loses every enrolled authenticator is stopped at `/auth/mfa/recovery`; an
 administrator must verify the person's identity and remove the inaccessible factor
 through trusted Supabase operations before the user enrolls again.
 
-## Public Privacy Access
+## Public Policy Access
 
-`/privacy` is an exact public route. Root-layout loading uses guest presentation
+`/privacy` and `/terms` are exact public information routes. Root-layout loading uses guest presentation
 and the existing theme preference, avoiding profile/reference reads and tutorial UI.
 For an authenticated reader it retains the server-verified account ID solely for client
-draft-storage scoping, so reading privacy does not switch existing drafts into guest
+draft-storage scoping, so reading either policy does not switch existing drafts into guest
 storage. Anonymous output contains no account ID. A password-upgrade requirement does not redirect
-this informational route; protected routes and server actions retain their existing
-checks. The public route neither signs a user out nor grants access to any account data.
+these informational routes; protected routes and server actions retain their existing
+checks. These public routes neither sign a user out nor grant access to any account data.
+
+### Consumer policy publication
+
+ModernCraft LLC, Oregon owns the consumer Terms of Service and Privacy & advertising
+notice. Consumer publication requires operator-approved text and verification against the
+actual service. Operator approval does not assert independent legal review or replace
+the separate public API review contract in `blendCalcAPI/public-release.md` or
+Google/provider approval.
+
+`TermsNotice` owns the consumer terms; `PrivacyNotice` owns the data/advertising
+notice. Both use `LegalNoticeShell` and the shared guest shell. `PublicPolicyLinks`
+exposes both routes from guest surfaces and Profile session settings. These pages do
+not add paid checkout, a new mandatory acceptance workflow, consent grants or public API
+rights. Future changes to pricing, processing or submission rights need their own review.
 
 ## Database Security
 
