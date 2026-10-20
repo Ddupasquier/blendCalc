@@ -9,6 +9,7 @@ import { spawn, spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { parse } from "dotenv";
+import { localViteNodeArguments } from "./run_local_vite.mjs";
 import {
 	createCleanProcessEnvironment,
 	createSafeLocalApplicationEnvironment,
@@ -80,8 +81,15 @@ console.log(
 );
 
 const child = spawn(
-	"vite",
-	["dev", "--host", "localhost", "--port", String(port), "--strictPort"],
+	process.execPath,
+	localViteNodeArguments([
+		"dev",
+		"--host",
+		"localhost",
+		"--port",
+		String(port),
+		"--strictPort",
+	]),
 	{
 		cwd: repositoryRoot,
 		env: environment,
