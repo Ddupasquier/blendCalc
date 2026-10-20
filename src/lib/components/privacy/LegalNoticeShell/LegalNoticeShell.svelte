@@ -1,8 +1,8 @@
 <script lang="ts">
-	import type { Snippet } from "svelte";
+	import type { LegalNoticeShellProps } from "./types";
 	import GuestAccessPageShell from "$lib/components/auth/GuestAccessPageShell/GuestAccessPageShell.svelte";
 
-	let { children }: { children: Snippet } = $props();
+	let { children }: LegalNoticeShellProps = $props();
 </script>
 
 <GuestAccessPageShell width="wide">
