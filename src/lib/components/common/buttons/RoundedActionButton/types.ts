@@ -16,6 +16,8 @@ export type RoundedActionButtonProps = {
 	element?: HTMLButtonElement | null;
 	className?: string;
 	id?: string;
+	name?: string;
+	value?: string;
 	type?: ButtonType;
 	variant?: RoundedActionButtonVariant;
 	contentAlign?: RoundedActionButtonContentAlign;

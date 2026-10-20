@@ -654,6 +654,13 @@ viewport-specific crop. Manual, moderator-approved, accepted automatic and unkno
 legacy placements remain unchanged. Full image and Restore default are deliberate
 contained choices; their saved results are not mistaken for an unplaced source default.
 
+The same editor serves personal placement and optional shared suggestions. Keep the
+personal save primary, explain that it affects only this account, and keep sharing a
+separate action. Ordinary placement controls have no privileged badge. Moderator
+publishing and the review/history link stay inside one closed, badged Moderator
+controls disclosure after the personal actions. Review queues compare current and
+proposed placements with the existing measured card preview and stored attribution.
+
 Current local geometry:
 
 - Media lane width: `28cqw`.

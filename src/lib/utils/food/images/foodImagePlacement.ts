@@ -9,6 +9,8 @@ export type FoodImagePlacementRequest = ImagePlacementValue & {
 	source: FoodImageAsset["source"];
 	sourceReference: string;
 	role: FoodImageAsset["role"];
+	imageUrl: string;
+	baseRevision: number;
 };
 
 export const updateFoodImagePlacement = async (

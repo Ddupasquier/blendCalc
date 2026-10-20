@@ -9,6 +9,7 @@ import type {
 import { runPrivilegedQueueAdmission } from "$lib/server/moderation/privilegedQueueAdmission.server";
 
 const COUNT_KEYS = [
+	"pendingImagePlacementReviews",
 	"pendingProductSubmissions",
 	"pendingCatalogReviewItems",
 	"pendingFoodWarningReports",
@@ -227,6 +228,7 @@ export const readPrivilegedToolReviewSummary = async (
 
 export const getUnavailablePrivilegedToolReviewSummary =
 	(): PrivilegedReviewSummary => ({
+		pendingImagePlacementReviews: null,
 		pendingProductSubmissions: null,
 		pendingCatalogReviewItems: null,
 		pendingFoodWarningReports: null,
@@ -242,6 +244,7 @@ export const getUnavailablePrivilegedToolReviewSummary =
 
 export const getIdentityVerificationRequiredPrivilegedToolReviewSummary =
 	(): PrivilegedReviewSummary => ({
+		pendingImagePlacementReviews: null,
 		pendingProductSubmissions: null,
 		pendingCatalogReviewItems: null,
 		pendingFoodWarningReports: null,

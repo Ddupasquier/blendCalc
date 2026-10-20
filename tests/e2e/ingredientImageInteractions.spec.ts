@@ -382,137 +382,83 @@ for (const placement of ["unplaced", "manual", "automatic"] as const) {
 	});
 }
 
-test("normal users see source images without privileged placement controls", async ({
+test("normal users can personalize images without moderator publishing controls", async ({
 	page,
 }, testInfo) => {
 	test.skip(
 		testInfo.project.name !== "desktop-chromium",
-		"One primary browser proves the role-based image-control boundary.",
+		"One primary browser owns the role boundary.",
 	);
-
-	for (const product of representativeImageProducts) {
-		const nutritionDetails = await openNutritionDetails(page, product);
-		await expect(
-			nutritionDetails.getByRole("img", {
-				name: `${product.name} package image`,
-			}),
-		).toBeVisible();
-		await expect(
-			nutritionDetails.getByText("Adjust card image placement"),
-		).toHaveCount(0);
-
-		const actionDialog = await openSavedIngredientActions(page, product.name);
-		await expect(
-			actionDialog.getByRole("button", { name: "Adjust image placement" }),
-		).toHaveCount(0);
-		await expect(
-			actionDialog.getByRole("region", { name: "Privileged tools" }),
-		).toHaveCount(0);
-		await actionDialog.getByRole("button", { name: "Close sheet" }).click();
-	}
+	const product = representativeImageProducts[0];
+	const details = await openNutritionDetails(page, product);
+	await details
+		.getByText("Adjust card image placement", { exact: true })
+		.click();
+	await expect(
+		details.getByRole("button", { name: "Save for me", exact: true }),
+	).toBeVisible();
+	await expect(
+		details.getByRole("button", { name: "Suggest for everyone", exact: true }),
+	).toBeVisible();
+	await expect(
+		details.getByRole("button", {
+			name: "Publish shared placement",
+			exact: true,
+		}),
+	).toHaveCount(0);
+	const actions = await openSavedIngredientActions(page, product.name);
+	await expect(
+		actions.getByRole("button", { name: "Adjust image placement" }),
+	).toBeVisible();
+	await expect(
+		actions.getByRole("region", { name: "Privileged tools" }),
+	).toHaveCount(0);
 });
 
-test("moderator image placement controls stay grouped, singular, and last", async ({
+test("moderator publishing stays separate from personal image placement", async ({
 	page,
 }, testInfo) => {
 	test.skip(
 		testInfo.project.name !== "desktop-chromium",
-		"One isolated Chromium project owns the shared moderator persona.",
+		"One isolated primary project owns the moderator fixture.",
 	);
 	await signInLocalQaAccount({
 		page,
 		email: moderatorEmail,
 		nextPath: "/ingredients/fridge",
 	});
-
-	for (const product of representativeImageProducts) {
-		const nutritionDetails = await openNutritionDetails(page, product);
-		const disclosureGroup = nutritionDetails.locator(
-			".nutrition-panel__disclosures",
-		);
-		const disclosures = disclosureGroup.locator("details");
-		const placementDetails = disclosureGroup.locator(
-			"details.product-image-panel__placement",
-		);
-		const placementSummary = placementDetails.locator(":scope > summary");
-		await expect(placementDetails).toHaveCount(1);
-		await expect(placementSummary).toContainText("Adjust card image placement");
-		expect(
-			await placementDetails.evaluate((element) => {
-				const panel = element.closest(".product-image-panel");
-				return Boolean(
-					panel && panel.parentElement?.lastElementChild === panel,
-				);
-			}),
-		).toBe(true);
-		expect(
-			await disclosures.evaluateAll((elements) =>
-				elements.every((element) => !(element as HTMLDetailsElement).open),
-			),
-		).toBe(true);
-		await expectPlacementSummaryOrder(placementSummary);
-
-		await placementSummary.click();
-		await expect(placementDetails).toHaveAttribute("open", "");
-		await expect(
-			placementDetails.getByRole("group", {
-				name: "Interactive card image preview",
-			}),
-		).toBeVisible();
-		const saveButton = placementDetails.getByRole("button", {
-			name: "Save image placement",
-		});
-		await expect(saveButton).toBeVisible();
-		await expect(saveButton.locator(".privileged-action-badge")).toHaveCount(0);
-		await expect(
-			placementDetails.locator(".privileged-action-badge"),
-		).toHaveCount(1);
-
-		const actionDialog = await openSavedIngredientActions(page, product.name);
-		const privilegedGroup = actionDialog.getByRole("region", {
-			name: "Privileged tools",
-		});
-		const adjustAction = privilegedGroup.getByRole("button", {
-			name: "Adjust image placement",
-		});
-		await expect(privilegedGroup).toBeVisible();
-		await expect(
-			privilegedGroup.locator(".privileged-action-badge"),
-		).toHaveCount(1);
-		await expect(adjustAction.locator(".privileged-action-badge")).toHaveCount(
-			0,
-		);
-		expect(
-			await actionDialog.evaluate((element) => {
-				const removeAction = Array.from(
-					element.querySelectorAll("button"),
-				).find((button) => button.textContent?.includes("Remove from Fridge"));
-				const group = element.querySelector(".privileged-action-group");
-				return Boolean(
-					removeAction &&
-					group &&
-					removeAction.compareDocumentPosition(group) &
-						Node.DOCUMENT_POSITION_FOLLOWING,
-				);
-			}),
-		).toBe(true);
-
-		await adjustAction.click();
-		const placementDialog = page.getByRole("dialog", {
-			name: "Adjust image placement",
-		});
-		await expect(placementDialog).toBeVisible();
-		await expect(placementDialog.locator("details")).toHaveCount(0);
-		await expect(
-			placementDialog.getByRole("group", {
-				name: "Interactive card image preview",
-			}),
-		).toBeVisible();
-		await expect(
-			placementDialog.getByRole("button", { name: "Save image placement" }),
-		).toBeVisible();
-		await placementDialog.getByRole("button", { name: "Close sheet" }).click();
-	}
+	const product = representativeImageProducts[0];
+	const details = await openNutritionDetails(page, product);
+	const placement = details.locator("details.product-image-panel__placement");
+	await expect(placement).toHaveCount(1);
+	await expect(placement).not.toHaveAttribute("open", "");
+	await placement.locator(":scope > summary").click();
+	await expect(
+		placement.getByRole("button", { name: "Save for me", exact: true }),
+	).toBeVisible();
+	const moderatorControls = placement.locator("details").filter({
+		has: page.locator("summary", { hasText: "Moderator controls" }),
+	});
+	await expect(moderatorControls).not.toHaveAttribute("open", "");
+	await expectPlacementSummaryOrder(
+		moderatorControls.locator(":scope > summary"),
+	);
+	await moderatorControls.locator(":scope > summary").click();
+	await expect(
+		moderatorControls.getByRole("button", { name: "Publish shared placement" }),
+	).toBeVisible();
+	const actions = await openSavedIngredientActions(page, product.name);
+	await actions.getByRole("button", { name: "Adjust image placement" }).click();
+	const sheet = page.getByRole("dialog", { name: "Adjust image placement" });
+	await expect(
+		sheet.getByRole("button", { name: "Save for me", exact: true }),
+	).toBeVisible();
+	await expect(
+		sheet.locator("details.product-image-panel__placement"),
+	).toHaveCount(0);
+	await expect(
+		sheet.getByText("Moderator controls", { exact: true }),
+	).toBeVisible();
 });
 
 test("one placement save shows pending feedback and sends one request", async ({
@@ -610,12 +556,16 @@ test("one placement save shows pending feedback and sends one request", async ({
 			await route.fulfill({
 				contentType: "application/json",
 				body: JSON.stringify({
-					image: { ...originalImage, ...placementRequest },
+					status: "personal_saved",
+					placement: placementRequest.placement,
+					sharedPlacement: originalImage,
+					revision: originalImage.placementRevision,
+					locked: false,
 				}),
 				status: 200,
 			});
 		};
-		await page.route("**/api/food-images/crop", slowPlacementSave);
+		await page.route("**/api/food-images/placement", slowPlacementSave);
 
 		const saveButton = placementDetails.locator(
 			".product-image-panel__placement-save button[type='submit']",
@@ -629,17 +579,22 @@ test("one placement save shows pending feedback and sends one request", async ({
 		releasePlacementSave();
 		releasePlacementSave = () => {};
 		await expect(
-			placementDetails.getByText("Your card image placement is saved."),
+			placementDetails.getByText(
+				"Saved for your account. Everyone else’s view stays the same.",
+			),
 		).toBeVisible();
 		expect(placementRequests).toHaveLength(1);
-		expect(placementRequests[0]).toMatchObject(savedPlacement);
-		await page.unroute("**/api/food-images/crop", slowPlacementSave);
+		expect(placementRequests[0]).toMatchObject({
+			action: "personal",
+			placement: savedPlacement,
+		});
+		await page.unroute("**/api/food-images/placement", slowPlacementSave);
 		slowPlacementSave = null;
 	} finally {
 		releasePlacementSave();
 		if (slowPlacementSave) {
 			await page
-				.unroute("**/api/food-images/crop", slowPlacementSave)
+				.unroute("**/api/food-images/placement", slowPlacementSave)
 				.catch(() => undefined);
 		}
 	}

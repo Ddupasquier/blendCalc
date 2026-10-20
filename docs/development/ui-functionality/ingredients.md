@@ -363,7 +363,8 @@ Supporting disclosures appear together at the bottom, in this order when present
 4. `Food passport`, containing the current record status, available catalog history,
    information-coverage summary, `Product details`, Data quality, correction, and
    missing-warning tools;
-5. moderator image placement.
+5. image placement, with personal controls for signed-in users and a separate closed
+   moderator-controls section for privileged publishing.
 
 All supporting disclosures start closed. The closed Food passport shows only its title
 and a bounded status such as `Verified`, `Shared record`, `Personal`, `Unverified`, or
@@ -379,7 +380,14 @@ user can ignore them. Supporting disclosures must not interrupt Ingredients,
 `Contains`, `May contain`, dietary labels, dietary considerations, current recalls, or
 current personalized warnings. Privileged controls stay last and are absent for
 ordinary users. Opening or closing a disclosure must preserve the current scroll
-position.
+position. The shared image editor offers **Save for me**, **Use shared placement**, and
+optional **Suggest for everyone**. Personal saves affect only this account and require
+no authenticator step. Suggestions report pending, published, already submitted,
+unchanged, restricted, locked, stale and limit outcomes honestly. A locked shared
+placement still permits personal adjustments; its suggestion action is disabled.
+Restore default remains a draft; Use shared placement removes the account override.
+Moderator publishing retains its verified-authenticator boundary, separate from
+personal saving.
 
 ## Food-Preference Results
 
