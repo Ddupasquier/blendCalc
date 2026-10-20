@@ -1,6 +1,6 @@
 import { APP_NAME, APP_PRODUCTION_ORIGIN } from "$lib/config/brand";
 
-export const PUBLIC_INDEXABLE_PATHS = ["/"] as const;
+export const PUBLIC_INDEXABLE_PATHS = ["/", "/demo"] as const;
 
 const publicIndexablePathSet = new Set<string>(PUBLIC_INDEXABLE_PATHS);
 const SEARCH_CONTROL_PATHS = new Set(["/robots.txt", "/sitemap.xml"]);

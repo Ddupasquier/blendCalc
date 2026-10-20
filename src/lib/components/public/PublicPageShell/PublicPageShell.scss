@@ -1,0 +1,81 @@
+@use "../../../../styles/variables" as *;
+
+.public-page-shell {
+	position: relative;
+	isolation: isolate;
+	min-height: 100vh;
+	min-height: 100dvh;
+	padding: max($app-gap-lg, env(safe-area-inset-top))
+		max($app-gap-lg, env(safe-area-inset-right))
+		max($app-gap-lg, env(safe-area-inset-bottom))
+		max($app-gap-lg, env(safe-area-inset-left));
+	background: $app-shell-surface-page;
+	color: $app-shell-text-primary;
+}
+.public-page-shell[data-variant="landing"] {
+	// The cream canvas needs stronger supporting ink than the default cool canvas.
+	--app-shell-text-muted: color-mix(
+		in srgb,
+		#{$app-shell-text-primary} 75%,
+		#{$app-guest-surface}
+	);
+	background: $app-guest-surface;
+}
+.public-page-shell__content {
+	position: relative;
+	z-index: 1;
+	max-width: 68rem;
+	margin-inline: auto;
+	display: grid;
+	gap: $app-gap-lg;
+}
+header,
+nav {
+	display: flex;
+	align-items: center;
+	gap: $app-gap-md;
+	flex-wrap: wrap;
+}
+header {
+	justify-content: space-between;
+	padding-block: $app-gap-sm;
+}
+a {
+	color: $app-shell-text-primary;
+	text-underline-offset: 0.2em;
+}
+nav a {
+	display: inline-flex;
+	min-height: $app-shell-control-height-narrow;
+	align-items: center;
+	font-weight: $app-font-weight-medium;
+	text-decoration: none;
+}
+nav a:hover {
+	text-decoration: underline;
+}
+a:focus-visible {
+	outline: $app-focus-outline;
+	outline-offset: $app-focus-outline-offset;
+}
+.brand {
+	font-family: $app-font-family-display;
+	font-weight: $app-font-weight-heavy;
+	font-size: $app-font-size-xl;
+	text-decoration: none;
+}
+footer {
+	display: grid;
+	gap: $app-gap-sm;
+	padding-block: $app-gap-lg;
+	border-top: $app-border;
+}
+footer p {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+}
+@media (max-width: $app-breakpoint-xs) {
+	.public-page-shell {
+		padding-inline: $app-gap-md;
+	}
+}

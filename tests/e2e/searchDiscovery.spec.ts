@@ -64,7 +64,7 @@ test("private, API, auth, and missing surfaces fail closed", async ({
 	expect(missingDocument).not.toMatch(/<link rel="canonical"/);
 });
 
-test("robots and sitemap expose only the intended public route", async ({
+test("robots and sitemap expose only the intended public routes", async ({
 	page,
 }) => {
 	const robotsResponse = await page.request.get("/robots.txt");
@@ -80,6 +80,7 @@ test("robots and sitemap expose only the intended public route", async ({
 		"application/xml",
 	);
 	const sitemap = await sitemapResponse.text();
-	expect(sitemap.match(/<url>/g)).toHaveLength(1);
+	expect(sitemap.match(/<url>/g)).toHaveLength(2);
 	expect(sitemap).toContain("<loc>https://www.blendcalc.food/</loc>");
+	expect(sitemap).toContain("<loc>https://www.blendcalc.food/demo</loc>");
 });
