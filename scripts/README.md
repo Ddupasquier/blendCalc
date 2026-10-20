@@ -135,6 +135,13 @@ documentation browser runner. Use the npm family command instead of adding alias
 
 ## Local Database And QA
 
+`operations/environment/run_local_vite.mjs` owns the bounded 64 KiB request-header
+budget for local Vite development and previews. Both application launchers import its
+Node arguments; npm previews and Rehearsal's declared application command use its CLI.
+It preserves the invoking working directory and already-selected environment, starts
+no database, and changes no deployment configuration. See the
+[local HTTP-header contract](../docs/development/environment.md#local-http-headers).
+
 `operations/database/manage_test_database.mjs` owns every `db:test:*` command. It can
 start or reset only localhost Supabase, writes an ignored test environment, applies
 `supabase/seed.sql`, and repairs the maintained personas in
