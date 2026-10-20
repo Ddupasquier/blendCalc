@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { animatedDetails } from "$lib/utils/animation/animatedDetails";
 	import ActionLink from "$lib/components/common/buttons/ActionLink/ActionLink.svelte";
 	import ActionButton from "$lib/components/common/buttons/ActionButton/ActionButton.svelte";
 	import NumberInput from "$lib/components/common/forms/NumberInput/NumberInput.svelte";
@@ -68,7 +69,7 @@
 							? "Enter a whole number from 0 to 1000 grams."
 							: "Whole grams, from 0 to 1000."}
 					</p>
-					<details>
+					<details use:animatedDetails>
 						<summary>Sample nutrition per 100 g</summary>
 						<dl>
 							{#each DEMO_NUTRIENTS as nutrient}<div>
