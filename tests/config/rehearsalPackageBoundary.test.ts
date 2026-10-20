@@ -159,7 +159,7 @@ describe("Rehearsal package consumer boundary", () => {
 		const { default: config } = await import("../../rehearsal.config.mjs");
 		expect(config.application).not.toHaveProperty("runtimeAdapter");
 		expect(config.application.startCommand).toContain(
-			"node node_modules/vite/bin/vite.js dev --mode rehearsal",
+			"node scripts/operations/environment/run_local_vite.mjs dev --mode rehearsal",
 		);
 		expect(config.application.proofCommand).toBe(
 			"node scripts/operations/quality/prove_local_application.mjs",
