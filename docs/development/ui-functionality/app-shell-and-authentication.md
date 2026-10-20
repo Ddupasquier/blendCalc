@@ -18,13 +18,34 @@ welcome, and guided tutorial. Auth configuration and security details remain in
 
 ## Signed-Out Landing Page
 
-- Present one focused marketing and sign-in surface; hide authenticated navigation.
-- Explain that users can organize food, build recipes, compare nutrients, and review
-  available recall, allergen, and dietary information without implying that an
-  unflagged food is guaranteed safe.
-- Keep the decorative floating-food animation subtle, noninteractive, and marked as
-  decoration. Use fewer and smaller items on mobile.
-- Offer one clear sign-in or get-started action.
+- The public root explains Ingredients, Mix, Saved, information limits, privacy, optional
+  email preferences and owner-configured donations. Keep account creation optional for
+  exploring the public demo. Authenticated root visits retain their normal safe redirect.
+- Use the established cream/navy/green palette, existing food illustrations, a sample
+  Mix preview, and clear demo and account-entry links. The public marketing canvas has
+  a local 68rem maximum width; at the existing compact breakpoint its columns stack.
+  This does not change the authenticated app's content cap or authentication shell.
+- Keep the landing concise: a recipe-focused hero, a warm cream canvas, an original vector breakfast-bowl illustration, calculated sample Mix totals, direct Ingredients/Mix/Saved descriptions, and quiet privacy/limits/support text. The landing has its own shell variant, with stronger supporting ink derived from the existing primary/surface colors for contrast on cream; the demo retains the default illustrated background.
+- The approved optional support link goes to the owner's Buy Me a Coffee page. It is
+  not a subscription, required payment, or purchase of ad-free access.
+
+## Public Guest Demo
+
+- `/demo` is an exact, public, indexable route included in the canonical sitemap. Its
+  foods, example recipe, nutrition details and default totals render in server HTML.
+  Nested or similarly prefixed routes do not inherit public access.
+- Only clearly labeled illustrative sample data is used. It is not imported catalog
+  data, a real product label, a recall check, or dietary advice. Real user records,
+  external food providers, account creation, database writes and ads are not involved.
+- Visitors can change whole-gram portions from 0 through 1000, inspect per-100g sample
+  values, see scaled totals, and reload the example recipe. Zero excludes a portion;
+  invalid or blank input pauses the total rather than silently substituting a value.
+- Demo state exists only in the mounted page. Reloading resets it; no guest account or
+  persistent draft is created. Sign-in offers building and saving the user's own work,
+  without promising that demo changes will transfer.
+- Signed-in visitors to `/demo` see the same sample-only public surface without profile,
+  reference-catalog or private-food hydration. Existing protected app/API admission and
+  all production advertising activation boundaries remain unchanged.
 
 ## Sign-In
 

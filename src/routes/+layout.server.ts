@@ -29,7 +29,7 @@ import {
 } from "$lib/utils/theme/themePreference";
 import { measureServerTiming } from "$lib/server/observability/serverTiming.server";
 
-const PUBLIC_INFORMATION_PATHS = new Set(["/privacy", "/terms"]);
+const PUBLIC_INFORMATION_PATHS = new Set(["/privacy", "/terms", "/demo"]);
 const PUBLIC_PATHS = new Set(["/", "/auth", ...PUBLIC_INFORMATION_PATHS]);
 
 const isPublicPath = (pathname: string) => {

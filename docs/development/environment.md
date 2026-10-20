@@ -62,6 +62,19 @@ Remove those links with the auxiliary checkout after its work is safely integrat
 
 ## Local Application
 
+### Local HTTP headers
+
+All maintained Vite development and preview commands use
+`scripts/operations/environment/run_local_vite.mjs`, which starts Node with a
+bounded 64 KiB HTTP-header budget. Browsers share `localhost` cookies across ports;
+multiple local Supabase sessions can exceed Node's default 16 KiB and trigger HTTP
+431 before application code runs. The local allowance avoids routine cookie clearing
+or hostname switching; requests above the budget still receive 431. It changes no
+cookies, authentication rules, environment allowlists or deployed server limits.
+Restart an already-running local app to pick up a launcher change.
+
+### Production-connected development
+
 `npm run dev` aliases `npm run dev:local` and starts the application at
 `http://localhost:5173` against the established hosted production application and API
 projects. It does not start or use the local application Supabase stack. Google sign-in

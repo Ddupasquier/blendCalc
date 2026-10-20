@@ -16,8 +16,8 @@ force every other part of the system to change versions.
 
 | Area                    | Current version                                | Source of truth                                            | Purpose                                |
 | ----------------------- | ---------------------------------------------- | ---------------------------------------------------------- | -------------------------------------- |
-| Application release     | `1.1.0`                                        | `package.json`                                             | Web/mobile product release             |
-| Application build       | `1.1.0+<deployment>`                           | SvelteKit build configuration                              | Exact deployed build identification    |
+| Application release     | `1.2.0`                                        | `package.json`                                             | Web/mobile product release             |
+| Application build       | `1.2.0+<deployment>`                           | SvelteKit build configuration                              | Exact deployed build identification    |
 | blendCalcAPI            | URL `/api/v1`, response `1.0`, OpenAPI `1.0.0` | `src/lib/blendCalcAPI/v1/blendCalcAPITypes.ts` and OpenAPI | Stable consumer contract               |
 | Database schema         | Timestamped migrations                         | `supabase/migrations`                                      | Ordered, forward-only database changes |
 | Catalog product         | Per-product revision number                    | `shared_product_revisions`                                 | Product-label and evidence history     |

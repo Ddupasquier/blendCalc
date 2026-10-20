@@ -41,7 +41,7 @@ export default defineRehearsalConfig({
 	],
 	application: {
 		startCommand:
-			"env PUBLIC_SITE_URL=http://localhost:5175 PUBLIC_TURNSTILE_SITE_KEY= TURNSTILE_SECRET_KEY= BLENDCALC_API_READ_MODE=isolated node node_modules/vite/bin/vite.js dev --mode rehearsal --host 127.0.0.1 --port 5175 --strictPort",
+			"env PUBLIC_SITE_URL=http://localhost:5175 PUBLIC_TURNSTILE_SITE_KEY= TURNSTILE_SECRET_KEY= BLENDCALC_API_READ_MODE=isolated node scripts/operations/environment/run_local_vite.mjs dev --mode rehearsal --host 127.0.0.1 --port 5175 --strictPort",
 		proofCommand: "node scripts/operations/quality/prove_local_application.mjs",
 		environmentFile: ".rehearsal-native/primary/.rehearsal/runtime.env",
 		environmentVariables: {

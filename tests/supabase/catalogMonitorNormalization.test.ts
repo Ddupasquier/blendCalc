@@ -542,6 +542,8 @@ describe("official food safety alert normalization and matching", () => {
 			});
 		});
 		vi.stubGlobal("fetch", fetchMock);
+		vi.useFakeTimers({ toFake: ["Date"] });
+		vi.setSystemTime(new Date("2026-08-14T00:00:00.000Z"));
 
 		try {
 			const page = await fetchOpenFdaAlertPage(
@@ -562,6 +564,7 @@ describe("official food safety alert normalization and matching", () => {
 			});
 		} finally {
 			vi.unstubAllGlobals();
+			vi.useRealTimers();
 		}
 	});
 

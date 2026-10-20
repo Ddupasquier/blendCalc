@@ -13,8 +13,10 @@ import {
 
 describe("public search discovery", () => {
 	it("keeps one explicit indexable public-route allowlist", () => {
-		expect(PUBLIC_INDEXABLE_PATHS).toEqual(["/"]);
+		expect(PUBLIC_INDEXABLE_PATHS).toEqual(["/", "/demo"]);
 		expect(isIndexablePublicPath("/")).toBe(true);
+		expect(isIndexablePublicPath("/demo")).toBe(true);
+		expect(isIndexablePublicPath("/demo/private")).toBe(false);
 		expect(isIndexablePublicPath("/auth")).toBe(false);
 		expect(isIndexablePublicPath("/ingredients/fridge")).toBe(false);
 		expect(isIndexablePublicPath("/api/v1/categories")).toBe(false);
@@ -37,7 +39,10 @@ describe("public search discovery", () => {
 	});
 
 	it("generates a root sitemap from the same absolute canonical allowlist", () => {
-		expect(PUBLIC_SITEMAP_URLS).toEqual([`${APP_PRODUCTION_ORIGIN}/`]);
+		expect(PUBLIC_SITEMAP_URLS).toEqual([
+			`${APP_PRODUCTION_ORIGIN}/`,
+			`${APP_PRODUCTION_ORIGIN}/demo`,
+		]);
 		expect(PUBLIC_SITEMAP_XML).toContain(
 			'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
 		);
