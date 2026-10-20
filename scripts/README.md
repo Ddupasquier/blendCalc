@@ -135,7 +135,7 @@ documentation browser runner. Use the npm family command instead of adding alias
 
 ## Local Database And QA
 
-`operations/environment/run_local_vite.mjs` owns the bounded 64 KiB request-header
+`scripts/operations/environment/run_local_vite.mjs` owns the bounded 64 KiB request-header
 budget for local Vite development and previews. Both application launchers import its
 Node arguments; npm previews and Rehearsal's declared application command use its CLI.
 It preserves the invoking working directory and already-selected environment, starts
