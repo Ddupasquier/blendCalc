@@ -4,6 +4,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { request } from "node:http";
 import { resolve } from "node:path";
 import { once } from "node:events";
+import { stripVTControlCharacters } from "node:util";
 import {
 	LOCAL_HTTP_HEADER_BYTES,
 	localViteNodeArguments,
@@ -44,7 +45,7 @@ describe("local Vite HTTP headers", () => {
 			const config = `${directory}/vite.fixture.config.mjs`;
 			writeFileSync(
 				config,
-				`export default { root: ${JSON.stringify(directory)} };`,
+				`export default { root: ${JSON.stringify(directory)}, server: { port: 0, strictPort: true }, preview: { port: 0, strictPort: true } };`,
 			);
 			const child = spawn(
 				process.execPath,
@@ -54,8 +55,6 @@ describe("local Vite HTTP headers", () => {
 					config,
 					"--host",
 					"127.0.0.1",
-					"--port",
-					"0",
 					"--strictPort",
 				]),
 				{
@@ -83,7 +82,9 @@ describe("local Vite HTTP headers", () => {
 					child.stderr.on("data", (chunk) => (output += chunk));
 					child.stdout.on("data", (chunk) => {
 						output += chunk;
-						const url = output.match(/http:\/\/127\.0\.0\.1:\d+\//)?.[0];
+						const url = stripVTControlCharacters(output).match(
+							/http:\/\/127\.0\.0\.1:\d+\//,
+						)?.[0];
 						if (url) finish(null, url);
 					});
 				});
