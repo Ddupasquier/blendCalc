@@ -1575,6 +1575,53 @@ row from using expiry rules that were not reviewed for that provider.
 `GRM`, allowing source serving weights to normalize through the same database-backed
 measure catalog as user-entered units.
 
+### Community Image Placement
+
+`20261020220000_community_image_placement.sql` adds account-only placement and bounded
+community review. It is additive and must be deployed before dependent app code.
+
+The expansion preserves the deployed application's existing asset reads and service-role
+crop updates. New columns have safe defaults; the existing privileged summary gains an
+additional count without removing its previous fields. Verify the unchanged application
+against this expansion before promoting dependent code. Application rollback can restore
+the previous release while leaving these additive structures intact; do not reverse the
+migration or delete saved personal preferences to roll back application code.
+
+| Table                               | Ownership and columns                                                                                                                                                                                        |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `food_image_placement_preferences`  | `(user_id, image_id)` primary key; exact `image_url`, validated geometry `placement`, `updated_at`; account-only RLS reads, validated owner RPC writes                                                       |
+| `food_image_placement_suggestions`  | `id`, `image_id`, `user_id`, `base_revision`, normalized `placement`, `status`, `created_at`, `reviewed_by`, `reviewed_at`, `review_note`; one vote per user/image/revision; own or verified moderator reads |
+| `food_image_placement_contributors` | `user_id`, `trusted`, `restricted`, `reviewed_by`, `updated_at`; private moderator controls, no role grants                                                                                                  |
+| `food_image_placement_policy`       | singleton `singleton`, `automation_enabled`, `updated_by`, `updated_at`; private global automation control                                                                                                   |
+| `food_image_placement_history`      | `id`, `image_id`, monotonic `revision`, original `image_url`, `previous_placement`, `next_placement`, `actor_id`, `created_at`; reversible shared history, moderator-only reads                              |
+
+`food_image_assets` additionally has `placement_revision` and
+`community_placement_locked`, plus internal `community_placement_anchor` geometry that
+prevents cumulative automatic drift. The geometry/replacement/approval/lock trigger increments
+revision, records history and invalidates old pending suggestions. Existing moderator
+and provider consumers retain their asset identity, provenance and licensing contracts.
+
+Authenticated callers cannot write these tables or shared assets directly.
+`save_food_image_placement` derives the owner from `auth.uid()` and validates personal,
+reset and optional suggest actions. Per-account advisory locks and per-image row locks
+protect quotas and concurrent consensus. A shared policy-row lock serializes automation
+and contributor eligibility controls against publication. Personal writes need no AAL2.
+`read_food_image_placement_preferences` returns only current-user overrides for up to
+1,000 requested assets; service sessions without a user receive no private rows.
+
+`review_food_image_placement`, `publish_food_image_placement` and
+`get_food_image_placement_workspace` require current authoritative moderator roles,
+catalog-review permission and AAL2. The workspace bounds rows and groups; the existing
+`get_privileged_tool_action_summary` includes the exact pending image count in its
+existing role-filtered snapshot. Private validation/eligibility/audit helpers
+have no browser execution grants. Shared audit records remain separate from personal
+preferences and never invent moderator provenance for automatic publication.
+
+Account/image foreign keys clean up their owned rows on deletion. Indexes cover
+owner/time quotas, active image proposals, reviewed-product eligibility, reverse image
+preferences and reviewer/history lookup. The reviewed thresholds, account-age rules,
+lock and rollback semantics live in [Moderation](moderation.md#community-image-placement).
+
 ### `food_image_assets`
 
 Stores reusable image metadata for ingredients and packaged products. This table does
