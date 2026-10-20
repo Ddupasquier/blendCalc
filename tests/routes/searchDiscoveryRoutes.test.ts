@@ -15,7 +15,7 @@ describe("public search discovery routes", () => {
 		);
 	});
 
-	it("serves a valid XML sitemap containing only the public canonical root", async () => {
+	it("serves a valid XML sitemap containing only the public canonical pages", async () => {
 		const response = getSitemap();
 		const xml = await response.text();
 
@@ -24,7 +24,8 @@ describe("public search discovery routes", () => {
 			"application/xml; charset=utf-8",
 		);
 		expect(xml).toContain('<?xml version="1.0" encoding="UTF-8"?>');
-		expect(xml.match(/<url>/g)).toHaveLength(1);
+		expect(xml.match(/<url>/g)).toHaveLength(2);
 		expect(xml).toContain("<loc>https://www.blendcalc.food/</loc>");
+		expect(xml).toContain("<loc>https://www.blendcalc.food/demo</loc>");
 	});
 });

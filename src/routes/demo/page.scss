@@ -1,0 +1,150 @@
+@use "../../styles/variables" as *;
+.demo-intro {
+	display: grid;
+	gap: $app-gap-md;
+	max-width: 48rem;
+	padding-block: $app-gap-lg;
+}
+h1,
+h2,
+h3 {
+	color: $app-shell-text-primary;
+	font-family: $app-font-family-display;
+	line-height: $app-line-height-heading;
+}
+h1 {
+	font-size: $app-font-size-hero-title;
+	font-weight: $app-font-weight-heavy;
+	letter-spacing: $app-letter-spacing-tight;
+}
+h2 {
+	font-size: $app-font-size-xl;
+	font-weight: $app-font-weight-bold;
+}
+h3 {
+	font-size: $app-font-size-lg;
+	font-weight: $app-font-weight-bold;
+}
+p {
+	color: $app-shell-text-muted;
+	line-height: $app-line-height-body;
+}
+.eyebrow {
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-heavy;
+	text-transform: uppercase;
+	letter-spacing: $app-letter-spacing-wide;
+	color: $app-shell-accent-info;
+}
+.demo-workspace {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+	gap: $app-gap-lg;
+	align-items: start;
+}
+.demo-ingredients,
+.demo-results,
+.demo-food,
+.demo-panel {
+	display: grid;
+	gap: $app-gap-md;
+	min-width: 0;
+}
+.demo-food,
+.demo-panel {
+	border: $app-border;
+	border-radius: $app-shell-radius-card;
+	padding: $app-gap-lg;
+	background: $app-shell-surface-panel;
+}
+.demo-panel:first-child {
+	background: $app-guest-surface;
+}
+.demo-food__heading {
+	display: flex;
+	gap: $app-gap-sm;
+	justify-content: space-between;
+	align-items: start;
+}
+.category,
+.field-help {
+	font-size: $app-font-size-sm;
+}
+.sample-badge {
+	padding: $app-gap-inline-compact $app-gap-sm;
+	border-radius: $app-shell-radius-pill;
+	background: $app-shell-accent-soft;
+	color: $app-shell-text-primary;
+	font-size: $app-font-size-sm;
+}
+.sample-notice {
+	padding: $app-gap-md;
+	border: $app-border;
+	border-radius: $app-shell-radius-card;
+	background: $app-shell-surface-soft;
+	font-size: $app-font-size-sm;
+}
+label {
+	font-weight: $app-font-weight-semibold;
+}
+:global(.demo-food input) {
+	min-height: $app-shell-control-height-narrow;
+	width: 100%;
+	padding: $app-gap-sm $app-gap-md;
+	border: $app-border;
+	border-radius: $app-shell-radius-control;
+	background: $app-shell-surface-control;
+	color: $app-shell-text-primary;
+	font: inherit;
+}
+summary {
+	cursor: pointer;
+	min-height: $app-shell-control-height-narrow;
+	padding-block: $app-gap-sm;
+	font-weight: $app-font-weight-semibold;
+}
+dl {
+	display: grid;
+	gap: $app-gap-sm;
+}
+dl div {
+	display: flex;
+	gap: $app-gap-sm;
+	justify-content: space-between;
+	padding-block: $app-gap-xs;
+	border-bottom: $app-border;
+}
+dd {
+	margin: 0;
+	font-weight: $app-font-weight-bold;
+}
+.mix-weight {
+	font-family: $app-font-family-display;
+	font-size: $app-font-size-2xl;
+	font-weight: $app-font-weight-heavy;
+	color: $app-shell-text-primary;
+}
+.mix-weight span {
+	font-family: $app-font-family-interface;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-regular;
+}
+summary:focus-visible,
+:global(.demo-food input:focus-visible) {
+	outline: $app-focus-outline;
+	outline-offset: $app-focus-outline-offset;
+}
+@media (max-width: $app-breakpoint-md) {
+	.demo-workspace {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+@media (max-width: $app-breakpoint-xs) {
+	h1 {
+		font-size: $app-font-size-2xl;
+	}
+	.demo-food,
+	.demo-panel {
+		padding: $app-gap-md;
+	}
+}

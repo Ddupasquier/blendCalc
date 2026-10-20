@@ -1,0 +1,29 @@
+@use "../../../../../styles/variables" as *;
+.action-link {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: $app-shell-control-height-narrow;
+	padding: $app-gap-sm $app-shell-control-padding-x;
+	color: $app-shell-text-on-accent;
+	background: $app-shell-accent-primary;
+	border: $app-border;
+	border-radius: $app-shell-radius-pill;
+	font-family: $app-button-font-family;
+	font-weight: $app-button-font-weight;
+	line-height: $app-button-line-height;
+	text-decoration: none;
+	text-align: center;
+}
+.action-link[data-variant="secondary"] {
+	color: $app-shell-text-primary;
+	background: $app-shell-surface-control;
+}
+.action-link:hover {
+	text-decoration: underline;
+	text-underline-offset: 0.2em;
+}
+.action-link:focus-visible {
+	outline: $app-focus-outline;
+	outline-offset: $app-focus-outline-offset;
+}

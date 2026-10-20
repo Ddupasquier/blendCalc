@@ -7,6 +7,7 @@
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { readProductionDevelopmentEnvironment } from "../../lib/environment/production_development.mjs";
+import { localViteNodeArguments } from "./run_local_vite.mjs";
 
 const repositoryRoot = fileURLToPath(new URL("../../..", import.meta.url));
 const environment = readProductionDevelopmentEnvironment({ repositoryRoot });
@@ -26,8 +27,15 @@ console.warn(
 );
 
 const child = spawn(
-	"vite",
-	["dev", "--host", "localhost", "--port", "5173", "--strictPort"],
+	process.execPath,
+	localViteNodeArguments([
+		"dev",
+		"--host",
+		"localhost",
+		"--port",
+		"5173",
+		"--strictPort",
+	]),
 	{
 		cwd: repositoryRoot,
 		env: environment,

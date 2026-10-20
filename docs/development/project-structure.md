@@ -184,6 +184,17 @@ The deterministic preview remains test material under `tests/fixtures/advertisin
 privacy copy, while `AdvertisingPrivacyChoices` owns browser/provider choices. The
 repeated guest/Profile link is `common/navigation/PrivacyPolicyLink`.
 
+The public landing and `/demo` share `components/public/PublicPageShell`; its landing
+variant owns the cream canvas and its default retains the fruit background. The
+landing’s decorative food artwork belongs to `components/public/BreakfastBowlIllustration`
+and has no data or interaction ownership. Sample-only
+fixtures, temporary amounts and calculation orchestration belong to
+`utils/demo/publicDemo.ts`, which reuses the existing per-100g scaling helper. The
+sample module must not read private account/catalog state or write persistence. The
+exact demo admission belongs to the root server layout; `searchDiscovery` owns its
+indexability and sitemap entry. `common/buttons/ActionLink` owns repeated public CTA
+link geometry while preserving native navigation semantics.
+
 ## Naming
 
 Application-owned names must explain their domain responsibility without requiring the

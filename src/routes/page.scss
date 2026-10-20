@@ -1,132 +1,247 @@
 @use "../styles/variables" as *;
-@use "../lib/utils/animation/motion" as motion;
 
-.landing-content,
-.landing-copy,
-.landing-action {
-	display: grid;
-}
-
-.landing-content {
-	gap: $app-gap-lg;
-}
-
-.landing-copy {
-	gap: $app-gap-md;
-}
-
-.landing-eyebrow {
-	width: fit-content;
-	padding: $app-gap-inline-compact $app-gap-sm;
-	color: $app-shell-text-primary;
-	background: $app-shell-accent-soft;
-	border-radius: $app-shell-radius-pill;
-	font-size: $app-font-size-sm;
-	font-weight: $app-font-weight-heavy;
-	text-transform: uppercase;
-	letter-spacing: $app-letter-spacing-wide;
-}
-
-h1 {
-	color: $app-shell-text-primary;
+h1,
+h2 {
 	font-family: $app-font-family-display;
-	font-size: $app-font-size-hero-title;
-	font-weight: $app-font-weight-bold;
-	letter-spacing: $app-letter-spacing-tight;
+	color: $app-shell-text-primary;
 	line-height: $app-line-height-heading;
 }
-
-.landing-intro {
-	max-width: 30rem;
-	color: $app-shell-text-muted;
-	font-size: $app-font-size-md;
+h1 {
+	font-size: $app-font-size-hero-title;
+	font-weight: $app-font-weight-semibold;
+	letter-spacing: $app-letter-spacing-tight;
+}
+h1 span {
+	display: block;
+}
+h2 {
+	font-size: $app-font-size-2xl;
+	font-weight: $app-font-weight-semibold;
+}
+p,
+dd {
 	line-height: $app-line-height-body;
 }
-
-.landing-benefits {
-	display: grid;
-	gap: $app-gap-sm;
-	list-style: none;
-
-	li {
-		display: flex;
-		gap: $app-gap-sm;
-		align-items: center;
-		color: $app-shell-text-primary;
-		font-size: $app-font-size-md;
-		font-weight: $app-font-weight-semibold;
-	}
-
-	:global(.landing-benefit-icon) {
-		--circular-icon-frame-size: #{$app-status-icon-badge-size};
-		--circular-icon-frame-icon-size: #{$app-font-size-xs};
-		--circular-icon-frame-background: #{$app-success-bg};
-	}
+p {
+	color: $app-shell-text-muted;
 }
-
-.landing-action {
-	gap: $app-gap-sm;
-	justify-items: start;
-}
-
 a {
-	display: inline-flex;
-	gap: $app-gap-sm;
-	align-items: center;
-	justify-content: center;
-	width: fit-content;
-	min-height: $app-shell-control-height-narrow;
-	padding: $app-gap-sm $app-shell-control-padding-x;
-	color: $app-shell-text-on-accent;
-	background: $app-shell-accent-primary;
-	border-radius: $app-shell-radius-pill;
-	font-family: $app-button-font-family;
-	font-weight: $app-button-font-weight;
-	line-height: $app-button-line-height;
-	text-decoration: none;
-	transition:
-		background motion.$duration-state motion.$easing-standard,
-		transform motion.$duration-press motion.$easing-standard;
-
-	&:hover {
-		background: $app-highlight-hover;
-		transform: translateY(-1px);
-	}
-
-	&:focus-visible {
-		outline: $app-focus-outline;
-		outline-offset: $app-focus-outline-offset;
-	}
+	color: $app-shell-text-primary;
+	text-underline-offset: 0.25em;
 }
-
-.landing-action p {
+a:focus-visible {
+	outline: $app-focus-outline;
+	outline-offset: $app-focus-outline-offset;
+}
+.fine-print,
+.eyebrow {
+	font-size: $app-font-size-sm;
+}
+.landing-hero {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+	align-items: center;
+	gap: calc($app-gap-lg * 3);
+	padding-block: $app-gap-lg calc($app-gap-lg * 2);
+}
+.landing-copy {
+	display: grid;
+	align-content: center;
+	gap: $app-gap-lg;
+	min-width: 0;
+}
+.landing-intro {
+	max-width: 35ch;
+	font-size: $app-font-size-lg;
+}
+.landing-actions {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: $app-gap-lg;
+}
+.account-link {
+	display: inline-flex;
+	align-items: center;
+	min-height: $app-shell-control-height-narrow;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-medium;
+}
+.sample-recipe {
+	min-width: 0;
+	margin: 0;
+}
+.sample-recipe__art {
+	border-radius: $app-shell-radius-sheet;
+	background: $app-shell-accent-soft;
+}
+figcaption {
+	display: grid;
+	gap: $app-gap-lg;
+	padding: $app-gap-lg $app-gap-sm 0;
+}
+.recipe-title {
+	display: flex;
+	align-items: end;
+	justify-content: space-between;
+	gap: $app-gap-md;
+}
+.recipe-title > div {
+	display: grid;
+	gap: $app-gap-xs;
+}
+.recipe-title h2 {
+	font-size: $app-font-size-xl;
+}
+.recipe-title p:last-child,
+.recipe-weight {
 	color: $app-shell-text-muted;
 	font-size: $app-font-size-sm;
 }
-
-@media (max-width: $app-breakpoint-xs) {
-	.landing-copy {
-		gap: $app-gap-sm;
+.recipe-weight {
+	white-space: nowrap;
+}
+.recipe-facts {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: $app-gap-md;
+	padding-block: $app-gap-md;
+	border-block: $app-border;
+}
+.recipe-facts > div {
+	display: grid;
+	gap: $app-gap-xs;
+}
+.recipe-facts dt {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+}
+.recipe-facts dd {
+	margin: 0;
+	white-space: nowrap;
+	font-size: $app-font-size-xl;
+	font-weight: $app-font-weight-medium;
+}
+.recipe-facts dd span {
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-regular;
+}
+.recipe-link {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: $app-gap-sm;
+}
+.recipe-link p {
+	font-size: $app-font-size-xs;
+}
+.recipe-link a {
+	display: inline-flex;
+	align-items: center;
+	min-height: $app-shell-control-height-narrow;
+	font-size: $app-font-size-sm;
+}
+.landing-features {
+	display: grid;
+	grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+	gap: calc($app-gap-lg * 3);
+	padding-block: calc($app-gap-lg * 2);
+	border-top: $app-border;
+}
+.features-intro {
+	display: grid;
+	gap: $app-gap-md;
+	align-content: start;
+}
+.features-intro h2 {
+	max-width: 21ch;
+}
+.landing-features dl {
+	display: grid;
+	gap: $app-gap-lg;
+}
+.landing-features dl > div {
+	display: grid;
+	grid-template-columns: 7rem minmax(0, 1fr);
+	gap: $app-gap-lg;
+}
+.landing-features dt {
+	font-weight: $app-font-weight-medium;
+}
+.landing-features dd {
+	margin: 0;
+	color: $app-shell-text-muted;
+}
+.landing-information {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: calc($app-gap-lg * 2);
+	padding-block: $app-gap-lg;
+	border-top: $app-border;
+}
+.landing-information p {
+	font-size: $app-font-size-sm;
+}
+.landing-support {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: $app-gap-lg;
+	padding-block: $app-gap-lg;
+}
+.landing-support > div {
+	display: grid;
+	gap: $app-gap-md;
+	max-width: 52ch;
+}
+.landing-support h2 {
+	font-family: $app-font-family-interface;
+	font-size: $app-font-size-lg;
+	font-weight: $app-font-weight-medium;
+}
+.landing-support p,
+.landing-support a {
+	font-size: $app-font-size-sm;
+}
+.landing-support a {
+	display: inline-flex;
+	align-items: center;
+	gap: $app-gap-sm;
+	min-height: $app-shell-control-height-narrow;
+}
+@media (max-width: $app-breakpoint-md) {
+	.landing-hero {
+		grid-template-columns: minmax(0, 1fr);
+		gap: calc($app-gap-lg * 2);
 	}
-
-	h1 {
-		font-size: $app-font-size-2xl;
-	}
-
-	.landing-intro,
-	.landing-benefits li {
-		font-size: $app-font-size-sm;
-	}
-
-	a {
+	.sample-recipe {
 		width: 100%;
-		padding: $app-gap-xs $app-shell-control-padding-x-compact;
+		max-width: 30rem;
+		justify-self: center;
+	}
+	.landing-features {
+		grid-template-columns: minmax(0, 1fr);
+		gap: $app-gap-lg;
+	}
+	.features-intro h2 {
+		max-width: none;
+	}
+	.landing-information {
+		grid-template-columns: minmax(0, 1fr);
+		gap: $app-gap-md;
 	}
 }
-
-@media (max-height: $app-breakpoint-height-compact) {
-	.landing-content,
+@media (max-width: $app-breakpoint-xs) {
 	.landing-copy {
+		gap: $app-gap-md;
+	}
+	.landing-features dl > div {
+		grid-template-columns: minmax(0, 1fr);
 		gap: $app-gap-sm;
+	}
+	.landing-features {
+		padding-block: $app-gap-lg;
 	}
 }

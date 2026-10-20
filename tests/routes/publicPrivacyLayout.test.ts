@@ -21,7 +21,7 @@ const event = (pathname: string, user: unknown = null) => ({
 
 describe("public policy page admission", () => {
 	beforeEach(() => vi.clearAllMocks());
-	it.each(["/", "/auth", "/privacy", "/terms"])(
+	it.each(["/", "/auth", "/privacy", "/terms", "/demo"])(
 		"admits signed-out readers at %s without account data",
 		async (pathname) => {
 			const result = await load(event(pathname) as never);
@@ -35,13 +35,15 @@ describe("public policy page admission", () => {
 		"/privacy-extra",
 		"/terms/private",
 		"/terms-extra",
+		"/demo/private",
+		"/demo-extra",
 	])("keeps %s protected", async (pathname) => {
 		await expect(load(event(pathname) as never)).rejects.toMatchObject({
 			status: 303,
 			location: `/?next=${encodeURIComponent(pathname)}`,
 		});
 	});
-	it.each(["/privacy", "/terms"])(
+	it.each(["/privacy", "/terms", "/demo"])(
 		"permits %s during a required password upgrade",
 		async (pathname) => {
 			vi.mocked(getPasswordUpgradeNext).mockReturnValue("/ingredients/fridge");
