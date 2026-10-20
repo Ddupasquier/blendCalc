@@ -16,7 +16,7 @@ import { runDependencyAudit } from "../../scripts/lib/security/run_dependency_au
 
 const repositoryRoot = resolve(".");
 const lock = JSON.parse(readFileSync("package-lock.json", "utf8"));
-const now = new Date("2026-10-12T12:00:00Z");
+const now = new Date("2026-10-21T12:00:00Z");
 const advisory = {
 	source: 1240992,
 	name: "braces",
@@ -153,19 +153,19 @@ describe("bounded dependency audit exception", () => {
 		expect(result.productionReport.metadata.vulnerabilities.total).toBe(0);
 	});
 	it("records an absolute seven-day window with no automatic renewal", () => {
-		expect(dependencyAuditException.approvedAt).toBe("2026-10-11T22:31:45Z");
-		expect(dependencyAuditException.expiresAt).toBe("2026-10-18T22:31:45Z");
+		expect(dependencyAuditException.approvedAt).toBe("2026-10-20T19:57:47Z");
+		expect(dependencyAuditException.expiresAt).toBe("2026-10-27T19:57:47Z");
 		expect(() =>
-			assertExceptionWindow(new Date("2026-10-18T22:31:44.999Z")),
+			assertExceptionWindow(new Date("2026-10-27T19:57:46.999Z")),
 		).not.toThrow();
-		for (const value of ["2026-10-18T22:31:45Z", "2026-10-19T00:00:00Z"])
+		for (const value of ["2026-10-27T19:57:47Z", "2026-10-28T00:00:00Z"])
 			expect(() => evaluate({ now: new Date(value) })).toThrow("expired");
-		for (const value of ["invalid", "2026-10-11T22:31:44Z"])
+		for (const value of ["invalid", "2026-10-20T19:57:46Z"])
 			expect(() => assertExceptionWindow(new Date(value))).toThrow("clock");
 	});
 	it("allows a genuinely clean audit without using an expired exception", () => {
 		expect(
-			evaluate({ full: production, now: new Date("2026-10-20T00:00:00Z") })
+			evaluate({ full: production, now: new Date("2026-10-29T00:00:00Z") })
 				.accepted,
 		).toBe(false);
 	});
