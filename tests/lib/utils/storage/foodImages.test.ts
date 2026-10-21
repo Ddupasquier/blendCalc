@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
 	getCachedFoodImageByBarcode,
 	hydrateFoodsWithCachedImages,
@@ -24,6 +24,8 @@ const makeImageRow = (
 		sharedProductId?: string | null;
 	} = {},
 ) => ({
+	id: image.assetId,
+	placement_revision: image.placementRevision,
 	barcode: identity.barcode === undefined ? "00021130493609" : identity.barcode,
 	shared_product_id: identity.sharedProductId ?? null,
 	source: image.source,
@@ -76,6 +78,77 @@ const makeImageQueryClient = (rows: ReturnType<typeof makeImageRow>[]) => ({
 });
 
 describe("food image selection", () => {
+	it("applies only the authenticated account override after shared image selection", async () => {
+		const image = makeImage({
+			assetId: "image-id",
+			cropZoom: 1,
+			placementMethod: "manual",
+		});
+		const rpc = vi.fn().mockResolvedValue({
+			data: [
+				{
+					image_id: "image-id",
+					image_url: image.imageUrl,
+					placement: {
+						cropX: 60,
+						cropY: 70,
+						cropZoom: 2,
+						fitMode: "custom",
+						rotationDegrees: 90,
+						placementVersion: 2,
+						placementMethod: "manual",
+					},
+				},
+			],
+			error: null,
+		});
+		const client = { ...makeImageQueryClient([makeImageRow(image)]), rpc };
+		const foods = [
+			{
+				fdcId: 1,
+				barcode: "00021130493609",
+				description: "Test",
+				foodNutrients: [],
+			},
+		] as FoodItem[];
+		const result = await hydrateFoodsWithCachedImages(client, foods);
+		expect(result[0].image).toMatchObject({
+			assetId: "image-id",
+			personalPlacement: true,
+			cropZoom: 2,
+			sharedPlacement: expect.objectContaining({ cropZoom: 1 }),
+		});
+		expect(rpc).toHaveBeenCalledWith("read_food_image_placement_preferences", {
+			p_image_ids: ["image-id"],
+		});
+		expect(foods[0].image).toBeUndefined();
+	});
+	it("does not reuse an old personal crop for a replacement image URL", async () => {
+		const image = makeImage({ assetId: "image-id", cropZoom: 1 });
+		const rpc = vi.fn().mockResolvedValue({
+			data: [
+				{
+					image_id: "image-id",
+					image_url: "https://example.com/old.png",
+					placement: { cropZoom: 8 },
+				},
+			],
+			error: null,
+		});
+		const result = await hydrateFoodsWithCachedImages(
+			{ ...makeImageQueryClient([makeImageRow(image)]), rpc },
+			[
+				{
+					fdcId: 1,
+					barcode: "00021130493609",
+					description: "Test",
+					foodNutrients: [],
+				},
+			] as FoodItem[],
+		);
+		expect(result[0].image?.personalPlacement).toBeUndefined();
+		expect(result[0].image?.cropZoom).toBe(1);
+	});
 	it("keeps the canonical image ahead of a newer higher-confidence candidate", () => {
 		const canonical = makeImage({
 			canonicalStatus: "selected",

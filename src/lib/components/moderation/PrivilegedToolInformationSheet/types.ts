@@ -2,6 +2,7 @@ export type PrivilegedToolInformationKey =
 	| "product-submissions"
 	| "food-warning-reports"
 	| "profile-images"
+	| "image-placement"
 	| "account-access"
 	| "catalog-review-work"
 	| "data-operations";

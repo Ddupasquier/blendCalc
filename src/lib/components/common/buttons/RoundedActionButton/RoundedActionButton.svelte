@@ -6,6 +6,8 @@
 		element = $bindable(),
 		className,
 		id,
+		name,
+		value,
 		type = "button",
 		variant = "primary",
 		contentAlign = "center",
@@ -33,6 +35,8 @@
 <button
 	bind:this={element}
 	{id}
+	{name}
+	{value}
 	{type}
 	class={`rounded-action-button${className ? ` ${className}` : ""}`}
 	class:rounded-action-button--full={fullWidth}

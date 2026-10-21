@@ -1872,6 +1872,16 @@ hardcode, or infer attribution in a component.
 
 #### Rule 31c — Image Placement Editor
 
+Signed-in users may save account-owned card-image placement without elevated
+authentication. These overrides never update the shared asset or enter a review queue.
+Sharing is a separate, optional suggestion. Small shared changes may publish only after
+three eligible distinct accounts agree under the database-owned community placement
+contract in [Moderation](../moderation.md#community-image-placement). This is account
+agreement, not proof of independent people. New accounts do not count automatically.
+Moderators retain verified shared publishing, grouped rejection, rollback, locks,
+contributor restrictions and an automation switch. Never let community consensus
+replace a moderator-approved, locked, stale or disputed placement automatically.
+
 Image zoom and placement must be
 non-destructive and versioned. Keep the original image unchanged; placement only
 controls card rendering. Otherwise-unplaced card images and untouched source-default

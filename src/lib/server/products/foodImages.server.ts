@@ -1,4 +1,6 @@
 import { randomUUID } from "node:crypto";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database, Json } from "$lib/types/database.types";
 import { fetchWithExternalRequestPolicy } from "$lib/server/http/externalRequest.server";
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
 import { completeServerBackgroundTask } from "$lib/server/runtime/backgroundTask.server";
@@ -337,44 +339,50 @@ export const updateFoodImageAssetPlacement = async ({
 	source,
 	sourceReference,
 	role,
-	moderatorId,
+	client,
 	crop,
+	baseRevision,
+	imageUrl,
 }: {
 	source: FoodImageAsset["source"];
 	sourceReference: string;
 	role: FoodImageAsset["role"];
-	moderatorId: string;
+	client: SupabaseClient<Database>;
 	crop: FoodImagePlacementValues;
+	baseRevision: number;
+	imageUrl: string;
 }) => {
-	const admin = getSupabaseAdminClient();
-	const now = new Date().toISOString();
-	const payload = {
-		...normalizePlacement(
-			{
-				...crop,
-				cropSource: "moderator",
-			},
-			now,
-		),
-		approved_by: moderatorId,
-		approved_at: now,
-	};
-
-	const { data, error } = await admin
+	const target = await client
 		.from("food_image_assets")
-		.update(payload)
+		.select("id")
 		.eq("source", source)
 		.eq("source_reference", sourceReference)
 		.eq("image_role", role)
 		.eq("status", "active")
+		.maybeSingle();
+	if (target.error) throw target.error;
+	if (!target.data) return null;
+	const published = await client.rpc("publish_food_image_placement", {
+		p_image_id: target.data.id,
+		p_image_url: imageUrl,
+		p_revision: baseRevision,
+		p_placement: constrainCardImagePlacement(crop) as unknown as Json,
+	});
+	if (published.error) throw published.error;
+	const { data, error } = await client
+		.from("food_image_assets")
 		.select(
-			"source, source_reference, image_role, image_url, thumbnail_url, storage_path, license_name, license_url, attribution_text, confidence, canonical_status, canonical_selection_method, canonical_selected_at, crop_x, crop_y, crop_zoom, rotation_degrees, fit_mode, placement_version, crop_source, placement_method, placement_suggestion_version, placement_suggestion_confidence, placement_suggestion_accepted_at, approved_by, approved_at, fetched_at",
+			"id, placement_revision, community_placement_locked, source, source_reference, image_role, image_url, thumbnail_url, storage_path, license_name, license_url, attribution_text, confidence, canonical_status, canonical_selection_method, canonical_selected_at, crop_x, crop_y, crop_zoom, rotation_degrees, fit_mode, placement_version, crop_source, placement_method, placement_suggestion_version, placement_suggestion_confidence, placement_suggestion_accepted_at, approved_by, approved_at, fetched_at",
 		)
+		.eq("id", target.data.id)
 		.maybeSingle();
 	if (error) throw error;
 	if (!data) return null;
 
 	return {
+		assetId: data.id,
+		placementRevision: data.placement_revision,
+		communityPlacementLocked: data.community_placement_locked,
 		source: data.source as FoodImageAsset["source"],
 		sourceReference: data.source_reference ?? undefined,
 		role: data.image_role as FoodImageAsset["role"],

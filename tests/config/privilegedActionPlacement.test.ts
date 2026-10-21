@@ -29,7 +29,10 @@ describe("privileged action crown placement", () => {
 
 		expect(imagePanel).toContain("summaryEnd={placementSummaryEnd}");
 		expect(imagePanel.match(/<PrivilegedActionBadge/g)).toHaveLength(1);
-		expect(actionSheet).toContain("<PrivilegedActionGroup>");
+		expect(imagePanel).toContain(
+			'<PrivilegedActionGroup title="Moderator controls" showHeader={false}>',
+		);
+		expect(actionSheet).not.toContain("PrivilegedActionGroup");
 		expect(actionSheet).not.toContain("privileged");
 	});
 });

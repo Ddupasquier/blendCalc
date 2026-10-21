@@ -9,6 +9,7 @@ export const PROFILE_SETTINGS_ROUTES = {
 	privilegedProductSubmissions: "privileged-tools/product-submissions",
 	privilegedFoodWarningReports: "privileged-tools/food-warning-reports",
 	privilegedProfileImages: "privileged-tools/profile-images",
+	privilegedImagePlacement: "privileged-tools/image-placement",
 	privilegedAccountAccess: "privileged-tools/account-access",
 	privilegedCatalogReviewWork: "privileged-tools/catalog-review-work",
 	privilegedDataOperations: "privileged-tools/data-operations",
@@ -33,6 +34,7 @@ const PROFILE_SETTINGS_ROUTE_TITLES: Record<ProfileSettingsRoute, string> = {
 	[PROFILE_SETTINGS_ROUTES.privilegedFoodWarningReports]:
 		"Food Warning Reports",
 	[PROFILE_SETTINGS_ROUTES.privilegedProfileImages]: "Profile Image Reviews",
+	[PROFILE_SETTINGS_ROUTES.privilegedImagePlacement]: "Food Image Placement",
 	[PROFILE_SETTINGS_ROUTES.privilegedAccountAccess]: "Account Access",
 	[PROFILE_SETTINGS_ROUTES.privilegedCatalogReviewWork]: "Catalog Review Work",
 	[PROFILE_SETTINGS_ROUTES.privilegedDataOperations]: "Data Operations",

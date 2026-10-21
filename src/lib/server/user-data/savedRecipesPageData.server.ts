@@ -5,6 +5,7 @@ import {
 } from "$lib/utils/storage/supabase";
 import { getUserFoodSafetyContext } from "$lib/server/food-safety/userFoodSafety.server";
 import { annotateFoodsWithFoodSafety } from "$lib/server/food-safety/foodSafetyEvaluation.server";
+import { hydrateFoodsWithCachedImages } from "$lib/utils/storage/supabase/foodImages";
 
 export const loadSavedRecipesPageData = async (
 	cloudDataContext: CloudDataContext,
@@ -20,11 +21,23 @@ export const loadSavedRecipesPageData = async (
 		if (!savedRecipes) {
 			throw new Error("Authenticated saved recipes were unavailable.");
 		}
+		const foodsWithImages = await hydrateFoodsWithCachedImages(
+			cloudDataContext.supabase,
+			savedRecipes.flatMap((recipe) => recipe.foods),
+		);
+		let foodOffset = 0;
 		return {
-			recipes: savedRecipes.map((recipe) => ({
-				...recipe,
-				foods: annotateFoodsWithFoodSafety(recipe.foods, foodSafetyContext),
-			})),
+			recipes: savedRecipes.map((recipe) => {
+				const foods = foodsWithImages.slice(
+					foodOffset,
+					foodOffset + recipe.foods.length,
+				);
+				foodOffset += recipe.foods.length;
+				return {
+					...recipe,
+					foods: annotateFoodsWithFoodSafety(foods, foodSafetyContext),
+				};
+			}),
 			loadError: "",
 		};
 	} catch (error) {

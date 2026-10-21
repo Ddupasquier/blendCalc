@@ -1946,7 +1946,7 @@ test("nutrition details preserve the complete source-backed food record", async 
 		await expectAllDisclosuresClosed(gochuDetails);
 		await expect(
 			gochuDetails.getByText("Adjust card image placement"),
-		).toHaveCount(0);
+		).toBeVisible();
 		await expect(
 			gochuDetails.locator("summary").filter({ hasText: "Food passport" }),
 		).toContainText(/Verified|Shared record/);

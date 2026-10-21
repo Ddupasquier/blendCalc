@@ -1,0 +1,36 @@
+@use "../../../../styles/variables" as *;
+.image-placement-reviews,
+.image-placement-reviews__image,
+.image-placement-reviews__proposal,
+.image-placement-reviews__history,
+.image-placement-reviews__contributor,
+.image-placement-reviews form {
+	display: grid;
+	gap: $app-gap-md;
+	min-width: 0;
+}
+.image-placement-reviews__image,
+.image-placement-reviews__proposal {
+	padding: $app-gap-lg;
+	border: $app-border;
+	border-radius: $app-shell-radius-card;
+}
+.image-placement-reviews__image {
+	background: $app-shell-surface-panel;
+}
+.image-placement-reviews__proposal {
+	background: $app-shell-surface-soft;
+}
+.image-placement-reviews__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: $app-gap-sm;
+}
+.image-placement-reviews p {
+	color: $app-shell-text-muted;
+}
+.image-placement-reviews__history,
+.image-placement-reviews__contributor {
+	padding-block: $app-gap-md;
+	border-top: $app-border;
+}

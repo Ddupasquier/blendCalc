@@ -375,6 +375,7 @@ describe("NutritionPanel", () => {
 					image: {
 						source: "open-food-facts",
 						sourceReference: "00000000119993",
+						assetId: "13010000-0000-4000-8000-000000000001",
 						role: "front",
 						imageUrl: "https://example.com/peanut-butter.jpg",
 						licenseName: "Open Database License",

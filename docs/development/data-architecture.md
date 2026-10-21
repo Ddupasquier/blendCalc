@@ -5,6 +5,14 @@
 blendCalc uses Supabase as the permanent source of truth for account data and the
 canonical food catalog. Browser storage is not a second database.
 
+Account-owned food-image placement is resolved only after shared asset selection.
+Authenticated image hydration uses `read_food_image_placement_preferences`; its
+`auth.uid()` boundary prevents a service read from selecting another user's overrides.
+Personal geometry, shared geometry and revision remain separate in the internal food
+model. Optional suggestions and moderator decisions use the server-owned workflow in
+[Moderation](moderation.md#community-image-placement), without changing public API
+image serialization or original image bytes.
+
 ## Quick Navigation
 
 | Area                         | Sections                                                                                                                                                                           |

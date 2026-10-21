@@ -13,6 +13,7 @@ const foodWithImage: FoodItem = {
 	image: {
 		source: "open-food-facts",
 		sourceReference: "00000000000000",
+		assetId: "13010000-0000-4000-8000-000000000001",
 		role: "front",
 		imageUrl: "https://example.com/gochujang.jpg",
 		licenseName: "Example license",
@@ -39,12 +40,14 @@ describe("IngredientImagePlacementSheet", () => {
 		).toBeInTheDocument();
 		expect(container.querySelector("details")).not.toBeInTheDocument();
 		expect(screen.queryByText("Card image placement")).not.toBeInTheDocument();
-		expect(container.querySelector(".product-image-frame")).not.toBeInTheDocument();
+		expect(
+			container.querySelector(".product-image-frame"),
+		).not.toBeInTheDocument();
 		expect(
 			screen.getByRole("group", { name: "Interactive card image preview" }),
 		).toBeInTheDocument();
 		expect(
-			screen.getByRole("button", { name: "Save image placement" }),
+			screen.getByRole("button", { name: "Save for me" }),
 		).toBeInTheDocument();
 		expect(container.querySelector(".bottom-sheet__content")).toHaveClass(
 			"bottom-sheet__content",

@@ -47,7 +47,6 @@
 		renameFoodInIngredientListViewState,
 		type IngredientListViewState,
 	} from "$lib/utils/ingredients/ingredientListStateTransitions";
-	import { isModerationAppRole } from "$lib/utils/moderation/moderation";
 	import {
 		buildIngredientRouteHref,
 		findIngredientRouteFood,
@@ -300,9 +299,7 @@
 		activeVisibleList.length < activeFilteredList.length ||
 			activeRawList.length < activeTotalCount,
 	);
-	const canAdjustImagePlacement = $derived(
-		isModerationAppRole(page.data.authUser?.role ?? null),
-	);
+	const canAdjustImagePlacement = $derived(Boolean(page.data.authUser));
 	const ingredientOverlayOpen = $derived(
 		activeSheet !== null ||
 			actionSheetItem !== null ||
@@ -781,7 +778,8 @@
 		image: FoodImageAsset,
 	) =>
 		foods.map((food) =>
-			food.fdcId === foodId
+			food.fdcId === foodId ||
+			(image.assetId && food.image?.assetId === image.assetId)
 				? {
 						...food,
 						image,
