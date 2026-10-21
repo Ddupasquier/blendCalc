@@ -64,6 +64,27 @@ export const privilegedToolInformationByTool = {
 		guardrail:
 			"A report never hides an image automatically, and a replacement image must not be removed because an older image was reported.",
 	},
+	"image-placement": {
+		title: "About food image placement",
+		purpose:
+			"Let people improve card images while keeping shared placements under moderator control.",
+		whenToUse:
+			"Review disagreements, larger adjustments or protected images. Personal adjustments never enter this queue.",
+		reviewSteps: [
+			"Compare the current card with the grouped suggestion.",
+			"Approve a useful placement once for the group, or reject it with a reason.",
+			"Lock a stable placement or restrict abusive contributors when needed.",
+		],
+		completion:
+			"Each reviewed group has a recorded decision; shared changes remain reversible.",
+		decisionEffects: [
+			"Approve publishes and locks the placement. Reject closes the matching group without changing the image.",
+			"Restore previous placement reverses the current revision and locks it against community changes.",
+			"Trust affects future agreement checks. Restriction excludes the contributor’s votes and stops shared submissions; their personal adjustments remain available.",
+		],
+		guardrail:
+			"Three eligible accounts may agree automatically only on a small uncontested adjustment to an unprotected placement. This is not proof of independent people. Existing moderator-reviewed placements stay protected.",
+	},
 	"account-access": {
 		title: "About account access",
 		purpose:

@@ -135,6 +135,12 @@ export type FoodNutrientSourceReview = {
 };
 
 export interface FoodImageAsset {
+	assetId?: string;
+	placementRevision?: number;
+	communityPlacementLocked?: boolean;
+	/** Account-only rendering override; never a shared image approval. */
+	personalPlacement?: boolean;
+	sharedPlacement?: ImagePlacementValue;
 	source: "open-food-facts" | "wikimedia-commons" | "community-reviewed";
 	sourceReference?: string;
 	role: "front" | "nutrition" | "barcode" | "ingredient" | "generic";

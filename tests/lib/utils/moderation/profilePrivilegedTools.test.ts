@@ -26,7 +26,7 @@ describe("Profile privileged tool presentation", () => {
 				"moderation.access",
 				"moderation.catalog.review",
 			]),
-		).toBe(2);
+		).toBe(3);
 		expect(getAvailableProfilePrivilegedToolCount(["moderation.access"])).toBe(
 			0,
 		);

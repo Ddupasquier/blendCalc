@@ -23,6 +23,7 @@ export type CatalogDataOperationSubject = {
 };
 
 export type PrivilegedReviewSummary = {
+	pendingImagePlacementReviews?: number | null;
 	pendingProductSubmissions: number | null;
 	pendingCatalogReviewItems: number | null;
 	pendingFoodWarningReports: number | null;
@@ -74,7 +75,7 @@ export const getAvailableProfilePrivilegedToolCount = (
 			PROFILE_PRIVILEGED_TOOL_PERMISSIONS.catalogReview,
 		),
 	) *
-		2 +
+		3 +
 	Number(
 		hasAppPermission(
 			permissions,

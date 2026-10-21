@@ -70,8 +70,8 @@ export type Database = {
 					id: string;
 					image_id: string;
 					image_url: string;
-					next_placement: NonNullable<Json>;
-					previous_placement: NonNullable<Json>;
+					next_placement: Json;
+					previous_placement: Json;
 					revision: number;
 				};
 				Insert: {
@@ -80,8 +80,8 @@ export type Database = {
 					id?: string;
 					image_id: string;
 					image_url: string;
-					next_placement: NonNullable<Json>;
-					previous_placement: NonNullable<Json>;
+					next_placement: Json;
+					previous_placement: Json;
 					revision: number;
 				};
 				Update: {
@@ -90,8 +90,8 @@ export type Database = {
 					id?: string;
 					image_id?: string;
 					image_url?: string;
-					next_placement?: NonNullable<Json>;
-					previous_placement?: NonNullable<Json>;
+					next_placement?: Json;
+					previous_placement?: Json;
 					revision?: number;
 				};
 				Relationships: [
@@ -129,21 +129,21 @@ export type Database = {
 				Row: {
 					image_id: string;
 					image_url: string;
-					placement: NonNullable<Json>;
+					placement: Json;
 					updated_at: string;
 					user_id: string;
 				};
 				Insert: {
 					image_id: string;
 					image_url: string;
-					placement: NonNullable<Json>;
+					placement: Json;
 					updated_at?: string;
 					user_id: string;
 				};
 				Update: {
 					image_id?: string;
 					image_url?: string;
-					placement?: NonNullable<Json>;
+					placement?: Json;
 					updated_at?: string;
 					user_id?: string;
 				};
@@ -163,7 +163,7 @@ export type Database = {
 					created_at: string;
 					id: string;
 					image_id: string;
-					placement: NonNullable<Json>;
+					placement: Json;
 					review_note: string | null;
 					reviewed_at: string | null;
 					reviewed_by: string | null;
@@ -175,7 +175,7 @@ export type Database = {
 					created_at?: string;
 					id?: string;
 					image_id: string;
-					placement: NonNullable<Json>;
+					placement: Json;
 					review_note?: string | null;
 					reviewed_at?: string | null;
 					reviewed_by?: string | null;
@@ -187,7 +187,7 @@ export type Database = {
 					created_at?: string;
 					id?: string;
 					image_id?: string;
-					placement?: NonNullable<Json>;
+					placement?: Json;
 					review_note?: string | null;
 					reviewed_at?: string | null;
 					reviewed_by?: string | null;

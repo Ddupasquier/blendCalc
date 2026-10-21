@@ -1,7 +1,12 @@
 import { normalizeBarcode } from "$lib/utils/barcode/barcode";
 import type { FoodItem, FoodImageAsset } from "$lib/utils/food/types";
+import { getCardImagePlacement } from "$lib/utils/food/images/imagePlacement";
+import type { ImagePlacementValue } from "$lib/utils/food/images/types";
 
 type FoodImageAssetRow = {
+	id?: string;
+	placement_revision?: number;
+	community_placement_locked?: boolean;
 	barcode: string | null;
 	shared_product_id: string | null;
 	source: FoodImageAsset["source"];
@@ -63,6 +68,9 @@ type FoodImageQueryClient = {
 };
 
 const FOOD_IMAGE_SELECT = [
+	"id",
+	"placement_revision",
+	"community_placement_locked",
 	"barcode",
 	"shared_product_id",
 	"source",
@@ -150,6 +158,9 @@ const getFoodBarcode = (food: FoodItem) =>
 	normalizeBarcode(food.barcode ?? food.gtinUpc ?? "");
 
 const toFoodImageAsset = (row: FoodImageAssetRow): FoodImageAsset => ({
+	assetId: row.id,
+	placementRevision: row.placement_revision,
+	communityPlacementLocked: row.community_placement_locked,
 	source: row.source,
 	sourceReference: row.source_reference ?? undefined,
 	role: row.image_role,
@@ -251,7 +262,7 @@ export const hydrateFoodsWithCachedImages = async (
 		imagesBySharedProductId.set(row.shared_product_id, images);
 	}
 
-	return foods.map((food) => {
+	const hydratedFoods = foods.map((food) => {
 		const image = selectPreferredFoodImageAsset(
 			deduplicateFoodImageAssets([
 				...(imagesByBarcode.get(getFoodBarcode(food) ?? "") ?? []),
@@ -259,5 +270,52 @@ export const hydrateFoodsWithCachedImages = async (
 			]),
 		);
 		return image ? { ...food, image } : food;
+	});
+	const imageIds = uniqueStrings(
+		hydratedFoods.map((food) => food.image?.assetId),
+	);
+	if (!imageIds.length) return hydratedFoods;
+	// auth.uid() in the RPC is the authority. A service client receives no other
+	// account's preferences, even though it can bypass ordinary table RLS.
+	const client = supabase as {
+		rpc: (
+			name: "read_food_image_placement_preferences",
+			args: { p_image_ids: string[] },
+		) => PromiseLike<{
+			data: Array<{
+				image_id: string;
+				image_url: string;
+				placement: ImagePlacementValue;
+			}> | null;
+			error: unknown;
+		}>;
+	};
+	const preferences = new Map<
+		string,
+		{ image_url: string; placement: ImagePlacementValue }
+	>();
+	for (let offset = 0; offset < imageIds.length; offset += 1000) {
+		const { data, error } = await client.rpc(
+			"read_food_image_placement_preferences",
+			{ p_image_ids: imageIds.slice(offset, offset + 1000) },
+		);
+		if (error) throw error;
+		for (const preference of data ?? [])
+			preferences.set(preference.image_id, preference);
+	}
+	return hydratedFoods.map((food) => {
+		const image = food.image;
+		const preference = image?.assetId ? preferences.get(image.assetId) : null;
+		if (!image || !preference || preference.image_url !== image.imageUrl)
+			return food;
+		return {
+			...food,
+			image: {
+				...image,
+				...preference.placement,
+				sharedPlacement: getCardImagePlacement(image),
+				personalPlacement: true,
+			},
+		};
 	});
 };

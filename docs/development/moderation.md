@@ -134,6 +134,59 @@ Add `SUPABASE_SERVICE_ROLE_KEY` to the Vercel project as a sensitive **Productio
 environment variable, then redeploy. Do not expose this key to arbitrary preview
 branches; preview code can change before review and the service role bypasses RLS.
 
+## Community Image Placement
+
+Users may save account-owned placement or return to the shared placement without MFA.
+Those preferences apply only to the same asset and image URL. They never become catalog
+evidence, image approval or a public API field. Sharing is optional; the original image
+and its licensing/admission rules do not change.
+
+The database groups suggestions into two-point X/Y and 0.05-zoom buckets. Each account
+gets one vote per asset revision, at most five new suggestions per rolling day and five
+pending suggestions. An image accepts at most 200 pending votes to bound consensus work.
+Personal preferences are capped at 2,000 per account. Repeated suggestions are idempotent;
+unchanged placements do not create queue work. Replacement URLs invalidate old personal
+overrides. Shared geometry, image, approval and lock changes invalidate pending proposals.
+The next account placement action prunes its own overrides for replaced or retired
+images, so stale rows do not consume the saved-placement allowance.
+
+Automatic publication requires three distinct eligible accounts, no competing eligible
+proposal, the same fit mode and rotation, version 2, at most ten points of X/Y movement
+and 0.15 zoom change from the current placement. The asset must remain source-automatic,
+unapproved, unlocked and without a person-accepted OCR placement. Global automation must
+be enabled. Account identity is not proof of independent people; this rule does not
+claim to eliminate coordinated abuse.
+
+The first automatic community adjustment retains an original geometry anchor. Later
+automatic changes must remain within the same position/zoom bounds of that anchor as
+well as the current crop; repeated small votes cannot accumulate into a large crop.
+Replacing the source image or making an explicit moderator geometry decision resets
+that anchor. Moderator-approved placements remain protected regardless.
+
+Eligible contributors have a confirmed email and an unblocked account, plus either
+explicit moderator trust or an account at least 30 days old with approved, reviewed
+submissions for three distinct product barcodes. Restricted contributors cannot suggest
+or count toward consensus, but may still personalize. Trust grants no moderation role
+or database permission. This workflow does not ban accounts, send email, introduce an
+external reputation service or scheduled worker, or replace image files.
+
+`/profile/privileged-tools/image-placement` requires current catalog-review permission
+and AAL2 at both server and database boundaries. The launcher counts pending images,
+not individual votes. The workspace shows the first 25 images, ten groups per image
+and ten recent history entries. Resolving groups exposes the next oldest work.
+Moderators can approve once for a matching group, reject it with a reason, lock or
+unlock suggestions, restore the latest prior geometry for the same current image,
+grant/revoke trust, restrict/restore contributors, or pause automatic publishing.
+Approval and rollback lock the result. Stale revision decisions fail. Locks suppress
+new community submissions without blocking personal edits and do not hide prior geometry
+from rollback.
+
+The privileged crop PATCH also records history and checks the image URL and revision.
+Enabling automation or changing trust affects future agreement checks; moderators may
+directly decide already-pending groups. Contributor controls and history stay private.
+Consensus never fabricates a moderator approval. The schema/function map lives in
+[Supabase Schema](supabase-schema.md#community-image-placement).
+
 ## Block Notification Emails
 
 Blocking through `/moderation` sends the affected user a transactional email that

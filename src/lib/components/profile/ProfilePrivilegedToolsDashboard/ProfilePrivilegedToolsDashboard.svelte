@@ -209,6 +209,20 @@
 							{#snippet icon()}<User />{/snippet}
 						</ProfilePrivilegedToolLink>
 					{/if}
+					{#if canReviewProducts && hasActions(summary.pendingImagePlacementReviews ?? null)}
+						<ProfilePrivilegedToolLink
+							href={getProfileSettingsRouteHref(
+								PROFILE_SETTINGS_ROUTES.privilegedImagePlacement,
+							)}
+							label="Food image placement"
+							description={describeQueue(
+								summary.pendingImagePlacementReviews ?? null,
+							)}
+							actionRequiredCount={summary.pendingImagePlacementReviews ?? 0}
+						>
+							{#snippet icon()}<Sliders />{/snippet}
+						</ProfilePrivilegedToolLink>
+					{/if}
 					{#if canReadDataOperations && hasActions(summary.pendingCatalogDataOperations)}
 						<ProfilePrivilegedToolLink
 							href={getProfileSettingsRouteHref(
@@ -255,6 +269,20 @@
 						)}
 						label="Catalog review work"
 						description={describeQueue(summary.pendingCatalogReviewItems)}
+					>
+						{#snippet icon()}<Sliders />{/snippet}
+					</ProfilePrivilegedToolLink>
+				{/if}
+				{#if canReviewProducts && !hasActions(summary.pendingImagePlacementReviews ?? null)}
+					<ProfilePrivilegedToolLink
+						href={getProfileSettingsRouteHref(
+							PROFILE_SETTINGS_ROUTES.privilegedImagePlacement,
+						)}
+						label="Food image placement"
+						description={describeQueue(
+							summary.pendingImagePlacementReviews ?? null,
+						)}
+						actionRequiredCount={summary.pendingImagePlacementReviews ?? 0}
 					>
 						{#snippet icon()}<Sliders />{/snippet}
 					</ProfilePrivilegedToolLink>

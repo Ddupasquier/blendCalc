@@ -148,6 +148,18 @@ required action after reading the evidence.
 - Require a public reason when blocking and support restoring access.
 - Send the bounded block notification without exposing internal notes.
 
+## Food Image Placement Review
+
+The privileged launcher counts pending images under Food image placement. Its focused
+workspace compares the current card and grouped proposed placements using the shared
+preview and stored attribution. Show eligible contributor counts honestly, keep
+contributor controls and history closed, and retain normal pending/error feedback.
+Approve publishes and locks one matching group; reject requires a useful note. The
+latest geometry for the same image may be restored even after a lock action. Stale
+decisions require refresh. Global automatic publishing and contributor trust/restriction
+remain explicit moderator controls; contributor restrictions never affect personal
+placement or grant a moderation role. See [the owning workflow](../moderation.md#community-image-placement).
+
 ## Catalog Submission Review
 
 - Show product name, brand, barcode, source match, evidence completeness, conflict

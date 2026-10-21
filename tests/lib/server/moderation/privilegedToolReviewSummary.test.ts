@@ -17,6 +17,7 @@ vi.mock(
 );
 
 const completeCounts = {
+	pendingImagePlacementReviews: 0,
 	pendingProductSubmissions: 3,
 	pendingCatalogReviewItems: 4,
 	pendingFoodWarningReports: 2,
@@ -230,6 +231,7 @@ describe("Profile privileged tool action summary", () => {
 
 	it("represents unavailable counts without pretending they are zero", () => {
 		expect(getUnavailablePrivilegedToolReviewSummary()).toEqual({
+			pendingImagePlacementReviews: null,
 			pendingProductSubmissions: null,
 			pendingCatalogReviewItems: null,
 			pendingFoodWarningReports: null,
@@ -248,6 +250,7 @@ describe("Profile privileged tool action summary", () => {
 		expect(
 			getIdentityVerificationRequiredPrivilegedToolReviewSummary(),
 		).toEqual({
+			pendingImagePlacementReviews: null,
 			pendingProductSubmissions: null,
 			pendingCatalogReviewItems: null,
 			pendingFoodWarningReports: null,

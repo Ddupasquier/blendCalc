@@ -41,8 +41,8 @@ describe("Profile privileged tools launcher", () => {
 			});
 			const description =
 				count === 0
-					? "6 tools available · no actions waiting"
-					: `6 tools available · ${count} ${count === 1 ? "action" : "actions"} waiting`;
+					? "7 tools available · no actions waiting"
+					: `7 tools available · ${count} ${count === 1 ? "action" : "actions"} waiting`;
 			expect(screen.getByText(description)).toBeVisible();
 			if (count === 0) {
 				expect(
@@ -64,7 +64,7 @@ describe("Profile privileged tools launcher", () => {
 		});
 
 		expect(
-			screen.getByText("6 tools available · 12 actions waiting"),
+			screen.getByText("7 tools available · 12 actions waiting"),
 		).toBeVisible();
 		expect(
 			screen.getByLabelText("12 privileged actions requiring attention"),
@@ -84,7 +84,7 @@ describe("Profile privileged tools launcher", () => {
 		});
 
 		expect(
-			screen.getByText("6 tools available · action counts unavailable"),
+			screen.getByText("7 tools available · action counts unavailable"),
 		).toBeVisible();
 		expect(
 			screen.queryByLabelText(/privileged actions requiring attention/),
