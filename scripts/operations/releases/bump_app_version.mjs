@@ -26,8 +26,9 @@ const versioningPath = resolve(
 	"docs/development/versioning.md",
 );
 const currentDocumentation = readFileSync(versioningPath, "utf8");
-const applicationReleaseRow = /\| Application release \| `[^`]+` \|/;
-const applicationBuildRow = /\| Application build \| `[^`]+\+<deployment>` \|/;
+const applicationReleaseRow = /\| Application release[ \t]+\| `[^`]+`[ \t]+\|/;
+const applicationBuildRow =
+	/\| Application build[ \t]+\| `[^`]+\+<deployment>`[ \t]+\|/;
 
 if (
 	!applicationReleaseRow.test(currentDocumentation) ||
