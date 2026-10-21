@@ -1,5 +1,6 @@
 <script lang="ts">
 	import PrivilegedActionBadge from "$lib/components/common/badges/PrivilegedActionBadge/PrivilegedActionBadge.svelte";
+	import PrivilegedActionGroup from "$lib/components/common/actions/PrivilegedActionGroup/PrivilegedActionGroup.svelte";
 	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
 	import CollapsibleSection from "$lib/components/common/disclosure/CollapsibleSection/CollapsibleSection.svelte";
 	import AssetAttribution from "$lib/components/common/display/AssetAttribution/AssetAttribution.svelte";
@@ -285,21 +286,23 @@
 					title="Moderator controls"
 					summaryEnd={placementSummaryEnd}
 				>
-					<p>
-						Publishing changes everyone’s cards and requires authenticator
-						verification.
-					</p>
-					<RoundedActionButton
-						type="button"
-						fullWidth
-						disabled={savingPlacement}
-						onclick={() => void savePlacement()}
-						>Publish shared placement</RoundedActionButton
-					>
-					<a
-						href={`${resolve("/profile/privileged-tools/image-placement")}?image=${food?.image?.assetId}`}
-						>Review suggestions, history and image lock</a
-					>
+					<PrivilegedActionGroup title="Moderator controls" showHeader={false}>
+						<p>
+							Publishing changes everyone’s cards and requires authenticator
+							verification.
+						</p>
+						<RoundedActionButton
+							type="button"
+							fullWidth
+							disabled={savingPlacement}
+							onclick={() => void savePlacement()}
+							>Publish shared placement</RoundedActionButton
+						>
+						<a
+							href={`${resolve("/profile/privileged-tools/image-placement")}?image=${food?.image?.assetId}`}
+							>Review suggestions, history and image lock</a
+						>
+					</PrivilegedActionGroup>
 				</CollapsibleSection>
 			{/if}
 			{#if placementMessage}
