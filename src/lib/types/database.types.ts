@@ -39,6 +39,171 @@ export type Database = {
 	};
 	public: {
 		Tables: {
+			food_image_placement_contributors: {
+				Row: {
+					restricted: boolean;
+					reviewed_by: string | null;
+					trusted: boolean;
+					updated_at: string;
+					user_id: string;
+				};
+				Insert: {
+					restricted?: boolean;
+					reviewed_by?: string | null;
+					trusted?: boolean;
+					updated_at?: string;
+					user_id: string;
+				};
+				Update: {
+					restricted?: boolean;
+					reviewed_by?: string | null;
+					trusted?: boolean;
+					updated_at?: string;
+					user_id?: string;
+				};
+				Relationships: [];
+			};
+			food_image_placement_history: {
+				Row: {
+					actor_id: string | null;
+					created_at: string;
+					id: string;
+					image_id: string;
+					image_url: string;
+					next_placement: NonNullable<Json>;
+					previous_placement: NonNullable<Json>;
+					revision: number;
+				};
+				Insert: {
+					actor_id?: string | null;
+					created_at?: string;
+					id?: string;
+					image_id: string;
+					image_url: string;
+					next_placement: NonNullable<Json>;
+					previous_placement: NonNullable<Json>;
+					revision: number;
+				};
+				Update: {
+					actor_id?: string | null;
+					created_at?: string;
+					id?: string;
+					image_id?: string;
+					image_url?: string;
+					next_placement?: NonNullable<Json>;
+					previous_placement?: NonNullable<Json>;
+					revision?: number;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "food_image_placement_history_image_id_fkey";
+						columns: ["image_id"];
+						isOneToOne: false;
+						referencedRelation: "food_image_assets";
+						referencedColumns: ["id"];
+					},
+				];
+			};
+			food_image_placement_policy: {
+				Row: {
+					automation_enabled: boolean;
+					singleton: boolean;
+					updated_at: string;
+					updated_by: string | null;
+				};
+				Insert: {
+					automation_enabled?: boolean;
+					singleton?: boolean;
+					updated_at?: string;
+					updated_by?: string | null;
+				};
+				Update: {
+					automation_enabled?: boolean;
+					singleton?: boolean;
+					updated_at?: string;
+					updated_by?: string | null;
+				};
+				Relationships: [];
+			};
+			food_image_placement_preferences: {
+				Row: {
+					image_id: string;
+					image_url: string;
+					placement: NonNullable<Json>;
+					updated_at: string;
+					user_id: string;
+				};
+				Insert: {
+					image_id: string;
+					image_url: string;
+					placement: NonNullable<Json>;
+					updated_at?: string;
+					user_id: string;
+				};
+				Update: {
+					image_id?: string;
+					image_url?: string;
+					placement?: NonNullable<Json>;
+					updated_at?: string;
+					user_id?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "food_image_placement_preferences_image_id_fkey";
+						columns: ["image_id"];
+						isOneToOne: false;
+						referencedRelation: "food_image_assets";
+						referencedColumns: ["id"];
+					},
+				];
+			};
+			food_image_placement_suggestions: {
+				Row: {
+					base_revision: number;
+					created_at: string;
+					id: string;
+					image_id: string;
+					placement: NonNullable<Json>;
+					review_note: string | null;
+					reviewed_at: string | null;
+					reviewed_by: string | null;
+					status: string;
+					user_id: string;
+				};
+				Insert: {
+					base_revision: number;
+					created_at?: string;
+					id?: string;
+					image_id: string;
+					placement: NonNullable<Json>;
+					review_note?: string | null;
+					reviewed_at?: string | null;
+					reviewed_by?: string | null;
+					status?: string;
+					user_id: string;
+				};
+				Update: {
+					base_revision?: number;
+					created_at?: string;
+					id?: string;
+					image_id?: string;
+					placement?: NonNullable<Json>;
+					review_note?: string | null;
+					reviewed_at?: string | null;
+					reviewed_by?: string | null;
+					status?: string;
+					user_id?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "food_image_placement_suggestions_image_id_fkey";
+						columns: ["image_id"];
+						isOneToOne: false;
+						referencedRelation: "food_image_assets";
+						referencedColumns: ["id"];
+					},
+				];
+			};
 			account_moderation: {
 				Row: {
 					created_at: string;
@@ -2957,6 +3122,8 @@ export type Database = {
 					canonical_selected_by: string | null;
 					canonical_selection_method: string | null;
 					canonical_status: string;
+					community_placement_anchor: Json | null;
+					community_placement_locked: boolean;
 					confidence: string;
 					created_at: string;
 					crop_source: string;
@@ -2971,6 +3138,7 @@ export type Database = {
 					license_name: string;
 					license_url: string | null;
 					placement_method: string;
+					placement_revision: number;
 					placement_suggestion_accepted_at: string | null;
 					placement_suggestion_confidence: number | null;
 					placement_suggestion_version: string | null;
@@ -2993,6 +3161,8 @@ export type Database = {
 					canonical_selected_by?: string | null;
 					canonical_selection_method?: string | null;
 					canonical_status?: string;
+					community_placement_anchor?: Json | null;
+					community_placement_locked?: boolean;
 					confidence?: string;
 					created_at?: string;
 					crop_source?: string;
@@ -3007,6 +3177,7 @@ export type Database = {
 					license_name: string;
 					license_url?: string | null;
 					placement_method?: string;
+					placement_revision?: number;
 					placement_suggestion_accepted_at?: string | null;
 					placement_suggestion_confidence?: number | null;
 					placement_suggestion_version?: string | null;
@@ -3029,6 +3200,8 @@ export type Database = {
 					canonical_selected_by?: string | null;
 					canonical_selection_method?: string | null;
 					canonical_status?: string;
+					community_placement_anchor?: Json | null;
+					community_placement_locked?: boolean;
 					confidence?: string;
 					created_at?: string;
 					crop_source?: string;
@@ -3043,6 +3216,7 @@ export type Database = {
 					license_name?: string;
 					license_url?: string | null;
 					placement_method?: string;
+					placement_revision?: number;
 					placement_suggestion_accepted_at?: string | null;
 					placement_suggestion_confidence?: number | null;
 					placement_suggestion_version?: string | null;
@@ -10517,6 +10691,49 @@ export type Database = {
 			};
 		};
 		Functions: {
+			publish_food_image_placement: {
+				Args: {
+					p_image_id: string;
+					p_image_url: string;
+					p_placement: Json;
+					p_revision: number;
+				};
+				Returns: undefined;
+			};
+			get_food_image_placement_workspace: {
+				Args: { p_image_id?: string };
+				Returns: Json;
+			};
+			read_food_image_placement_preferences: {
+				Args: { p_image_ids: string[] };
+				Returns: {
+					image_id: string;
+					image_url: string;
+					placement: Json;
+				}[];
+			};
+			review_food_image_placement: {
+				Args: {
+					p_action: string;
+					p_enabled?: boolean;
+					p_image_id?: string;
+					p_note?: string;
+					p_revision?: number;
+					p_suggestion_id?: string;
+					p_user_id?: string;
+				};
+				Returns: undefined;
+			};
+			save_food_image_placement: {
+				Args: {
+					p_action: string;
+					p_base_revision?: number;
+					p_image_id: string;
+					p_image_url: string;
+					p_placement?: Json;
+				};
+				Returns: Json;
+			};
 			read_current_user_advertising_access: {
 				Args: Record<PropertyKey, never>;
 				Returns: string;
