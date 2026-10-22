@@ -1,0 +1,6 @@
+@use "../../../../styles/variables" as *;
+
+.image-placement-review-editor {
+	display: grid;
+	gap: $app-gap-sm;
+}

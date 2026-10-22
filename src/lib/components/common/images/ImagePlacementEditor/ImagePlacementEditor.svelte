@@ -39,6 +39,7 @@
 		description = "Adjust how the image appears in ingredient cards.",
 		showIntro = true,
 		editable = true,
+		showRestoreDefault = true,
 		warningFrameTone = null,
 		smartPlacementSource = imageUrl,
 		automaticallyPlaceNewImage = false,
@@ -404,9 +405,11 @@
 						updateCustomValue({ cropZoom: nextValue })}
 				/>
 			</label>
-			<RoundedActionButton variant="neutral" onclick={restoreDefault}>
-				Restore default
-			</RoundedActionButton>
+			{#if showRestoreDefault}
+				<RoundedActionButton variant="neutral" onclick={restoreDefault}>
+					Restore default
+				</RoundedActionButton>
+			{/if}
 		</div>
 	{/if}
 </section>

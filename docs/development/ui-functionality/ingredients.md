@@ -363,8 +363,8 @@ Supporting disclosures appear together at the bottom, in this order when present
 4. `Food passport`, containing the current record status, available catalog history,
    information-coverage summary, `Product details`, Data quality, correction, and
    missing-warning tools;
-5. image placement, with personal controls for signed-in users and a separate closed
-   moderator-controls section for privileged publishing.
+5. image placement, with personal controls for signed-in users and a small moderator-only
+   link to the existing review workspace.
 
 All supporting disclosures start closed. The closed Food passport shows only its title
 and a bounded status such as `Verified`, `Shared record`, `Personal`, `Unverified`, or
@@ -380,14 +380,17 @@ user can ignore them. Supporting disclosures must not interrupt Ingredients,
 `Contains`, `May contain`, dietary labels, dietary considerations, current recalls, or
 current personalized warnings. Privileged controls stay last and are absent for
 ordinary users. Opening or closing a disclosure must preserve the current scroll
-position. The shared image editor offers **Save for me**, **Use shared placement**, and
-optional **Suggest for everyone**. Personal saves affect only this account and require
-no authenticator step. Suggestions report pending, published, already submitted,
-unchanged, restricted, locked, stale and limit outcomes honestly. A locked shared
-placement still permits personal adjustments; its suggestion action is disabled.
-Restore default remains a draft; Use shared placement removes the account override.
-Moderator publishing retains its verified-authenticator boundary, separate from
-personal saving.
+position. The shared image editor has one **Save** action and an initially unchecked
+**Suggest this adjustment for everyone** checkbox. Save always writes this account’s
+placement first, without an authenticator step; only an explicit checked choice sends
+a separate suggestion. A suggestion failure never rolls back a successful personal
+save: show a non-blocking warning and allow retry. Successful suggestions use a short
+thank-you without explaining consensus machinery. Locked images disable only the
+suggestion checkbox. **Reset to shared image** is a quiet action that removes the
+account override; omit the shared editor’s separate draft-default button here.
+Moderators see a **Review image** link to the existing focused workspace. Shared
+publishing, trust, restrictions, locks and rollback stay in that workspace behind the
+existing verified-authenticator boundary, separate from personal saving.
 
 ## Food-Preference Results
 

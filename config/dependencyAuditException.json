@@ -3,7 +3,7 @@
 	"approvedAt": "2026-10-20T19:57:47Z",
 	"expiresAt": "2026-10-27T19:57:47Z",
 	"reason": "Temporary acceptance of development-tool stack-exhaustion risk while preserving all existing style checks. This does not fix the vulnerability. No renewal is automatic.",
-	"findingsSha256": "7e47cc06d2e9b1488caded30d60cdc7c67d061f57251992271f324dcd8177544",
+	"findingsSha256": "47ea6e1f1b16311a143b084f7703c7bceafbe86fdd487f2616726f1fdeefb841",
 	"packages": {
 		"node_modules/braces": {
 			"version": "3.0.3",

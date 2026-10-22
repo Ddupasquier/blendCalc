@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
 	import CollapsibleSection from "$lib/components/common/disclosure/CollapsibleSection/CollapsibleSection.svelte";
+	import ImagePlacementReviewEditor from "$lib/components/moderation/ImagePlacementReviewEditor/ImagePlacementReviewEditor.svelte";
 	import ImagePlacementCardPreview from "$lib/components/common/images/ImagePlacementCardPreview/ImagePlacementCardPreview.svelte";
 	import AssetAttribution from "$lib/components/common/display/AssetAttribution/AssetAttribution.svelte";
 	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
@@ -43,6 +44,15 @@
 				licenseUrl={image.licenseUrl ?? undefined}
 				attributionText={image.attributionText ?? undefined}
 			/>
+			<CollapsibleSection title="Adjust shared image">
+				{#key `${image.id}:${image.imageUrl}:${image.revision}`}
+					<ImagePlacementReviewEditor
+						{image}
+						disabled={busy}
+						onBusyChange={(value) => (busy = value)}
+					/>
+				{/key}
+			</CollapsibleSection>
 			<form method="POST" action="?/review" use:enhance={submitReview}>
 				<input type="hidden" name="action" value="lock" /><input
 					type="hidden"

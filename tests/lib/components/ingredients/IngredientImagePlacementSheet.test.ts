@@ -46,9 +46,7 @@ describe("IngredientImagePlacementSheet", () => {
 		expect(
 			screen.getByRole("group", { name: "Interactive card image preview" }),
 		).toBeInTheDocument();
-		expect(
-			screen.getByRole("button", { name: "Save for me" }),
-		).toBeInTheDocument();
+		expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
 		expect(container.querySelector(".bottom-sheet__content")).toHaveClass(
 			"bottom-sheet__content",
 		);

@@ -81,7 +81,7 @@ test("@mobile @compatibility the public landing links demo, support and account 
 	await page.goto("/");
 	await waitForAppReady(page);
 	await expect(
-		page.getByRole("heading", { name: "Keep your good recipes." }),
+		page.getByRole("heading", { name: "What’s in the food you make?" }),
 	).toBeVisible();
 	await expect(
 		page.getByRole("link", { name: "Support on Buy Me a Coffee" }),
