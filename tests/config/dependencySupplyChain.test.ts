@@ -50,9 +50,9 @@ describe("dependency supply-chain configuration", () => {
 		).toBe(true);
 	});
 
-	it("installs the exact public Rehearsal release candidate from npm", () => {
+	it("installs the exact public Rehearsal release from npm", () => {
 		const packageName = "@rehearsal-db/core";
-		const version = "0.1.0-rc.4";
+		const version = "1.0.2";
 		const installedPackage =
 			packageLock.packages[`node_modules/${packageName}`];
 
@@ -62,7 +62,7 @@ describe("dependency supply-chain configuration", () => {
 			`https://registry.npmjs.org/@rehearsal-db/core/-/core-${version}.tgz`,
 		);
 		expect(installedPackage?.integrity).toBe(
-			"sha512-TQfIYn5dw1izMW8PYyIAsWUVqxbRz2ebYKhjbLm+00C+X4EnONBJnt7k1cWonC6B0JWZwIuQ5cDTI4CEd6+Xaw==",
+			"sha512-VuNI71ClTrFdpdYh64C+9rhFNwE6g4gpAKdnCO3actpxL6hHU69qMcCen8DQc4h21Dhcmal4kP0pmQhf2/6prw==",
 		);
 		expect(packageMetadata.devDependencies).not.toHaveProperty("@rehearsal/db");
 		expect(packageLock.packages).not.toHaveProperty(
