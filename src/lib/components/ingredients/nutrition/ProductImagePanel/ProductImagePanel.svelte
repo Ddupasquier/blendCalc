@@ -1,6 +1,5 @@
 <script lang="ts">
-	import PrivilegedActionBadge from "$lib/components/common/badges/PrivilegedActionBadge/PrivilegedActionBadge.svelte";
-	import PrivilegedActionGroup from "$lib/components/common/actions/PrivilegedActionGroup/PrivilegedActionGroup.svelte";
+	import CheckboxField from "$lib/components/common/forms/CheckboxField/CheckboxField.svelte";
 	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
 	import CollapsibleSection from "$lib/components/common/disclosure/CollapsibleSection/CollapsibleSection.svelte";
 	import AssetAttribution from "$lib/components/common/display/AssetAttribution/AssetAttribution.svelte";
@@ -14,7 +13,6 @@
 		pickFoodFullImageUrl,
 	} from "$lib/utils/food/images/foodImages";
 	import { getFoodWarningFrameTone } from "$lib/utils/ingredients/ingredientListUi";
-	import { updateFoodImagePlacement } from "$lib/utils/food/images/foodImagePlacement";
 	import { getUserFacingErrorMessage } from "$lib/utils/errors/userFacingErrors";
 	import { getCanonicalFoodDescription } from "$lib/utils/food/records/foodRecords";
 	import type { ProductImagePanelProps } from "./types";
@@ -54,6 +52,9 @@
 	let saveRequestInFlight = false;
 	let placementMessage = $state("");
 	let placementError = $state("");
+	let suggestionWarning = $state("");
+	let suggestForEveryone = $state(false);
+	const suggestionCheckboxId = $props.id();
 
 	const savedPlacement = $derived<ImagePlacementValue>(
 		getCardImagePlacement({
@@ -74,6 +75,7 @@
 	);
 	const imageKey = $derived(
 		[
+			food?.image?.assetId ?? "",
 			food?.image?.source ?? "",
 			food?.image?.sourceReference ?? "",
 			food?.image?.role ?? "",
@@ -86,16 +88,6 @@
 	const canPublishPlacement = $derived(
 		isModerationAppRole(page.data.authUser?.role ?? null),
 	);
-	const placementHasChanged = () =>
-		draftPlacement.cropX !== savedPlacement.cropX ||
-		draftPlacement.cropY !== savedPlacement.cropY ||
-		draftPlacement.cropZoom !== savedPlacement.cropZoom ||
-		draftPlacement.rotationDegrees !== savedPlacement.rotationDegrees ||
-		draftPlacement.fitMode !== savedPlacement.fitMode ||
-		draftPlacement.placementVersion !== savedPlacement.placementVersion ||
-		draftPlacement.placementMethod !== savedPlacement.placementMethod ||
-		draftPlacement.suggestionVersion !== savedPlacement.suggestionVersion ||
-		draftPlacement.suggestionConfidence !== savedPlacement.suggestionConfidence;
 
 	$effect(() => {
 		if (imageUrl !== lastImageUrl) {
@@ -110,110 +102,98 @@
 		draftPlacement = { ...savedPlacement };
 		placementMessage = "";
 		placementError = "";
+		suggestionWarning = "";
+		suggestForEveryone = false;
 	});
 
-	const savePlacement = async () => {
-		const imageAsset = food?.image;
-		const sourceReference = imageAsset?.sourceReference;
-		if (!sourceReference || saveRequestInFlight) return;
-		if (!placementHasChanged()) {
-			placementError = "";
-			placementMessage = "This card image placement is already saved.";
-			return;
-		}
-
-		saveRequestInFlight = true;
-		savingPlacement = true;
-		placementMessage = "";
-		placementError = "";
-		const placementToSave = { ...draftPlacement };
-		const foodId = food?.fdcId;
-		try {
-			const image = await updateFoodImagePlacement({
-				source: imageAsset.source,
-				sourceReference,
-				role: imageAsset.role,
-				imageUrl: imageAsset.imageUrl,
-				baseRevision: imageAsset.placementRevision ?? 0,
-				...placementToSave,
-			});
-			await onImagePlacementSave?.(image, foodId);
-			placementMessage = "Your card image placement is saved.";
-		} catch (error) {
-			console.error("[image placement] Save failed", error);
-			placementError = getUserFacingErrorMessage(error, {
-				fallback:
-					"We couldn't save this image placement. Restore the default or try again.",
-				network:
-					"We couldn't connect while saving. Check your connection and try again.",
-				timeout: "Saving took too long. Check your connection and try again.",
-			});
-		} finally {
-			saveRequestInFlight = false;
-			savingPlacement = false;
-		}
+	const suggestionIssue = (status: string) => {
+		if (status === "locked") return "This image isn’t accepting suggestions.";
+		if (status === "restricted")
+			return "Suggestions aren’t available for your account.";
+		if (status === "stale")
+			return "The shared image changed. Refresh before suggesting again.";
+		if (status === "limit_reached")
+			return "You’ve reached the suggestion limit. Try again later.";
+		return "We couldn’t send your suggestion. Please try again.";
 	};
-	const saveForAccount = async (action: "personal" | "reset" | "suggest") => {
+
+	const saveForAccount = async (action: "personal" | "reset") => {
 		const image = food?.image;
 		if (!image?.assetId || saveRequestInFlight) return;
 		const foodId = food?.fdcId;
 		const requestImageKey = imageKey;
+		const placementToSave = { ...draftPlacement };
+		const shouldSuggest = action === "personal" && suggestForEveryone;
 		saveRequestInFlight = true;
 		savingPlacement = true;
 		placementMessage = "";
 		placementError = "";
+		suggestionWarning = "";
 		try {
-			const result = await savePersonalImagePlacement(image, action, {
-				...draftPlacement,
-			});
+			const result = await savePersonalImagePlacement(
+				image,
+				action,
+				placementToSave,
+			);
 			if (
-				result.status === "personal_saved" ||
-				result.status === "personal_reset"
+				result.status !== "personal_saved" &&
+				result.status !== "personal_reset"
 			) {
-				const updated = {
-					...image,
-					...result.placement,
-					sharedPlacement: result.sharedPlacement,
-					placementRevision: result.revision,
-					communityPlacementLocked: result.locked,
-					personalPlacement: result.status === "personal_saved",
-				};
-				await onImagePlacementSave?.(updated, foodId);
-				if (imageKey !== requestImageKey) return;
-				draftPlacement = getCardImagePlacement(updated);
-				placementMessage =
-					result.status === "personal_saved"
-						? "Saved for your account. Everyone else’s view stays the same."
-						: "You’re using the shared placement again.";
-			} else if (imageKey !== requestImageKey) {
+				if (imageKey === requestImageKey) {
+					placementError =
+						result.status === "limit_reached"
+							? "You’ve reached your saved-image limit. Reset an older image to make room."
+							: "We couldn’t save this adjustment. Refresh and try again.";
+				}
 				return;
-			} else if (result.status === "pending") {
-				placementMessage =
-					"Suggestion sent. It can be shared after enough trusted contributors agree or a moderator approves it.";
-			} else if (result.status === "published") {
-				placementMessage =
-					"Enough contributors agreed. The shared placement is updated; refresh to see it.";
-			} else if (result.status === "already_submitted") {
-				placementMessage =
-					"You’ve already suggested a placement for this version of the image.";
-			} else if (result.status === "unchanged") {
-				placementMessage = "This is already the shared placement.";
-			} else {
-				placementError =
-					result.status === "locked"
-						? "A moderator has locked the shared placement. You can still save your own view."
-						: result.status === "stale"
-							? "This image changed. Refresh before trying again."
-							: result.status === "restricted"
-								? "Shared suggestions are paused for your account. You can still save your own placement."
-								: action === "personal"
-									? "You’ve reached your saved-placement limit. Use shared placement on an older image to make room."
-									: "You’ve reached a suggestion limit. Try another day or wait for pending suggestions to be reviewed.";
+			}
+			const updated = {
+				...image,
+				...result.placement,
+				sharedPlacement: result.sharedPlacement,
+				placementRevision: result.revision,
+				communityPlacementLocked: result.locked,
+				personalPlacement: result.status === "personal_saved",
+			};
+			await onImagePlacementSave?.(updated, foodId);
+			if (imageKey !== requestImageKey) return;
+			draftPlacement = getCardImagePlacement(updated);
+			placementMessage =
+				action === "reset" ? "Reset to the shared image." : "Saved.";
+			if (action === "reset") suggestForEveryone = false;
+			if (!shouldSuggest) return;
+
+			// Keep the original revision: saving privately must not vote on a newer shared image.
+			try {
+				const suggestion = await savePersonalImagePlacement(
+					image,
+					"suggest",
+					placementToSave,
+				);
+				if (imageKey !== requestImageKey) return;
+				if (
+					["pending", "published", "already_submitted", "unchanged"].includes(
+						suggestion.status,
+					)
+				) {
+					suggestForEveryone = false;
+					placementMessage =
+						suggestion.status === "unchanged"
+							? "Saved. This already matches the shared image."
+							: "Saved. Thanks for suggesting an improvement.";
+				} else {
+					suggestionWarning = `Your adjustment is saved. ${suggestionIssue(suggestion.status)}`;
+				}
+			} catch {
+				if (imageKey === requestImageKey) {
+					suggestionWarning =
+						"Your adjustment is saved, but we couldn’t send the suggestion. Save again to retry.";
+				}
 			}
 		} catch (error) {
 			if (imageKey !== requestImageKey) return;
 			placementError = getUserFacingErrorMessage(error, {
-				fallback: "We couldn’t save your placement. Please try again.",
+				fallback: "We couldn’t save your adjustment. Please try again.",
 			});
 		} finally {
 			saveRequestInFlight = false;
@@ -226,10 +206,6 @@
 		void saveForAccount("personal");
 	};
 </script>
-
-{#snippet placementSummaryEnd()}
-	{#if canPublishPlacement}<PrivilegedActionBadge />{/if}
-{/snippet}
 
 {#snippet placementEditor()}
 	<div class="product-image-panel__placement-content">
@@ -244,69 +220,60 @@
 			showIntro={placementPresentation !== "flat"}
 			{warningFrameTone}
 			value={draftPlacement}
+			editable={!savingPlacement}
+			showRestoreDefault={false}
 			onChange={(value) => {
 				draftPlacement = value;
 				placementMessage = "";
 				placementError = "";
+				suggestionWarning = "";
 			}}
 		/>
 		<form
 			class="product-image-panel__placement-save"
 			onsubmit={handlePlacementSubmit}
 		>
+			<CheckboxField
+				id={suggestionCheckboxId}
+				checked={suggestForEveryone}
+				disabled={savingPlacement || food?.image?.communityPlacementLocked}
+				onchange={(event) => (suggestForEveryone = event.currentTarget.checked)}
+				>Suggest this adjustment for everyone</CheckboxField
+			>
+			{#if food?.image?.communityPlacementLocked}
+				<p>
+					Suggestions are closed for this image. You can still adjust your own
+					view.
+				</p>
+			{/if}
 			<RoundedActionButton
 				type="submit"
 				variant="primary"
 				fullWidth
 				busy={savingPlacement}
 			>
-				{savingPlacement ? "Saving image placement…" : "Save for me"}
+				{savingPlacement ? "Saving…" : "Save"}
 			</RoundedActionButton>
-			<p>This changes your cards only. Sharing a suggestion is optional.</p>
-			<RoundedActionButton
-				type="button"
-				fullWidth
-				disabled={savingPlacement}
-				onclick={() => void saveForAccount("reset")}
-				>Use shared placement</RoundedActionButton
-			>
-			<RoundedActionButton
-				type="button"
-				fullWidth
-				disabled={savingPlacement || food?.image?.communityPlacementLocked}
-				onclick={() => void saveForAccount("suggest")}
-				>Suggest for everyone</RoundedActionButton
-			>
-			{#if food?.image?.communityPlacementLocked}<p>
-					A moderator has locked the shared placement. You can still save your
-					own view.
-				</p>{/if}
-			{#if canPublishPlacement}
-				<CollapsibleSection
-					title="Moderator controls"
-					summaryEnd={placementSummaryEnd}
+			<div class="product-image-panel__placement-links">
+				<RoundedActionButton
+					type="button"
+					variant="link"
+					disabled={savingPlacement}
+					onclick={() => void saveForAccount("reset")}
+					>Reset to shared image</RoundedActionButton
 				>
-					<PrivilegedActionGroup title="Moderator controls" showHeader={false}>
-						<p>
-							Publishing changes everyone’s cards and requires authenticator
-							verification.
-						</p>
-						<RoundedActionButton
-							type="button"
-							fullWidth
-							disabled={savingPlacement}
-							onclick={() => void savePlacement()}
-							>Publish shared placement</RoundedActionButton
-						>
-						<a
-							href={`${resolve("/profile/privileged-tools/image-placement")}?image=${food?.image?.assetId}`}
-							>Review suggestions, history and image lock</a
-						>
-					</PrivilegedActionGroup>
-				</CollapsibleSection>
-			{/if}
+				{#if canPublishPlacement}
+					<a
+						href={`${resolve("/profile/privileged-tools/image-placement")}?image=${food?.image?.assetId}`}
+						>Review image</a
+					>
+				{/if}
+			</div>
 			{#if placementMessage}
 				<StatusMessage tone="success" message={placementMessage} />
+			{/if}
+			{#if suggestionWarning}
+				<StatusMessage tone="warning" message={suggestionWarning} />
 			{/if}
 			{#if placementError}
 				<StatusMessage tone="danger" message={placementError} />

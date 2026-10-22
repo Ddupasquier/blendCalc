@@ -29,6 +29,12 @@ const sourceFiles = walkFiles(sourceRoot).filter(
 	(path) => sourceExtensions.includes(extname(path)) && !path.endsWith(".d.ts"),
 );
 const sourceFileSet = new Set(sourceFiles);
+// These checks inspect one fixed source tree; avoid rereading it for every prop type.
+const sourceTextByPath = new Map(
+	sourceFiles.map((path) => [path, readFileSync(path, "utf8")]),
+);
+const readSourceText = (path: string) =>
+	sourceTextByPath.get(path) ?? readFileSync(path, "utf8");
 
 const resolveSourceImport = (
 	specifier: string,
@@ -54,7 +60,7 @@ const resolveSourceImport = (
 };
 
 const readSourceImports = (path: string): string[] => {
-	const source = readFileSync(path, "utf8");
+	const source = readSourceText(path);
 	const dependencies = new Set<string>();
 	const patterns = [
 		/(?:from\s*|import\s*\()\s*["']([^"']+)["']/g,
@@ -97,7 +103,7 @@ describe("source architecture", () => {
 		)) {
 			const ownerName = basename(dirname(typesPath));
 			const ownerPath = join(dirname(typesPath), `${ownerName}.svelte`);
-			const source = readFileSync(typesPath, "utf8");
+			const source = readSourceText(typesPath);
 
 			if (!existsSync(ownerPath)) {
 				const sharedPropNames = [
@@ -107,7 +113,7 @@ describe("source architecture", () => {
 					const consumers = componentFiles.filter(
 						(path) =>
 							extname(path) === ".svelte" &&
-							readFileSync(path, "utf8").includes(propName),
+							readSourceText(path).includes(propName),
 					);
 					expect(
 						consumers.length,
@@ -117,7 +123,7 @@ describe("source architecture", () => {
 				continue;
 			}
 
-			expect(readFileSync(ownerPath, "utf8"), ownerPath).toMatch(
+			expect(readSourceText(ownerPath), ownerPath).toMatch(
 				/from\s+["']\.\/types["']/,
 			);
 		}
@@ -127,7 +133,7 @@ describe("source architecture", () => {
 		for (const componentPath of sourceFiles.filter(
 			(path) => extname(path) === ".svelte",
 		)) {
-			const source = readFileSync(componentPath, "utf8");
+			const source = readSourceText(componentPath);
 			const script =
 				source.match(/<script[^>]*>([\s\S]*?)<\/script>/)?.[1] ?? "";
 			expect(script, componentPath).not.toMatch(

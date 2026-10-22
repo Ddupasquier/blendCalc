@@ -3,6 +3,7 @@ import type { Actions, PageServerLoad } from "./$types";
 import { requireModeratorPermission } from "$lib/server/moderation/moderationAccess.server";
 import { throwAppError } from "$lib/server/errors/appError.server";
 import { readLimitedFormData } from "$lib/server/security/requestBody.server";
+import type { Json } from "$lib/types/database.types";
 import type { ImagePlacementReviewWorkspace } from "$lib/utils/moderation/imagePlacementReview";
 
 const route = "/profile/privileged-tools/image-placement";
@@ -38,6 +39,7 @@ export const actions: Actions = {
 		const note = String(form.get("note") ?? "").trim();
 		if (
 			![
+				"publish",
 				"automation",
 				"trust",
 				"restrict",
@@ -61,15 +63,46 @@ export const actions: Actions = {
 					"Add a review note of up to 1,000 characters before rejecting a group.",
 			});
 		}
-		const { error } = await locals.supabase.rpc("review_food_image_placement", {
-			p_action: action,
-			p_image_id: imageId || undefined,
-			p_user_id: userId || undefined,
-			p_suggestion_id: suggestionId || undefined,
-			p_revision: revision === null ? undefined : Number(revision),
-			p_enabled: enabled === null ? undefined : enabled === "true",
-			p_note: note,
-		});
+		let placement: Json = null;
+		const imageUrl = String(form.get("imageUrl") ?? "");
+		if (action === "publish") {
+			if (
+				!imageId ||
+				revision === null ||
+				!imageUrl ||
+				imageUrl.length > 2048
+			) {
+				return fail(400, {
+					error: "Refresh the image before publishing an adjustment.",
+				});
+			}
+			try {
+				const parsed: unknown = JSON.parse(String(form.get("placement") ?? ""));
+				if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+					return fail(400, { error: "Choose a valid image adjustment." });
+				}
+				placement = parsed as Json;
+			} catch {
+				return fail(400, { error: "Choose a valid image adjustment." });
+			}
+		}
+		const { error } =
+			action === "publish"
+				? await locals.supabase.rpc("publish_food_image_placement", {
+						p_image_id: imageId,
+						p_image_url: imageUrl,
+						p_revision: Number(revision),
+						p_placement: placement,
+					})
+				: await locals.supabase.rpc("review_food_image_placement", {
+						p_action: action,
+						p_image_id: imageId || undefined,
+						p_user_id: userId || undefined,
+						p_suggestion_id: suggestionId || undefined,
+						p_revision: revision === null ? undefined : Number(revision),
+						p_enabled: enabled === null ? undefined : enabled === "true",
+						p_note: note,
+					});
 		if (error)
 			return fail(
 				error.code === "40001"
@@ -88,6 +121,11 @@ export const actions: Actions = {
 							: "We couldn’t apply that decision. Check the inputs and refresh before trying again.",
 				},
 			);
-		return { success: "Image-placement review saved." };
+		return {
+			success:
+				action === "publish"
+					? "Shared image updated."
+					: "Image-placement review saved.",
+		};
 	},
 };

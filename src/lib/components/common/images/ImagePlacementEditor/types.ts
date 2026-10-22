@@ -12,6 +12,7 @@ export type ImagePlacementEditorProps = {
 	description?: string;
 	showIntro?: boolean;
 	editable?: boolean;
+	showRestoreDefault?: boolean;
 	warningFrameTone?: CardWarningFrameTone | null;
 	smartPlacementSource?: Blob | string;
 	automaticallyPlaceNewImage?: boolean;
