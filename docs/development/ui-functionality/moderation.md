@@ -152,7 +152,9 @@ required action after reading the evidence.
 
 The privileged launcher counts pending images under Food image placement. Its focused
 workspace compares the current card and grouped proposed placements using the shared
-preview and stored attribution. Show eligible contributor counts honestly, keep
+preview and stored attribution. A closed Adjust shared image editor retains direct
+moderator publishing through the existing protected RPC, with the exact URL and revision.
+The personal editor links here without embedding privileged actions. Show eligible contributor counts honestly, keep
 contributor controls and history closed, and retain normal pending/error feedback.
 Approve publishes and locks one matching group; reject requires a useful note. The
 latest geometry for the same image may be restored even after a lock action. Stale

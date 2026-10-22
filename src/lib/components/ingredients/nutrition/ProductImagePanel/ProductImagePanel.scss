@@ -17,7 +17,24 @@
 	gap: $app-gap-sm;
 }
 
-@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+.product-image-panel__placement-links {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: $app-gap-sm;
+
+	a {
+		display: inline-flex;
+		align-items: center;
+		min-height: $app-shell-control-height-compact;
+		color: $app-shell-text-primary;
+		text-decoration: underline;
+	}
+}
+
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
 	.product-image-panel,
 	.product-image-panel__placement-content {
 		gap: $app-gap-sm;

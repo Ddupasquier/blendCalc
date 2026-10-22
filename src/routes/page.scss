@@ -183,33 +183,46 @@ figcaption {
 .landing-information p {
 	font-size: $app-font-size-sm;
 }
-.landing-support {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	flex-wrap: wrap;
-	gap: $app-gap-lg;
-	padding-block: $app-gap-lg;
-}
-.landing-support > div {
+.landing-maker {
 	display: grid;
-	gap: $app-gap-md;
-	max-width: 52ch;
+	grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+	gap: calc($app-gap-lg * 3);
+	padding-block: calc($app-gap-lg * 2);
+	border-top: $app-border;
 }
-.landing-support h2 {
+.landing-support,
+.landing-projects {
+	display: grid;
+	align-content: start;
+	gap: $app-gap-md;
+	min-width: 0;
+}
+.landing-maker h2 {
 	font-family: $app-font-family-interface;
 	font-size: $app-font-size-lg;
 	font-weight: $app-font-weight-medium;
 }
-.landing-support p,
-.landing-support a {
+.landing-maker p,
+.landing-maker a,
+.landing-maker dd {
 	font-size: $app-font-size-sm;
 }
-.landing-support a {
+.landing-maker a {
 	display: inline-flex;
 	align-items: center;
 	gap: $app-gap-sm;
 	min-height: $app-shell-control-height-narrow;
+}
+.landing-projects dl {
+	display: grid;
+	gap: $app-gap-md;
+}
+.landing-projects dt {
+	font-weight: $app-font-weight-medium;
+}
+.landing-projects dd {
+	margin: 0;
+	color: $app-shell-text-muted;
 }
 @media (max-width: $app-breakpoint-md) {
 	.landing-hero {
@@ -231,6 +244,10 @@ figcaption {
 	.landing-information {
 		grid-template-columns: minmax(0, 1fr);
 		gap: $app-gap-md;
+	}
+	.landing-maker {
+		grid-template-columns: minmax(0, 1fr);
+		gap: calc($app-gap-lg * 2);
 	}
 }
 @media (max-width: $app-breakpoint-xs) {

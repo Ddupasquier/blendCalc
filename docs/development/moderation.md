@@ -181,7 +181,10 @@ Approval and rollback lock the result. Stale revision decisions fail. Locks supp
 new community submissions without blocking personal edits and do not hide prior geometry
 from rollback.
 
-The privileged crop PATCH also records history and checks the image URL and revision.
+The moderator workspace’s closed shared-image editor uses the existing protected
+publication RPC with the exact image URL and revision. The personal editor exposes
+only a small moderator review link. The privileged crop PATCH remains available to
+existing server/API consumers and also records history and checks the image URL and revision.
 Enabling automation or changing trust affects future agreement checks; moderators may
 directly decide already-pending groups. Contributor controls and history stay private.
 Consensus never fabricates a moderator approval. The schema/function map lives in

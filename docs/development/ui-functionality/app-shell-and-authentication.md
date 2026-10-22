@@ -28,6 +28,10 @@ welcome, and guided tutorial. Auth configuration and security details remain in
 - Keep the landing concise: a recipe-focused hero, a warm cream canvas, an original vector breakfast-bowl illustration, calculated sample Mix totals, direct Ingredients/Mix/Saved descriptions, and quiet privacy/limits/support text. The landing has its own shell variant, with stronger supporting ink derived from the existing primary/surface colors for contrast on cream; the demo retains the default illustrated background.
 - The approved optional support link goes to the owner's Buy Me a Coffee page. It is
   not a subscription, required payment, or purchase of ad-free access.
+- Beside support, a compact “More from ModernCraft” section features Rehearsal first
+  and Rehearsal for VS Code second, with benefit-led descriptions and official project
+  documentation links. Stack these sections at compact widths; keep BlendCalc's demo
+  and account entry as the page's primary actions.
 
 ## Public Guest Demo
 

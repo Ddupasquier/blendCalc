@@ -16,26 +16,30 @@
 <PublicPageShell next={data.next} variant="landing">
 	<section class="landing-hero" aria-labelledby="landing-title">
 		<div class="landing-copy">
-			<h1 id="landing-title">Keep your <span>good recipes.</span></h1>
+			<h1 id="landing-title">What’s in the <span>food you make?</span></h1>
 			<p class="landing-intro">
-				Find ingredients, put a mix together, and save it for next time.
-				blendCalc handles the nutrition math.
+				A food label tells you about one ingredient. blendCalc helps you see the
+				whole recipe. Add what you use, adjust the amounts, and see the
+				calories, protein, and other nutrients without adding it all up
+				yourself.
 			</p>
 			<div class="landing-actions">
 				<ActionLink href="/demo">Try the demo</ActionLink><a
 					class="account-link"
 					href={`${resolve("/auth")}?next=${encodeURIComponent(data.next)}`}
-					>Sign in or join</a
+					>Sign in or create an account</a
 				>
 			</div>
-			<p class="fine-print">Try it without creating an account.</p>
+			<p class="fine-print">
+				No account needed. Start with our sample breakfast bowl.
+			</p>
 		</div>
 		<figure class="sample-recipe" aria-label="Example breakfast bowl">
 			<div class="sample-recipe__art"><BreakfastBowlIllustration /></div>
 			<figcaption>
 				<div class="recipe-title">
 					<div>
-						<p class="fine-print">From the demo</p>
+						<p class="fine-print">More yogurt? Less oats? Try it.</p>
 						<h2>Breakfast bowl</h2>
 						<p>Oats, yogurt &amp; berries</p>
 					</div>
@@ -65,7 +69,7 @@
 				<div class="recipe-link">
 					<p class="fine-print">Illustrative sample values</p>
 					<a href={resolve("/demo")}
-						>Open sample recipe <span aria-hidden="true">→</span></a
+						>Try this recipe <span aria-hidden="true">→</span></a
 					>
 				</div>
 			</figcaption>
@@ -74,29 +78,31 @@
 
 	<section class="landing-features" aria-labelledby="features-title">
 		<div class="features-intro">
-			<p class="eyebrow">What’s in blendCalc</p>
-			<h2 id="features-title">A few useful tools for your kitchen.</h2>
+			<p class="eyebrow">Smoothies, meal prep, and whatever’s for dinner</p>
+			<h2 id="features-title">Build a recipe you’ll want to make again.</h2>
 		</div>
 		<dl>
 			<div>
-				<dt>Ingredients</dt>
+				<dt>Find your food.</dt>
 				<dd>
-					Search for foods, scan a barcode, or add one yourself. Keep track of
-					what’s in your Fridge and what’s on your Shopping List.
+					Find your foods in Ingredients by searching, scanning a barcode, or
+					adding them yourself. Keep what you have in your Fridge and what you
+					need on your Shopping List.
 				</dd>
 			</div>
 			<div>
-				<dt>Mix</dt>
+				<dt>Try a change.</dt>
 				<dd>
-					Add ingredients and adjust their amounts to see the combined
-					nutrition. Change a portion and the totals change with it.
+					An extra spoonful of yogurt? A smaller portion of oats? Put your
+					ingredients in a Mix and change the amounts to see what they
+					contribute to the recipe’s nutrition.
 				</dd>
 			</div>
 			<div>
-				<dt>Saved</dt>
+				<dt>Save the good ones.</dt>
 				<dd>
-					Save a Mix as a recipe, mark your favorites, and open it again when
-					you want to make it.
+					Got your smoothie just right? Keep the recipe in Saved, mark it as a
+					favorite, and come back to the same ingredients and amounts next time.
 				</dd>
 			</div>
 		</dl>
@@ -117,18 +123,50 @@
 		</p>
 	</aside>
 
-	<section class="landing-support" aria-labelledby="support-title">
-		<div>
-			<h2 id="support-title">Support a small, independent project.</h2>
+	<div class="landing-maker">
+		<section class="landing-support" aria-labelledby="support-title">
+			<h2 id="support-title">Finding blendCalc useful?</h2>
 			<p>
-				If you find blendCalc useful, you can help keep it going. Donations are
-				optional and don’t purchase ad-free access.
+				You can help keep this independent project going by buying me a coffee.
+				There’s no obligation, and donations don’t purchase ad-free access.
 			</p>
-		</div>
-		<a href="https://buymeacoffee.com/dylandupasquier"
-			>Support on Buy Me a Coffee <span aria-hidden="true">↗</span></a
-		>
-	</section>
+			<a href="https://buymeacoffee.com/dylandupasquier"
+				>Support on Buy Me a Coffee <span aria-hidden="true">↗</span></a
+			>
+		</section>
+		<section class="landing-projects" aria-labelledby="projects-title">
+			<h2 id="projects-title">More from ModernCraft</h2>
+			<p>
+				We make blendCalc—and tools that help other developers ship better
+				software.
+			</p>
+			<dl>
+				<div>
+					<dt>
+						<a href="https://ddupasquier.github.io/rehearsal-db/"
+							>Rehearsal <span aria-hidden="true">↗</span></a
+						>
+					</dt>
+					<dd>
+						Catch database problems before your users do. Test changes against
+						realistic data in a disposable local environment before you deploy.
+					</dd>
+				</div>
+				<div>
+					<dt>
+						<a href="https://ddupasquier.github.io/rehearsal-db/vscode/"
+							>Rehearsal for VS Code <span aria-hidden="true">↗</span></a
+						>
+					</dt>
+					<dd>
+						The same workflow, right in your editor. Review migrations, run
+						checks, and see what needs attention without juggling terminal
+						commands.
+					</dd>
+				</div>
+			</dl>
+		</section>
+	</div>
 </PublicPageShell>
 
 <style lang="scss">

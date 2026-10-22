@@ -186,29 +186,6 @@ const openSavedIngredientActions = async (page: Page, productName: string) => {
 	return dialog;
 };
 
-const expectPlacementSummaryOrder = async (summary: Locator) => {
-	await expect(summary.locator(".collapsible-section__chevron")).toHaveCount(1);
-	await expect(summary.locator(".privileged-action-badge")).toHaveCount(1);
-	expect(
-		await summary.evaluate((element) => {
-			const chevron = element.querySelector(".collapsible-section__chevron");
-			const title = element.querySelector(".collapsible-section__title");
-			const badge = element.querySelector(".privileged-action-badge");
-			if (!chevron || !title || !badge) return false;
-			return (
-				Boolean(
-					chevron.compareDocumentPosition(title) &
-					Node.DOCUMENT_POSITION_FOLLOWING,
-				) &&
-				Boolean(
-					title.compareDocumentPosition(badge) &
-					Node.DOCUMENT_POSITION_FOLLOWING,
-				)
-			);
-		}),
-	).toBe(true);
-};
-
 const setRangeValue = async (slider: Locator, value: number) => {
 	await slider.evaluate((element, nextValue) => {
 		const input = element as HTMLInputElement;
@@ -395,16 +372,22 @@ test("normal users can personalize images without moderator publishing controls"
 		.getByText("Adjust card image placement", { exact: true })
 		.click();
 	await expect(
-		details.getByRole("button", { name: "Save for me", exact: true }),
+		details.getByRole("button", { name: "Save", exact: true }),
 	).toBeVisible();
 	await expect(
-		details.getByRole("button", { name: "Suggest for everyone", exact: true }),
+		details.getByRole("checkbox", {
+			name: "Suggest this adjustment for everyone",
+			exact: true,
+		}),
 	).toBeVisible();
 	await expect(
 		details.getByRole("button", {
 			name: "Publish shared placement",
 			exact: true,
 		}),
+	).toHaveCount(0);
+	await expect(
+		details.getByRole("link", { name: "Review image", exact: true }),
 	).toHaveCount(0);
 	const actions = await openSavedIngredientActions(page, product.name);
 	await expect(
@@ -434,30 +417,31 @@ test("moderator publishing stays separate from personal image placement", async 
 	await expect(placement).not.toHaveAttribute("open", "");
 	await placement.locator(":scope > summary").click();
 	await expect(
-		placement.getByRole("button", { name: "Save for me", exact: true }),
+		placement.getByRole("button", { name: "Save", exact: true }),
 	).toBeVisible();
-	const moderatorControls = placement.locator("details").filter({
-		has: page.locator("summary", { hasText: "Moderator controls" }),
-	});
-	await expect(moderatorControls).not.toHaveAttribute("open", "");
-	await expectPlacementSummaryOrder(
-		moderatorControls.locator(":scope > summary"),
-	);
-	await moderatorControls.locator(":scope > summary").click();
 	await expect(
-		moderatorControls.getByRole("button", { name: "Publish shared placement" }),
-	).toBeVisible();
+		placement.getByRole("link", { name: "Review image", exact: true }),
+	).toHaveAttribute(
+		"href",
+		/\/profile\/privileged-tools\/image-placement\?image=/,
+	);
+	await expect(
+		placement.getByRole("button", {
+			name: "Publish shared placement",
+			exact: true,
+		}),
+	).toHaveCount(0);
 	const actions = await openSavedIngredientActions(page, product.name);
 	await actions.getByRole("button", { name: "Adjust image placement" }).click();
 	const sheet = page.getByRole("dialog", { name: "Adjust image placement" });
 	await expect(
-		sheet.getByRole("button", { name: "Save for me", exact: true }),
+		sheet.getByRole("button", { name: "Save", exact: true }),
 	).toBeVisible();
 	await expect(
 		sheet.locator("details.product-image-panel__placement"),
 	).toHaveCount(0);
 	await expect(
-		sheet.getByText("Moderator controls", { exact: true }),
+		sheet.getByRole("link", { name: "Review image", exact: true }),
 	).toBeVisible();
 });
 
@@ -575,14 +559,10 @@ test("one placement save shows pending feedback and sends one request", async ({
 		);
 		await expect(saveButton).toHaveAttribute("aria-busy", "true");
 		await expect(saveButton).toBeDisabled();
-		await expect(saveButton).toContainText("Saving image placement…");
+		await expect(saveButton).toContainText("Saving…");
 		releasePlacementSave();
 		releasePlacementSave = () => {};
-		await expect(
-			placementDetails.getByText(
-				"Saved for your account. Everyone else’s view stays the same.",
-			),
-		).toBeVisible();
+		await expect(placementDetails.getByText("Saved.")).toBeVisible();
 		expect(placementRequests).toHaveLength(1);
 		expect(placementRequests[0]).toMatchObject({
 			action: "personal",
@@ -829,4 +809,135 @@ test("placement controls update the exact card preview within safe movement boun
 		)
 		.not.toBeCloseTo(zoomedTop, 0);
 	await expectPaintedMediaContainment(preview);
+});
+
+test("@compatibility @mobile optional image suggestions preserve personal saves and allow retry", async ({
+	page,
+	unexpectedBrowserErrors,
+}, testInfo) => {
+	const product = representativeImageProducts[0];
+	const details = await openNutritionDetails(page, product);
+	await details
+		.getByText("Adjust card image placement", { exact: true })
+		.click();
+	const checkbox = details.getByRole("checkbox", {
+		name: "Suggest this adjustment for everyone",
+		exact: true,
+	});
+	const save = details.getByRole("button", { name: "Save", exact: true });
+	await expect(checkbox).not.toBeChecked();
+	await expect(
+		details.getByRole("button", { name: "Restore default", exact: true }),
+	).toHaveCount(0);
+	const requests: Array<Record<string, unknown>> = [];
+	let suggestionAttempts = 0;
+	await page.route("**/api/food-images/placement", async (route) => {
+		const body = route.request().postDataJSON() as Record<string, unknown>;
+		requests.push(body);
+		if (body.action === "suggest") {
+			suggestionAttempts++;
+			if (suggestionAttempts === 1) {
+				await route.fulfill({
+					status: 200,
+					contentType: "application/json",
+					body: "{}",
+				});
+				return;
+			}
+			await route.fulfill({
+				status: 200,
+				contentType: "application/json",
+				body: JSON.stringify({ status: "pending" }),
+			});
+			return;
+		}
+		await route.fulfill({
+			status: 200,
+			contentType: "application/json",
+			body: JSON.stringify({
+				status: body.action === "reset" ? "personal_reset" : "personal_saved",
+				placement: body.placement,
+				sharedPlacement: body.placement,
+				revision: body.baseRevision,
+				locked: false,
+			}),
+		});
+	});
+	await save.click();
+	await expect(details.getByText("Saved.", { exact: true })).toBeVisible();
+	expect(requests.map((request) => request.action)).toEqual(["personal"]);
+	await checkbox.focus();
+	await checkbox.press("Space");
+	await save.focus();
+	await save.press("Enter");
+	await expect(
+		details.getByText(
+			"Your adjustment is saved, but we couldn’t send the suggestion. Save again to retry.",
+			{ exact: true },
+		),
+	).toBeVisible();
+	await expect(details.getByText("Saved.", { exact: true })).toBeVisible();
+	await expect(checkbox).toBeChecked();
+	expect(requests.map((request) => request.action)).toEqual([
+		"personal",
+		"personal",
+		"suggest",
+	]);
+	await save.click();
+	await expect(
+		details.getByText("Saved. Thanks for suggesting an improvement.", {
+			exact: true,
+		}),
+	).toBeVisible();
+	await expect(checkbox).not.toBeChecked();
+	expect(requests.map((request) => request.action)).toEqual([
+		"personal",
+		"personal",
+		"suggest",
+		"personal",
+		"suggest",
+	]);
+	await details
+		.getByRole("button", { name: "Reset to shared image", exact: true })
+		.click();
+	await expect(
+		details.getByText("Reset to the shared image.", { exact: true }),
+	).toBeVisible();
+	for (const [width, height] of [
+		[320, 568],
+		[360, 740],
+		[390, 844],
+		[420, 844],
+		[740, 360],
+		[820, 1180],
+		[1280, 900],
+	]) {
+		await page.setViewportSize({ width, height });
+		await save.scrollIntoViewIfNeeded();
+		expect(
+			await page.evaluate(
+				() => document.documentElement.scrollWidth <= innerWidth,
+			),
+		).toBe(true);
+	}
+	await page.setViewportSize({ width: 390, height: 844 });
+	await page.locator("html").evaluate((element) => {
+		element.style.fontSize = "200%";
+	});
+	expect(
+		await page.evaluate(
+			() => document.documentElement.scrollWidth <= innerWidth,
+		),
+	).toBe(true);
+	await page.locator("html").evaluate((element) => {
+		element.style.fontSize = "";
+		element.dataset.theme = "dark";
+	});
+	await save.scrollIntoViewIfNeeded();
+	await page.screenshot({
+		path: `test-results/DEV-130-002/editor-${testInfo.project.name}.png`,
+		fullPage: true,
+	});
+	expect(unexpectedBrowserErrors).toEqual([]);
+	await page.unroute("**/api/food-images/placement");
 });

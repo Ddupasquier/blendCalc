@@ -72,6 +72,62 @@ describe("image placement moderator workspace", () => {
 			}),
 		);
 	});
+	it("publishes a moderator adjustment with exact image and revision through the existing protected RPC", async () => {
+		const placement = {
+			cropX: 55,
+			cropY: 50,
+			cropZoom: 1.5,
+			fitMode: "custom",
+			rotationDegrees: 0,
+			placementVersion: 2,
+		};
+		const { event, rpc } = createEvent({
+			action: "publish",
+			imageId,
+			imageUrl: "https://example.com/food.jpg",
+			revision: "2",
+			placement: JSON.stringify(placement),
+		});
+		expect(await actions.review(event as never)).toEqual({
+			success: "Shared image updated.",
+		});
+		expect(rpc).toHaveBeenCalledWith("publish_food_image_placement", {
+			p_image_id: imageId,
+			p_image_url: "https://example.com/food.jpg",
+			p_revision: 2,
+			p_placement: placement,
+		});
+	});
+	it.each(["", "null", "[]", "not json"])(
+		"rejects malformed publish geometry %s before a write",
+		async (placement) => {
+			const { event, rpc } = createEvent({
+				action: "publish",
+				imageId,
+				imageUrl: "https://example.com/food.jpg",
+				revision: "2",
+				placement,
+			});
+			expect(await actions.review(event as never)).toMatchObject({
+				status: 400,
+			});
+			expect(rpc).not.toHaveBeenCalled();
+		},
+	);
+	it("does not publish after an access or MFA rejection", async () => {
+		const { event, rpc } = createEvent({
+			action: "publish",
+			imageId,
+			revision: "2",
+			imageUrl: "https://example.com/food.jpg",
+			placement: "{}",
+		});
+		access.requireModeratorPermission.mockRejectedValue({ status: 403 });
+		await expect(actions.review(event as never)).rejects.toMatchObject({
+			status: 403,
+		});
+		expect(rpc).not.toHaveBeenCalled();
+	});
 	it("rejects empty rejection reasons before a write", async () => {
 		const { event, rpc } = createEvent({
 			action: "reject",

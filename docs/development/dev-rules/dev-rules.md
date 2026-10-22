@@ -254,6 +254,10 @@ reviewed development-only paths and locked records, from October 20 through Octo
 denial-of-service risk; it does not repair the vulnerability. All existing style checks
 remain mandatory.
 
+On October 22, the owner approved refreshing the two narrowed npm-reported affected
+version ranges for `stylelint` and `stylelint-config-recommended` and their findings
+fingerprint. The eight pinned paths, accepted risk and October 27 expiry are unchanged.
+
 The exception fails closed on expiration, production findings, any other advisory or
 affected path, dependency or advisory-condition drift, and execution/network/parse
 errors. The public upstream advisory must still report no patch. Remove the exception

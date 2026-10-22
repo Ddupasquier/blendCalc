@@ -109,16 +109,12 @@ test("@compatibility @mobile personal image placement stays private and shared s
 				element.dispatchEvent(new Event("input", { bubbles: true }));
 			});
 		const save = details.getByRole("button", {
-			name: "Save for me",
+			name: "Save",
 			exact: true,
 		});
 		await save.focus();
 		await save.press("Enter");
-		await expect(
-			details.getByText(
-				"Saved for your account. Everyone else’s view stays the same.",
-			),
-		).toBeVisible();
+		await expect(details.getByText("Saved.")).toBeVisible();
 		const unchanged = await admin
 			.from("food_image_assets")
 			.select("crop_zoom,placement_revision")
@@ -163,14 +159,14 @@ test("@compatibility @mobile personal image placement stays private and shared s
 				),
 			).toBe(true);
 			await page.screenshot({
-				path: `test-results/DEV-130/personal-${testInfo.project.name}-${width}-${theme}.png`,
+				path: `test-results/DEV-130-002/personal-${testInfo.project.name}-${width}-${theme}.png`,
 				fullPage: true,
 			});
 		}
-		await details.getByRole("button", { name: "Use shared placement" }).click();
-		await expect(
-			details.getByText("You’re using the shared placement again."),
-		).toBeVisible();
+		await details
+			.getByRole("button", { name: "Reset to shared image" })
+			.click();
+		await expect(details.getByText("Reset to the shared image.")).toBeVisible();
 		const resetPreference = await admin
 			.from("food_image_placement_preferences")
 			.select("image_id")
@@ -183,9 +179,14 @@ test("@compatibility @mobile personal image placement stays private and shared s
 				(element as HTMLInputElement).value = "1.7";
 				element.dispatchEvent(new Event("input", { bubbles: true }));
 			});
-		await details.getByRole("button", { name: "Suggest for everyone" }).click();
+		await details
+			.getByRole("checkbox", { name: "Suggest this adjustment for everyone" })
+			.check();
+		await save.click();
 		await expect(
-			details.getByText("Suggestion sent.", { exact: false }),
+			details.getByText("Saved. Thanks for suggesting an improvement.", {
+				exact: true,
+			}),
 		).toBeVisible();
 		await signInLocalQaAccount({
 			page,
@@ -229,7 +230,7 @@ test("@compatibility @mobile personal image placement stays private and shared s
 				),
 			).toBe(true);
 			await page.screenshot({
-				path: `test-results/DEV-130/review-${testInfo.project.name}-${width}.png`,
+				path: `test-results/DEV-130-002/review-${testInfo.project.name}-${width}.png`,
 				fullPage: true,
 			});
 		}
@@ -252,12 +253,54 @@ test("@compatibility @mobile personal image placement stays private and shared s
 		await undoComplete;
 		const restored = await admin
 			.from("food_image_assets")
-			.select("crop_zoom,community_placement_locked")
+			.select("crop_zoom,community_placement_locked,placement_revision")
 			.eq("id", imageId!)
 			.single();
 		expect(restored.data).toMatchObject({
 			crop_zoom: original.crop_zoom,
 			community_placement_locked: true,
+		});
+		await expect(
+			review.getByText(`Image revision ${restored.data!.placement_revision}.`, {
+				exact: false,
+			}),
+		).toBeVisible();
+		await review.getByText("Adjust shared image", { exact: true }).click();
+		const sharedEditor = review.getByRole("region", {
+			name: "Shared image adjustment",
+			exact: true,
+		});
+		await expect(
+			sharedEditor.getByRole("slider", { name: "Image zoom" }),
+		).toBeEnabled();
+		await sharedEditor
+			.getByRole("slider", { name: "Image zoom" })
+			.evaluate((element) => {
+				(element as HTMLInputElement).value = "1.8";
+				element.dispatchEvent(new Event("input", { bubbles: true }));
+			});
+		await sharedEditor
+			.getByRole("button", { name: "Publish shared placement", exact: true })
+			.click();
+		await expect(
+			page.getByText("Shared image updated.", { exact: true }),
+		).toBeVisible();
+		const published = await admin
+			.from("food_image_assets")
+			.select("crop_zoom,community_placement_locked")
+			.eq("id", imageId!)
+			.single();
+		expect(published.data).toMatchObject({
+			crop_zoom: 1.8,
+			community_placement_locked: true,
+		});
+		await page.setViewportSize({ width: 390, height: 844 });
+		await sharedEditor
+			.getByRole("button", { name: "Publish shared placement", exact: true })
+			.scrollIntoViewIfNeeded();
+		await page.screenshot({
+			path: `test-results/DEV-130-002/shared-editor-${testInfo.project.name}.png`,
+			fullPage: true,
 		});
 	} finally {
 		await cleanupPlacement();
