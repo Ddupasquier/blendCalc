@@ -806,8 +806,9 @@ photo` actions. Only the camera action carries the rear-camera hint; cancelling 
   dietary considerations remain plain text against the app background unless
   interaction or status requires a surface. Do not expose internal match expressions,
   policy identifiers, or provider analysis jargon.
-- Privileged image-placement actions live at the bottom in a collapsed privileged
-  section with one crown in the heading.
+- Image-placement editing uses one primary Save action, an optional suggestion checkbox,
+  and a quiet reset action. Moderator controls stay in the focused moderation workspace;
+  the personal editor offers moderators only a small Review image link.
 - Full product imagery and attribution may appear in detail; compact thumbnails may omit
   attribution only when the detailed view exposes it.
 

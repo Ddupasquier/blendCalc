@@ -27,10 +27,13 @@ describe("privileged action crown placement", () => {
 			"src/lib/components/ingredients/sheets/IngredientActionSheet/IngredientActionSheet.svelte",
 		);
 
-		expect(imagePanel).toContain("summaryEnd={placementSummaryEnd}");
-		expect(imagePanel.match(/<PrivilegedActionBadge/g)).toHaveLength(1);
-		expect(imagePanel).toContain(
-			'<PrivilegedActionGroup title="Moderator controls" showHeader={false}>',
+		expect(imagePanel).not.toContain("PrivilegedActionBadge");
+		expect(imagePanel).not.toContain("PrivilegedActionGroup");
+		const moderatorEditor = read(
+			"src/lib/components/moderation/ImagePlacementReviewEditor/ImagePlacementReviewEditor.svelte",
+		);
+		expect(moderatorEditor).toContain(
+			'<PrivilegedActionGroup title="Shared image adjustment" showHeader={false}>',
 		);
 		expect(actionSheet).not.toContain("PrivilegedActionGroup");
 		expect(actionSheet).not.toContain("privileged");
