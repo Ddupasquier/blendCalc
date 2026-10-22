@@ -123,18 +123,50 @@
 		</p>
 	</aside>
 
-	<section class="landing-support" aria-labelledby="support-title">
-		<div>
+	<div class="landing-maker">
+		<section class="landing-support" aria-labelledby="support-title">
 			<h2 id="support-title">Finding blendCalc useful?</h2>
 			<p>
 				You can help keep this independent project going by buying me a coffee.
 				There’s no obligation, and donations don’t purchase ad-free access.
 			</p>
-		</div>
-		<a href="https://buymeacoffee.com/dylandupasquier"
-			>Support on Buy Me a Coffee <span aria-hidden="true">↗</span></a
-		>
-	</section>
+			<a href="https://buymeacoffee.com/dylandupasquier"
+				>Support on Buy Me a Coffee <span aria-hidden="true">↗</span></a
+			>
+		</section>
+		<section class="landing-projects" aria-labelledby="projects-title">
+			<h2 id="projects-title">More from ModernCraft</h2>
+			<p>
+				We make blendCalc—and tools that help other developers ship better
+				software.
+			</p>
+			<dl>
+				<div>
+					<dt>
+						<a href="https://ddupasquier.github.io/rehearsal-db/"
+							>Rehearsal <span aria-hidden="true">↗</span></a
+						>
+					</dt>
+					<dd>
+						Catch database problems before your users do. Test changes against
+						realistic data in a disposable local environment before you deploy.
+					</dd>
+				</div>
+				<div>
+					<dt>
+						<a href="https://ddupasquier.github.io/rehearsal-db/vscode/"
+							>Rehearsal for VS Code <span aria-hidden="true">↗</span></a
+						>
+					</dt>
+					<dd>
+						The same workflow, right in your editor. Review migrations, run
+						checks, and see what needs attention without juggling terminal
+						commands.
+					</dd>
+				</div>
+			</dl>
+		</section>
+	</div>
 </PublicPageShell>
 
 <style lang="scss">
