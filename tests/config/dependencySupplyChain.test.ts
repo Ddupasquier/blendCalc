@@ -75,6 +75,8 @@ describe("dependency supply-chain configuration", () => {
 			["sharp", [0, 35, 5]],
 			["source-map-js", [1, 2, 2]],
 			["postcss-selector-parser", [7, 1, 6]],
+			["vitest", [4, 1, 12]],
+			["@vitest/mocker", [4, 1, 12]],
 		] as const) {
 			const version = packageLock.packages[`node_modules/${name}`]?.version;
 			expect(version, name).toMatch(/^\d+\.\d+\.\d+$/);
