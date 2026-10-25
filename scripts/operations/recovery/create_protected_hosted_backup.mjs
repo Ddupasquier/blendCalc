@@ -2,7 +2,7 @@
  * Purpose: Create a private logical backup of the linked production public schema,
  * public data, and every Storage object, then write SHA-256 checksums outside the repo.
  * Run: `node scripts/operations/recovery/create_protected_hosted_backup.mjs`
- * Custom destination: `node scripts/operations/recovery/create_protected_hosted_backup.mjs --output-dir=/absolute/private/path`
+ * Custom destination: --output-dir must stay within Development/.local-data/blendCalc/backups.
  * This reads production and writes local backup files; it never changes hosted data.
  */
 
@@ -16,14 +16,16 @@ import {
 	statSync,
 	writeFileSync,
 } from "node:fs";
-import { homedir } from "node:os";
+import { fileURLToPath } from "node:url";
 import { basename, dirname, join, relative, resolve, sep } from "node:path";
 import { createClient } from "@supabase/supabase-js";
 import { config } from "dotenv";
 import {
 	buildMigrationManifest,
 	parseLinkedMigrationList,
+	resolveProtectedBackupRoot,
 } from "../../lib/recovery/protectedBackup.mjs";
+import { getCanonicalLocalRepositoryRoot } from "../../lib/environment/local_supabase_workdir.mjs";
 
 config({ path: ".env.moderation.local", quiet: true });
 
@@ -32,11 +34,6 @@ const getArgumentValue = (name) =>
 		.slice(2)
 		.find((argument) => argument.startsWith(`${name}=`))
 		?.slice(name.length + 1);
-
-const getDefaultBackupRoot = () =>
-	process.platform === "darwin"
-		? join(homedir(), "Library", "Application Support", "blendCalc", "backups")
-		: join(homedir(), ".local", "share", "blendCalc", "backups");
 
 const getTimestampDirectoryName = () =>
 	new Date()
@@ -135,9 +132,11 @@ const listFiles = (directory) =>
 		return entry.isDirectory() ? listFiles(entryPath) : [entryPath];
 	});
 
-const outputRoot = resolve(
-	getArgumentValue("--output-dir") ?? getDefaultBackupRoot(),
-);
+const repositoryRoot = fileURLToPath(new URL("../../../", import.meta.url));
+const outputRoot = resolveProtectedBackupRoot({
+	developmentRoot: dirname(getCanonicalLocalRepositoryRoot(repositoryRoot)),
+	outputDirectory: getArgumentValue("--output-dir"),
+});
 const backupDirectory = join(outputRoot, getTimestampDirectoryName());
 const databasePassword = readDatabasePassword();
 const supabaseUrl = process.env.PUBLIC_SUPABASE_URL?.trim();

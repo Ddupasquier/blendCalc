@@ -505,6 +505,12 @@ The dry run never prints message bodies or protected values.
 
 Create and verify a protected backup outside the repository:
 
+Future output belongs under the external Development directory's
+`.local-data/blendCalc/backups/`. The canonical checkout determines that directory;
+unavailable/internal storage and redirected paths fail closed. `--output-dir` must
+stay within that backup root. Existing backups are preserved in place. See
+[Protected Backups](../docs/development/hosted-security.md#protected-backups).
+
 ```bash
 node scripts/operations/recovery/create_protected_hosted_backup.mjs
 node scripts/operations/recovery/verify_protected_hosted_backup.mjs \
