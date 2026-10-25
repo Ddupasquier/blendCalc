@@ -24,6 +24,11 @@ falls back to ambient `.env` or `.env.local` files. The exact variable ownership
 [Environment Configuration](../docs/development/environment.md). Never pass secrets on
 the command line or place generated data in tracked files.
 
+Local artifact placement is owned by
+[Environment Configuration](../docs/development/environment.md#local-temporary-files-and-tool-caches).
+Use the shared path configuration for temporary work; preserve cleanup on failure and
+do not treat live `.cache/local-supabase` inputs or recovery evidence as disposable caches.
+
 Image placement uses the application-owned server OCR worker lifetime, imported from
 `src/lib/server/ocr/createOwnedTesseractWorker.server.ts` through Node 24's native
 type stripping. Failed language initialization rejects the backfill operation and
@@ -498,6 +503,12 @@ keeps phone-change notices disabled with phone Auth, and verifies exact hosted e
 The dry run never prints message bodies or protected values.
 
 Create and verify a protected backup outside the repository:
+
+Future output belongs under the external Development directory's
+`.local-data/blendCalc/backups/`. The canonical checkout determines that directory;
+unavailable/internal storage and redirected paths fail closed. `--output-dir` must
+stay within that backup root. Existing backups are preserved in place. See
+[Protected Backups](../docs/development/hosted-security.md#protected-backups).
 
 ```bash
 node scripts/operations/recovery/create_protected_hosted_backup.mjs

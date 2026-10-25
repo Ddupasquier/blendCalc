@@ -80,6 +80,35 @@ Remove those links with the auxiliary checkout after its work is safely integrat
 
 ## Local Application
 
+### Local temporary files and tool caches
+
+`config/runtimeArtifactPaths.js` owns local artifact paths. Maintained application,
+test, documentation and bounded verification launchers explicitly put `TMPDIR`, `TMP`
+and `TEMP` in the checkout's ignored `.cache/tmp`. npm uses `.cache/npm`, Node's
+compile cache uses `.cache/node-compile`, and browser installation/verification uses
+`.cache/playwright-browsers`. Paths resolve the existing checkout before creation and
+reject symlinked cache directories; a missing checkout has no fallback location.
+Nutrition imports and recovery drills use the same temporary-directory owner.
+Vite excludes `.cache` from watching so generated artifacts do not trigger reloads.
+Hosted CI retains its existing workflow-owned browser installation paths.
+
+These are process-local settings, not machine-wide environment changes or VS Code
+requirements. Existing processes keep their original environment until their normal
+restart. Direct tool invocations outside maintained launchers may use host defaults.
+The npm project configuration applies its cache setting to commands run from this
+checkout. Use `npm run test:e2e:install` to populate its local browser directory when
+browser verification is needed; do not move or delete other projects' shared browsers.
+
+Local server OCR caches language assets under `.cache/tesseract-language-data`.
+Vercel server execution retains its writable operating-system temporary directory;
+it must not attempt to write into its deployed application bundle.
+
+Generated output is not automatically disposable. Local database state under
+`.cache/local-supabase` can be bind-mounted by live containers, and recovery evidence,
+environment links, keys and accepted baselines need their owning retention decision.
+Synthetic test directories must be registered for cleanup immediately after creation,
+including when their assertions fail.
+
 ### Local HTTP headers
 
 All maintained Vite development and preview commands use

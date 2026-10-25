@@ -8,6 +8,7 @@ import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { readProductionDevelopmentEnvironment } from "../../lib/environment/production_development.mjs";
 import { localViteNodeArguments } from "./run_local_vite.mjs";
+import { createLocalArtifactEnvironment } from "../../../config/runtimeArtifactPaths.js";
 
 const repositoryRoot = fileURLToPath(new URL("../../..", import.meta.url));
 const environment = readProductionDevelopmentEnvironment({ repositoryRoot });
@@ -38,7 +39,7 @@ const child = spawn(
 	]),
 	{
 		cwd: repositoryRoot,
-		env: environment,
+		env: createLocalArtifactEnvironment(repositoryRoot, environment),
 		stdio: "inherit",
 	},
 );

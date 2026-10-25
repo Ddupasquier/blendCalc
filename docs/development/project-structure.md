@@ -260,6 +260,10 @@ not duplicate the same assertion across runners.
 
 ## Scripts
 
+`config/runtimeArtifactPaths.js` owns the shared local filesystem configuration used
+by server OCR and command launchers. It resolves ignored temporary/cache paths without
+embedding a developer-specific drive path; `environment.md` owns the runtime contract.
+
 `scripts/lib/environment/local_supabase_workdir.mjs` owns staging public Supabase inputs
 for local commands. Generated config, migrations, seeds, tests, templates and CLI state
 live in `.cache/local-supabase/<project-id>/` under the primary checkout; they are derived

@@ -11,9 +11,9 @@ const importers = [
 ];
 
 describe("nutrition dataset download storage", () => {
-	it("uses disposable operating-system directories", () => {
+	it("uses disposable checkout-owned temporary directories", () => {
 		expect(sharedImporter).toContain("mkdtemp");
-		expect(sharedImporter).toContain("tmpdir()");
+		expect(sharedImporter).toContain("createLocalArtifactEnvironment");
 		expect(sharedImporter).toContain("rmSync");
 	});
 

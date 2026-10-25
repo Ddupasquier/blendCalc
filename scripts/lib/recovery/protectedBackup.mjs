@@ -5,12 +5,61 @@
  */
 
 import { createHash } from "node:crypto";
-import { createReadStream, readFileSync } from "node:fs";
+import fs, { createReadStream, readFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { isAbsolute, join, relative, resolve, sep } from "node:path";
 import { createInterface } from "node:readline";
 
 const MIGRATION_VERSION_PATTERN = /^\d{14}$/;
 const COPY_HEADER_PATTERN =
 	/^COPY (?:(?:"public"\."([^"]+)")|(?:public\.(?:"([^"]+)"|([a-zA-Z0-9_]+)))) \(.+\) FROM stdin;$/;
+
+/** Select external protected storage without creating directories or reading credentials. */
+export const resolveProtectedBackupRoot = ({
+	developmentRoot,
+	outputDirectory,
+}) => {
+	const root = fs.realpathSync(developmentRoot);
+	const rootStat = fs.statSync(root);
+	// macOS's writable startup Data volume can differ from its sealed '/' volume.
+	const internalDevices = new Set([
+		fs.statSync("/").dev,
+		fs.statSync(homedir()).dev,
+	]);
+	if (!rootStat.isDirectory() || internalDevices.has(rootStat.dev)) {
+		throw new Error(
+			"Protected backups require an available external development volume.",
+		);
+	}
+	const approved = join(root, ".local-data", "blendCalc", "backups");
+	if (outputDirectory !== undefined && !isAbsolute(outputDirectory)) {
+		throw new Error("Backup output directory must be absolute.");
+	}
+	const target =
+		outputDirectory === undefined ? approved : resolve(outputDirectory);
+	const suffix = relative(approved, target);
+	if (suffix === ".." || suffix.startsWith(`..${sep}`) || isAbsolute(suffix)) {
+		throw new Error(
+			"Backup output must remain inside the approved external backup directory.",
+		);
+	}
+	let current = root;
+	for (const part of relative(root, target).split(sep)) {
+		current = join(current, part);
+		const stat = fs.lstatSync(current, { throwIfNoEntry: false });
+		if (
+			stat &&
+			(!stat.isDirectory() ||
+				stat.isSymbolicLink() ||
+				stat.dev !== rootStat.dev)
+		) {
+			throw new Error(
+				"Backup storage must use regular directories on the external volume.",
+			);
+		}
+	}
+	return target;
+};
 
 export const parseLinkedMigrationList = (output) => {
 	const parsed = JSON.parse(output);

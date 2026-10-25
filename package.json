@@ -59,7 +59,7 @@
 		"test:e2e:headed": "node scripts/operations/quality/run_browser_verification.mjs --project=desktop-chromium --headed",
 		"test:e2e:ui": "node scripts/operations/quality/run_browser_verification.mjs --ui",
 		"test:e2e:update": "node scripts/operations/quality/run_browser_verification.mjs --project=desktop-chromium --project=mobile-chromium --update-snapshots",
-		"test:e2e:install": "playwright install chromium firefox webkit",
+		"test:e2e:install": "node scripts/operations/environment/run_test_command.mjs -- playwright install chromium firefox webkit",
 		"verify:quick": "node scripts/operations/quality/run_verification_dashboard.mjs quick",
 		"verify:feature": "node scripts/operations/quality/run_with_resource_limits.mjs node scripts/operations/quality/run_verification_dashboard.mjs feature",
 		"verify:release": "node scripts/operations/quality/run_with_resource_limits.mjs node scripts/operations/quality/run_verification_dashboard.mjs release",
