@@ -8,6 +8,9 @@ import { spawn } from "node:child_process";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { assertLocalResourceSafety } from "../../lib/quality/resource_safety.mjs";
+import { createLocalArtifactEnvironment } from "../../../config/runtimeArtifactPaths.js";
+
+const repositoryRoot = fileURLToPath(new URL("../../../", import.meta.url));
 
 const nodeHeapLimitMegabytes = 4096;
 const nodeHeapLimitPattern =
@@ -47,7 +50,7 @@ export const main = async (args = process.argv.slice(2)) => {
 		const child = spawn(command, commandArguments, {
 			stdio: "inherit",
 			env: {
-				...process.env,
+				...createLocalArtifactEnvironment(repositoryRoot),
 				NODE_OPTIONS: withNodeHeapLimit(process.env.NODE_OPTIONS),
 			},
 		});

@@ -73,6 +73,7 @@ export default defineConfig({
 	server: {
 		watch: {
 			ignored: [
+				"**/.cache/**",
 				"**/playwright-report/**",
 				"**/test-results/**",
 				createInactiveSvelteKitOutputWatchPattern(viteMode),

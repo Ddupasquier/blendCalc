@@ -9,8 +9,10 @@ import { spawn } from "node:child_process";
 import { constants } from "node:os";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { createLocalArtifactEnvironment } from "../../../config/runtimeArtifactPaths.js";
 
 export const LOCAL_HTTP_HEADER_BYTES = 64 * 1024;
+const repositoryRoot = fileURLToPath(new URL("../../../", import.meta.url));
 const viteEntry = fileURLToPath(
 	new URL("../../../node_modules/vite/bin/vite.js", import.meta.url),
 );
@@ -29,7 +31,7 @@ export const localViteNodeArguments = (args) => {
 export const main = (args = process.argv.slice(2)) => {
 	const child = spawn(process.execPath, localViteNodeArguments(args), {
 		cwd: process.cwd(),
-		env: process.env,
+		env: createLocalArtifactEnvironment(repositoryRoot),
 		stdio: "inherit",
 	});
 	for (const signal of ["SIGINT", "SIGTERM"]) {

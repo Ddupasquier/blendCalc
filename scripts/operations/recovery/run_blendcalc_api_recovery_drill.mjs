@@ -17,9 +17,9 @@ import {
 	rmSync,
 	writeFileSync,
 } from "node:fs";
-import { tmpdir } from "node:os";
 import { isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { createLocalArtifactEnvironment } from "../../../config/runtimeArtifactPaths.js";
 import { createClient } from "@supabase/supabase-js";
 import {
 	readCopyRowCounts,
@@ -472,6 +472,12 @@ const runPublicationExercise = async ({
 };
 
 export const runRecoveryDrill = async () => {
+	Object.assign(
+		process.env,
+		createLocalArtifactEnvironment(
+			fileURLToPath(new URL("../../../", import.meta.url)),
+		),
+	);
 	const repositoryRoot = resolve(
 		fileURLToPath(new URL("../../..", import.meta.url)),
 	);
@@ -519,7 +525,9 @@ export const runRecoveryDrill = async () => {
 	const storageManifest = JSON.parse(
 		readFileSync(join(backupDirectory, "storage-manifest.json"), "utf8"),
 	);
-	const temporaryRoot = mkdtempSync(join(tmpdir(), "blendcalc-recovery-"));
+	const temporaryRoot = mkdtempSync(
+		join(process.env.TMPDIR, "blendcalc-recovery-"),
+	);
 	const appWorkdir = join(temporaryRoot, "app");
 	const targetWorkdir = join(temporaryRoot, "api");
 	const appSupabase = join(appWorkdir, "supabase");

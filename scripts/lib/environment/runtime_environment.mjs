@@ -8,6 +8,10 @@ import {
 	assertLoopbackUrl,
 	createCleanProcessEnvironment,
 } from "@rehearsal-db/core/process-environment";
+import { fileURLToPath } from "node:url";
+import { createLocalArtifactEnvironment } from "../../../config/runtimeArtifactPaths.js";
+
+const repositoryRoot = fileURLToPath(new URL("../../../", import.meta.url));
 
 export {
 	assertLoopbackUrl,
@@ -98,6 +102,7 @@ export const createSafeLocalApplicationEnvironment = ({
 		passthroughKeys,
 		overrides: {
 			...additionalEnvironment,
+			...createLocalArtifactEnvironment(repositoryRoot, {}),
 			BLENDCALC_RUNTIME_ENVIRONMENT: runtimeEnvironment,
 			PUBLIC_SITE_URL: applicationUrl,
 			PUBLIC_SUPABASE_URL: applicationSupabase.apiUrl,

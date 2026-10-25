@@ -24,6 +24,11 @@ falls back to ambient `.env` or `.env.local` files. The exact variable ownership
 [Environment Configuration](../docs/development/environment.md). Never pass secrets on
 the command line or place generated data in tracked files.
 
+Local artifact placement is owned by
+[Environment Configuration](../docs/development/environment.md#local-temporary-files-and-tool-caches).
+Use the shared path configuration for temporary work; preserve cleanup on failure and
+do not treat live `.cache/local-supabase` inputs or recovery evidence as disposable caches.
+
 Image placement uses the application-owned server OCR worker lifetime, imported from
 `src/lib/server/ocr/createOwnedTesseractWorker.server.ts` through Node 24's native
 type stripping. Failed language initialization rejects the backfill operation and

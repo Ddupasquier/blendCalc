@@ -8,8 +8,9 @@
 import { createHash } from "node:crypto";
 import { rmSync } from "node:fs";
 import { mkdtemp, readFile, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { createLocalArtifactEnvironment } from "../../../config/runtimeArtifactPaths.js";
 import { config } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
 import WebSocket from "ws";
@@ -46,7 +47,13 @@ process.once("exit", () => {
 });
 
 export const createTemporaryDownloadDirectory = async (prefix) => {
-	const directory = await mkdtemp(path.join(tmpdir(), prefix));
+	const repositoryRoot = fileURLToPath(new URL("../../../", import.meta.url));
+	const directory = await mkdtemp(
+		path.join(
+			createLocalArtifactEnvironment(repositoryRoot, {}).TMPDIR,
+			prefix,
+		),
+	);
 	temporaryDirectories.add(directory);
 	return directory;
 };
