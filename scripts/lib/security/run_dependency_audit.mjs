@@ -1,6 +1,6 @@
 /**
- * Purpose: Run bounded, scripts-disabled lockfile audits and the public upstream
- * patch check without concealing vulnerability evidence. Do not run directly;
+ * Purpose: Run bounded, scripts-disabled lockfile audits without concealing
+ * vulnerability evidence. Do not run directly;
  * the maintained audit CLI and promotion command import this module.
  */
 
@@ -8,10 +8,7 @@ import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
-	assertExceptionWindow,
-	assertUnpatchedAdvisory,
 	auditRecordDigest,
-	dependencyAuditException,
 	evaluateDependencyAudits,
 	parseAuditResult,
 } from "./dependency_audit_policy.mjs";
@@ -27,9 +24,7 @@ const auditArguments = [
 export const runDependencyAudit = async ({
 	repositoryRoot,
 	run = spawnSync,
-	fetchAdvisory = fetch,
 	log = console.log,
-	clock = () => new Date(),
 }) => {
 	if (Number(process.versions.node.split(".")[0]) !== 24)
 		throw new Error("Dependency verification requires Node.js 24.");
@@ -67,40 +62,7 @@ export const runDependencyAudit = async ({
 	const result = evaluateDependencyAudits({
 		full,
 		production,
-		lock,
-		now: clock(),
 	});
-	if (result.accepted) {
-		let response;
-		try {
-			response = await fetchAdvisory(
-				`https://api.github.com/advisories/${dependencyAuditException.advisory}`,
-				{
-					headers: {
-						Accept: "application/vnd.github+json",
-						"User-Agent": "BlendCalc-dependency-audit",
-					},
-					signal: AbortSignal.timeout(15_000),
-				},
-			);
-			if (!response.ok) throw new Error();
-			const body = await response.text();
-			if (Buffer.byteLength(body) > 1024 * 1024) throw new Error();
-			response = JSON.parse(body);
-		} catch {
-			throw new Error(
-				"Public upstream advisory check failed; the exception cannot be used without current evidence.",
-			);
-		}
-		assertUnpatchedAdvisory(response);
-		assertExceptionWindow(clock());
-		log(
-			`TEMPORARY RISK ACCEPTED: ${dependencyAuditException.advisory}; eight pinned development paths; expires ${dependencyAuditException.expiresAt}. The vulnerability remains unfixed. Production findings: zero.`,
-		);
-	} else {
-		log(
-			"Dependency audit clean. Remove the unused temporary exception policy during dependency maintenance.",
-		);
-	}
+	log("Dependency audit clean. No active vulnerability exceptions.");
 	return result;
 };

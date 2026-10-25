@@ -3,7 +3,7 @@
 		ADVERTISING_SESSION_CONTEXT,
 		createAdvertisingSession,
 	} from "$lib/utils/advertising/advertisingSession.svelte";
-	import { browser, dev } from "$app/environment";
+	import { browser, dev } from "$app/env";
 	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
 	import { onMount, setContext } from "svelte";
@@ -201,9 +201,8 @@
 
 	const navigateTutorial = async (href: string) => {
 		await goto(href, {
-			replaceState: true,
-			noScroll: true,
-			keepFocus: true,
+			replace: true,
+			reset: false,
 		});
 	};
 
@@ -212,7 +211,7 @@
 
 		if (tutorialMode === "replay") {
 			tutorialOpen = false;
-			await goto("/profile", { replaceState: true });
+			await goto("/profile", { replace: true });
 			return true;
 		}
 

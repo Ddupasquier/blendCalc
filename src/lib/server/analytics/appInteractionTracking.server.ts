@@ -1,4 +1,4 @@
-import { env } from "$env/dynamic/private";
+import * as env from "$app/env/private";
 import type { AppInteractionMetric } from "$lib/utils/analytics/appInteractionMetrics";
 import { track } from "@vercel/analytics/server";
 

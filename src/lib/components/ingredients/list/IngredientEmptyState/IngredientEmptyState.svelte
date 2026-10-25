@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { browser } from "$app/environment";
+	import { browser } from "$app/env";
 	import { onMount } from "svelte";
 	import Leaf from "$lib/assets/icons/Leaf/Leaf.svelte";
 	import ShoppingBag from "$lib/assets/icons/ShoppingBag/ShoppingBag.svelte";

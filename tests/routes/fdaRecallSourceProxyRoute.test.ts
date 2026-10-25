@@ -7,9 +7,17 @@ const mocks = vi.hoisted(() => ({
 	},
 }));
 
-vi.mock("$env/dynamic/private", () => ({
-	env: mocks.privateEnvironment,
-}));
+vi.mock("$app/env/private", async (importOriginal) => {
+	const actual = await importOriginal<Record<string, unknown>>();
+	const overrides = mocks.privateEnvironment;
+	return new Proxy(actual, {
+		get(target, key) {
+			return Reflect.has(overrides, key)
+				? Reflect.get(overrides, key)
+				: Reflect.get(target, key);
+		},
+	});
+});
 
 import { GET } from "../../src/routes/api/internal/food-safety/fda-recall-source/+server";
 

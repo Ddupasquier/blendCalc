@@ -1,4 +1,4 @@
-import { dev } from "$app/environment";
+import { dev } from "$app/env";
 import { fail, type RequestEvent } from "@sveltejs/kit";
 import {
 	saveCurrentUserAppearanceTheme,

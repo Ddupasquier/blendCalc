@@ -1,8 +1,8 @@
 import {
 	PUBLIC_SUPABASE_PUBLISHABLE_KEY,
 	PUBLIC_SUPABASE_URL,
-} from "$env/static/public";
-import { dev } from "$app/environment";
+} from "$app/env/public";
+import { dev } from "$app/env";
 import { createServerClient } from "@supabase/ssr";
 import type { CookieMethodsServer } from "@supabase/ssr";
 import type { WebSocketLikeConstructor } from "@supabase/realtime-js";

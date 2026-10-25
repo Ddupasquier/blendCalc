@@ -5,7 +5,7 @@ const mocks = vi.hoisted(() => ({
 	processNutritionLabelOcrJob: vi.fn(),
 }));
 
-vi.mock("$app/environment", () => ({ dev: false }));
+vi.mock("$app/env", () => ({ dev: false }));
 vi.mock("$lib/server/ocr/nutritionLabelOcrJobs.server", () => ({
 	processNutritionLabelOcrJob: mocks.processNutritionLabelOcrJob,
 }));

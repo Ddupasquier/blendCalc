@@ -1,4 +1,5 @@
 import { expect, test, waitForAppReady } from "./support/browserTest";
+import type { ConsoleMessage } from "@playwright/test";
 
 test(
 	"email authentication switches modes without stale credential fields",
@@ -139,7 +140,7 @@ test("local QA sign-in chooses a seeded account without requesting a password", 
 test(
 	"local QA sign-in keeps the real credential flow usable on a compact screen",
 	{ tag: "@mobile" },
-	async ({ context, page }) => {
+	async ({ context, page, unexpectedBrowserErrors }) => {
 		await context.clearCookies();
 		await page.setViewportSize({ width: 360, height: 740 });
 		await page.goto("/auth");
@@ -156,7 +157,34 @@ test(
 
 		await page.getByLabel("Email").fill("qa-user@blendcalc.local");
 		await page.getByLabel("Password", { exact: true }).fill("not-the-password");
+		const isSignInAction = (value: string) => {
+			const url = new URL(value);
+			return (
+				url.origin === new URL(page.url()).origin &&
+				url.pathname === "/auth" &&
+				url.searchParams.has("/emailSignIn")
+			);
+		};
+		const expectedHttpErrors: string[] = [];
+		const recordExpectedHttpError = (message: ConsoleMessage) => {
+			const location = message.location().url;
+			if (
+				message.type() === "error" &&
+				location &&
+				isSignInAction(location) &&
+				/^Failed to load resource:.*\b400\b/.test(message.text())
+			) {
+				expectedHttpErrors.push(`console.error: ${message.text()}`);
+			}
+		};
+		page.on("console", recordExpectedHttpError);
+		const rejectionResponse = page.waitForResponse(
+			(response) =>
+				response.request().method() === "POST" &&
+				isSignInAction(response.url()),
+		);
 		await page.getByRole("button", { name: "Sign in", exact: true }).click();
+		expect((await rejectionResponse).status()).toBe(400);
 		await expect(
 			page.getByText("Email or password was not accepted."),
 		).toBeVisible();
@@ -168,6 +196,15 @@ test(
 				),
 			)
 			.toBe(true);
+		page.off("console", recordExpectedHttpError);
+		// Kit 3 preserves the action's HTTP failure status. Some engines log that
+		// expected response; every unrelated console or page error still fails.
+		expect(expectedHttpErrors.length).toBeLessThanOrEqual(1);
+		for (const message of expectedHttpErrors) {
+			const index = unexpectedBrowserErrors.indexOf(message);
+			expect(index).toBeGreaterThanOrEqual(0);
+			unexpectedBrowserErrors.splice(index, 1);
+		}
 	},
 );
 

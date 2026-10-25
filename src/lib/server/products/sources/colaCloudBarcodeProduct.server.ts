@@ -1,4 +1,4 @@
-import { env } from "$env/dynamic/private";
+import * as env from "$app/env/private";
 import { findFirstBarcodeCandidateMatch } from "$lib/server/products/barcodeCandidateLookup";
 import { fetchCachedProductApiJson } from "$lib/server/products/productApiRequests.server";
 import { getProductReferenceCatalog } from "$lib/server/products/productReferenceCatalog.server";
@@ -47,13 +47,14 @@ type ColaCloudBarcodeEvidence = {
 	barcode_value?: string;
 };
 
-type ColaCloudApprovalDetail = ColaCloudApprovalSummary & ColaCloudBarcodeEvidence & {
-	abv?: number | string | null;
-	volume?: number | string | null;
-	volume_unit?: string | null;
-	latest_update_date?: string | null;
-	barcodes?: ColaCloudBarcodeEvidence[];
-};
+type ColaCloudApprovalDetail = ColaCloudApprovalSummary &
+	ColaCloudBarcodeEvidence & {
+		abv?: number | string | null;
+		volume?: number | string | null;
+		volume_unit?: string | null;
+		latest_update_date?: string | null;
+		barcodes?: ColaCloudBarcodeEvidence[];
+	};
 
 type ColaCloudLookupOptions = {
 	apiKey?: string;
@@ -70,7 +71,9 @@ const toIsoDate = (value: string | null | undefined) => {
 	const trimmed = value?.trim();
 	if (!trimmed) return undefined;
 	const timestamp = Date.parse(trimmed);
-	return Number.isFinite(timestamp) ? new Date(timestamp).toISOString() : undefined;
+	return Number.isFinite(timestamp)
+		? new Date(timestamp).toISOString()
+		: undefined;
 };
 
 const getApprovalTimestamp = (approval: ColaCloudApprovalSummary) =>
@@ -78,24 +81,28 @@ const getApprovalTimestamp = (approval: ColaCloudApprovalSummary) =>
 
 const selectNewestApprovedLabel = (
 	approvals: ColaCloudApprovalSummary[] | undefined,
-) => (approvals ?? [])
-	.filter((approval) =>
-		approval.ttb_id?.trim() &&
-		approval.application_status?.trim().toLocaleLowerCase() === "approved"
-	)
-	.sort((left, right) =>
-		getApprovalTimestamp(right) - getApprovalTimestamp(left) ||
-		String(right.ttb_id).localeCompare(String(left.ttb_id))
-	)[0] ?? null;
+) =>
+	(approvals ?? [])
+		.filter(
+			(approval) =>
+				approval.ttb_id?.trim() &&
+				approval.application_status?.trim().toLocaleLowerCase() === "approved",
+		)
+		.sort(
+			(left, right) =>
+				getApprovalTimestamp(right) - getApprovalTimestamp(left) ||
+				String(right.ttb_id).localeCompare(String(left.ttb_id)),
+		)[0] ?? null;
 
 const detailMatchesBarcode = (
 	detail: ColaCloudApprovalDetail,
 	canonicalBarcode: string,
-) => [
+) =>
+	[
 		detail.barcode_value,
 		...(detail.barcodes ?? []).map((barcode) => barcode.barcode_value),
 	].some((value) =>
-		value ? normalizeBarcode(value) === canonicalBarcode : false
+		value ? normalizeBarcode(value) === canonicalBarcode : false,
 	);
 
 const parseAlcoholByVolume = (
@@ -143,7 +150,11 @@ const createColaCloudDraft = (
 ): BarcodeProductDraft | null => {
 	const name = formatSourceProductName(detail.product_name);
 	const sourceReference = detail.ttb_id?.trim();
-	if (!name || !sourceReference || !detailMatchesBarcode(detail, canonicalBarcode)) {
+	if (
+		!name ||
+		!sourceReference ||
+		!detailMatchesBarcode(detail, canonicalBarcode)
+	) {
 		return null;
 	}
 
@@ -204,22 +215,23 @@ const fetchColaCloudJson = async <Data>(input: {
 	cacheValue: unknown;
 	apiKey: string;
 	fetcher?: typeof fetch;
-}) => fetchCachedProductApiJson<ColaCloudResponse<Data> | null>({
-	provider: COLA_CLOUD_SOURCE_KEY,
-	requestKind: input.requestKind,
-	cacheValue: input.cacheValue,
-	url: `${COLA_CLOUD_API_URL}${input.path}`,
-	headers: {
-		accept: "application/json",
-		"x-api-key": input.apiKey,
-	},
-	ttlMilliseconds: 0,
-	notFoundStatusCodes: [404],
-	notFoundValue: null,
-	timeoutMilliseconds: COLA_CLOUD_REQUEST_TIMEOUT_MILLISECONDS,
-	cacheStore: transientRequestStore,
-	fetcher: input.fetcher,
-});
+}) =>
+	fetchCachedProductApiJson<ColaCloudResponse<Data> | null>({
+		provider: COLA_CLOUD_SOURCE_KEY,
+		requestKind: input.requestKind,
+		cacheValue: input.cacheValue,
+		url: `${COLA_CLOUD_API_URL}${input.path}`,
+		headers: {
+			accept: "application/json",
+			"x-api-key": input.apiKey,
+		},
+		ttlMilliseconds: 0,
+		notFoundStatusCodes: [404],
+		notFoundValue: null,
+		timeoutMilliseconds: COLA_CLOUD_REQUEST_TIMEOUT_MILLISECONDS,
+		cacheStore: transientRequestStore,
+		fetcher: input.fetcher,
+	});
 
 export const lookupColaCloudBarcodeProduct = async (
 	barcode: string,
@@ -277,12 +289,12 @@ export const lookupColaCloudBarcodeProduct = async (
 		const detail = detailResponse?.data;
 		const draft = detail
 			? createColaCloudDraft(
-				detail,
-				canonicalBarcode,
-				options.productReferenceCatalog ??
-					productReferenceCatalog ??
-					await getProductReferenceCatalog(),
-			)
+					detail,
+					canonicalBarcode,
+					options.productReferenceCatalog ??
+						productReferenceCatalog ??
+						(await getProductReferenceCatalog()),
+				)
 			: null;
 		await recordProductSourceLookup({
 			sourceKey: COLA_CLOUD_SOURCE_KEY,

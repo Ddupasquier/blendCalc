@@ -9,7 +9,7 @@
 	let { data }: CatalogDataOperationsPageProps = $props();
 	const firstActionSubject = $derived(data.actionSubjects?.[0] ?? null);
 	const closeAction = () => {
-		void goto("/profile/privileged-tools", { replaceState: true });
+		void goto("/profile/privileged-tools", { replace: true });
 	};
 </script>
 

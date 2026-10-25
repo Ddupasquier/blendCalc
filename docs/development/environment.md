@@ -47,6 +47,24 @@ browser authentication runs only against disposable local Supabase and receives 
 explicit empty Turnstile site key unless `npm run dev:test:auth` selects the official
 local test key.
 
+SvelteKit 3 reads the declared application variables from `src/env.ts` through
+`$app/env/public` and `$app/env/private`. Only the four existing `PUBLIC_` keys are
+browser-visible. The Supabase public URL/key remain static build inputs; the other
+application variables remain runtime inputs. Optional variables remain absent until
+their existing consumer requires them. This declaration does not load dotenv files,
+change credentials or synchronize a deployment automatically. SvelteKit's separate
+dotenv loader points at the ignored `.cache/process-only-environment` directory;
+configuration creates this required empty directory and refuses redirected or
+populated paths. Vite's independent loader remains disabled with `envDir: false`.
+Do not put dotenv files or placeholders in this directory.
+
+The SvelteKit 3 compatibility candidate pins `@vercel/analytics` to
+`2.1.0-canary.5` and `@vercel/speed-insights` to `2.1.0-canary`: these published
+versions declare SvelteKit 3 support, while the current stable versions do not.
+They remain prerelease SDKs. Local checks cannot establish hosted ingestion or
+provider-dashboard behavior; those outcomes remain unverified by the local
+compatibility suite.
+
 ### Branches And Auxiliary Worktrees
 
 Run ordinary branches from the primary repository checkout so its ignored environment

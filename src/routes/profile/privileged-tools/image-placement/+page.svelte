@@ -34,7 +34,7 @@
 		countLabel: "images with pending placement suggestions",
 	}}
 	onClose={() =>
-		void goto(resolve("/profile/privileged-tools"), { replaceState: true })}
+		void goto(resolve("/profile/privileged-tools"), { replace: true })}
 >
 	{#snippet sidebar()}
 		<form

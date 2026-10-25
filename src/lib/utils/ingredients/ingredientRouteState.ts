@@ -1,3 +1,4 @@
+import type { ReadonlyURL } from "$app/state";
 import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 import type { FoodItem } from "$lib/utils/food/types";
 import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
@@ -102,38 +103,38 @@ const getIngredientListBasePath = (listKey: IngredientListKey) => {
 		: `/${LIST_ROUTE_SLUGS.ingredients}/${LIST_ROUTE_SLUGS.fridge}`;
 };
 
-export const getIngredientListTab = (url: URL): IngredientListKey => {
+export const getIngredientListTab = (url: ReadonlyURL): IngredientListKey => {
 	return getIngredientPathContext(url.pathname).listKey;
 };
 
 export const getActiveIngredientRouteHref = (
-	url: URL,
+	url: ReadonlyURL,
 	shallowRouteHref?: string,
 ) => getActiveShallowRouteHref(url, shallowRouteHref);
 
 export const getActiveIngredientRouteUrl = (
-	url: URL,
+	url: ReadonlyURL,
 	shallowRouteHref?: string,
 ) => getActiveShallowRouteUrl(url, shallowRouteHref);
 
 export const getActiveIngredientRouteState = (
-	url: URL,
+	url: ReadonlyURL,
 	shallowRouteHref?: string,
 ) =>
 	getIngredientRouteState(getActiveIngredientRouteUrl(url, shallowRouteHref));
 
 export const buildIngredientListTabHref = (
-	url: URL,
+	url: ReadonlyURL,
 	key: IngredientListKey,
 ) => {
-	const nextUrl = new URL(url);
+	const nextUrl = new URL(url.href);
 	nextUrl.pathname = getIngredientListBasePath(key);
 	nextUrl.searchParams.delete(ACTIONS_PARAM);
 	const query = nextUrl.searchParams.toString();
 	return `${nextUrl.pathname}${query ? `?${query}` : ""}${nextUrl.hash}`;
 };
 
-const getPathRouteState = (url: URL): IngredientRouteState | null => {
+const getPathRouteState = (url: ReadonlyURL): IngredientRouteState | null => {
 	const pathContext = getIngredientPathContext(url.pathname);
 	const [routeSlug, secondSegment, ...remainingSegments] =
 		pathContext.routeSegments;
@@ -301,7 +302,9 @@ const getPathRouteState = (url: URL): IngredientRouteState | null => {
 	return null;
 };
 
-export const getIngredientRouteState = (url: URL): IngredientRouteState => {
+export const getIngredientRouteState = (
+	url: ReadonlyURL,
+): IngredientRouteState => {
 	return (
 		getPathRouteState(url) ?? {
 			view: null,
@@ -315,10 +318,10 @@ export const getIngredientRouteState = (url: URL): IngredientRouteState => {
 };
 
 export const buildIngredientRouteHref = (
-	url: URL,
+	url: ReadonlyURL,
 	patch: IngredientRoutePatch = {},
 ) => {
-	const nextUrl = new URL(url);
+	const nextUrl = new URL(url.href);
 	const params = nextUrl.searchParams;
 	const current = getIngredientRouteState(url);
 	const nextView = patch.view !== undefined ? patch.view : current.view;
@@ -394,7 +397,7 @@ export const buildIngredientRouteHref = (
 };
 
 export const getBarcodeScannerOpenRoutePatch = (
-	url: URL,
+	url: ReadonlyURL,
 ): IngredientRoutePatch => {
 	const preserveSearch =
 		getIngredientRouteState(url).view === INGREDIENT_ROUTE_VIEWS.search;
@@ -409,7 +412,7 @@ export const getBarcodeScannerOpenRoutePatch = (
 };
 
 export const getIngredientFiltersOpenRoutePatch = (
-	url: URL,
+	url: ReadonlyURL,
 ): IngredientRoutePatch => {
 	const preserveSearch =
 		getIngredientRouteState(url).view === INGREDIENT_ROUTE_VIEWS.search;
@@ -424,7 +427,7 @@ export const getIngredientFiltersOpenRoutePatch = (
 };
 
 export const getIngredientFiltersCloseRoutePatch = (
-	url: URL,
+	url: ReadonlyURL,
 ): IngredientRoutePatch => {
 	const restoreSearch =
 		getIngredientRouteState(url).view === INGREDIENT_ROUTE_VIEWS.search;
@@ -439,7 +442,7 @@ export const getIngredientFiltersCloseRoutePatch = (
 };
 
 export const getBarcodeScannerCloseRoutePatch = (
-	url: URL,
+	url: ReadonlyURL,
 ): IngredientRoutePatch => {
 	const restoreSearch =
 		getIngredientRouteState(url).view === INGREDIENT_ROUTE_VIEWS.search;
@@ -453,7 +456,10 @@ export const getBarcodeScannerCloseRoutePatch = (
 	};
 };
 
-export const getIngredientRouteTitle = (url: URL, foodName?: string | null) => {
+export const getIngredientRouteTitle = (
+	url: ReadonlyURL,
+	foodName?: string | null,
+) => {
 	const state = getIngredientRouteState(url);
 	const namedFood = foodName?.trim();
 

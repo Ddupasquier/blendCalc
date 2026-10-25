@@ -1,5 +1,5 @@
 import { createHmac } from "node:crypto";
-import { env } from "$env/dynamic/private";
+import * as env from "$app/env/private";
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
 
 export type RequestRateLimitPolicy = {

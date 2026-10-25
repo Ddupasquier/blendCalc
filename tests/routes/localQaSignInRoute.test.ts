@@ -9,8 +9,9 @@ vi.mock("$lib/server/auth/automaticLocalQaMfa.server", () => ({
 	completeAutomaticLocalQaMfa: mocks.completeAutomaticLocalQaMfa,
 }));
 
-vi.mock("$env/dynamic/private", () => ({
-	env: {
+vi.mock("$app/env/private", async (importOriginal) => {
+	const actual = await importOriginal<Record<string, unknown>>();
+	const overrides = {
 		BLENDCALC_RUNTIME_ENVIRONMENT: "test",
 		BLENDCALC_TEST_ACCOUNT_PASSWORD: "generated-local-password",
 		BLENDCALC_TEST_ACCOUNTS_BASE64: Buffer.from(
@@ -31,15 +32,30 @@ vi.mock("$env/dynamic/private", () => ({
 				},
 			]),
 		).toString("base64"),
-	},
-}));
+	};
+	return new Proxy(actual, {
+		get(target, key) {
+			return Reflect.has(overrides, key)
+				? Reflect.get(overrides, key)
+				: Reflect.get(target, key);
+		},
+	});
+});
 
-vi.mock("$env/dynamic/public", () => ({
-	env: {
+vi.mock("$app/env/public", async (importOriginal) => {
+	const actual = await importOriginal<Record<string, unknown>>();
+	const overrides = {
 		PUBLIC_SUPABASE_URL: "http://127.0.0.1:54321",
 		PUBLIC_TURNSTILE_SITE_KEY: "",
-	},
-}));
+	};
+	return new Proxy(actual, {
+		get(target, key) {
+			return Reflect.has(overrides, key)
+				? Reflect.get(overrides, key)
+				: Reflect.get(target, key);
+		},
+	});
+});
 
 vi.mock("$lib/server/analytics/appInteractionTracking.server", () => ({
 	trackServerAppInteraction: mocks.trackServerAppInteraction,

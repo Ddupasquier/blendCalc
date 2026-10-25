@@ -6,9 +6,17 @@ const mocks = vi.hoisted(() => ({
 	sendEmail: vi.fn(),
 }));
 
-vi.mock("$env/dynamic/private", () => ({
-	env: { CRON_SECRET: "operations-secret" },
-}));
+vi.mock("$app/env/private", async (importOriginal) => {
+	const actual = await importOriginal<Record<string, unknown>>();
+	const overrides = { CRON_SECRET: "operations-secret" };
+	return new Proxy(actual, {
+		get(target, key) {
+			return Reflect.has(overrides, key)
+				? Reflect.get(overrides, key)
+				: Reflect.get(target, key);
+		},
+	});
+});
 vi.mock(
 	"$lib/server/blendCalcAPI/operations/blendCalcAPIOperationalAlerts.server",
 	() => ({ evaluateBlendCalcAPIOperationalAlerts: mocks.evaluate }),

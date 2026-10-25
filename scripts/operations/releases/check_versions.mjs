@@ -36,7 +36,7 @@ const activeNodeMajor = Number.parseInt(
 const expectedNodeEngine = `>=${configuredNodeMajor} <${configuredNodeMajor + 1}`;
 const appVersion = packageMetadata.version;
 const lockRootVersion = packageLock.packages?.[""]?.version;
-const svelteConfig = readText("svelte.config.js");
+const svelteConfig = readText("vite.config.ts");
 const runtimeVersionSource = readText("src/lib/config/version.ts");
 const apiTypesSource = readText("src/lib/blendCalcAPI/v1/blendCalcAPITypes.ts");
 const apiHttpSource = readText(
@@ -77,12 +77,12 @@ requireCondition(
 );
 requireCondition(
 	svelteConfig.includes("packageMetadata.version") &&
-		svelteConfig.includes("kit:") &&
+		svelteConfig.includes("sveltekit({") &&
 		svelteConfig.includes("version:"),
-	"SvelteKit build version must derive from package.json through kit.version.",
+	"SvelteKit build version must derive from package.json through the Vite plugin version option.",
 );
 requireCondition(
-	runtimeVersionSource.includes('from "$app/environment"') &&
+	runtimeVersionSource.includes('from "$app/env"') &&
 		runtimeVersionSource.includes("export const APP_VERSION") &&
 		runtimeVersionSource.includes("export const APP_BUILD_VERSION"),
 	"Runtime app release/build constants must derive from SvelteKit's generated version.",
