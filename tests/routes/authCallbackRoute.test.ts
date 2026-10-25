@@ -5,10 +5,28 @@ const mocks = vi.hoisted(() => ({
 	env: { BLENDCALC_RUNTIME_ENVIRONMENT: "rehearsal" },
 }));
 
-vi.mock("$env/dynamic/public", () => ({
-	env: { PUBLIC_SITE_URL: "https://www.blendcalc.food" },
-}));
-vi.mock("$env/dynamic/private", () => ({ env: mocks.env }));
+vi.mock("$app/env/public", async (importOriginal) => {
+	const actual = await importOriginal<Record<string, unknown>>();
+	const overrides = { PUBLIC_SITE_URL: "https://www.blendcalc.food" };
+	return new Proxy(actual, {
+		get(target, key) {
+			return Reflect.has(overrides, key)
+				? Reflect.get(overrides, key)
+				: Reflect.get(target, key);
+		},
+	});
+});
+vi.mock("$app/env/private", async (importOriginal) => {
+	const actual = await importOriginal<Record<string, unknown>>();
+	const overrides = mocks.env;
+	return new Proxy(actual, {
+		get(target, key) {
+			return Reflect.has(overrides, key)
+				? Reflect.get(overrides, key)
+				: Reflect.get(target, key);
+		},
+	});
+});
 vi.mock("$lib/server/analytics/appInteractionTracking.server", () => ({
 	trackServerAppInteraction: mocks.track,
 }));

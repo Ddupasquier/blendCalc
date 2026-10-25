@@ -1,4 +1,4 @@
-import { version as buildVersion } from "$app/environment";
+import { version as buildVersion } from "$app/env";
 
 const semanticVersion = buildVersion.split("+")[0] ?? "";
 const versionMatch = semanticVersion.match(

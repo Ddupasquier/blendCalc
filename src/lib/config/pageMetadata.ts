@@ -1,3 +1,4 @@
+import type { ReadonlyURL } from "$app/state";
 import { APP_NAME, APP_PRODUCTION_ORIGIN } from "$lib/config/brand";
 import { getIngredientRouteTitle } from "$lib/utils/ingredients/ingredientRouteState";
 import { getMixRouteTitle } from "$lib/utils/mix/navigation/mixRouteState";
@@ -7,7 +8,7 @@ export const formatDocumentTitle = (title: string) =>
 	`${title.trim()} · ${APP_NAME}`;
 
 export const getAppDocumentTitle = (
-	url: URL,
+	url: ReadonlyURL,
 	ingredientName?: string | null,
 	status = 200,
 ) => {
@@ -52,5 +53,5 @@ export const getAppDocumentTitle = (
 	return APP_NAME;
 };
 
-export const getCanonicalAppUrl = (url: URL) =>
+export const getCanonicalAppUrl = (url: ReadonlyURL) =>
 	`${APP_PRODUCTION_ORIGIN}${url.pathname}`;

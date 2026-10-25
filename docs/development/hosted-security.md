@@ -109,8 +109,16 @@ node scripts/operations/recovery/create_protected_hosted_backup.mjs
 The default private location is:
 
 ```text
-~/Library/Application Support/blendCalc/backups/<UTC timestamp>/
+<external Development>/.local-data/blendCalc/backups/<UTC timestamp>/
 ```
+
+The external Development directory is resolved from the canonical Git checkout, so
+auxiliary worktrees and the compatibility Development symlink select the same storage.
+The volume must exist separately from the operating-system volume. Missing storage,
+redirected backup directories and internal-drive fallbacks are rejected before provider
+access. `--output-dir` may select a directory within this protected backup root.
+Existing backups remain in place; this changes future output only. Creating a backup
+still requires its own operational authorization.
 
 The operation writes the public schema, public data, the exact linked migration history,
 every Storage object and its available content metadata, a Storage manifest, and SHA-256

@@ -2,7 +2,7 @@ import { createSupabaseServerClient } from "$lib/supabase/server";
 import { randomUUID } from "node:crypto";
 import { readVerifiedAuthUser } from "$lib/server/auth/verifiedAuthUser.server";
 import { isDisposableDatabaseRuntimeEnvironment } from "$lib/server/environment/runtimeEnvironment.server";
-import { env } from "$env/dynamic/private";
+import * as env from "$app/env/private";
 import { applySecurityHeaders } from "$lib/utils/http/securityHeaders";
 import { isActiveAccountBlock } from "$lib/utils/moderation/moderation";
 import { APP_BUILD_VERSION, APP_VERSION } from "$lib/config/version";
@@ -34,13 +34,8 @@ import {
 	appendServerTimingHeader,
 	recordServerTiming,
 } from "$lib/server/observability/serverTiming.server";
-import {
-	redirect,
-	error,
-	json,
-	type Handle,
-	type HandleServerError,
-} from "@sveltejs/kit";
+import { redirect, error, json } from "@sveltejs/kit";
+import type { Handle, HandleServerError } from "@sveltejs/kit/hooks";
 
 const finalizeResponse = (
 	response: Response,
@@ -78,12 +73,13 @@ const logUnexpectedRequestError = ({
 	});
 };
 
-export const handleError: HandleServerError = ({ error, event, status }) => {
+export const handleError: HandleServerError = ({ error, event, kind }) => {
+	if (kind !== "unknown") return;
 	logUnexpectedRequestError({
 		error,
 		method: event.request.method,
 		path: event.url.pathname,
-		status,
+		status: 500,
 	});
 	return createAppIssuePayload("UNEXPECTED_ERROR");
 };

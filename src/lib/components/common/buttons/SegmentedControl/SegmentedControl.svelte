@@ -1,9 +1,6 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
-	import type {
-		SegmentedControlOption,
-		SegmentedControlProps,
-	} from "./types";
+	import type { SegmentedControlOption, SegmentedControlProps } from "./types";
 	import { getLinearNavigationIndex } from "$lib/utils/accessibility/keyboardNavigation";
 
 	let {
@@ -13,7 +10,9 @@
 		variant = "pill",
 		onSelect,
 	}: SegmentedControlProps = $props();
-	const activeIndex = $derived(options.findIndex((option) => option.value === value));
+	const activeIndex = $derived(
+		options.findIndex((option) => option.value === value),
+	);
 	let pendingVisualIndex = $state<number | null>(null);
 	const visualActiveIndex = $derived(pendingVisualIndex ?? activeIndex);
 	let motionSequence = $state(0);
@@ -45,12 +44,10 @@
 	};
 
 	const isActive = (option: SegmentedControlOption) => value === option.value;
-	const isVisuallyActive = (
-		option: SegmentedControlOption,
-		index: number,
-	) => variant === "pill" && options.length === 2
-		? visualActiveIndex === index
-		: isActive(option);
+	const isVisuallyActive = (option: SegmentedControlOption, index: number) =>
+		variant === "pill" && options.length === 2
+			? visualActiveIndex === index
+			: isActive(option);
 
 	const handleLinkClick = (
 		event: MouseEvent,
@@ -75,15 +72,11 @@
 		motionDirection = index > visualActiveIndex ? "forward" : "backward";
 		pendingVisualIndex = index === activeIndex ? null : index;
 		motionSequence += 1;
-		pendingNavigation = index === activeIndex
-			? null
-			: { href: option.href, index };
+		pendingNavigation =
+			index === activeIndex ? null : { href: option.href, index };
 	};
 
-	const handleButtonClick = (
-		option: SegmentedControlOption,
-		index: number,
-	) => {
+	const handleButtonClick = (option: SegmentedControlOption, index: number) => {
 		if (variant !== "pill" || options.length !== 2) {
 			onSelect?.(option.value);
 			return;
@@ -97,9 +90,7 @@
 	};
 
 	const handleSelectionAnimationEnd = (event: AnimationEvent) => {
-		if (
-			event.currentTarget !== event.target
-		) return;
+		if (event.currentTarget !== event.target) return;
 		if (!pendingNavigation) {
 			pendingVisualIndex = null;
 			return;
@@ -108,8 +99,7 @@
 		const { href } = pendingNavigation;
 		pendingNavigation = null;
 		void goto(href, {
-			keepFocus: true,
-			noScroll: true,
+			reset: false,
 		})
 			.then(() => {
 				pendingVisualIndex = null;
@@ -132,15 +122,18 @@
 		<span
 			class="segmented-control__selection"
 			class:segmented-control__selection--moving={motionSequence > 0}
-			class:segmented-control__selection--backward={motionDirection === "backward"}
+			class:segmented-control__selection--backward={motionDirection ===
+				"backward"}
 			aria-hidden="true"
 			onanimationend={handleSelectionAnimationEnd}
 		>
 			{#key motionSequence}
 				<span
 					class="segmented-control__selection-surface"
-					class:segmented-control__selection-surface--moving={motionSequence > 0}
-					class:segmented-control__selection-surface--backward={motionDirection === "backward"}
+					class:segmented-control__selection-surface--moving={motionSequence >
+						0}
+					class:segmented-control__selection-surface--backward={motionDirection ===
+						"backward"}
 				></span>
 			{/key}
 		</span>
@@ -151,11 +144,13 @@
 			<a
 				id={option.id}
 				href={option.href}
-				data-sveltekit-keepfocus
-				data-sveltekit-noscroll
+				data-sveltekit-reset="false"
 				role="tab"
 				class="segmented-control__button"
-				class:segmented-control__button--active={isVisuallyActive(option, index)}
+				class:segmented-control__button--active={isVisuallyActive(
+					option,
+					index,
+				)}
 				aria-selected={isActive(option)}
 				aria-current={isActive(option) ? "page" : undefined}
 				aria-controls={option.controlsId}
@@ -175,16 +170,20 @@
 				role="tab"
 				class="segmented-control__button"
 				class:segmented-control__button--active={isActive(option)}
-				class:segmented-control__button--completed={variant === "progress" && index <= activeIndex}
+				class:segmented-control__button--completed={variant === "progress" &&
+					index <= activeIndex}
 				aria-selected={isActive(option)}
-				aria-current={variant === "progress" && isActive(option) ? "step" : undefined}
+				aria-current={variant === "progress" && isActive(option)
+					? "step"
+					: undefined}
 				aria-controls={option.controlsId}
 				tabindex={isActive(option) ? 0 : -1}
 				onclick={() => handleButtonClick(option, index)}
 				onkeydown={(event) => handleKeydown(event, index)}
 			>
 				{#if variant === "progress"}
-					<span class="segmented-control__progress-indicator" aria-hidden="true"></span>
+					<span class="segmented-control__progress-indicator" aria-hidden="true"
+					></span>
 				{/if}
 				<span class="segmented-control__label">{option.label}</span>
 				{#if option.count !== undefined}

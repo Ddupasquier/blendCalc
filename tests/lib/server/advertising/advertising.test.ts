@@ -3,7 +3,17 @@ const settings = vi.hoisted(() => ({
 	environment: {} as Record<string, string>,
 	runtime: "test",
 }));
-vi.mock("$env/dynamic/private", () => ({ env: settings.environment }));
+vi.mock("$app/env/private", async (importOriginal) => {
+	const actual = await importOriginal<Record<string, unknown>>();
+	const overrides = settings.environment;
+	return new Proxy(actual, {
+		get(target, key) {
+			return Reflect.has(overrides, key)
+				? Reflect.get(overrides, key)
+				: Reflect.get(target, key);
+		},
+	});
+});
 vi.mock("$lib/server/environment/runtimeEnvironment.server", () => ({
 	readBlendCalcRuntimeEnvironment: () => settings.runtime,
 }));

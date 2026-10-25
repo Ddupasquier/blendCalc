@@ -1,4 +1,4 @@
-import { browser } from "$app/environment";
+import { browser } from "$app/env";
 
 const ACTIVE_STORAGE_USER_KEY = "blendcalc-active-storage-user";
 const OBSOLETE_SERVER_BACKED_STORAGE_KEYS = [

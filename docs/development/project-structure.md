@@ -67,7 +67,7 @@ repository-owned VS Code Explorer settings.
 | ------------------------------ | -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
 | Onboarding and agent discovery | `README.md`, `AGENTS.md`                                                                                 | Keep at root so people and supported agent tooling find the governing entry point immediately. `AGENTS.md` remains machine-local and untracked. |
 | Package and runtime            | `package.json`, `package-lock.json`, `.npmrc`, `.nvmrc`, `.node-version`                                 | Keep at root for npm and runtime-manager discovery. Both Node selectors intentionally enforce Node 24 for different tools.                      |
-| SvelteKit and TypeScript       | `svelte.config.js`, `vite.config.ts`, `tsconfig.json`                                                    | Keep at their conventional tool-discovery locations. Vite accepts only the explicit process environment supplied by launchers or deployment.    |
+| SvelteKit and TypeScript       | `vite.config.ts`, `tsconfig.json`                                                                        | SvelteKit 3 configuration lives in the Vite plugin. Vite accepts only the explicit process environment supplied by launchers or deployment.     |
 | Quality tools                  | `eslint.config.js`, `stylelint.config.js`, `playwright.config.ts`, `.prettierrc.json`, `.prettierignore` | Keep at conventional discovery paths; relocating them would require fragile wrapper arguments or reduce editor compatibility.                   |
 | Sandbox tool                   | `rehearsal.config.mjs`                                                                                   | Keep the active, reviewed configuration beside `package.json` for package discovery and easy maintenance.                                       |
 | Deployment and native shells   | `vercel.json`, `capacitor.config.ts`                                                                     | Keep at the root expected by Vercel and Capacitor.                                                                                              |
@@ -105,6 +105,13 @@ source-function directory: it can shadow parameterized SvelteKit API routes in t
 deployed routing table. Route-specific Vercel runtime limits belong in the owning
 SvelteKit route configuration, while application policy and processing remain under
 `src/lib/server/<domain>` so local and hosted paths share the same behavior.
+
+`src/env.ts` declares the existing application environment variables for SvelteKit 3,
+including their browser/server and static/runtime boundaries. It contains no values;
+consumer templates and maintained launchers retain environment ownership.
+`src/params.ts` owns the signed-integer and UUID route matchers. Vite and TypeScript
+explicitly retain the existing `$lib` project alias; no deprecated framework alias
+configuration or second library tree is needed.
 
 ## Components
 
@@ -253,6 +260,10 @@ not duplicate the same assertion across runners.
 
 ## Scripts
 
+`config/runtimeArtifactPaths.js` owns the shared local filesystem configuration used
+by server OCR and command launchers. It resolves ignored temporary/cache paths without
+embedding a developer-specific drive path; `environment.md` owns the runtime contract.
+
 `scripts/lib/environment/local_supabase_workdir.mjs` owns staging public Supabase inputs
 for local commands. Generated config, migrations, seeds, tests, templates and CLI state
 live in `.cache/local-supabase/<project-id>/` under the primary checkout; they are derived
@@ -282,10 +293,9 @@ local artifacts, never a second source authority or a feature-checkout mount dep
 uses the explicitly configured application and publication service origins, rejects
 non-loopback or credential-bearing URLs, and never adds a wildcard to accommodate
 another runtime. Hosted policy remains independent of those local mappings.
-`config/dependencyAuditException.json` owns the single explicitly approved, absolute-
-expiry development-tool risk record. Evaluation belongs in `scripts/lib/security/`;
-the public command is `scripts/operations/quality/audit_dependencies.mjs`. This is
-build/verification policy, never application runtime or a general advisory allowlist.
+Dependency audit evaluation belongs in `scripts/lib/security/`; the public command is
+`scripts/operations/quality/audit_dependencies.mjs`. Both production and development
+audits must be clean; there is no active vulnerability exception or allowlist.
 `config/environments/` owns tracked, value-free environment templates for manually
 configured consumers. Runtime values stay in each documented ignored destination or
 deployment provider; the templates are never loaded as an application environment.

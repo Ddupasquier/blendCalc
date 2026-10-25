@@ -5,6 +5,7 @@
  */
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { createLocalArtifactEnvironment } from "../../../config/runtimeArtifactPaths.js";
 
 const repositoryRoot = fileURLToPath(new URL("../../../", import.meta.url));
 if (Number(process.versions.node.split(".")[0]) !== 24)
@@ -38,6 +39,7 @@ if (args[0] === "--help") {
 		const run = (commandArgs) => {
 			const result = spawnSync(process.execPath, commandArgs, {
 				cwd: repositoryRoot,
+				env: createLocalArtifactEnvironment(repositoryRoot),
 				stdio: "inherit",
 			});
 			return result.signal ? 130 : (result.status ?? 1);

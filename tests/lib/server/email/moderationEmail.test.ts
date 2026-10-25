@@ -2,14 +2,22 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({ fetch: vi.fn() }));
 
-vi.mock("$env/dynamic/private", () => ({
-	env: {
+vi.mock("$app/env/private", async (importOriginal) => {
+	const actual = await importOriginal<Record<string, unknown>>();
+	const overrides = {
 		BLENDCALC_RUNTIME_ENVIRONMENT: "production",
 		MODERATION_EMAIL_FROM: "blendCalc <moderation@noreply.blendcalc.food>",
 		MODERATION_SUPPORT_EMAIL: "support@blendcalc.food",
 		RESEND_API_KEY: "test-key",
-	},
-}));
+	};
+	return new Proxy(actual, {
+		get(target, key) {
+			return Reflect.has(overrides, key)
+				? Reflect.get(overrides, key)
+				: Reflect.get(target, key);
+		},
+	});
+});
 vi.mock("$lib/server/http/externalRequest.server", () => ({
 	fetchWithExternalRequestPolicy: mocks.fetch,
 }));

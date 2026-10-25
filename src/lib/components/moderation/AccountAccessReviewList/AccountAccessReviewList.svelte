@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
 	import { goto } from "$app/navigation";
-	import type { SubmitFunction } from "@sveltejs/kit";
+	import type { SubmitFunction } from "$app/forms";
 	import ActionButton from "$lib/components/common/buttons/ActionButton/ActionButton.svelte";
 	import CollapsibleSection from "$lib/components/common/disclosure/CollapsibleSection/CollapsibleSection.svelte";
 	import TextField from "$lib/components/common/forms/TextField/TextField.svelte";
@@ -80,14 +80,14 @@
 			: searchPath;
 
 		try {
-			await goto(href, { keepFocus: true, noScroll: true });
+			await goto(href, { reset: false });
 		} finally {
 			searching = false;
 		}
 	};
 
 	const clearAccountSearch = () => {
-		if (!searching) void goto(searchPath, { keepFocus: true, noScroll: true });
+		if (!searching) void goto(searchPath, { reset: false });
 	};
 
 	const enhanceAccountAction: SubmitFunction = ({ formData, cancel }) => {

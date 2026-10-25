@@ -1,5 +1,11 @@
-import { describe, expect, it } from "vitest";
-import { chmodSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { afterEach, describe, expect, it } from "vitest";
+import {
+	chmodSync,
+	mkdtempSync,
+	readFileSync,
+	rmSync,
+	writeFileSync,
+} from "node:fs";
 import {
 	assertSafeLocalApplicationEnvironment,
 	createCleanProcessEnvironment,
@@ -16,6 +22,12 @@ import {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
+const fixtureRoots = [];
+afterEach(() => {
+	for (const root of fixtureRoots.splice(0))
+		rmSync(root, { recursive: true, force: true });
+});
+
 const applicationSupabase = {
 	apiUrl: "http://127.0.0.1:54321",
 	publishableKey: "local-publishable",
@@ -30,6 +42,7 @@ const blendCalcAPISupabase = {
 describe("script runtime environments", () => {
 	it("loads only the owner-protected production-development allowlist", () => {
 		const repositoryRoot = mkdtempSync(join(tmpdir(), "blendcalc-prod-dev-"));
+		fixtureRoots.push(repositoryRoot);
 		const path = join(repositoryRoot, ".env");
 		const values = Object.fromEntries(
 			productionDevelopmentEnvironmentKeys.map((key) => [key, ""]),

@@ -246,25 +246,17 @@ speculative compatibility, and stop when a required upgrade conflicts with the N
 SvelteKit, browser, or deployment compatibility floor.
 
 Use `node scripts/operations/quality/audit_dependencies.mjs` for the blocking audit.
-It shows the full lockfile findings and separately requires a clean production tree.
-The only approved temporary risk acceptance is recorded in
-`config/dependencyAuditException.json`: advisory `GHSA-vfj7-8cjw-p6xm`, exactly eight
-reviewed development-only paths and locked records, from October 20 through October 27,
-2026 at 19:57:47 UTC, explicitly renewed by the owner. This accepts developer/build
-denial-of-service risk; it does not repair the vulnerability. All existing style checks
-remain mandatory.
+It shows the full lockfile findings and separately requires clean production and
+development trees. There is no active vulnerability exception. The former temporary
+braces exception was retired after upstream withdrew advisory `GHSA-vfj7-8cjw-p6xm`
+on October 23, 2026; the reviewed style checks remain mandatory.
 
-On October 22, the owner approved refreshing the two narrowed npm-reported affected
-version ranges for `stylelint` and `stylelint-config-recommended` and their findings
-fingerprint. The eight pinned paths, accepted risk and October 27 expiry are unchanged.
-
-The exception fails closed on expiration, production findings, any other advisory or
-affected path, dependency or advisory-condition drift, and execution/network/parse
-errors. The public upstream advisory must still report no patch. Remove the exception
-and install a supported compatible fix as soon as one exists; an extension requires a
-new explicit risk decision. Never renew it automatically. Reused release evidence must
-pass the current audit too, so an earlier success cannot bypass expiry. Raw `npm audit`
-remains available and continues to report the vulnerability.
+Execution, network, parse and finding errors fail closed. Any future temporary risk
+acceptance requires a new explicit owner decision identifying the advisory, exact
+affected paths, risk and fixed expiry; no exception or renewal is automatic. Remove
+unused acceptance policy once a compatible patch or advisory withdrawal resolves it.
+Reused release evidence must pass the current audit too. Raw `npm audit` remains
+available and reports all current findings.
 
 <a id="rule-test-layer-ownership"></a>
 

@@ -92,6 +92,13 @@ developer's base `.env` file or inherit hosted/provider credentials from the par
 shell. A non-loopback database or Playwright base URL fails before the application or
 browser starts.
 
+Standalone component tests use `tests/test-setup.ts` for their framework environment
+and teardown. It supplies the browser-safe test configuration and registers component
+cleanup directly in each Vitest context to unmount the previous test's components.
+Component projects use the
+file-isolated thread pool: cached VM dependencies retained DOM prototypes and mocks
+across files in the SvelteKit 3 compatibility checks.
+
 ### Fast Change Loop
 
 Run the smallest relevant test while editing:
@@ -200,8 +207,8 @@ The scheduled Dependency Audit checks the lockfile daily through
 `node scripts/operations/quality/audit_dependencies.mjs`. The same gate runs in release
 and nightly profiles, promotion reuse, and the CI preflight for full/reused candidates
 or dependency/policy-changing branches. It preserves full findings and requires a clean
-production audit. The narrowly pinned temporary development exception and its fixed
-expiry are governed by the [dependency safety policy](dev-rules/dev-rules.md#rule-dependency-supply-chain).
+production audit and a clean development audit. There is no active vulnerability
+exception; see the [dependency safety policy](dev-rules/dev-rules.md#rule-dependency-supply-chain).
 Network, parse and execution errors never count as a successful audit. Focused refusal
 coverage lives in `tests/scripts/dependencyAuditPolicy.test.mjs`; it uses synthetic
 public advisory evidence rather than contacting live registries.
@@ -244,16 +251,17 @@ only the focused architecture and documentation checks that govern the changed t
 
 Vitest separates work by runtime instead of paying for jsdom in every file:
 
-- 389 source, server, architecture, and pure-utility files run in Node threads;
-- 121 rendered component and browser-utility files run in isolated VM threads;
-- one OCR component test uses a standard isolated thread because Svelte runes cannot be
-  evaluated safely in the VM pool.
+- Source, server, architecture, and pure-utility files run in Node threads.
+- Rendered component and browser-utility files use file-isolated threads with jsdom.
+- The separate OCR component runtime project keeps its maintained command and the
+  same isolated thread pool.
 
-On the current development machine after removing the former editor-memory bottleneck,
-the complete 2,553-assertion Vitest pass completed in 64.6 seconds with four workers in
-one process, versus 90.8 seconds with two workers across three sequential processes.
-Vitest therefore uses four workers locally and in CI inside the maintained 4 GiB Node
-heap and resource preflight limits.
+The former VM dependency-cache optimization retained DOM prototypes and mocks across
+files during the SvelteKit 3 migration. Standard isolated threads preserve the test
+boundaries, at the cost of rebuilding more runtime state. The earlier SvelteKit 2
+timings do not establish performance for this configuration. The configured default
+remains four workers locally and in CI inside the maintained 4 GiB Node heap and
+resource preflight limits; a focused local run can select fewer workers.
 
 Playwright defaults to two workers. A clean bounded-matrix benchmark completed in 3.7
 minutes with two workers and 4.2 minutes with three, so the extra worker increased local

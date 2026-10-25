@@ -53,6 +53,11 @@ the repository instead of continuing with a stale process.
 
 ### Application Release Commands
 
+SvelteKit 3 configuration and the deployment-derived build version are owned by
+the `sveltekit(...)` plugin in `vite.config.ts`. Runtime code reads the generated
+version from `$app/env`. Framework package versions remain independent of the
+application's semantic release and the API version.
+
 Check every version source without changing files:
 
 ```bash

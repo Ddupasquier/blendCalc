@@ -22,7 +22,7 @@
 	let correctionEvidenceRoles = $state<ProductEvidenceRole[] | undefined>();
 	const closeAction = () => {
 		void goto("/profile/privileged-tools/catalog-review-work", {
-			replaceState: true,
+			replace: true,
 		});
 	};
 	const directDecisionCount = $derived(

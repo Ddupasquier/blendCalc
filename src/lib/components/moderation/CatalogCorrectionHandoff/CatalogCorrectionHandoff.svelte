@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
-	import type { SubmitFunction } from "@sveltejs/kit";
+	import type { SubmitFunction } from "$app/forms";
 	import ActionButton from "$lib/components/common/buttons/ActionButton/ActionButton.svelte";
 	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
 	import RoundedActionLink from "$lib/components/common/buttons/RoundedActionLink/RoundedActionLink.svelte";

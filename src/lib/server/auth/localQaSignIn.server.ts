@@ -1,5 +1,5 @@
-import { env as privateEnvironment } from "$env/dynamic/private";
-import { env as publicEnvironment } from "$env/dynamic/public";
+import * as privateEnvironment from "$app/env/private";
+import * as publicEnvironment from "$app/env/public";
 import { Buffer } from "node:buffer";
 
 const LOCAL_TEST_APP_PORT = "5174";
