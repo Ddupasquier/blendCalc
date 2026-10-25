@@ -1,4 +1,4 @@
-import { env } from "$env/dynamic/private";
+import * as env from "$app/env/private";
 import { error, json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 import { syncVercelInteractionMetrics } from "$lib/server/analytics/vercelInteractionMetrics.server";
@@ -17,8 +17,7 @@ export const GET: RequestHandler = async ({ request }) => {
 		return json({ synchronized: true, ...result });
 	} catch (syncError) {
 		console.error("[analytics] Vercel metric synchronization failed", {
-			errorType:
-				syncError instanceof Error ? syncError.name : typeof syncError,
+			errorType: syncError instanceof Error ? syncError.name : typeof syncError,
 		});
 		throw error(503, "Analytics synchronization is temporarily unavailable.");
 	}

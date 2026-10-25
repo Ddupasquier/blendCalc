@@ -10,7 +10,8 @@ export const throwAppError = (
 	code: AppIssueCode,
 	params?: AppIssueParams,
 ): never => {
-	throw error(status, createAppIssuePayload(code, params));
+	const { message, ...properties } = createAppIssuePayload(code, params);
+	throw error(status, message, properties);
 };
 
 export const requireAppValue = <Value>(

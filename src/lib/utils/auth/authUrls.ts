@@ -1,5 +1,5 @@
-import { env } from "$env/dynamic/public";
-import { env as privateEnv } from "$env/dynamic/private";
+import * as env from "$app/env/public";
+import * as privateEnv from "$app/env/private";
 
 const normalizeConfiguredOrigin = (value: string | undefined) => {
 	if (!value) return "";
@@ -16,7 +16,11 @@ const normalizeConfiguredOrigin = (value: string | undefined) => {
 export const isLocalOrigin = (origin: string) => {
 	try {
 		const { hostname } = new URL(origin);
-		return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]";
+		return (
+			hostname === "localhost" ||
+			hostname === "127.0.0.1" ||
+			hostname === "[::1]"
+		);
 	} catch {
 		return false;
 	}
@@ -96,10 +100,7 @@ export const getCanonicalAuthPageUrl = (
 	return url.toString();
 };
 
-export const getAuthCallbackUrl = (
-	request: Request,
-	fallbackUrl: URL,
-) => {
+export const getAuthCallbackUrl = (request: Request, fallbackUrl: URL) => {
 	return new URL(
 		"/auth/callback",
 		getRequestOrigin(request, fallbackUrl),

@@ -39,7 +39,7 @@
 	);
 	const closeAction = () => {
 		void goto("/profile/privileged-tools/data-operations", {
-			replaceState: true,
+			replace: true,
 		});
 	};
 </script>

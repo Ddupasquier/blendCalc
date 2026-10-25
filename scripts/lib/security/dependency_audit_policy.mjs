@@ -1,18 +1,10 @@
 /**
- * Purpose: Evaluate complete npm audit evidence against the single reviewed,
- * time-limited development-tool exception. Do not run directly; audit and promotion
- * commands own execution. No environment variable or CLI flag changes the deadline.
+ * Purpose: Validate complete npm audit evidence and require clean production and
+ * development dependency trees. Do not run directly; maintained audit commands
+ * import this policy. There are no active vulnerability exceptions.
  */
 
 import { createHash } from "node:crypto";
-import { readFileSync } from "node:fs";
-
-export const dependencyAuditException = JSON.parse(
-	readFileSync(
-		new URL("../../../config/dependencyAuditException.json", import.meta.url),
-		"utf8",
-	),
-);
 
 const canonicalize = (value) =>
 	Array.isArray(value)
@@ -29,47 +21,6 @@ export const auditRecordDigest = (value) =>
 	createHash("sha256")
 		.update(JSON.stringify(canonicalize(value)))
 		.digest("hex");
-
-export const assertExceptionWindow = (now = new Date()) => {
-	const approved = Date.parse(dependencyAuditException.approvedAt);
-	const expires = Date.parse(dependencyAuditException.expiresAt);
-	if (
-		!Number.isFinite(now.getTime()) ||
-		expires - approved !== 7 * 24 * 60 * 60 * 1000 ||
-		now.getTime() < approved
-	) {
-		throw new Error("Invalid exception approval window or audit clock.");
-	}
-	if (now.getTime() >= expires) {
-		throw new Error(
-			`Dependency exception expired at ${dependencyAuditException.expiresAt}; renewal is not automatic.`,
-		);
-	}
-};
-
-export const assertReviewedLock = (lock) => {
-	if (lock?.lockfileVersion !== 3 || !lock.packages)
-		throw new Error("Unsupported dependency lockfile.");
-	for (const [path, approved] of Object.entries(
-		dependencyAuditException.packages,
-	)) {
-		const record = lock.packages[path];
-		if (
-			record?.dev !== true ||
-			record?.version !== approved.version ||
-			auditRecordDigest(record) !== approved.recordSha256
-		) {
-			throw new Error(`Reviewed development dependency drift: ${path}.`);
-		}
-		if (
-			Object.keys(lock.packages).some(
-				(candidate) => candidate !== path && candidate.endsWith(`/${path}`),
-			)
-		) {
-			throw new Error(`Unreviewed duplicate dependency path: ${path}.`);
-		}
-	}
-};
 
 export const parseAuditResult = (result) => {
 	if (result.error || result.signal || ![0, 1].includes(result.status))
@@ -131,53 +82,16 @@ export const parseAuditResult = (result) => {
 	return report;
 };
 
-export const evaluateDependencyAudits = ({
-	full,
-	production,
-	lock,
-	now = new Date(),
-}) => {
+export const evaluateDependencyAudits = ({ full, production }) => {
 	const fullReport = parseAuditResult(full);
 	const productionReport = parseAuditResult(production);
 	if (productionReport.metadata.vulnerabilities.total !== 0)
 		throw new Error(
 			"Production dependencies have vulnerability findings; no production exception exists.",
 		);
-	if (fullReport.metadata.vulnerabilities.total === 0)
-		return { accepted: false, fullReport, productionReport };
-	assertExceptionWindow(now);
-	assertReviewedLock(lock);
-	if (
-		auditRecordDigest(fullReport.vulnerabilities) !==
-		dependencyAuditException.findingsSha256
-	)
+	if (fullReport.metadata.vulnerabilities.total !== 0)
 		throw new Error(
-			"Audit findings differ from the exact reviewed advisory, paths or conditions.",
+			"Development dependencies have vulnerability findings; no active exception exists.",
 		);
-	return { accepted: true, fullReport, productionReport };
-};
-
-export const assertUnpatchedAdvisory = (advisory) => {
-	const vulnerabilities = advisory?.vulnerabilities;
-	const entry = vulnerabilities?.[0];
-	if (
-		advisory?.ghsa_id !== dependencyAuditException.advisory ||
-		advisory.severity !== "high" ||
-		advisory.withdrawn_at !== null ||
-		vulnerabilities?.length !== 1 ||
-		entry?.package?.ecosystem !== "npm" ||
-		entry.package.name !== "braces" ||
-		entry.vulnerable_version_range !== "<= 3.0.3" ||
-		entry.first_patched_version !== null ||
-		entry.vulnerable_functions?.length !== 0 ||
-		advisory.cwes?.length !== 1 ||
-		advisory.cwes[0].cwe_id !== "CWE-674" ||
-		advisory.cvss?.score !== 7.5 ||
-		advisory.cvss.vector_string !==
-			"CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
-	) {
-		throw new Error(
-			"Upstream advisory changed or a patch is available. Remove/review the exception and install a supported compatible fix.",
-		);
-	}
+	return { accepted: false, fullReport, productionReport };
 };

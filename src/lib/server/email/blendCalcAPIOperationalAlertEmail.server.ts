@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { env } from "$env/dynamic/private";
+import * as env from "$app/env/private";
 import { APP_NAME } from "$lib/config/brand";
 import {
 	escapeEmailHtml,

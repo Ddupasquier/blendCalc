@@ -1,23 +1,58 @@
-import { readFileSync, statSync } from "node:fs";
+import {
+	mkdirSync,
+	mkdtempSync,
+	readFileSync,
+	rmSync,
+	statSync,
+	symlinkSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
-import { describe, expect, it } from "vitest";
+import { join } from "node:path";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createServerTesseractWorkerOptions } from "../../src/lib/server/ocr/serverTesseractCache.server.js";
 
 const read = (path: string) => readFileSync(path, "utf8");
 
 describe("OCR runtime assets", () => {
-	it("creates the server cache beneath the operating-system temporary directory", () => {
-		const { cachePath } = createServerTesseractWorkerOptions();
+	let directory: string;
+	beforeEach(() => {
+		directory = mkdtempSync(join(tmpdir(), "blendcalc-ocr-cache-test-"));
+		vi.spyOn(process, "cwd").mockReturnValue(directory);
+		vi.stubEnv("VERCEL", "");
+	});
+	afterEach(() => {
+		vi.restoreAllMocks();
+		vi.unstubAllEnvs();
+		rmSync(directory, { recursive: true, force: true });
+	});
 
-		expect(cachePath.startsWith(tmpdir())).toBe(true);
-		expect(cachePath).toContain("tesseract-language-data");
+	it("creates the local server cache inside its checkout", () => {
+		const { cachePath } = createServerTesseractWorkerOptions();
+		expect(cachePath).toBe(
+			join(directory, ".cache", "tesseract-language-data"),
+		);
 		expect(statSync(cachePath).isDirectory()).toBe(true);
 	});
 
-	it("keeps server Tesseract caches outside the repository root", () => {
-		const cacheOwner = read(
-			"src/lib/server/ocr/serverTesseractCache.server.ts",
+	it("keeps hosted OCR on the writable temporary filesystem", () => {
+		vi.stubEnv("VERCEL", "1");
+		vi.stubEnv("TMPDIR", directory);
+		expect(createServerTesseractWorkerOptions().cachePath).toBe(
+			join(directory, "blendcalc", "tesseract-language-data"),
 		);
+	});
+
+	it("refuses a local OCR cache redirected outside its owner", () => {
+		mkdirSync(join(directory, ".cache"));
+		symlinkSync(
+			directory,
+			join(directory, ".cache", "tesseract-language-data"),
+		);
+		expect(() => createServerTesseractWorkerOptions()).toThrow("not symlinks");
+	});
+
+	it("uses the same cache owner for nutrition and product placement", () => {
+		vi.restoreAllMocks();
 		const nutritionProcessor = read(
 			"src/lib/server/ocr/nutritionLabelOcrProcessor.server.ts",
 		);
@@ -25,8 +60,6 @@ describe("OCR runtime assets", () => {
 			"src/lib/server/products/automaticFoodImagePlacement.server.ts",
 		);
 
-		expect(cacheOwner).toContain("tmpdir()");
-		expect(cacheOwner).toContain('"tesseract-language-data"');
 		expect(nutritionProcessor).toContain(
 			"createServerTesseractWorkerOptions()",
 		);

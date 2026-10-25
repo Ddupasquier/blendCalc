@@ -10,8 +10,28 @@ const privateEnvironment = vi.hoisted(() => ({
 	VERCEL_PROJECT_PRODUCTION_URL: "",
 }));
 
-vi.mock("$env/dynamic/public", () => ({ env: publicEnvironment }));
-vi.mock("$env/dynamic/private", () => ({ env: privateEnvironment }));
+vi.mock("$app/env/public", async (importOriginal) => {
+	const actual = await importOriginal<Record<string, unknown>>();
+	const overrides = publicEnvironment;
+	return new Proxy(actual, {
+		get(target, key) {
+			return Reflect.has(overrides, key)
+				? Reflect.get(overrides, key)
+				: Reflect.get(target, key);
+		},
+	});
+});
+vi.mock("$app/env/private", async (importOriginal) => {
+	const actual = await importOriginal<Record<string, unknown>>();
+	const overrides = privateEnvironment;
+	return new Proxy(actual, {
+		get(target, key) {
+			return Reflect.has(overrides, key)
+				? Reflect.get(overrides, key)
+				: Reflect.get(target, key);
+		},
+	});
+});
 
 import {
 	getAuthCallbackUrl,

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { browser } from "$app/environment";
+	import { browser } from "$app/env";
 	import { onMount } from "svelte";
 	import {
 		applyThemePreference,
@@ -14,7 +14,8 @@
 		if (!browser) return;
 		applyThemePreference(
 			normalizeThemePreference(preference),
-			mediaQuery?.matches ?? window.matchMedia("(prefers-color-scheme: dark)").matches,
+			mediaQuery?.matches ??
+				window.matchMedia("(prefers-color-scheme: dark)").matches,
 			document.documentElement,
 			document.querySelector<HTMLMetaElement>("meta[name='theme-color']"),
 		);

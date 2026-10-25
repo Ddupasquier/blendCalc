@@ -20,6 +20,7 @@ import {
 } from "../../lib/environment/local_supabase.mjs";
 import { assertLocalResourceSafety } from "../../lib/quality/resource_safety.mjs";
 import { withNodeHeapLimit } from "./run_with_resource_limits.mjs";
+import { createLocalArtifactEnvironment } from "../../../config/runtimeArtifactPaths.js";
 
 const repositoryRoot = fileURLToPath(new URL("../../..", import.meta.url));
 
@@ -35,6 +36,7 @@ export const main = (playwrightArguments = process.argv.slice(2)) => {
 	const preparationEnvironment = createCleanProcessEnvironment({
 		passthroughKeys: ["BLENDCALC_ALLOW_RESOURCE_PRESSURE"],
 		overrides: {
+			...createLocalArtifactEnvironment(repositoryRoot, {}),
 			BLENDCALC_RUNTIME_ENVIRONMENT: "test",
 			NODE_OPTIONS: withNodeHeapLimit(process.env.NODE_OPTIONS),
 		},

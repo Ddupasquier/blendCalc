@@ -1,5 +1,5 @@
 import { createHmac } from "node:crypto";
-import { env } from "$env/dynamic/private";
+import * as env from "$app/env/private";
 import { getBlendCalcAPIIsolatedClient } from "$lib/server/blendCalcAPI/v1/blendCalcAPIIsolatedClient.server";
 
 export type BlendCalcAPIRequestActorType =

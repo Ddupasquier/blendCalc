@@ -24,6 +24,11 @@ falls back to ambient `.env` or `.env.local` files. The exact variable ownership
 [Environment Configuration](../docs/development/environment.md). Never pass secrets on
 the command line or place generated data in tracked files.
 
+Local artifact placement is owned by
+[Environment Configuration](../docs/development/environment.md#local-temporary-files-and-tool-caches).
+Use the shared path configuration for temporary work; preserve cleanup on failure and
+do not treat live `.cache/local-supabase` inputs or recovery evidence as disposable caches.
+
 Image placement uses the application-owned server OCR worker lifetime, imported from
 `src/lib/server/ocr/createOwnedTesseractWorker.server.ts` through Node 24's native
 type stripping. Failed language initialization rejects the backfill operation and
@@ -46,15 +51,14 @@ dry-run, image-authority, and write-approval boundaries remain in force.
 `node scripts/operations/quality/audit_dependencies.mjs` is the shared read-only
 dependency gate for CI, release/nightly verification and promotion reuse. It runs
 bounded, scripts-disabled full and production lockfile audits, prints both reports,
-and checks the public upstream advisory before accepting the one approved temporary
-development-tool risk. The reviewed paths, record digests and absolute deadline live
-in `config/dependencyAuditException.json`; no flag or environment value extends them.
-Audit errors, production findings, drift and expiration fail closed. See the
+and requires zero findings in both trees. The former temporary braces exception was
+retired after its upstream advisory was withdrawn. There is no active exception or
+runtime bypass. Audit errors and findings fail closed. See the
 [dependency safety policy](../docs/development/dev-rules/dev-rules.md#rule-dependency-supply-chain)
 for risk acceptance and patch-removal requirements. The command never modifies
 dependencies, databases or credentials. The verification dashboard retains even a
 passing audit's complete report under ignored `test-results/verification-dashboard/`
-and prints its location and risk warning at closeout. Raw `npm audit` remains an
+and prints its location at closeout. Raw `npm audit` remains an
 unsuppressed report.
 
 | Workflow type                            | Required practice                                                                                     |
@@ -499,6 +503,12 @@ keeps phone-change notices disabled with phone Auth, and verifies exact hosted e
 The dry run never prints message bodies or protected values.
 
 Create and verify a protected backup outside the repository:
+
+Future output belongs under the external Development directory's
+`.local-data/blendCalc/backups/`. The canonical checkout determines that directory;
+unavailable/internal storage and redirected paths fail closed. `--output-dir` must
+stay within that backup root. Existing backups are preserved in place. See
+[Protected Backups](../docs/development/hosted-security.md#protected-backups).
 
 ```bash
 node scripts/operations/recovery/create_protected_hosted_backup.mjs

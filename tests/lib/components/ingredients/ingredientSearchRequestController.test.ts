@@ -3,7 +3,7 @@ import type { FoodItem } from "$lib/utils/food/types";
 
 const searchFoodPage = vi.hoisted(() => vi.fn());
 
-vi.mock("$app/environment", () => ({ browser: true }));
+vi.mock("$app/env", () => ({ browser: true }));
 vi.mock("$lib/utils/food/sources/fdc", () => ({ searchFoodPage }));
 
 import { createIngredientSearchRequestController } from "$lib/components/ingredients/search/IngredientSearch/ingredientSearchRequestController.svelte";

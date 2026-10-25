@@ -32,6 +32,10 @@ Do not keep a source-string or jsdom interaction assertion after Playwright cove
 same rendered behavior unless the source boundary is itself a contract. Keep
 non-browser behavior in the layer assigned by the [Testing Strategy](testing.md).
 
+For navigation that preserves focus and scroll, SvelteKit 3 uses `reset: false`
+with `goto` and `data-sveltekit-reset="false"` on links. The old
+`data-sveltekit-keepfocus` and `data-sveltekit-noscroll` attributes no longer apply.
+
 Playwright does not replace physical-device camera and permission checks, VoiceOver,
 TalkBack, named installed-browser sign-off, or subjective visual approval. Those remain
 in the manual QA queue until directly observed in the required environment.
@@ -180,6 +184,10 @@ both approved production hostnames against the budgets in
 - Treat same-origin `5xx` responses as browser-test failures even when the page catches
   them; expected domain outcomes such as a handled product-not-found `404` need an
   explicit behavioral assertion instead of a blanket network exception.
+  SvelteKit 3 also preserves handled action failure statuses. The bad-credentials
+  case asserts its `400` response and visible rejection, and accounts for at most one
+  native resource-error message scoped to that exact sign-in action. Other browser
+  errors remain failures.
 - Keep database mutations serial and deterministic; restore the local baseline when a
   scenario changes durable state.
 - Do not assume a shared QA queue is empty or delete existing records to make an

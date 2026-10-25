@@ -1,4 +1,4 @@
-import { env } from "$env/dynamic/private";
+import * as env from "$app/env/private";
 import { error, json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 import { cleanupExpiredNutritionLabelOcrJobs } from "$lib/server/ocr/nutritionLabelOcrJobs.server";

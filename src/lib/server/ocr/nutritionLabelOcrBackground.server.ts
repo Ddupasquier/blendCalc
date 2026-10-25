@@ -1,4 +1,4 @@
-import { dev } from "$app/environment";
+import { dev } from "$app/env";
 import { processNutritionLabelOcrJob } from "$lib/server/ocr/nutritionLabelOcrJobs.server";
 import { completeServerBackgroundTask } from "$lib/server/runtime/backgroundTask.server";
 

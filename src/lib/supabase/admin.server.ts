@@ -1,5 +1,5 @@
-import { env } from "$env/dynamic/private";
-import { PUBLIC_SUPABASE_URL } from "$env/static/public";
+import * as env from "$app/env/private";
+import { PUBLIC_SUPABASE_URL } from "$app/env/public";
 import type { Database } from "$lib/types/database.types";
 import { assertRuntimeUrlMatchesEnvironment } from "$lib/server/environment/runtimeEnvironment.server";
 import { createClient } from "@supabase/supabase-js";

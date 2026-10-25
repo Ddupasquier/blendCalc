@@ -4,14 +4,32 @@ const { createServerClient } = vi.hoisted(() => ({
 	createServerClient: vi.fn(() => ({ kind: "request-client" })),
 }));
 
-vi.mock("$app/environment", () => ({ dev: true }));
-vi.mock("$env/dynamic/private", () => ({
-	env: { BLENDCALC_RUNTIME_ENVIRONMENT: "production" },
-}));
-vi.mock("$env/static/public", () => ({
-	PUBLIC_SUPABASE_PUBLISHABLE_KEY: "publishable-key",
-	PUBLIC_SUPABASE_URL: "https://example.supabase.co",
-}));
+vi.mock("$app/env", () => ({ dev: true }));
+vi.mock("$app/env/private", async (importOriginal) => {
+	const actual = await importOriginal<Record<string, unknown>>();
+	const overrides = { BLENDCALC_RUNTIME_ENVIRONMENT: "production" };
+	return new Proxy(actual, {
+		get(target, key) {
+			return Reflect.has(overrides, key)
+				? Reflect.get(overrides, key)
+				: Reflect.get(target, key);
+		},
+	});
+});
+vi.mock("$app/env/public", async (importOriginal) => {
+	const actual = await importOriginal<Record<string, unknown>>();
+	const overrides = {
+		PUBLIC_SUPABASE_PUBLISHABLE_KEY: "publishable-key",
+		PUBLIC_SUPABASE_URL: "https://example.supabase.co",
+	};
+	return new Proxy(actual, {
+		get(target, key) {
+			return Reflect.has(overrides, key)
+				? Reflect.get(overrides, key)
+				: Reflect.get(target, key);
+		},
+	});
+});
 vi.mock("@supabase/ssr", () => ({ createServerClient }));
 vi.mock("ws", () => ({ default: class WebSocketTransport {} }));
 

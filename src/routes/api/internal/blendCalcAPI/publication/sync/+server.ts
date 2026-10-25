@@ -1,4 +1,4 @@
-import { env } from "$env/dynamic/private";
+import * as env from "$app/env/private";
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
 import { readLimitedJson } from "$lib/server/security/requestBody.server";
 import {

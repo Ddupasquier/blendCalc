@@ -47,6 +47,24 @@ browser authentication runs only against disposable local Supabase and receives 
 explicit empty Turnstile site key unless `npm run dev:test:auth` selects the official
 local test key.
 
+SvelteKit 3 reads the declared application variables from `src/env.ts` through
+`$app/env/public` and `$app/env/private`. Only the four existing `PUBLIC_` keys are
+browser-visible. The Supabase public URL/key remain static build inputs; the other
+application variables remain runtime inputs. Optional variables remain absent until
+their existing consumer requires them. This declaration does not load dotenv files,
+change credentials or synchronize a deployment automatically. SvelteKit's separate
+dotenv loader points at the ignored `.cache/process-only-environment` directory;
+configuration creates this required empty directory and refuses redirected or
+populated paths. Vite's independent loader remains disabled with `envDir: false`.
+Do not put dotenv files or placeholders in this directory.
+
+The SvelteKit 3 compatibility candidate pins `@vercel/analytics` to
+`2.1.0-canary.5` and `@vercel/speed-insights` to `2.1.0-canary`: these published
+versions declare SvelteKit 3 support, while the current stable versions do not.
+They remain prerelease SDKs. Local checks cannot establish hosted ingestion or
+provider-dashboard behavior; those outcomes remain unverified by the local
+compatibility suite.
+
 ### Branches And Auxiliary Worktrees
 
 Run ordinary branches from the primary repository checkout so its ignored environment
@@ -61,6 +79,35 @@ existing target, and never print, copy, move, commit, or broaden access to secre
 Remove those links with the auxiliary checkout after its work is safely integrated.
 
 ## Local Application
+
+### Local temporary files and tool caches
+
+`config/runtimeArtifactPaths.js` owns local artifact paths. Maintained application,
+test, documentation and bounded verification launchers explicitly put `TMPDIR`, `TMP`
+and `TEMP` in the checkout's ignored `.cache/tmp`. npm uses `.cache/npm`, Node's
+compile cache uses `.cache/node-compile`, and browser installation/verification uses
+`.cache/playwright-browsers`. Paths resolve the existing checkout before creation and
+reject symlinked cache directories; a missing checkout has no fallback location.
+Nutrition imports and recovery drills use the same temporary-directory owner.
+Vite excludes `.cache` from watching so generated artifacts do not trigger reloads.
+Hosted CI retains its existing workflow-owned browser installation paths.
+
+These are process-local settings, not machine-wide environment changes or VS Code
+requirements. Existing processes keep their original environment until their normal
+restart. Direct tool invocations outside maintained launchers may use host defaults.
+The npm project configuration applies its cache setting to commands run from this
+checkout. Use `npm run test:e2e:install` to populate its local browser directory when
+browser verification is needed; do not move or delete other projects' shared browsers.
+
+Local server OCR caches language assets under `.cache/tesseract-language-data`.
+Vercel server execution retains its writable operating-system temporary directory;
+it must not attempt to write into its deployed application bundle.
+
+Generated output is not automatically disposable. Local database state under
+`.cache/local-supabase` can be bind-mounted by live containers, and recovery evidence,
+environment links, keys and accepted baselines need their owning retention decision.
+Synthetic test directories must be registered for cleanup immediately after creation,
+including when their assertions fail.
 
 ### Local HTTP headers
 

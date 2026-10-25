@@ -30,7 +30,7 @@ describe("Playwright browser-testing architecture", () => {
 		expect(viteConfig).toContain('name: "dom"');
 		expect(viteConfig).toContain('environment: "jsdom"');
 		expect(viteConfig).toContain('name: "dom-svelte-runtime"');
-		expect(viteConfig).toContain('pool: "vmThreads"');
+		expect(viteConfig).not.toContain('pool: "vmThreads"');
 	});
 
 	it("runs authenticated desktop and mobile projects with isolated parallel workers", () => {

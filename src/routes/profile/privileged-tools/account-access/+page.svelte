@@ -8,7 +8,7 @@
 	let { data, form }: AccountAccessPageProps = $props();
 
 	const closeAction = () => {
-		void goto("/profile/privileged-tools", { replaceState: true });
+		void goto("/profile/privileged-tools", { replace: true });
 	};
 </script>
 

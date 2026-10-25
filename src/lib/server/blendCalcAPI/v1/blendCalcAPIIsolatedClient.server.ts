@@ -1,4 +1,4 @@
-import { env } from "$env/dynamic/private";
+import * as env from "$app/env/private";
 import type { Database as BlendCalcAPIDatabase } from "../../../../../infrastructure/blendCalcAPI/supabase/database.types";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import {

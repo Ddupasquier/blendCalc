@@ -1,14 +1,13 @@
 import { mkdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-
-const SERVER_TESSERACT_CACHE_PATH = join(
-	tmpdir(),
-	"blendcalc",
-	"tesseract-language-data",
-);
+import { localArtifactCacheDirectory } from "../../../../config/runtimeArtifactPaths.js";
 
 export const createServerTesseractWorkerOptions = () => {
-	mkdirSync(SERVER_TESSERACT_CACHE_PATH, { recursive: true });
-	return { cachePath: SERVER_TESSERACT_CACHE_PATH };
+	const cachePath =
+		process.env.VERCEL === "1"
+			? join(tmpdir(), "blendcalc", "tesseract-language-data")
+			: localArtifactCacheDirectory(process.cwd(), "tesseract-language-data");
+	mkdirSync(cachePath, { recursive: true });
+	return { cachePath };
 };

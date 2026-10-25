@@ -4,9 +4,17 @@ const mocks = vi.hoisted(() => ({
 	trackServerAppInteraction: vi.fn(),
 }));
 
-vi.mock("$env/dynamic/public", () => ({
-	env: { PUBLIC_TURNSTILE_SITE_KEY: "test-site-key" },
-}));
+vi.mock("$app/env/public", async (importOriginal) => {
+	const actual = await importOriginal<Record<string, unknown>>();
+	const overrides = { PUBLIC_TURNSTILE_SITE_KEY: "test-site-key" };
+	return new Proxy(actual, {
+		get(target, key) {
+			return Reflect.has(overrides, key)
+				? Reflect.get(overrides, key)
+				: Reflect.get(target, key);
+		},
+	});
+});
 
 vi.mock("$lib/server/analytics/appInteractionTracking.server", () => ({
 	trackServerAppInteraction: mocks.trackServerAppInteraction,

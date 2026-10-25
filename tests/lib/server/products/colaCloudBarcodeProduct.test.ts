@@ -2,9 +2,17 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { lookupColaCloudBarcodeProduct } from "$lib/server/products/sources/colaCloudBarcodeProduct.server";
 import type { ProductReferenceCatalog } from "$lib/utils/food/reference/productReferenceCatalog";
 
-vi.mock("$env/dynamic/private", () => ({
-	env: { BLENDCALC_RUNTIME_ENVIRONMENT: "production" },
-}));
+vi.mock("$app/env/private", async (importOriginal) => {
+	const actual = await importOriginal<Record<string, unknown>>();
+	const overrides = { BLENDCALC_RUNTIME_ENVIRONMENT: "production" };
+	return new Proxy(actual, {
+		get(target, key) {
+			return Reflect.has(overrides, key)
+				? Reflect.get(overrides, key)
+				: Reflect.get(target, key);
+		},
+	});
+});
 
 vi.mock("$lib/server/products/sourceMetrics.server", () => ({
 	createProductSourceRequestTrace: () => ({

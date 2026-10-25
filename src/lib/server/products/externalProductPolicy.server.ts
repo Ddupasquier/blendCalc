@@ -1,4 +1,4 @@
-import { env } from "$env/dynamic/private";
+import * as env from "$app/env/private";
 import {
 	readBlendCalcRuntimeEnvironment,
 	type BlendCalcRuntimeEnvironment,

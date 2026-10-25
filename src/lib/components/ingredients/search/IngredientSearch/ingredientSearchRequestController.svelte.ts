@@ -1,4 +1,4 @@
-import { browser } from "$app/environment";
+import { browser } from "$app/env";
 import { getUserFacingErrorMessage } from "$lib/utils/errors/userFacingErrors";
 import { searchFoodPage } from "$lib/utils/food/sources/fdc";
 import type { FoodItem } from "$lib/utils/food/types";
