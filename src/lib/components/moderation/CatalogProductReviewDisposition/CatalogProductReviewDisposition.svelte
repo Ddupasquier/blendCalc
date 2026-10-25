@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
-	import type { SubmitFunction } from "@sveltejs/kit";
+	import type { SubmitFunction } from "$app/forms";
 	import ActionButton from "$lib/components/common/buttons/ActionButton/ActionButton.svelte";
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import TextField from "$lib/components/common/forms/TextField/TextField.svelte";

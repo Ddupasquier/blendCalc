@@ -1,4 +1,4 @@
-import { env } from "$env/dynamic/private";
+import * as env from "$app/env/private";
 import { normalizeFdcFood } from "$lib/utils/food/sources/fdc";
 import type { FoodItem, FdcSearchResponse } from "$lib/utils/food/types";
 import {

@@ -27,6 +27,13 @@ const createRepository = async () => {
 	const repositoryRoot = await mkdtemp(join(tmpdir(), "blendcalc-release-"));
 	temporaryRepositories.push(repositoryRoot);
 	runGit(repositoryRoot, ["init", "--quiet"]);
+	// Disposable synthetic repositories must not inherit workstation delivery hooks.
+	// This changes only this fixture's local Git configuration.
+	runGit(repositoryRoot, [
+		"config",
+		"core.hooksPath",
+		join(repositoryRoot, ".git", "fixture-hooks"),
+	]);
 	runGit(repositoryRoot, [
 		"config",
 		"user.email",

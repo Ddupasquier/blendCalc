@@ -1,4 +1,4 @@
-import { env } from "$env/dynamic/private";
+import * as env from "$app/env/private";
 import type { Json } from "$lib/types/database.types";
 import {
 	APP_INTERACTION_METRICS,
@@ -7,8 +7,7 @@ import {
 } from "$lib/utils/analytics/appInteractionMetrics";
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
 
-const VERCEL_ANALYTICS_API =
-	"https://api.vercel.com/v1/query/web-analytics";
+const VERCEL_ANALYTICS_API = "https://api.vercel.com/v1/query/web-analytics";
 const DEFAULT_LOOKBACK_DAYS = 3;
 const MAX_LOOKBACK_DAYS = 31;
 const REQUEST_TIMEOUT_MS = 10_000;
@@ -75,25 +74,14 @@ const enumerateDates = (since: string, until: string) => {
 	return dates;
 };
 
-const readNonNegativeInteger = (
-	value: unknown,
-	fieldName: string,
-): number => {
-	if (
-		typeof value !== "number" ||
-		!Number.isSafeInteger(value) ||
-		value < 0
-	) {
+const readNonNegativeInteger = (value: unknown, fieldName: string): number => {
+	if (typeof value !== "number" || !Number.isSafeInteger(value) || value < 0) {
 		throw new Error(`Vercel returned an invalid ${fieldName}.`);
 	}
 	return value;
 };
 
-const readMetricDate = (
-	value: unknown,
-	since: string,
-	until: string,
-) => {
+const readMetricDate = (value: unknown, since: string, until: string) => {
 	if (typeof value !== "string") {
 		throw new Error("Vercel returned an invalid aggregate timestamp.");
 	}
@@ -103,7 +91,9 @@ const readMetricDate = (
 		metricDate < since ||
 		metricDate > until
 	) {
-		throw new Error("Vercel returned an aggregate outside the requested range.");
+		throw new Error(
+			"Vercel returned an aggregate outside the requested range.",
+		);
 	}
 	return metricDate;
 };
@@ -369,8 +359,7 @@ export const syncVercelInteractionMetrics = async (
 	dependencies: VercelInteractionMetricsDependencies = {},
 ) => {
 	const configuration =
-		dependencies.configuration ??
-		getVercelInteractionMetricsConfiguration();
+		dependencies.configuration ?? getVercelInteractionMetricsConfiguration();
 	const fetchImpl = dependencies.fetchImpl ?? fetch;
 	const now = dependencies.now ?? new Date();
 	const sleep =
@@ -408,11 +397,7 @@ export const syncVercelInteractionMetrics = async (
 
 	const [dailyVisits, dailyRoutes, dailyEvents] = await Promise.all([
 		queryAggregate("visits", ["day"], "environment eq 'production'"),
-		queryAggregate(
-			"visits",
-			["day", "route"],
-			"environment eq 'production'",
-		),
+		queryAggregate("visits", ["day", "route"], "environment eq 'production'"),
 		queryAggregate("events", ["day", "eventName"], eventFilter),
 	]);
 	const rows = buildVercelInteractionMetricRows({

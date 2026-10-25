@@ -1,3 +1,4 @@
+import type { ReadonlyURL } from "$app/state";
 import { getActiveShallowRouteHref } from "$lib/utils/navigation/shallowRouteState";
 
 export const MIX_ROUTE_OVERLAYS = {
@@ -10,8 +11,8 @@ export const MIX_ROUTE_OVERLAYS = {
 	resetAll: "reset-all",
 	warningDetails: "warning-details",
 	conversionDetails: "conversion-details",
-  saveGoalPreset: "save-goal-preset",
-  deleteGoalPreset: "delete-goal-preset",
+	saveGoalPreset: "save-goal-preset",
+	deleteGoalPreset: "delete-goal-preset",
 } as const;
 
 export type MixRouteOverlay =
@@ -21,7 +22,7 @@ export type MixRouteState = {
 	overlay: MixRouteOverlay | null;
 	foodId: number | null;
 	warningId: string | null;
-  goalTemplateId: string | null;
+	goalTemplateId: string | null;
 };
 
 export type MixRouteTarget =
@@ -40,18 +41,18 @@ export type MixRouteTarget =
 	| {
 			overlay: typeof MIX_ROUTE_OVERLAYS.conversionDetails;
 			foodId: number;
-    }
-  | { overlay: typeof MIX_ROUTE_OVERLAYS.saveGoalPreset }
-  | {
-      overlay: typeof MIX_ROUTE_OVERLAYS.deleteGoalPreset;
-      goalTemplateId: string;
+	  }
+	| { overlay: typeof MIX_ROUTE_OVERLAYS.saveGoalPreset }
+	| {
+			overlay: typeof MIX_ROUTE_OVERLAYS.deleteGoalPreset;
+			goalTemplateId: string;
 	  };
 
 const EMPTY_MIX_ROUTE_STATE: MixRouteState = {
 	overlay: null,
 	foodId: null,
 	warningId: null,
-  goalTemplateId: null,
+	goalTemplateId: null,
 };
 
 const parseFoodId = (value: string | undefined) => {
@@ -66,16 +67,23 @@ const getSegments = (pathname: string) =>
 		.filter(Boolean)
 		.map((segment) => decodeURIComponent(segment));
 
-export const getActiveMixRouteHref = (url: URL, shallowRouteHref?: string) =>
-	getActiveShallowRouteHref(url, shallowRouteHref);
+export const getActiveMixRouteHref = (
+	url: ReadonlyURL,
+	shallowRouteHref?: string,
+) => getActiveShallowRouteHref(url, shallowRouteHref);
 
-export const getActiveMixRouteState = (url: URL, shallowRouteHref?: string) =>
-  getMixRouteState(new URL(getActiveMixRouteHref(url, shallowRouteHref), url));
+export const getActiveMixRouteState = (
+	url: ReadonlyURL,
+	shallowRouteHref?: string,
+) =>
+	getMixRouteState(
+		new URL(getActiveMixRouteHref(url, shallowRouteHref), url.href),
+	);
 
-export const getMixRouteState = (url: URL): MixRouteState => {
-  const segments = getSegments(url.pathname);
-  const [root, first, second, third, fourth] = segments;
-  if (root !== "mix") return EMPTY_MIX_ROUTE_STATE;
+export const getMixRouteState = (url: ReadonlyURL): MixRouteState => {
+	const segments = getSegments(url.pathname);
+	const [root, first, second, third, fourth] = segments;
+	if (root !== "mix") return EMPTY_MIX_ROUTE_STATE;
 	if (first === undefined) return EMPTY_MIX_ROUTE_STATE;
 	if (first === MIX_ROUTE_OVERLAYS.options && second === undefined) {
 		return { ...EMPTY_MIX_ROUTE_STATE, overlay: MIX_ROUTE_OVERLAYS.options };
@@ -86,7 +94,7 @@ export const getMixRouteState = (url: URL): MixRouteState => {
 			overlay: MIX_ROUTE_OVERLAYS.reorganize,
 		};
 	}
-  if (first === "ingredients" && second === "filters" && third === undefined) {
+	if (first === "ingredients" && second === "filters" && third === undefined) {
 		return {
 			...EMPTY_MIX_ROUTE_STATE,
 			overlay: MIX_ROUTE_OVERLAYS.ingredientFilters,
@@ -126,8 +134,8 @@ export const getMixRouteState = (url: URL): MixRouteState => {
 	if (
 		first === "ingredients" &&
 		parseFoodId(second) !== null &&
-    third === MIX_ROUTE_OVERLAYS.conversionDetails &&
-    segments.length === 4
+		third === MIX_ROUTE_OVERLAYS.conversionDetails &&
+		segments.length === 4
 	) {
 		return {
 			...EMPTY_MIX_ROUTE_STATE,
@@ -135,36 +143,36 @@ export const getMixRouteState = (url: URL): MixRouteState => {
 			foodId: parseFoodId(second),
 		};
 	}
-  if (
-    first === "goals" &&
-    second === "presets" &&
-    third === "save" &&
-    segments.length === 4
-  ) {
-    return {
-      ...EMPTY_MIX_ROUTE_STATE,
-      overlay: MIX_ROUTE_OVERLAYS.saveGoalPreset,
-    };
-  }
-  if (
-    first === "goals" &&
-    second === "presets" &&
-    third &&
-    fourth === "delete" &&
-    segments.length === 5
-  ) {
-    return {
-      ...EMPTY_MIX_ROUTE_STATE,
-      overlay: MIX_ROUTE_OVERLAYS.deleteGoalPreset,
-      goalTemplateId: third,
-    };
-  }
+	if (
+		first === "goals" &&
+		second === "presets" &&
+		third === "save" &&
+		segments.length === 4
+	) {
+		return {
+			...EMPTY_MIX_ROUTE_STATE,
+			overlay: MIX_ROUTE_OVERLAYS.saveGoalPreset,
+		};
+	}
+	if (
+		first === "goals" &&
+		second === "presets" &&
+		third &&
+		fourth === "delete" &&
+		segments.length === 5
+	) {
+		return {
+			...EMPTY_MIX_ROUTE_STATE,
+			overlay: MIX_ROUTE_OVERLAYS.deleteGoalPreset,
+			goalTemplateId: third,
+		};
+	}
 
 	return EMPTY_MIX_ROUTE_STATE;
 };
 
-export const buildMixRouteHref = (url: URL, target: MixRouteTarget) => {
-	const nextUrl = new URL(url);
+export const buildMixRouteHref = (url: ReadonlyURL, target: MixRouteTarget) => {
+	const nextUrl = new URL(url.href);
 
 	switch (target.overlay) {
 		case null:
@@ -187,19 +195,19 @@ export const buildMixRouteHref = (url: URL, target: MixRouteTarget) => {
 		case MIX_ROUTE_OVERLAYS.conversionDetails:
 			nextUrl.pathname = `/mix/ingredients/${target.foodId}/${MIX_ROUTE_OVERLAYS.conversionDetails}`;
 			break;
-    case MIX_ROUTE_OVERLAYS.saveGoalPreset:
-      nextUrl.pathname = "/mix/goals/presets/save";
-      break;
-    case MIX_ROUTE_OVERLAYS.deleteGoalPreset:
-      nextUrl.pathname = `/mix/goals/presets/${encodeURIComponent(target.goalTemplateId)}/delete`;
-      break;
+		case MIX_ROUTE_OVERLAYS.saveGoalPreset:
+			nextUrl.pathname = "/mix/goals/presets/save";
+			break;
+		case MIX_ROUTE_OVERLAYS.deleteGoalPreset:
+			nextUrl.pathname = `/mix/goals/presets/${encodeURIComponent(target.goalTemplateId)}/delete`;
+			break;
 	}
 
 	const query = nextUrl.searchParams.toString();
 	return `${nextUrl.pathname}${query ? `?${query}` : ""}${nextUrl.hash}`;
 };
 
-export const getMixRouteTitle = (url: URL) => {
+export const getMixRouteTitle = (url: ReadonlyURL) => {
 	const state = getMixRouteState(url);
 	switch (state.overlay) {
 		case MIX_ROUTE_OVERLAYS.options:
@@ -220,10 +228,10 @@ export const getMixRouteTitle = (url: URL) => {
 			return "Mix Warning Details";
 		case MIX_ROUTE_OVERLAYS.conversionDetails:
 			return "Serving Conversion Details";
-    case MIX_ROUTE_OVERLAYS.saveGoalPreset:
-      return "Save Goal Preset";
-    case MIX_ROUTE_OVERLAYS.deleteGoalPreset:
-      return "Delete Goal Preset";
+		case MIX_ROUTE_OVERLAYS.saveGoalPreset:
+			return "Save Goal Preset";
+		case MIX_ROUTE_OVERLAYS.deleteGoalPreset:
+			return "Delete Goal Preset";
 		default:
 			return "Mix";
 	}

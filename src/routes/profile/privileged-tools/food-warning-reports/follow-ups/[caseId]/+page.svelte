@@ -12,7 +12,7 @@
 	);
 	const closeAction = () => {
 		void goto("/profile/privileged-tools/food-warning-reports", {
-			replaceState: true,
+			replace: true,
 		});
 	};
 </script>

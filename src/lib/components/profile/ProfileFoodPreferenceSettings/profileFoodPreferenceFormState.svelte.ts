@@ -1,4 +1,4 @@
-import { browser } from "$app/environment";
+import { browser } from "$app/env";
 import type { FoodPreferenceOptionSets } from "$lib/utils/profile/foodPreferenceOptions";
 import type { FoodPreferenceProfile } from "$lib/utils/profile/foodPreferenceProfile";
 import {

@@ -334,6 +334,14 @@ describe("owned local Supabase workdirs", () => {
 	it("uses the primary repository root across an auxiliary checkout", () => {
 		const { root } = fixture();
 		execFileSync("git", ["init", "--quiet", root]);
+		// Keep workstation delivery hooks out of this disposable Git fixture only.
+		execFileSync("git", [
+			"-C",
+			root,
+			"config",
+			"core.hooksPath",
+			join(root, ".git", "fixture-hooks"),
+		]);
 		execFileSync(
 			"git",
 			[

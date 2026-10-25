@@ -1,4 +1,4 @@
-import { env } from "$env/dynamic/private";
+import * as env from "$app/env/private";
 import type { CloudDataContext } from "$lib/utils/storage/supabase/shared";
 import type { AdEligibility } from "$lib/utils/advertising/adPolicy";
 import type { AdvertisingConfiguration } from "$lib/utils/advertising/advertisingConfiguration";

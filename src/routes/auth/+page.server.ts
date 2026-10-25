@@ -25,7 +25,7 @@ import {
 	getLocalQaSignInCredentials,
 	getLocalQaSignInPageData,
 } from "$lib/server/auth/localQaSignIn.server";
-import { env as publicEnvironment } from "$env/dynamic/public";
+import * as publicEnvironment from "$app/env/public";
 import { completeAutomaticLocalQaMfa } from "$lib/server/auth/automaticLocalQaMfa.server";
 import { MARKETING_EMAIL_CONSENT_COPY_VERSION } from "$lib/utils/email/marketingEmailPreferences";
 
@@ -111,7 +111,11 @@ const redirectToCanonicalAuthPage = (
 	next: string,
 ) => {
 	const canonicalUrl = getCanonicalAuthPageUrl(request, url, next);
-	if (canonicalUrl) throw redirect(303, canonicalUrl);
+	if (canonicalUrl) {
+		throw redirect(303, canonicalUrl, {
+			external: [new URL(canonicalUrl).origin],
+		});
+	}
 };
 
 const addNextToCallbackUrl = (callbackUrl: string, next: string) => {
@@ -426,6 +430,8 @@ export const actions: Actions = {
 			});
 		}
 
-		throw redirect(303, data.url);
+		throw redirect(303, data.url, {
+			external: [new URL(publicEnvironment.PUBLIC_SUPABASE_URL).origin],
+		});
 	},
 };

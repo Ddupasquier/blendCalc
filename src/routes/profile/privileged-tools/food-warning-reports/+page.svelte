@@ -20,7 +20,7 @@
 	const totalWorkCount = $derived(totals.reports + followUpCount);
 
 	const closeAction = () => {
-		void goto("/profile/privileged-tools", { replaceState: true });
+		void goto("/profile/privileged-tools", { replace: true });
 	};
 </script>
 

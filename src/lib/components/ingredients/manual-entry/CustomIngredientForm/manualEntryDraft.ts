@@ -1,4 +1,4 @@
-import { browser } from "$app/environment";
+import { browser } from "$app/env";
 import { manualEntrySteps } from "$lib/components/ingredients/manual-entry/formTypes";
 import type { ManualEntryFormResetState } from "$lib/components/ingredients/manual-entry/utils/formState";
 import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";

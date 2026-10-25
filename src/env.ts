@@ -1,0 +1,45 @@
+import { defineEnvVars } from "@sveltejs/kit/env";
+
+const optionalString = (value: string | undefined) => value;
+
+export const variables = defineEnvVars({
+	API_ALERT_EMAIL_FROM: { schema: optionalString },
+	API_ALERT_EMAIL_TO: { schema: optionalString },
+	BLENDCALC_ADVERTISING_APPROVED: { schema: optionalString },
+	BLENDCALC_ADVERTISING_MODE: { schema: optionalString },
+	BLENDCALC_API_READ_MODE: { schema: optionalString },
+	BLENDCALC_API_SUPABASE_SERVICE_ROLE_KEY: { schema: optionalString },
+	BLENDCALC_API_SUPABASE_URL: { schema: optionalString },
+	BLENDCALC_RUNTIME_ENVIRONMENT: { schema: optionalString },
+	BLENDCALC_TEST_ACCOUNTS_BASE64: { schema: optionalString },
+	BLENDCALC_TEST_ACCOUNT_PASSWORD: { schema: optionalString },
+	COLA_CLOUD_API_KEY: { schema: optionalString },
+	CRON_SECRET: { schema: optionalString },
+	FDA_RECALL_PROXY_SECRET: { schema: optionalString },
+	FDC_API_KEY: { schema: optionalString },
+	MODERATION_EMAIL_FROM: { schema: optionalString },
+	MODERATION_SUPPORT_EMAIL: { schema: optionalString },
+	NODE_ENV: { schema: optionalString },
+	PUBLIC_SITE_URL: { public: true, schema: optionalString },
+	PUBLIC_SUPABASE_PUBLISHABLE_KEY: {
+		public: true,
+		static: true,
+		schema: (value: string | undefined) => value ?? "",
+	},
+	PUBLIC_SUPABASE_URL: {
+		public: true,
+		static: true,
+		schema: (value: string | undefined) => value ?? "",
+	},
+	PUBLIC_TURNSTILE_SITE_KEY: { public: true, schema: optionalString },
+	RESEND_API_KEY: { schema: optionalString },
+	SUPABASE_SERVICE_ROLE_KEY: { schema: optionalString },
+	VERCEL_ANALYTICS_ACCESS_TOKEN: { schema: optionalString },
+	VERCEL_ANALYTICS_SYNC_LOOKBACK_DAYS: { schema: optionalString },
+	VERCEL_BRANCH_URL: { schema: optionalString },
+	VERCEL_ENV: { schema: optionalString },
+	VERCEL_PROJECT_ID: { schema: optionalString },
+	VERCEL_PROJECT_PRODUCTION_URL: { schema: optionalString },
+	VERCEL_TEAM_ID: { schema: optionalString },
+	VERCEL_URL: { schema: optionalString },
+});

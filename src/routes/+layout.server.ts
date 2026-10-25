@@ -3,7 +3,7 @@ import {
 	readAdvertisingEligibility,
 } from "$lib/server/advertising/advertising.server";
 import { redirect } from "@sveltejs/kit";
-import { dev } from "$app/environment";
+import { dev } from "$app/env";
 import type { LayoutServerLoad } from "./$types";
 import { getPasswordUpgradeNext } from "$lib/utils/auth/passwordUpgrade";
 import { getSignedAvatarUrl, getUserProfile } from "$lib/utils/profile/profile";

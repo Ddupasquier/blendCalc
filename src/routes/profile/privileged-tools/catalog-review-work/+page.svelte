@@ -10,7 +10,7 @@
 	let scrollContainer = $state<HTMLElement | null>(null);
 	let currentPage = $state(untrack(() => data.productsPage));
 	const closeAction = () => {
-		void goto("/profile/privileged-tools", { replaceState: true });
+		void goto("/profile/privileged-tools", { replace: true });
 	};
 	const actionCount = $derived(
 		currentPage.counts.safetyMatches +

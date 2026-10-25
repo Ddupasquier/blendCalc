@@ -25,7 +25,17 @@ const mocks = vi.hoisted(() => {
 	};
 });
 
-vi.mock("$env/dynamic/private", () => ({ env: {} }));
+vi.mock("$app/env/private", async (importOriginal) => {
+	const actual = await importOriginal<Record<string, unknown>>();
+	const overrides = {};
+	return new Proxy(actual, {
+		get(target, key) {
+			return Reflect.has(overrides, key)
+				? Reflect.get(overrides, key)
+				: Reflect.get(target, key);
+		},
+	});
+});
 vi.mock("$lib/config/version", () => ({
 	APP_BUILD_VERSION: "1.0.0+test",
 	APP_VERSION: "1.0.0",
@@ -73,9 +83,48 @@ vi.mock("$lib/utils/theme/themePreference", () => ({
 	normalizeThemePreference: () => "system",
 }));
 
-import { handle } from "../../src/hooks.server";
+import { handle, handleError } from "../../src/hooks.server";
 
 const API_PATH = "/api/v1/categories";
+
+describe("framework error hook compatibility", () => {
+	it.each(["app", "framework", "validation"])(
+		"preserves safe %s error defaults without logging",
+		async (kind) => {
+			const log = vi.spyOn(console, "error").mockImplementation(() => {});
+			try {
+				expect(
+					await handleError({
+						kind,
+						error: { status: 403, message: "Access denied" },
+					} as never),
+				).toBeUndefined();
+				expect(log).not.toHaveBeenCalled();
+			} finally {
+				log.mockRestore();
+			}
+		},
+	);
+	it("redacts unexpected error details and returns the existing friendly error", async () => {
+		const log = vi.spyOn(console, "error").mockImplementation(() => {});
+		try {
+			const result = await handleError({
+				kind: "unknown",
+				error: new Error("private diagnostic canary"),
+				event: {
+					request: { method: "GET" },
+					url: new URL("http://localhost/demo"),
+				},
+			} as never);
+			expect(result).toMatchObject({ code: "UNEXPECTED_ERROR" });
+			expect(JSON.stringify(log.mock.calls)).not.toContain(
+				"private diagnostic canary",
+			);
+		} finally {
+			log.mockRestore();
+		}
+	});
+});
 
 const createEvent = (pathname = API_PATH) => {
 	const url = new URL(`http://localhost${pathname}`);

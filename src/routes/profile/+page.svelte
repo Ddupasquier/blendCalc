@@ -118,9 +118,8 @@
 
 	const closeSettingsRouteAfterSave = () => {
 		void goto("/profile", {
-			keepFocus: true,
-			noScroll: true,
-			replaceState: true,
+			reset: false,
+			replace: true,
 		});
 	};
 </script>
