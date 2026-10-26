@@ -4,20 +4,23 @@ import { describe, expect, it } from "vitest";
 const packageMetadata = JSON.parse(readFileSync("package.json", "utf8")) as {
 	dependencies?: Record<string, string>;
 };
-const appLayout = readFileSync("src/routes/+layout.svelte", "utf8");
+const appLayout = readFileSync(
+	"src/lib/utils/analytics/vercelObservability.ts",
+	"utf8",
+);
 
 describe("Vercel Speed Insights", () => {
 	it("uses the supported SvelteKit integration in production", () => {
 		expect(
 			packageMetadata.dependencies?.["@vercel/speed-insights"],
 		).toBeDefined();
+		expect(appLayout).toContain('import("@vercel/speed-insights/sveltekit")');
 		expect(appLayout).toContain(
-			'import { injectSpeedInsights } from "@vercel/speed-insights/sveltekit";',
+			"isApprovedObservabilityHostname(target.location.hostname)",
 		);
 		expect(appLayout).toContain(
-			"isApprovedObservabilityHostname(window.location.hostname)",
+			"dev || !isApprovedObservabilityHostname(target.location.hostname)",
 		);
-		expect(appLayout).toContain("if (!dev && isVercelObservabilityAvailable)");
 		expect(appLayout).toContain("injectSpeedInsights({");
 	});
 

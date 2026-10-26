@@ -367,6 +367,13 @@ const main = async () => {
 							).bio,
 					)
 					.toBe("Disposable application proof");
+				// The database write precedes enhanced-form invalidation and the
+				// settings route's return navigation. Observe that completion before
+				// starting another navigation, which would cancel its data request.
+				await expect(page).toHaveURL(new URL("/profile", applicationUrl).href);
+				await expect(
+					page.getByRole("heading", { name: "Your profile" }),
+				).toBeVisible();
 				await navigate("/profile");
 				await page.reload();
 				await page.waitForFunction(
