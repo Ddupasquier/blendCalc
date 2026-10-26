@@ -50,6 +50,7 @@
 	import {
 		buildIngredientRouteHref,
 		findIngredientRouteFood,
+		getActiveIngredientRouteHref,
 		getActiveIngredientRouteState,
 		getActiveIngredientRouteUrl,
 		getBarcodeScannerCloseRoutePatch,
@@ -140,6 +141,9 @@
 		FOOD_SAFETY_FILTER_VALUES.all,
 	);
 	let listSort = $state<FoodListSort>("recent");
+	const activeIngredientRouteHref = $derived(
+		getActiveIngredientRouteHref(page.url, page.state.ingredientRouteHref),
+	);
 	const activeIngredientRouteUrl = $derived(
 		getActiveIngredientRouteUrl(page.url, page.state.ingredientRouteHref),
 	);
@@ -211,9 +215,7 @@
 	) => {
 		const currentUrl = new URL(window.location.href);
 		const href = buildIngredientRouteHref(currentUrl, patch);
-		// Consecutive close callbacks can run before reactive page state catches up.
-		if (href === `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`)
-			return;
+		if (href === activeIngredientRouteHref) return;
 
 		navigateShallowRoute({
 			href,
@@ -535,8 +537,7 @@
 	};
 
 	const closeMoveConfirmation = () => {
-		const currentRoute = getIngredientRouteState(new URL(window.location.href));
-		if (currentRoute.modal !== INGREDIENT_ROUTE_MODALS.moveIngredient) {
+		if (ingredientRouteState.modal !== INGREDIENT_ROUTE_MODALS.moveIngredient) {
 			return;
 		}
 		void navigateIngredientRoute({
