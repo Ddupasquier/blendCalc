@@ -46,6 +46,7 @@ test(
 				(
 					await page.request.delete(
 						`/api/user-food-lists/shopping-list?foodId=${food.fdcId}`,
+						{ headers: { origin: new URL(page.url()).origin } },
 					)
 				).ok(),
 			).toBeTruthy();

@@ -714,8 +714,9 @@ test("placement controls update the exact card preview within safe movement boun
 		.toBeGreaterThan(0);
 	await expectPaintedMediaContainment(preview);
 
-	const restoreButton = placementEditor.getByRole("button", {
-		name: "Restore default",
+	const restoreButton = nutritionDetails.getByRole("button", {
+		name: "Reset to shared image",
+		exact: true,
 	});
 	const shiftSlider = placementEditor.getByRole("slider", {
 		name: "Shift image left",
@@ -727,6 +728,12 @@ test("placement controls update the exact card preview within safe movement boun
 		name: "Image zoom",
 	});
 	await restoreButton.click();
+	await expect(
+		nutritionDetails.getByText("Reset to the shared image.", { exact: true }),
+	).toBeVisible();
+	await placementEditor
+		.getByRole("button", { name: "Full image", exact: true })
+		.click();
 	await expect(shiftSlider).toBeEnabled();
 	await expect(verticalSlider).toBeDisabled();
 	await expect(zoomSlider).toBeEnabled();

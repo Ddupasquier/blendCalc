@@ -82,16 +82,19 @@ test(
 		await expect(page).toHaveURL(/\/\?next=%2Fingredients%2Ffridge$/);
 		await expect(
 			page.getByRole("heading", {
-				name: "Know more about the food you use.",
+				name: "What’s in the food you make?",
 			}),
 		).toBeVisible();
 		await expect(
 			page.getByText(
-				"Organize food, compare nutrition, and review available recall, allergen, and dietary information in one place.",
+				"A food label tells you about one ingredient. blendCalc helps you see the whole recipe. Add what you use, adjust the amounts, and see the calories, protein, and other nutrients without adding it all up yourself.",
 			),
 		).toBeVisible();
 		await expect(
-			page.getByRole("link", { name: /Sign in to start building/ }),
+			page.getByRole("link", {
+				name: "Sign in or create an account",
+				exact: true,
+			}),
 		).toHaveAttribute("href", "/auth?next=%2Fingredients%2Ffridge");
 	},
 );
