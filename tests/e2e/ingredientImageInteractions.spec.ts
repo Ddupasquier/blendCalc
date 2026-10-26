@@ -731,6 +731,9 @@ test("placement controls update the exact card preview within safe movement boun
 	await expect(
 		nutritionDetails.getByText("Reset to the shared image.", { exact: true }),
 	).toBeVisible();
+	await placementEditor
+		.getByRole("button", { name: "Full image", exact: true })
+		.click();
 	await expect(shiftSlider).toBeEnabled();
 	await expect(verticalSlider).toBeDisabled();
 	await expect(zoomSlider).toBeEnabled();

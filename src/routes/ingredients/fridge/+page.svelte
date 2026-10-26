@@ -537,7 +537,8 @@
 	};
 
 	const closeMoveConfirmation = () => {
-		if (ingredientRouteState.modal !== INGREDIENT_ROUTE_MODALS.moveIngredient) {
+		const currentRoute = getIngredientRouteState(new URL(window.location.href));
+		if (currentRoute.modal !== INGREDIENT_ROUTE_MODALS.moveIngredient) {
 			return;
 		}
 		void navigateIngredientRoute({
