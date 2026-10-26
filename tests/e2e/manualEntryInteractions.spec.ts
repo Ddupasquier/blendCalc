@@ -460,8 +460,12 @@ test("manual entry shows duplicate and move actions for the selected list", asyn
 					? moveResult.code
 					: null,
 		}).toEqual({ status: 200, count: 1, errorCode: null });
-		await expect(dialog).not.toBeVisible();
-		await expect(page).toHaveURL(/\/ingredients\/fridge$/);
+		await expect
+			.poll(async () => ({
+				pathname: new URL(page.url()).pathname,
+				dialogVisible: await dialog.isVisible(),
+			}))
+			.toEqual({ pathname: "/ingredients/fridge", dialogVisible: false });
 
 		const supabase = await getAuthenticatedLocalQaDatabaseClient(
 			testInfo.parallelIndex,
