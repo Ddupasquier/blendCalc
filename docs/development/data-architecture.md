@@ -610,7 +610,13 @@ Vercel Web Analytics owns anonymous page-view collection and the explicitly regi
 `auth_login_success`, `auth_logout_success`, and `page_reload` events. Application code
 sends only the stable event name; it does not attach email addresses, user ids, product
 identifiers, search terms, or free-form properties. Analytics and Speed Insights strip
-query strings and URL hashes before sending page URLs.
+query strings and URL hashes before sending page URLs. The root layout loads both
+optional SDKs asynchronously only after mounting on an approved production hostname;
+SSR, development and other hosts do not load them. App-owned timing listeners start
+synchronously, queue at most 32 coarse events while loading, and release listeners,
+observers and queued events on unmount. A rejected or late SDK load cannot block app
+startup or initialize reporting after disposal. Provider-owned route subscriptions
+remain within the pinned SDK integration; no polling or automatic retry is added.
 
 The authenticated Ingredients layout server-renders only the requested Fridge or
 Shopping List page, the opposite list count, route-target food, and current food-safety

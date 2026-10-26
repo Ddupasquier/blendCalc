@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onDestroy, onMount } from "svelte";
+	import { onDestroy, onMount, tick } from "svelte";
 	import {
 		SERVING_MEASURE_OPTIONS,
 		type ServingMeasureUnit,
@@ -276,6 +276,10 @@
 				);
 				return;
 			}
+			preflightMovePrompt = null;
+			preflightMoveBusy = false;
+			// Finish confirmation-route cleanup before closing the containing sheet.
+			await tick();
 			onClose?.();
 		} finally {
 			preflightMoveBusy = false;

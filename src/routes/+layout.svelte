@@ -37,106 +37,10 @@
 	import { configureServingMeasureCatalog } from "$lib/utils/serving/servingMeasureCatalog";
 	import { configureNutritionCompletenessCatalog } from "$lib/utils/food/quality/nutritionCompletenessCatalog";
 	import { configureAppReferenceCatalog } from "$lib/utils/food/reference/appReferenceCatalog";
-	import { injectAnalytics } from "@vercel/analytics/sveltekit";
-	import { track } from "@vercel/analytics/sveltekit";
-	import { injectSpeedInsights } from "@vercel/speed-insights/sveltekit";
-	import { APP_INTERACTION_METRICS } from "$lib/utils/analytics/appInteractionMetrics";
-	import {
-		APP_PERFORMANCE_METRIC,
-		APP_PERFORMANCE_TIMING_EVENT,
-		getPerformanceDurationBucket,
-		getPerformanceRouteGroup,
-		isApprovedObservabilityHostname,
-		reportAppPerformanceTiming,
-		SLOW_INTERACTION_THRESHOLD_MS,
-		type AppPerformanceTimingDetail,
-	} from "$lib/utils/analytics/performanceObservability";
+	import { mountVercelObservability } from "$lib/utils/analytics/vercelObservability";
 	import type { AppLayoutProps } from "./types";
 
-	const redactObservabilityUrl = <Event extends { url: string }>(
-		event: Event,
-	): Event => {
-		const url = new URL(event.url);
-		url.search = "";
-		url.hash = "";
-		return { ...event, url: url.toString() };
-	};
-	const isVercelObservabilityAvailable =
-		browser && isApprovedObservabilityHostname(window.location.hostname);
-
-	if (!dev && isVercelObservabilityAvailable) {
-		injectAnalytics({
-			mode: "production",
-			debug: false,
-			beforeSend: redactObservabilityUrl,
-		});
-		injectSpeedInsights({
-			debug: false,
-			beforeSend: redactObservabilityUrl,
-		});
-	}
-
-	onMount(() => {
-		if (dev || !isVercelObservabilityAvailable) {
-			reportAppPerformanceTiming("hydration", performance.now());
-			return;
-		}
-		const trackPerformanceTiming = ({
-			name,
-			durationMilliseconds,
-		}: AppPerformanceTimingDetail) => {
-			track(APP_PERFORMANCE_METRIC, {
-				phase: name,
-				durationBucket: getPerformanceDurationBucket(durationMilliseconds),
-				routeGroup: getPerformanceRouteGroup(window.location.pathname),
-			});
-		};
-		const handlePerformanceTiming = (event: Event) => {
-			trackPerformanceTiming(
-				(event as CustomEvent<AppPerformanceTimingDetail>).detail,
-			);
-		};
-		window.addEventListener(
-			APP_PERFORMANCE_TIMING_EVENT,
-			handlePerformanceTiming,
-		);
-		reportAppPerformanceTiming("hydration", performance.now());
-
-		let reportedSlowInteraction = false;
-		const interactionObserver =
-			typeof PerformanceObserver !== "undefined" &&
-			PerformanceObserver.supportedEntryTypes.includes("event")
-				? new PerformanceObserver((list) => {
-						if (reportedSlowInteraction) return;
-						const slowInteraction = list
-							.getEntries()
-							.find((entry) => entry.duration >= SLOW_INTERACTION_THRESHOLD_MS);
-						if (!slowInteraction) return;
-						reportedSlowInteraction = true;
-						trackPerformanceTiming({
-							name: "slow_interaction",
-							durationMilliseconds: slowInteraction.duration,
-						});
-					})
-				: null;
-		interactionObserver?.observe({
-			type: "event",
-			buffered: true,
-		});
-
-		const navigationEntry = performance.getEntriesByType("navigation")[0] as
-			PerformanceNavigationTiming | undefined;
-		if (navigationEntry?.type === "reload") {
-			track(APP_INTERACTION_METRICS.PAGE_RELOAD);
-		}
-		return () => {
-			interactionObserver?.disconnect();
-			window.removeEventListener(
-				APP_PERFORMANCE_TIMING_EVENT,
-				handlePerformanceTiming,
-			);
-		};
-	});
+	onMount(() => mountVercelObservability({ browser, dev }));
 
 	onMount(() => {
 		document.documentElement.dataset.appReady = "true";

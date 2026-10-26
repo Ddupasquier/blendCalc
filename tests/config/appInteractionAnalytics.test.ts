@@ -1,7 +1,10 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-const layout = readFileSync("src/routes/+layout.svelte", "utf8");
+const layout = readFileSync(
+	"src/lib/utils/analytics/vercelObservability.ts",
+	"utf8",
+);
 const authAction = readFileSync("src/routes/auth/+page.server.ts", "utf8");
 const authCallback = readFileSync(
 	"src/routes/auth/callback/+server.ts",
@@ -32,9 +35,11 @@ describe("app interaction analytics", () => {
 	});
 
 	it("records browser reloads without treating initial navigation as a reload", () => {
-		expect(layout).toContain('navigationEntry?.type === "reload"');
+		expect(layout).toContain('?.type === "reload"');
 		expect(layout).toContain("APP_INTERACTION_METRICS.PAGE_RELOAD");
-		expect(layout).toContain("dev || !isVercelObservabilityAvailable");
+		expect(layout).toContain(
+			"dev || !isApprovedObservabilityHostname(target.location.hostname)",
+		);
 	});
 
 	it("protects and schedules the aggregate synchronization route", () => {
