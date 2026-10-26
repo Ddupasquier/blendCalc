@@ -188,6 +188,9 @@ both approved production hostnames against the budgets in
   case asserts its `400` response and visible rejection, and accounts for at most one
   native resource-error message scoped to that exact sign-in action. Other browser
   errors remain failures.
+- After an enhanced form action, assert its completed return route before reloading or
+  navigating again. A submitted MFA code or completed click does not prove that the
+  client has applied its authenticated redirect.
 - Keep database mutations serial and deterministic; restore the local baseline when a
   scenario changes durable state.
 - Do not assume a shared QA queue is empty or delete existing records to make an

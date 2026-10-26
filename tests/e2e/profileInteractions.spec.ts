@@ -1052,6 +1052,9 @@ test("privileged tools stay hidden from regular accounts and use a landing dashb
 
 	try {
 		await finishLocalQaAuthenticatorEnrollment(page);
+		await expect(page).toHaveURL(
+			(url) => url.pathname === "/profile/privileged-tools",
+		);
 		await runImageModerationFixture("seed");
 		await page.reload();
 		await waitForAppReady(page);
