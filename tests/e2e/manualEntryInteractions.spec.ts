@@ -442,10 +442,30 @@ test("manual entry shows duplicate and move actions for the selected list", asyn
 		await expect(
 			moveConfirmation.getByRole("button", { name: "Cancel", exact: true }),
 		).toBeFocused();
+		const moveResponse = page.waitForResponse((response) =>
+			new URL(response.url()).pathname.endsWith(
+				"/rest/v1/rpc/move_user_food_list_items",
+			),
+		);
 		await moveConfirmation
 			.getByRole("button", { name: "Move", exact: true })
 			.click();
-		await expect(dialog).not.toBeVisible();
+		const moved = await moveResponse;
+		const moveResult: unknown = await moved.json();
+		expect({
+			status: moved.status(),
+			count: typeof moveResult === "number" ? moveResult : null,
+			errorCode:
+				moveResult && typeof moveResult === "object" && "code" in moveResult
+					? moveResult.code
+					: null,
+		}).toEqual({ status: 200, count: 1, errorCode: null });
+		await expect
+			.poll(async () => ({
+				pathname: new URL(page.url()).pathname,
+				dialogVisible: await dialog.isVisible(),
+			}))
+			.toEqual({ pathname: "/ingredients/fridge", dialogVisible: false });
 
 		const supabase = await getAuthenticatedLocalQaDatabaseClient(
 			testInfo.parallelIndex,

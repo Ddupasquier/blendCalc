@@ -201,6 +201,8 @@ barcode` and source-empty groups `Not provided`. Keep source omissions blank and
 - confirm cross-list moves inside the Share step rather than opening a nested dialog;
   name both the current and destination lists, focus Cancel first, keep Cancel and Move
   visible at compact heights, and change list membership exactly once only after Move;
+  after success, close manual entry and its confirmation together; a late confirmation
+  close callback must not reopen the completed form;
 - offer separate native `Take photo` and `Choose existing photo` actions for package
   front, nutrition-label reading/evidence, barcode evidence, and package-warning
   evidence; only the camera action requests the rear camera, and neither choice uploads,

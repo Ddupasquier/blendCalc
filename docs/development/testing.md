@@ -431,6 +431,11 @@ effects, external providers, real email, genuine Google interaction, or hosted
 configuration. Signed image downloads and three-engine rendering are application
 proofs; copied-account association and genuine Google login are separately reviewed.
 
+The local application proof waits for the profile save's client return to `/profile`
+as well as its database write before navigating again. A database commit alone does
+not complete enhanced-form invalidation or navigation; interrupting either can create
+a browser cancellation error. Console warnings and errors remain proof failures.
+
 Automation can complete a QA task only when it proves every step and expected outcome
 with the required corpus, project, route, and viewport. Physical devices, named
 installed browsers, OS permissions, assistive technology, and subjective visual
