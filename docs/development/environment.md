@@ -76,6 +76,18 @@ publisher trust or SLSA provenance. Remove the override when the official plugin
 ships its [replacement](https://github.com/sveltejs/vite-plugin-svelte/pull/1415)
 or another reviewed fix, then rerun the dependency and plugin/build checks.
 
+The development tooling also has parent-scoped npm overrides for
+[glob cancellation](https://github.com/advisories/GHSA-3g3m-2fjr-6pw4) and
+[minimatch pattern amplification](https://github.com/advisories/GHSA-g3hv-75wg-m249).
+NFT 1.10.2 and rimraf 6.1.3 resolve glob 14.0.2 with minimatch 11.0.1; ESLint 10.9.0,
+config-array 0.23.5 and typescript-estree 8.67.0 resolve minimatch 11.0.1 directly.
+The parent/framework versions and Node 24 floor stay unchanged. These major-version
+repairs change matching internals and some edge semantics; their asset/ignore,
+filesystem cleanup, lint-discovery and bounded cancellation checks belong in the
+existing dependency supply-chain tests. They introduce no install-hook approval or
+audit exception. Retire each override when its maintained parent accepts the fixed
+major, then rerun those checks, the compiler/lint/build and current audits.
+
 ### Branches And Auxiliary Worktrees
 
 Run ordinary branches from the primary repository checkout so its ignored environment
