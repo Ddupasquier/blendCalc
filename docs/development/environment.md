@@ -65,6 +65,17 @@ They remain prerelease SDKs. Local checks cannot establish hosted ingestion or
 provider-dashboard behavior; those outcomes remain unverified by the local
 compatibility suite.
 
+The Svelte Vite plugin's `deepmerge` dependency has a temporary, plugin-scoped npm
+override to exact `@oss-cve-patches/deepmerge` 4.3.2 for
+[GHSA-gcqx-w48m-w2h4](https://github.com/advisories/GHSA-gcqx-w48m-w2h4).
+This is a community security fork, not a release from the original maintainer.
+Its reviewed MIT patch rejects `__proto__` in both merge loops, preserves the plugin's
+array-replacement behavior, and adds no runtime dependencies or install hooks.
+The lockfile pins its registry integrity; a registry signature does not establish
+publisher trust or SLSA provenance. Remove the override when the official plugin
+ships its [replacement](https://github.com/sveltejs/vite-plugin-svelte/pull/1415)
+or another reviewed fix, then rerun the dependency and plugin/build checks.
+
 ### Branches And Auxiliary Worktrees
 
 Run ordinary branches from the primary repository checkout so its ignored environment
