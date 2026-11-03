@@ -22,12 +22,7 @@ on:
   pull_request:
     paths:
       - ".github/workflows/documentation.yml"
-      - "README.md"
-      - "docs/README.md"
-      - "docs/development/**"
-      - "docs/user/**"
       - "config/documentation/**"
-      - "scripts/README.md"
       - "scripts/generators/documentation/**"
       - "scripts/lib/documentation/**"
       - "scripts/operations/documentation/**"
@@ -48,6 +43,7 @@ concurrency:
 jobs:
   build:
     name: Check and build documentation
+    if: github.event_name != 'push' || github.ref_name == (vars.DOCS_PUBLISH_BRANCH || 'main')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -60,19 +56,19 @@ jobs:
           cache: npm
       - name: Install without lifecycle scripts
         run: npm ci --ignore-scripts
-      - name: Check source and formatting
-        env:
-          FORMAT_BASE_REF: ${{ github.event.pull_request.base.sha || github.event.before || 'origin/main' }}
-        run: |
-          npm run check
-          npm run lint
-          npx stylelint config/documentation/site.css
-          npm run format:check
+      - name: Check documentation styling
+        if: github.event_name != 'push' || github.ref_name != 'main'
+        run: npx stylelint config/documentation/site.css
       - name: Check documentation sources and rendering
-        run: npm run test:focused -- tests/config/documentationQuality.test.ts tests/config/documentationSite.test.ts
+        if: github.event_name != 'push' || github.ref_name != 'main'
+        run: |
+          node scripts/operations/environment/run_test_command.mjs -- svelte-kit sync
+          npm run test:focused -- tests/config/documentationQuality.test.ts tests/config/documentationSite.test.ts
       - name: Install documentation browsers
+        if: github.event_name != 'push' || github.ref_name != 'main'
         run: npx playwright install --with-deps chromium firefox webkit
       - name: Test themes, navigation and browser layouts
+        if: github.event_name != 'push' || github.ref_name != 'main'
         run: npm run docs -- test
       - name: Build the project-path site
         env:

@@ -53,6 +53,28 @@ export const classifyProjectTicketDelivery = (ticket) => {
 	return PROJECT_TICKET_DELIVERY_CLASS.operational;
 };
 
+export const assertProjectBranchAvailability = ({
+	branch,
+	local,
+	remote,
+	checkout,
+	requireCheckout = true,
+	delivery = false,
+}) => {
+	if (!value(branch) || (!delivery && integrationBranches.has(branch))) {
+		throw new Error(
+			"Implementation requires a dedicated feature branch, not main or staging.",
+		);
+	}
+	const missing = [];
+	if (local !== true) missing.push("local branch");
+	if (delivery && remote !== true) missing.push("origin branch");
+	if (requireCheckout && !checkout) missing.push("checked-out local workspace");
+	if (missing.length) {
+		throw new Error(`${branch} is missing: ${missing.join(", ")}.`);
+	}
+};
+
 export const assertHomogeneousProjectTicketBatch = (tickets) => {
 	const classifications = new Set(tickets.map(classifyProjectTicketDelivery));
 	if (classifications.size <= 1) return;

@@ -17,6 +17,7 @@ import {
 	recordReleaseReceipt,
 } from "../../lib/quality/release_verification_receipt.mjs";
 import { createCleanProcessEnvironment } from "../../lib/environment/runtime_environment.mjs";
+import { readLocalVerificationScope } from "../../lib/quality/verification_scope.mjs";
 
 const repositoryRoot = fileURLToPath(new URL("../../..", import.meta.url));
 const historyPath = fileURLToPath(
@@ -200,6 +201,52 @@ export const verificationProfiles = {
 			exhaustiveBrowserMatrixStage,
 		],
 	},
+};
+
+export const verificationProfileForScope = (profileKey, scope) => {
+	const profile = verificationProfiles[profileKey];
+	if (
+		!profile ||
+		scope !== "documentation" ||
+		!["quick", "feature"].includes(profileKey)
+	)
+		return profile;
+	return {
+		...profile,
+		label: `${profile.label} · documentation`,
+		description:
+			"Formatting and documentation contracts; application services are unchanged.",
+		stages: [
+			sourceContractStages.find(({ id }) => id === "format"),
+			stage(
+				"documentation-setup",
+				"Documentation test setup",
+				"node",
+				[
+					"scripts/operations/environment/run_test_command.mjs",
+					"--",
+					"svelte-kit",
+					"sync",
+				],
+				3_000,
+			),
+			stage(
+				"documentation",
+				"Documentation contracts and rendering",
+				"npm",
+				[
+					"run",
+					"test:focused",
+					"--",
+					"tests/config/documentationQuality.test.ts",
+					"tests/config/documentationSite.test.ts",
+					"tests/config/developmentRulesStructure.test.ts",
+				],
+				20_000,
+				{ kind: "vitest" },
+			),
+		],
+	};
 };
 
 const formatDuration = (milliseconds) => {
@@ -480,7 +527,10 @@ const main = async () => {
 		return;
 	}
 	const profileKey = args[0] ?? "quick";
-	const profile = verificationProfiles[profileKey];
+	const scope = ["quick", "feature"].includes(profileKey)
+		? readLocalVerificationScope({ repositoryRoot })
+		: "source";
+	const profile = verificationProfileForScope(profileKey, scope);
 	if (!profile) {
 		console.error(
 			`Unknown verification profile ${JSON.stringify(profileKey)}. Use quick, feature, release, or nightly.`,

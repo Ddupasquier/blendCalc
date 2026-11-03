@@ -2,6 +2,10 @@ import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import {
+	verificationProfileForScope,
+	verificationProfiles,
+} from "../../scripts/operations/quality/run_verification_dashboard.mjs";
 
 const packageMetadata = JSON.parse(
 	readFileSync(resolve("package.json"), "utf8"),
@@ -133,4 +137,39 @@ describe("visible verification dashboard", () => {
 			'PUBLIC_SUPABASE_URL: "http://127.0.0.1:54321"',
 		);
 	});
+});
+
+describe("change-focused verification profiles", () => {
+	it.each(["quick", "feature"])(
+		"uses documentation checks for %s plain-text edits",
+		(profile) => {
+			const selected = verificationProfileForScope(profile, "documentation");
+			expect(selected.stages.map(({ id }) => id)).toEqual([
+				"format",
+				"documentation-setup",
+				"documentation",
+			]);
+			expect(JSON.stringify(selected)).not.toMatch(
+				/db:test|test:e2e|npm run build/,
+			);
+		},
+	);
+
+	it.each(["quick", "feature", "release", "nightly"])(
+		"retains %s source verification when scope is not documentation",
+		(profile) => {
+			expect(verificationProfileForScope(profile, "source")).toBe(
+				verificationProfiles[profile],
+			);
+		},
+	);
+
+	it.each(["release", "nightly"])(
+		"keeps explicit %s verification broad",
+		(profile) => {
+			expect(verificationProfileForScope(profile, "documentation")).toBe(
+				verificationProfiles[profile],
+			);
+		},
+	);
 });

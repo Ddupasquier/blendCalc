@@ -96,10 +96,14 @@ ordinary application browser suite remains separate.
 ## Prepare A GitHub Pages Build
 
 The published site is [BlendCalc documentation](https://ddupasquier.github.io/blendCalc/).
-`.github/workflows/documentation.yml` checks documentation pull requests and publishes
-the checked static artifact from `main` by default. A manual run can rebuild it.
-Pull requests never publish. Other `docs/` branches only run checks unless explicitly
-selected as the publishing source.
+Plain Markdown changes are checked by the required Source job in
+`.github/workflows/verify.yml`, using documentation contracts and formatting rather than
+application checks. Renderer, theme, navigation, documentation-test and dependency
+changes retain `.github/workflows/documentation.yml` browser verification. That workflow
+publishes the generated static artifact from `main` by default without repeating browser
+checks after the reviewed source is merged. A manual run can verify and rebuild it.
+Pull requests never publish. Nonpublishing `docs/` pushes do not duplicate PR checks;
+an explicitly selected initial publishing branch still verifies before publication.
 
 For the initial publication, set repository **Settings → Pages → Source** to
 **GitHub Actions**. Restrict the `github-pages` environment to the publishing branch.

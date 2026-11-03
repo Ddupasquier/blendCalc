@@ -86,6 +86,13 @@ assertion in the same change.
 
 ## Development Workflow
 
+For added or modified regular public Markdown, Quick and Feature checks select formatting and the
+focused documentation contracts instead of application compilation, browser or database
+work. The same strict scope decision is used in CI. Renderer, configuration, dependency,
+renamed, deleted, executable, symlinked, private, mixed or uncertain changes retain their existing source/affected checks.
+Explicit Release and Exhaustive checks remain broad. Documentation site contracts build
+and inspect the generated pages; the publication workflow creates the deployable build.
+
 Test application and Playwright processes run with an allowlisted environment assembled
 from the disposable local application and blendCalcAPI stacks. They do not layer the
 developer's base `.env` file or inherit hosted/provider credentials from the parent
@@ -337,8 +344,10 @@ only when a failure needs investigation.
 
 The checked-in workflows use Node.js 24 and a clean dependency install:
 
-- `.github/workflows/verify.yml` chooses feature, release-candidate (`full`), or
-  exact-promotion scope before expensive setup. Feature PRs run affected unit and
+- `.github/workflows/verify.yml` chooses documentation, feature, release-candidate
+  (`full`), or exact-promotion scope before expensive setup. Plain Markdown uses the
+  required Source job for documentation, structure and formatting checks; no application
+  build, application browser or database setup is selected. Feature PRs run affected unit and
   desktop Chromium coverage. Release candidates run affected unit tests plus five
   tagged smoke scenarios in desktop Chromium and WebKit: authentication controls,
   authenticated navigation, ingredient search/list persistence, Mix save persistence,
@@ -371,6 +380,15 @@ The checked-in workflows use Node.js 24 and a clean dependency install:
 The stable required conclusions are `Source, Tests, And Build`, `Browser Matrix`,
 `Database Verification`, and `Hosted Auth Health`. Feature PRs and protected integration pushes report the maintained gates, while
 expensive domain checks run only when their ownership changed.
+Database and hosted-Auth workflows run on PRs and protected integration pushes, not
+both every feature push and its PR. Creating an unchanged local task branch therefore
+starts no database rebuild. Their change detectors compare Git trees only; the Verify
+preflight owns the one fresh dependency audit for full/reused candidates.
+Documentation renderer changes retain their independent browser checks; plain text is
+verified by the required Source job. Main documentation publication builds and uploads
+the already-reviewed sources without repeating application checks or the docs browser
+matrix.
+
 Repository protection
 must require all four on `staging` and `main`; pull requests target `staging` for normal
 work and `main` only for an explicitly approved release.

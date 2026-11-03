@@ -977,13 +977,9 @@ documentation, tests, configuration, dependencies, scripts, migrations, generate
 artifacts, or other repository-owned files, create or enter one short-lived
 responsibility branch from current `staging`. In this workflow, “feature branch” is the
 umbrella term for `feat/`, `fix/`, `refactor/`, `chore/`, `docs/`, `test/`, and other
-focused change branches. Immediately publish every new local branch to `origin` with an
-upstream before editing tracked files; local-only working branches are not allowed. The
-initial remote branch may point to unchanged `staging` until a commit is approved.
-Publishing that branch pointer is standing workflow authorization only—it does not
-authorize committing or pushing changed content. If the remote branch cannot be
-created, report the blocker and do not begin tracked edits without explicit approval.
-Never make content changes directly on `staging` or `main`. Read-only investigation and
+focused change branches. Keep each branch local and inspectable during implementation
+and review; publishing an unchanged branch before editing is not required. Publish its
+changed content only under the scoped delivery authorization in Rule 20. Never make content changes directly on `staging` or `main`. Read-only investigation and
 the explicitly authorized merge or release operation itself do not require another
 branch.
 
@@ -1065,8 +1061,8 @@ the user explicitly requests it or the release scope requires it.
 branch's single responsibility. Continue only when they match. If the prompt introduces
 a separate feature, fix, refactor, migration, test effort, documentation policy, or
 other responsibility, create a new feature branch from current `staging` before
-editing, publish it to `origin`, and set its upstream—without waiting for the user to
-repeat the branch requirement. Use a descriptive prefix such as `feat/`, `fix/`,
+editing without waiting for the user to repeat the branch requirement. Keep it local
+and inspectable until changed-content delivery is approved. Use a descriptive prefix such as `feat/`, `fix/`,
 `refactor/`, `chore/`, `docs/`, or `test/`, followed by a plain-English outcome. Do not
 reuse long-lived view branches or combine unrelated work merely because it touches the
 same page.
@@ -1099,8 +1095,8 @@ grant standing permission to commit, push, merge, deploy, or include unrelated w
 branch. If the primary checkout is clean, switch it normally; do not create another
 checkout. If unrelated uncommitted work must remain untouched, an auxiliary worktree is
 necessary: create it from current `staging`, perform the new responsibility on its own
-feature branch, publish that branch pointer to `origin`, and leave the original checkout
-untouched. Never stash, discard, stage, or carry unrelated changes merely to switch
+feature branch and leave the original checkout untouched. The new branch may remain
+local until its changed-content delivery is approved. Never stash, discard, stage, or carry unrelated changes merely to switch
 tasks. Before using an auxiliary checkout, link only the required ignored environment
 files from the primary checkout after verifying that each source is ignored and each
 target is absent. Never copy, move, print, or overwrite secrets. Branch creation,
@@ -2327,15 +2323,17 @@ Owner command fast lane:
   `complete-batch` mutation. Verification-only and operational/manual tickets never use
   this implementation fast lane.
 - Update the Project at durable outcome boundaries, not after every shell command. One
-  pull/doctor at pickup and one fresh pull/doctor at handoff or closeout are sufficient
-  while state remains unchanged; rerun immediately after an error, external edit, or
+  validated pull or `go` at pickup and one at handoff or closeout are sufficient while
+  state remains unchanged. The helper already validates its result; do not repeat a
+  manual pull/doctor after an unchanged successful helper. Rerun immediately after an error, external edit, or
   lifecycle mutation that is not part of an atomic helper.
 
 Use this sequence for every work session and every ticket. Status is an operational
 fact, not a label to repair after work has started.
 
-1. **Recover and validate the queue.** Pull the private Project and run `doctor` once;
-   the maintained `go` helper performs both before pickup. Use `resume` only after
+1. **Recover and validate the queue.** Use one maintained `pull` or `go` at pickup;
+   each validates its result, so a second manual `doctor` is unnecessary while state
+   remains unchanged. Use `resume` only after
    validation passes. Reconcile an externally changed status before
    selecting work. Stop on stale ownership, an invalid lifecycle combination, a missing
    active branch, or an uninspectable working tree.
@@ -2352,11 +2350,17 @@ fact, not a label to repair after work has started.
    item unless the user explicitly selects another item. Recheck duplicates, scope,
    dependencies, priority, and the current branch responsibility before claiming it.
 4. **Move the ticket before doing the work.** A newly selected Inbox item first moves to
-   `Ready`. Before implementation or active verification begins, create and publish the
-   required dedicated branch when the work owns a repository delta, then atomically
+   `Ready`. Before implementation or active verification begins, create the required
+   local dedicated branch when the work owns a repository delta, then atomically
    move the ticket to `In Progress` with `start`. Never leave actively worked content in
    `Inbox`, `Ready`, or an unrelated lifecycle state, and never restart a `Done` ticket;
    create or reopen the correct active responsibility instead.
+   When GitHub cannot be read, `go` may use a valid last-known ticket and inspectable
+   local branch with a visible warning. It does not invent a fresh status, approval or
+   completion, and it writes no pending mutation queue. Reconcile when the tracker is
+   available; actual delivery transitions still require live origin and Project
+   verification.
+
 5. **Execute one owned responsibility.** Read the complete ticket and applicable source
    contracts, classify the outcome and ownership, inspect current implementation and
    tests, implement only the coherent scope, and record discovered unrelated work once

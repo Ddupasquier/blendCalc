@@ -260,12 +260,8 @@ describe("Playwright browser-testing architecture", () => {
 			"if: needs.verification-plan.outputs.mode == 'feature'",
 		);
 		expect(verificationWorkflow).toContain('REF_NAME" == "mock-staging"');
-		expect(verificationWorkflow).toContain(
-			"verify_release_promotion.mjs --against origin/mock-staging",
-		);
-		expect(verificationWorkflow).toContain(
-			"verify_release_promotion.mjs --against origin/staging",
-		);
+		expect(verificationWorkflow).toContain("same_tree origin/mock-staging");
+		expect(verificationWorkflow).toContain("same_tree origin/staging");
 		expect(verificationWorkflow).toContain(
 			"No identical fully verified candidate; running the full staging checks.",
 		);
@@ -286,10 +282,10 @@ describe("Playwright browser-testing architecture", () => {
 		expect(databaseWorkflow).toContain("npm run db:test -- verify");
 		expect(databaseWorkflow).toContain("name: Database Verification");
 		expect(databaseWorkflow).toContain(
-			"verify_release_promotion.mjs --against origin/mock-staging",
+			"verifyMatchingGitTrees(process.cwd(), process.argv[1]);\' origin/mock-staging",
 		);
 		expect(databaseWorkflow).toContain(
-			"verify_release_promotion.mjs --against origin/staging",
+			"verifyMatchingGitTrees(process.cwd(), process.argv[1]);\' origin/staging",
 		);
 		expect(databaseWorkflow).not.toMatch(/pull_request:\s*\n\s+paths:/);
 		expect(hostedAuthWorkflow).toContain("name: Hosted Auth Health");
@@ -298,10 +294,10 @@ describe("Playwright browser-testing architecture", () => {
 		expect(hostedAuthWorkflow).toContain('cron: "30 10 * * *"');
 		expect(hostedAuthWorkflow).toContain("src/lib/server/auth");
 		expect(hostedAuthWorkflow).toContain(
-			"verify_release_promotion.mjs --against origin/staging",
+			"verifyMatchingGitTrees(process.cwd(), process.argv[1]);\' origin/staging",
 		);
 		expect(hostedAuthWorkflow).toContain(
-			"verify_release_promotion.mjs --against origin/mock-staging",
+			"verifyMatchingGitTrees(process.cwd(), process.argv[1]);\' origin/mock-staging",
 		);
 		expect(hostedAuthWorkflow).toContain("vars.BLENDCALC_HOSTED_SUPABASE_URL");
 		expect(hostedAuthWorkflow).not.toContain("secrets.");
