@@ -43,6 +43,10 @@ jobs:
     if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      actions: read
+      contents: read
+      pull-requests: read
     outputs:
       comparison-base: ${{ steps.plan.outputs.comparison-base }}
       dependencies: ${{ steps.plan.outputs.dependencies }}
@@ -86,23 +90,105 @@ jobs:
           }
 
           reuse_verified_candidate() {
-            verified_candidates=$(gh api \
-              "repos/${GITHUB_REPOSITORY}/actions/workflows/verify.yml/runs?event=workflow_dispatch&status=success&per_page=50" \
-              --jq '[.workflow_runs[] | select(.event == "workflow_dispatch" and .display_title == "Verify (full)" and .conclusion == "success") | .head_sha] | unique | .[]')
-            for candidate in HEAD $(git show -s --format=%P HEAD) $verified_candidates; do
-              if ! same_tree "$candidate" >/dev/null 2>&1; then
-                continue
-              fi
-              verified_runs=$(gh api \
-                "repos/${GITHUB_REPOSITORY}/actions/workflows/verify.yml/runs?head_sha=${candidate}&status=success&per_page=20" \
-                --jq '[.workflow_runs[] | select(.event == "workflow_dispatch" and .display_title == "Verify (full)")] | length')
-              if [[ "$verified_runs" -gt 0 ]]; then
-                echo "Reusing the successful full verification for identical candidate ${candidate}."
-                mode=reuse
-                comparison_base="$candidate"
-                return
-              fi
-            done
+            local candidate
+            if ! candidate=$(node --input-type=module <<'NODE'
+          import { execFileSync } from "node:child_process";
+          import { verifyMatchingGitTrees } from "./scripts/lib/quality/release_verification_receipt.mjs";
+
+          const repository = process.env.GITHUB_REPOSITORY;
+          const shaPattern = /^[0-9a-f]{40}$/;
+          const inspected = new Map();
+          class DiscoveryError extends Error {}
+          const diagnostic = (reason, sha = "discovery") =>
+            console.error(`Verification candidate ${sha}: ${reason}.`);
+          const run = (command, args) =>
+            execFileSync(command, args, {
+              encoding: "utf8",
+              maxBuffer: 1024 * 1024, stdio: ["ignore", "pipe", "pipe"],
+            }).trim();
+          const api = (path) => {
+            try { return JSON.parse(run("gh", ["api", `repos/${repository}/${path}`])); }
+            catch { throw new DiscoveryError("API-unavailable-or-invalid-response"); }
+          };
+          const inspect = (reference) => {
+            let sha;
+            try { sha = run("git", ["rev-parse", "--verify", `${reference}^{commit}`]); }
+            catch {
+              diagnostic("object-missing", reference);
+              return null;
+            }
+            if (!shaPattern.test(sha)) throw new DiscoveryError("invalid-commit-identity");
+            if (inspected.has(sha)) return inspected.get(sha);
+            const result = { sha, sameTree: false, verified: false };
+            inspected.set(sha, result);
+            try { verifyMatchingGitTrees(process.cwd(), sha); }
+            catch (error) {
+              if (error.message.startsWith("Promotion tree ")) {
+                diagnostic("tree-mismatch", sha);
+                return result;
+              }
+              throw new DiscoveryError("unclean-or-unreadable-candidate");
+            }
+            result.sameTree = true;
+            const response = api(`actions/workflows/verify.yml/runs?head_sha=${sha}&event=workflow_dispatch&status=success&per_page=20`);
+            if (!Array.isArray(response.workflow_runs) || response.workflow_runs.length > 20 ||
+                response.workflow_runs.some((run) => !Number.isSafeInteger(run.id) || run.id <= 0 ||
+                  run.head_sha !== sha || run.repository?.full_name !== repository)) {
+              throw new DiscoveryError("invalid-workflow-evidence-identity");
+            }
+            result.verified = response.workflow_runs.some((run) =>
+              run.event === "workflow_dispatch" && run.display_title === "Verify (full)" &&
+              run.status === "completed" && run.conclusion === "success");
+            diagnostic(result.verified ? "verified-full-proof" : "no-full-proof", sha);
+            return result;
+          };
+
+          try {
+            if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repository ?? "")) {
+              throw new DiscoveryError("invalid-repository-identity");
+            }
+            const lineage = run("git", ["show", "-s", "--format=%H %P", "HEAD"]).split(/\s+/);
+            if (lineage.length > 9 || lineage.some((sha) => !shaPattern.test(sha))) {
+              throw new DiscoveryError("invalid-or-excessive-immediate-lineage");
+            }
+            diagnostic(`selected-lineage-count=${lineage.length}`);
+            let verified;
+            for (const reference of new Set(lineage)) {
+              const root = inspect(reference);
+              if (!root?.sameTree) continue;
+              if (root.verified) { verified = root.sha; break; }
+              const pulls = api(`commits/${root.sha}/pulls?per_page=10`);
+              if (!Array.isArray(pulls) || pulls.length > 10 || pulls.some((pull) =>
+                pull.base?.repo?.full_name !== repository || !shaPattern.test(pull.head?.sha ?? "") ||
+                (pull.merged_at !== null && (typeof pull.merged_at !== "string" || !Number.isFinite(Date.parse(pull.merged_at)) ||
+                  !shaPattern.test(pull.merge_commit_sha ?? "") || typeof pull.head.repo?.full_name !== "string")))) {
+                throw new DiscoveryError("invalid-pull-request-evidence-identity");
+              }
+              const heads = [...new Set(pulls.filter((pull) =>
+                pull.merged_at && pull.merge_commit_sha === root.sha &&
+                pull.head.repo?.full_name === repository).map((pull) => pull.head.sha))];
+              diagnostic(`merged-source-count=${heads.length}`, root.sha);
+              for (const head of heads) {
+                if (inspect(head)?.verified) { verified = head; break; }
+              }
+              if (verified) break;
+            }
+            diagnostic(`checked-candidate-count=${inspected.size}`);
+            if (verified) console.log(verified);
+          } catch (error) {
+            diagnostic(`reuse-refused:${error instanceof DiscoveryError ? error.message : "unexpected-error"}`);
+            process.exitCode = 1;
+          }
+          NODE
+            ); then
+              echo "Candidate discovery could not prove reuse; preserving the full verification fallback."
+              return
+            fi
+            if [[ -n "$candidate" ]]; then
+              echo "Reusing the successful full verification for identical candidate ${candidate}."
+              mode=reuse
+              comparison_base="$candidate"
+            fi
           }
 
           if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
