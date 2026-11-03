@@ -220,7 +220,7 @@ jobs:
       - name: Verify documentation contracts
         if: needs.verification-plan.outputs.mode == 'documentation'
         run: |
-          node scripts/operations/environment/run_test_command.mjs -- svelte-kit sync
+          node scripts/operations/environment/run_test_command.mjs -- node node_modules/@sveltejs/kit/svelte-kit.js sync
           npm run test:focused -- tests/config/documentationQuality.test.ts tests/config/documentationSite.test.ts tests/config/developmentRulesStructure.test.ts
       - name: Verify versions
         if: needs.verification-plan.outputs.mode != 'reuse' && needs.verification-plan.outputs.mode != 'documentation'

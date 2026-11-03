@@ -62,7 +62,7 @@ jobs:
       - name: Check documentation sources and rendering
         if: github.event_name != 'push' || github.ref_name != 'main'
         run: |
-          node scripts/operations/environment/run_test_command.mjs -- svelte-kit sync
+          node scripts/operations/environment/run_test_command.mjs -- node node_modules/@sveltejs/kit/svelte-kit.js sync
           npm run test:focused -- tests/config/documentationQuality.test.ts tests/config/documentationSite.test.ts
       - name: Install documentation browsers
         if: github.event_name != 'push' || github.ref_name != 'main'
