@@ -19,7 +19,8 @@ export const getAppDocumentTitle = (
 	if (pathname === "/") {
 		return formatDocumentTitle("Food Awareness, Nutrition & Recalls");
 	}
-	if (pathname === "/demo") return formatDocumentTitle("Try the Demo");
+	if (pathname === "/demo")
+		return formatDocumentTitle("Recipe Nutrition Calculator");
 	if (pathname === "/auth") return formatDocumentTitle("Sign In");
 	if (pathname === "/terms") return formatDocumentTitle("Terms of Service");
 	if (pathname === "/privacy")

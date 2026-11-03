@@ -31,7 +31,8 @@
 				>
 			</div>
 			<p class="fine-print">
-				No account needed. Start with our sample breakfast bowl.
+				No account needed. Try the example or calculate from your own food
+				labels.
 			</p>
 		</div>
 		<figure class="sample-recipe" aria-label="Example breakfast bowl">
@@ -116,8 +117,8 @@
 			provide medical or dietary advice.
 		</p>
 		<p>
-			The demo uses temporary examples. Sign in to save your own work.
-			Promotional email is optional; manage it in Profile. <a
+			The public calculator keeps your entries on the page. Sign in to save
+			recipes. Promotional email is optional; manage it in Profile. <a
 				href={resolve("/privacy")}>Privacy &amp; advertising choices</a
 			>
 		</p>
