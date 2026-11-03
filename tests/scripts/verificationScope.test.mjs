@@ -105,6 +105,9 @@ describe("documentation verification scope", () => {
 
 	it("uses the actual comparison and refuses missing bases or renamed documentation", () => {
 		const root = mkdtempSync(join(tmpdir(), "blendcalc-verification-scope-"));
+		// The caller's comparison belongs to its checkout, not this isolated Git fixture.
+		const inheritedBase = process.env.TEST_BASE_REF;
+		delete process.env.TEST_BASE_REF;
 		const git = (...args) =>
 			execFileSync(
 				"git",
@@ -158,6 +161,11 @@ describe("documentation verification scope", () => {
 				readVerificationScope({ comparisonBase: base, repositoryRoot: root }),
 			).toBe("documentation");
 			git("branch", "staging", base);
+			process.env.TEST_BASE_REF = "f".repeat(40);
+			expect(readLocalVerificationScope({ repositoryRoot: root })).toBe(
+				"source",
+			);
+			delete process.env.TEST_BASE_REF;
 			expect(readLocalVerificationScope({ repositoryRoot: root })).toBe(
 				"documentation",
 			);
@@ -242,6 +250,8 @@ describe("documentation verification scope", () => {
 				}),
 			).toBe("source");
 		} finally {
+			if (inheritedBase === undefined) delete process.env.TEST_BASE_REF;
+			else process.env.TEST_BASE_REF = inheritedBase;
 			rmSync(root, { recursive: true, force: true });
 		}
 	});
