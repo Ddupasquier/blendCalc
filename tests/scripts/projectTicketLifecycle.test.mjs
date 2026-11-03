@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
 	assertHomogeneousProjectTicketBatch,
 	assertProjectTicketCanStart,
+	assertProjectBranchAvailability,
 	assertReadyForMainBatchEligible,
 	assertShipReadyBatchEligible,
 	assertStageBatchEligible,
@@ -202,5 +203,74 @@ describe("Project ticket lifecycle classification", () => {
 				"The exact release passed.",
 			),
 		).toThrow("cannot re-enter the Ship fast lane");
+	});
+});
+
+describe("Project branch availability", () => {
+	const branch = "fix/DEV-001-example";
+	const local = {
+		branch,
+		local: true,
+		remote: null,
+		checkout: "/owned/checkout",
+	};
+
+	it("allows inspectable local work and review without publishing an empty branch", () => {
+		expect(() => assertProjectBranchAvailability(local)).not.toThrow();
+		expect(() =>
+			assertProjectBranchAvailability({
+				...local,
+				checkout: null,
+				requireCheckout: false,
+			}),
+		).not.toThrow();
+	});
+
+	it.each(["", "main", "staging"])(
+		"does not implement directly on %s",
+		(candidate) => {
+			expect(() =>
+				assertProjectBranchAvailability({ ...local, branch: candidate }),
+			).toThrow(/dedicated feature branch/);
+		},
+	);
+
+	it("requires a local branch and an inspectable checkout for uncommitted work", () => {
+		expect(() =>
+			assertProjectBranchAvailability({ ...local, local: false }),
+		).toThrow(/local branch/);
+		expect(() =>
+			assertProjectBranchAvailability({ ...local, checkout: null }),
+		).toThrow(/checked-out local workspace/);
+	});
+
+	it("retains the origin guard at delivery and refuses unknown publication state", () => {
+		for (const remote of [false, null, undefined, "unknown"]) {
+			expect(() =>
+				assertProjectBranchAvailability({
+					...local,
+					remote,
+					delivery: true,
+					requireCheckout: false,
+				}),
+			).toThrow(/origin branch/);
+		}
+		expect(() =>
+			assertProjectBranchAvailability({
+				...local,
+				remote: true,
+				delivery: true,
+				requireCheckout: false,
+			}),
+		).not.toThrow();
+		expect(() =>
+			assertProjectBranchAvailability({
+				...local,
+				branch: "staging",
+				remote: true,
+				delivery: true,
+				requireCheckout: false,
+			}),
+		).not.toThrow();
 	});
 });

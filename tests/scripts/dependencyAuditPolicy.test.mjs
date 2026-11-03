@@ -116,6 +116,10 @@ describe("clean dependency audit policy", () => {
 
 describe("audit execution and delivery wiring", () => {
 	it.each([
+		["documentation", "skipped", "skipped", "skipped", 0],
+		["documentation", "success", "skipped", "skipped", 1],
+		["documentation", "skipped", "success", "skipped", 1],
+		["documentation", "skipped", "skipped", "success", 1],
 		["reuse", "success", "skipped", "skipped", 0],
 		["reuse", "failure", "skipped", "skipped", 1],
 		["reuse", "skipped", "skipped", "skipped", 1],
@@ -193,5 +197,7 @@ describe("audit execution and delivery wiring", () => {
 		);
 		expect(rules).toHaveLength(47);
 		expect(rules.filter(([name]) => name.startsWith("scss/"))).toHaveLength(13);
-	}, 15_000);
+		// Loading the real SCSS plugin and core-rule graph is integration setup,
+		// not a product latency budget; retain a finite cold-start allowance.
+	}, 120_000);
 });

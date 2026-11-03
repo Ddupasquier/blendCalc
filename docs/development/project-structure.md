@@ -27,9 +27,9 @@ where any file belongs:
 1. Start every tracked change on a short-lived feature branch created from current
    `staging`. “Feature branch” includes focused fix, refactor, documentation, test,
    migration, dependency, script, and maintenance branches.
-2. Immediately publish the new branch to `origin` and set its upstream before editing
-   tracked files. If remote publication fails, report the blocker and pause tracked
-   changes unless the user explicitly approves local-only work.
+2. Keep the local branch inspectable during implementation and review. An unchanged
+   upstream branch is unnecessary before editing; publish approved content only under
+   Rule 20 and verify the origin branch at delivery.
 3. Give the branch one plain-English responsibility and a matching prefix such as
    `feat/`, `fix/`, `refactor/`, `docs/`, `test/`, or `chore/`. When a private Project
    ticket owns the work, use `<type>/<TICKET-ID>-<short-description>`, such as
@@ -52,8 +52,7 @@ where any file belongs:
 
 Read-only investigation does not require a branch. Creating a branch or worktree does
 not authorize a commit, content push, merge, deployment, or database change. Publishing
-the initial unchanged branch pointer is required workflow setup, not permission to push
-later commits.
+a branch pointer is optional setup, not permission to push changed content.
 
 ## Repository Root
 
