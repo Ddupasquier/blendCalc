@@ -2312,9 +2312,10 @@ status before the first Project mutation, then run lifecycle doctor immediately 
 Owner command fast lane:
 
 - **`Go`** performs one fresh Project recovery/doctor pass, selects the user's named
-  ticket or the highest-priority eligible Ready item, creates and publishes its focused
-  branch, atomically records `In Progress`, implements the outcome, and runs affected
-  verification. It does not request confirmation between those mechanical steps.
+  ticket or the highest-priority eligible Ready item, creates its local focused branch,
+  atomically records `In Progress`, implements the outcome, and runs affected
+  verification. Changed-content publication follows Rule 20 delivery authorization.
+  It does not request confirmation between those mechanical steps.
 - **`Ship`** carries the exact named implementation or homogeneous batch through the
   full authorization in Rule 20. After the exact staging tree passes, use one
   `ship-ready-batch` mutation to record the durable Approved-on-staging fact instead of
