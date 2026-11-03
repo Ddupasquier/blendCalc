@@ -89,3 +89,79 @@ export const calculateDemoMix = (amounts: DemoAmounts) => {
 	}
 	return { grams, nutrients };
 };
+
+export type LabelIngredient = {
+	id: number;
+	name: string;
+	grams: string;
+	labelGrams: string;
+	nutrients: Record<DemoNutrientKey, string>;
+};
+
+export const MAX_LABEL_INGREDIENTS = 20;
+
+export const createLabelIngredient = (id: number): LabelIngredient => ({
+	id,
+	name: "",
+	grams: "",
+	labelGrams: "",
+	nutrients: { energy: "", protein: "", carbohydrate: "", fat: "", fiber: "" },
+});
+
+/** Plain decimal inputs only. A blank is unknown, never an inferred zero. */
+export const parseLabelAmount = (value: string): number | null => {
+	if (!/^(?:\d+(?:\.\d*)?|\.\d+)$/.test(value)) return null;
+	const amount = Number(value);
+	return Number.isFinite(amount) && amount <= 100_000 ? amount : null;
+};
+
+export const calculateLabelRecipe = (
+	ingredients: readonly LabelIngredient[],
+	servings: string,
+) => {
+	const count = parseLabelAmount(servings);
+	if (
+		!count ||
+		!Number.isInteger(count) ||
+		count > 1000 ||
+		!ingredients.length ||
+		ingredients.length > MAX_LABEL_INGREDIENTS
+	)
+		return null;
+	const totals: Record<DemoNutrientKey, number | null> = {
+		energy: 0,
+		protein: 0,
+		carbohydrate: 0,
+		fat: 0,
+		fiber: 0,
+	};
+	let grams = 0;
+	for (const ingredient of ingredients) {
+		const amount = parseLabelAmount(ingredient.grams);
+		if (amount === null) return null;
+		// An explicitly omitted ingredient contributes nothing, even without a label.
+		if (amount === 0) continue;
+		const basis = parseLabelAmount(ingredient.labelGrams);
+		if (!basis) return null;
+		grams += amount;
+		for (const { key } of DEMO_NUTRIENTS) {
+			const raw = ingredient.nutrients[key];
+			if (raw === "") {
+				totals[key] = null;
+				continue;
+			}
+			const value = parseLabelAmount(raw);
+			if (value === null) return null;
+			const contribution = (value * amount) / basis;
+			if (!Number.isFinite(contribution)) return null;
+			if (totals[key] !== null) totals[key] += contribution;
+		}
+	}
+	const perServing = Object.fromEntries(
+		DEMO_NUTRIENTS.map(({ key }) => [
+			key,
+			totals[key] === null ? null : totals[key] / count,
+		]),
+	) as typeof totals;
+	return { grams, servings: count, totals, perServing };
+};
