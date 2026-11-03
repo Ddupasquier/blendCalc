@@ -199,9 +199,13 @@ Release integration branches (`release/**`) use one explicit `Verify` dispatch w
 `scope=full`, rather than duplicate push and PR matrices. Keep their PRs draft until
 that exact clean tree passes. Marking the PR ready then runs eligible PR checks that
 verify and reuse the successful full proof; a missing, changed or dirty proof refuses
-review. Staging discovers recent successful full candidates by tree identity, including
-after a protected squash merge changes the commit ID. Fresh dependency audits remain
-mandatory during reuse.
+review. Reuse examines the exact commit and its immediate parents, then the source heads
+of their associated merged PRs when those commits share the promoted tree. This retains
+the candidate link after a protected squash merge changes its commit ID, without
+searching unrelated recent runs or walking arbitrary history. Each source head must
+have a successful exact-SHA full dispatch and the same clean tree. Discovery is bounded;
+missing objects, unavailable or invalid API evidence and mismatches are reported and
+cannot qualify reuse. Fresh dependency audits remain mandatory during reuse.
 
 `Ship` may dispatch `Verify` with `scope=full` on the exact assembled candidate before staging;
 when the later staging tree is identical and that dispatched run succeeded, staging
