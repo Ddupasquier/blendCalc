@@ -31,6 +31,43 @@ const profiles = JSON.parse(
 	),
 ) as Record<string, { stages: Array<{ id: string }> }>;
 
+// Exercise this Node CLI owner in its own runtime, keeping its terminal and
+// release dependencies outside the application's TypeScript module graph.
+const scopedProfiles = JSON.parse(
+	execFileSync(
+		process.execPath,
+		[
+			"--input-type=module",
+			"--eval",
+			`
+import {
+	verificationProfileForScope,
+	verificationProfiles,
+} from "./scripts/operations/quality/run_verification_dashboard.mjs";
+console.log(JSON.stringify(Object.fromEntries(
+	Object.keys(verificationProfiles).map((profile) => [
+		profile,
+		Object.fromEntries(["documentation", "source"].map((scope) => {
+			const selected = verificationProfileForScope(profile, scope);
+			return [scope, {
+				profile: selected,
+				unchanged: selected === verificationProfiles[profile],
+			}];
+		})),
+	]),
+)));
+`,
+		],
+		{ encoding: "utf8", timeout: 30_000, maxBuffer: 256 * 1024 },
+	),
+) as Record<
+	string,
+	Record<
+		"documentation" | "source",
+		{ profile: { stages: Array<{ id: string }> }; unchanged: boolean }
+	>
+>;
+
 describe("visible verification dashboard", () => {
 	it("keeps quick, feature, release, and nightly confidence intentional", () => {
 		expect(Object.keys(profiles)).toEqual([
@@ -133,4 +170,35 @@ describe("visible verification dashboard", () => {
 			'PUBLIC_SUPABASE_URL: "http://127.0.0.1:54321"',
 		);
 	});
+});
+
+describe("change-focused verification profiles", () => {
+	it.each(["quick", "feature"])(
+		"uses documentation checks for %s plain-text edits",
+		(profile) => {
+			const selected = scopedProfiles[profile].documentation.profile;
+			expect(selected.stages.map(({ id }) => id)).toEqual([
+				"format",
+				"documentation-setup",
+				"documentation",
+			]);
+			expect(JSON.stringify(selected)).not.toMatch(
+				/db:test|test:e2e|npm run build/,
+			);
+		},
+	);
+
+	it.each(["quick", "feature", "release", "nightly"])(
+		"retains %s source verification when scope is not documentation",
+		(profile) => {
+			expect(scopedProfiles[profile].source.unchanged).toBe(true);
+		},
+	);
+
+	it.each(["release", "nightly"])(
+		"keeps explicit %s verification broad",
+		(profile) => {
+			expect(scopedProfiles[profile].documentation.unchanged).toBe(true);
+		},
+	);
 });

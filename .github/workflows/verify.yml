@@ -69,13 +69,28 @@ jobs:
         run: |
           mode=feature
           comparison_base="$PR_BASE_SHA"
+          documentation_base="$PR_BASE_SHA"
+          if [[ "$EVENT_NAME" == "push" ]]; then
+            documentation_base="$BEFORE_SHA"
+          fi
+          documentation_scope=$(COMPARISON_BASE="$documentation_base" node --input-type=module -e '
+            import { readVerificationScope } from "./scripts/lib/quality/verification_scope.mjs";
+            console.log(readVerificationScope({ comparisonBase: process.env.COMPARISON_BASE }));
+          ')
+
+          same_tree() {
+            node --input-type=module -e '
+              import { verifyMatchingGitTrees } from "./scripts/lib/quality/release_verification_receipt.mjs";
+              verifyMatchingGitTrees(process.cwd(), process.argv[1]);
+            ' "$1"
+          }
 
           reuse_verified_candidate() {
             verified_candidates=$(gh api \
               "repos/${GITHUB_REPOSITORY}/actions/workflows/verify.yml/runs?event=workflow_dispatch&status=success&per_page=50" \
               --jq '[.workflow_runs[] | select(.event == "workflow_dispatch" and .display_title == "Verify (full)" and .conclusion == "success") | .head_sha] | unique | .[]')
             for candidate in HEAD $(git show -s --format=%P HEAD) $verified_candidates; do
-              if ! node scripts/operations/quality/verify_release_promotion.mjs --against "$candidate" >/dev/null 2>&1; then
+              if ! same_tree "$candidate" >/dev/null 2>&1; then
                 continue
               fi
               verified_runs=$(gh api \
@@ -92,6 +107,9 @@ jobs:
 
           if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
             mode="${REQUESTED_SCOPE:-full}"
+          elif [[ "$documentation_scope" == "documentation" && ( "$EVENT_NAME" != "push" || "$REF_NAME" != "main" ) ]]; then
+            mode=documentation
+            comparison_base="$documentation_base"
           elif [[ "$EVENT_NAME" == "pull_request" && "${HEAD_REF:-}" == release/* ]]; then
             reuse_verified_candidate
             if [[ "$mode" != "reuse" ]]; then
@@ -100,12 +118,12 @@ jobs:
             fi
           elif [[ "$EVENT_NAME" == "push" && "$REF_NAME" == "main" ]]; then
             git fetch origin staging:refs/remotes/origin/staging
-            node scripts/operations/quality/verify_release_promotion.mjs --against origin/staging
+            same_tree origin/staging
             mode=reuse
             comparison_base=origin/staging
           elif [[ "$EVENT_NAME" == "push" && "$REF_NAME" == "staging" ]]; then
             if git fetch origin mock-staging:refs/remotes/origin/mock-staging && \
-              node scripts/operations/quality/verify_release_promotion.mjs --against origin/mock-staging; then
+              same_tree origin/mock-staging; then
               mode=reuse
               comparison_base=origin/mock-staging
             else
@@ -144,6 +162,7 @@ jobs:
 
   preflight:
     name: Security And Repository Policy Preflight
+    if: needs.verification-plan.outputs.mode != 'documentation'
     needs: verification-plan
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -193,13 +212,21 @@ jobs:
           node-version: 24
           cache: npm
       - name: Install dependencies
-        if: needs.verification-plan.outputs.mode != 'reuse'
+        if: needs.verification-plan.outputs.mode != 'reuse' && needs.verification-plan.outputs.mode != 'documentation'
         run: npm ci
+      - name: Install documentation dependencies without lifecycle scripts
+        if: needs.verification-plan.outputs.mode == 'documentation'
+        run: npm ci --ignore-scripts
+      - name: Verify documentation contracts
+        if: needs.verification-plan.outputs.mode == 'documentation'
+        run: |
+          node scripts/operations/environment/run_test_command.mjs -- node node_modules/@sveltejs/kit/svelte-kit.js sync
+          npm run test:focused -- tests/config/documentationQuality.test.ts tests/config/documentationSite.test.ts tests/config/developmentRulesStructure.test.ts
       - name: Verify versions
-        if: needs.verification-plan.outputs.mode != 'reuse'
+        if: needs.verification-plan.outputs.mode != 'reuse' && needs.verification-plan.outputs.mode != 'documentation'
         run: npm run version:check
       - name: Lint TypeScript, Svelte, and SCSS
-        if: needs.verification-plan.outputs.mode != 'reuse'
+        if: needs.verification-plan.outputs.mode != 'reuse' && needs.verification-plan.outputs.mode != 'documentation'
         run: npm run lint
       - name: Check source formatting
         if: needs.verification-plan.outputs.mode != 'reuse'
@@ -207,15 +234,15 @@ jobs:
         env:
           FORMAT_BASE_REF: ${{ needs.verification-plan.outputs.comparison-base }}
       - name: Check Svelte and TypeScript
-        if: needs.verification-plan.outputs.mode != 'reuse'
+        if: needs.verification-plan.outputs.mode != 'reuse' && needs.verification-plan.outputs.mode != 'documentation'
         run: npm run check
       - name: Run affected Vitest coverage
-        if: needs.verification-plan.outputs.mode != 'reuse'
+        if: needs.verification-plan.outputs.mode != 'reuse' && needs.verification-plan.outputs.mode != 'documentation'
         run: npm run test:affected
         env:
           TEST_BASE_REF: ${{ needs.verification-plan.outputs.comparison-base }}
       - name: Build production application
-        if: needs.verification-plan.outputs.mode != 'reuse'
+        if: needs.verification-plan.outputs.mode != 'reuse' && needs.verification-plan.outputs.mode != 'documentation'
         run: npm run build
 
   browser:
@@ -335,7 +362,9 @@ jobs:
             echo "Verification planning or source checks failed."
             exit 1
           fi
-          if [[ "$MODE" == "reuse" ]]; then
+          if [[ "$MODE" == "documentation" ]]; then
+            [[ "$PREFLIGHT_RESULT" == "skipped" && "$BROWSER_RESULT" == "skipped" && "$AFFECTED_RESULT" == "skipped" ]]
+          elif [[ "$MODE" == "reuse" ]]; then
             [[ "$PREFLIGHT_RESULT" == "success" && "$BROWSER_RESULT" == "skipped" && "$AFFECTED_RESULT" == "skipped" ]]
           elif [[ "$MODE" == "full" ]]; then
             [[ "$PREFLIGHT_RESULT" == "success" && "$BROWSER_RESULT" == "success" && "$AFFECTED_RESULT" == "skipped" ]]

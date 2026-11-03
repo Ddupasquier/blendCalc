@@ -7,7 +7,9 @@ on:
       - staging
   push:
     branches:
-      - "**"
+      - staging
+      - main
+      - mock-staging
   schedule:
     - cron: "30 10 * * *"
   workflow_dispatch:
@@ -49,13 +51,13 @@ jobs:
           fi
           if [[ "$EVENT_NAME" == "push" && "$REF_NAME" == "main" ]]; then
             git fetch origin staging:refs/remotes/origin/staging
-            node scripts/operations/quality/verify_release_promotion.mjs --against origin/staging
+            node --input-type=module -e 'import { verifyMatchingGitTrees } from "./scripts/lib/quality/release_verification_receipt.mjs"; verifyMatchingGitTrees(process.cwd(), process.argv[1]);' origin/staging
             echo "changed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           if [[ "$EVENT_NAME" == "push" && "$REF_NAME" == "staging" ]]; then
             if git fetch origin mock-staging:refs/remotes/origin/mock-staging && \
-              node scripts/operations/quality/verify_release_promotion.mjs --against origin/mock-staging; then
+              node --input-type=module -e 'import { verifyMatchingGitTrees } from "./scripts/lib/quality/release_verification_receipt.mjs"; verifyMatchingGitTrees(process.cwd(), process.argv[1]);' origin/mock-staging; then
               echo "changed=false" >> "$GITHUB_OUTPUT"
               exit 0
             fi
