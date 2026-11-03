@@ -33,21 +33,31 @@ welcome, and guided tutorial. Auth configuration and security details remain in
   documentation links. Stack these sections at compact widths; keep BlendCalc's demo
   and account entry as the page's primary actions.
 
-## Public Guest Demo
+## Public Guest Demo And Label Calculator
 
 - `/demo` is an exact, public, indexable route included in the canonical sitemap. Its
   foods, example recipe, nutrition details and default totals render in server HTML.
   Nested or similarly prefixed routes do not inherit public access.
-- Only clearly labeled illustrative sample data is used. It is not imported catalog
-  data, a real product label, a recall check, or dietary advice. Real user records,
-  external food providers, account creation, database writes and ads are not involved.
+- The breakfast-bowl example remains clearly labeled illustrative data. A separate
+  blank label calculator accepts the visitor’s own entries; sample values never fill
+  its fields. Neither flow imports catalog data, reads user records, contacts food
+  providers, creates accounts, writes to a database or loads ads.
+- The label calculator accepts up to 20 ingredients, exact gram amounts and label
+  serving weights, five optional nutrient values and 1–1000 equal portions.
+  Nonnegative plain decimals are bounded to 100,000; serving weights must be positive.
+  Missing nutrient values make that nutrient incomplete across the batch and portion,
+  while explicit zero grams excludes an ingredient. Invalid required input pauses
+  results. No assumed volume-to-mass or cooked-weight conversion is performed.
+- Original worked examples explain label scaling, portions, preparation and missing
+  values in server-rendered public content. Labels and visitor entries are not
+  independently verified nutrition or dietary advice.
 - Visitors can change whole-gram portions from 0 through 1000, inspect per-100g sample
   values, see scaled totals, and reload the example recipe. Zero excludes a portion;
   invalid or blank input pauses the total rather than silently substituting a value.
 - Demo state exists only in the mounted page. Reloading resets it; no guest account or
   persistent draft is created. Sign-in offers building and saving the user's own work,
   without promising that demo changes will transfer.
-- Signed-in visitors to `/demo` see the same sample-only public surface without profile,
+- Signed-in visitors to `/demo` see the same temporary public calculator without profile,
   reference-catalog or private-food hydration. Existing protected app/API admission and
   all production advertising activation boundaries remain unchanged.
 
