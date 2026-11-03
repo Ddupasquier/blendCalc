@@ -1,4 +1,5 @@
 <script lang="ts">
+	import LabelRecipeCalculator from "$lib/components/public/LabelRecipeCalculator/LabelRecipeCalculator.svelte";
 	import { animatedDetails } from "$lib/utils/animation/animatedDetails";
 	import ActionLink from "$lib/components/common/buttons/ActionLink/ActionLink.svelte";
 	import ActionButton from "$lib/components/common/buttons/ActionButton/ActionButton.svelte";
@@ -26,9 +27,10 @@
 		<p class="eyebrow">A little taste of blendCalc</p>
 		<h1 id="demo-title">Try a Mix. No account needed.</h1>
 		<p>
-			Start with our example breakfast bowl. Change the amounts, explore the
-			sample nutrition, and see how each ingredient contributes.
+			See how recipe nutrition adds up with the example below, or use your own
+			package labels to calculate a batch and divide it into portions.
 		</p>
+		<a href="#your-recipe">Jump to your own recipe calculator</a>
 		<p class="sample-notice" id="sample-notice">
 			Sample data only: these are illustrative nutrition values, not actual
 			product labels. Your changes stay on this page and reset when you reload.
@@ -108,7 +110,7 @@
 						Check the ingredient amounts to see a valid total. No estimate is
 						substituted for an invalid amount.
 					</p>{/if}
-				<p role="status" class="field-help">
+				<p role="status" aria-label="Example Mix status" class="field-help">
 					{notice ||
 						(mix
 							? `Mix updated: ${mix.grams} grams, ${formatNutritionAmount(mix.nutrients.energy)} kcal from sample data.`
@@ -127,7 +129,7 @@
 				>
 			</section>
 			<section class="demo-panel" aria-labelledby="demo-next-title">
-				<h2 id="demo-next-title">Make your own.</h2>
+				<h2 id="demo-next-title">Keep recipes for next time.</h2>
 				<p>
 					Sign in to find foods, organize your Fridge and Shopping List, and
 					save your own Mixes and favorites. Demo changes do not transfer to
@@ -143,6 +145,49 @@
 			</section>
 		</div>
 	</div>
+	<LabelRecipeCalculator />
+	<section class="demo-intro" aria-labelledby="recipe-math-title">
+		<p class="eyebrow">What the calculator is doing</p>
+		<h2 id="recipe-math-title">From a food label to the whole recipe.</h2>
+		<p>
+			A serving on the package isn’t always the amount you put in the bowl.
+			Divide the weight you used by the label’s serving weight, then multiply
+			each nutrient by that number. Add the ingredients together for the batch;
+			divide by the number of equal portions for one portion.
+		</p>
+		<h3>A worked example</h3>
+		<p>
+			Suppose an example oat label reports 150 kcal and 5 g protein per 40 g
+			serving. You use 80 g: that is two label servings, so the oats contribute
+			300 kcal and 10 g protein. An example yogurt label reports 90 kcal and 15
+			g protein per 150 g, and you use exactly that amount. Together the 230 g
+			batch contains 390 kcal and 25 g protein. Split it into two equal
+			portions: each has 195 kcal and 12.5 g protein. These numbers illustrate
+			the method; use your actual labels for your recipe.
+		</p>
+		<h3>Before you weigh the ingredients</h3>
+		<p>
+			Match the food to its label: dry rice and cooked rice have different
+			weights, as do a drained ingredient and one packed in liquid. Include oil,
+			sauces and toppings that stay in the finished dish. If you only have a
+			volume measurement, weigh it or use that product’s documented gram
+			equivalent instead of assuming a cup or milliliter has a fixed weight.
+		</p>
+		<h3>What these totals can’t tell you</h3>
+		<p>
+			Labels are rounded, and nutrients may change with preparation. Cooking can
+			add or remove water, so the raw batch weight is not the cooked weight.
+			Equal portions assume the ingredients are distributed evenly. Missing
+			fiber or other values stay incomplete; a blank label field never becomes
+			zero. The calculator does not check allergens, recalls or whether a recipe
+			meets your individual dietary needs.
+		</p>
+		<p>
+			Want to look up foods and keep recipes for next time? <a
+				href="/auth?next=%2Fmix">Create an account or sign in</a
+			>. Your entries here stay in this page and won’t transfer.
+		</p>
+	</section>
 </PublicPageShell>
 
 <style lang="scss">
