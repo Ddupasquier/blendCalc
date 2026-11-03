@@ -26,8 +26,17 @@ const rawDiffArguments = [
 	"--no-color",
 ];
 
+const safePathCharacters = (path) => {
+	for (const character of path) {
+		const code = character.charCodeAt(0);
+		if (code <= 0x1f || code === 0x7f || code === 0xfffd || code === 0x5c)
+			return false;
+	}
+	return true;
+};
+
 const documentationPath = (path) =>
-	!/[\u0000-\u001f\u007f\ufffd\\]/u.test(path) &&
+	safePathCharacters(path) &&
 	!path
 		.split("/")
 		.some(

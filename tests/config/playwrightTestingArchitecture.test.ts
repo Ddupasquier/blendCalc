@@ -282,10 +282,10 @@ describe("Playwright browser-testing architecture", () => {
 		expect(databaseWorkflow).toContain("npm run db:test -- verify");
 		expect(databaseWorkflow).toContain("name: Database Verification");
 		expect(databaseWorkflow).toContain(
-			"verifyMatchingGitTrees(process.cwd(), process.argv[1]);\' origin/mock-staging",
+			"verifyMatchingGitTrees(process.cwd(), process.argv[1]);' origin/mock-staging",
 		);
 		expect(databaseWorkflow).toContain(
-			"verifyMatchingGitTrees(process.cwd(), process.argv[1]);\' origin/staging",
+			"verifyMatchingGitTrees(process.cwd(), process.argv[1]);' origin/staging",
 		);
 		expect(databaseWorkflow).not.toMatch(/pull_request:\s*\n\s+paths:/);
 		expect(hostedAuthWorkflow).toContain("name: Hosted Auth Health");
@@ -294,10 +294,10 @@ describe("Playwright browser-testing architecture", () => {
 		expect(hostedAuthWorkflow).toContain('cron: "30 10 * * *"');
 		expect(hostedAuthWorkflow).toContain("src/lib/server/auth");
 		expect(hostedAuthWorkflow).toContain(
-			"verifyMatchingGitTrees(process.cwd(), process.argv[1]);\' origin/staging",
+			"verifyMatchingGitTrees(process.cwd(), process.argv[1]);' origin/staging",
 		);
 		expect(hostedAuthWorkflow).toContain(
-			"verifyMatchingGitTrees(process.cwd(), process.argv[1]);\' origin/mock-staging",
+			"verifyMatchingGitTrees(process.cwd(), process.argv[1]);' origin/mock-staging",
 		);
 		expect(hostedAuthWorkflow).toContain("vars.BLENDCALC_HOSTED_SUPABASE_URL");
 		expect(hostedAuthWorkflow).not.toContain("secrets.");
