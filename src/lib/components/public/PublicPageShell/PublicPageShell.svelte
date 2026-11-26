@@ -20,7 +20,7 @@
 		<header>
 			<a class="brand" href={resolve("/")}>{APP_NAME}</a>
 			<nav aria-label="Public navigation">
-				<a href={resolve("/demo")}>Try the demo</a>
+				<a href={resolve("/demo")}>Recipe calculator</a>
 				<a href={`${resolve("/auth")}?next=${encodeURIComponent(next)}`}
 					>Sign in</a
 				>

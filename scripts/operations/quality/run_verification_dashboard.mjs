@@ -412,7 +412,6 @@ const getChildProcessEnvironment = (stageEnvironment = {}) => {
 	const environment = createCleanProcessEnvironment({
 		overrides: stageEnvironment,
 		passthroughKeys: [
-			"BLENDCALC_ALLOW_RESOURCE_PRESSURE",
 			"NODE_OPTIONS",
 			"PLAYWRIGHT_ENFORCE_DURATION_BUDGETS",
 			"PLAYWRIGHT_EXHAUSTIVE_MATRIX",

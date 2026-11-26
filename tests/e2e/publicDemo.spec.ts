@@ -18,8 +18,22 @@ test("@mobile @compatibility guests explore sample nutrition and reset a tempora
 	await page.goto("/demo");
 	await waitForAppReady(page);
 	await expect(
-		page.getByRole("heading", { name: "Try a Mix. No account needed." }),
+		page.getByRole("heading", {
+			name: "Calculate your recipe. No account needed.",
+		}),
 	).toBeVisible();
+	const calculator = page.getByRole("heading", {
+		name: "Calculate your own recipe.",
+	});
+	const example = page.getByRole("heading", {
+		name: "Explore an illustrative breakfast bowl",
+	});
+	await expect(calculator).toBeVisible();
+	const calculatorBounds = await calculator.boundingBox();
+	const exampleBounds = await example.boundingBox();
+	expect(calculatorBounds).not.toBeNull();
+	expect(exampleBounds).not.toBeNull();
+	expect(calculatorBounds!.y).toBeLessThan(exampleBounds!.y);
 	await expect(
 		page.getByRole("status", { name: "Example Mix status" }),
 	).toContainText("325 grams, 508 kcal");
@@ -89,6 +103,15 @@ test("@mobile @compatibility the public landing links demo, support and account 
 	page,
 }) => {
 	await page.goto("/");
+	const instagram = page.getByRole("link", {
+		name: "Follow @blendcalc on Instagram",
+	});
+	await expect(instagram).toHaveAttribute(
+		"href",
+		"https://www.instagram.com/blendcalc/",
+	);
+	await expect(instagram.locator("svg")).toHaveAttribute("aria-hidden", "true");
+
 	await waitForAppReady(page);
 	await expect(
 		page.getByRole("heading", { name: "What’s in the food you make?" }),
@@ -128,7 +151,7 @@ test("@mobile @compatibility the public landing links demo, support and account 
 		await page.setViewportSize(original);
 	}
 	await page
-		.getByRole("link", { name: "Try the demo", exact: true })
+		.getByRole("link", { name: "Recipe calculator", exact: true })
 		.first()
 		.click();
 	await expect(page).toHaveURL(/\/demo$/);
@@ -236,4 +259,61 @@ test("@mobile @compatibility guests calculate their own labels without sending r
 		"",
 	);
 	expect(forbiddenRequests).toEqual([]);
+});
+
+test("production reporting queues initial and SPA pageviews with installed SDKs", async ({
+	browser,
+	baseURL,
+}) => {
+	const context = await browser.newContext({
+		storageState: { cookies: [], origins: [] },
+	});
+	try {
+		// Exercise the approved hostname without sending requests or events to production.
+		await context.route("**/*", async (route) => {
+			const url = new URL(route.request().url());
+			if (url.hostname !== "www.blendcalc.food") return route.abort();
+			if (url.pathname.startsWith("/_vercel/"))
+				return route.fulfill({
+					status: 200,
+					contentType: "application/javascript",
+					body: "",
+				});
+			const response = await route.fetch({
+				url: new URL(url.pathname + url.search, baseURL).toString(),
+			});
+			await route.fulfill({ response });
+		});
+		const page = await context.newPage();
+		const errors: string[] = [];
+		page.on("pageerror", (error) => errors.push(error.message));
+		const pageviews = () =>
+			page.evaluate<Array<[string, { path: string; route: string }]>>(
+				"window.vaq?.filter(command => command[0] === 'pageview') ?? []",
+			);
+		await page.goto("https://www.blendcalc.food/?private=secret#private");
+		await expect
+			.poll(pageviews)
+			.toEqual([["pageview", { route: "/", path: "/" }]]);
+		await page
+			.getByRole("link", { name: "Recipe calculator", exact: true })
+			.first()
+			.click();
+		await expect.poll(pageviews).toEqual([
+			["pageview", { route: "/", path: "/" }],
+			["pageview", { route: "/demo", path: "/demo" }],
+		]);
+		await expect(page.locator('script[src*="speed-insights"]')).toHaveAttribute(
+			"data-route",
+			"/demo",
+		);
+		expect(
+			await page.evaluate<string>(
+				"window.vaq.find(command => command[0] === 'beforeSend')[1]({url: 'https://www.blendcalc.food/demo?private=secret#private'}).url",
+			),
+		).toBe("https://www.blendcalc.food/demo");
+		expect(errors).toEqual([]);
+	} finally {
+		await context.close();
+	}
 });

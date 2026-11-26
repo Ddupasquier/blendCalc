@@ -69,6 +69,9 @@ direct visual review.
 
 ## Choosing A Layer
 
+Calendar-based provider scenarios use a Date-only clock around fixed examples and
+restore it in `finally`; request timeout timers remain real.
+
 1. If PostgreSQL, Auth, Storage, an RPC, or RLS enforces the contract, test it against
    the disposable local database.
 2. If correctness depends on a browser, routed application, layout, focus model, or
@@ -272,7 +275,7 @@ files during the SvelteKit 3 migration. Standard isolated threads preserve the t
 boundaries, at the cost of rebuilding more runtime state. The earlier SvelteKit 2
 timings do not establish performance for this configuration. The configured default
 remains four workers locally and in CI inside the maintained 4 GiB Node heap and
-resource preflight limits; a focused local run can select fewer workers.
+heap limits; a focused local run can select fewer workers.
 
 Playwright defaults to two workers. A clean bounded-matrix benchmark completed in 3.7
 minutes with two workers and 4.2 minutes with three, so the extra worker increased local
@@ -345,6 +348,10 @@ directory is ignored. Open retained HTML reports, traces, screenshots, videos, o
 only when a failure needs investigation.
 
 ## Remote Verification
+
+Workflow-planning fixtures copy the current imported helper modules into their disposable
+repositories and provide controlled GitHub API JSON. Local affected-test selection owns
+combined committed and working-tree changes; hosted planning qualifies committed trees.
 
 The checked-in workflows use Node.js 24 and a clean dependency install:
 
