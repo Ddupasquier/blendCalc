@@ -34,6 +34,10 @@ export default defineRehearsalConfig({
 		proofCommand: "node scripts/operations/quality/prove_local_publication.mjs",
 		environmentFile: ".rehearsal-native/publication/.rehearsal/runtime.env",
 	},
+	lifecycle: {
+		run: "keep-until-stop",
+		open: "keep-until-stop",
+	},
 	runtime: {
 		target: "supabase",
 		applicationUrl: "http://localhost:5175",
