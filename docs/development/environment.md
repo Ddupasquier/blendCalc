@@ -287,7 +287,9 @@ npm run rehearsal -- open
 ```
 
 The application opens at **http://localhost:5175**. Ctrl+C or Ctrl+Z closes only the
-application; database and Storage state persist. Use the package's `stop` and `start`
+application; database and Storage state persist. Both Rehearsal configurations explicitly
+set `lifecycle.run` and `lifecycle.open` to `keep-until-stop`, preserving this workflow
+across package upgrades. Use the package's `stop` and `start`
 commands for a database restart, or `reset` to deliberately replace sandbox edits with
 the approved baseline. Review the candidate digest before applying migrations.
 

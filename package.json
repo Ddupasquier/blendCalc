@@ -90,7 +90,7 @@
 		"@fontsource-variable/dm-sans": "5.3.0",
 		"@fontsource-variable/plus-jakarta-sans": "5.3.0",
 		"@playwright/test": "^1.62.1",
-		"@rehearsal-db/core": "1.0.2",
+		"@rehearsal-db/core": "2.3.0",
 		"@sveltejs/adapter-vercel": "7.0.1",
 		"@sveltejs/kit": "3.1.0",
 		"@sveltejs/vite-plugin-svelte": "^7.2.0",
@@ -147,7 +147,7 @@
 		"ws": "^8.21.1"
 	},
 	"allowScripts": {
-		"@rehearsal-db/core@1.0.2": true,
+		"@rehearsal-db/core@2.3.0": true,
 		"@parcel/watcher@2.5.6": true,
 		"bufferutil@4.1.0": true,
 		"fsevents@2.3.3": true,
