@@ -143,7 +143,7 @@ intentionally omitted.
 | `npm run format -- <paths...>`                                             | Apply the maintained Prettier layout to selected source or documentation.                   |
 | `npm run format:check`                                                     | Verify newly added supported files match the maintained layout.                             |
 | `npm run format:check:all`                                                 | Audit remaining legacy formatting debt without rewriting it.                                |
-| `npm run resources:check`                                                  | Report local disk, swap, and process memory without blocking work.                               |
+| `npm run resources:check`                                                  | Report local disk, swap, and process memory without blocking work.                          |
 | `npm test`                                                                 | Run the non-browser Vitest suite with compact output.                                       |
 | `npm run test:affected`                                                    | Run Vitest files related to the current branch and working-tree changes.                    |
 | `npm run test:focused -- <path>`                                           | Run one focused Vitest file or directory in its configured runtime.                         |

@@ -66,7 +66,7 @@ unsuppressed report.
 | Read-only audit                          | Confirm the target environment and use `--json` only when a machine-readable report is needed.        |
 | Seed, import, or backfill                | Run the documented dry run first when one exists; review counts and exact write scope.                |
 | Local QA database                        | Use only `db:test:*`; the manager rejects non-local Supabase URLs.                                    |
-| Heavy local verification                 | Optional `npm run resources:check` reports capacity; verification retains heap and worker limits.               |
+| Heavy local verification                 | Optional `npm run resources:check` reports capacity; verification retains heap and worker limits.     |
 | Linked migration                         | Use only `db:push`, `db:push:auto`, or `db:push:dry`; never bypass the remote-`main` promotion guard. |
 | Privileged account or publication action | Verify the actor, target identifier, reason, and environment before writing.                          |
 | Backup or recovery                       | Store output outside the repository and verify permissions and checksums.                             |
