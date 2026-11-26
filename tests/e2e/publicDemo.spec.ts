@@ -296,7 +296,7 @@ test("production reporting queues initial and SPA pageviews with installed SDKs"
 			.poll(pageviews)
 			.toEqual([["pageview", { route: "/", path: "/" }]]);
 		await page
-			.getByRole("link", { name: "Try the demo", exact: true })
+			.getByRole("link", { name: "Recipe calculator", exact: true })
 			.first()
 			.click();
 		await expect.poll(pageviews).toEqual([
