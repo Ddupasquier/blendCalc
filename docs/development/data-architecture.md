@@ -611,7 +611,8 @@ Vercel Web Analytics owns anonymous page-view collection and the explicitly regi
 sends only the stable event name; it does not attach email addresses, user ids, product
 identifiers, search terms, or free-form properties. Analytics and Speed Insights strip
 query strings and URL hashes before sending page URLs. The root layout loads both
-optional SDKs asynchronously only after mounting on an approved production hostname;
+optional SDKs through their SvelteKit 3 `/sveltekit-next` integrations asynchronously
+only after mounting on an approved production hostname;
 SSR, development and other hosts do not load them. App-owned timing listeners start
 synchronously, queue at most 32 coarse events while loading, and release listeners,
 observers and queued events on unmount. A rejected or late SDK load cannot block app

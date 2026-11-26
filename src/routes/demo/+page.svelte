@@ -24,13 +24,18 @@
 
 <PublicPageShell next="/mix">
 	<section class="demo-intro" aria-labelledby="demo-title">
-		<p class="eyebrow">A little taste of blendCalc</p>
-		<h1 id="demo-title">Try a Mix. No account needed.</h1>
+		<p class="eyebrow">Recipe nutrition, from your labels</p>
+		<h1 id="demo-title">Calculate your recipe. No account needed.</h1>
 		<p>
-			See how recipe nutrition adds up with the example below, or use your own
-			package labels to calculate a batch and divide it into portions.
+			Use your package labels to calculate a batch and divide it into portions.
+			Then explore the illustrative breakfast bowl below to see how ingredient
+			amounts change the totals.
 		</p>
-		<a href="#your-recipe">Jump to your own recipe calculator</a>
+		<a href="#recipe-math-title">How the calculation works</a>
+	</section>
+	<LabelRecipeCalculator />
+	<section class="demo-intro" aria-labelledby="example-title">
+		<h2 id="example-title">Explore an illustrative breakfast bowl</h2>
 		<p class="sample-notice" id="sample-notice">
 			Sample data only: these are illustrative nutrition values, not actual
 			product labels. Your changes stay on this page and reset when you reload.
@@ -145,7 +150,6 @@
 			</section>
 		</div>
 	</div>
-	<LabelRecipeCalculator />
 	<section class="demo-intro" aria-labelledby="recipe-math-title">
 		<p class="eyebrow">What the calculator is doing</p>
 		<h2 id="recipe-math-title">From a food label to the whole recipe.</h2>
@@ -165,6 +169,25 @@
 			portions: each has 195 kcal and 12.5 g protein. These numbers illustrate
 			the method; use your actual labels for your recipe.
 		</p>
+		<h3>Compare a shake ingredient swap</h3>
+		<p>
+			Keep a copy of your first result, then change just one ingredient using
+			its own package label. To compare two shake bases fairly, use the same
+			weight for each and keep the other ingredients unchanged. Compare both the
+			batch and per-portion totals. If one label omits a nutrient, leave it
+			blank: an incomplete total is not evidence that the replacement has less
+			of it. This compares your entries, not taste, suitability or food safety.
+		</p>
+		<h3>Divide meal prep into equal portions</h3>
+		<p>
+			Enter all ingredients retained in your finished recipe, then choose how
+			many equal portions you will make. Using the 390 kcal and 25 g protein
+			batch in the worked example above, two equal portions contain 195 kcal and
+			12.5 g protein each. Four equal portions instead contain 97.5 kcal and
+			6.25 g protein each. Changing the portion count does not change the batch
+			total. If portions are unequal or ingredients are not evenly distributed,
+			these averages do not describe each container accurately.
+		</p>
 		<h3>Before you weigh the ingredients</h3>
 		<p>
 			Match the food to its label: dry rice and cooked rice have different
@@ -181,6 +204,24 @@
 			fiber or other values stay incomplete; a blank label field never becomes
 			zero. The calculator does not check allergens, recalls or whether a recipe
 			meets your individual dietary needs.
+		</p>
+		<h3>Where the numbers come from</h3>
+		<p>
+			This public calculator uses only the label values you enter. The breakfast
+			bowl above uses fixed illustrative values, not a live food database.
+			Neither is independently verified. A rounded label value stays rounded
+			even when the arithmetic produces more decimal places; displayed precision
+			is not a guarantee of laboratory accuracy.
+		</p>
+		<h3>About this tool and corrections</h3>
+		<p>
+			blendCalc is maintained by ModernCraft LLC in Oregon. It is a tool for
+			understanding recipe arithmetic, not medical advice or a food-safety
+			certification. If a calculation looks wrong, check the serving weight,
+			units and portion count first. Send a reproducible example to
+			<a href="mailto:support@blendcalc.food">support@blendcalc.food</a>
+			with the values entered and the result you expected. Please leave out private
+			health information.
 		</p>
 		<p>
 			Want to look up foods and keep recipes for next time? <a
