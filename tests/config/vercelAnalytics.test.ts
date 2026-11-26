@@ -12,7 +12,7 @@ const appLayout = readFileSync(
 describe("Vercel Web Analytics", () => {
 	it("uses the supported SvelteKit integration in production", () => {
 		expect(packageMetadata.dependencies?.["@vercel/analytics"]).toBeDefined();
-		expect(appLayout).toContain('import("@vercel/analytics/sveltekit")');
+		expect(appLayout).toContain('import("@vercel/analytics/sveltekit-next")');
 		expect(appLayout).not.toMatch(/import\s+[^;]+from\s+["']@vercel\//);
 		const rootLayout = readFileSync("src/routes/+layout.svelte", "utf8");
 		expect(rootLayout).not.toContain("@vercel/");

@@ -26,6 +26,11 @@ welcome, and guided tutorial. Auth configuration and security details remain in
   a local 68rem maximum width; at the existing compact breakpoint its columns stack.
   This does not change the authenticated app's content cap or authentication shell.
 - Keep the landing concise: a recipe-focused hero, a warm cream canvas, an original vector breakfast-bowl illustration, calculated sample Mix totals, direct Ingredients/Mix/Saved descriptions, and quiet privacy/limits/support text. The landing has its own shell variant, with stronger supporting ink derived from the existing primary/surface colors for contrast on cream; the demo retains the default illustrated background.
+- A quiet Instagram link with its recognizable icon points to
+  `https://www.instagram.com/blendcalc/` and identifies `@blendcalc`. Keep it beside
+  the existing support information; it does not embed social scripts or images.
+- A quiet Instagram link beside support displays the Instagram mark and `@blendcalc`,
+  linking directly to `https://www.instagram.com/blendcalc/` without an embed or tracker.
 - The approved optional support link goes to the owner's Buy Me a Coffee page. It is
   not a subscription, required payment, or purchase of ad-free access.
 - Beside support, a compact “More from ModernCraft” section features Rehearsal first

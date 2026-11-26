@@ -10,11 +10,11 @@ import {
 } from "./performanceObservability";
 
 type Analytics = Pick<
-	typeof import("@vercel/analytics/sveltekit"),
+	typeof import("@vercel/analytics/sveltekit-next"),
 	"injectAnalytics" | "track"
 >;
 type SpeedInsights = Pick<
-	typeof import("@vercel/speed-insights/sveltekit"),
+	typeof import("@vercel/speed-insights/sveltekit-next"),
 	"injectSpeedInsights"
 >;
 type Options = {
@@ -45,8 +45,8 @@ export const mountVercelObservability = ({
 	Observer = typeof PerformanceObserver === "undefined"
 		? undefined
 		: PerformanceObserver,
-	loadAnalytics = () => import("@vercel/analytics/sveltekit"),
-	loadSpeedInsights = () => import("@vercel/speed-insights/sveltekit"),
+	loadAnalytics = () => import("@vercel/analytics/sveltekit-next"),
+	loadSpeedInsights = () => import("@vercel/speed-insights/sveltekit-next"),
 }: Options): (() => void) => {
 	if (!browser || !target || !timing) return () => {};
 	const hydration = timing.now();
