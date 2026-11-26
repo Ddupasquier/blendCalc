@@ -17,7 +17,7 @@ export const getAppDocumentTitle = (
 	const { pathname } = url;
 
 	if (pathname === "/") {
-		return formatDocumentTitle("Food Awareness, Nutrition & Recalls");
+		return formatDocumentTitle("Recipe Nutrition & Label Calculator");
 	}
 	if (pathname === "/demo")
 		return formatDocumentTitle("Recipe Nutrition Calculator");

@@ -40,6 +40,12 @@ welcome, and guided tutorial. Auth configuration and security details remain in
 
 ## Public Guest Demo And Label Calculator
 
+- Lead `/demo` with the blank label calculator, followed by the explicitly illustrative
+  breakfast bowl and reproducible arithmetic examples. Public navigation calls it the
+  Recipe calculator. Explain input provenance, rounding, limitations and corrections
+  alongside the calculation method; do not imply examples were tested recipes or live
+  database results.
+
 - `/demo` is an exact, public, indexable route included in the canonical sitemap. Its
   foods, example recipe, nutrition details and default totals render in server HTML.
   Nested or similarly prefixed routes do not inherit public access.

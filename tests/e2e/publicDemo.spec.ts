@@ -18,8 +18,22 @@ test("@mobile @compatibility guests explore sample nutrition and reset a tempora
 	await page.goto("/demo");
 	await waitForAppReady(page);
 	await expect(
-		page.getByRole("heading", { name: "Try a Mix. No account needed." }),
+		page.getByRole("heading", {
+			name: "Calculate your recipe. No account needed.",
+		}),
 	).toBeVisible();
+	const calculator = page.getByRole("heading", {
+		name: "Calculate your own recipe.",
+	});
+	const example = page.getByRole("heading", {
+		name: "Explore an illustrative breakfast bowl",
+	});
+	await expect(calculator).toBeVisible();
+	const calculatorBounds = await calculator.boundingBox();
+	const exampleBounds = await example.boundingBox();
+	expect(calculatorBounds).not.toBeNull();
+	expect(exampleBounds).not.toBeNull();
+	expect(calculatorBounds!.y).toBeLessThan(exampleBounds!.y);
 	await expect(
 		page.getByRole("status", { name: "Example Mix status" }),
 	).toContainText("325 grams, 508 kcal");
@@ -137,7 +151,7 @@ test("@mobile @compatibility the public landing links demo, support and account 
 		await page.setViewportSize(original);
 	}
 	await page
-		.getByRole("link", { name: "Try the demo", exact: true })
+		.getByRole("link", { name: "Recipe calculator", exact: true })
 		.first()
 		.click();
 	await expect(page).toHaveURL(/\/demo$/);

@@ -25,7 +25,7 @@
 				yourself.
 			</p>
 			<div class="landing-actions">
-				<ActionLink href="/demo">Try the demo</ActionLink><a
+				<ActionLink href="/demo">Recipe calculator</ActionLink><a
 					class="account-link"
 					href={`${resolve("/auth")}?next=${encodeURIComponent(data.next)}`}
 					>Sign in or create an account</a
@@ -85,7 +85,7 @@
 		</div>
 		<dl>
 			<div>
-				<dt>Find your food.</dt>
+				<dt>Find your food after signing in.</dt>
 				<dd>
 					Find your foods in Ingredients by searching, scanning a barcode, or
 					adding them yourself. Keep what you have in your Fridge and what you
