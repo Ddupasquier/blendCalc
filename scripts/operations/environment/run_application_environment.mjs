@@ -73,7 +73,7 @@ const environment = createSafeLocalApplicationEnvironment({
 			? "1x00000000000000000000AA"
 			: "",
 	},
-	passthroughKeys: ["BLENDCALC_ALLOW_RESOURCE_PRESSURE"],
+	passthroughKeys: [],
 });
 
 console.log(

@@ -1,6 +1,5 @@
 /**
- * Purpose: Provide shared parsing, inspection, and enforcement for local resource
- * safety boundaries.
+ * Purpose: Provide shared parsing and read-only reporting for local resource use.
  * Do not run directly; import this module from a maintained quality command.
  */
 
@@ -205,46 +204,41 @@ export const formatGibibytes = (bytes) =>
 
 export const formatResourceIssue = (issue) => {
 	switch (issue.kind) {
+		case "inspection":
+			return "Local resource measurements are unavailable. Reporting is informational.";
 		case "disk-measurement":
-			return "Startup disk free space could not be measured. Resolve the measurement failure before starting heavy work.";
+			return "Startup disk free space could not be measured. Reporting is informational.";
 		case "memory-measurement":
-			return "macOS physical RAM, swap or current memory pressure could not be measured. Resolve the measurement failure before starting heavy work.";
+			return "macOS physical RAM, swap or current memory pressure could not be measured. Reporting is informational.";
 		case "memory-pressure":
-			return `macOS reports ${issue.pressure} current memory pressure. Wait for normal pressure before starting heavy work.`;
+			return `macOS reports ${issue.pressure} current memory pressure.`;
 		case "startup-disk":
-			return `Startup disk has ${formatGibibytes(issue.actualBytes)} free; at least ${formatGibibytes(issue.limitBytes)} is required.`;
+			return `Startup disk has ${formatGibibytes(issue.actualBytes)} free; at least ${formatGibibytes(issue.limitBytes)} is the advisory threshold.`;
 		case "swap":
-			return `Swap use is ${formatGibibytes(issue.actualBytes)}; it must be at or below ${formatGibibytes(issue.limitBytes)}.`;
+			return `Swap use is ${formatGibibytes(issue.actualBytes)}; the advisory threshold is ${formatGibibytes(issue.limitBytes)}.`;
 		case "process":
-			return `${basename(issue.process.command)} PID ${issue.process.pid} is using ${formatGibibytes(issue.actualBytes)}; the development-process limit is ${formatGibibytes(issue.limitBytes)}.`;
+			return `${basename(issue.process.command)} PID ${issue.process.pid} is using ${formatGibibytes(issue.actualBytes)}; the advisory threshold is ${formatGibibytes(issue.limitBytes)}.`;
 		default:
 			return "Unknown resource-safety issue.";
 	}
 };
 
-export const assertLocalResourceSafety = ({
+/** Resource observations are informational and never authorize or block a run. */
+export const getLocalResourceReport = ({
 	environment = process.env,
 	snapshot = null,
+	inspect = inspectLocalResources,
 } = {}) => {
-	if ([true, "true", "1"].includes(environment.CI)) {
-		return { skipped: true, overridden: false, snapshot: null, issues: [] };
+	if ([true, "true", "1"].includes(environment.CI))
+		return { skipped: true, snapshot: null, issues: [] };
+	try {
+		const currentSnapshot = snapshot ?? inspect();
+		return {
+			skipped: false,
+			snapshot: currentSnapshot,
+			issues: evaluateResourceSafety(currentSnapshot),
+		};
+	} catch {
+		return { skipped: false, snapshot: null, issues: [{ kind: "inspection" }] };
 	}
-	const currentSnapshot = snapshot ?? inspectLocalResources();
-	const issues = evaluateResourceSafety(currentSnapshot);
-	const overridden = environment.BLENDCALC_ALLOW_RESOURCE_PRESSURE === "1";
-	if (issues.length > 0 && !overridden) {
-		throw new Error(
-			[
-				"Resource safety check failed:",
-				...issues.map((issue) => `- ${formatResourceIssue(issue)}`),
-				"Resolve the pressure before a heavy run. Use BLENDCALC_ALLOW_RESOURCE_PRESSURE=1 only for a deliberate one-time override.",
-			].join("\n"),
-		);
-	}
-	return {
-		skipped: false,
-		overridden,
-		snapshot: currentSnapshot,
-		issues,
-	};
 };

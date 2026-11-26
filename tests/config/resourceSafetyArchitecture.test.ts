@@ -5,7 +5,7 @@ const packageMetadata = JSON.parse(readFileSync("package.json", "utf8"));
 const readSource = (path: string) => readFileSync(path, "utf8");
 
 describe("resource-safe verification architecture", () => {
-	it("guards maintained heavy entry points and caps Vitest workers", () => {
+	it("preserves heap wrappers and worker caps without machine-capacity gates", () => {
 		for (const command of [
 			"build",
 			"build:test:e2e",
@@ -28,7 +28,15 @@ describe("resource-safe verification architecture", () => {
 		expect(packageMetadata.scripts.test).not.toContain("npm run test:node");
 		expect(
 			readSource("scripts/operations/database/manage_test_database.mjs"),
-		).toContain('if (action === "verify") assertLocalResourceSafety()');
+		).not.toContain("assertLocalResourceSafety");
+		expect(packageMetadata.scripts["test:e2e:prepare"]).not.toContain(
+			"resources:check",
+		);
+		for (const file of [
+			"scripts/operations/quality/run_with_resource_limits.mjs",
+			"scripts/operations/quality/run_browser_verification.mjs",
+		])
+			expect(readSource(file)).not.toContain("assertLocalResourceSafety");
 	});
 
 	it("caps browser workers and cleans up an owned database runtime", () => {

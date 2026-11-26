@@ -112,6 +112,6 @@ export const readProductionDevelopmentEnvironment = ({
 			BLENDCALC_RUNTIME_ENVIRONMENT: "production",
 			PUBLIC_SITE_URL: "http://localhost:5173",
 		},
-		passthroughKeys: ["BLENDCALC_ALLOW_RESOURCE_PRESSURE"],
+		passthroughKeys: [],
 	});
 };

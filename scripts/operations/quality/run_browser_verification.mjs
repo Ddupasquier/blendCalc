@@ -18,7 +18,6 @@ import {
 	startLocalSupabase,
 	stopLocalSupabase,
 } from "../../lib/environment/local_supabase.mjs";
-import { assertLocalResourceSafety } from "../../lib/quality/resource_safety.mjs";
 import { withNodeHeapLimit } from "./run_with_resource_limits.mjs";
 import { createLocalArtifactEnvironment } from "../../../config/runtimeArtifactPaths.js";
 
@@ -32,9 +31,8 @@ const runCommand = (command, args, environment) =>
 	}).status ?? 1;
 
 export const main = (playwrightArguments = process.argv.slice(2)) => {
-	assertLocalResourceSafety();
 	const preparationEnvironment = createCleanProcessEnvironment({
-		passthroughKeys: ["BLENDCALC_ALLOW_RESOURCE_PRESSURE"],
+		passthroughKeys: [],
 		overrides: {
 			...createLocalArtifactEnvironment(repositoryRoot, {}),
 			BLENDCALC_RUNTIME_ENVIRONMENT: "test",
@@ -74,7 +72,6 @@ export const main = (playwrightArguments = process.argv.slice(2)) => {
 				},
 				inheritedEnvironment: process.env,
 				passthroughKeys: [
-					"BLENDCALC_ALLOW_RESOURCE_PRESSURE",
 					"PLAYWRIGHT_ENFORCE_DURATION_BUDGETS",
 					"PLAYWRIGHT_EXHAUSTIVE_MATRIX",
 					"PLAYWRIGHT_PROGRESS_REPORTER",
