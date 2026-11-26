@@ -654,6 +654,8 @@ describe("official food safety alert normalization and matching", () => {
 			throw new TypeError("detail page unavailable");
 		});
 		vi.stubGlobal("fetch", fetchMock);
+		vi.useFakeTimers({ toFake: ["Date"] });
+		vi.setSystemTime(new Date("2026-08-25T00:00:00.000Z"));
 
 		try {
 			const page = await fetchOpenFdaAlertPage(null, {}, 100);
@@ -667,6 +669,7 @@ describe("official food safety alert normalization and matching", () => {
 			]);
 		} finally {
 			vi.unstubAllGlobals();
+			vi.useRealTimers();
 		}
 	});
 
@@ -739,6 +742,8 @@ describe("official food safety alert normalization and matching", () => {
 			},
 		);
 		vi.stubGlobal("fetch", fetchMock);
+		vi.useFakeTimers({ toFake: ["Date"] });
+		vi.setSystemTime(new Date("2026-08-25T00:00:00.000Z"));
 
 		try {
 			const page = await fetchOpenFdaAlertPage(null, {}, 100, undefined, {
@@ -765,6 +770,7 @@ describe("official food safety alert normalization and matching", () => {
 			}
 		} finally {
 			vi.unstubAllGlobals();
+			vi.useRealTimers();
 		}
 	});
 });
