@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Instagram from "$lib/assets/icons/Instagram/Instagram.svelte";
 	import { resolve } from "$app/paths";
 	import ActionLink from "$lib/components/common/buttons/ActionLink/ActionLink.svelte";
 	import BreakfastBowlIllustration from "$lib/components/public/BreakfastBowlIllustration/BreakfastBowlIllustration.svelte";
@@ -127,6 +128,9 @@
 	<div class="landing-maker">
 		<section class="landing-support" aria-labelledby="support-title">
 			<h2 id="support-title">Finding blendCalc useful?</h2>
+			<a href="https://www.instagram.com/blendcalc/" rel="me">
+				<Instagram /> <span>Follow @blendcalc on Instagram</span>
+			</a>
 			<p>
 				You can help keep this independent project going by buying me a coffee.
 				There’s no obligation, and donations don’t purchase ad-free access.

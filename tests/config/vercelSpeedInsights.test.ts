@@ -14,7 +14,9 @@ describe("Vercel Speed Insights", () => {
 		expect(
 			packageMetadata.dependencies?.["@vercel/speed-insights"],
 		).toBeDefined();
-		expect(appLayout).toContain('import("@vercel/speed-insights/sveltekit")');
+		expect(appLayout).toContain(
+			'import("@vercel/speed-insights/sveltekit-next")',
+		);
 		expect(appLayout).toContain(
 			"isApprovedObservabilityHostname(target.location.hostname)",
 		);

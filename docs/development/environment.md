@@ -61,6 +61,13 @@ Do not put dotenv files or placeholders in this directory.
 The SvelteKit 3 compatibility candidate pins `@vercel/analytics` to
 `2.1.0-canary.5` and `@vercel/speed-insights` to `2.1.0-canary`: these published
 versions declare SvelteKit 3 support, while the current stable versions do not.
+Both SDKs use their `/sveltekit-next` entry points for SvelteKit 3. Their older
+`/sveltekit` entry points subscribe to the removed `$app/stores` API and cannot
+report pageviews or performance under SvelteKit 3. Mount reporting once in the root
+layout so public landing, calculator, account and authenticated routes share the
+same navigation-aware integration. Preserve production-host restrictions and URL
+query/fragment redaction.
+
 They remain prerelease SDKs. Local checks cannot establish hosted ingestion or
 provider-dashboard behavior; those outcomes remain unverified by the local
 compatibility suite.
