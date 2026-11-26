@@ -54,6 +54,20 @@ const packageImportInventory = execFileSync(
 	});
 
 describe("Rehearsal package consumer boundary", () => {
+	it("preserves explicit hands-on lifecycle settings across package upgrades", async () => {
+		for (const path of [
+			"../../rehearsal.config.mjs",
+			"../../infrastructure/rehearsal/publication/rehearsal.config.mjs",
+		]) {
+			const { default: configuration } = await import(
+				new URL(path, import.meta.url).href
+			);
+			expect(configuration.lifecycle).toEqual({
+				run: "keep-until-stop",
+				open: "keep-until-stop",
+			});
+		}
+	});
 	it("does not retain a second source-copy, sanitizer or Storage preparation engine", () => {
 		for (const path of [
 			"scripts/lib/rehearsal",

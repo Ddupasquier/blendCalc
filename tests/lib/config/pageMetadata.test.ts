@@ -19,7 +19,7 @@ describe("page metadata", () => {
 
 	it("puts the useful view name before the app name", () => {
 		expect(getAppDocumentTitle(url("/"))).toBe(
-			"Food Awareness, Nutrition & Recalls · blendCalc",
+			"Recipe Nutrition & Label Calculator · blendCalc",
 		);
 		expect(formatDocumentTitle("Shopping List")).toBe(
 			"Shopping List · blendCalc",

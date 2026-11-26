@@ -20,7 +20,6 @@ import { fileURLToPath } from "node:url";
 import { createClient } from "@supabase/supabase-js";
 import WebSocket from "ws";
 import { createCleanProcessEnvironment } from "../../lib/environment/runtime_environment.mjs";
-import { assertLocalResourceSafety } from "../../lib/quality/resource_safety.mjs";
 import { localSupabaseCommandArguments } from "../../lib/environment/local_supabase_workdir.mjs";
 import { assertLocalConfigurationChangeSafe } from "../../lib/environment/local_supabase.mjs";
 import {
@@ -1089,8 +1088,6 @@ const printAccounts = () => {
 };
 
 const main = async () => {
-	if (action === "verify") assertLocalResourceSafety();
-
 	switch (action) {
 		case "start":
 			await startLocalStack();

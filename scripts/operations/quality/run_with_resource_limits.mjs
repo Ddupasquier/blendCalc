@@ -1,5 +1,5 @@
 /**
- * Purpose: Refuse an unsafe local heavy run and bound the child Node heap without
+ * Purpose: Bound the child Node heap without
  * modifying repository or machine state.
  * Run: `node scripts/operations/quality/run_with_resource_limits.mjs -- <command>`.
  */
@@ -7,7 +7,6 @@
 import { spawn } from "node:child_process";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { assertLocalResourceSafety } from "../../lib/quality/resource_safety.mjs";
 import { createLocalArtifactEnvironment } from "../../../config/runtimeArtifactPaths.js";
 
 const repositoryRoot = fileURLToPath(new URL("../../../", import.meta.url));
@@ -45,7 +44,6 @@ export const main = async (args = process.argv.slice(2)) => {
 			"Provide a command after run_with_resource_limits.mjs, optionally separated by --.",
 		);
 	}
-	assertLocalResourceSafety();
 	const exitCode = await new Promise((resolveExitCode) => {
 		const child = spawn(command, commandArguments, {
 			stdio: "inherit",

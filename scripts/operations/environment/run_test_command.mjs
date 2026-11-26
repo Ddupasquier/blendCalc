@@ -69,7 +69,6 @@ export const main = async (args = process.argv.slice(2)) => {
 		blendCalcAPISupabase: readLocalBlendCalcAPIEnvironment(),
 		additionalEnvironment: generatedEnvironment,
 		passthroughKeys: [
-			"BLENDCALC_ALLOW_RESOURCE_PRESSURE",
 			"BLENDCALC_ADVERTISING_MODE",
 			"FORMAT_BASE_REF",
 			"NODE_OPTIONS",

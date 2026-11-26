@@ -59,6 +59,10 @@ export default defineRehearsalConfig({
 			timeoutSeconds: 90,
 		},
 	},
+	lifecycle: {
+		run: "keep-until-stop",
+		open: "keep-until-stop",
+	},
 	runtime: {
 		applicationUrl: "http://localhost:5175",
 		projectId: "blendcalc-rehearsal-native",
