@@ -346,6 +346,10 @@ only when a failure needs investigation.
 
 ## Remote Verification
 
+Workflow-planning fixtures copy the current imported helper modules into their disposable
+repositories and provide controlled GitHub API JSON. Local affected-test selection owns
+combined committed and working-tree changes; hosted planning qualifies committed trees.
+
 The checked-in workflows use Node.js 24 and a clean dependency install:
 
 - `.github/workflows/verify.yml` chooses documentation, feature, release-candidate

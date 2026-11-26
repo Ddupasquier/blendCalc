@@ -32,6 +32,14 @@ const createFixture = (changedPaths) => {
 	temporaryRepositories.push(root);
 	mkdirSync(dirname(join(root, selectorPath)), { recursive: true });
 	copyFileSync(resolve(selectorPath), join(root, selectorPath));
+	for (const helper of [
+		"verification_scope.mjs",
+		"release_verification_receipt.mjs",
+	]) {
+		const path = `scripts/lib/quality/${helper}`;
+		mkdirSync(dirname(join(root, path)), { recursive: true });
+		copyFileSync(resolve(path), join(root, path));
+	}
 	const commandGuards = join(root, "command-guards");
 	mkdirSync(commandGuards);
 	for (const command of ["npm", "npx"]) {
@@ -77,38 +85,26 @@ const readOutput = (fixture) =>
 
 const createSquashedFixture = () => {
 	const fixture = createFixture([]);
-	const promotionPath =
-		"scripts/operations/quality/verify_release_promotion.mjs";
-	writeFileSync(
-		join(fixture.root, promotionPath),
-		`import { verifyMatchingGitTrees } from ${JSON.stringify(
-			resolve("scripts/lib/quality/release_verification_receipt.mjs"),
-		)};\nverifyMatchingGitTrees(process.cwd(), process.argv[3]);\n`,
-	);
 	writeFileSync(
 		join(fixture.root, "command-guards/gh"),
-		`#!/bin/sh
-case "$2" in
-  *event=workflow_dispatch*)
-    if [ "$FIXTURE_DISCOVERY_ERROR" = true ]; then exit 7; fi
-    if [ "$FIXTURE_ADVERTISE" = true ]; then printf '%s\\n' "$FIXTURE_VERIFIED_SHA"; fi
-    ;;
-  *head_sha=*)
-    case "$2" in
-      *"head_sha=$FIXTURE_VERIFIED_SHA&"*)
-        if [ "$FIXTURE_FULL_PASSED" = true ]; then echo 1; else echo 0; fi
-        ;;
-      *) echo 0 ;;
-    esac
-    ;;
-  *) exit 8 ;;
-esac
+		`#!${process.execPath}
+if (process.argv[2] !== "api") process.exit(8);
+if (process.env.FIXTURE_DISCOVERY_ERROR === "true") process.exit(7);
+const endpoint = new URL(process.argv[3], "https://fixture.invalid/");
+const repository = process.env.GITHUB_REPOSITORY;
+const verified = process.env.FIXTURE_VERIFIED_SHA;
+if (endpoint.pathname.endsWith("/actions/workflows/verify.yml/runs")) {
+    if (endpoint.searchParams.get("per_page") !== "20" || endpoint.searchParams.get("event") !== "workflow_dispatch") process.exit(8);
+    const passed = endpoint.searchParams.get("head_sha") === verified && process.env.FIXTURE_FULL_PASSED === "true";
+    console.log(JSON.stringify({workflow_runs: passed ? [{id: 1, head_sha: verified, repository: {full_name: repository}, event: "workflow_dispatch", display_title: "Verify (full)", status: "completed", conclusion: "success"}] : []}));
+} else if (endpoint.pathname.endsWith("/pulls")) {
+    if (endpoint.searchParams.get("per_page") !== "10") process.exit(8);
+    const commit = endpoint.pathname.split("/").at(-2);
+    const advertised = commit === process.env.FIXTURE_PROMOTION_SHA && process.env.FIXTURE_ADVERTISE === "true";
+    console.log(JSON.stringify(advertised ? [{merged_at: "2026-11-03T08:00:00Z", merge_commit_sha: commit, base: {repo: {full_name: repository}}, head: {sha: verified, repo: {full_name: repository}}}] : []));
+} else process.exit(8);
 `,
 		{ mode: 0o755 },
-	);
-	writeFileSync(
-		join(fixture.root, ".gitignore"),
-		"plan-output\ntest-results/\n",
 	);
 	git(fixture.root, "add", ".");
 	git(fixture.root, "commit", "--quiet", "-m", "fixture planning support");
@@ -131,6 +127,7 @@ esac
 			BEFORE_SHA: baseline,
 			GITHUB_REPOSITORY: "fixture/owned-repository",
 			FIXTURE_VERIFIED_SHA: verified,
+			FIXTURE_PROMOTION_SHA: git(fixture.root, "rev-parse", "HEAD"),
 			FIXTURE_ADVERTISE: "true",
 			FIXTURE_FULL_PASSED: "true",
 		},
@@ -247,14 +244,18 @@ describe("real workflow browser routing", () => {
 		},
 	);
 
-	it("fails closed when successful-candidate discovery is unavailable", () => {
+	it("keeps full verification when candidate discovery is unavailable", () => {
 		const fixture = createSquashedFixture();
 		const result = spawnSync("bash", ["-e", "-c", planningShell], {
 			cwd: fixture.root,
 			env: { ...fixture.env, FIXTURE_DISCOVERY_ERROR: "true" },
 			encoding: "utf8",
 		});
-		expect(result.status).toBe(7);
+		expect(result.status).toBe(0);
+		expect(readOutput(fixture)).toMatchObject({
+			mode: "full",
+			dependencies: "true",
+		});
 		expect(result.stdout).not.toContain(
 			"Reusing the successful full verification",
 		);
@@ -445,13 +446,27 @@ describe("real workflow browser routing", () => {
 		git(fixture.root, "commit", "--quiet", "-m", "fixture docs change");
 		mkdirSync(join(fixture.root, "src/styles"), { recursive: true });
 		writeFileSync(join(fixture.root, "src/styles/_themes.scss"), "change\n");
-		const result = spawnSync("bash", ["-e", "-c", planningShell], {
-			cwd: fixture.root,
-			env: fixture.env,
-			encoding: "utf8",
-		});
+		const result = spawnSync(
+			process.execPath,
+			[selectorPath, "browser", "--plan-only"],
+			{
+				cwd: fixture.root,
+				env: { ...fixture.env, TEST_BASE_REF: "staging" },
+				encoding: "utf8",
+			},
+		);
 		expect(result.status, result.stderr).toBe(0);
-		expect(readOutput(fixture).mode).toBe("feature");
+		const report = JSON.parse(
+			readFileSync(
+				join(fixture.root, "test-results/affected-test-selection.json"),
+				"utf8",
+			),
+		);
+		expect(report.changedFiles).toEqual([
+			"docs/README.md",
+			"src/styles/_themes.scss",
+		]);
+		expect(report.browserSelection.projects).toEqual(["desktop-chromium"]);
 	});
 
 	it("fails planning before selection when its Git comparison is invalid", () => {
