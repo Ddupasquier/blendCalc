@@ -69,6 +69,9 @@ direct visual review.
 
 ## Choosing A Layer
 
+Calendar-based provider scenarios use a Date-only clock around fixed examples and
+restore it in `finally`; request timeout timers remain real.
+
 1. If PostgreSQL, Auth, Storage, an RPC, or RLS enforces the contract, test it against
    the disposable local database.
 2. If correctness depends on a browser, routed application, layout, focus model, or
