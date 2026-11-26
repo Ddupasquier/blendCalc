@@ -53,7 +53,7 @@
 		"test:affected": "node scripts/operations/environment/run_test_command.mjs -- node scripts/operations/quality/run_affected_tests.mjs unit",
 		"pretest:watch": "npm run version:check",
 		"test:watch": "node scripts/operations/environment/run_test_command.mjs -- vitest",
-		"test:e2e:prepare": "npm run resources:check && npm run free:test-port && npm run version:check && npm run db:test -- start",
+		"test:e2e:prepare": "npm run free:test-port && npm run version:check && npm run db:test -- start",
 		"test:e2e": "node scripts/operations/quality/run_browser_verification.mjs",
 		"test:e2e:affected": "node scripts/operations/quality/run_affected_tests.mjs browser --prepare",
 		"test:e2e:headed": "node scripts/operations/quality/run_browser_verification.mjs --project=desktop-chromium --headed",

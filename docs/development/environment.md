@@ -405,35 +405,15 @@ the provider owns credential revocation and expiry. See the
 
 ## Local Resource Safety
 
-Run `npm run resources:check` before a long local session. Maintained builds, complete
-Vitest projects, browser suites, full database verification, and feature/release/nightly
-verification run the same preflight automatically. Local heavy work is blocked when:
+`npm run resources:check` is an optional, read-only report of disk space, RAM,
+current memory pressure, retained swap and large development processes. Advisory
+thresholds and unavailable measurements remain visible; they never block builds,
+tests, browser runs or database verification. No override environment variable is needed.
 
-- the macOS startup disk has less than 50 GiB free;
-- current macOS memory pressure is warning or critical;
-- swap use exceeds one physical-RAM-sized budget, capped at 16 GiB;
-- macOS physical RAM or current pressure cannot be measured reliably; or
-- an existing development process uses more than 5 GiB resident memory.
-
-The heavy-command runner limits Node old-space to 4 GiB, Vitest uses at most four workers,
-and Playwright accepts one or two workers. The local database manager starts Colima with
-four CPUs and 4 GiB memory; the 5 GiB process guard leaves room for its virtualization
-overhead without loosening the Node heap or process limit. Complete database and release verification stop Supabase and
-also stop Colima when that command started it.
-
-On a 16 GiB Mac, the permanent swap budget is 16 GiB; an 8 GiB Mac gets 8 GiB and
-larger Macs remain capped at 16 GiB. Retained swap alone does not identify current
-memory pressure. The read-only report shows RAM, current pressure and the effective
-swap limit. The pressure sysctl exposes notification flags (normal, warning, critical),
-not the different internal kernel enum; see Apple's
-[export implementation](https://github.com/apple-oss-distributions/xnu/blob/main/bsd/kern/kern_memorystatus_notify.c).
-
-Free storage or stop stale development processes when the measured bounds are exceeded.
-Restart macOS after severe swap pressure, keep macOS and development tools current, and
-leave Colima stopped when database work is not active. The repository cannot install
-operating-system updates, choose personal files to remove, or reboot safely on the
-developer's behalf. `BLENDCALC_ALLOW_RESOURCE_PRESSURE=1` permits one deliberate command
-only when postponing the work is less safe than proceeding.
+Maintained runners retain the 4 GiB Node old-space limit, at most four Vitest workers
+and one or two Playwright workers. The local database manager retains its existing
+runtime ownership, isolation, four-CPU/four-GiB Colima configuration and cleanup rules.
+Resource reporting never deletes files, stops unrelated processes, or modifies databases.
 
 ## Vercel
 

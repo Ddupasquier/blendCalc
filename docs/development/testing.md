@@ -272,7 +272,7 @@ files during the SvelteKit 3 migration. Standard isolated threads preserve the t
 boundaries, at the cost of rebuilding more runtime state. The earlier SvelteKit 2
 timings do not establish performance for this configuration. The configured default
 remains four workers locally and in CI inside the maintained 4 GiB Node heap and
-resource preflight limits; a focused local run can select fewer workers.
+heap limits; a focused local run can select fewer workers.
 
 Playwright defaults to two workers. A clean bounded-matrix benchmark completed in 3.7
 minutes with two workers and 4.2 minutes with three, so the extra worker increased local

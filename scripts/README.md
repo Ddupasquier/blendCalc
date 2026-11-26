@@ -66,7 +66,7 @@ unsuppressed report.
 | Read-only audit                          | Confirm the target environment and use `--json` only when a machine-readable report is needed.        |
 | Seed, import, or backfill                | Run the documented dry run first when one exists; review counts and exact write scope.                |
 | Local QA database                        | Use only `db:test:*`; the manager rejects non-local Supabase URLs.                                    |
-| Heavy local verification                 | Run `npm run resources:check`; maintained full-suite commands enforce it automatically.               |
+| Heavy local verification                 | Optional `npm run resources:check` reports capacity; verification retains heap and worker limits.               |
 | Linked migration                         | Use only `db:push`, `db:push:auto`, or `db:push:dry`; never bypass the remote-`main` promotion guard. |
 | Privileged account or publication action | Verify the actor, target identifier, reason, and environment before writing.                          |
 | Backup or recovery                       | Store output outside the repository and verify permissions and checksums.                             |
@@ -77,24 +77,14 @@ as a whole-product authority.
 
 ### Local Resource Safety
 
-Builds, complete Vitest projects, browser suites, feature/release/nightly verification,
-and full database verification run through
-`operations/quality/run_with_resource_limits.mjs`. On a local machine, the runner
-refuses to start when the macOS startup disk has less than 50 GiB free, current memory
-pressure is warning or critical, swap use exceeds one physical-RAM-sized budget capped
-at 16 GiB, or an existing development process exceeds 5 GiB resident memory. A 16 GiB
-Mac therefore permits 16 GiB used swap while pressure is normal; smaller Macs retain
-their smaller budget. Missing macOS RAM/pressure measurements fail closed. It also gives
-child Node processes a 4 GiB old-space limit. CI skips machine-capacity checks but keeps
-the worker and heap limits.
+Maintained verification commands retain bounded Node heaps, test-worker counts and
+owned-runtime cleanup through `operations/quality/run_with_resource_limits.mjs` and
+their existing browser/database runners. Machine-capacity checks do not block commands.
 
-Use `npm run resources:check` for a read-only report. Resolve pressure before continuing.
-The report distinguishes retained swap from current pressure and displays the effective
-budget. The pressure sysctl uses exported notification flags, not the internal kernel
-enum described in some XNU documentation.
-`BLENDCALC_ALLOW_RESOURCE_PRESSURE=1` is an explicit one-command emergency override;
-it is not a persistent setting and does not make an unsafe machine state acceptable.
-The guard never deletes files, caches, containers, volumes, or databases.
+Use `npm run resources:check` for an optional read-only report. Low disk space, memory
+pressure, retained swap, large processes and unavailable measurements are informational.
+No override setting is required. See [Environment Configuration](../docs/development/environment.md#local-resource-safety)
+for the reporting and execution-limit contract.
 
 ## Directory Map
 

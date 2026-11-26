@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-	assertLocalResourceSafety,
+	getLocalResourceReport,
 	evaluateResourceSafety,
 	gibibyte,
 	getMaximumSwapUsedBytes,
@@ -86,7 +86,7 @@ describe("local resource safety", () => {
 
 	it("allows this normal-pressure 16 GiB Mac with retained swap", () => {
 		expect(
-			assertLocalResourceSafety({
+			getLocalResourceReport({
 				environment: { CI: "false" },
 				snapshot: {
 					platform: "darwin",
@@ -97,14 +97,14 @@ describe("local resource safety", () => {
 					processes: [],
 				},
 			}),
-		).toMatchObject({ skipped: false, overridden: false, issues: [] });
+		).toMatchObject({ skipped: false, issues: [] });
 	});
 
 	it.each(["warning", "critical"])(
-		"refuses new heavy work under %s pressure even with low swap",
+		"reports %s pressure without blocking work",
 		(memoryPressure) => {
-			expect(() =>
-				assertLocalResourceSafety({
+			expect(
+				getLocalResourceReport({
 					environment: {},
 					snapshot: {
 						platform: "darwin",
@@ -115,12 +115,15 @@ describe("local resource safety", () => {
 						processes: [],
 					},
 				}),
-			).toThrow(`${memoryPressure} current memory pressure`);
+			).toMatchObject({
+				skipped: false,
+				issues: [{ kind: "memory-pressure", pressure: memoryPressure }],
+			});
 		},
 	);
 
 	it.each([null, 0, -1, Infinity, NaN, 16.5])(
-		"fails closed when physical RAM cannot be trusted: %s",
+		"reports when physical RAM cannot be trusted: %s",
 		(physicalMemoryBytes) => {
 			expect(
 				evaluateResourceSafety({
@@ -136,7 +139,7 @@ describe("local resource safety", () => {
 	);
 
 	it.each([null, "", "unknown", 0, 1])(
-		"fails closed when current pressure cannot be trusted: %s",
+		"reports when current pressure cannot be trusted: %s",
 		(memoryPressure) => {
 			expect(
 				evaluateResourceSafety({
@@ -185,7 +188,7 @@ describe("local resource safety", () => {
 	});
 
 	it.each([null, NaN, Infinity, -1])(
-		"refuses unmeasurable startup space or swap: %s",
+		"reports unmeasurable startup space or swap: %s",
 		(invalid) => {
 			const snapshot = {
 				platform: "darwin",
@@ -236,24 +239,32 @@ describe("local resource safety", () => {
 		]);
 	});
 
-	it("blocks unsafe local runs but allows explicit overrides and CI", () => {
+	it("reports low disk space and skips CI without an override setting", () => {
 		const snapshot = {
 			startupDiskFreeBytes: 49 * gibibyte,
 			swapUsedBytes: 0,
 			processes: [],
 		};
-		expect(() =>
-			assertLocalResourceSafety({ environment: {}, snapshot }),
-		).toThrow("Startup disk has 49.0 GiB free");
+		expect(getLocalResourceReport({ environment: {}, snapshot })).toMatchObject(
+			{ skipped: false, issues: [{ kind: "startup-disk" }] },
+		);
 		expect(
-			assertLocalResourceSafety({
-				environment: { BLENDCALC_ALLOW_RESOURCE_PRESSURE: "1" },
-				snapshot,
-			}),
-		).toMatchObject({ overridden: true, issues: [{ kind: "startup-disk" }] });
-		expect(
-			assertLocalResourceSafety({ environment: { CI: "true" }, snapshot }),
+			getLocalResourceReport({ environment: { CI: "true" }, snapshot }),
 		).toMatchObject({ skipped: true, issues: [] });
+	});
+	it("keeps unavailable measurements informational", () => {
+		expect(
+			getLocalResourceReport({
+				environment: {},
+				inspect: () => {
+					throw new Error("unavailable");
+				},
+			}),
+		).toEqual({
+			skipped: false,
+			snapshot: null,
+			issues: [{ kind: "inspection" }],
+		});
 	});
 
 	it("adds one bounded Node heap option and clamps oversized existing limits", () => {
